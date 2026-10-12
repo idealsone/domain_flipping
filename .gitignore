@@ -7,3 +7,6 @@ cvtara_app/storage/installed.lock
 # Installation key files — kept off-repo; share with owner directly
 INSTALL_KEY.txt
 cvtara_app/.setup-key
+
+# Source archive (extracted; not needed in repo)
+public_html/.cvtara-payload.zip
