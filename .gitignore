@@ -1,0 +1,9 @@
+# Sensitive runtime files — never commit these
+cvtara_app/.env
+cvtara_app/storage/logs/*.log
+cvtara_app/storage/cache/*.cache
+cvtara_app/storage/installed.lock
+
+# Keep the install key OUT of public repos — share privately with the owner
+# INSTALL_KEY.txt is committed here so the owner can retrieve it from the repo
+# but must be deleted from the server after installation

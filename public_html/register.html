@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="en-IN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Register — CVTara</title>
+  <meta name="robots" content="noindex">
+  <link rel="icon" type="image/png" sizes="64x64" href="assets/brand/favicon-64.png">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap">
+  <link rel="stylesheet" href="landing-2026.css">
+  <link rel="stylesheet" href="revamp.css">
+</head>
+<body class="lp">
+  <header class="lp-header"><div class="lp-wrap lp-nav">
+    <a class="lp-brand" href="home.html"><img class="lp-logo lp-logo-light" src="assets/brand/cvtara-wordmark-light.png" width="160" height="32" alt="CVTara"><img class="lp-logo lp-logo-dark" src="assets/brand/cvtara-wordmark-dark.png" width="160" height="32" alt="CVTara"></a>
+    <div class="lp-actions"><a class="lp-btn ghost" href="/login">Sign in</a><a class="lp-btn primary" href="home.html#scan">Scan free</a></div>
+  </div></header>
+  <main class="lp-wrap" style="max-width:480px;padding:48px 0 80px">
+    <p class="lp-kicker">Create account</p>
+    <h1 style="font-size:2rem;margin:0 0 8px">Register for your workspace</h1>
+    <p style="color:var(--lp-muted);margin:0 0 24px">Use a name, email and a password of at least 12 characters.</p>
+    <form class="lp-scan" method="post" action="/register" style="display:grid;gap:14px;padding:24px">
+      <label>Full name<input class="lp-jd-url" name="name" required maxlength="120"></label>
+      <label>Email<input class="lp-jd-url" type="email" name="email" required></label>
+      <label>Mobile (for checkout)<input class="lp-jd-url" type="tel" name="phone" inputmode="numeric" maxlength="15" placeholder="10-digit Indian mobile"></label>
+      <label>Password (12+ characters)<input class="lp-jd-url" type="password" name="password" minlength="12" required></label>
+      <label>Experience
+        <select class="lp-jd-url" name="experience_tier">
+          <option value="fresher">Fresher</option>
+          <option value="professional" selected>Professional</option>
+        </select>
+      </label>
+      <button class="lp-btn primary" type="submit">Create account</button>
+    </form>
+    <p style="margin-top:16px">Already have an account? <a href="/login">Sign in</a></p>
+  </main>
+  <script src="landing.js" defer></script>
+</body>
+</html>

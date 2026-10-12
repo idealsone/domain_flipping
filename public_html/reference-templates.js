@@ -1,0 +1,49 @@
+(() => {
+'use strict';const D=window.CVTARA_DATA;if(!D)return;
+const definitions=[
+['RenderCV Classic','rendercv-classic','#004f90',true,'RenderCV'],['RenderCV Ember','rendercv-ember','#a53a20',true,'RenderCV'],['RenderCV Engineering Classic','rendercv-engineeringclassic','#196aa3',true,'RenderCV'],['RenderCV Engineering Resume','rendercv-engineeringresumes','#202020',true,'RenderCV'],['RenderCV Harvard','rendercv-harvard','#222222',true,'RenderCV'],['RenderCV Ink','rendercv-ink','#3d2564',true,'RenderCV'],['RenderCV Modern CV','rendercv-moderncv','#0064a7',true,'RenderCV'],['RenderCV Opal','rendercv-opal','#117578',true,'RenderCV'],['RenderCV Sb2nov','rendercv-sb2nov','#222222',true,'RenderCV'],
+['LaTeXCV Classic','latexcv-classic','#1484b4',true,'LaTeXCV'],['LaTeXCV Modern','latexcv-modern','#db8300',true,'LaTeXCV'],['LaTeXCV Minimal','latexcv-minimal','#347841',true,'LaTeXCV'],['LaTeXCV Two Column','latexcv-two-column','#176482',true,'LaTeXCV'],['LaTeXCV Right Sidebar','latexcv-sidebar','#12566b',true,'LaTeXCV'],['LaTeXCV Left Sidebar','latexcv-sidebarleft','#bc3434',true,'LaTeXCV'],['LaTeXCV Rows','latexcv-rows','#d38b00',true,'LaTeXCV'],['LaTeXCV Infographic Timeline','latexcv-infographics','#126d9c',true,'LaTeXCV'],['LaTeXCV Infographic Panels','latexcv-infographics2','#126d9c',true,'LaTeXCV'],['HTML Executive Classic','html-executive','#303030',true,'HTML CV'],
+['Universal ATS Nova','nova','#1557d2',true,'CVTara Universal'],['Universal Meridian','meridian','#1e3a5f',true,'CVTara Universal'],['Universal Apex Split','apex','#0f766e',true,'CVTara Universal'],['Universal Folio','folio','#334155',true,'CVTara Universal'],['Universal Ledger','ledger','#1e40af',true,'CVTara Universal'],['Universal Clinic','clinic','#0f766e',true,'CVTara Universal'],['Universal North','north','#1d4ed8',true,'CVTara Universal'],['Universal Atlas','atlas','#0f172a',true,'CVTara Universal'],['Universal Pulse','pulse','#b45309',true,'CVTara Universal'],['Universal Miller','miller','#365314',true,'CVTara Universal'],
+...['Blue','Turquoise','Green','Berry','Orange','Ceramic','Teal','Slate'].map((name,i)=>['Career Sidebar '+name,'career-sidebar-'+name.toLowerCase(),['#245e9e','#247e88','#357748','#913a64','#b75e1c','#61585a','#196c69','#445f71'][i],true,'CVTara Sidebar'])];
+const reference=definitions.map(([name,layout,accent,ats,collection],i)=>({id:51+i,name,slug:layout,layout,accent,ats,category:'Reference collection',profile:collection==='HTML CV'?'finance':collection==='RenderCV'?'software':'hr',collection,badge:ats?'ATS friendly':'ATS friendly',reference:true,defaultFont:/harvard|sb2nov|html-executive|ember|ink/.test(layout)?'Georgia':'Arial'}));
+D.templates.push(...reference);const e=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const lines=v=>String(v||'').split('\n').map(x=>x.replace(/^\s*[•*-]\s*/,'').trim()).filter(Boolean);const bullets=(v,style)=>{const items=lines(v);if(!items.length)return '';const tag=style==='numbers'?'ol':'ul';return '<'+tag+'>'+items.map(x=>'<li>'+e(x)+'</li>').join('')+'</'+tag+'>';};
+const labels={summary:'Profile',experience:'Experience',education:'Education',projects:'Projects',skills:'Skills',certifications:'Certifications',languages:'Languages',awards:'Awards & volunteering'};
+function sample(t){
+  const p=D.resumeProfiles[t.profile]||D.resumeProfiles.software;
+  const loc=(p.location||'').split(' · ');
+  const job=(p.job||'').split(' · ');
+  const edu=String(p.education||'').split(' · ');
+  const you=(()=>{const raw=window.CVTaraDisplay?window.CVTaraDisplay.pick(window.CVTaraProfile?.profile,window.CVTaraProfile?.user):'';const draft=window.CVTaraStudio?.getDraft?.()?.personal?.name||'';const n=(raw||draft||'').trim();return n&&!/site\s*owner/i.test(n)?n:'Your name';})();
+  const name=you==='Your name'?p.name.replace(/\b\w/g,c=>c.toUpperCase()):you;
+  return {version:1,title:t.name,template:t.slug,accent:t.accent,font:t.defaultFont||'Arial',spacing:'comfortable',
+    personal:{name,role:p.role,email:loc[1]||'candidate@example.com',city:loc[0]||'Bengaluru',state:'Karnataka',phone:'+91 98XX XX3210',linkedin:'linkedin.com/in/'+name.toLowerCase().replace(/[^a-z]+/g,'-').replace(/^-|-$/g,''),portfolio:''},
+    summary:p.summary,skills:p.skills,languages:'English (professional) · Hindi (native)',
+    experience:[
+      {role:job[0]||p.role,company:job[1]||'Northstar Labs',city:loc[0]||'Bengaluru',type:'Full-time',start:'2023-01',current:true,bullets:(p.experience||[]).slice(0,3).join('\n')},
+      {role:'Associate '+((job[0]||p.role).replace(/senior |lead |manager/i,'').trim()||p.role),company:'BrightPath',city:'Pune',type:'Full-time',start:'2021-06',end:'2022-12',current:false,bullets:(p.experience||[]).slice(3).join('\n')||'Supported delivery, documented handovers and kept stakeholder updates accurate.'}
+    ],
+    education:[{degree:edu[0]||p.education||'Bachelor degree',school:edu[1]||'University of Mumbai',city:'Mumbai',start:'2018-06',end:'2022-05',details:edu.slice(2).join(' · ')}],
+    projects:[{name:(p.project||'Selected project').split(' · ')[0],details:p.project,tools:p.skills?.split(' · ').slice(0,3).join(' · ')}],
+    certifications:[{name:'Role-relevant certification',issuer:'Recognised body',date:'2024'}],
+    awards:'Volunteer mentor · documented weekly coaching notes for three junior colleagues.',
+    order:Object.keys(labels),hidden:[],example:true};
+}
+function render(t,d,{sample:fictional=false}={}){fictional=fictional||!!d.example;
+ const localLabels=({hi:{summary:'परिचय',experience:'अनुभव',education:'शिक्षा',projects:'परियोजनाएँ',skills:'कौशल',certifications:'प्रमाणपत्र',languages:'भाषाएँ',awards:'पुरस्कार और स्वयंसेवा'},bn:{summary:'পরিচিতি',experience:'অভিজ্ঞতা',education:'শিক্ষা',projects:'প্রকল্প',skills:'দক্ষতা',certifications:'সনদ',languages:'ভাষা',awards:'পুরস্কার ও স্বেচ্ছাসেবা'}})[d.documentLanguage]||labels;const p=d.personal||{},date=v=>/^\d{4}-\d{2}$/.test(v||'')?v.slice(0,7):String(v||''),parts={};
+ parts.summary=d.summary?'<p>'+e(d.summary).replace(/\n/g,'<br>')+'</p>':'';
+ parts.experience=(d.experience||[]).filter(r=>r.role||r.company||r.bullets).map(r=>`<div class="ref-entry"><div class="ref-entry-heading"><b>${e(r.role)}</b><span>${e(date(r.start))}${r.start&&(r.end||r.current)?' – ':''}${r.current?'Present':e(date(r.end))}</span></div><p class="ref-meta">${e([r.company,r.city,r.type].filter(Boolean).join(' · '))}</p>${bullets(r.bullets,r.listStyle)}</div>`).join('');
+ parts.education=(d.education||[]).filter(r=>r.degree||r.school).map(r=>`<div class="ref-entry"><div class="ref-entry-heading"><b>${e(r.degree)}</b><span>${e([r.start,r.end].filter(Boolean).join(' – '))}</span></div><p class="ref-meta">${e([r.school,r.city,r.grade].filter(Boolean).join(' · '))}</p>${bullets(r.details)}</div>`).join('');
+ parts.projects=(d.projects||[]).filter(r=>r.name||r.details).map(r=>`<div class="ref-entry"><b>${e(r.name)}</b><p class="ref-meta">${e([r.role,r.tools,r.link].filter(Boolean).join(' · '))}</p>${bullets(r.details)}</div>`).join('');
+ parts.certifications=(d.certifications||[]).filter(r=>r.name).map(r=>`<div class="ref-entry"><b>${e(r.name)}</b><p class="ref-meta">${e([r.issuer,r.date,r.link].filter(Boolean).join(' · '))}</p></div>`).join('');
+ parts.skills=d.skills?'<p class="ref-skills">'+e(d.skills).replace(/\n/g,' · ')+'</p>':'';parts.languages=d.languages?'<p>'+e(d.languages).replace(/\n/g,'<br>')+'</p>':'';parts.awards=bullets(d.awards);
+ const order=(d.order||Object.keys(labels)).filter(k=>labels[k]&&!d.hidden?.includes(k)&&parts[k]);const section=k=>`<section class="ref-section ref-${k}"><h2>${e(d.sectionLabels?.[k]||localLabels[k])}</h2><div class="ref-section-content">${parts[k]}</div></section>`;
+ const isSidebar=/sidebar|^signal$|^apex$|^atlas$|^suite-(vector|forma|prism|folio)$/.test(t.layout),isTwo=t.layout==='latexcv-two-column'||t.layout==='folio',isInfographic=/infographics/.test(t.layout),sideKeys=['skills','languages','certifications'],secondary=order.filter(k=>sideKeys.includes(k)),primary=order.filter(k=>!sideKeys.includes(k));
+ const contacts=[p.email,p.phone,[p.city,p.state].filter(Boolean).join(', '),p.linkedin,p.portfolio].filter(Boolean);const contactHTML=contacts.map(x=>`<span>${e(x)}</span>`).join('');
+ const photo=d.showPhoto!==false&&/^data:image\/(jpeg|png|webp);base64,[A-Za-z0-9+/=]+$/.test(d.photo||'')?`<img class="ref-photo ${d.photoShape==='square'?'square':''}" src="${e(d.photo)}" alt="${e(p.name)}" width="88" height="88">`:fictional&&t.photo?'<span class="ref-photo-placeholder">Photo<br>optional</span>':'';const heading=`<header class="ref-header">${photo}<h1>${e(p.name||'Your name')}</h1>${p.role?`<p class="ref-role">${e(p.role)}</p>`:''}${contacts.length?`<div class="ref-contact">${contactHTML}</div>`:''}</header>`;
+ let content=order.map(section).join('');if(isSidebar)content=`${heading}<div class="ref-columns"><main>${primary.map(section).join('')}</main><aside><h2>Contact</h2><div class="ref-contact ref-contact-side">${contactHTML}</div>${secondary.map(section).join('')}</aside></div>`;else if(isTwo||isInfographic)content=heading+`<div class="ref-columns"><main>${order.filter((_,i)=>i%2===0).map(section).join('')}</main><aside>${order.filter((_,i)=>i%2===1).map(section).join('')}</aside></div>`;else content=heading+content;
+ if(!order.length)content+='<p class="ref-empty">Add your details and experience in the editor to build your resume.</p>';
+ return `<article class="ref-resume ref-${e(t.layout)} ref-spacing-${e(d.spacing||'comfortable')}" style="--ref-accent:${e(d.accent||t.accent)};font-family:${['Arial','Georgia','Verdana'].includes(d.font)?d.font:(t.defaultFont||'Arial')}">${fictional?'<div class="ref-sample">FICTIONAL SAMPLE · REPLACE WITH YOUR FACTS</div>':''}${content}</article>`;
+}
+window.CVTaraReferenceTemplates={templates:reference,render,sample};
+})();
