@@ -2681,49 +2681,6 @@ function selectColor(btn, color) {
 function goBuilderStep(n) {}
 function builderStep(d) {}
 
-// ========== REFERENCE TEMPLATE GRIDS ==========
-function buildRefTPLGrid() {
-  const grid = document.getElementById('ws-ref-tpl-grid');
-  if (!grid || grid.dataset.built) return;
-  grid.dataset.built = '1';
-  REF_TEMPLATES.forEach(tpl => {
-    const card = document.createElement('div');
-    card.className = 'ref-tpl-card';
-    card.innerHTML = `
-      <div class="ref-tpl-thumb template-preview">${renderRefResume(tpl, REF_SAMPLE_DATA)}</div>
-      <div class="ref-tpl-info">
-        <div class="ref-tpl-name">${tpl.name}</div>
-        <div class="ref-tpl-collection">${tpl.collection}${tpl.ats?' · <span style="color:var(--success);font-weight:700">ATS ✓</span>':''}</div>
-      </div>`;
-    card.onclick = () => openBuilder(tpl.name, tpl);
-    grid.appendChild(card);
-  });
-}
-function buildAdminTemplates() {
-  const grid = document.getElementById('adm-ref-tpl-grid');
-  if (!grid || grid.dataset.built) return;
-  grid.dataset.built = '1';
-  REF_TEMPLATES.forEach(tpl => {
-    const card = document.createElement('div');
-    card.className = 'ref-tpl-card';
-    card.dataset.collection = tpl.collection;
-    card.innerHTML = `
-      <div class="ref-tpl-thumb template-preview">${renderRefResume(tpl, REF_SAMPLE_DATA)}</div>
-      <div class="ref-tpl-info">
-        <div class="ref-tpl-name">${tpl.name}</div>
-        <div class="ref-tpl-collection">${tpl.collection}${tpl.ats?' · <span style="color:var(--success);font-weight:700">ATS ✓</span>':''}</div>
-      </div>`;
-    grid.appendChild(card);
-  });
-}
-function adminTplFilter(btn, collection) {
-  document.querySelectorAll('#adm-tpl-collection-filter .filter-btn').forEach(b => b.classList.remove('active'));
-  btn.classList.add('active');
-  document.querySelectorAll('#adm-ref-tpl-grid .ref-tpl-card').forEach(card => {
-    card.style.display = (collection === 'all' || card.dataset.collection === collection) ? '' : 'none';
-  });
-}
-
 // ========== ATS ==========
 function analyzeResume(r, j) {
   let seed = 0;
