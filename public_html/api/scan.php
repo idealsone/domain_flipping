@@ -4,6 +4,30 @@ header('Content-Type: application/json; charset=utf-8');
 header('Access-Control-Allow-Origin: *');
 header('X-Robots-Tag: noindex');
 
+// Rate limiting: max 10 requests per minute per IP
+$ip = $_SERVER['REMOTE_ADDR'] ?? '0.0.0.0';
+$rateFile = sys_get_temp_dir() . '/cvtara_scan_' . md5($ip) . '.json';
+$now = time();
+$window = 60; // 1 minute
+$maxRequests = 10;
+
+$data = ['requests' => [], 'blocked_until' => 0];
+if (file_exists($rateFile)) {
+    $data = json_decode(file_get_contents($rateFile), true) ?? $data;
+}
+
+// Clear old requests outside window
+$data['requests'] = array_filter($data['requests'], fn($t) => $now - $t < $window);
+
+if (count($data['requests']) >= $maxRequests) {
+    http_response_code(429);
+    echo json_encode(['error' => 'Too many requests. Please wait a moment and try again.']);
+    exit;
+}
+
+$data['requests'][] = $now;
+file_put_contents($rateFile, json_encode($data));
+
 $resume = trim($_POST['resume'] ?? '');
 $job    = trim($_POST['job']    ?? '');
 

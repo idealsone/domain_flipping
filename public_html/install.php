@@ -59,6 +59,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $db = trim((string) ($_POST['db_name'] ?? ''));
         $user = trim((string) ($_POST['db_user'] ?? ''));
         $pass = (string) ($_POST['db_password'] ?? '');
+
+        // Validate to prevent DSN injection
+        if (!preg_match('/^[a-zA-Z0-9._:\-]+$/', $host)) {
+            $errors[] = 'Invalid database host format.';
+        }
+        if (!preg_match('/^[a-zA-Z0-9_\-]+$/', $db)) {
+            $errors[] = 'Invalid database name format.';
+        }
+        if (!preg_match('/^[a-zA-Z0-9_\-]+$/', $user)) {
+            $errors[] = 'Invalid database username format.';
+        }
+        if (!empty($errors)) {
+            throw new RuntimeException(implode(' ', $errors));
+        }
+
         $pdo = new PDO("mysql:host=$host;dbname=$db;charset=utf8mb4", $user, $pass, [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION]);
         $existing = $pdo->query("SHOW TABLES LIKE 'users'")->fetchColumn();
         if ($existing && (int) $pdo->query('SELECT COUNT(*) FROM users')->fetchColumn() > 0) {
@@ -151,7 +166,7 @@ function h($v): string
       <?php
       $fields = [
           'setup_key' => 'Installation key',
-          'url' => 'HTTPS domain (https://yourdomain.com)',
+          'url' => 'HTTPS domain (https://cvtara.com)',
           'db_host' => 'Database host',
           'db_name' => 'Database name',
           'db_user' => 'Database username',

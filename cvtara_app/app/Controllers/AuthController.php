@@ -22,10 +22,29 @@ final class AuthController
 
     public function login(): never
     {
+        // Brute force protection
+        $attempts = $_SESSION['login_attempts'] ?? 0;
+        $lastAttempt = $_SESSION['login_last_attempt'] ?? 0;
+
+        // Reset counter after 15 minutes
+        if (time() - $lastAttempt > 900) {
+            $attempts = 0;
+        }
+
+        if ($attempts >= 5) {
+            $remainingSeconds = 900 - (time() - $lastAttempt);
+            flash('error', 'Too many failed attempts. Please try again in ' . ceil($remainingSeconds / 60) . ' minute(s).');
+            Response::redirect('/login');
+        }
+
         if (!Auth::attempt((string) ($_POST['email'] ?? ''), (string) ($_POST['password'] ?? ''))) {
+            $_SESSION['login_attempts'] = ($attempts + 1);
+            $_SESSION['login_last_attempt'] = time();
             flash('error', 'Those details did not match an account.');
             Response::redirect('/login');
         }
+
+        unset($_SESSION['login_attempts'], $_SESSION['login_last_attempt']);
         Response::redirect(Auth::admin() ? '/admin' : '/workspace');
     }
 

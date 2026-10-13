@@ -9,7 +9,10 @@ final class Crypto
     {
         $raw = (string) Env::get('APP_KEY', '');
         $raw = str_starts_with($raw, 'base64:') ? base64_decode(substr($raw, 7)) : $raw;
-        return hash('sha256', $raw !== '' ? $raw : 'cvtara-fallback-key', true);
+        if ($raw === '') {
+            throw new \RuntimeException('APP_KEY is not set in .env — required for encryption.');
+        }
+        return hash('sha256', $raw, true);
     }
 
     public static function encrypt(string $plain): string
