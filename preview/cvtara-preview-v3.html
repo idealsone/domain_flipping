@@ -127,22 +127,39 @@ input,textarea,select{font-family:inherit;font-size:14px}
 .cl-region{font-size:12px;color:var(--muted)}
 
 /* Reviews */
-.reviews-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:20px}
-.review-card{background:var(--paper);border-radius:10px;box-shadow:0 2px 8px rgba(0,0,0,.07);padding:20px}
-.review-stars{color:#f59e0b;font-size:16px;margin-bottom:8px}
-.review-text{color:var(--ink2);font-size:14px;line-height:1.6;margin-bottom:12px}
-.review-author{font-size:13px;font-weight:600;color:var(--ink)}
-.review-city{font-size:12px;color:var(--muted)}
+.reviews-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:24px}
+.review-card{background:var(--paper);border-radius:14px;box-shadow:0 4px 20px rgba(0,0,0,.08);padding:24px;position:relative;border-top:3px solid var(--blue);transition:transform .2s,box-shadow .2s}
+.review-card:hover{transform:translateY(-3px);box-shadow:0 8px 32px rgba(0,0,0,.12)}
+.review-header{display:flex;align-items:center;gap:12px;margin-bottom:14px}
+.review-avatar{width:44px;height:44px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:800;color:#fff;flex-shrink:0}
+.review-meta h4{font-size:15px;font-weight:700;color:var(--ink)}
+.review-meta .rev-company{font-size:12px;color:var(--blue);font-weight:600}
+.review-meta .rev-city{font-size:11px;color:var(--muted)}
+.review-stars{color:#f59e0b;font-size:16px;margin-bottom:10px;letter-spacing:1px}
+.review-text{color:var(--ink2);font-size:14px;line-height:1.65;font-style:italic}
+.review-text::before{content:'\201C';font-size:32px;color:var(--blue);opacity:.3;line-height:0;vertical-align:-10px;margin-right:2px}
+.review-verified{display:inline-flex;align-items:center;gap:4px;margin-top:10px;font-size:11px;color:var(--success);font-weight:600}
+
+/* Admin review card */
+.adm-review-card{background:var(--paper);border-radius:10px;padding:16px;margin-bottom:12px;box-shadow:0 2px 8px rgba(0,0,0,.06)}
 
 /* Comparison table */
-.cmp-table{width:100%;border-collapse:collapse;background:var(--paper);border-radius:10px;overflow:hidden;box-shadow:var(--shadow)}
-.cmp-table th,.cmp-table td{padding:12px 16px;text-align:center;border-bottom:1px solid var(--line);font-size:14px}
-.cmp-table th{background:var(--soft);font-weight:700}
-.cmp-table tr:first-child th:first-child{text-align:left}
-.cmp-table td:first-child{text-align:left;font-weight:500}
+.cmp-table{width:100%;border-collapse:separate;border-spacing:0;background:var(--paper);border-radius:14px;overflow:hidden;box-shadow:0 8px 32px rgba(15,23,42,.12)}
+.cmp-table th,.cmp-table td{padding:16px 20px;text-align:center;border-bottom:1px solid var(--line);font-size:14px}
+.cmp-table th{background:var(--soft);font-weight:700;font-size:15px}
+.cmp-table tr:first-child th:first-child,.cmp-table td:first-child{text-align:left}
+.cmp-table td:first-child{font-weight:600;color:var(--ink2);font-size:14px}
 .cmp-highlight{background:#eff4ff}
-.tick{color:var(--success);font-size:16px}
-.cross{color:var(--danger);font-size:16px}
+.cmp-table th.cmp-highlight{background:#1557d2;color:#fff;position:relative}
+.cmp-table th.cmp-highlight::after{content:'✦ Best Choice';position:absolute;top:-1px;left:50%;transform:translateX(-50%) translateY(-100%);background:var(--warn);color:#fff;font-size:10px;font-weight:800;padding:3px 8px;border-radius:0 0 6px 6px;white-space:nowrap}
+.cmp-tick{color:var(--success);font-size:18px;font-weight:700}
+.cmp-cross{color:#cbd5e1;font-size:18px}
+.cmp-val{font-weight:700;color:var(--blue);font-size:15px}
+.cmp-table tr:hover td{background:rgba(21,87,210,.04)}
+.cmp-table tr:last-child td{border-bottom:none}
+
+/* Widen all content sections */
+.section{padding:72px 64px;max-width:1280px;margin:0 auto}
 
 /* FAQ */
 .faq-list{max-width:700px;margin:0 auto;display:flex;flex-direction:column;gap:8px}
@@ -482,6 +499,127 @@ select{padding:8px 12px;border:1.5px solid var(--line);border-radius:6px;backgro
 
 /* Expiry timer */
 #exit-timer{font-size:20px;font-weight:800;color:var(--danger);margin:8px 0 16px;letter-spacing:2px}
+
+/* ── Landing Page Revamp Styles ── */
+
+/* Typewriter cursor */
+.typewriter-cursor{display:inline-block;width:3px;height:1em;background:var(--blue);margin-left:2px;vertical-align:middle;animation:blink .7s step-end infinite}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:0}}
+
+/* Hero v2 */
+.hero2{padding:80px 64px 56px;max-width:1280px;margin:0 auto;display:grid;grid-template-columns:1.1fr .9fr;gap:72px;align-items:center}
+.hero2-eyebrow{display:inline-flex;align-items:center;gap:8px;background:#eff4ff;color:var(--blue);font-size:12px;font-weight:700;padding:5px 12px;border-radius:20px;margin-bottom:20px;border:1px solid #bfdbfe}
+.hero2-eyebrow-dot{width:7px;height:7px;border-radius:50%;background:#22c55e;animation:pulse 2s infinite}
+.hero2 h1{font-size:50px;font-weight:900;line-height:1.1;color:var(--ink);letter-spacing:-.5px}
+.hero2 h1 .role-text{color:var(--blue)}
+.hero2-sub{margin:18px 0 30px;font-size:17px;color:var(--muted);line-height:1.75;max-width:520px}
+.hero2-ctas{display:flex;gap:12px;flex-wrap:wrap;align-items:center}
+.btn-hero{font-size:16px;padding:14px 28px;border-radius:8px;font-weight:700;background:var(--blue);color:#fff;transition:all .2s;box-shadow:0 4px 14px rgba(21,87,210,.35)}
+.btn-hero:hover{background:#1248b3;box-shadow:0 6px 20px rgba(21,87,210,.45);transform:translateY(-1px)}
+.btn-hero-ghost{font-size:15px;padding:13px 22px;border-radius:8px;font-weight:600;border:1.5px solid var(--line);background:transparent;color:var(--ink);transition:all .2s}
+.btn-hero-ghost:hover{border-color:var(--blue);color:var(--blue)}
+.hero2-trust{display:flex;align-items:center;gap:8px;margin-top:18px;flex-wrap:wrap}
+.hero2-trust .av-stack{display:flex}
+.av-circle{width:30px;height:30px;border-radius:50%;border:2px solid var(--paper);margin-left:-8px;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:800;color:#fff}
+.av-circle:first-child{margin-left:0}
+.hero2-trust-text{font-size:13px;color:var(--muted)}
+.hero2-trust-text strong{color:var(--ink)}
+.hero2-watching{display:inline-flex;align-items:center;gap:6px;background:var(--soft);border:1px solid var(--line);padding:5px 11px;border-radius:20px;font-size:12px;font-weight:600;color:var(--ink2)}
+
+/* Hero card v2 */
+.hero2-card{background:var(--paper);border-radius:16px;box-shadow:0 12px 48px rgba(15,23,42,.16);padding:0;overflow:hidden}
+.hero2-card-header{background:linear-gradient(135deg,#1557d2,#6366f1);padding:20px 22px;color:#fff}
+.hero2-card-title{font-size:14px;font-weight:700;opacity:.85;margin-bottom:4px}
+.hero2-score-row{display:flex;align-items:center;justify-content:space-between}
+.hero2-score-num{font-size:36px;font-weight:900}
+.hero2-score-label{font-size:12px;opacity:.8}
+.hero2-card-body{padding:20px 22px}
+.hero2-progress-item{margin-bottom:14px}
+.hero2-prog-label{display:flex;justify-content:space-between;font-size:12px;font-weight:600;margin-bottom:5px}
+.hero2-prog-bar{height:7px;background:var(--line);border-radius:4px;overflow:hidden}
+.hero2-prog-fill{height:100%;border-radius:4px;transition:width 1.5s ease}
+.hero2-card-footer{padding:14px 22px;border-top:1px solid var(--line);display:flex;align-items:center;justify-content:space-between;background:var(--soft)}
+.hero2-card-badge{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:600;color:var(--success)}
+
+/* Company logos trust strip */
+.trust-strip{padding:28px 64px;border-top:1px solid var(--line);border-bottom:1px solid var(--line);background:var(--paper)}
+.trust-strip-label{text-align:center;font-size:12px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:20px}
+.trust-logos{display:flex;align-items:center;justify-content:center;gap:40px;flex-wrap:wrap}
+.trust-logo{font-size:14px;font-weight:800;color:var(--muted);opacity:.6;transition:opacity .2s;white-space:nowrap;letter-spacing:-.3px}
+.trust-logo:hover{opacity:1;color:var(--ink)}
+
+/* How it works */
+.hiw-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:32px;margin-top:16px}
+.hiw-card{background:var(--paper);border-radius:14px;padding:28px 24px;box-shadow:0 4px 20px rgba(15,23,42,.07);position:relative;border:1px solid var(--line);transition:transform .2s,box-shadow .2s}
+.hiw-card:hover{transform:translateY(-4px);box-shadow:0 12px 36px rgba(15,23,42,.12)}
+.hiw-num{position:absolute;top:-16px;left:24px;width:32px;height:32px;background:var(--blue);color:#fff;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:800;box-shadow:0 2px 8px rgba(21,87,210,.4)}
+.hiw-icon{font-size:36px;margin-bottom:14px;margin-top:8px}
+.hiw-card h4{font-size:17px;font-weight:800;margin-bottom:8px}
+.hiw-card p{font-size:13px;color:var(--muted);line-height:1.65}
+
+/* Pricing section */
+.pricing-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:24px;margin-top:16px;max-width:1000px;margin-left:auto;margin-right:auto}
+.pricing-card2{background:var(--paper);border-radius:16px;padding:28px 24px;border:2px solid var(--line);position:relative;transition:transform .2s,box-shadow .2s}
+.pricing-card2:hover{transform:translateY(-4px);box-shadow:0 12px 36px rgba(15,23,42,.1)}
+.pricing-card2.popular{border-color:var(--blue);box-shadow:0 8px 32px rgba(21,87,210,.15)}
+.pricing-pop-badge{position:absolute;top:-13px;left:50%;transform:translateX(-50%);background:var(--blue);color:#fff;font-size:11px;font-weight:800;padding:4px 14px;border-radius:20px;white-space:nowrap}
+.pricing-card2-title{font-size:13px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px}
+.pricing-card2-price{font-size:38px;font-weight:900;color:var(--ink);line-height:1}
+.pricing-card2-price sup{font-size:20px;vertical-align:super}
+.pricing-card2-period{font-size:12px;color:var(--muted);margin-top:4px;margin-bottom:18px}
+.pricing-card2-features{list-style:none;display:flex;flex-direction:column;gap:9px;margin-bottom:22px}
+.pricing-card2-features li{font-size:13px;color:var(--ink2);display:flex;align-items:center;gap:8px}
+.pricing-card2-features li::before{content:'✓';color:var(--success);font-weight:800;flex-shrink:0}
+.pricing-offer-timer{text-align:center;background:#fff7ed;border:1px solid #fed7aa;border-radius:8px;padding:8px 16px;margin-bottom:16px;font-size:12px;font-weight:700;color:#ea580c}
+.pricing-offer-countdown{font-size:16px;font-weight:900;color:var(--danger);letter-spacing:1px}
+
+/* Mid-page CTA banner */
+.mid-cta-banner{background:linear-gradient(135deg,#1557d2 0%,#6366f1 100%);padding:64px 64px;text-align:center;color:#fff}
+.mid-cta-banner h2{font-size:34px;font-weight:900;margin-bottom:10px}
+.mid-cta-banner p{font-size:17px;opacity:.85;margin-bottom:28px;max-width:600px;margin-left:auto;margin-right:auto}
+.mid-cta-banner .btn-white{background:#fff;color:var(--blue);padding:14px 32px;border-radius:8px;font-size:16px;font-weight:800;transition:all .2s}
+.mid-cta-banner .btn-white:hover{background:#f0f4ff;transform:scale(1.03)}
+
+/* Urgency bar */
+.urgency-bar{background:#fff7ed;border-bottom:1px solid #fed7aa;text-align:center;padding:8px 16px;font-size:13px;font-weight:600;color:#c2410c}
+
+/* Sticky bottom CTA */
+#sticky-cta{position:fixed;bottom:0;left:0;width:100%;background:#1557d2;color:#fff;z-index:400;padding:10px 24px;display:flex;align-items:center;justify-content:center;gap:16px;transform:translateY(100%);transition:transform .4s ease;box-shadow:0 -4px 20px rgba(0,0,0,.2)}
+#sticky-cta.show{transform:translateY(0)}
+#sticky-cta p{font-size:14px;font-weight:600}
+#sticky-cta button{background:#fff;color:var(--blue);padding:7px 18px;border-radius:6px;font-weight:700;font-size:14px;transition:background .2s}
+#sticky-cta button:hover{background:#f0f4ff}
+#sticky-cta-close{position:absolute;right:16px;background:rgba(255,255,255,.2);border:none;color:#fff;width:24px;height:24px;border-radius:50%;cursor:pointer;font-size:14px;display:flex;align-items:center;justify-content:center}
+
+/* Social proof row */
+.social-proof-row{display:flex;align-items:center;justify-content:center;gap:32px;flex-wrap:wrap;padding:20px 0}
+.sp-item{text-align:center}
+.sp-num{font-size:28px;font-weight:900;color:#fff}
+.sp-lbl{font-size:12px;color:rgba(255,255,255,.75);margin-top:2px}
+
+/* Interactive quiz card */
+.quiz-section{background:linear-gradient(135deg,#f8fafc,#f1f5f9);padding:72px 64px}
+.quiz-cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:16px;max-width:900px;margin:28px auto 0}
+.quiz-card{background:var(--paper);border:2px solid var(--line);border-radius:12px;padding:22px 18px;text-align:center;cursor:pointer;transition:all .25s}
+.quiz-card:hover,.quiz-card.selected{border-color:var(--blue);background:#eff4ff;transform:translateY(-3px);box-shadow:0 8px 24px rgba(21,87,210,.15)}
+.quiz-card-icon{font-size:36px;margin-bottom:10px}
+.quiz-card-label{font-size:14px;font-weight:700;color:var(--ink);margin-bottom:4px}
+.quiz-card-sub{font-size:12px;color:var(--muted)}
+
+/* Section CTA strip */
+.section-cta-strip{background:var(--blue);color:#fff;border-radius:12px;padding:22px 28px;display:flex;align-items:center;justify-content:space-between;margin-top:28px;gap:16px;flex-wrap:wrap}
+.section-cta-strip p{font-size:15px;font-weight:600}
+.section-cta-strip small{font-size:12px;opacity:.75;display:block;margin-top:3px}
+
+/* Final CTA */
+.final-cta{padding:96px 64px;text-align:center;background:var(--paper)}
+.final-cta h2{font-size:42px;font-weight:900;max-width:700px;margin:0 auto 14px;line-height:1.15}
+.final-cta p{font-size:18px;color:var(--muted);max-width:540px;margin:0 auto 32px}
+.final-cta-btns{display:flex;gap:14px;justify-content:center;flex-wrap:wrap}
+.final-cta-note{margin-top:18px;font-size:13px;color:var(--muted)}
+
+/* Animated counter */
+.stat-num{transition:all .5s}
 </style>
 </head>
 <body>
@@ -560,61 +698,177 @@ select{padding:8px 12px;border:1.5px solid var(--line);border-radius:6px;backgro
 
   <!-- NAV -->
   <nav class="lp-nav">
-    <div class="lp-logo">CVTara</div>
+    <div class="lp-logo">CV<span style="color:var(--indigo)">Tara</span></div>
     <ul class="lp-nav-links">
-      <li><a href="#">Features</a></li>
-      <li><a href="#">Resume</a></li>
-      <li><a href="#">Cover Letter</a></li>
-      <li><a href="#">Blog</a></li>
+      <li><a href="#" onclick="document.getElementById('tpl-section').scrollIntoView({behavior:'smooth'});return false">Templates</a></li>
+      <li><a href="#" onclick="document.getElementById('ats-section').scrollIntoView({behavior:'smooth'});return false">ATS Scanner</a></li>
+      <li><a href="#" onclick="document.getElementById('pricing-section').scrollIntoView({behavior:'smooth'});return false">Pricing</a></li>
     </ul>
     <div class="lp-nav-actions">
       <button class="btn btn-outline btn-sm" onclick="switchTab('ws')">Sign in</button>
-      <button class="btn btn-primary btn-sm" onclick="switchTab('ws')">Start free</button>
+      <button class="btn btn-primary btn-sm" onclick="switchTab('ws')" style="background:var(--blue)">Start Free →</button>
     </div>
   </nav>
 
-  <!-- HERO -->
-  <section>
-    <div class="hero">
+  <!-- URGENCY BAR -->
+  <div class="urgency-bar">🔥 Limited offer: First 500 users get 25% off — <strong><span id="offer-spots">247</span> spots left</strong></div>
+
+  <!-- HERO v2 -->
+  <section style="background:var(--paper)">
+    <div class="hero2">
       <div>
-        <h1>Build a Resume That <span>Gets You Hired</span> in India</h1>
-        <p class="hero-sub">88 templates crafted for Indian job boards — Naukri, LinkedIn, Shine. Built-in ATS scanner. No experience needed.</p>
-        <div class="hero-ctas">
-          <button class="btn btn-primary" onclick="switchTab('ws')" style="font-size:16px;padding:12px 24px">Build My Resume Free →</button>
-          <button class="btn btn-outline" onclick="document.getElementById('ats-section').scrollIntoView({behavior:'smooth'})">Try ATS Scanner</button>
+        <div class="hero2-eyebrow"><span class="hero2-eyebrow-dot"></span>India's #1 ATS Resume Builder</div>
+        <h1>Land Your Dream Job as a<br><span class="role-text" id="hero-role">Software Engineer</span><span class="typewriter-cursor"></span></h1>
+        <p class="hero2-sub">Build an ATS-optimised resume in minutes. 88 templates designed for Naukri, LinkedIn & Shine. No experience needed — just your story.</p>
+        <div class="hero2-ctas">
+          <button class="btn-hero" onclick="switchTab('ws')">Build My Resume Free →</button>
+          <button class="btn-hero-ghost" onclick="document.getElementById('ats-section').scrollIntoView({behavior:'smooth'})">Try Free ATS Scanner</button>
         </div>
-        <p style="margin-top:14px;font-size:13px;color:var(--muted)">✓ No credit card to start &nbsp; ✓ 88 premium templates &nbsp; ✓ Download instantly</p>
+        <div class="hero2-trust" style="margin-top:20px">
+          <div class="av-stack">
+            <div class="av-circle" style="background:#6366f1">R</div>
+            <div class="av-circle" style="background:#1557d2">A</div>
+            <div class="av-circle" style="background:#22c55e">P</div>
+            <div class="av-circle" style="background:#f59e0b">S</div>
+            <div class="av-circle" style="background:#ef4444">V</div>
+          </div>
+          <span class="hero2-trust-text"><strong>48,000+</strong> professionals hired using CVTara</span>
+        </div>
+        <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:14px">
+          <span class="hero2-watching"><span style="width:7px;height:7px;border-radius:50%;background:#22c55e;animation:pulse 2s infinite;display:inline-block"></span><span id="live-viewers">143</span> people building right now</span>
+          <span style="display:inline-flex;align-items:center;gap:5px;font-size:12px;color:var(--muted)">⭐ 4.8/5 · 3,200+ reviews</span>
+        </div>
       </div>
-      <div class="hero-card">
-        <div class="score-badge">ATS 87%</div>
-        <div class="resume-preview">
-          <div class="rp-line bold w80"></div>
-          <div class="rp-line w60" style="height:7px;background:#c7d2fe"></div>
-          <div style="height:1px;background:var(--line);margin:6px 0"></div>
-          <div class="rp-line bold w40"></div>
-          <div class="rp-line w100"></div>
-          <div class="rp-line w80"></div>
-          <div class="rp-line w60"></div>
-          <div style="height:1px;background:var(--line);margin:6px 0"></div>
-          <div class="rp-line bold w40"></div>
-          <div class="rp-line w100"></div>
-          <div class="rp-line w80"></div>
-          <div style="height:1px;background:var(--line);margin:6px 0"></div>
-          <div class="rp-line bold w40"></div>
-          <div class="rp-line w60"></div><div class="rp-line w80"></div>
+      <div class="hero2-card">
+        <div class="hero2-card-header">
+          <div class="hero2-card-title">ATS Match Score</div>
+          <div class="hero2-score-row">
+            <div>
+              <div class="hero2-score-num" id="hero-ats-num">57%</div>
+              <div class="hero2-score-label">Before CVTara</div>
+            </div>
+            <div style="text-align:right">
+              <div class="hero2-score-num" style="color:#86efac">89%</div>
+              <div class="hero2-score-label">After CVTara ✓</div>
+            </div>
+          </div>
         </div>
-        <p style="font-size:12px;color:var(--muted);margin-top:10px;text-align:center">IT/Tech · Senior template · Paid ₹199</p>
+        <div class="hero2-card-body">
+          <div class="hero2-progress-item">
+            <div class="hero2-prog-label"><span>Keywords matched</span><span style="color:var(--success)">18/20</span></div>
+            <div class="hero2-prog-bar"><div class="hero2-prog-fill" style="width:90%;background:var(--success)"></div></div>
+          </div>
+          <div class="hero2-progress-item">
+            <div class="hero2-prog-label"><span>Format score</span><span style="color:var(--success)">92%</span></div>
+            <div class="hero2-prog-bar"><div class="hero2-prog-fill" style="width:92%;background:var(--blue)"></div></div>
+          </div>
+          <div class="hero2-progress-item" style="margin-bottom:0">
+            <div class="hero2-prog-label"><span>Recruiter readability</span><span style="color:var(--warn)">84%</span></div>
+            <div class="hero2-prog-bar"><div class="hero2-prog-fill" style="width:84%;background:var(--warn)"></div></div>
+          </div>
+        </div>
+        <div class="hero2-card-footer">
+          <span class="hero2-card-badge">✓ ATS Ready</span>
+          <span style="font-size:12px;color:var(--muted)">TCS · SDE Role</span>
+        </div>
       </div>
     </div>
   </section>
 
-  <!-- STATS -->
-  <section style="background:var(--blue)">
-    <div class="stats-row">
-      <div class="stat-item"><div class="stat-num">48K+</div><div class="stat-lbl">Resumes Built</div></div>
-      <div class="stat-item"><div class="stat-num">3.2×</div><div class="stat-lbl">More Interviews</div></div>
-      <div class="stat-item"><div class="stat-num">₹199</div><div class="stat-lbl">Starting Price</div></div>
+  <!-- COMPANY TRUST STRIP -->
+  <section class="trust-strip">
+    <div class="trust-strip-label">CVTara users have been hired at</div>
+    <div class="trust-logos">
+      <span class="trust-logo">TCS</span>
+      <span class="trust-logo">Infosys</span>
+      <span class="trust-logo">Wipro</span>
+      <span class="trust-logo">Accenture</span>
+      <span class="trust-logo">HCLTech</span>
+      <span class="trust-logo">Cognizant</span>
+      <span class="trust-logo">Tech Mahindra</span>
+      <span class="trust-logo">Swiggy</span>
+      <span class="trust-logo">Zomato</span>
+      <span class="trust-logo">Razorpay</span>
+      <span class="trust-logo">Flipkart</span>
+      <span class="trust-logo">Amazon</span>
+    </div>
+  </section>
+
+  <!-- STATS STRIP -->
+  <section style="background:var(--blue);padding:36px 64px">
+    <div style="max-width:1100px;margin:0 auto;display:flex;justify-content:center;gap:64px;flex-wrap:wrap">
+      <div class="stat-item"><div class="stat-num" id="stat-resumes">0</div><div class="stat-lbl">Resumes Built</div></div>
+      <div class="stat-item"><div class="stat-num">3.2×</div><div class="stat-lbl">More Interview Calls</div></div>
+      <div class="stat-item"><div class="stat-num">₹199</div><div class="stat-lbl">Plans Start At</div></div>
       <div class="stat-item"><div class="stat-num">4.8★</div><div class="stat-lbl">Average Rating</div></div>
+      <div class="stat-item"><div class="stat-num">88</div><div class="stat-lbl">Premium Templates</div></div>
+    </div>
+  </section>
+
+  <!-- QUIZ: WHO ARE YOU? -->
+  <section class="quiz-section">
+    <div style="max-width:900px;margin:0 auto">
+      <h2 class="section-title">What best describes you?</h2>
+      <p class="section-sub">Get templates and tips tailored to your situation</p>
+      <div class="quiz-cards" id="quiz-cards">
+        <div class="quiz-card" onclick="selectQuiz(this,'fresher')">
+          <div class="quiz-card-icon">🎓</div>
+          <div class="quiz-card-label">Fresh Graduate</div>
+          <div class="quiz-card-sub">Just completed college, looking for first job</div>
+        </div>
+        <div class="quiz-card" onclick="selectQuiz(this,'experienced')">
+          <div class="quiz-card-icon">💼</div>
+          <div class="quiz-card-label">Experienced Pro</div>
+          <div class="quiz-card-sub">2+ years experience, ready to level up</div>
+        </div>
+        <div class="quiz-card" onclick="selectQuiz(this,'career-change')">
+          <div class="quiz-card-icon">🔄</div>
+          <div class="quiz-card-label">Career Switch</div>
+          <div class="quiz-card-sub">Moving to a new industry or role</div>
+        </div>
+        <div class="quiz-card" onclick="selectQuiz(this,'govt')">
+          <div class="quiz-card-icon">🏛️</div>
+          <div class="quiz-card-label">Govt / PSU</div>
+          <div class="quiz-card-sub">Targeting UPSC, PSB, or government roles</div>
+        </div>
+      </div>
+      <div id="quiz-result" style="display:none;margin-top:28px;background:var(--paper);border-radius:12px;padding:24px;border:1.5px solid var(--blue);text-align:center">
+        <p id="quiz-result-text" style="font-size:16px;color:var(--ink2);margin-bottom:16px"></p>
+        <button class="btn-hero" onclick="switchTab('ws')" style="font-size:15px;padding:12px 24px">Show Me These Templates →</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- HOW IT WORKS -->
+  <section class="section" style="background:var(--paper)">
+    <h2 class="section-title">Go from Zero to Interview-Ready in 3 Steps</h2>
+    <p class="section-sub">Takes less than 10 minutes — start right now</p>
+    <div class="hiw-grid">
+      <div class="hiw-card">
+        <div class="hiw-num">1</div>
+        <div class="hiw-icon">🎨</div>
+        <h4>Pick a Template</h4>
+        <p>Choose from 88 ATS-optimised templates built for Indian job boards. Fresher, IT, management, government — we have it all.</p>
+        <p style="margin-top:12px;font-size:12px;color:var(--blue);font-weight:600">⏱ Takes ~1 min</p>
+      </div>
+      <div class="hiw-card" style="border-color:var(--blue)">
+        <div class="hiw-num">2</div>
+        <div class="hiw-icon">✍️</div>
+        <h4>Fill in Your Details</h4>
+        <p>Our guided builder prompts you for everything. Get AI-powered bullet point suggestions tailored to your role and experience level.</p>
+        <p style="margin-top:12px;font-size:12px;color:var(--blue);font-weight:600">⏱ Takes ~6 min</p>
+      </div>
+      <div class="hiw-card">
+        <div class="hiw-num">3</div>
+        <div class="hiw-icon">🚀</div>
+        <h4>Scan, Fix & Download</h4>
+        <p>Run the free ATS scanner against any job description. Fix keyword gaps in one click. Download PDF instantly.</p>
+        <p style="margin-top:12px;font-size:12px;color:var(--blue);font-weight:600">⏱ Takes ~3 min</p>
+      </div>
+    </div>
+    <div style="text-align:center;margin-top:36px">
+      <button class="btn-hero" onclick="switchTab('ws')" style="font-size:15px;padding:12px 28px">Start Building Now — Free →</button>
+      <p style="margin-top:10px;font-size:12px;color:var(--muted)">No credit card · No install · Works in browser</p>
     </div>
   </section>
 
@@ -706,8 +960,65 @@ select{padding:8px 12px;border:1.5px solid var(--line);border-radius:6px;backgro
     </div>
   </section>
 
+  <!-- PRICING -->
+  <section style="background:var(--soft);padding:72px 64px" id="pricing-section">
+    <div style="max-width:1100px;margin:0 auto">
+      <h2 class="section-title">Simple, Honest Pricing in ₹</h2>
+      <p class="section-sub">No dollar conversions, no hidden fees — priced for Indian professionals</p>
+      <div class="pricing-offer-timer" style="max-width:380px;margin:0 auto 28px">
+        🏷️ Launch offer ends in: <span class="pricing-offer-countdown" id="pricing-countdown">03:47:22</span>
+      </div>
+      <div class="pricing-grid">
+        <!-- Fresher -->
+        <div class="pricing-card2">
+          <div class="pricing-card2-title">Fresher</div>
+          <div class="pricing-card2-price"><sup>₹</sup>199</div>
+          <div class="pricing-card2-period">per 30 days &nbsp;·&nbsp; <s style="color:var(--muted);font-size:12px">₹249</s></div>
+          <ul class="pricing-card2-features">
+            <li>30 Fresher templates</li>
+            <li>Free ATS scanner (5 scans)</li>
+            <li>5 cover letters</li>
+            <li>Naukri/LinkedIn export</li>
+            <li>PDF download</li>
+          </ul>
+          <button class="btn btn-outline" style="width:100%;padding:11px;font-size:14px" onclick="switchTab('ws')">Get Started →</button>
+        </div>
+        <!-- Professional (popular) -->
+        <div class="pricing-card2 popular">
+          <div class="pricing-pop-badge">⭐ Most Popular</div>
+          <div class="pricing-card2-title">Professional</div>
+          <div class="pricing-card2-price"><sup>₹</sup>349</div>
+          <div class="pricing-card2-period">per 60 days &nbsp;·&nbsp; <s style="color:var(--muted);font-size:12px">₹499</s></div>
+          <ul class="pricing-card2-features">
+            <li>All 88 premium templates</li>
+            <li>Unlimited ATS scans</li>
+            <li>20 cover letters</li>
+            <li>Priority support</li>
+            <li>7-day money-back guarantee</li>
+          </ul>
+          <button class="btn btn-primary" style="width:100%;padding:11px;font-size:14px;background:var(--blue)" onclick="switchTab('ws')">Get Professional →</button>
+        </div>
+        <!-- Unlimited -->
+        <div class="pricing-card2">
+          <div class="pricing-card2-title">Unlimited</div>
+          <div class="pricing-card2-price"><sup>₹</sup>599</div>
+          <div class="pricing-card2-period">per 90 days &nbsp;·&nbsp; <s style="color:var(--muted);font-size:12px">₹799</s></div>
+          <ul class="pricing-card2-features">
+            <li>Everything in Professional</li>
+            <li>Unlimited cover letters</li>
+            <li>Referral programme access</li>
+            <li>1-on-1 resume review call</li>
+            <li>Lifetime template updates</li>
+          </ul>
+          <button class="btn btn-outline" style="width:100%;padding:11px;font-size:14px" onclick="switchTab('ws')">Get Unlimited →</button>
+        </div>
+      </div>
+      <p style="text-align:center;margin-top:20px;font-size:13px;color:var(--muted)">✓ Pay via UPI, Net banking, Cards &nbsp;·&nbsp; ✓ GST invoice provided &nbsp;·&nbsp; ✓ 7-day refund</p>
+    </div>
+  </section>
+
   <!-- COVER LETTERS -->
-  <section style="background:var(--soft);padding:64px 48px">
+  <section style="background:var(--paper);padding:72px 64px">
     <div style="max-width:1200px;margin:0 auto">
       <h2 class="section-title">Professional Cover Letter Templates</h2>
       <p class="section-sub">Crafted for Indian job applications — Naukri, LinkedIn, campus placements &amp; more</p>
@@ -720,38 +1031,82 @@ select{padding:8px 12px;border:1.5px solid var(--line);border-radius:6px;backgro
   </section>
 
   <!-- REVIEWS -->
-  <section class="section">
-    <h2 class="section-title">What Job Seekers Say</h2>
-    <p class="section-sub">Trusted by 48,000+ professionals across India</p>
-    <div class="reviews-grid" id="reviews-grid"></div>
+  <section class="section" style="background:var(--soft);padding:72px 64px">
+    <div style="max-width:1280px;margin:0 auto">
+      <h2 class="section-title">What Job Seekers Are Saying</h2>
+      <p class="section-sub">Trusted by 48,000+ professionals across India — <strong style="color:var(--blue)">real reviews, real people</strong></p>
+      <div class="reviews-grid" id="reviews-grid"></div>
+      <div style="text-align:center;margin-top:36px">
+        <button class="btn btn-primary" style="padding:12px 28px;font-size:15px" onclick="switchTab('ws')">Join Them — Build Your Resume Free →</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- MID-PAGE CTA BANNER -->
+  <section class="mid-cta-banner">
+    <h2>Your next job offer starts with a better resume</h2>
+    <p>Stop losing out to candidates with the same skills but a better-formatted CV. Get ATS-optimised in minutes.</p>
+    <button class="btn-white" onclick="switchTab('ws')">Create My Resume — It's Free</button>
+    <div style="margin-top:18px;opacity:.75;font-size:13px">No credit card required · Join 48,000+ professionals</div>
   </section>
 
   <!-- COMPARISON TABLE -->
-  <section style="background:var(--soft);padding:64px 48px">
-    <div style="max-width:900px;margin:0 auto">
-      <h2 class="section-title">CVTara vs The Rest</h2>
-      <p class="section-sub">See why Indian professionals choose CVTara</p>
+  <section style="background:var(--soft);padding:72px 64px">
+    <div style="max-width:1100px;margin:0 auto">
+      <h2 class="section-title">Why CVTara Wins Every Time</h2>
+      <p class="section-sub">The only resume builder built for India — from pricing to job board optimisation</p>
+      <div style="overflow-x:auto;margin-top:8px">
       <table class="cmp-table">
-        <thead><tr><th>Feature</th><th class="cmp-highlight">CVTara</th><th>Resume.io</th><th>Zety</th></tr></thead>
+        <thead>
+          <tr>
+            <th style="text-align:left;width:36%">Feature / Advantage</th>
+            <th class="cmp-highlight" style="width:22%">CVTara</th>
+            <th style="width:21%">Resume.io</th>
+            <th style="width:21%">Zety</th>
+          </tr>
+        </thead>
         <tbody>
-          <tr><td>Indian job board optimized</td><td class="cmp-highlight"><span class="tick">✓</span></td><td><span class="cross">✗</span></td><td><span class="cross">✗</span></td></tr>
-          <tr><td>Starting price</td><td class="cmp-highlight" style="font-weight:700;color:var(--blue)">₹199/mo</td><td>$9.95/mo</td><td>$9.99/mo</td></tr>
-          <tr><td>Free ATS scanner</td><td class="cmp-highlight"><span class="tick">✓</span></td><td><span class="cross">✗</span></td><td><span class="cross">✗</span></td></tr>
-          <tr><td>Resume templates</td><td class="cmp-highlight" style="font-weight:700">88</td><td>20</td><td>18</td></tr>
-          <tr><td>Indian JD templates</td><td class="cmp-highlight"><span class="tick">✓</span></td><td><span class="cross">✗</span></td><td><span class="cross">✗</span></td></tr>
-          <tr><td>Cover letter templates</td><td class="cmp-highlight" style="font-weight:700">26</td><td>18</td><td>10</td></tr>
-          <tr><td>Naukri/LinkedIn export</td><td class="cmp-highlight"><span class="tick">✓</span></td><td><span class="cross">✗</span></td><td><span class="cross">✗</span></td></tr>
-          <tr><td>INR pricing</td><td class="cmp-highlight"><span class="tick">✓</span></td><td><span class="cross">✗</span></td><td><span class="cross">✗</span></td></tr>
+          <tr><td>🇮🇳 Indian job board optimised</td><td class="cmp-highlight"><span class="cmp-tick">✓</span></td><td><span class="cmp-cross">✗</span></td><td><span class="cmp-cross">✗</span></td></tr>
+          <tr><td>💰 Starting price (monthly)</td><td class="cmp-highlight"><span class="cmp-val">₹199</span></td><td style="color:var(--muted)">$9.95</td><td style="color:var(--muted)">$9.99</td></tr>
+          <tr><td>📋 Premium resume templates</td><td class="cmp-highlight"><span class="cmp-val">88</span></td><td style="color:var(--muted)">20</td><td style="color:var(--muted)">18</td></tr>
+          <tr><td>📝 Cover letter templates</td><td class="cmp-highlight"><span class="cmp-val">26</span></td><td style="color:var(--muted)">18</td><td style="color:var(--muted)">10</td></tr>
+          <tr><td>🎯 Free ATS resume scanner</td><td class="cmp-highlight"><span class="cmp-tick">✓</span></td><td><span class="cmp-cross">✗</span></td><td><span class="cmp-cross">✗</span></td></tr>
+          <tr><td>🏢 Naukri / Shine / Indeed export</td><td class="cmp-highlight"><span class="cmp-tick">✓</span></td><td><span class="cmp-cross">✗</span></td><td><span class="cmp-cross">✗</span></td></tr>
+          <tr><td>🔍 Indian JD keyword matching</td><td class="cmp-highlight"><span class="cmp-tick">✓</span></td><td><span class="cmp-cross">✗</span></td><td><span class="cmp-cross">✗</span></td></tr>
+          <tr><td>📲 UPI / Net banking / Wallets</td><td class="cmp-highlight"><span class="cmp-tick">✓</span></td><td><span class="cmp-cross">✗</span></td><td><span class="cmp-cross">✗</span></td></tr>
+          <tr><td>🎓 Fresher-specific templates</td><td class="cmp-highlight"><span class="cmp-tick">✓ 30 templates</span></td><td><span class="cmp-cross">✗</span></td><td><span class="cmp-cross">✗</span></td></tr>
+          <tr><td>🏛️ Government / PSU templates</td><td class="cmp-highlight"><span class="cmp-tick">✓</span></td><td><span class="cmp-cross">✗</span></td><td><span class="cmp-cross">✗</span></td></tr>
+          <tr><td>💬 Hindi / Regional support</td><td class="cmp-highlight"><span class="cmp-val">Coming soon</span></td><td><span class="cmp-cross">✗</span></td><td><span class="cmp-cross">✗</span></td></tr>
+          <tr><td>🔁 Money-back guarantee</td><td class="cmp-highlight"><span class="cmp-tick">7 days</span></td><td><span class="cmp-cross">✗</span></td><td style="color:var(--muted)">14 days</td></tr>
         </tbody>
       </table>
+      </div>
+      <div style="text-align:center;margin-top:28px">
+        <button class="btn btn-primary" style="font-size:15px;padding:13px 28px" onclick="switchTab('ws')">Start Building — It's Free →</button>
+        <p style="margin-top:10px;font-size:13px;color:var(--muted)">No credit card required · Plans from ₹199</p>
+      </div>
     </div>
   </section>
 
   <!-- FAQ -->
-  <section class="section">
+  <section class="section" style="background:var(--paper)">
     <h2 class="section-title">Frequently Asked Questions</h2>
     <p class="section-sub" style="margin-bottom:32px">Everything you need to know about CVTara</p>
     <div id="faq-list" class="faq-list"></div>
+    <div style="text-align:center;margin-top:32px">
+      <p style="font-size:14px;color:var(--muted)">Still have questions? <a href="#" style="color:var(--blue);font-weight:600">Chat with us →</a></p>
+    </div>
+  </section>
+
+  <!-- FINAL CTA -->
+  <section class="final-cta" style="background:linear-gradient(135deg,#f0f4ff,#f8fafc)">
+    <h2>Ready to land more interviews? <span style="color:var(--blue)">Start free today.</span></h2>
+    <p>Join 48,000+ Indian professionals who built their resume on CVTara — the only builder made for India.</p>
+    <div class="final-cta-btns">
+      <button class="btn-hero" onclick="switchTab('ws')" style="font-size:17px;padding:15px 36px">Build My Resume — Free →</button>
+      <button class="btn-hero-ghost" onclick="document.getElementById('ats-section').scrollIntoView({behavior:'smooth'})">Try ATS Scanner First</button>
+    </div>
+    <div class="final-cta-note">✓ No credit card &nbsp; ✓ No downloads &nbsp; ✓ Plans from ₹199 &nbsp; ✓ 7-day refund</div>
   </section>
 
   <!-- FOOTER -->
@@ -770,6 +1125,13 @@ select{padding:8px 12px;border:1.5px solid var(--line);border-radius:6px;backgro
       <span>support@cvtara.com</span>
     </div>
   </footer>
+
+  <!-- STICKY BOTTOM CTA -->
+  <div id="sticky-cta">
+    <p>🚀 Start building your resume — it's free!</p>
+    <button onclick="switchTab('ws')">Build Now →</button>
+    <button id="sticky-cta-close" onclick="document.getElementById('sticky-cta').classList.remove('show');document.getElementById('sticky-cta').style.display='none'">✕</button>
+  </div>
 
   <!-- EXIT POPUP -->
   <div id="exit-popup" onclick="if(event.target===this)closeExitPopup()" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.6);z-index:9999;align-items:center;justify-content:center">
@@ -1379,13 +1741,38 @@ select{padding:8px 12px;border:1.5px solid var(--line);border-radius:6px;backgro
       <!-- REVIEWS -->
       <div id="adm-reviews" class="admin-view">
         <div class="page-title">User Reviews</div>
-        <div class="page-sub">Moderate and publish user reviews</div>
-        <div class="review-tabs">
-          <button class="rev-tab-btn active" onclick="showReviewTab('pending')">Pending</button>
-          <button class="rev-tab-btn" onclick="showReviewTab('published')">Published</button>
+        <div class="page-sub">Add, moderate and publish user reviews shown on the landing page</div>
+
+        <!-- Add new review -->
+        <div class="card" style="margin-bottom:20px">
+          <h4 style="margin-bottom:14px;font-size:15px">➕ Add New Review</h4>
+          <div class="col-2" style="margin-bottom:10px">
+            <div class="form-group"><label>Full Name</label><input id="rev-name" type="text" placeholder="Priya Sharma" style="width:100%;padding:8px 10px;border:1.5px solid var(--line);border-radius:6px;background:var(--bg);color:var(--ink)"></div>
+            <div class="form-group"><label>Company & Role</label><input id="rev-company" type="text" placeholder="TCS · Software Engineer" style="width:100%;padding:8px 10px;border:1.5px solid var(--line);border-radius:6px;background:var(--bg);color:var(--ink)"></div>
+          </div>
+          <div class="col-2" style="margin-bottom:10px">
+            <div class="form-group"><label>City</label><input id="rev-city" type="text" placeholder="Mumbai" style="width:100%;padding:8px 10px;border:1.5px solid var(--line);border-radius:6px;background:var(--bg);color:var(--ink)"></div>
+            <div class="form-group"><label>Star Rating</label>
+              <select id="rev-stars" style="width:100%;padding:8px 10px;border:1.5px solid var(--line);border-radius:6px">
+                <option value="5">★★★★★ 5 Stars</option>
+                <option value="4">★★★★☆ 4 Stars</option>
+                <option value="3">★★★☆☆ 3 Stars</option>
+              </select>
+            </div>
+          </div>
+          <div class="form-group mb4"><label>Review Text</label><textarea id="rev-text" rows="3" placeholder="Write the review feedback..." style="width:100%;padding:8px 10px;border:1.5px solid var(--line);border-radius:6px;background:var(--bg);color:var(--ink);resize:vertical"></textarea></div>
+          <div style="display:flex;gap:10px;align-items:center">
+            <button class="btn btn-primary btn-sm" onclick="adminAddReview()">Add Review</button>
+            <span id="rev-add-status" style="font-size:12px;color:var(--success)"></span>
+          </div>
         </div>
-        <div class="rev-tab active" id="reviews-pending-tab"></div>
-        <div class="rev-tab" id="reviews-published-tab"></div>
+
+        <div class="review-tabs">
+          <button class="rev-tab-btn active" onclick="showReviewTab('pending')">Pending (<span id="pending-count">2</span>)</button>
+          <button class="rev-tab-btn" onclick="showReviewTab('published')">Published (<span id="published-count">6</span>)</button>
+        </div>
+        <div class="rev-tab active" id="reviews-pending-tab" style="margin-top:12px"></div>
+        <div class="rev-tab" id="reviews-published-tab" style="margin-top:12px"></div>
       </div>
 
       <!-- SETTINGS -->
@@ -2083,21 +2470,42 @@ function renderCLPreviewGrid(grid, cat) {
   });
 }
 
-const REVIEWS_DATA = [
-  {name:'Priya Sharma',city:'Mumbai',stars:5,text:'Got my first job in TCS after using CVTara! The ATS scanner really helped me understand what keywords to add.'},
-  {name:'Rahul Verma',city:'Delhi',stars:5,text:'Amazing templates for IT roles. The IT/Tech category is exactly what Naukri expects. Highly recommend!'},
-  {name:'Ananya Nair',city:'Bangalore',stars:5,text:'Used the Fresher Classic template for campus placements. Got shortlisted by 4 companies in one week!'},
-  {name:'Amit Kulkarni',city:'Pune',stars:4,text:'Very affordable compared to international tools. The ATS score tips are genuinely useful. Good product.'},
-  {name:'Sneha Iyer',city:'Chennai',stars:5,text:'Perfect for Indian job market. The cover letter builder saved me so much time during placement season.'},
-  {name:'Vikram Singh',city:'Hyderabad',stars:4,text:'Built my resume in 20 minutes using the IT template. Downloaded as PDF and uploaded to Naukri directly. Works perfectly.'}
+let REVIEWS_DATA = [
+  {id:1,name:'Priya Sharma',company:'TCS · Software Engineer',city:'Mumbai',stars:5,text:'Got my first job in TCS after using CVTara! The ATS scanner helped me understand exactly which keywords to add for the role.',status:'published'},
+  {id:2,name:'Rahul Verma',company:'Infosys · Business Analyst',city:'Delhi',stars:5,text:'Amazing templates for IT roles. The IT/Tech category is exactly what Naukri expects. Shortlisted in 3 companies in 10 days!',status:'published'},
+  {id:3,name:'Ananya Nair',company:'Wipro · Campus Hire',city:'Bangalore',stars:5,text:'Used the Fresher Classic template for campus placements. Got shortlisted by 4 companies in one week. Highly recommend!',status:'published'},
+  {id:4,name:'Amit Kulkarni',company:'HDFC Bank · Finance Analyst',city:'Pune',stars:4,text:'Very affordable compared to international tools. The ATS score tips are genuinely useful. Great value for Indian job seekers.',status:'published'},
+  {id:5,name:'Sneha Iyer',company:'Deloitte · HR Executive',city:'Chennai',stars:5,text:'Perfect for the Indian job market. The cover letter builder saved me so much time during placement season.',status:'published'},
+  {id:6,name:'Vikram Singh',company:'HCL Technologies · DevOps',city:'Hyderabad',stars:5,text:'Built my resume in 20 minutes using the IT template. Downloaded as PDF and uploaded to Naukri directly. Works perfectly.',status:'published'}
 ];
+let nextReviewId = 7;
+
+function getAvatarColor(name) {
+  const colors = ['#1557d2','#6366f1','#22c55e','#f59e0b','#ef4444','#3b82f6','#8b5cf6','#ec4899','#14b8a6','#f97316'];
+  let h = 0; for (const c of name) h = (h + c.charCodeAt(0)) % colors.length;
+  return colors[h];
+}
+
 function buildReviews() {
   const grid = document.getElementById('reviews-grid');
-  if (!grid || grid.dataset.built) return;
-  grid.dataset.built = '1';
-  REVIEWS_DATA.forEach(r => {
+  if (!grid) return;
+  grid.innerHTML = '';
+  const published = REVIEWS_DATA.filter(r => r.status === 'published');
+  published.forEach(r => {
     const card = document.createElement('div'); card.className = 'review-card';
-    card.innerHTML = `<div class="review-stars">${'★'.repeat(r.stars)}${'☆'.repeat(5-r.stars)}</div><p class="review-text">"${r.text}"</p><div class="review-author">${r.name}</div><div class="review-city">📍 ${r.city}</div>`;
+    const initials = r.name.split(' ').map(w=>w[0]).join('').slice(0,2);
+    card.innerHTML = `
+      <div class="review-header">
+        <div class="review-avatar" style="background:${getAvatarColor(r.name)}">${initials}</div>
+        <div class="review-meta">
+          <h4>${r.name}</h4>
+          <div class="rev-company">${r.company}</div>
+          <div class="rev-city">📍 ${r.city}</div>
+        </div>
+      </div>
+      <div class="review-stars">${'★'.repeat(r.stars)}${'☆'.repeat(5-r.stars)}</div>
+      <p class="review-text">${r.text}</p>
+      <div class="review-verified">✓ Verified CVTara User</div>`;
     grid.appendChild(card);
   });
 }
@@ -2371,30 +2779,89 @@ function filterBlog(btn, cat) {
   });
 }
 
-function buildReviews() {
+const ADM_PENDING_REVIEWS = [
+  {id:100,name:'Kiran Patel',company:'Zomato · Associate',city:'Surat',stars:5,text:'Very helpful tool for freshers like me. Got 2 interview calls within 2 weeks!',status:'pending'},
+  {id:101,name:'Meera Joshi',company:'Jaipur Rugs · Executive',city:'Jaipur',stars:4,text:'Good templates. Would love more options for arts graduates. Otherwise great product.',status:'pending'}
+];
+
+function buildAdminReviews() {
   const pending = document.getElementById('reviews-pending-tab');
   const published = document.getElementById('reviews-published-tab');
-  if (pending && !pending.dataset.built) {
-    pending.dataset.built = '1';
-    const pendingRevs = [
-      {name:'Kiran Patel',city:'Surat',stars:5,text:'Very helpful tool for freshers like me. Got 2 interview calls!'},
-      {name:'Meera Joshi',city:'Jaipur',stars:4,text:'Good templates. Would love more options for arts graduates.'}
-    ];
-    pendingRevs.forEach(r => {
-      const card = document.createElement('div'); card.className = 'review-card'; card.style.marginBottom='12px';
-      card.innerHTML = `<div class="review-stars">${'★'.repeat(r.stars)}</div><p class="review-text">"${r.text}"</p><div class="review-author">${r.name} · ${r.city}</div><div style="display:flex;gap:8px;margin-top:10px"><button class="btn btn-success btn-sm">Approve</button><button class="btn btn-danger btn-sm">Reject</button></div>`;
-      pending.appendChild(card);
-    });
-  }
-  if (published && !published.dataset.built) {
-    published.dataset.built = '1';
-    REVIEWS_DATA.forEach(r => {
-      const card = document.createElement('div'); card.className = 'review-card'; card.style.marginBottom='12px';
-      card.innerHTML = `<div class="review-stars">${'★'.repeat(r.stars)}</div><p class="review-text">"${r.text}"</p><div class="review-author">${r.name} · ${r.city}</div><div style="margin-top:10px"><span class="pill st-published">Published</span></div>`;
-      published.appendChild(card);
-    });
-  }
+  if (!pending || !published) return;
+  pending.innerHTML = '';
+  published.innerHTML = '';
+  ADM_PENDING_REVIEWS.forEach(r => {
+    const card = document.createElement('div'); card.className = 'adm-review-card';
+    const initials = r.name.split(' ').map(w=>w[0]).join('').slice(0,2);
+    card.innerHTML = `<div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">
+      <div class="review-avatar" style="width:36px;height:36px;border-radius:50%;background:${getAvatarColor(r.name)};display:flex;align-items:center;justify-content:center;color:#fff;font-size:13px;font-weight:700">${initials}</div>
+      <div><strong>${r.name}</strong> <span style="color:var(--blue);font-size:12px">${r.company}</span><br><span style="font-size:11px;color:var(--muted)">📍 ${r.city}</span></div>
+      <div style="margin-left:auto;color:#f59e0b">${'★'.repeat(r.stars)}${'☆'.repeat(5-r.stars)}</div>
+    </div>
+    <p style="font-size:13px;color:var(--ink2);line-height:1.5;margin-bottom:12px">"${r.text}"</p>
+    <div style="display:flex;gap:8px">
+      <button class="btn btn-success btn-sm" onclick="approveReview(${r.id})">✓ Approve & Publish</button>
+      <button class="btn btn-danger btn-sm" onclick="rejectReview(${r.id})">✕ Reject</button>
+    </div>`;
+    pending.appendChild(card);
+  });
+  REVIEWS_DATA.filter(r=>r.status==='published').forEach(r => {
+    const card = document.createElement('div'); card.className = 'adm-review-card';
+    const initials = r.name.split(' ').map(w=>w[0]).join('').slice(0,2);
+    card.innerHTML = `<div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">
+      <div class="review-avatar" style="width:36px;height:36px;border-radius:50%;background:${getAvatarColor(r.name)};display:flex;align-items:center;justify-content:center;color:#fff;font-size:13px;font-weight:700">${initials}</div>
+      <div><strong>${r.name}</strong> <span style="color:var(--blue);font-size:12px">${r.company}</span><br><span style="font-size:11px;color:var(--muted)">📍 ${r.city}</span></div>
+      <div style="margin-left:auto;display:flex;align-items:center;gap:8px">
+        <span style="color:#f59e0b">${'★'.repeat(r.stars)}</span>
+        <span class="badge badge-green">Published</span>
+      </div>
+    </div>
+    <p style="font-size:13px;color:var(--ink2);line-height:1.5;margin-bottom:10px">"${r.text}"</p>
+    <button class="btn btn-danger btn-sm" onclick="unpublishReview(${r.id})">Unpublish</button>`;
+    published.appendChild(card);
+  });
+  const pc = document.getElementById('pending-count');
+  const uc = document.getElementById('published-count');
+  if (pc) pc.textContent = ADM_PENDING_REVIEWS.length;
+  if (uc) uc.textContent = REVIEWS_DATA.filter(r=>r.status==='published').length;
 }
+
+function approveReview(id) {
+  const idx = ADM_PENDING_REVIEWS.findIndex(r=>r.id===id);
+  if (idx < 0) return;
+  const r = ADM_PENDING_REVIEWS.splice(idx,1)[0];
+  r.status = 'published'; r.id = nextReviewId++;
+  REVIEWS_DATA.push(r);
+  buildAdminReviews();
+  buildReviews();
+}
+function rejectReview(id) {
+  const idx = ADM_PENDING_REVIEWS.findIndex(r=>r.id===id);
+  if (idx >= 0) ADM_PENDING_REVIEWS.splice(idx,1);
+  buildAdminReviews();
+}
+function unpublishReview(id) {
+  const r = REVIEWS_DATA.find(r=>r.id===id);
+  if (r) { r.status='unpublished'; }
+  buildAdminReviews();
+  buildReviews();
+}
+function adminAddReview() {
+  const name = document.getElementById('rev-name')?.value.trim();
+  const company = document.getElementById('rev-company')?.value.trim();
+  const city = document.getElementById('rev-city')?.value.trim();
+  const stars = parseInt(document.getElementById('rev-stars')?.value || '5');
+  const text = document.getElementById('rev-text')?.value.trim();
+  if (!name || !text) { alert('Name and review text are required.'); return; }
+  const rev = {id:nextReviewId++,name,company:company||'CVTara User',city:city||'India',stars,text,status:'published'};
+  REVIEWS_DATA.push(rev);
+  buildAdminReviews();
+  buildReviews();
+  ['rev-name','rev-company','rev-city','rev-text'].forEach(id=>{ const el=document.getElementById(id); if(el) el.value=''; });
+  const st = document.getElementById('rev-add-status');
+  if (st) { st.textContent = '✓ Review published to landing page'; setTimeout(()=>st.textContent='',3000); }
+}
+
 function showReviewTab(t) {
   document.querySelectorAll('.rev-tab-btn').forEach(b => b.classList.remove('active'));
   document.querySelectorAll('.rev-tab').forEach(v => { v.classList.remove('active'); v.style.display='none'; });
@@ -2402,6 +2869,10 @@ function showReviewTab(t) {
   if (btn) btn.classList.add('active');
   const el = document.getElementById('reviews-' + t + '-tab');
   if (el) { el.classList.add('active'); el.style.display='block'; }
+}
+
+function buildReviews() {
+  buildAdminReviews();
 }
 
 // ========== MAILER ==========
@@ -2565,6 +3036,112 @@ document.addEventListener('mouseleave', function(event) {
   }
 });
 
+// ========== HERO TYPEWRITER ==========
+const ROLES = ['Software Engineer','Data Analyst','Product Manager','UI/UX Designer','Business Analyst','DevOps Engineer','Marketing Manager','HR Executive','Finance Analyst','Project Manager'];
+let roleIndex = 0, charIndex = 0, typing = true;
+function typewriterStep() {
+  const el = document.getElementById('hero-role');
+  if (!el) return;
+  if (typing) {
+    if (charIndex < ROLES[roleIndex].length) {
+      el.textContent = ROLES[roleIndex].substring(0, ++charIndex);
+      setTimeout(typewriterStep, 70);
+    } else {
+      typing = false;
+      setTimeout(typewriterStep, 2000);
+    }
+  } else {
+    if (charIndex > 0) {
+      el.textContent = ROLES[roleIndex].substring(0, --charIndex);
+      setTimeout(typewriterStep, 40);
+    } else {
+      typing = true;
+      roleIndex = (roleIndex + 1) % ROLES.length;
+      setTimeout(typewriterStep, 300);
+    }
+  }
+}
+
+// ========== LIVE VIEWERS COUNTER ==========
+function animateLiveViewers() {
+  const el = document.getElementById('live-viewers');
+  if (!el) return;
+  let base = 130 + Math.floor(Math.random() * 30);
+  el.textContent = base;
+  setInterval(() => {
+    const delta = Math.floor(Math.random() * 5) - 2;
+    base = Math.max(110, Math.min(180, base + delta));
+    el.textContent = base;
+  }, 7000);
+}
+
+// ========== ANIMATED STAT COUNTER ==========
+function animateStatCounter(id, target, suffix) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  let cur = 0;
+  const step = Math.ceil(target / 60);
+  const timer = setInterval(() => {
+    cur = Math.min(cur + step, target);
+    el.textContent = (cur >= 1000 ? Math.round(cur/1000)*1000/1000 + 'K' : cur) + (suffix||'');
+    if (cur >= target) clearInterval(timer);
+  }, 25);
+}
+
+// ========== QUIZ SELECTOR ==========
+const QUIZ_RESULTS = {
+  fresher: 'We found 30 Fresher templates perfect for freshers — ATS-optimised for campus placements, IT & management roles.',
+  experienced: 'We have 58 Professional templates for senior roles — pick the one recruiters at TCS, Infosys & startups love.',
+  'career-change': 'Our Career Switch templates highlight transferable skills — great for pivoting to IT, consulting or ops roles.',
+  govt: '10 Government & PSU templates formatted to official standards — for UPSC, PSB, SSC & state board applications.'
+};
+function selectQuiz(el, key) {
+  document.querySelectorAll('.quiz-card').forEach(c => c.classList.remove('selected'));
+  el.classList.add('selected');
+  const res = document.getElementById('quiz-result');
+  document.getElementById('quiz-result-text').textContent = '✓ ' + QUIZ_RESULTS[key];
+  res.style.display = 'block';
+  res.scrollIntoView({behavior:'smooth',block:'nearest'});
+}
+
+// ========== PRICING COUNTDOWN ==========
+let pricingSeconds = 3600 * 3 + 47 * 60 + 22;
+function updatePricingCountdown() {
+  const el = document.getElementById('pricing-countdown');
+  if (!el) return;
+  const h = Math.floor(pricingSeconds/3600);
+  const m = Math.floor((pricingSeconds%3600)/60);
+  const s = pricingSeconds%60;
+  el.textContent = String(h).padStart(2,'0')+':'+String(m).padStart(2,'0')+':'+String(s).padStart(2,'0');
+  if (pricingSeconds > 0) pricingSeconds--;
+}
+
+// ========== STICKY BOTTOM CTA ==========
+function initStickyCTA() {
+  const bar = document.getElementById('sticky-cta');
+  if (!bar) return;
+  let shown = false;
+  window.addEventListener('scroll', () => {
+    if (!shown && window.scrollY > 600) {
+      shown = true;
+      bar.classList.add('show');
+    }
+  }, {passive:true});
+}
+
+// ========== OFFER SPOTS TICKER ==========
+function initOfferSpots() {
+  const el = document.getElementById('offer-spots');
+  if (!el) return;
+  let spots = 247;
+  setInterval(() => {
+    if (spots > 180 && Math.random() < .3) {
+      spots--;
+      el.textContent = spots;
+    }
+  }, 25000);
+}
+
 // ========== INIT ==========
 document.addEventListener('DOMContentLoaded', function() {
   switchTab('lp');
@@ -2573,13 +3150,18 @@ document.addEventListener('DOMContentLoaded', function() {
   buildReviews();
   buildFAQ();
   startTicker();
-  // FOMO toast: first appears after 8 seconds, then every 60 seconds
   setTimeout(startFomoToast, 8000);
-  // Auto-detect OS dark preference for theme button label
   const btn = document.getElementById('theme-toggle');
   if (btn && window.matchMedia('(prefers-color-scheme:dark)').matches) {
     btn.textContent = '☀️ Light';
   }
+  // New interactive features
+  setTimeout(typewriterStep, 800);
+  animateLiveViewers();
+  setTimeout(() => animateStatCounter('stat-resumes', 48, 'K+'), 600);
+  setInterval(updatePricingCountdown, 1000);
+  initStickyCTA();
+  initOfferSpots();
 });
 </script>
 </body>
