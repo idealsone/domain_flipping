@@ -425,6 +425,63 @@ h3{font-size:18px;font-weight:700}
 .badge-orange{background:#fef3c7;color:#d97706}
 .divider{height:1px;background:var(--line);margin:16px 0}
 select{padding:8px 12px;border:1.5px solid var(--line);border-radius:6px;background:var(--bg);color:var(--ink)}
+
+/* Explicit dark theme */
+:root[data-theme=dark]{
+  --bg:#0f1117;--paper:#1a1f2e;--ink:#f1f5f9;--ink2:#cbd5e1;
+  --muted:#94a3b8;--line:#2d3748;--soft:#1e293b;
+}
+
+/* Theme toggle */
+#theme-toggle{margin-left:auto;padding:5px 10px;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.15);border-radius:6px;color:#94a3b8;font-size:12px;cursor:pointer;transition:all .2s;white-space:nowrap}
+#theme-toggle:hover{background:rgba(255,255,255,.18);color:#fff}
+
+/* FOMO toast — bottom-left floating */
+#fomo-toast{position:fixed;bottom:28px;left:24px;z-index:5000;max-width:300px;background:var(--paper);border:1px solid var(--line);border-radius:12px;padding:12px 16px;box-shadow:0 8px 32px rgba(0,0,0,.18);display:none;align-items:center;gap:10px;animation:toastIn .4s ease}
+@keyframes toastIn{from{transform:translateX(-120%);opacity:0}to{transform:translateX(0);opacity:1}}
+@keyframes toastOut{from{transform:translateX(0);opacity:1}to{transform:translateX(-120%);opacity:0}}
+#fomo-toast.hiding{animation:toastOut .4s ease forwards}
+.fomo-avatar{width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,#6366f1,#3b82f6);display:flex;align-items:center;justify-content:center;color:#fff;font-size:14px;font-weight:700;flex-shrink:0}
+.fomo-text{font-size:12px;line-height:1.45;color:var(--ink2)}
+.fomo-text strong{color:var(--ink);display:block;font-size:13px}
+.fomo-time{font-size:10px;color:var(--muted);margin-top:2px}
+
+/* Template modal */
+#tpl-modal{position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.65);z-index:8000;display:none;align-items:center;justify-content:center}
+.tpl-modal-card{background:var(--paper);border-radius:16px;padding:0;max-width:520px;width:92%;overflow:hidden;box-shadow:0 24px 64px rgba(0,0,0,.3)}
+.tpl-modal-preview{height:220px;background:linear-gradient(135deg,#e0e7ff,#c7d2fe);display:flex;flex-direction:column;gap:8px;padding:24px;position:relative}
+.tpl-modal-preview .tpl-thumb-line{background:rgba(99,102,241,.3);border-radius:3px;height:9px}
+.tpl-modal-preview .tpl-thumb-line.bold{background:rgba(99,102,241,.6);height:13px}
+.tpl-modal-badges{position:absolute;top:12px;right:12px;display:flex;gap:6px}
+.badge-ats{background:#d1fae5;color:#059669;padding:3px 8px;border-radius:10px;font-size:10px;font-weight:700}
+.badge-premium{background:#ede9fe;color:#7c3aed;padding:3px 8px;border-radius:10px;font-size:10px;font-weight:700}
+.tpl-modal-body{padding:20px 24px 24px}
+.tpl-modal-body h3{font-size:20px;font-weight:800;margin-bottom:4px}
+.tpl-modal-meta{display:flex;gap:10px;margin-bottom:12px;flex-wrap:wrap}
+.tpl-modal-meta span{font-size:12px;color:var(--muted)}
+.tpl-modal-desc{font-size:13px;color:var(--ink2);line-height:1.6;margin-bottom:18px}
+.tpl-modal-cta{width:100%;padding:13px;background:var(--blue);color:#fff;border-radius:8px;font-size:15px;font-weight:700;transition:background .2s}
+.tpl-modal-cta:hover{background:#1248b3}
+.tpl-modal-close{position:absolute;top:10px;right:14px;background:rgba(0,0,0,.3);border:none;color:#fff;font-size:18px;width:28px;height:28px;border-radius:50%;cursor:pointer;display:flex;align-items:center;justify-content:center;line-height:1}
+
+/* Register gate modal */
+#register-modal{position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.65);z-index:8500;display:none;align-items:center;justify-content:center}
+.register-card{background:var(--paper);border-radius:16px;padding:36px;max-width:400px;width:90%;text-align:center;box-shadow:0 24px 64px rgba(0,0,0,.3)}
+.register-card h3{font-size:22px;font-weight:800;margin-bottom:8px}
+.register-card p{color:var(--muted);font-size:14px;margin-bottom:20px;line-height:1.6}
+.register-form input{width:100%;padding:10px 14px;border:1.5px solid var(--line);border-radius:8px;margin-bottom:10px;font-size:14px;background:var(--bg);color:var(--ink)}
+.register-form input:focus{outline:none;border-color:var(--blue)}
+
+/* Template gallery */
+.tpl-gallery{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:18px;margin-bottom:24px}
+.tpl-featured{border:2px solid var(--indigo)}
+.tpl-popular-badge{position:absolute;top:8px;left:8px;background:var(--warn);color:#fff;font-size:9px;font-weight:800;padding:2px 6px;border-radius:8px}
+.show-more-bar{text-align:center;padding:24px 0 0}
+.show-more-btn{padding:12px 32px;background:transparent;border:2px solid var(--blue);color:var(--blue);border-radius:8px;font-size:15px;font-weight:700;cursor:pointer;transition:all .2s}
+.show-more-btn:hover{background:var(--blue);color:#fff}
+
+/* Expiry timer */
+#exit-timer{font-size:20px;font-weight:800;color:var(--danger);margin:8px 0 16px;letter-spacing:2px}
 </style>
 </head>
 <body>
@@ -434,6 +491,67 @@ select{padding:8px 12px;border:1.5px solid var(--line);border-radius:6px;backgro
   <button class="ttab on" id="btn-lp" onclick="switchTab('lp')">Landing Page</button>
   <button class="ttab" id="btn-ws" onclick="switchTab('ws')">Customer Workspace</button>
   <button class="ttab" id="btn-admin" onclick="switchTab('admin')">Admin Dashboard</button>
+  <button id="theme-toggle" onclick="toggleTheme()">🌙 Dark</button>
+</div>
+
+<!-- FOMO TOAST (global) -->
+<div id="fomo-toast">
+  <div class="fomo-avatar" id="fomo-avatar">R</div>
+  <div>
+    <div class="fomo-text"><strong id="fomo-name">Rahul from Mumbai</strong><span id="fomo-msg">just purchased 60-Day Fresher Plan</span></div>
+    <div class="fomo-time" id="fomo-time">just now</div>
+  </div>
+</div>
+
+<!-- TEMPLATE MODAL (global) -->
+<div id="tpl-modal" onclick="if(event.target===this)closeTplModal()">
+  <div class="tpl-modal-card">
+    <div class="tpl-modal-preview" id="tpl-modal-preview">
+      <button class="tpl-modal-close" onclick="closeTplModal()">✕</button>
+      <div class="tpl-thumb-line bold" style="width:65%"></div>
+      <div class="tpl-thumb-line" style="width:42%;opacity:.7"></div>
+      <div style="height:1px;background:rgba(99,102,241,.2);margin:6px 0"></div>
+      <div class="tpl-thumb-line bold" style="width:38%"></div>
+      <div class="tpl-thumb-line" style="width:100%"></div>
+      <div class="tpl-thumb-line" style="width:88%"></div>
+      <div class="tpl-thumb-line" style="width:72%"></div>
+      <div style="height:1px;background:rgba(99,102,241,.2);margin:6px 0"></div>
+      <div class="tpl-thumb-line bold" style="width:38%"></div>
+      <div class="tpl-thumb-line" style="width:100%"></div>
+      <div class="tpl-thumb-line" style="width:80%"></div>
+      <div class="tpl-modal-badges">
+        <span class="badge-ats">✓ ATS Optimized</span>
+        <span class="badge-premium">Premium</span>
+      </div>
+    </div>
+    <div class="tpl-modal-body">
+      <h3 id="tpl-modal-name">Template Name</h3>
+      <div class="tpl-modal-meta">
+        <span id="tpl-modal-cat">Category</span>
+        <span>•</span><span>ATS Score: <strong style="color:var(--success)">92%</strong></span>
+        <span>•</span><span>Professional</span>
+      </div>
+      <p class="tpl-modal-desc" id="tpl-modal-desc">This premium template is crafted specifically for Indian job seekers targeting top companies on Naukri, LinkedIn & Shine. Clean layout, ATS-optimized formatting, and keyword-friendly sections.</p>
+      <button class="tpl-modal-cta" onclick="closeTplModal();switchTab('ws')">Create My Resume with This Template →</button>
+      <p style="margin-top:10px;font-size:12px;color:var(--muted);text-align:center">✓ Instant access &nbsp;·&nbsp; ✓ PDF download &nbsp;·&nbsp; ✓ Unlimited edits</p>
+    </div>
+  </div>
+</div>
+
+<!-- REGISTER GATE MODAL -->
+<div id="register-modal" onclick="if(event.target===this)closeRegisterModal()">
+  <div class="register-card">
+    <div style="font-size:36px;margin-bottom:10px">🔓</div>
+    <h3>Unlock All 88 Templates</h3>
+    <p>Create a free account to browse the full template library, run ATS scans, and build your resume in minutes.</p>
+    <div class="register-form">
+      <input type="text" placeholder="Your full name">
+      <input type="email" placeholder="Work email address">
+      <button class="btn btn-primary" style="width:100%;padding:11px;font-size:15px" onclick="closeRegisterModal();switchTab('ws')">Create Free Account →</button>
+    </div>
+    <p style="margin-top:12px;font-size:12px;color:var(--muted)">Already have an account? <a href="#" onclick="closeRegisterModal();switchTab('ws')">Sign in</a></p>
+    <button style="position:absolute;top:14px;right:16px;background:none;font-size:20px;color:var(--muted);cursor:pointer" onclick="closeRegisterModal()">✕</button>
+  </div>
 </div>
 
 <!-- ===== TAB 1: LANDING PAGE ===== -->
@@ -465,7 +583,7 @@ select{padding:8px 12px;border:1.5px solid var(--line);border-radius:6px;backgro
           <button class="btn btn-primary" onclick="switchTab('ws')" style="font-size:16px;padding:12px 24px">Build My Resume Free →</button>
           <button class="btn btn-outline" onclick="document.getElementById('ats-section').scrollIntoView({behavior:'smooth'})">Try ATS Scanner</button>
         </div>
-        <p style="margin-top:14px;font-size:13px;color:var(--muted)">✓ No credit card &nbsp; ✓ Free templates &nbsp; ✓ Download instantly</p>
+        <p style="margin-top:14px;font-size:13px;color:var(--muted)">✓ No credit card to start &nbsp; ✓ 88 premium templates &nbsp; ✓ Download instantly</p>
       </div>
       <div class="hero-card">
         <div class="score-badge">ATS 87%</div>
@@ -555,18 +673,49 @@ select{padding:8px 12px;border:1.5px solid var(--line);border-radius:6px;backgro
 
   <!-- 88 TEMPLATES -->
   <section id="tpl-section" class="section">
-    <h2 class="section-title">88 Professional Resume Templates</h2>
-    <p class="section-sub">Designed for Indian job seekers — crafted for every industry and experience level</p>
-    <div class="filter-row" id="lp-filters"></div>
-    <div class="tpl-grid" id="lp-tpl-grid"></div>
+    <h2 class="section-title">88 Premium ATS-Optimised Resume Templates</h2>
+    <p class="section-sub">Every template crafted for Naukri, LinkedIn & Shine — for freshers and experienced professionals</p>
+
+    <!-- Fresher showcase -->
+    <div style="margin-bottom:36px">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
+        <div>
+          <h3 style="font-size:20px;font-weight:800">🎓 Fresher Templates</h3>
+          <p style="font-size:13px;color:var(--muted);margin-top:3px">Best picks for graduates &amp; entry-level job seekers</p>
+        </div>
+        <span style="font-size:12px;color:var(--muted);background:var(--soft);padding:4px 10px;border-radius:20px">Showing 15 of 30</span>
+      </div>
+      <div class="tpl-gallery" id="lp-fresher-grid"></div>
+    </div>
+
+    <!-- Professional showcase -->
+    <div style="margin-bottom:36px">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
+        <div>
+          <h3 style="font-size:20px;font-weight:800">💼 Professional Templates</h3>
+          <p style="font-size:13px;color:var(--muted);margin-top:3px">Designed for mid-level &amp; senior professionals</p>
+        </div>
+        <span style="font-size:12px;color:var(--muted);background:var(--soft);padding:4px 10px;border-radius:20px">Showing 15 of 58</span>
+      </div>
+      <div class="tpl-gallery" id="lp-pro-grid"></div>
+    </div>
+
+    <div class="show-more-bar">
+      <p style="color:var(--muted);font-size:14px;margin-bottom:14px">Showing 30 of 88 templates — sign up to access the full library</p>
+      <button class="show-more-btn" onclick="openRegisterModal()">Unlock All 88 Templates — It's Free →</button>
+    </div>
   </section>
 
   <!-- COVER LETTERS -->
   <section style="background:var(--soft);padding:64px 48px">
     <div style="max-width:1200px;margin:0 auto">
-      <h2 class="section-title">26 Cover Letter Templates</h2>
-      <p class="section-sub">Professional cover letters tailored for Indian job applications</p>
+      <h2 class="section-title">Professional Cover Letter Templates</h2>
+      <p class="section-sub">Crafted for Indian job applications — Naukri, LinkedIn, campus placements &amp; more</p>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:24px" id="cl-lp-filter-row"></div>
       <div class="cl-grid" id="cl-preview-grid"></div>
+      <div style="text-align:center;margin-top:24px">
+        <button class="show-more-btn" onclick="openRegisterModal()">View All Cover Letter Templates →</button>
+      </div>
     </div>
   </section>
 
@@ -623,17 +772,19 @@ select{padding:8px 12px;border:1.5px solid var(--line);border-radius:6px;backgro
   </footer>
 
   <!-- EXIT POPUP -->
-  <div id="exit-popup" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.6);z-index:9999;align-items:center;justify-content:center">
+  <div id="exit-popup" onclick="if(event.target===this)closeExitPopup()" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.6);z-index:9999;align-items:center;justify-content:center">
     <div class="exit-card-inner" style="position:relative">
       <div class="exit-card">
-        <button class="exit-close" onclick="document.getElementById('exit-popup').style.display='none'">✕</button>
+        <button class="exit-close" onclick="closeExitPopup()">✕</button>
         <div style="font-size:36px;margin-bottom:8px">🎁</div>
         <h2>Wait! Don't Leave Empty-Handed</h2>
-        <p>Get our most popular Fresher plan at a special price — valid for the next 10 minutes only.</p>
-        <div class="big-price">₹149</div>
-        <div class="orig-price">Regular price ₹199</div>
-        <button class="btn btn-primary" style="width:100%;margin-top:16px;padding:12px;font-size:15px" onclick="switchTab('ws')">Claim My Discount →</button>
-        <p style="margin-top:10px;font-size:12px;color:var(--muted)">Use code: COMEBACK25 at checkout</p>
+        <p id="exit-popup-msg">Get our most popular Fresher plan at a special price — valid for the next 10 minutes only.</p>
+        <div id="exit-timer">10:00</div>
+        <div class="big-price" id="exit-offer-price">₹149</div>
+        <div class="orig-price">Regular price <span id="exit-orig-price">₹199</span></div>
+        <button class="btn btn-primary" style="width:100%;margin-top:16px;padding:12px;font-size:15px" onclick="closeExitPopup();switchTab('ws')">Claim My Discount →</button>
+        <p style="margin-top:10px;font-size:12px;color:var(--muted)">Use code: <strong id="exit-coupon-code">COMEBACK25</strong> at checkout</p>
+        <p style="margin-top:8px;font-size:12px;color:var(--muted)"><a href="#" onclick="closeExitPopup()">No thanks, I'll pay full price</a> &nbsp;|&nbsp; <a href="#" onclick="closeExitPopup();document.getElementById('tpl-section').scrollIntoView({behavior:'smooth'})">Explore templates first</a></p>
       </div>
     </div>
   </div>
@@ -1327,19 +1478,32 @@ const TEMPLATES = [
 ];
 
 const CL_TEMPLATES = [
-  {id:1,n:'Fresher Application',region:'Pan-India',type:'free'},{id:2,n:'IT Job Application',region:'Bangalore',type:'paid'},
-  {id:3,n:'Finance Role Letter',region:'Mumbai',type:'paid'},{id:4,n:'Sales Executive CL',region:'Pan-India',type:'free'},
-  {id:5,n:'Marketing Manager CL',region:'Delhi NCR',type:'paid'},{id:6,n:'Teacher Application',region:'Pan-India',type:'free'},
-  {id:7,n:'Healthcare Professional',region:'Pan-India',type:'paid'},{id:8,n:'Engineering Graduate',region:'Pan-India',type:'free'},
-  {id:9,n:'MBA Fresher',region:'Pan-India',type:'paid'},{id:10,n:'Campus Placement',region:'Pan-India',type:'free'},
-  {id:11,n:'Referral Letter',region:'Pan-India',type:'paid'},{id:12,n:'Internal Transfer',region:'Pan-India',type:'paid'},
-  {id:13,n:'Remote Work Application',region:'Pan-India',type:'paid'},{id:14,n:'Startup Application',region:'Bangalore',type:'paid'},
-  {id:15,n:'MNC Application',region:'Hyderabad',type:'paid'},{id:16,n:'Government Job CL',region:'Pan-India',type:'free'},
-  {id:17,n:'PSU Application',region:'Pan-India',type:'free'},{id:18,n:'Design Portfolio CL',region:'Pan-India',type:'paid'},
-  {id:19,n:'Legal Firm Application',region:'Delhi',type:'paid'},{id:20,n:'Hospitality CL',region:'Pan-India',type:'paid'},
-  {id:21,n:'Operations Role CL',region:'Pan-India',type:'paid'},{id:22,n:'Supply Chain CL',region:'Pune',type:'paid'},
-  {id:23,n:'Data Analyst CL',region:'Pan-India',type:'paid'},{id:24,n:'Product Manager CL',region:'Bangalore',type:'paid'},
-  {id:25,n:'HR Manager CL',region:'Pan-India',type:'free'},{id:26,n:'Executive Assistant CL',region:'Pan-India',type:'paid'}
+  {id:1,n:'Fresher Application',region:'Campus Placement',type:'paid',inputRef:'Degree · Internship · Skills',outputRef:'1-page campus placement letter'},
+  {id:2,n:'IT Job Application',region:'IT / Tech',type:'paid',inputRef:'Tech stack · GitHub · Certifications',outputRef:'ATS-safe tech cover letter PDF'},
+  {id:3,n:'Finance Role Letter',region:'Finance & Banking',type:'paid',inputRef:'CA / CFA · Portfolio · Key metrics',outputRef:'Professional finance sector letter'},
+  {id:4,n:'Sales Executive CL',region:'Sales & Marketing',type:'paid',inputRef:'Revenue targets · Client wins',outputRef:'Impact-driven sales cover letter'},
+  {id:5,n:'Marketing Manager CL',region:'Sales & Marketing',type:'paid',inputRef:'Campaigns · KPIs · Brands managed',outputRef:'Results-focused marketing letter'},
+  {id:6,n:'Teacher Application',region:'Campus Placement',type:'paid',inputRef:'Qualifications · Subject · Board',outputRef:'Formal educator application letter'},
+  {id:7,n:'Healthcare Professional',region:'Healthcare',type:'paid',inputRef:'Degree · Specialisation · Licenses',outputRef:'Clinical-standard cover letter'},
+  {id:8,n:'Engineering Graduate',region:'Campus Placement',type:'paid',inputRef:'Branch · Projects · Placement JD',outputRef:'Campus-ready engineering letter'},
+  {id:9,n:'MBA Fresher',region:'Campus Placement',type:'paid',inputRef:'MBA specialisation · Internship',outputRef:'MBA campus placement letter'},
+  {id:10,n:'Government Job CL',region:'Government',type:'paid',inputRef:'Vacancy no · Department · Grade',outputRef:'Formal GOI-style application'},
+  {id:11,n:'Referral Letter',region:'IT / Tech',type:'paid',inputRef:'Referrer name · Role · Company',outputRef:'Employee referral cover note'},
+  {id:12,n:'Internship Application',region:'Internship',type:'paid',inputRef:'College · Course year · Skills',outputRef:'1-page internship letter'},
+  {id:13,n:'Remote Work Application',region:'IT / Tech',type:'paid',inputRef:'Remote tools · Time zone · Projects',outputRef:'Remote-optimised cover letter'},
+  {id:14,n:'Startup Application',region:'IT / Tech',type:'paid',inputRef:'Growth mindset · Startup exp · Stack',outputRef:'Startup-culture-fit letter'},
+  {id:15,n:'MNC Application',region:'IT / Tech',type:'paid',inputRef:'Global exposure · Leadership · STAR',outputRef:'MNC-standard professional letter'},
+  {id:16,n:'PSU Application',region:'Government',type:'paid',inputRef:'GATE score · Branch · Category',outputRef:'PSU formatted application letter'},
+  {id:17,n:'Data Analyst CL',region:'IT / Tech',type:'paid',inputRef:'Tools (SQL/Python) · Dashboards',outputRef:'Data-role targeted cover letter'},
+  {id:18,n:'Product Manager CL',region:'IT / Tech',type:'paid',inputRef:'PRDs · Roadmap · Stakeholders',outputRef:'PM-focused strategic cover letter'},
+  {id:19,n:'HR Manager CL',region:'Sales & Marketing',type:'paid',inputRef:'Hiring volume · HR tools · L&D',outputRef:'HR leadership cover letter'},
+  {id:20,n:'Senior Executive CL',region:'Senior / Executive',type:'paid',inputRef:'P&L · Board experience · Industry',outputRef:'C-suite level executive letter'},
+  {id:21,n:'Operations Role CL',region:'Sales & Marketing',type:'paid',inputRef:'SLA · Process improvements · KPIs',outputRef:'Operations-focused cover letter'},
+  {id:22,n:'Supply Chain CL',region:'Sales & Marketing',type:'paid',inputRef:'ERP · Vendor mgmt · Cost savings',outputRef:'Supply chain specific letter'},
+  {id:23,n:'Design Portfolio CL',region:'Sales & Marketing',type:'paid',inputRef:'Portfolio URL · Tools · Style',outputRef:'Creative + ATS cover letter'},
+  {id:24,n:'Legal Firm Application',region:'Government',type:'paid',inputRef:'Bar enrolment · Practice areas',outputRef:'Legal-standard cover letter'},
+  {id:25,n:'Hospitality CL',region:'Sales & Marketing',type:'paid',inputRef:'Hotel brand · Certifications · Soft skills',outputRef:'Hospitality-sector cover letter'},
+  {id:26,n:'Executive Assistant CL',region:'Senior / Executive',type:'paid',inputRef:'C-suite support exp · Tools · Travel',outputRef:'EA professional cover letter'}
 ];
 
 const EMAIL_TEMPLATES = {
@@ -1481,13 +1645,25 @@ const PROOFS = [
   '💰 Arjun from Surat just saved ₹100 using code WELCOME20'
 ];
 
+// ========== ADMIN PRICING CONFIG (managed from admin dashboard) ==========
+const PRICING_CONFIG = {
+  exitOfferPrice: 149,
+  exitOrigPrice: 199,
+  exitCoupon: 'COMEBACK25',
+  exitMsg: 'Get our most popular Fresher plan at a special price — valid for the next 10 minutes only.'
+};
+
 // ========== STATE ==========
 let currentBuilderStep = 0;
 let currentMailKey = 'welcome';
 let tickerIdx = 0;
 let tickerTimer = null;
 let exitFired = false;
+let exitTimerInterval = null;
 let liveTimer = null;
+let fomoIdx = 0;
+let fomoHistory = new Set();
+let fomoTimer = null;
 
 // ========== TAB SYSTEM ==========
 function switchTab(t) {
@@ -1792,29 +1968,117 @@ function filterTPL(btn, cat, containerId) {
 }
 
 // ========== LANDING PAGE HELPERS ==========
+// Popular template IDs to highlight
+const POPULAR_IDS = new Set([1,5,12,20,35,44,52,61,3,8,22,31,40,55,68]);
+
 function buildLPTemplates() {
-  const fr = document.getElementById('lp-filters');
-  if (fr && !fr.dataset.built) {
-    fr.dataset.built = '1';
-    TPL_CATS.forEach((c,i) => {
-      const btn = document.createElement('button');
-      btn.className = 'filter-btn' + (i===0?' active':'');
-      btn.textContent = c + (c==='All'?' (88)':'');
-      btn.onclick = () => filterTPL(btn, c, 'lp-tpl-grid');
-      fr.appendChild(btn);
-    });
-  }
-  renderTPLGrid(document.getElementById('lp-tpl-grid'), TEMPLATES, 'all', 'lp');
+  const fresherTpls = TEMPLATES.filter(t => t.cat === 'Fresher').slice(0,15);
+  const proTpls = TEMPLATES.filter(t => t.cat !== 'Fresher').slice(0,15);
+  buildGallery('lp-fresher-grid', fresherTpls, 'lp');
+  buildGallery('lp-pro-grid', proTpls, 'lp');
 }
 
+function buildGallery(containerId, templates, context) {
+  const container = document.getElementById(containerId);
+  if (!container) return;
+  container.innerHTML = '';
+  const colors = ['#e0e7ff,#c7d2fe','#d1fae5,#a7f3d0','#fef3c7,#fde68a','#fee2e2,#fecaca','#ede9fe,#ddd6fe','#cffafe,#a5f3fc'];
+  templates.forEach(t => {
+    const card = document.createElement('div');
+    card.className = 'tpl-card' + (POPULAR_IDS.has(t.id) ? ' tpl-featured' : '');
+    const colorPair = colors[t.id % colors.length];
+    card.innerHTML = `<div class="tpl-thumb" style="background:linear-gradient(135deg,${colorPair})">
+      ${POPULAR_IDS.has(t.id) ? '<span class="tpl-popular-badge">🔥 Most Popular</span>' : ''}
+      <div class="tpl-thumb-line bold" style="width:62%"></div>
+      <div class="tpl-thumb-line" style="width:38%;opacity:.7"></div>
+      <div style="height:1px;background:rgba(99,102,241,.2);margin:4px 0"></div>
+      <div class="tpl-thumb-line" style="width:100%"></div>
+      <div class="tpl-thumb-line" style="width:88%"></div>
+      <div class="tpl-thumb-line" style="width:75%"></div>
+      <div style="height:1px;background:rgba(99,102,241,.2);margin:4px 0"></div>
+      <div class="tpl-thumb-line bold" style="width:42%"></div>
+      <div class="tpl-thumb-line" style="width:100%"></div>
+      <div class="tpl-thumb-line" style="width:80%"></div>
+      <span class="tpl-badge paid" style="position:absolute;bottom:8px;right:8px">PREMIUM</span>
+    </div>
+    <div class="tpl-info"><div class="tpl-name">${t.n}</div><div class="tpl-cat">${t.cat}</div></div>`;
+    card.onclick = () => openTplModal(t);
+    container.appendChild(card);
+  });
+}
+
+function openTplModal(t) {
+  const modal = document.getElementById('tpl-modal');
+  document.getElementById('tpl-modal-name').textContent = t.n;
+  document.getElementById('tpl-modal-cat').textContent = t.cat;
+  const descs = {
+    'Fresher':'Crafted for fresh graduates targeting campus placements & entry-level roles on Naukri and LinkedIn. Clean, structured layout with emphasis on education and projects.',
+    'IT/Tech':'Optimised for software engineers, developers and IT professionals. Highlights technical skills, GitHub projects, and certifications prominently.',
+    'Finance':'Tailored for banking, CA, CFA and finance professionals. Professional layout with focus on quantifiable achievements.',
+    'Sales':'Impact-driven layout for sales and business development roles. Highlights revenue targets, conversions, and client metrics.',
+    'Marketing':'Creative yet professional design for marketing, brand and digital professionals. Showcases campaigns and measurable results.',
+    'Healthcare':'Clean, clinical layout for doctors, nurses and healthcare professionals compliant with Indian hospital HR requirements.',
+    'Education':'For teachers, trainers and academic professionals. Emphasises qualifications, certifications and academic achievements.',
+    'Operations':'Streamlined for ops and supply chain roles. Highlights process improvements, KPIs and team leadership.',
+    'Engineering':'Technical and structured for civil, mechanical and electrical engineers. Emphasises projects and certifications.',
+    'Design/Creative':'Visually distinct while remaining ATS-safe. For designers, creative directors and UX professionals.',
+    'Legal/Admin':'Formal and precise for legal, compliance and administrative roles.',
+    'Govt/PSU':'Formatted for government job applications and PSU recruitment standards.',
+    'Hospitality':'Warm and professional for hotel, tourism and hospitality industry roles.'
+  };
+  document.getElementById('tpl-modal-desc').textContent = descs[t.cat] || 'This premium template is crafted for Indian job seekers. Clean layout, ATS-optimised formatting, and keyword-friendly sections tailored for Naukri, LinkedIn and Shine.';
+  modal.style.display = 'flex';
+}
+function closeTplModal() {
+  document.getElementById('tpl-modal').style.display = 'none';
+}
+function openRegisterModal() {
+  document.getElementById('register-modal').style.display = 'flex';
+}
+function closeRegisterModal() {
+  document.getElementById('register-modal').style.display = 'none';
+}
+
+const CL_CATS = ['All','Campus Placement','IT / Tech','Finance & Banking','Sales & Marketing','Healthcare','Government','Internship','Senior / Executive'];
+const CL_ICONS = {'Campus Placement':'🎓','IT / Tech':'💻','Finance & Banking':'💰','Sales & Marketing':'📊','Healthcare':'🏥','Government':'🏛️','Internship':'⚡','Senior / Executive':'👔','default':'📝'};
 function buildCLPreview() {
   const grid = document.getElementById('cl-preview-grid');
+  const filterRow = document.getElementById('cl-lp-filter-row');
   if (!grid) return;
-  const icons = ['📝','💼','🎓','🏥','⚙️','🏛️'];
-  CL_TEMPLATES.slice(0,6).forEach((t,i) => {
+  // Build filter row
+  if (filterRow && !filterRow.dataset.built) {
+    filterRow.dataset.built = '1';
+    CL_CATS.forEach((cat, i) => {
+      const btn = document.createElement('button');
+      btn.className = 'filter-btn' + (i===0?' active':'');
+      btn.textContent = cat;
+      btn.onclick = () => {
+        if (cat !== 'All') { openRegisterModal(); return; }
+        filterRow.querySelectorAll('.filter-btn').forEach(b=>b.classList.remove('active'));
+        btn.classList.add('active');
+        renderCLPreviewGrid(grid, 'All');
+      };
+      filterRow.appendChild(btn);
+    });
+  }
+  renderCLPreviewGrid(grid, 'All');
+}
+function renderCLPreviewGrid(grid, cat) {
+  grid.innerHTML = '';
+  const show = CL_TEMPLATES.slice(0, 6);
+  show.forEach(t => {
     const card = document.createElement('div'); card.className = 'cl-card';
-    card.innerHTML = `<div class="cl-icon">${icons[i%6]}</div><div class="cl-name">${t.n}</div><div class="cl-region">${t.region}</div><div style="margin-top:8px"><span class="tpl-badge ${t.type}" style="position:static">${t.type==='free'?'FREE':'PAID'}</span></div>`;
-    card.onclick = () => { switchTab('ws'); };
+    const icon = CL_ICONS[t.region] || CL_ICONS['default'];
+    card.innerHTML = `
+      <div class="cl-icon">${icon}</div>
+      <div class="cl-name">${t.n}</div>
+      <div class="cl-region">${t.region}</div>
+      <div style="margin-top:6px;font-size:11px;color:var(--muted)">${t.inputRef || 'Your experience · JD keywords'} → ${t.outputRef || 'Tailored cover letter PDF'}</div>
+      <div style="margin-top:8px;display:flex;gap:6px;align-items:center">
+        <span class="badge badge-blue">ATS Optimised</span>
+        <span class="tpl-badge paid" style="position:static">PREMIUM</span>
+      </div>`;
+    card.onclick = () => openRegisterModal();
     grid.appendChild(card);
   });
 }
@@ -1870,6 +2134,106 @@ function startTicker() {
   tickerTimer = setInterval(rotateTicker, 60000);
 }
 function stopTicker() { clearInterval(tickerTimer); }
+
+// ========== DARK/LIGHT THEME ==========
+function toggleTheme() {
+  const root = document.documentElement;
+  const btn = document.getElementById('theme-toggle');
+  if (root.getAttribute('data-theme') === 'dark') {
+    root.removeAttribute('data-theme');
+    if (btn) btn.textContent = '🌙 Dark';
+  } else {
+    root.setAttribute('data-theme', 'dark');
+    if (btn) btn.textContent = '☀️ Light';
+  }
+}
+
+// ========== FOMO TOAST (left-side notification) ==========
+const FOMO_NAMES = ['Rahul','Priya','Amit','Sneha','Vikram','Ananya','Deepak','Meera','Ravi','Neha','Arjun','Pooja','Suresh','Anil','Kavya','Sanjay','Divya','Rohit','Sunita','Kartik','Lavanya','Nikhil','Pallavi','Tarun','Shruti','Vishal','Geeta','Manish','Rekha','Ajay','Swati','Rajesh','Nisha','Pawan','Lata','Kiran','Vijay','Seema','Saurabh','Archana'];
+const FOMO_CITIES = ['Mumbai','Delhi','Bangalore','Chennai','Hyderabad','Pune','Kolkata','Ahmedabad','Jaipur','Surat','Lucknow','Kochi','Chandigarh','Indore','Bhopal','Noida','Gurgaon','Vadodara','Coimbatore','Nagpur'];
+const FOMO_PLANS = ['Fresher 30-Day Plan','Fresher 60-Day Plan','Fresher 90-Day Plan','Professional 30-Day Plan','Professional 60-Day Plan','Professional 90-Day Plan'];
+const FOMO_ACTIONS = [
+  (n,c,p) => ({msg:`just purchased ${p}`, sub:'Claimed discount successfully ✓', emoji:n[0]}),
+  (n,c,p) => ({msg:`is preparing a Software Engineer resume`, sub:'Building with a Premium template', emoji:n[0]}),
+  (n,c,p) => ({msg:`just ran an ATS scan — improved to 58%!`, sub:'Resume looks great for this JD', emoji:n[0]}),
+  (n,c,p) => ({msg:`got a callback from Infosys!`, sub:'Used CVTara ATS Optimiser', emoji:n[0]}),
+  (n,c,p) => ({msg:`just unlocked all 88 premium templates`, sub:`Upgraded to ${p}`, emoji:n[0]}),
+  (n,c,p) => ({msg:`is building their first professional resume`, sub:'New member joined just now', emoji:n[0]}),
+  (n,c,p) => ({msg:`downloaded resume for a TCS interview`, sub:'ATS score: 56% — Top 10%', emoji:n[0]}),
+  (n,c,p) => ({msg:`just applied for 5 jobs using CVTara`, sub:'Applications sent via Naukri & LinkedIn', emoji:n[0]})
+];
+
+function getUniqueFomo() {
+  if (fomoHistory.size >= FOMO_NAMES.length * 0.7) fomoHistory.clear();
+  let attempts = 0;
+  let name, city, plan, action;
+  do {
+    name = FOMO_NAMES[Math.floor(Math.random() * FOMO_NAMES.length)];
+    city = FOMO_CITIES[Math.floor(Math.random() * FOMO_CITIES.length)];
+    plan = FOMO_PLANS[Math.floor(Math.random() * FOMO_PLANS.length)];
+    action = FOMO_ACTIONS[Math.floor(Math.random() * FOMO_ACTIONS.length)](name, city, plan);
+    attempts++;
+  } while (fomoHistory.has(name + city) && attempts < 20);
+  fomoHistory.add(name + city);
+  return { name, city, plan, action };
+}
+
+function showFomoToast() {
+  const toast = document.getElementById('fomo-toast');
+  if (!toast) return;
+  const { name, city, action } = getUniqueFomo();
+  const avatar = document.getElementById('fomo-avatar');
+  const nameEl = document.getElementById('fomo-name');
+  const msgEl = document.getElementById('fomo-msg');
+  const timeEl = document.getElementById('fomo-time');
+  if (avatar) { avatar.textContent = name[0]; avatar.style.background = `hsl(${name.charCodeAt(0)*11%360},60%,45%)`; }
+  if (nameEl) nameEl.textContent = `${name} from ${city}`;
+  if (msgEl) msgEl.textContent = action.msg;
+  if (timeEl) timeEl.textContent = action.sub;
+  toast.classList.remove('hiding');
+  toast.style.display = 'flex';
+  setTimeout(() => {
+    toast.classList.add('hiding');
+    setTimeout(() => { toast.style.display = 'none'; }, 400);
+  }, 7000);
+}
+
+function startFomoToast() {
+  showFomoToast();
+  fomoTimer = setInterval(showFomoToast, 60000);
+}
+function stopFomoToast() { clearInterval(fomoTimer); fomoTimer = null; }
+
+// ========== EXIT POPUP ==========
+let exitCountdown = 600;
+function closeExitPopup() {
+  document.getElementById('exit-popup').style.display = 'none';
+  clearInterval(exitTimerInterval);
+}
+function showExitPopup() {
+  const popup = document.getElementById('exit-popup');
+  const offerEl = document.getElementById('exit-offer-price');
+  const origEl = document.getElementById('exit-orig-price');
+  const msgEl = document.getElementById('exit-popup-msg');
+  const couponEl = document.getElementById('exit-coupon-code');
+  if (offerEl) offerEl.textContent = '₹' + PRICING_CONFIG.exitOfferPrice;
+  if (origEl) origEl.textContent = '₹' + PRICING_CONFIG.exitOrigPrice;
+  if (msgEl) msgEl.textContent = PRICING_CONFIG.exitMsg;
+  if (couponEl) couponEl.textContent = PRICING_CONFIG.exitCoupon;
+  exitCountdown = 600;
+  clearInterval(exitTimerInterval);
+  exitTimerInterval = setInterval(() => {
+    exitCountdown--;
+    const timerEl = document.getElementById('exit-timer');
+    if (timerEl) {
+      const m = Math.floor(exitCountdown / 60);
+      const s = exitCountdown % 60;
+      timerEl.textContent = m + ':' + String(s).padStart(2,'0');
+    }
+    if (exitCountdown <= 0) { closeExitPopup(); }
+  }, 1000);
+  popup.style.display = 'flex';
+}
 
 // ========== ADMIN TABLES ==========
 const SAMPLE_USERS = [
@@ -2191,13 +2555,12 @@ function drawLine() {
 }
 
 // ========== EXIT INTENT ==========
-document.addEventListener('mouseleave', function handler(event) {
+document.addEventListener('mouseleave', function(event) {
   if (!exitFired && event.clientY <= 0) {
     const lp = document.getElementById('lp');
     if (lp && lp.style.display !== 'none') {
       exitFired = true;
-      const popup = document.getElementById('exit-popup');
-      if (popup) popup.style.display = 'flex';
+      showExitPopup();
     }
   }
 });
@@ -2210,7 +2573,13 @@ document.addEventListener('DOMContentLoaded', function() {
   buildReviews();
   buildFAQ();
   startTicker();
-  // Init admin overview tables (lazy loaded on adminNav)
+  // FOMO toast: first appears after 8 seconds, then every 60 seconds
+  setTimeout(startFomoToast, 8000);
+  // Auto-detect OS dark preference for theme button label
+  const btn = document.getElementById('theme-toggle');
+  if (btn && window.matchMedia('(prefers-color-scheme:dark)').matches) {
+    btn.textContent = '☀️ Light';
+  }
 });
 </script>
 </body>
