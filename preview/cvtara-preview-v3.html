@@ -35,6 +35,7 @@ input,textarea,select{font-family:inherit;font-size:14px}
 
 /* Panels */
 .tpanel{display:none}
+#lp{padding-top:57px}
 
 /* Ticker */
 #ticker-bar{background:#1557d2;color:#fff;text-align:center;padding:7px 16px;font-size:13px;font-weight:500;overflow:hidden;position:relative;min-height:34px}
@@ -42,7 +43,7 @@ input,textarea,select{font-family:inherit;font-size:14px}
 #proof-ticker.fade-out{opacity:0}
 
 /* Landing Nav */
-.lp-nav{display:flex;align-items:center;justify-content:space-between;padding:12px 48px;background:var(--paper);border-bottom:1px solid var(--line);position:sticky;top:44px;z-index:200}
+.lp-nav{display:flex;align-items:center;justify-content:space-between;padding:12px 48px;background:var(--paper);border-bottom:1px solid var(--line);position:fixed;top:44px;left:0;right:0;z-index:200}
 .lp-logo{font-size:22px;font-weight:800;color:var(--blue)}
 .lp-nav-links{display:flex;gap:28px;list-style:none}
 .lp-nav-links a{color:var(--muted);font-size:14px;font-weight:500;transition:color .2s}
@@ -82,17 +83,25 @@ input,textarea,select{font-family:inherit;font-size:14px}
 .section-title{font-size:30px;font-weight:800;text-align:center;margin-bottom:8px}
 .section-sub{text-align:center;color:var(--muted);font-size:16px;margin-bottom:40px}
 
-/* ATS Tool */
-.ats-card{background:var(--paper);border-radius:12px;box-shadow:var(--shadow);padding:32px;max-width:800px;margin:0 auto}
-.seg-row{display:flex;gap:8px;margin-bottom:12px}
+/* ATS Tool — redesigned */
+.ats-section-wrap{max-width:1100px;margin:0 auto;display:grid;grid-template-columns:1fr 1fr;gap:48px;align-items:start}
+.ats-card{background:var(--paper);border-radius:16px;box-shadow:0 8px 40px rgba(15,23,42,.14);padding:36px;position:relative;overflow:hidden}
+.ats-card::before{content:'';position:absolute;top:0;left:0;right:0;height:4px;background:linear-gradient(90deg,var(--blue),var(--indigo))}
+.ats-step-header{display:flex;align-items:center;gap:10px;margin-bottom:14px}
+.ats-step-num{width:28px;height:28px;border-radius:50%;background:var(--blue);color:#fff;font-size:12px;font-weight:800;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.ats-step-label{font-size:14px;font-weight:700;color:var(--ink2)}
+.seg-row{display:flex;gap:6px;margin-bottom:12px}
 .seg-btn{padding:7px 16px;border:1.5px solid var(--line);border-radius:6px;background:transparent;color:var(--muted);font-size:13px;font-weight:500;transition:all .2s}
 .seg-btn.active{border-color:var(--blue);background:#eff4ff;color:var(--blue)}
-.ats-upload-area{border:2px dashed var(--line);border-radius:8px;padding:28px;text-align:center;color:var(--muted);background:var(--soft);cursor:pointer;margin-bottom:12px;transition:border-color .2s}
-.ats-upload-area:hover{border-color:var(--blue)}
+.ats-upload-area{border:2px dashed var(--blue);border-radius:12px;padding:32px 20px;text-align:center;color:var(--muted);background:linear-gradient(135deg,#f8faff,#eff4ff);cursor:pointer;margin-bottom:12px;transition:all .3s;position:relative;overflow:hidden}
+.ats-upload-area:hover{background:linear-gradient(135deg,#eff4ff,#e0e7ff);border-color:var(--indigo);transform:scale(1.01)}
+@keyframes uploadPulse{0%,100%{border-color:var(--blue);opacity:1}50%{border-color:var(--indigo);opacity:.7}}
+.ats-upload-icon{font-size:36px;margin-bottom:8px;display:block}
 .ats-ta{width:100%;border:1.5px solid var(--line);border-radius:8px;padding:10px;resize:vertical;min-height:80px;background:var(--bg);color:var(--ink)}
-.ats-divider{text-align:center;color:var(--muted);margin:18px 0 4px;font-weight:600}
-#ats-scan-btn{width:100%;padding:12px;background:var(--blue);color:#fff;border-radius:8px;font-size:15px;font-weight:700;margin-top:16px;transition:background .2s}
-#ats-scan-btn:hover{background:#1248b3}
+.ats-divider{display:flex;align-items:center;gap:10px;margin:20px 0;color:var(--muted);font-size:12px;font-weight:700}
+.ats-divider::before,.ats-divider::after{content:'';flex:1;height:1px;background:var(--line)}
+#ats-scan-btn{width:100%;padding:14px;background:linear-gradient(135deg,var(--blue),var(--indigo));color:#fff;border-radius:10px;font-size:16px;font-weight:800;margin-top:20px;transition:all .3s;border:none;cursor:pointer;box-shadow:0 4px 16px rgba(21,87,210,.35);letter-spacing:.3px}
+#ats-scan-btn:hover{transform:translateY(-2px);box-shadow:0 8px 24px rgba(21,87,210,.45)}
 #ats-result{margin-top:24px;display:none}
 .ats-result-inner{display:flex;gap:32px;align-items:center;flex-wrap:wrap}
 .ring-wrap{position:relative;flex-shrink:0}
@@ -100,6 +109,22 @@ input,textarea,select{font-family:inherit;font-size:14px}
 .ats-tips h4{font-size:16px;font-weight:700;margin-bottom:10px}
 .ats-tips ul{list-style:none;display:flex;flex-direction:column;gap:7px}
 .ats-tips li{padding:7px 10px;border-radius:6px;background:var(--soft);font-size:13px;color:var(--ink2)}
+/* ATS Right side benefits panel */
+.ats-benefits{display:flex;flex-direction:column;gap:20px}
+.ats-benefit-card{background:var(--paper);border-radius:12px;padding:20px;border:1px solid var(--line);display:flex;gap:14px;align-items:flex-start;transition:transform .2s,box-shadow .2s}
+.ats-benefit-card:hover{transform:translateY(-2px);box-shadow:0 6px 20px rgba(15,23,42,.09)}
+.ats-benefit-icon{font-size:26px;flex-shrink:0;margin-top:2px}
+.ats-benefit-card h4{font-size:14px;font-weight:700;margin-bottom:4px}
+.ats-benefit-card p{font-size:12px;color:var(--muted);line-height:1.6}
+.ats-score-demo{background:linear-gradient(135deg,#0f172a,#1e293b);border-radius:12px;padding:20px;color:#fff}
+.ats-score-demo-title{font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:#64748b;margin-bottom:14px}
+.ats-keyword-row{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
+.kw-found{background:rgba(34,197,94,.15);color:#4ade80;padding:3px 10px;border-radius:10px;font-size:11px;font-weight:600;border:1px solid rgba(34,197,94,.2)}
+.kw-missing{background:rgba(239,68,68,.1);color:#f87171;padding:3px 10px;border-radius:10px;font-size:11px;font-weight:600;border:1px solid rgba(239,68,68,.15);text-decoration:line-through}
+.ats-stat-row{display:flex;gap:16px;margin-top:16px}
+.ats-stat-box{flex:1;background:rgba(255,255,255,.06);border-radius:8px;padding:10px;text-align:center}
+.ats-stat-box .n{font-size:20px;font-weight:900;color:#fff}
+.ats-stat-box .l{font-size:10px;color:#64748b;margin-top:2px}
 
 /* Template grid */
 .filter-row{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:20px}
@@ -680,7 +705,7 @@ select{padding:8px 12px;border:1.5px solid var(--line);border-radius:6px;backgro
 <div id="register-modal" onclick="if(event.target===this)closeRegisterModal()">
   <div class="register-card">
     <div style="font-size:36px;margin-bottom:10px">🔓</div>
-    <h3>Unlock All 88 Templates</h3>
+    <h3>Unlock All Templates</h3>
     <p>Create a free account to browse the full template library, run ATS scans, and build your resume in minutes.</p>
     <div class="register-form">
       <input type="text" placeholder="Your full name">
@@ -719,7 +744,7 @@ select{padding:8px 12px;border:1.5px solid var(--line);border-radius:6px;backgro
       <div>
         <div class="hero2-eyebrow"><span class="hero2-eyebrow-dot"></span>India's #1 ATS Resume Builder</div>
         <h1>Land Your Dream Job as a<br><span class="role-text" id="hero-role">Software Engineer</span><span class="typewriter-cursor"></span></h1>
-        <p class="hero2-sub">Build an ATS-optimised resume in minutes. 88 templates designed for Naukri, LinkedIn & Shine. No experience needed — just your story.</p>
+        <p class="hero2-sub">Build an ATS-optimised resume in minutes. Premium templates designed for Naukri, LinkedIn & Shine. No experience needed — just your story.</p>
         <div class="hero2-ctas">
           <button class="btn-hero" onclick="switchTab('ws')">Build My Resume Free →</button>
           <button class="btn-hero-ghost" onclick="document.getElementById('ats-section').scrollIntoView({behavior:'smooth'})">Try Free ATS Scanner</button>
@@ -848,7 +873,7 @@ select{padding:8px 12px;border:1.5px solid var(--line);border-radius:6px;backgro
         <div class="hiw-num">1</div>
         <div class="hiw-icon">🎨</div>
         <h4>Pick a Template</h4>
-        <p>Choose from 88 ATS-optimised templates built for Indian job boards. Fresher, IT, management, government — we have it all.</p>
+        <p>Choose from our full library of ATS-optimised templates built for Indian job boards. Fresher, IT, management, government — we have it all.</p>
         <p style="margin-top:12px;font-size:12px;color:var(--blue);font-weight:600">⏱ Takes ~1 min</p>
       </div>
       <div class="hiw-card" style="border-color:var(--blue)">
@@ -873,51 +898,127 @@ select{padding:8px 12px;border:1.5px solid var(--line);border-radius:6px;backgro
   </section>
 
   <!-- ATS SCAN TOOL -->
-  <section id="ats-section" style="background:var(--soft);padding:64px 48px">
-    <div style="max-width:800px;margin:0 auto">
-      <h2 class="section-title">Free ATS Resume Scanner</h2>
-      <p class="section-sub">Check how your resume matches any job description in seconds</p>
-      <div class="ats-card">
-        <div style="margin-bottom:18px">
-          <p style="font-size:13px;font-weight:600;color:var(--ink2);margin-bottom:8px">Step 1: Your Resume</p>
-          <div class="seg-row">
-            <button class="seg-btn active" data-res="upload" onclick="setATSMode('upload')">Upload PDF/DOCX</button>
-            <button class="seg-btn" data-res="paste" onclick="setATSMode('paste')">Paste Text</button>
-          </div>
-          <div id="ats-upload-area" class="ats-upload-area" onclick="this.style.borderColor='var(--blue)'">
-            📎 Click to upload or drag &amp; drop your resume (PDF/DOCX)
-          </div>
-          <div id="ats-paste-area" style="display:none">
-            <textarea id="ats-resume-text" class="ats-ta" placeholder="Paste your resume text here..."></textarea>
-          </div>
-        </div>
-        <div class="ats-divider">⟋ AND ⟋</div>
-        <div style="margin-top:18px">
-          <p style="font-size:13px;font-weight:600;color:var(--ink2);margin-bottom:8px">Step 2: Job Description</p>
-          <div class="seg-row">
-            <button class="seg-btn active" data-jd="url" onclick="setJDMode('url')">JD URL</button>
-            <button class="seg-btn" data-jd="text" onclick="setJDMode('text')">Paste JD</button>
-          </div>
-          <input id="ats-jd-url-input" class="ats-ta" style="height:auto;min-height:unset;padding:9px 12px;border-radius:8px;width:100%;border:1.5px solid var(--line);background:var(--bg);color:var(--ink)" placeholder="https://www.naukri.com/job-listings-...">
-          <div id="ats-jd-paste" style="display:none;margin-top:8px">
-            <textarea id="ats-jd-text" class="ats-ta" placeholder="Paste job description here..."></textarea>
-          </div>
-        </div>
-        <button id="ats-scan-btn" onclick="runScan()">Analyze Resume →</button>
-        <div id="ats-result">
-          <div class="ats-result-inner">
-            <div class="ring-wrap">
-              <svg width="90" height="90" viewBox="0 0 90 90">
-                <circle cx="45" cy="45" r="36" fill="none" stroke="var(--line)" stroke-width="8"/>
-                <circle id="ring-fg" cx="45" cy="45" r="36" fill="none" stroke="var(--blue)" stroke-width="8"
-                  stroke-linecap="round" stroke-dasharray="226.2" stroke-dashoffset="226.2"
-                  style="transform:rotate(-90deg);transform-origin:50% 50%;transition:stroke-dashoffset 1.2s ease"/>
-              </svg>
-              <div class="ring-num" id="ring-num">0%</div>
+  <section id="ats-section" style="background:linear-gradient(180deg,var(--soft) 0%,var(--paper) 100%);padding:72px 64px">
+    <div style="max-width:1100px;margin:0 auto">
+      <div style="text-align:center;margin-bottom:48px">
+        <div style="display:inline-flex;align-items:center;gap:8px;background:#eff4ff;color:var(--blue);font-size:12px;font-weight:700;padding:5px 14px;border-radius:20px;margin-bottom:14px;border:1px solid #bfdbfe">⚡ 100% Free — No Sign-up Required</div>
+        <h2 class="section-title" style="margin-bottom:8px">Know Your ATS Score Before You Apply</h2>
+        <p class="section-sub" style="margin-bottom:0">Most resumes are rejected by ATS before a human reads them.<br><strong style="color:var(--ink)">Fix yours in 60 seconds.</strong></p>
+      </div>
+      <div class="ats-section-wrap">
+        <!-- Left: scanner form -->
+        <div class="ats-card">
+          <div style="margin-bottom:22px">
+            <div class="ats-step-header">
+              <div class="ats-step-num">1</div>
+              <span class="ats-step-label">Your Resume</span>
             </div>
-            <div class="ats-tips">
-              <h4>Resume Improvement Tips</h4>
-              <ul id="ats-tips-list"></ul>
+            <div class="seg-row">
+              <button class="seg-btn active" data-res="upload" onclick="setATSMode('upload')">📎 Upload PDF/DOCX</button>
+              <button class="seg-btn" data-res="paste" onclick="setATSMode('paste')">📋 Paste Text</button>
+            </div>
+            <div id="ats-upload-area" class="ats-upload-area" onclick="this.querySelector('span').style.display='block'">
+              <span class="ats-upload-icon">📄</span>
+              <div style="font-size:15px;font-weight:700;color:var(--ink);margin-bottom:4px">Drop your resume here</div>
+              <div style="font-size:13px;color:var(--muted)">or <strong style="color:var(--blue)">click to browse</strong> — PDF or DOCX, up to 5MB</div>
+              <div style="margin-top:10px;display:flex;gap:10px;justify-content:center">
+                <span style="background:#d1fae5;color:#059669;padding:3px 10px;border-radius:10px;font-size:11px;font-weight:700">✓ PDF</span>
+                <span style="background:#dbeafe;color:#1d4ed8;padding:3px 10px;border-radius:10px;font-size:11px;font-weight:700">✓ DOCX</span>
+                <span style="background:#ede9fe;color:#7c3aed;padding:3px 10px;border-radius:10px;font-size:11px;font-weight:700">✓ TXT</span>
+              </div>
+            </div>
+            <div id="ats-paste-area" style="display:none">
+              <textarea id="ats-resume-text" class="ats-ta" placeholder="Paste your resume text here..."></textarea>
+            </div>
+          </div>
+          <div class="ats-divider">Match against Job Description</div>
+          <div>
+            <div class="ats-step-header">
+              <div class="ats-step-num">2</div>
+              <span class="ats-step-label">Job Description</span>
+            </div>
+            <div class="seg-row">
+              <button class="seg-btn active" data-jd="url" onclick="setJDMode('url')">🔗 JD URL</button>
+              <button class="seg-btn" data-jd="text" onclick="setJDMode('text')">📋 Paste JD</button>
+            </div>
+            <input id="ats-jd-url-input" class="ats-ta" style="height:auto;min-height:unset;padding:11px 14px;border-radius:8px;width:100%;border:1.5px solid var(--line);background:var(--bg);color:var(--ink);font-size:14px" placeholder="https://www.naukri.com/job-listings-...">
+            <p style="font-size:11px;color:var(--muted);margin-top:6px">Supports: Naukri, LinkedIn, Shine, Indeed, Instahyre</p>
+            <div id="ats-jd-paste" style="display:none;margin-top:8px">
+              <textarea id="ats-jd-text" class="ats-ta" placeholder="Paste job description here..."></textarea>
+            </div>
+          </div>
+          <button id="ats-scan-btn" onclick="runScan()">🔍 Analyse My Resume — Free</button>
+          <p style="text-align:center;font-size:11px;color:var(--muted);margin-top:10px">No account needed · Results in under 10 seconds</p>
+          <div id="ats-result">
+            <div class="ats-result-inner">
+              <div class="ring-wrap">
+                <svg width="90" height="90" viewBox="0 0 90 90">
+                  <circle cx="45" cy="45" r="36" fill="none" stroke="var(--line)" stroke-width="8"/>
+                  <circle id="ring-fg" cx="45" cy="45" r="36" fill="none" stroke="var(--blue)" stroke-width="8"
+                    stroke-linecap="round" stroke-dasharray="226.2" stroke-dashoffset="226.2"
+                    style="transform:rotate(-90deg);transform-origin:50% 50%;transition:stroke-dashoffset 1.2s ease"/>
+                </svg>
+                <div class="ring-num" id="ring-num">0%</div>
+              </div>
+              <div class="ats-tips">
+                <h4>Resume Improvement Tips</h4>
+                <ul id="ats-tips-list"></ul>
+              </div>
+            </div>
+          </div>
+        </div>
+        <!-- Right: benefits panel -->
+        <div class="ats-benefits">
+          <!-- Live score demo -->
+          <div class="ats-score-demo">
+            <div class="ats-score-demo-title">Sample ATS Analysis — TCS SDE Role</div>
+            <div style="display:flex;align-items:center;gap:16px">
+              <div style="position:relative;flex-shrink:0">
+                <svg width="80" height="80" viewBox="0 0 80 80">
+                  <circle cx="40" cy="40" r="32" fill="none" stroke="rgba(255,255,255,.1)" stroke-width="7"/>
+                  <circle cx="40" cy="40" r="32" fill="none" stroke="#22c55e" stroke-width="7"
+                    stroke-linecap="round" stroke-dasharray="201.1" stroke-dashoffset="50"
+                    style="transform:rotate(-90deg);transform-origin:50% 50%"/>
+                </svg>
+                <div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);font-size:18px;font-weight:900;color:#fff">75%</div>
+              </div>
+              <div>
+                <div style="font-size:16px;font-weight:800;color:#fff;margin-bottom:4px">Good Match!</div>
+                <div style="font-size:12px;color:#94a3b8;line-height:1.5">Your resume matches 15 of 20 required keywords</div>
+              </div>
+            </div>
+            <div style="margin-top:12px;font-size:11px;color:#64748b;font-weight:600;text-transform:uppercase;letter-spacing:.4px">Keywords found</div>
+            <div class="ats-keyword-row">
+              <span class="kw-found">Java</span><span class="kw-found">Spring Boot</span><span class="kw-found">REST API</span>
+              <span class="kw-found">MySQL</span><span class="kw-found">Git</span><span class="kw-missing">Kubernetes</span>
+              <span class="kw-missing">Docker</span><span class="kw-found">Agile</span>
+            </div>
+            <div class="ats-stat-row">
+              <div class="ats-stat-box"><div class="n">8,470</div><div class="l">Scans today</div></div>
+              <div class="ats-stat-box"><div class="n">+32%</div><div class="l">Avg score lift</div></div>
+              <div class="ats-stat-box"><div class="n">54→87</div><div class="l">Typical jump</div></div>
+            </div>
+          </div>
+          <!-- What it checks -->
+          <div class="ats-benefit-card">
+            <div class="ats-benefit-icon">🎯</div>
+            <div>
+              <h4>Keyword Gap Analysis</h4>
+              <p>See exactly which keywords from the JD are missing from your resume — and where to add them for maximum impact.</p>
+            </div>
+          </div>
+          <div class="ats-benefit-card">
+            <div class="ats-benefit-icon">📊</div>
+            <div>
+              <h4>Format & Structure Score</h4>
+              <p>We check font, section order, bullet points, date formats, and ATS-unfriendly elements like tables and graphics.</p>
+            </div>
+          </div>
+          <div class="ats-benefit-card">
+            <div class="ats-benefit-icon">⚡</div>
+            <div>
+              <h4>One-Click Resume Fix</h4>
+              <p>After scanning, rebuild your resume in CVTara — all keyword suggestions are pre-loaded into the builder for you.</p>
             </div>
           </div>
         </div>
@@ -925,9 +1026,9 @@ select{padding:8px 12px;border:1.5px solid var(--line);border-radius:6px;backgro
     </div>
   </section>
 
-  <!-- 88 TEMPLATES -->
+  <!-- TEMPLATES -->
   <section id="tpl-section" class="section">
-    <h2 class="section-title">88 Premium ATS-Optimised Resume Templates</h2>
+    <h2 class="section-title">Premium ATS-Optimised Resume Templates</h2>
     <p class="section-sub">Every template crafted for Naukri, LinkedIn & Shine — for freshers and experienced professionals</p>
 
     <!-- Fresher showcase -->
@@ -955,8 +1056,8 @@ select{padding:8px 12px;border:1.5px solid var(--line);border-radius:6px;backgro
     </div>
 
     <div class="show-more-bar">
-      <p style="color:var(--muted);font-size:14px;margin-bottom:14px">Showing 30 of 88 templates — sign up to access the full library</p>
-      <button class="show-more-btn" onclick="openRegisterModal()">Unlock All 88 Templates — It's Free →</button>
+      <p style="color:var(--muted);font-size:14px;margin-bottom:14px">Showing top picks — sign up to access the complete template library</p>
+      <button class="show-more-btn" onclick="openRegisterModal()">Unlock All Templates — It's Free →</button>
     </div>
   </section>
 
@@ -990,7 +1091,7 @@ select{padding:8px 12px;border:1.5px solid var(--line);border-radius:6px;backgro
           <div class="pricing-card2-price"><sup>₹</sup>349</div>
           <div class="pricing-card2-period">per 60 days &nbsp;·&nbsp; <s style="color:var(--muted);font-size:12px">₹499</s></div>
           <ul class="pricing-card2-features">
-            <li>All 88 premium templates</li>
+            <li>All premium templates</li>
             <li>Unlimited ATS scans</li>
             <li>20 cover letters</li>
             <li>Priority support</li>
@@ -1272,7 +1373,7 @@ select{padding:8px 12px;border:1.5px solid var(--line);border-radius:6px;backgro
             <div class="card" style="flex:1;min-width:200px;cursor:pointer;border:2px dashed var(--blue);background:#eff4ff;text-align:center" onclick="openBuilder('New Resume')">
               <div style="font-size:32px;margin-bottom:8px">+</div>
               <div style="font-weight:700;color:var(--blue)">Create New Resume</div>
-              <div class="text-muted">Pick from 88 templates</div>
+              <div class="text-muted">Pick from premium templates</div>
             </div>
             <div class="card" style="flex:2;min-width:280px">
               <h4 style="margin-bottom:12px">Existing Resumes</h4>
@@ -1469,7 +1570,7 @@ select{padding:8px 12px;border:1.5px solid var(--line);border-radius:6px;backgro
         <h2 style="margin-bottom:4px">User Guide</h2>
         <p class="text-muted mb4">Get the most out of CVTara in 5 steps</p>
         <div class="guide-steps">
-          <div class="guide-step"><div class="guide-step-num">1</div><div><h4>Choose Your Template</h4><p>Browse 88 professionally designed templates tailored for Indian job seekers. Filter by industry, experience level, or ATS score.</p></div></div>
+          <div class="guide-step"><div class="guide-step-num">1</div><div><h4>Choose Your Template</h4><p>Browse professionally designed templates tailored for Indian job seekers. Filter by industry, experience level, or ATS score.</p></div></div>
           <div class="guide-step"><div class="guide-step-num">2</div><div><h4>Fill in Your Details</h4><p>Use our guided builder to add your personal info, work experience, education, and skills. Tips appear at each step.</p></div></div>
           <div class="guide-step"><div class="guide-step-num">3</div><div><h4>Run ATS Match</h4><p>Paste any job description from Naukri or LinkedIn to see your match score. Get specific tips to improve your score.</p></div></div>
           <div class="guide-step"><div class="guide-step-num">4</div><div><h4>Download Your Resume</h4><p>Download as PDF optimized for ATS systems and Indian job portals. One-click upload to Naukri coming soon.</p></div></div>
@@ -2000,7 +2101,7 @@ const EMAIL_TEMPLATES = {
 };
 
 const FAQ_DATA = [
-  {q:'Is CVTara really free?',a:'Yes! Several templates are completely free to use and download. Paid plans starting at ₹199 unlock all 88 templates, the advanced ATS scanner, and cover letter builder.'},
+  {q:'Is CVTara really free?',a:'Yes! Several templates are completely free to use and download. Paid plans starting at ₹199 unlock all premium templates, the advanced ATS scanner, and cover letter builder.'},
   {q:'How does the ATS scanner work?',a:'Our ATS scanner compares your resume text against the job description, checking keyword matches, formatting, section presence, and readability. You get a score from 40–61 for a typical resume and specific tips to improve it.'},
   {q:'Are the templates optimised for Indian job boards?',a:'Yes. All templates are designed and tested on Naukri, LinkedIn India, Shine, and Indeed India. They follow the preferred format of Indian recruiters and HR teams.'},
   {q:'Can I download my resume as a PDF?',a:'Absolutely. All plans include PDF download. The PDF is optimised for ATS parsing and looks great when printed for walk-in interviews too.'},
@@ -2325,15 +2426,16 @@ function renderTPLGrid(container, templates, cat, context) {
     : templates.filter(t => (context === 'cl' ? t.region : t.cat) === cat);
   visible.forEach(t => {
     const card = document.createElement('div'); card.className = 'tpl-card';
-    const colors = ['#e0e7ff,#c7d2fe','#d1fae5,#a7f3d0','#fef3c7,#fde68a','#fee2e2,#fecaca','#ede9fe,#ddd6fe'];
-    const colorPair = colors[t.id % colors.length];
-    card.innerHTML = `<div class="tpl-thumb" style="background:linear-gradient(135deg,${colorPair})">
-      <div class="tpl-thumb-line bold" style="width:60%"></div>
-      <div class="tpl-thumb-line" style="width:40%;background:rgba(99,102,241,.2)"></div>
-      <div class="tpl-thumb-line" style="width:90%"></div>
-      <div class="tpl-thumb-line" style="width:75%"></div>
-      <div class="tpl-thumb-line" style="width:85%"></div>
-      <span class="tpl-badge ${t.type}">${t.type === 'free' ? 'FREE' : 'PAID'}</span>
+    const meta = (context !== 'cl' && CAT_META[t.cat]) ? CAT_META[t.cat] : {icon:'📝',color:'#6366f1,#a5b4fc',accent:'rgba(99,102,241,'};
+    const atsScore = ATS_SCORES[t.id % ATS_SCORES.length];
+    card.innerHTML = `<div class="tpl-thumb" style="background:linear-gradient(135deg,${meta.color});position:relative">
+      <div style="font-size:24px;margin-bottom:6px">${meta.icon}</div>
+      <div class="tpl-thumb-line bold" style="width:60%;background:${meta.accent}.4)"></div>
+      <div class="tpl-thumb-line" style="width:40%;background:${meta.accent}.25);margin-top:4px"></div>
+      <div class="tpl-thumb-line" style="width:90%;background:${meta.accent}.2);margin-top:4px"></div>
+      <div class="tpl-thumb-line" style="width:75%;background:${meta.accent}.18);margin-top:4px"></div>
+      <span style="position:absolute;top:7px;right:7px;background:rgba(0,0,0,.22);color:#fff;font-size:9px;font-weight:800;padding:2px 6px;border-radius:6px">${atsScore}%</span>
+      <span class="tpl-badge paid" style="position:absolute;bottom:7px;right:7px">PREMIUM</span>
     </div>
     <div class="tpl-info"><div class="tpl-name">${t.n}</div><div class="tpl-cat">${context === 'cl' ? (t.region||'') : t.cat}</div></div>`;
     card.onclick = () => {
@@ -2365,30 +2467,52 @@ function buildLPTemplates() {
   buildGallery('lp-pro-grid', proTpls, 'lp');
 }
 
+const CAT_META = {
+  'Fresher':      {icon:'🎓',color:'#6366f1,#a5b4fc',accent:'rgba(99,102,241,'},
+  'IT/Tech':      {icon:'💻',color:'#0284c7,#38bdf8',accent:'rgba(2,132,199,'},
+  'Finance':      {icon:'💰',color:'#059669,#6ee7b7',accent:'rgba(5,150,105,'},
+  'Sales':        {icon:'📈',color:'#d97706,#fcd34d',accent:'rgba(217,119,6,'},
+  'Marketing':    {icon:'📣',color:'#db2777,#f9a8d4',accent:'rgba(219,39,119,'},
+  'Education':    {icon:'📚',color:'#7c3aed,#c4b5fd',accent:'rgba(124,58,237,'},
+  'Healthcare':   {icon:'🏥',color:'#0891b2,#67e8f9',accent:'rgba(8,145,178,'},
+  'Operations':   {icon:'⚙️',color:'#475569,#94a3b8',accent:'rgba(71,85,105,'},
+  'Engineering':  {icon:'🔧',color:'#b45309,#fcd34d',accent:'rgba(180,83,9,'},
+  'Design/Creative':{icon:'🎨',color:'#e11d48,#fda4af',accent:'rgba(225,29,72,'},
+  'Legal/Admin':  {icon:'⚖️',color:'#1d4ed8,#93c5fd',accent:'rgba(29,78,216,'},
+  'Govt/PSU':     {icon:'🏛️',color:'#047857,#6ee7b7',accent:'rgba(4,120,87,'},
+  'Hospitality':  {icon:'🏨',color:'#c2410c,#fdba74',accent:'rgba(194,65,12,'}
+};
+const ATS_SCORES = [85,88,90,87,92,89,86,91,88,84,90,87,93,88,85,91,89,86,92,88,87,90,84,89,91,88,85,93,87,90];
+
 function buildGallery(containerId, templates, context) {
   const container = document.getElementById(containerId);
   if (!container) return;
   container.innerHTML = '';
-  const colors = ['#e0e7ff,#c7d2fe','#d1fae5,#a7f3d0','#fef3c7,#fde68a','#fee2e2,#fecaca','#ede9fe,#ddd6fe','#cffafe,#a5f3fc'];
-  templates.forEach(t => {
+  templates.forEach((t, i) => {
+    const meta = CAT_META[t.cat] || {icon:'📄',color:'#6366f1,#a5b4fc',accent:'rgba(99,102,241,'};
+    const atsScore = ATS_SCORES[t.id % ATS_SCORES.length];
     const card = document.createElement('div');
     card.className = 'tpl-card' + (POPULAR_IDS.has(t.id) ? ' tpl-featured' : '');
-    const colorPair = colors[t.id % colors.length];
-    card.innerHTML = `<div class="tpl-thumb" style="background:linear-gradient(135deg,${colorPair})">
-      ${POPULAR_IDS.has(t.id) ? '<span class="tpl-popular-badge">🔥 Most Popular</span>' : ''}
-      <div class="tpl-thumb-line bold" style="width:62%"></div>
-      <div class="tpl-thumb-line" style="width:38%;opacity:.7"></div>
-      <div style="height:1px;background:rgba(99,102,241,.2);margin:4px 0"></div>
-      <div class="tpl-thumb-line" style="width:100%"></div>
-      <div class="tpl-thumb-line" style="width:88%"></div>
-      <div class="tpl-thumb-line" style="width:75%"></div>
-      <div style="height:1px;background:rgba(99,102,241,.2);margin:4px 0"></div>
-      <div class="tpl-thumb-line bold" style="width:42%"></div>
-      <div class="tpl-thumb-line" style="width:100%"></div>
-      <div class="tpl-thumb-line" style="width:80%"></div>
-      <span class="tpl-badge paid" style="position:absolute;bottom:8px;right:8px">PREMIUM</span>
+    card.style.cssText = 'border-radius:12px;overflow:hidden;transition:transform .2s,box-shadow .2s;cursor:pointer';
+    card.innerHTML = `
+    <div class="tpl-thumb" style="background:linear-gradient(135deg,${meta.color});height:155px;padding:14px;position:relative">
+      ${POPULAR_IDS.has(t.id) ? '<span class="tpl-popular-badge">🔥 Hot</span>' : ''}
+      <div style="position:absolute;top:10px;right:10px;background:rgba(0,0,0,.25);border-radius:8px;padding:3px 7px;font-size:10px;font-weight:800;color:#fff">${atsScore}% ATS</div>
+      <div style="font-size:28px;margin-bottom:8px;margin-top:4px">${meta.icon}</div>
+      <div class="tpl-thumb-line bold" style="width:70%;background:${meta.accent}.45)"></div>
+      <div class="tpl-thumb-line" style="width:45%;background:${meta.accent}.3);margin-top:5px"></div>
+      <div style="height:1px;background:${meta.accent}.15);margin:7px 0"></div>
+      <div class="tpl-thumb-line" style="width:100%;background:${meta.accent}.2)"></div>
+      <div class="tpl-thumb-line" style="width:85%;background:${meta.accent}.15);margin-top:4px"></div>
+      <div class="tpl-thumb-line" style="width:72%;background:${meta.accent}.12);margin-top:4px"></div>
     </div>
-    <div class="tpl-info"><div class="tpl-name">${t.n}</div><div class="tpl-cat">${t.cat}</div></div>`;
+    <div class="tpl-info" style="padding:10px 12px;background:var(--paper)">
+      <div class="tpl-name" style="font-size:13px;font-weight:700">${t.n}</div>
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-top:4px">
+        <span class="tpl-cat" style="font-size:11px;color:var(--muted)">${t.cat}</span>
+        <span style="font-size:10px;background:#ede9fe;color:#7c3aed;padding:2px 7px;border-radius:8px;font-weight:700">PREMIUM</span>
+      </div>
+    </div>`;
     card.onclick = () => openTplModal(t);
     container.appendChild(card);
   });
@@ -2565,7 +2689,7 @@ const FOMO_ACTIONS = [
   (n,c,p) => ({msg:`is preparing a Software Engineer resume`, sub:'Building with a Premium template', emoji:n[0]}),
   (n,c,p) => ({msg:`just ran an ATS scan — improved to 58%!`, sub:'Resume looks great for this JD', emoji:n[0]}),
   (n,c,p) => ({msg:`got a callback from Infosys!`, sub:'Used CVTara ATS Optimiser', emoji:n[0]}),
-  (n,c,p) => ({msg:`just unlocked all 88 premium templates`, sub:`Upgraded to ${p}`, emoji:n[0]}),
+  (n,c,p) => ({msg:`just unlocked all premium templates`, sub:`Upgraded to ${p}`, emoji:n[0]}),
   (n,c,p) => ({msg:`is building their first professional resume`, sub:'New member joined just now', emoji:n[0]}),
   (n,c,p) => ({msg:`downloaded resume for a TCS interview`, sub:'ATS score: 56% — Top 10%', emoji:n[0]}),
   (n,c,p) => ({msg:`just applied for 5 jobs using CVTara`, sub:'Applications sent via Naukri & LinkedIn', emoji:n[0]})
@@ -3129,17 +3253,31 @@ function initStickyCTA() {
   }, {passive:true});
 }
 
-// ========== OFFER SPOTS TICKER ==========
+// ========== OFFER SPOTS — daily-persistent ==========
 function initOfferSpots() {
   const el = document.getElementById('offer-spots');
   if (!el) return;
-  let spots = 247;
+  const TODAY = new Date().toDateString();
+  let state;
+  try { state = JSON.parse(localStorage.getItem('cvt_urgency') || 'null'); } catch(e){ state = null; }
+  // Reset on new day: random start 420-480, minus a morning drop (0-80 based on hour)
+  if (!state || state.date !== TODAY) {
+    const startBase = 420 + Math.floor(Math.random() * 60);
+    const hourDrop = Math.floor((new Date().getHours() / 24) * 80);
+    const spots = Math.max(150, startBase - hourDrop - Math.floor(Math.random() * 20));
+    state = {date: TODAY, spots};
+    try { localStorage.setItem('cvt_urgency', JSON.stringify(state)); } catch(e){}
+  }
+  let spots = state.spots;
+  el.textContent = spots;
+  // Decrement randomly ~2-3 per hour (every 20-40 min)
   setInterval(() => {
-    if (spots > 180 && Math.random() < .3) {
+    if (spots > 120 && Math.random() < 0.35) {
       spots--;
       el.textContent = spots;
+      try { localStorage.setItem('cvt_urgency', JSON.stringify({date: TODAY, spots})); } catch(e){}
     }
-  }, 25000);
+  }, 28000);
 }
 
 // ========== INIT ==========
