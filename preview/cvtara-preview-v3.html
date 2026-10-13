@@ -583,20 +583,49 @@ select{padding:8px 12px;border:1.5px solid var(--line);border-radius:6px;backgro
 .hiw-card p{font-size:13px;color:var(--muted);line-height:1.65}
 
 /* Pricing section */
-.pricing-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:24px;margin-top:16px;max-width:1000px;margin-left:auto;margin-right:auto}
-.pricing-card2{background:var(--paper);border-radius:16px;padding:28px 24px;border:2px solid var(--line);position:relative;transition:transform .2s,box-shadow .2s}
+.pricing-tabs{display:flex;background:var(--soft);border-radius:12px;padding:4px;gap:4px;max-width:320px;margin:0 auto 32px}
+.pricing-tab-btn{flex:1;padding:9px 0;border-radius:9px;border:none;background:transparent;font-size:14px;font-weight:700;color:var(--muted);cursor:pointer;transition:all .2s}
+.pricing-tab-btn.active{background:var(--paper);color:var(--ink);box-shadow:0 2px 8px rgba(15,23,42,.1)}
+.pricing-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:24px;max-width:1050px;margin:0 auto}
+.pricing-card2{background:var(--paper);border-radius:16px;padding:28px 24px;border:2px solid var(--line);position:relative;transition:transform .2s,box-shadow .2s;display:flex;flex-direction:column}
 .pricing-card2:hover{transform:translateY(-4px);box-shadow:0 12px 36px rgba(15,23,42,.1)}
 .pricing-card2.popular{border-color:var(--blue);box-shadow:0 8px 32px rgba(21,87,210,.15)}
 .pricing-pop-badge{position:absolute;top:-13px;left:50%;transform:translateX(-50%);background:var(--blue);color:#fff;font-size:11px;font-weight:800;padding:4px 14px;border-radius:20px;white-space:nowrap}
-.pricing-card2-title{font-size:13px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px}
-.pricing-card2-price{font-size:38px;font-weight:900;color:var(--ink);line-height:1}
+.pricing-card2-title{font-size:13px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px}
+.pricing-card2-tagline{font-size:12px;color:var(--muted);margin-bottom:12px;line-height:1.4}
+.pricing-card2-price{font-size:40px;font-weight:900;color:var(--ink);line-height:1}
 .pricing-card2-price sup{font-size:20px;vertical-align:super}
 .pricing-card2-period{font-size:12px;color:var(--muted);margin-top:4px;margin-bottom:18px}
-.pricing-card2-features{list-style:none;display:flex;flex-direction:column;gap:9px;margin-bottom:22px}
-.pricing-card2-features li{font-size:13px;color:var(--ink2);display:flex;align-items:center;gap:8px}
+/* Primary resume highlight */
+.plan-primary-box{background:linear-gradient(135deg,#eff4ff,#e0e7ff);border:1px solid #bfdbfe;border-radius:10px;padding:12px 14px;margin-bottom:16px;display:flex;align-items:flex-start;gap:10px}
+.plan-primary-box .crown{font-size:18px}
+.plan-primary-box-text{font-size:12px;color:var(--ink2);line-height:1.5}
+.plan-primary-box-text strong{font-size:13px;color:var(--blue);display:block;margin-bottom:2px}
+/* Counts row */
+.plan-counts{display:flex;gap:6px;margin-bottom:14px}
+.plan-count-chip{flex:1;text-align:center;background:var(--soft);border-radius:8px;padding:8px 4px}
+.plan-count-chip .n{font-size:18px;font-weight:900;color:var(--blue)}
+.plan-count-chip .l{font-size:10px;color:var(--muted);margin-top:2px}
+.pricing-card2-features{list-style:none;display:flex;flex-direction:column;gap:8px;margin-bottom:20px;flex:1}
+.pricing-card2-features li{font-size:12px;color:var(--ink2);display:flex;align-items:center;gap:7px}
 .pricing-card2-features li::before{content:'✓';color:var(--success);font-weight:800;flex-shrink:0}
-.pricing-offer-timer{text-align:center;background:#fff7ed;border:1px solid #fed7aa;border-radius:8px;padding:8px 16px;margin-bottom:16px;font-size:12px;font-weight:700;color:#ea580c}
+/* Add-ons */
+.addons-strip{display:flex;gap:16px;flex-wrap:wrap;justify-content:center;margin-top:36px}
+.addon-card{background:var(--paper);border:1.5px dashed var(--line);border-radius:12px;padding:18px 22px;text-align:center;min-width:180px;flex:1;max-width:220px;transition:border-color .2s,transform .2s;cursor:pointer}
+.addon-card:hover{border-color:var(--blue);transform:translateY(-2px)}
+.addon-card-plus{font-size:22px;font-weight:900;color:var(--blue);margin-bottom:6px}
+.addon-card-name{font-size:13px;font-weight:600;color:var(--ink2);margin-bottom:8px}
+.addon-card-price{font-size:22px;font-weight:900;color:var(--blue)}
+/* Pricing offer timer */
+.pricing-offer-timer{text-align:center;background:#fff7ed;border:1px solid #fed7aa;border-radius:8px;padding:8px 16px;margin-bottom:24px;font-size:12px;font-weight:700;color:#ea580c;max-width:380px;margin-left:auto;margin-right:auto}
 .pricing-offer-countdown{font-size:16px;font-weight:900;color:var(--danger);letter-spacing:1px}
+/* Concept explainer */
+.pricing-concept{background:linear-gradient(135deg,#0f172a,#1e293b);border-radius:14px;padding:24px 28px;margin-bottom:32px;color:#fff;display:flex;gap:20px;align-items:flex-start;flex-wrap:wrap}
+.pricing-concept-icon{font-size:36px;flex-shrink:0}
+.pricing-concept h4{font-size:16px;font-weight:800;margin-bottom:6px}
+.pricing-concept p{font-size:13px;color:#94a3b8;line-height:1.65}
+.pricing-concept-chips{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap}
+.pricing-concept-chips span{background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.12);border-radius:8px;padding:4px 10px;font-size:11px;font-weight:600;color:#e2e8f0}
 
 /* Mid-page CTA banner */
 .mid-cta-banner{background:linear-gradient(135deg,#1557d2 0%,#6366f1 100%);padding:64px 64px;text-align:center;color:#fff}
@@ -1064,57 +1093,38 @@ select{padding:8px 12px;border:1.5px solid var(--line);border-radius:6px;backgro
   <!-- PRICING -->
   <section style="background:var(--soft);padding:72px 64px" id="pricing-section">
     <div style="max-width:1100px;margin:0 auto">
-      <h2 class="section-title">Simple, Honest Pricing in ₹</h2>
-      <p class="section-sub">No dollar conversions, no hidden fees — priced for Indian professionals</p>
-      <div class="pricing-offer-timer" style="max-width:380px;margin:0 auto 28px">
-        🏷️ Launch offer ends in: <span class="pricing-offer-countdown" id="pricing-countdown">03:47:22</span>
-      </div>
-      <div class="pricing-grid">
-        <!-- Fresher -->
-        <div class="pricing-card2">
-          <div class="pricing-card2-title">Fresher</div>
-          <div class="pricing-card2-price"><sup>₹</sup>199</div>
-          <div class="pricing-card2-period">per 30 days &nbsp;·&nbsp; <s style="color:var(--muted);font-size:12px">₹249</s></div>
-          <ul class="pricing-card2-features">
-            <li>30 Fresher templates</li>
-            <li>Free ATS scanner (5 scans)</li>
-            <li>5 cover letters</li>
-            <li>Naukri/LinkedIn export</li>
-            <li>PDF download</li>
-          </ul>
-          <button class="btn btn-outline" style="width:100%;padding:11px;font-size:14px" onclick="switchTab('ws')">Get Started →</button>
-        </div>
-        <!-- Professional (popular) -->
-        <div class="pricing-card2 popular">
-          <div class="pricing-pop-badge">⭐ Most Popular</div>
-          <div class="pricing-card2-title">Professional</div>
-          <div class="pricing-card2-price"><sup>₹</sup>349</div>
-          <div class="pricing-card2-period">per 60 days &nbsp;·&nbsp; <s style="color:var(--muted);font-size:12px">₹499</s></div>
-          <ul class="pricing-card2-features">
-            <li>All premium templates</li>
-            <li>Unlimited ATS scans</li>
-            <li>20 cover letters</li>
-            <li>Priority support</li>
-            <li>7-day money-back guarantee</li>
-          </ul>
-          <button class="btn btn-primary" style="width:100%;padding:11px;font-size:14px;background:var(--blue)" onclick="switchTab('ws')">Get Professional →</button>
-        </div>
-        <!-- Unlimited -->
-        <div class="pricing-card2">
-          <div class="pricing-card2-title">Unlimited</div>
-          <div class="pricing-card2-price"><sup>₹</sup>599</div>
-          <div class="pricing-card2-period">per 90 days &nbsp;·&nbsp; <s style="color:var(--muted);font-size:12px">₹799</s></div>
-          <ul class="pricing-card2-features">
-            <li>Everything in Professional</li>
-            <li>Unlimited cover letters</li>
-            <li>Referral programme access</li>
-            <li>1-on-1 resume review call</li>
-            <li>Lifetime template updates</li>
-          </ul>
-          <button class="btn btn-outline" style="width:100%;padding:11px;font-size:14px" onclick="switchTab('ws')">Get Unlimited →</button>
+      <h2 class="section-title">Pricing Built for India</h2>
+      <p class="section-sub">All plans include your Primary Resume + JD-tailored resume variants + cover letters</p>
+      <!-- Concept explainer -->
+      <div class="pricing-concept">
+        <div class="pricing-concept-icon">🎯</div>
+        <div>
+          <h4>How CVTara Plans Work</h4>
+          <p>Every plan gives you <strong style="color:#fff">1 Premium Primary Resume</strong> — your masterpiece, ATS-optimised for your target role. Then create multiple <strong style="color:#fff">JD-tailored variants</strong> from it — one per job application — each fine-tuned to match that company's keywords.</p>
+          <div class="pricing-concept-chips">
+            <span>🏆 1 Primary Resume</span>
+            <span>📋 JD-Tailored Variants</span>
+            <span>✉️ Cover Letters</span>
+            <span>⚡ ATS Scanner</span>
+          </div>
         </div>
       </div>
-      <p style="text-align:center;margin-top:20px;font-size:13px;color:var(--muted)">✓ Pay via UPI, Net banking, Cards &nbsp;·&nbsp; ✓ GST invoice provided &nbsp;·&nbsp; ✓ 7-day refund</p>
+      <!-- Countdown -->
+      <div class="pricing-offer-timer">🏷️ Launch offer ends in: <span class="pricing-offer-countdown" id="pricing-countdown">03:47:22</span></div>
+      <!-- Fresher / Experienced toggle -->
+      <div class="pricing-tabs">
+        <button class="pricing-tab-btn active" id="ptab-fresher" onclick="switchPricingTab('fresher')">🎓 Fresher</button>
+        <button class="pricing-tab-btn" id="ptab-experienced" onclick="switchPricingTab('experienced')">💼 Experienced</button>
+      </div>
+      <!-- Plan cards — rendered by JS -->
+      <div class="pricing-grid" id="pricing-cards-grid"></div>
+      <!-- Add-ons -->
+      <div style="margin-top:44px">
+        <h3 style="text-align:center;font-size:18px;font-weight:800;margin-bottom:6px">Need More? Add Extras</h3>
+        <p style="text-align:center;font-size:13px;color:var(--muted);margin-bottom:20px">Top up your current plan any time</p>
+        <div class="addons-strip" id="addons-strip"></div>
+      </div>
+      <p style="text-align:center;margin-top:24px;font-size:13px;color:var(--muted)">✓ Pay via UPI, Net banking, Cards &nbsp;·&nbsp; ✓ GST invoice &nbsp;·&nbsp; ✓ 7-day refund</p>
     </div>
   </section>
 
@@ -1658,6 +1668,7 @@ select{padding:8px 12px;border:1.5px solid var(--line);border-radius:6px;backgro
         </div>
         <div class="admin-nav-item" onclick="adminNav(this,'adm-blog')"><span class="ico">📝</span>Blog &amp; SEO</div>
         <div class="admin-nav-item" onclick="adminNav(this,'adm-reviews')"><span class="ico">⭐</span>Reviews</div>
+        <div class="admin-nav-item" onclick="adminNav(this,'adm-pricing')"><span class="ico">💰</span>Pricing Plans</div>
         <div class="admin-nav-item" onclick="adminNav(this,'adm-settings')"><span class="ico">🔧</span>Settings</div>
       </nav>
     </aside>
@@ -1874,6 +1885,23 @@ select{padding:8px 12px;border:1.5px solid var(--line);border-radius:6px;backgro
         </div>
         <div class="rev-tab active" id="reviews-pending-tab" style="margin-top:12px"></div>
         <div class="rev-tab" id="reviews-published-tab" style="margin-top:12px"></div>
+      </div>
+
+      <!-- PRICING PLANS -->
+      <div id="adm-pricing" class="admin-view">
+        <div class="page-title">Pricing Plans</div>
+        <div class="page-sub">All prices are live — changes reflect on the landing page immediately</div>
+
+        <!-- Tab switcher -->
+        <div style="display:flex;gap:8px;margin-bottom:20px;flex-wrap:wrap">
+          <button class="seg-btn active" id="adm-ptab-fresher" onclick="adminPricingTab('fresher')">🎓 Fresher Plans</button>
+          <button class="seg-btn" id="adm-ptab-experienced" onclick="adminPricingTab('experienced')">💼 Experienced Plans</button>
+          <button class="seg-btn" id="adm-ptab-addons" onclick="adminPricingTab('addons')">➕ Add-ons</button>
+          <button class="seg-btn" id="adm-ptab-exit" onclick="adminPricingTab('exit')">🎁 Exit Offer</button>
+        </div>
+
+        <!-- Plan editor — rendered by JS -->
+        <div id="adm-pricing-editor"></div>
       </div>
 
       <!-- SETTINGS -->
@@ -2134,11 +2162,58 @@ const PROOFS = [
 ];
 
 // ========== ADMIN PRICING CONFIG (managed from admin dashboard) ==========
-const PRICING_CONFIG = {
-  exitOfferPrice: 149,
-  exitOrigPrice: 199,
-  exitCoupon: 'COMEBACK25',
-  exitMsg: 'Get our most popular Fresher plan at a special price — valid for the next 10 minutes only.'
+let PRICING_PACKAGES = {
+  exitOffer: {
+    price: 149,
+    origPrice: 199,
+    coupon: 'COMEBACK25',
+    msg: 'Get our most popular Fresher plan at a special price — valid for the next 10 minutes only.'
+  },
+  fresher: [
+    {
+      id:'f1', name:'Fresher Basic', tagline:'Perfect for your first job application',
+      price:299, origPrice:399, primaryResume:1, resumeCount:10, clCount:10,
+      validity:'60 days', popular:false, atsScans:10,
+      extra:['Naukri / LinkedIn Export','PDF Download','Email Support']
+    },
+    {
+      id:'f2', name:'Fresher Standard', tagline:'Apply to more jobs with more variations',
+      price:399, origPrice:549, primaryResume:1, resumeCount:20, clCount:20,
+      validity:'60 days', popular:true, atsScans:0,
+      extra:['Unlimited ATS Scans','Priority Support','Naukri / LinkedIn Export']
+    },
+    {
+      id:'f3', name:'Fresher Pro', tagline:'Maximum applications, maximum chances',
+      price:499, origPrice:699, primaryResume:1, resumeCount:30, clCount:30,
+      validity:'90 days', popular:false, atsScans:0,
+      extra:['Unlimited ATS Scans','7-Day Money-Back','Referral Programme Access']
+    }
+  ],
+  experienced: [
+    {
+      id:'e1', name:'Professional Basic', tagline:'For professionals targeting new opportunities',
+      price:399, origPrice:549, primaryResume:1, resumeCount:10, clCount:10,
+      validity:'60 days', popular:false, atsScans:10,
+      extra:['LinkedIn Profile Tips','Naukri Export','PDF Download']
+    },
+    {
+      id:'e2', name:'Professional Standard', tagline:'Most chosen by mid-level professionals',
+      price:499, origPrice:699, primaryResume:1, resumeCount:20, clCount:20,
+      validity:'60 days', popular:true, atsScans:0,
+      extra:['Unlimited ATS Scans','Priority Support','7-Day Money-Back']
+    },
+    {
+      id:'e3', name:'Professional Pro', tagline:'For senior professionals & career changers',
+      price:599, origPrice:849, primaryResume:1, resumeCount:30, clCount:30,
+      validity:'90 days', popular:false, atsScans:0,
+      extra:['Unlimited ATS Scans','1-on-1 Resume Review Call','Referral Programme + Lifetime Updates']
+    }
+  ],
+  addons: [
+    {id:'a1', name:'+10 Resumes + 10 Cover Letters', price:149},
+    {id:'a2', name:'+20 Resumes + 20 Cover Letters', price:249},
+    {id:'a3', name:'+30 Resumes + 30 Cover Letters', price:399}
+  ]
 };
 
 // ========== STATE ==========
@@ -2204,6 +2279,7 @@ function adminNav(el, viewId) {
   if (viewId === 'adm-mailer') buildMailer();
   if (viewId === 'adm-blog') buildBlog();
   if (viewId === 'adm-reviews') buildReviews();
+  if (viewId === 'adm-pricing') buildAdminPricing();
 }
 
 function toggleOps() {
@@ -2748,10 +2824,10 @@ function showExitPopup() {
   const origEl = document.getElementById('exit-orig-price');
   const msgEl = document.getElementById('exit-popup-msg');
   const couponEl = document.getElementById('exit-coupon-code');
-  if (offerEl) offerEl.textContent = '₹' + PRICING_CONFIG.exitOfferPrice;
-  if (origEl) origEl.textContent = '₹' + PRICING_CONFIG.exitOrigPrice;
-  if (msgEl) msgEl.textContent = PRICING_CONFIG.exitMsg;
-  if (couponEl) couponEl.textContent = PRICING_CONFIG.exitCoupon;
+  if (offerEl) offerEl.textContent = '₹' + PRICING_PACKAGES.exitOffer.price;
+  if (origEl) origEl.textContent = '₹' + PRICING_PACKAGES.exitOffer.origPrice;
+  if (msgEl) msgEl.textContent = PRICING_PACKAGES.exitOffer.msg;
+  if (couponEl) couponEl.textContent = PRICING_PACKAGES.exitOffer.coupon;
   exitCountdown = 600;
   clearInterval(exitTimerInterval);
   exitTimerInterval = setInterval(() => {
@@ -2997,6 +3073,87 @@ function showReviewTab(t) {
 
 function buildReviews() {
   buildAdminReviews();
+}
+
+// ========== ADMIN PRICING MANAGEMENT ==========
+let adminPricingTabActive = 'fresher';
+
+function buildAdminPricing() {
+  adminPricingTab('fresher');
+}
+
+function adminPricingTab(tab) {
+  adminPricingTabActive = tab;
+  ['fresher','experienced','addons','exit'].forEach(t => {
+    const b = document.getElementById('adm-ptab-' + t);
+    if (b) b.classList.toggle('active', t === tab);
+  });
+  renderAdminPricingEditor();
+}
+
+function renderAdminPricingEditor() {
+  const el = document.getElementById('adm-pricing-editor');
+  if (!el) return;
+  const tab = adminPricingTabActive;
+
+  if (tab === 'exit') {
+    const o = PRICING_PACKAGES.exitOffer;
+    el.innerHTML = `
+      <div class="card">
+        <h4 style="margin-bottom:16px">🎁 Exit Popup Offer</h4>
+        <div class="col-2">
+          <div class="form-group"><label>Offer Price (₹)</label><input type="number" value="${o.price}" onchange="PRICING_PACKAGES.exitOffer.price=+this.value" style="padding:8px;border:1.5px solid var(--line);border-radius:6px;width:100%"></div>
+          <div class="form-group"><label>Original Price (₹)</label><input type="number" value="${o.origPrice}" onchange="PRICING_PACKAGES.exitOffer.origPrice=+this.value" style="padding:8px;border:1.5px solid var(--line);border-radius:6px;width:100%"></div>
+          <div class="form-group"><label>Coupon Code</label><input type="text" value="${o.coupon}" onchange="PRICING_PACKAGES.exitOffer.coupon=this.value" style="padding:8px;border:1.5px solid var(--line);border-radius:6px;width:100%"></div>
+        </div>
+        <div class="form-group mt4"><label>Message</label><textarea style="width:100%;padding:8px;border:1.5px solid var(--line);border-radius:6px;min-height:60px" onchange="PRICING_PACKAGES.exitOffer.msg=this.value">${o.msg}</textarea></div>
+      </div>`;
+    return;
+  }
+
+  if (tab === 'addons') {
+    const rows = PRICING_PACKAGES.addons.map((a, i) => `
+      <div class="card" style="margin-bottom:12px">
+        <div class="row" style="gap:12px;align-items:flex-end;flex-wrap:wrap">
+          <div class="form-group" style="flex:2;min-width:200px"><label>Add-on Name</label><input type="text" value="${a.name}" onchange="PRICING_PACKAGES.addons[${i}].name=this.value;renderAddons()" style="padding:8px;border:1.5px solid var(--line);border-radius:6px;width:100%"></div>
+          <div class="form-group" style="flex:1;min-width:100px"><label>Price (₹)</label><input type="number" value="${a.price}" onchange="PRICING_PACKAGES.addons[${i}].price=+this.value;renderAddons()" style="padding:8px;border:1.5px solid var(--line);border-radius:6px;width:100%"></div>
+        </div>
+      </div>`).join('');
+    el.innerHTML = `<h4 style="margin-bottom:14px">Add-on Packages</h4>${rows}
+      <p class="text-muted" style="margin-top:8px">Changes apply to the landing page immediately.</p>`;
+    return;
+  }
+
+  const plans = PRICING_PACKAGES[tab] || [];
+  const label = tab === 'fresher' ? '🎓 Fresher' : '💼 Experienced';
+  el.innerHTML = `<h4 style="margin-bottom:16px">${label} Plans</h4>` +
+    plans.map((p, i) => `
+      <div class="card" style="margin-bottom:16px;border-left:4px solid ${p.popular ? 'var(--blue)' : 'var(--line)'}">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
+          <h4 style="font-size:15px">${p.name} ${p.popular ? '<span class="badge badge-blue" style="margin-left:6px">★ Popular</span>' : ''}</h4>
+          <button class="btn btn-outline btn-sm" onclick="togglePlanPopular('${tab}',${i})">${p.popular ? 'Unmark Popular' : 'Mark as Popular'}</button>
+        </div>
+        <div class="col-2" style="gap:12px">
+          <div class="form-group"><label>Plan Name</label><input type="text" value="${p.name}" onchange="PRICING_PACKAGES['${tab}'][${i}].name=this.value;renderPricingCards()" style="padding:8px;border:1.5px solid var(--line);border-radius:6px;width:100%"></div>
+          <div class="form-group"><label>Tagline</label><input type="text" value="${p.tagline}" onchange="PRICING_PACKAGES['${tab}'][${i}].tagline=this.value;renderPricingCards()" style="padding:8px;border:1.5px solid var(--line);border-radius:6px;width:100%"></div>
+          <div class="form-group"><label>Price (₹)</label><input type="number" value="${p.price}" onchange="PRICING_PACKAGES['${tab}'][${i}].price=+this.value;renderPricingCards()" style="padding:8px;border:1.5px solid var(--line);border-radius:6px;width:100%"></div>
+          <div class="form-group"><label>Original Price (₹)</label><input type="number" value="${p.origPrice}" onchange="PRICING_PACKAGES['${tab}'][${i}].origPrice=+this.value;renderPricingCards()" style="padding:8px;border:1.5px solid var(--line);border-radius:6px;width:100%"></div>
+          <div class="form-group"><label>JD Resume Variants</label><input type="number" value="${p.resumeCount}" onchange="PRICING_PACKAGES['${tab}'][${i}].resumeCount=+this.value;renderPricingCards()" style="padding:8px;border:1.5px solid var(--line);border-radius:6px;width:100%"></div>
+          <div class="form-group"><label>Cover Letters</label><input type="number" value="${p.clCount}" onchange="PRICING_PACKAGES['${tab}'][${i}].clCount=+this.value;renderPricingCards()" style="padding:8px;border:1.5px solid var(--line);border-radius:6px;width:100%"></div>
+          <div class="form-group"><label>ATS Scans (0 = Unlimited)</label><input type="number" value="${p.atsScans}" onchange="PRICING_PACKAGES['${tab}'][${i}].atsScans=+this.value;renderPricingCards()" style="padding:8px;border:1.5px solid var(--line);border-radius:6px;width:100%"></div>
+          <div class="form-group"><label>Validity</label><input type="text" value="${p.validity}" onchange="PRICING_PACKAGES['${tab}'][${i}].validity=this.value;renderPricingCards()" style="padding:8px;border:1.5px solid var(--line);border-radius:6px;width:100%"></div>
+        </div>
+        <div class="form-group mt4"><label>Extra Features (one per line)</label>
+          <textarea style="width:100%;padding:8px;border:1.5px solid var(--line);border-radius:6px;min-height:70px;font-size:12px" onchange="PRICING_PACKAGES['${tab}'][${i}].extra=this.value.split('\\n').filter(Boolean);renderPricingCards()">${p.extra.join('\n')}</textarea>
+        </div>
+      </div>`).join('');
+}
+
+function togglePlanPopular(tab, idx) {
+  const plans = PRICING_PACKAGES[tab];
+  plans.forEach((p, i) => p.popular = (i === idx) ? !p.popular : false);
+  renderPricingCards();
+  renderAdminPricingEditor();
 }
 
 // ========== MAILER ==========
@@ -3280,6 +3437,76 @@ function initOfferSpots() {
   }, 28000);
 }
 
+// ========== PRICING SECTION RENDERER ==========
+let activePricingTab = 'fresher';
+
+function switchPricingTab(tab) {
+  activePricingTab = tab;
+  document.querySelectorAll('.pricing-tab-btn').forEach(b => b.classList.remove('active'));
+  const btn = document.getElementById('ptab-' + tab);
+  if (btn) btn.classList.add('active');
+  renderPricingCards();
+}
+
+function renderPricingCards() {
+  const grid = document.getElementById('pricing-cards-grid');
+  if (!grid) return;
+  const plans = PRICING_PACKAGES[activePricingTab] || [];
+  grid.innerHTML = '';
+  plans.forEach(p => {
+    const isPopular = p.popular;
+    const atsLine = p.atsScans === 0
+      ? 'Unlimited ATS Scans'
+      : `Free ATS Scanner (${p.atsScans} scans)`;
+    const card = document.createElement('div');
+    card.className = 'pricing-card2' + (isPopular ? ' popular' : '');
+    card.innerHTML = `
+      ${isPopular ? '<div class="pricing-pop-badge">⭐ Most Popular</div>' : ''}
+      <div class="pricing-card2-title">${p.name}</div>
+      <div class="pricing-card2-tagline">${p.tagline}</div>
+      <div class="pricing-card2-price"><sup>₹</sup>${p.price}</div>
+      <div class="pricing-card2-period">${p.validity} &nbsp;·&nbsp; <s style="color:var(--muted);font-size:12px">₹${p.origPrice}</s></div>
+      <!-- Primary resume box -->
+      <div class="plan-primary-box">
+        <span class="crown">👑</span>
+        <div class="plan-primary-box-text">
+          <strong>1 Premium Primary Resume</strong>
+          ATS-optimised, hand-crafted for your target role — your best foot forward
+        </div>
+      </div>
+      <!-- Counts -->
+      <div class="plan-counts">
+        <div class="plan-count-chip"><div class="n">${p.resumeCount}</div><div class="l">JD Resumes</div></div>
+        <div class="plan-count-chip"><div class="n">${p.clCount}</div><div class="l">Cover Letters</div></div>
+        <div class="plan-count-chip"><div class="n">${p.atsScans === 0 ? '∞' : p.atsScans}</div><div class="l">ATS Scans</div></div>
+      </div>
+      <!-- Features -->
+      <ul class="pricing-card2-features">
+        ${p.extra.map(f => `<li>${f}</li>`).join('')}
+      </ul>
+      <button class="${isPopular ? 'btn btn-primary' : 'btn btn-outline'}" style="width:100%;padding:12px;font-size:14px;${isPopular ? 'background:var(--blue);' : ''}" onclick="switchTab('ws')">
+        Get ${p.name.split(' ').slice(-1)[0]} →
+      </button>
+    `;
+    grid.appendChild(card);
+  });
+}
+
+function renderAddons() {
+  const strip = document.getElementById('addons-strip');
+  if (!strip) return;
+  strip.innerHTML = '';
+  (PRICING_PACKAGES.addons || []).forEach(a => {
+    strip.innerHTML += `
+      <div class="addon-card" onclick="switchTab('ws')">
+        <div class="addon-card-plus">＋</div>
+        <div class="addon-card-name">${a.name}</div>
+        <div class="addon-card-price">₹${a.price}</div>
+        <div style="font-size:11px;color:var(--muted);margin-top:6px">Add to any plan</div>
+      </div>`;
+  });
+}
+
 // ========== INIT ==========
 document.addEventListener('DOMContentLoaded', function() {
   switchTab('lp');
@@ -3300,6 +3527,8 @@ document.addEventListener('DOMContentLoaded', function() {
   setInterval(updatePricingCountdown, 1000);
   initStickyCTA();
   initOfferSpots();
+  renderPricingCards();
+  renderAddons();
 });
 </script>
 </body>
