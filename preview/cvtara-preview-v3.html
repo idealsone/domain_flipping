@@ -1,11 +1,3 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<title>CVTara — Resume Builder for India</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <!doctype html><html lang="en"><head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
@@ -311,91 +303,6 @@ input:checked + .toggle-slider::before{transform:translateX(16px)}
 .tag-pro{background:#eff6ff;color:#1d4ed8;padding:2px 7px;border-radius:6px;font-size:10px;font-weight:600}
 @media(max-width:900px){.hero-grid,.scan-grid,.kpi-grid,.reviews-grid{grid-template-columns:1fr}.ws-sidebar,.admin-sidebar{width:52px}.ws-nav-item span:last-child,.admin-nav-item span:last-child,.ws-sidebar-top .brand,.admin-sidebar-top .brand{display:none}.quick-grid{grid-template-columns:repeat(3,1fr)}.pipeline{grid-template-columns:1fr 1fr}.footer-grid{grid-template-columns:1fr 1fr}}
 </style>
-<style>
-body{font-family:'Inter',sans-serif;margin:0;padding:0}
-.tab-bar{position:sticky;top:0;z-index:200;background:#fff;border-bottom:2px solid var(--line);display:flex;align-items:center;gap:4px;padding:0 24px}
-.tab-btn{padding:14px 20px;font-size:13px;font-weight:600;border:none;background:none;cursor:pointer;color:var(--muted);border-bottom:3px solid transparent;transition:all .2s}
-.tab-btn.active{color:var(--indigo);border-bottom-color:var(--indigo)}
-.tpanel{display:none}
-#ticker-bar{background:var(--indigo);color:#fff;padding:7px 16px;font-size:12px;display:flex;align-items:center;gap:8px}
-#proof-ticker{transition:opacity .4s}
-/* ATS ring */
-.ats-ring-wrap{position:relative;width:120px;height:120px}
-.ats-ring-wrap svg{width:120px;height:120px;transform:rotate(-90deg)}
-.ring-bg{fill:none;stroke:#e8ecf0;stroke-width:10}
-.ring-fg{fill:none;stroke:var(--indigo);stroke-width:10;stroke-linecap:round;stroke-dasharray:0 283;transition:stroke-dasharray 1.2s ease}
-.ring-label{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center}
-/* ws ring */
-.ws-ring-wrap{position:relative;width:100px;height:100px}
-.ws-ring-wrap svg{width:100px;height:100px;transform:rotate(-90deg)}
-/* live panel */
-#live-panel{position:fixed;bottom:24px;right:24px;width:200px;background:#fff;border:1.5px solid var(--indigo);border-radius:14px;padding:12px;box-shadow:0 8px 32px rgba(102,126,234,.18);z-index:1000;display:none}
-.lp-row{display:flex;justify-content:space-between;padding:3px 0;font-size:12px}
-/* admin shell */
-.admin-shell{display:grid;grid-template-columns:220px 1fr;min-height:calc(100vh - 48px)}
-.admin-sidebar{background:#fff;border-right:1px solid var(--line);padding:0}
-.admin-sidebar-top{padding:16px;border-bottom:1px solid var(--line)}
-.admin-sidebar .brand{font-size:18px;font-weight:800;color:var(--indigo)}
-.admin-sidebar .brand small{display:block;font-size:10px;font-weight:500;color:var(--muted)}
-.admin-nav{padding:8px 0}
-.admin-nav-divider{padding:10px 16px 4px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--muted)}
-.admin-nav-item{padding:10px 16px;cursor:pointer;font-size:13px;font-weight:500;display:flex;align-items:center;gap:8px;border-left:3px solid transparent;transition:all .15s;color:var(--ink)}
-.admin-nav-item:hover{background:var(--soft)}
-.admin-nav-item.active{color:var(--indigo);background:#eff6ff;border-left-color:var(--indigo)}
-.ops-sub{padding-left:12px;background:var(--soft)}
-.ops-sub .admin-nav-item{font-size:12px;padding:8px 16px}
-.admin-main{background:var(--bg);overflow-y:auto}
-.admin-view{display:none;padding:24px}
-.admin-view.active{display:block}
-.admin-topbar{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:24px}
-.admin-topbar h1{font-size:22px;font-weight:800;margin:4px 0 0;color:var(--ink)}
-.breadcrumb{font-size:11px;color:var(--muted)}
-.kpi-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:12px;margin-bottom:24px}
-.kpi-card{background:#fff;border:1px solid var(--line);border-radius:12px;padding:16px}
-.kpi-card.accent-green{border-left:4px solid var(--success)}
-.kpi-card.accent-blue{border-left:4px solid var(--blue)}
-.kpi-card.accent-orange{border-left:4px solid var(--warn)}
-.kpi-card.accent-violet{border-left:4px solid var(--indigo)}
-.kpi-label{font-size:11px;color:var(--muted);margin-bottom:4px}
-.kpi-val{font-size:22px;font-weight:800;color:var(--ink)}
-.kpi-sub{font-size:11px;color:var(--muted);margin-top:2px}
-.admin-section{background:#fff;border:1px solid var(--line);border-radius:14px;padding:20px}
-.chart-wrap{background:#fff;border:1px solid var(--line);border-radius:12px;padding:16px}
-.chart-wrap h4{font-size:13px;font-weight:700;margin:0 0 12px;color:var(--ink)}
-.admin-search{display:flex;gap:8px;margin-bottom:14px}
-.admin-search input{flex:1;padding:9px 12px;border:1.5px solid var(--line);border-radius:10px;font:inherit;font-size:13px}
-.admin-search input:focus{outline:none;border-color:var(--indigo)}
-.biz-tab{display:none}
-.biz-tab.active{display:block}
-.table-wrap{overflow-x:auto}
-.table-wrap table,.admin-section table{width:100%;border-collapse:collapse;font-size:13px}
-.table-wrap th,.admin-section th{text-align:left;padding:10px 12px;background:var(--soft);color:var(--muted);font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.04em}
-.table-wrap td,.admin-section td{padding:10px 12px;border-bottom:1px solid var(--line);vertical-align:middle}
-.review-card{background:var(--soft);border-radius:10px;padding:14px;margin-bottom:10px}
-.review-header{display:flex;align-items:center;gap:8px;margin-bottom:6px;font-size:13px}
-/* status pills */
-.status-pill{display:inline-flex;align-items:center;padding:2px 8px;border-radius:20px;font-size:11px;font-weight:600}
-.st-paid{background:#d1fae5;color:#059669}
-.st-started{background:#fef3c7;color:#d97706}
-.st-paused{background:#fee2e2;color:#dc2626}
-/* toggle */
-.toggle{position:relative;display:inline-block;width:36px;height:20px}
-.toggle input{opacity:0;width:0;height:0}
-.toggle-slider{position:absolute;cursor:pointer;inset:0;background:#d1d5db;border-radius:20px;transition:.3s}
-.toggle-slider:before{position:absolute;content:"";height:14px;width:14px;left:3px;bottom:3px;background:#fff;border-radius:50%;transition:.3s}
-.toggle input:checked+.toggle-slider{background:var(--success)}
-.toggle input:checked+.toggle-slider:before{transform:translateX(16px)}
-</style>
-</head>
-<body>
-<!-- Tab bar -->
-<div class="tab-bar">
-  <span style="font-size:16px;font-weight:800;color:var(--indigo);margin-right:12px">CVTara</span>
-  <button class="tab-btn active" data-tab="landing" onclick="showTab('landing')">🌐 Landing Page</button>
-  <button class="tab-btn" data-tab="workspace" onclick="showTab('workspace')">🧑‍💼 Customer Workspace</button>
-  <button class="tab-btn" data-tab="admin" onclick="showTab('admin')">⚙️ Admin Dashboard</button>
-  <span style="margin-left:auto;font-size:11px;color:var(--muted)">v3.2.0-RC1 · cvtara.com</span>
-</div>
 </head><body>
 <div id="topbar">
   <span class="brand">CVTara v3</span>
@@ -1909,5 +1816,129 @@ document.addEventListener('DOMContentLoaded',()=>{
   startTicker();
   document.getElementById('adm-overview').classList.add('active');
 });
+
+// ── Aliases & fixes ───────────────────────────────────────────────────────
+// HTML calls switchTab, JS defined showTab
+function switchTab(t){ showTab(t); }
+
+// HTML calls builderStep(±1), JS defined builderStepDir
+function builderStep(d){ builderStepDir(d); }
+
+// openBuilder: show builder from resume list edit button
+function openBuilder(name){
+  const ti=document.getElementById('builder-title');
+  if(ti) ti.textContent=name||'Build Resume';
+  const chooser=document.getElementById('ws-tpl-chooser');
+  const builder=document.getElementById('ws-builder');
+  if(chooser) chooser.style.display='none';
+  if(builder) builder.style.display='block';
+  goBuilderStep(0);
+}
+// closeBuilder: back to resume list
+function closeBuilder(){
+  const chooser=document.getElementById('ws-tpl-chooser');
+  const builder=document.getElementById('ws-builder');
+  if(chooser) chooser.style.display='block';
+  if(builder) builder.style.display='none';
+}
+// wsAtsStep: alias for HTML calls
+function wsAtsStep(n){ atsWsStep(n); }
+function wsAtsContinue(){ atsWsStep(atsWsStepN+1); }
+
+// moveApp: HTML calls moveApp(this,'applied'|'interview')
+function moveApp(btn,stageName){
+  const card=btn.closest('.pipeline-item');
+  if(!card) return;
+  const colMap={applied:'app-applied',interview:'app-interview',offer:'app-offer'};
+  const colId=colMap[stageName];
+  if(!colId) return;
+  const col=document.getElementById(colId);
+  if(!col) return;
+  // remove the move button from the card
+  btn.remove();
+  col.appendChild(card);
+}
+
+// ── Ring animation fix (r=36, circ=226.2) ────────────────────────────────
+// Override runScan to use correct IDs and circumference
+const _origRunScan=runScan;
+runScan=function(){
+  const scanBtn=document.getElementById('ats-scan-btn');
+  if(scanBtn){scanBtn.textContent='Analyzing…';scanBtn.disabled=true;}
+  const resume=_rMode==='paste'?(document.getElementById('ats-resume-text')||{value:''}).value:'uploaded';
+  const job=_jMode==='url'?(document.getElementById('ats-jd-url-input')||{value:''}).value
+                          :(document.getElementById('ats-jd-text')||{value:''}).value;
+  // also handle the original landing page textarea IDs
+  const r2=(document.getElementById('resume-ta')||{}).value||resume;
+  const j2=(document.getElementById('jd-ta')||{}).value||job;
+  setTimeout(()=>{
+    const score=analyzeResume(r2,j2);
+    const circ=226.2;
+    const offset=circ*(1-score/100);
+    const ring=document.getElementById('ring-fg');
+    if(ring){ring.style.strokeDashoffset=offset;ring.style.strokeDasharray=circ;}
+    const rn=document.getElementById('ring-num');
+    if(rn) rn.textContent=score+'%';
+    const res=document.getElementById('scan-result')||document.getElementById('ats-result');
+    if(res) res.style.display='block';
+    // populate tips
+    const tl=document.getElementById('ats-tips-list');
+    if(tl) tl.innerHTML=['Add 3–5 more keywords from the JD','Use bullet points for experience','Include measurable achievements'].map(t=>`<li>${t}</li>`).join('');
+    // headline/sub
+    const hl=document.getElementById('result-headline');
+    if(hl) hl.textContent=score>=55?'Good match — a few gaps to close':'Needs improvement — key keywords missing';
+    const sub=document.getElementById('result-sub');
+    if(sub) sub.textContent=`Score: ${score}/100. Free preview capped — sign up to see your full score.`;
+    if(scanBtn){scanBtn.textContent='Analyse Resume';scanBtn.disabled=false;}
+  },1400);
+};
+// Override runWsScan for workspace ring
+const _origRunWsScan=runWsScan;
+runWsScan=function(){
+  const btn=document.getElementById('ws-scan-btn');
+  if(btn){btn.textContent='Scanning…';btn.disabled=true;}
+  const r=(document.getElementById('ws-resume-ta')||{}).value||'sample resume';
+  const j=(document.getElementById('ws-jd-ta')||{}).value||'job description';
+  setTimeout(()=>{
+    const score=analyzeResume(r,j);
+    const circ=226.2;
+    const offset=circ*(1-score/100);
+    const ring=document.getElementById('ws-ring-fg');
+    if(ring){ring.style.strokeDashoffset=offset;ring.style.strokeDasharray=circ;}
+    const num=document.getElementById('ws-ring-num');
+    if(num) num.textContent=score+'%';
+    const hl=document.getElementById('ws-result-headline');
+    if(hl) hl.textContent=score>=55?'Good match — review the gaps':'Needs improvement — add missing keywords';
+    const res=document.getElementById('ws-scan-result');
+    if(res) res.style.display='block';
+    atsWsStep(2);
+    if(btn){btn.textContent='Analyse Match';btn.disabled=false;}
+  },1400);
+};
+
+// Landing page scan button (uses original IDs from old artifact)
+(function patchLandingScan(){
+  const oldBtn=document.getElementById('scan-btn');
+  if(oldBtn) oldBtn.onclick=function(){
+    const r=(document.getElementById('resume-ta')||{}).value||'';
+    const j=(document.getElementById('jd-ta')||{}).value||'';
+    if(!r.trim()&&!j.trim()){alert('Please paste your resume and job description first.');return;}
+    const circ=226.2;
+    const score=analyzeResume(r,j);
+    const offset=circ*(1-score/100);
+    setTimeout(()=>{
+      const ring=document.getElementById('ring-fg');
+      if(ring){ring.style.strokeDashoffset=offset;ring.style.strokeDasharray=circ;}
+      const num=document.getElementById('ring-num');
+      if(num) num.textContent=score;
+      const hl=document.getElementById('result-headline');
+      if(hl) hl.textContent=score>=55?`Strong match at ${score}%`:`${score}% — missing keywords detected`;
+      const sub=document.getElementById('result-sub');
+      if(sub) sub.textContent='Your free ATS score preview. Sign up for full keyword breakdown.';
+      const res=document.getElementById('scan-result');
+      if(res) res.style.display='block';
+    },1400);
+  };
+})();
 </script>
 </body></html>
