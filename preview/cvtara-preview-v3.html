@@ -1,0 +1,1913 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>CVTara — Resume Builder for India</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<!doctype html><html lang="en"><head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>CVTara — Preview v3</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap">
+<style>
+:root{--bg:#f8fafc;--paper:#fff;--ink:#0f172a;--ink2:#1e293b;--muted:#475569;--line:#e2e8f0;--soft:#f1f5f9;--blue:#1557d2;--blue2:#3b6ef0;--indigo:#6366f1;--mint:#72f2c6;--lime:#c6f17b;--shadow:0 20px 60px rgba(15,23,42,.10);--r:16px;--primary:#1557d2;--success:#22c55e;--warn:#f59e0b;--danger:#ef4444}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Inter',system-ui,sans-serif;font-size:15px;line-height:1.6;background:var(--bg);color:var(--ink);-webkit-font-smoothing:antialiased}
+a{text-decoration:none;color:inherit}button{cursor:pointer;font:inherit}
+@media(prefers-color-scheme:dark){:root:not([data-theme=light]){--bg:#0f1117;--paper:#1a1f2e;--ink:#f1f5f9;--ink2:#cbd5e1;--muted:#94a3b8;--line:#2d3748;--soft:#1e293b;color-scheme:dark}}
+/* TOP TABS */
+#topbar{background:var(--ink2);display:flex;align-items:center;gap:4px;padding:8px 16px;position:sticky;top:0;z-index:300}
+#topbar .brand{color:#94a3b8;font-size:12px;font-weight:700;margin-right:8px;flex-shrink:0}
+.ttab{padding:6px 14px;border-radius:8px;border:none;background:transparent;color:#94a3b8;font-size:13px;font-weight:600}
+.ttab.on{background:#2d3748;color:#fff}
+.tpanel{display:none}.tpanel.on{display:block}
+/* Social Proof Ticker */
+#ticker-bar{background:linear-gradient(90deg,#1e3a5f,#1557d2);color:#bfdbfe;font-size:13px;font-weight:600;text-align:center;padding:8px 16px;min-height:36px;display:flex;align-items:center;justify-content:center}
+#proof-ticker{transition:opacity .3s}
+/* LANDING */
+.lp-header{background:rgba(255,255,255,.92);backdrop-filter:blur(18px);border-bottom:1px solid var(--line);position:sticky;top:45px;z-index:50}
+.lp-nav{display:flex;align-items:center;gap:16px;max-width:1180px;margin:0 auto;padding:0 20px;min-height:68px}
+.lp-brand{font-size:18px;font-weight:900;color:var(--blue);letter-spacing:-.03em;display:flex;align-items:center;gap:8px;flex-shrink:0}
+.lp-bmark{width:30px;height:30px;border-radius:8px;background:linear-gradient(135deg,#1557d2,#4f46e5);display:flex;align-items:center;justify-content:center;color:#fff;font-size:13px;font-weight:900}
+.lp-links{display:flex;gap:2px;margin:0 auto}
+.lp-links a{padding:6px 12px;border-radius:8px;color:var(--muted);font-size:14px;font-weight:600}
+.lp-links a:hover{color:var(--ink);background:var(--soft)}
+.nav-btns{display:flex;gap:8px}
+.btn{display:inline-flex;align-items:center;gap:6px;min-height:38px;padding:0 16px;border-radius:10px;border:1px solid transparent;font:inherit;font-size:13px;font-weight:700;transition:.15s}
+.btn-primary{background:linear-gradient(135deg,#1557d2,#4f46e5);color:#fff;border:none}
+.btn-ghost{background:transparent;color:var(--muted);border-color:var(--line)}
+.btn-outline{background:transparent;color:var(--ink);border:1.5px solid var(--line)}
+.btn-big{min-height:50px;padding:0 26px;font-size:15px;border-radius:12px}
+.btn:hover{opacity:.9;transform:translateY(-1px)}
+/* Hero */
+.lp-hero{background:radial-gradient(circle at 80% 5%,rgba(114,242,198,.25),transparent 28%),radial-gradient(circle at 10% 0,rgba(59,110,240,.16),transparent 30%),#fff;border-bottom:1px solid var(--line);position:relative;overflow:hidden}
+.lp-hero::before{content:'';position:absolute;inset:0;background-image:linear-gradient(rgba(15,23,42,.04) 1px,transparent 1px),linear-gradient(90deg,rgba(15,23,42,.04) 1px,transparent 1px);background-size:42px 42px;mask-image:linear-gradient(#000,transparent 90%)}
+.hero-grid{position:relative;display:grid;grid-template-columns:1.1fr .9fr;gap:56px;align-items:center;max-width:1180px;margin:0 auto;padding:72px 20px 60px}
+.lp-kicker{display:inline-flex;align-items:center;gap:8px;margin-bottom:14px;color:var(--blue);font-size:11px;font-weight:800;letter-spacing:.14em;text-transform:uppercase}
+.lp-kicker::before{content:'';width:16px;height:2px;background:currentColor}
+.hero-h1{font-size:clamp(2.2rem,4.5vw,3.6rem);line-height:1.06;letter-spacing:-.055em;margin-bottom:16px;max-width:560px}
+.hero-h1 em{font-style:normal;color:var(--blue)}
+.hero-lead{font-size:17px;color:var(--muted);max-width:500px;margin-bottom:18px}
+.hero-answer{max-width:500px;padding:13px 16px;margin-bottom:22px;border-left:4px solid var(--blue);border-radius:0 12px 12px 0;background:var(--soft);color:var(--ink2);font-size:14px}
+.hero-cta{display:flex;flex-wrap:wrap;gap:10px;margin-bottom:14px}
+.trust-row{display:flex;flex-wrap:wrap;gap:12px;color:var(--muted);font-size:12px;font-weight:600}
+.trust-row span::before{content:'✓ ';color:#147d60;font-weight:800}
+.lp-doc{border:1px solid var(--line);border-radius:20px;padding:14px;background:linear-gradient(180deg,#eef2f7,#f1f5f9);box-shadow:var(--shadow);position:relative}
+.doc-bar{display:flex;justify-content:space-between;margin-bottom:10px;color:var(--muted);font-size:11px;font-weight:700}
+.live-dot{width:7px;height:7px;background:#22c55e;border-radius:50%;display:inline-block;margin-right:4px}
+.doc-sheet{background:#fff;color:#0f172a;border:1px solid #dbe3ee;border-radius:6px;padding:20px 18px 14px;box-shadow:0 8px 24px rgba(15,23,42,.07);font-size:11.5px;line-height:1.5}
+.doc-sheet header{padding-left:10px;border-left:3px solid #1557d2}
+.doc-sheet header strong{display:block;font-size:16px;letter-spacing:.03em}
+.doc-sheet header span{color:#1557d2;font-weight:700;font-size:10px}
+.doc-sheet .dmeta{padding:7px 0 5px;border-bottom:1px solid #e2e8f0;color:#475569;font-size:10px}
+.doc-sheet h3{margin:10px 0 4px;color:#1557d2;font-size:9.5px;letter-spacing:.14em;text-transform:uppercase}
+.doc-sheet ul{margin:0;padding-left:13px;color:#334155}
+.doc-sheet ul li{margin-bottom:3px;font-size:10.5px}
+.score-badge{position:absolute;right:-14px;bottom:18px;width:110px;padding:12px;border:1px solid var(--line);border-radius:14px;background:#0f172a;color:#e2e8f0;box-shadow:var(--shadow);text-align:center}
+.score-badge b{display:block;font-size:28px;letter-spacing:-.04em;color:#72f2c6;line-height:1.1}
+.score-badge small{color:#94a3b8;font-size:10px}
+/* Stats band */
+.stats-band{background:var(--paper);border-bottom:1px solid var(--line)}
+.stats-inner{display:flex;justify-content:space-around;max-width:1100px;margin:0 auto;padding:32px 20px}
+.stat-item{text-align:center}
+.stat-item b{display:block;font-size:28px;font-weight:900;letter-spacing:-.04em;color:var(--blue)}
+.stat-item small{color:var(--muted);font-size:13px;font-weight:600}
+/* Section headings */
+.section{max-width:1180px;margin:0 auto;padding:64px 20px}
+.section-hd{text-align:center;margin-bottom:48px}
+.section-hd h2{font-size:clamp(1.9rem,3.5vw,2.8rem);letter-spacing:-.045em;margin-bottom:10px}
+.section-hd p{color:var(--muted);font-size:16px;max-width:540px;margin:0 auto}
+/* ATS Scan tool */
+.scan-box{background:var(--paper);border:1px solid var(--line);border-radius:20px;overflow:hidden;box-shadow:var(--shadow)}
+.scan-head{background:linear-gradient(135deg,#1557d2,#4f46e5);padding:20px 24px}
+.scan-head h3{color:#fff;font-size:18px;font-weight:800;margin-bottom:4px}
+.scan-head p{color:#c7d2fe;font-size:13px}
+.scan-body{padding:24px}
+.scan-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px}
+.scan-grid textarea{width:100%;padding:14px;border:1.5px solid var(--line);border-radius:12px;font:inherit;font-size:13px;resize:vertical;background:var(--soft);color:var(--ink);min-height:140px}
+.scan-grid textarea:focus{outline:none;border-color:var(--blue)}
+.scan-grid label{display:block;font-size:12px;font-weight:700;color:var(--muted);margin-bottom:6px;text-transform:uppercase;letter-spacing:.08em}
+#scan-btn{width:100%;padding:14px;background:linear-gradient(135deg,#1557d2,#4f46e5);color:#fff;border:none;border-radius:12px;font-size:15px;font-weight:800}
+#scan-result{display:none;margin-top:20px;border-top:1px solid var(--line);padding-top:20px}
+.result-top{display:flex;align-items:center;gap:24px;margin-bottom:20px}
+.score-ring{width:90px;height:90px;flex-shrink:0}
+.score-ring svg{width:90px;height:90px}
+.ring-bg{fill:none;stroke:#e2e8f0;stroke-width:8}
+.ring-fg{fill:none;stroke-width:8;stroke-linecap:round;transition:stroke-dashoffset .8s ease}
+.score-num{font-size:22px;font-weight:900;text-anchor:middle;dominant-baseline:central}
+.result-meta h4{font-size:17px;font-weight:800;margin-bottom:4px}
+.result-meta p{color:var(--muted);font-size:13px}
+.result-chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+.chip-match{padding:3px 10px;border-radius:99px;background:#dcfce7;color:#14532d;font-size:11.5px;font-weight:600}
+.chip-miss{padding:3px 10px;border-radius:99px;background:#fef2f2;color:#991b1b;font-size:11.5px;font-weight:600}
+.chip-verb{padding:3px 10px;border-radius:99px;background:#eff6ff;color:#1d4ed8;font-size:11.5px;font-weight:600}
+.issue-card{display:flex;gap:12px;padding:12px 14px;border-radius:10px;margin-bottom:8px;border-left:4px solid}
+.issue-critical{background:#fef2f2;border-color:#ef4444}
+.issue-warning{background:#fffbeb;border-color:#f59e0b}
+.issue-title{font-size:13px;font-weight:700}
+.issue-desc{font-size:12px;color:var(--muted);margin-top:2px}
+/* Template gallery */
+.tpl-filters{display:flex;gap:8px;margin-bottom:24px;flex-wrap:wrap}
+.tpl-filter{padding:7px 16px;border-radius:99px;border:1.5px solid var(--line);background:var(--paper);color:var(--muted);font-size:13px;font-weight:600;cursor:pointer}
+.tpl-filter.on{background:var(--indigo);color:#fff;border-color:var(--indigo)}
+.tpl-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:14px}
+.tpl-card{border:1.5px solid var(--line);border-radius:14px;overflow:hidden;background:var(--paper);transition:box-shadow .2s,transform .2s;cursor:pointer}
+.tpl-card:hover{box-shadow:0 8px 30px rgba(15,23,42,.12);transform:translateY(-2px)}
+.tpl-thumb{height:120px;display:flex;align-items:center;justify-content:center;font-size:28px;position:relative}
+.tpl-badge{position:absolute;top:8px;right:8px;padding:2px 8px;border-radius:99px;font-size:10px;font-weight:700;background:#eff6ff;color:#1d4ed8}
+.tpl-info{padding:10px}
+.tpl-name{font-weight:700;font-size:12px;margin-bottom:2px;color:var(--ink)}
+.tpl-tag{font-size:10px;color:var(--muted)}
+/* Reviews */
+.reviews-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+.review-card{background:var(--paper);border:1px solid var(--line);border-radius:14px;padding:18px}
+.review-stars{color:#f59e0b;font-size:16px;margin-bottom:8px}
+.review-text{font-size:13px;color:var(--ink2);margin-bottom:10px}
+.review-author{font-size:12px;font-weight:700;color:var(--muted)}
+/* Comparison table */
+.compare-table{width:100%;border-collapse:collapse;font-size:13px;border-radius:12px;overflow:hidden;border:1px solid var(--line)}
+.compare-table th{background:var(--soft);padding:10px 14px;font-weight:700;font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em}
+.compare-table td{padding:11px 14px;border-bottom:1px solid var(--line)}
+.compare-table tr:last-child td{border:none}
+.compare-table .good{color:#15803d;font-weight:700}
+.compare-table .bad{color:#dc2626}
+/* FAQ */
+.faq-list{max-width:760px;margin:0 auto}
+.faq-item{border:1px solid var(--line);border-radius:12px;margin-bottom:8px;overflow:hidden}
+.faq-q{padding:16px 20px;font-weight:700;font-size:15px;cursor:pointer;display:flex;justify-content:space-between;align-items:center;background:var(--paper)}
+.faq-q::after{content:'+';font-size:18px;color:var(--muted)}
+.faq-q.open::after{content:'−'}
+.faq-a{display:none;padding:0 20px 16px;color:var(--muted);font-size:14px;background:var(--paper)}
+/* CL Preview */
+.cl-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:14px}
+/* Exit popup */
+.overlay{position:fixed;inset:0;background:rgba(15,23,42,.6);z-index:500;display:none;align-items:center;justify-content:center}
+.popup-box{background:#fff;border-radius:20px;padding:32px;max-width:400px;width:90%;text-align:center;box-shadow:0 32px 80px rgba(15,23,42,.2)}
+/* Footer */
+.lp-footer{background:var(--ink2);color:#94a3b8;padding:48px 20px 28px}
+.footer-grid{display:grid;grid-template-columns:2fr 1fr 1fr 1fr;gap:32px;max-width:1180px;margin:0 auto 40px}
+.footer-brand strong{color:#fff;font-size:16px;font-weight:900}
+.footer-brand p{font-size:13px;margin-top:8px}
+.footer-col h4{color:#e2e8f0;font-size:13px;font-weight:700;margin-bottom:10px}
+.footer-col a{display:block;font-size:13px;margin-bottom:6px;color:#64748b}
+.footer-col a:hover{color:#fff}
+.footer-bottom{text-align:center;border-top:1px solid #1e293b;padding-top:24px;font-size:12px}
+/* WORKSPACE */
+.ws-shell{display:flex;height:calc(100vh - 45px);overflow:hidden}
+.ws-sidebar{width:220px;background:#1e1b4b;flex-shrink:0;display:flex;flex-direction:column;overflow-y:auto}
+.ws-sidebar-top{padding:20px 16px 8px}
+.ws-sidebar-top .brand{color:#c7d2fe;font-size:15px;font-weight:900;letter-spacing:-.03em}
+.ws-sidebar-top .brand small{display:block;color:#818cf8;font-size:11px;font-weight:500;margin-top:1px}
+.ws-nav{padding:8px;flex:1}
+.ws-nav-item{display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:10px;color:#a5b4fc;font-size:13.5px;font-weight:600;cursor:pointer;margin-bottom:2px}
+.ws-nav-item:hover{background:#312e81;color:#e0e7ff}
+.ws-nav-item.active{background:#4338ca;color:#fff}
+.ws-sidebar-foot{padding:12px 8px}
+.ws-sidebar-foot .ws-nav-item{color:#6d7baf}
+.ws-main{flex:1;overflow-y:auto;background:#f8fafc}
+.ws-view{display:none;height:100%}
+.ws-view.active{display:block}
+.ws-hero{background:linear-gradient(120deg,#1e1b4b 0%,#312e81 55%,#4338ca 100%);padding:28px 32px 32px;color:#fff}
+.ws-hero h2{font-size:22px;font-weight:800;margin-bottom:4px}
+.ws-hero p{color:#c7d2fe;font-size:14px}
+.ws-hero-row{display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap}
+.ws-content{padding:24px 28px}
+.ws-grid-2{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:20px}
+.ws-grid-3{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:20px}
+.ws-card{background:#fff;border:1px solid var(--line);border-radius:14px;padding:18px}
+.ws-card-hd{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
+.ws-card-hd h3{font-size:14px;font-weight:700}
+.ws-label{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin-bottom:6px}
+.quick-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin-bottom:24px}
+.quick-card{background:#fff;border:1.5px solid var(--line);border-radius:12px;padding:16px 12px;text-align:center;cursor:pointer;transition:.15s}
+.quick-card:hover{box-shadow:0 4px 16px rgba(15,23,42,.08);transform:translateY(-2px);border-color:var(--indigo)}
+.quick-card .qicon{width:36px;height:36px;border-radius:10px;margin:0 auto 8px;display:flex;align-items:center;justify-content:center;font-size:16px}
+.quick-card p{font-size:12px;font-weight:700;color:var(--ink2)}
+.pipeline{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
+.pipeline-col{background:var(--soft);border-radius:12px;padding:12px}
+.pipeline-col-hd{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
+.pipeline-col-hd h4{font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--muted)}
+.pipeline-count{min-width:20px;height:20px;border-radius:99px;background:var(--indigo);color:#fff;font-size:10px;font-weight:700;display:flex;align-items:center;justify-content:center}
+.pipeline-item{background:#fff;border:1px solid var(--line);border-radius:10px;padding:10px 12px;margin-bottom:6px;cursor:pointer;font-size:13px}
+.pipeline-item:hover{border-color:var(--indigo)}
+.pipeline-item .pi-role{font-weight:600;margin-bottom:2px}
+.pipeline-item .pi-co{font-size:11.5px;color:var(--muted)}
+.pipeline-item .pi-date{font-size:10px;color:#94a3b8;margin-top:4px}
+.resume-list{display:flex;flex-direction:column;gap:10px}
+.resume-row{background:#fff;border:1px solid var(--line);border-radius:12px;padding:14px 16px;display:flex;align-items:center;gap:14px}
+.resume-icon{width:40px;height:48px;background:linear-gradient(135deg,#4338ca,#7c3aed);border-radius:6px;flex-shrink:0;display:flex;align-items:center;justify-content:center;color:#fff;font-size:11px;font-weight:700}
+.resume-info{flex:1}
+.resume-info h4{font-size:14px;font-weight:700;margin-bottom:2px}
+.resume-info p{font-size:12px;color:var(--muted)}
+.resume-actions{display:flex;gap:6px}
+.rs-btn{padding:6px 12px;border-radius:8px;font-size:12px;font-weight:600;border:1px solid var(--line);background:var(--paper);cursor:pointer}
+.rs-btn:hover{border-color:var(--indigo)}
+.rs-btn.primary{background:var(--indigo);color:#fff;border:none}
+.score-pill{padding:3px 10px;border-radius:99px;font-size:12px;font-weight:700}
+.score-green{background:#dcfce7;color:#14532d}
+.score-orange{background:#fef3c7;color:#92400e}
+.score-red{background:#fef2f2;color:#991b1b}
+/* Builder steps */
+.steps-nav{display:flex;gap:4px;margin-bottom:20px;background:var(--soft);border-radius:10px;padding:4px}
+.step-pill{flex:1;padding:8px 4px;text-align:center;border-radius:8px;font-size:11px;font-weight:700;color:var(--muted);cursor:pointer}
+.step-pill.active{background:#fff;color:var(--indigo);box-shadow:0 1px 4px rgba(0,0,0,.1)}
+.step-pill.done{color:var(--success)}
+.builder-pane{display:none}.builder-pane.active{display:block}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px}
+.form-group{display:flex;flex-direction:column;gap:4px}
+.form-group label{font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.06em}
+.form-control{width:100%;padding:10px 12px;border:1.5px solid var(--line);border-radius:10px;font:inherit;font-size:13px;background:var(--soft)}
+.form-control:focus{outline:none;border-color:var(--blue)}
+.skill-tag{display:inline-flex;align-items:center;gap:4px;padding:4px 10px;background:var(--indigo);color:#fff;border-radius:20px;font-size:12px;margin:2px}
+.color-dot{width:22px;height:22px;border-radius:50%;cursor:pointer;transition:.15s}
+/* ATS workspace steps */
+.ws-steps-nav{display:flex;gap:0;margin-bottom:20px}
+.ws-step-pill{flex:1;padding:12px;background:#fff;border:1px solid var(--line);border-right:none;text-align:center;font-size:12px;font-weight:700;color:var(--muted)}
+.ws-step-pill:first-child{border-radius:10px 0 0 10px}
+.ws-step-pill:last-child{border-right:1px solid var(--line);border-radius:0 10px 10px 0}
+.ws-step-pill.active{background:#4338ca;border-color:#4338ca;color:#fff}
+.ws-step-pill.done{background:#ede9fe;border-color:#a5b4fc;color:#5b21b6}
+.ats-pane{display:none}.ats-pane.active{display:block}
+/* ADMIN */
+.admin-shell{display:flex;height:calc(100vh - 45px);overflow:hidden}
+.admin-sidebar{width:224px;background:#0f172a;flex-shrink:0;display:flex;flex-direction:column;overflow-y:auto}
+.admin-sidebar-top{padding:20px 16px 10px;border-bottom:1px solid #1e293b}
+.admin-sidebar-top .brand{color:#f1f5f9;font-size:15px;font-weight:900}
+.admin-sidebar-top .brand small{color:#64748b;font-size:11px;display:block;margin-top:1px}
+.admin-nav{padding:8px;flex:1}
+.admin-nav-item{display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:10px;color:#64748b;font-size:13px;font-weight:600;cursor:pointer;margin-bottom:2px}
+.admin-nav-item:hover{background:#1e293b;color:#e2e8f0}
+.admin-nav-item.active{background:#1e3a5f;color:#60a5fa}
+.admin-nav-divider{padding:12px 12px 4px;font-size:10px;font-weight:700;letter-spacing:.1em;color:#334155;text-transform:uppercase}
+.ops-sub{max-height:0;overflow:hidden;transition:max-height .3s}
+.ops-sub.open{max-height:300px}
+.ops-sub .admin-nav-item{padding-left:28px;font-size:12px}
+.admin-main{flex:1;overflow-y:auto;background:#f8fafc}
+.admin-view{display:none}.admin-view.active{display:block}
+.admin-topbar{background:#fff;border-bottom:1px solid var(--line);padding:14px 28px;display:flex;align-items:center;justify-content:space-between;gap:12px}
+.admin-topbar h1{font-size:18px;font-weight:800}
+.admin-topbar .breadcrumb{font-size:12px;color:var(--muted)}
+.kpi-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;padding:24px 28px 0}
+.kpi-card{background:#fff;border:1px solid var(--line);border-radius:14px;padding:18px;position:relative;overflow:hidden}
+.kpi-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:var(--accent,#6366f1)}
+.kpi-card .kpi-label{font-size:12px;color:var(--muted);font-weight:600;margin-bottom:6px}
+.kpi-card .kpi-val{font-size:26px;font-weight:900;letter-spacing:-.04em}
+.kpi-card .kpi-sub{font-size:11px;color:var(--muted);margin-top:3px}
+.accent-green{--accent:#22c55e}.accent-blue{--accent:#3b82f6}.accent-orange{--accent:#f97316}.accent-violet{--accent:#8b5cf6}
+.admin-section{padding:24px 28px}
+.table-wrap{background:#fff;border:1px solid var(--line);border-radius:14px;overflow:hidden}
+table{width:100%;border-collapse:collapse;font-size:13px}
+th{background:#f8fafc;padding:10px 14px;text-align:left;font-weight:700;font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;border-bottom:1px solid var(--line)}
+td{padding:11px 14px;border-bottom:1px solid #f1f5f9;color:var(--ink2)}
+tr:last-child td{border-bottom:none}
+tr:hover td{background:#fafafa}
+.status-pill{padding:2px 9px;border-radius:99px;font-size:11px;font-weight:700}
+.st-paid{background:#dcfce7;color:#14532d}.st-started{background:#fef3c7;color:#92400e}.st-failed{background:#fef2f2;color:#991b1b}.st-pending{background:#f1f5f9;color:#475569}
+.admin-search{display:flex;gap:10px;margin-bottom:16px}
+.admin-search input{flex:1;padding:9px 14px;border:1.5px solid var(--line);border-radius:10px;font:inherit;font-size:13px}
+.admin-search input:focus{outline:none;border-color:var(--blue)}
+.chart-wrap{background:#fff;border:1px solid var(--line);border-radius:14px;padding:20px;margin-top:14px}
+.chart-wrap h4{font-size:14px;font-weight:700;margin-bottom:14px}
+.review-avatar{width:38px;height:38px;border-radius:50%;background:linear-gradient(135deg,#4338ca,#7c3aed);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:14px;flex-shrink:0}
+.review-body{flex:1}
+.review-name{font-weight:700;font-size:13.5px}
+.review-role{font-size:12px;color:var(--muted);margin-bottom:4px}
+.review-text{font-size:13px;color:var(--ink2)}
+.review-stars{color:#f59e0b;font-size:14px;margin-bottom:2px}
+.review-actions{display:flex;gap:6px;margin-top:8px}
+/* Toggle switch */
+.toggle{position:relative;display:inline-block;width:38px;height:22px}
+.toggle input{opacity:0;width:0;height:0}
+.toggle-slider{position:absolute;cursor:pointer;inset:0;background:#e2e8f0;border-radius:22px;transition:.3s}
+.toggle-slider::before{content:'';position:absolute;height:16px;width:16px;left:3px;bottom:3px;background:#fff;border-radius:50%;transition:.3s}
+input:checked + .toggle-slider{background:var(--indigo)}
+input:checked + .toggle-slider::before{transform:translateX(16px)}
+/* Live Panel */
+#live-panel{position:fixed;right:0;top:50%;transform:translateY(-50%);width:210px;background:#fff;border:1px solid var(--line);border-left:3px solid var(--indigo);border-radius:12px 0 0 12px;padding:14px;box-shadow:0 8px 32px rgba(0,0,0,.12);z-index:200;display:none;flex-direction:column;gap:8px}
+#live-panel.visible{display:flex!important}
+#live-panel.mini{width:40px;padding:10px 8px;overflow:hidden}
+#live-panel.mini .lp-content{display:none}
+.lp-row{display:flex;justify-content:space-between;align-items:center;font-size:12px}
+/* Biz tabs */
+.biz-tab{display:none}.biz-tab.active{display:block}
+/* Blog filters */
+.filter-pill{padding:5px 14px;border-radius:20px;border:1px solid var(--line);background:var(--soft);font-size:12px;cursor:pointer}
+.filter-pill.on{background:var(--indigo);color:#fff;border-color:var(--indigo)}
+/* Mailer */
+#mailer-list .mitem{display:flex;justify-content:space-between;align-items:center;padding:10px 16px;border-bottom:1px solid var(--line);cursor:pointer;font-size:13px}
+#mailer-list .mitem:hover{background:var(--soft)}
+#mailer-list .mitem.active{background:#eff6ff}
+/* Misc */
+.empty-state{text-align:center;padding:48px 20px;color:var(--muted)}
+.badge{padding:2px 8px;border-radius:99px;font-size:11px;font-weight:700;background:var(--soft);color:var(--muted)}
+.badge-info{background:#dbeafe;color:#1e40af}
+.badge-success{background:#dcfce7;color:#14532d}
+.badge-warn{background:#fef3c7;color:#92400e}
+.badge-danger{background:#fef2f2;color:#991b1b}
+.tag-free{background:#f1f5f9;color:#64748b;padding:2px 7px;border-radius:6px;font-size:10px;font-weight:600}
+.tag-pro{background:#eff6ff;color:#1d4ed8;padding:2px 7px;border-radius:6px;font-size:10px;font-weight:600}
+@media(max-width:900px){.hero-grid,.scan-grid,.kpi-grid,.reviews-grid{grid-template-columns:1fr}.ws-sidebar,.admin-sidebar{width:52px}.ws-nav-item span:last-child,.admin-nav-item span:last-child,.ws-sidebar-top .brand,.admin-sidebar-top .brand{display:none}.quick-grid{grid-template-columns:repeat(3,1fr)}.pipeline{grid-template-columns:1fr 1fr}.footer-grid{grid-template-columns:1fr 1fr}}
+</style>
+<style>
+body{font-family:'Inter',sans-serif;margin:0;padding:0}
+.tab-bar{position:sticky;top:0;z-index:200;background:#fff;border-bottom:2px solid var(--line);display:flex;align-items:center;gap:4px;padding:0 24px}
+.tab-btn{padding:14px 20px;font-size:13px;font-weight:600;border:none;background:none;cursor:pointer;color:var(--muted);border-bottom:3px solid transparent;transition:all .2s}
+.tab-btn.active{color:var(--indigo);border-bottom-color:var(--indigo)}
+.tpanel{display:none}
+#ticker-bar{background:var(--indigo);color:#fff;padding:7px 16px;font-size:12px;display:flex;align-items:center;gap:8px}
+#proof-ticker{transition:opacity .4s}
+/* ATS ring */
+.ats-ring-wrap{position:relative;width:120px;height:120px}
+.ats-ring-wrap svg{width:120px;height:120px;transform:rotate(-90deg)}
+.ring-bg{fill:none;stroke:#e8ecf0;stroke-width:10}
+.ring-fg{fill:none;stroke:var(--indigo);stroke-width:10;stroke-linecap:round;stroke-dasharray:0 283;transition:stroke-dasharray 1.2s ease}
+.ring-label{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center}
+/* ws ring */
+.ws-ring-wrap{position:relative;width:100px;height:100px}
+.ws-ring-wrap svg{width:100px;height:100px;transform:rotate(-90deg)}
+/* live panel */
+#live-panel{position:fixed;bottom:24px;right:24px;width:200px;background:#fff;border:1.5px solid var(--indigo);border-radius:14px;padding:12px;box-shadow:0 8px 32px rgba(102,126,234,.18);z-index:1000;display:none}
+.lp-row{display:flex;justify-content:space-between;padding:3px 0;font-size:12px}
+/* admin shell */
+.admin-shell{display:grid;grid-template-columns:220px 1fr;min-height:calc(100vh - 48px)}
+.admin-sidebar{background:#fff;border-right:1px solid var(--line);padding:0}
+.admin-sidebar-top{padding:16px;border-bottom:1px solid var(--line)}
+.admin-sidebar .brand{font-size:18px;font-weight:800;color:var(--indigo)}
+.admin-sidebar .brand small{display:block;font-size:10px;font-weight:500;color:var(--muted)}
+.admin-nav{padding:8px 0}
+.admin-nav-divider{padding:10px 16px 4px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--muted)}
+.admin-nav-item{padding:10px 16px;cursor:pointer;font-size:13px;font-weight:500;display:flex;align-items:center;gap:8px;border-left:3px solid transparent;transition:all .15s;color:var(--ink)}
+.admin-nav-item:hover{background:var(--soft)}
+.admin-nav-item.active{color:var(--indigo);background:#eff6ff;border-left-color:var(--indigo)}
+.ops-sub{padding-left:12px;background:var(--soft)}
+.ops-sub .admin-nav-item{font-size:12px;padding:8px 16px}
+.admin-main{background:var(--bg);overflow-y:auto}
+.admin-view{display:none;padding:24px}
+.admin-view.active{display:block}
+.admin-topbar{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:24px}
+.admin-topbar h1{font-size:22px;font-weight:800;margin:4px 0 0;color:var(--ink)}
+.breadcrumb{font-size:11px;color:var(--muted)}
+.kpi-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:12px;margin-bottom:24px}
+.kpi-card{background:#fff;border:1px solid var(--line);border-radius:12px;padding:16px}
+.kpi-card.accent-green{border-left:4px solid var(--success)}
+.kpi-card.accent-blue{border-left:4px solid var(--blue)}
+.kpi-card.accent-orange{border-left:4px solid var(--warn)}
+.kpi-card.accent-violet{border-left:4px solid var(--indigo)}
+.kpi-label{font-size:11px;color:var(--muted);margin-bottom:4px}
+.kpi-val{font-size:22px;font-weight:800;color:var(--ink)}
+.kpi-sub{font-size:11px;color:var(--muted);margin-top:2px}
+.admin-section{background:#fff;border:1px solid var(--line);border-radius:14px;padding:20px}
+.chart-wrap{background:#fff;border:1px solid var(--line);border-radius:12px;padding:16px}
+.chart-wrap h4{font-size:13px;font-weight:700;margin:0 0 12px;color:var(--ink)}
+.admin-search{display:flex;gap:8px;margin-bottom:14px}
+.admin-search input{flex:1;padding:9px 12px;border:1.5px solid var(--line);border-radius:10px;font:inherit;font-size:13px}
+.admin-search input:focus{outline:none;border-color:var(--indigo)}
+.biz-tab{display:none}
+.biz-tab.active{display:block}
+.table-wrap{overflow-x:auto}
+.table-wrap table,.admin-section table{width:100%;border-collapse:collapse;font-size:13px}
+.table-wrap th,.admin-section th{text-align:left;padding:10px 12px;background:var(--soft);color:var(--muted);font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.04em}
+.table-wrap td,.admin-section td{padding:10px 12px;border-bottom:1px solid var(--line);vertical-align:middle}
+.review-card{background:var(--soft);border-radius:10px;padding:14px;margin-bottom:10px}
+.review-header{display:flex;align-items:center;gap:8px;margin-bottom:6px;font-size:13px}
+/* status pills */
+.status-pill{display:inline-flex;align-items:center;padding:2px 8px;border-radius:20px;font-size:11px;font-weight:600}
+.st-paid{background:#d1fae5;color:#059669}
+.st-started{background:#fef3c7;color:#d97706}
+.st-paused{background:#fee2e2;color:#dc2626}
+/* toggle */
+.toggle{position:relative;display:inline-block;width:36px;height:20px}
+.toggle input{opacity:0;width:0;height:0}
+.toggle-slider{position:absolute;cursor:pointer;inset:0;background:#d1d5db;border-radius:20px;transition:.3s}
+.toggle-slider:before{position:absolute;content:"";height:14px;width:14px;left:3px;bottom:3px;background:#fff;border-radius:50%;transition:.3s}
+.toggle input:checked+.toggle-slider{background:var(--success)}
+.toggle input:checked+.toggle-slider:before{transform:translateX(16px)}
+</style>
+</head>
+<body>
+<!-- Tab bar -->
+<div class="tab-bar">
+  <span style="font-size:16px;font-weight:800;color:var(--indigo);margin-right:12px">CVTara</span>
+  <button class="tab-btn active" data-tab="landing" onclick="showTab('landing')">🌐 Landing Page</button>
+  <button class="tab-btn" data-tab="workspace" onclick="showTab('workspace')">🧑‍💼 Customer Workspace</button>
+  <button class="tab-btn" data-tab="admin" onclick="showTab('admin')">⚙️ Admin Dashboard</button>
+  <span style="margin-left:auto;font-size:11px;color:var(--muted)">v3.2.0-RC1 · cvtara.com</span>
+</div>
+</head><body>
+<div id="topbar">
+  <span class="brand">CVTara v3</span>
+  <button class="ttab on" id="btn-lp" onclick="switchTab('lp',this)">🌐 Landing Page</button>
+  <button class="ttab" id="btn-ws" onclick="switchTab('ws',this)">👤 Customer Workspace</button>
+  <button class="ttab" id="btn-admin" onclick="switchTab('admin',this)">⚙️ Admin Dashboard</button>
+</div>
+
+<!-- ===== LANDING PAGE ===== -->
+<div id="lp" class="tpanel on">
+<div id="ticker-bar"><span id="proof-ticker" style="transition:opacity .3s">🔥 Rahul from Mumbai just purchased 60-day Fresher plan</span></div>
+<div class="lp-header">
+  <nav class="lp-nav">
+    <div class="lp-brand"><div class="lp-bmark">CV</div>CVTara</div>
+    <div class="lp-links">
+      <a href="#">Features</a><a href="#">Resume</a><a href="#">Cover Letter</a><a href="#">Blog</a>
+    </div>
+    <div class="nav-btns">
+      <button class="btn btn-ghost">Sign in</button>
+      <button class="btn btn-primary">Start free →</button>
+    </div>
+  </nav>
+</div>
+
+<!-- Hero -->
+<div class="lp-hero">
+  <div class="hero-grid">
+    <div>
+      <div class="lp-kicker">ATS-Optimised Resume Builder · India</div>
+      <h1 class="hero-h1">Get past ATS filters.<br><em>Land more interviews.</em></h1>
+      <p class="hero-lead">CVTara scores your resume against any job description — so you know exactly what to fix before you apply.</p>
+      <div class="hero-answer">Most resumes are filtered out before a human reads them. CVTara shows you the keywords you're missing and how to add them with real evidence.</div>
+      <div class="hero-cta">
+        <button class="btn btn-primary btn-big" onclick="document.getElementById('ats-section').scrollIntoView({behavior:'smooth'})">Scan your resume free →</button>
+        <button class="btn btn-ghost btn-big" onclick="document.getElementById('tpl-section').scrollIntoView({behavior:'smooth'})">See 88 templates</button>
+      </div>
+      <div class="trust-row">
+        <span>Free ATS scan</span><span>No credit card</span><span>88 templates</span><span>2-min setup</span>
+      </div>
+    </div>
+    <div>
+      <div class="lp-doc">
+        <div class="doc-bar"><span><span class="live-dot"></span>resume_v3.pdf</span><span>ATS score updating…</span></div>
+        <div class="doc-sheet">
+          <header><strong>Priya Sharma</strong><span>Product Manager · Bengaluru</span></header>
+          <div class="dmeta">priya@email.com · +91 98765 43210 · linkedin.com/in/priyasharma</div>
+          <h3>Summary</h3>
+          <p style="font-size:10.5px;color:#475569">5 years driving roadmap decisions at B2B SaaS companies. Led 3 product launches, each reaching ₹1Cr ARR within 6 months.</p>
+          <h3>Experience</h3>
+          <ul>
+            <li><b>Senior PM — TechStart (2022–present)</b></li>
+            <li>Led cross-functional team of 14 to deliver mobile app (+67% DAU)</li>
+            <li>Reduced churn by 28% through data-driven onboarding redesign</li>
+          </ul>
+        </div>
+        <div class="score-badge"><b id="hero-score">–</b><small>ATS Score</small></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Stats -->
+<div class="stats-band">
+  <div class="stats-inner">
+    <div class="stat-item"><b>48,000+</b><small>resumes scored</small></div>
+    <div class="stat-item"><b>3.2×</b><small>more interview calls</small></div>
+    <div class="stat-item"><b>88</b><small>ATS templates</small></div>
+    <div class="stat-item"><b>4.8 / 5</b><small>from 620 reviews</small></div>
+  </div>
+</div>
+
+<!-- ATS Scan Tool -->
+<div id="ats-section" style="background:var(--soft);padding:64px 20px">
+  <div style="max-width:1100px;margin:0 auto">
+    <div class="section-hd">
+      <h2>Free ATS Score Check</h2>
+      <p>Paste your resume and job description. Get your keyword gaps instantly — no sign-up needed.</p>
+    </div>
+    <!-- mode toggles -->
+    <div style="display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap">
+      <div style="background:var(--paper);border:1px solid var(--line);border-radius:10px;padding:4px;display:flex;gap:4px">
+        <button id="ats-upload-btn" onclick="setATSMode('upload')" style="padding:6px 14px;border-radius:8px;border:none;font:inherit;font-size:12px;font-weight:700;background:var(--indigo);color:#fff">📎 Upload file</button>
+        <button id="ats-paste-btn" onclick="setATSMode('paste')" style="padding:6px 14px;border-radius:8px;border:none;font:inherit;font-size:12px;font-weight:700;background:transparent;color:var(--muted)">📋 Paste text</button>
+      </div>
+      <div style="background:var(--paper);border:1px solid var(--line);border-radius:10px;padding:4px;display:flex;gap:4px">
+        <button id="jd-url-btn" onclick="setJDMode('url')" style="padding:6px 14px;border-radius:8px;border:none;font:inherit;font-size:12px;font-weight:700;background:var(--indigo);color:#fff">🔗 JD URL</button>
+        <button id="jd-text-btn" onclick="setJDMode('text')" style="padding:6px 14px;border-radius:8px;border:none;font:inherit;font-size:12px;font-weight:700;background:transparent;color:var(--muted)">📄 Paste JD</button>
+      </div>
+    </div>
+    <div class="scan-box">
+      <div class="scan-head"><h3>Resume vs Job Description</h3><p>Works with Naukri, LinkedIn, Internshala, Foundit, and any JD URL</p></div>
+      <div class="scan-body">
+        <div class="scan-grid">
+          <div>
+            <label>Your Resume</label>
+            <div id="ats-upload-area" style="border:2px dashed var(--line);border-radius:12px;padding:24px;text-align:center;cursor:pointer;background:var(--soft)" onclick="document.getElementById('resume-file').click()">
+              <div style="font-size:24px;margin-bottom:6px">📄</div>
+              <div style="font-size:13px;font-weight:600;color:var(--muted)" id="resume-filename">Click to upload PDF or DOCX</div>
+              <div style="font-size:11px;color:var(--muted);margin-top:4px">or drag and drop</div>
+              <input type="file" id="resume-file" accept=".pdf,.docx" style="display:none" onchange="handleResumeFile(this)">
+            </div>
+            <textarea id="ats-resume-text" style="display:none;width:100%;padding:14px;border:1.5px solid var(--line);border-radius:12px;font:inherit;font-size:13px;resize:vertical;background:var(--soft);min-height:140px" placeholder="Paste your full resume text here…"></textarea>
+          </div>
+          <div>
+            <label>Job Description</label>
+            <input id="jd-url" style="width:100%;padding:12px 14px;border:1.5px solid var(--line);border-radius:12px;font:inherit;font-size:13px;background:var(--soft)" placeholder="https://www.naukri.com/job-listings-...">
+            <textarea id="jd-text" style="display:none;width:100%;padding:14px;border:1.5px solid var(--line);border-radius:12px;font:inherit;font-size:13px;resize:vertical;background:var(--soft);min-height:140px" placeholder="Paste the full job description here…"></textarea>
+          </div>
+        </div>
+        <button id="scan-btn" onclick="runScan()">⚡ Analyse ATS Match — Free</button>
+        <div id="scan-result">
+          <div class="result-top">
+            <svg class="score-ring" viewBox="0 0 90 90">
+              <circle class="ring-bg" cx="45" cy="45" r="36"/>
+              <circle class="ring-fg" id="ring-fg" cx="45" cy="45" r="36" stroke="#6366f1" stroke-dasharray="226.2" stroke-dashoffset="226.2" transform="rotate(-90 45 45)"/>
+              <text class="score-num" id="ring-num" x="45" y="45" fill="#0f172a" font-weight="900" font-family="Inter,sans-serif" font-size="18">–</text>
+            </svg>
+            <div class="result-meta">
+              <h4 id="result-headline">Analysing…</h4>
+              <p id="result-sub"></p>
+              <div class="result-chips" id="result-chips"></div>
+            </div>
+          </div>
+          <div id="kw-section" style="margin-bottom:16px;display:none">
+            <div class="ws-label">Matched Keywords</div>
+            <div id="matched-chips" class="result-chips" style="margin-bottom:10px"></div>
+            <div class="ws-label">Missing Keywords</div>
+            <div id="missing-chips" class="result-chips" style="margin-bottom:10px"></div>
+            <div class="ws-label">Action Verbs Found</div>
+            <div id="verb-chips" class="result-chips"></div>
+          </div>
+          <div id="issues-section"></div>
+          <div style="margin-top:16px;padding:14px 16px;background:#eff6ff;border-radius:10px;font-size:13px">
+            <b>Want your full score?</b> Create a free account to see the raw score, keyword gaps and tailoring suggestions. <button class="btn btn-primary" style="margin-left:10px;min-height:32px;padding:0 14px;font-size:12px">Start free →</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Features -->
+<div class="section">
+  <div class="section-hd"><h2>Everything you need to get hired</h2><p>Built for the Indian job market — Naukri, LinkedIn India, Infosys, TCS and beyond.</p></div>
+  <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:20px">
+    <div class="ws-card"><div style="font-size:24px;margin-bottom:10px">🎯</div><h3 style="font-size:15px;margin-bottom:6px">ATS Score Check</h3><p style="font-size:13px;color:var(--muted)">See exactly what keywords your resume is missing for each job.</p></div>
+    <div class="ws-card"><div style="font-size:24px;margin-bottom:10px">📄</div><h3 style="font-size:15px;margin-bottom:6px">88 Templates</h3><p style="font-size:13px;color:var(--muted)">Design, ATS-safe, LaTeX, HTML — every style for every industry.</p></div>
+    <div class="ws-card"><div style="font-size:24px;margin-bottom:10px">✉️</div><h3 style="font-size:15px;margin-bottom:6px">Cover Letters</h3><p style="font-size:13px;color:var(--muted)">26 templates for Indian and global job markets, 3-step builder.</p></div>
+    <div class="ws-card"><div style="font-size:24px;margin-bottom:10px">📊</div><h3 style="font-size:15px;margin-bottom:6px">Application Tracker</h3><p style="font-size:13px;color:var(--muted)">Kanban board tracks every application from saved to offer.</p></div>
+    <div class="ws-card"><div style="font-size:24px;margin-bottom:10px">🔒</div><h3 style="font-size:15px;margin-bottom:6px">100% Private</h3><p style="font-size:13px;color:var(--muted)">Your resume data is never shared or used for training.</p></div>
+    <div class="ws-card"><div style="font-size:24px;margin-bottom:10px">🇮🇳</div><h3 style="font-size:15px;margin-bottom:6px">Made for India</h3><p style="font-size:13px;color:var(--muted)">Understands Naukri, Internshala, IIT/NIT formats and Indian HR.</p></div>
+  </div>
+</div>
+
+<!-- Templates Gallery -->
+<div id="tpl-section" style="background:var(--soft);padding:64px 20px">
+  <div style="max-width:1180px;margin:0 auto">
+    <div class="section-hd"><h2>88 Resume Templates</h2><p>Every template tested for ATS compatibility. Filter by category.</p></div>
+    <div class="tpl-filters" id="lp-filters"></div>
+    <div class="tpl-grid" id="lp-tpl-grid"></div>
+  </div>
+</div>
+
+<!-- Cover Letter Preview -->
+<div class="section">
+  <div class="section-hd"><h2>26 Cover Letter Templates</h2><p>For freshers, professionals, and international roles.</p></div>
+  <div class="cl-grid" id="cl-preview-grid"></div>
+</div>
+
+<!-- Reviews -->
+<div style="background:var(--soft);padding:64px 20px">
+  <div style="max-width:1100px;margin:0 auto">
+    <div class="section-hd"><h2>What Indian job seekers say</h2></div>
+    <div class="reviews-grid">
+      <div class="review-card"><div class="review-stars">★★★★★</div><p class="review-text">"Got 3 interview calls within a week. The ATS scanner caught gaps my previous resume had for 2 years!"</p><div class="review-author">Priya S. · Product Manager · Bengaluru</div></div>
+      <div class="review-card"><div class="review-stars">★★★★★</div><p class="review-text">"Simple, fast and actually useful. The keyword suggestions are spot on for TCS and Infosys roles."</p><div class="review-author">Rahul V. · Software Engineer · Mumbai</div></div>
+      <div class="review-card"><div class="review-stars">★★★★☆</div><p class="review-text">"Great product. The ATS score feature is excellent. Wish I'd found it before my campus placements."</p><div class="review-author">Sneha N. · Data Analyst · Hyderabad</div></div>
+      <div class="review-card"><div class="review-stars">★★★★★</div><p class="review-text">"As a fresher I had no idea what ATS was. CVTara explained it clearly and helped me fix my resume."</p><div class="review-author">Amit P. · Fresher · Delhi</div></div>
+      <div class="review-card"><div class="review-stars">★★★★★</div><p class="review-text">"The cover letter builder saved me so much time. Used it for 12 applications and got 4 calls."</p><div class="review-author">Divya R. · HR Manager · Pune</div></div>
+      <div class="review-card"><div class="review-stars">★★★★★</div><p class="review-text">"Best ₹199 I've spent on my career. Landed a 40% salary hike using the tailored resume."</p><div class="review-author">Karan M. · Business Analyst · Chennai</div></div>
+    </div>
+  </div>
+</div>
+
+<!-- Comparison -->
+<div class="section">
+  <div class="section-hd"><h2>CVTara vs others</h2></div>
+  <div style="max-width:800px;margin:0 auto">
+    <table class="compare-table">
+      <thead><tr><th>Feature</th><th>CVTara</th><th>Resume.io</th><th>Zety</th></tr></thead>
+      <tbody>
+        <tr><td>ATS keyword scanner</td><td class="good">✓ Free</td><td class="bad">✗</td><td class="bad">✗</td></tr>
+        <tr><td>Indian fresher templates</td><td class="good">✓ 8 dedicated</td><td class="bad">✗ None</td><td class="bad">✗ None</td></tr>
+        <tr><td>Naukri/LinkedIn India ready</td><td class="good">✓</td><td class="bad">✗</td><td class="bad">✗</td></tr>
+        <tr><td>Cover letter builder</td><td class="good">✓ 26 templates</td><td>Paid</td><td>Paid</td></tr>
+        <tr><td>Application tracker</td><td class="good">✓ Kanban board</td><td class="bad">✗</td><td class="bad">✗</td></tr>
+        <tr><td>Starting price</td><td class="good">₹199 (30 days)</td><td>$2.95/mo</td><td>$5.99/mo</td></tr>
+        <tr><td>Pricing in INR</td><td class="good">✓ Razorpay/UPI</td><td class="bad">USD only</td><td class="bad">USD only</td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- FAQ -->
+<div style="background:var(--soft);padding:64px 20px">
+  <div style="max-width:1100px;margin:0 auto">
+    <div class="section-hd"><h2>Common Questions</h2></div>
+    <div class="faq-list" id="faq-list"></div>
+  </div>
+</div>
+
+<!-- Footer -->
+<footer class="lp-footer">
+  <div class="footer-grid">
+    <div class="footer-brand"><strong>CVTara</strong><p>ATS-optimised resume builder for the Indian job market. Built with care, no fluff.</p></div>
+    <div class="footer-col"><h4>Product</h4><a href="#">Features</a><a href="#">Templates</a><a href="#">ATS Scan</a></div>
+    <div class="footer-col"><h4>Resources</h4><a href="#">Resume Guide</a><a href="#">ATS Tips</a><a href="#">Blog</a></div>
+    <div class="footer-col"><h4>Company</h4><a href="#">About</a><a href="#">Contact</a><a href="#">Privacy</a><a href="#">Terms</a></div>
+  </div>
+  <div class="footer-bottom">© 2026 CVTara · Built in India for India · cvtara.com</div>
+</footer>
+</div><!-- lp panel -->
+
+<!-- Exit intent popup -->
+<div id="exit-popup" class="overlay" onclick="if(event.target===this)this.style.display='none'">
+  <div class="popup-box">
+    <div style="font-size:32px;margin-bottom:12px">⏳</div>
+    <h3 style="font-size:20px;margin-bottom:8px">Wait — before you go</h3>
+    <p style="color:var(--muted);font-size:14px;margin-bottom:20px">Scan your resume for free in 60 seconds. No sign-up needed.</p>
+    <button class="btn btn-primary" style="width:100%;padding:14px" onclick="document.getElementById('exit-popup').style.display='none';document.getElementById('ats-section').scrollIntoView({behavior:'smooth'})">Scan my resume free →</button>
+    <button style="margin-top:10px;background:none;border:none;color:var(--muted);font-size:13px;cursor:pointer;width:100%" onclick="document.getElementById('exit-popup').style.display='none'">No thanks, I'll miss out</button>
+  </div>
+</div>
+
+<!-- ===== CUSTOMER WORKSPACE ===== -->
+<div id="ws" class="tpanel">
+<div class="ws-shell">
+  <aside class="ws-sidebar">
+    <div class="ws-sidebar-top"><div class="brand">CVTara<small>Pro workspace</small></div></div>
+    <nav class="ws-nav">
+      <div class="ws-nav-item active" data-view="dashboard" onclick="wsNav(this,'ws-dashboard')">🏠 <span>Dashboard</span></div>
+      <div class="ws-nav-item" data-view="resumes" onclick="wsNav(this,'ws-resumes')">📄 <span>My Resumes</span></div>
+      <div class="ws-nav-item" data-view="match" onclick="wsNav(this,'ws-match')">🎯 <span>ATS Match</span></div>
+      <div class="ws-nav-item" data-view="cover" onclick="wsNav(this,'ws-cover')">✉️ <span>Cover Letters</span></div>
+      <div class="ws-nav-item" data-view="applications" onclick="wsNav(this,'ws-applications')">📋 <span>Applications</span></div>
+      <div class="ws-nav-item" data-view="guide" onclick="wsNav(this,'ws-guide')">📖 <span>User Guide</span></div>
+    </nav>
+    <div class="ws-sidebar-foot">
+      <div class="ws-nav-item" data-view="billing" onclick="wsNav(this,'ws-billing')">💳 <span>Billing</span></div>
+      <div class="ws-nav-item" data-view="account" onclick="wsNav(this,'ws-account')">⚙️ <span>Account</span></div>
+    </div>
+  </aside>
+  <main class="ws-main">
+
+    <!-- Dashboard -->
+    <div class="ws-view active" id="ws-dashboard">
+      <div class="ws-hero">
+        <div class="ws-hero-row">
+          <div><h2>Welcome back, Priya 👋</h2><p>Your resume scores 72 for the last job scanned. Here's what to do today.</p></div>
+          <div style="display:flex;align-items:center;gap:12px">
+            <div style="position:relative;width:64px;height:64px">
+              <svg viewBox="0 0 64 64" style="width:64px;height:64px"><circle cx="32" cy="32" r="26" fill="none" stroke="#1e40af" stroke-width="6"/><circle cx="32" cy="32" r="26" fill="none" stroke="#a5f3fc" stroke-width="6" stroke-dasharray="163.4" stroke-dashoffset="54.5" stroke-linecap="round" transform="rotate(-90 32 32)"/></svg>
+              <div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center"><b style="font-size:18px;color:#a5f3fc;line-height:1">17</b><small style="font-size:9px;color:#7dd3fc">left</small></div>
+            </div>
+            <div><b style="color:#fff;font-size:14px">17 AI Credits</b><p style="font-size:13px;color:#c7d2fe;margin:0">3 used of 20</p></div>
+          </div>
+        </div>
+      </div>
+      <div class="ws-content">
+        <div class="ws-label" style="margin-bottom:8px">Your progress</div>
+        <div style="display:flex;gap:0;margin-bottom:20px">
+          <div style="flex:1;padding:10px;background:#ede9fe;border:1px solid #a5b4fc;border-right:none;border-radius:10px 0 0 10px;font-size:11px;font-weight:700;color:#5b21b6">✓ Create account</div>
+          <div style="flex:1;padding:10px;background:#ede9fe;border:1px solid #a5b4fc;border-right:none;font-size:11px;font-weight:700;color:#5b21b6">✓ Upload resume</div>
+          <div style="flex:1;padding:10px;background:#4338ca;border:1px solid #4338ca;border-right:none;font-size:11px;font-weight:700;color:#fff">→ Run ATS scan</div>
+          <div style="flex:1;padding:10px;background:#fff;border:1px solid var(--line);border-right:none;font-size:11px;color:var(--muted)">Tailor with AI</div>
+          <div style="flex:1;padding:10px;background:#fff;border:1px solid var(--line);border-radius:0 10px 10px 0;font-size:11px;color:var(--muted)">Apply & track</div>
+        </div>
+        <div class="ws-label" style="margin-bottom:8px">Quick actions</div>
+        <div class="quick-grid">
+          <div class="quick-card" onclick="wsNav(document.querySelector('[data-view=resumes]'),'ws-resumes')"><div class="qicon" style="background:#eff6ff">📄</div><p>New Resume</p></div>
+          <div class="quick-card" onclick="wsNav(document.querySelector('[data-view=match]'),'ws-match')"><div class="qicon" style="background:#f0fdf4">🎯</div><p>Scan a Job</p></div>
+          <div class="quick-card" onclick="wsNav(document.querySelector('[data-view=cover]'),'ws-cover')"><div class="qicon" style="background:#fdf4ff">✉️</div><p>Cover Letter</p></div>
+          <div class="quick-card" onclick="wsNav(document.querySelector('[data-view=applications]'),'ws-applications')"><div class="qicon" style="background:#fff7ed">📋</div><p>Applications</p></div>
+          <div class="quick-card" onclick="wsNav(document.querySelector('[data-view=guide]'),'ws-guide')"><div class="qicon" style="background:#f0fdf4">📖</div><p>User Guide</p></div>
+        </div>
+        <div class="ws-grid-2">
+          <div class="ws-card"><div class="ws-card-hd"><h3>Last ATS Scan</h3><span class="score-pill score-orange">72</span></div><p style="font-size:13px;color:var(--muted);margin-bottom:8px">Senior Product Manager — Flipkart</p><div style="font-size:12px">Missing: <b style="color:#dc2626">agile, roadmap, kpi, stakeholder</b></div><button class="btn btn-primary" style="margin-top:10px;min-height:34px;font-size:12px" onclick="wsNav(document.querySelector('[data-view=match]'),'ws-match')">Improve score →</button></div>
+          <div class="ws-card"><div class="ws-card-hd"><h3>Recent Activity</h3></div><div style="font-size:13px"><div style="padding:6px 0;border-bottom:1px solid var(--line);color:var(--muted)">📄 Resume "PM v3" saved <span style="color:#94a3b8;font-size:11px">2h ago</span></div><div style="padding:6px 0;border-bottom:1px solid var(--line);color:var(--muted)">🎯 ATS scan: 72 — Flipkart <span style="color:#94a3b8;font-size:11px">2h ago</span></div><div style="padding:6px 0;color:var(--muted)">✅ Account created <span style="color:#94a3b8;font-size:11px">1d ago</span></div></div></div>
+        </div>
+        <div class="ws-label" style="margin-bottom:8px">Application Pipeline</div>
+        <div class="pipeline">
+          <div class="pipeline-col"><div class="pipeline-col-hd"><h4>Saved</h4><span class="pipeline-count">2</span></div><div class="pipeline-item"><div class="pi-role">Product Manager</div><div class="pi-co">Meesho</div><div class="pi-date">Oct 10</div></div><div class="pipeline-item"><div class="pi-role">Growth PM</div><div class="pi-co">Razorpay</div><div class="pi-date">Oct 11</div></div></div>
+          <div class="pipeline-col"><div class="pipeline-col-hd"><h4>Applied</h4><span class="pipeline-count">1</span></div><div class="pipeline-item"><div class="pi-role">Senior PM</div><div class="pi-co">Flipkart</div><div class="pi-date">Oct 9</div></div></div>
+          <div class="pipeline-col"><div class="pipeline-col-hd"><h4>Interview</h4><span class="pipeline-count">0</span></div><div class="empty-state" style="padding:20px 10px;font-size:12px">🤞 Keep applying!</div></div>
+          <div class="pipeline-col"><div class="pipeline-col-hd"><h4>Offer</h4><span class="pipeline-count">0</span></div><div class="empty-state" style="padding:20px 10px;font-size:12px">🎯 Your offer awaits</div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- My Resumes -->
+    <div class="ws-view" id="ws-resumes">
+      <div id="ws-tpl-chooser">
+        <div class="ws-hero"><h2>My Resumes</h2><p>Choose a template to build a new resume, or edit an existing one.</p></div>
+        <div class="ws-content">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px"><div class="ws-label" style="margin:0">3 resumes saved</div></div>
+          <div class="resume-list" style="margin-bottom:24px">
+            <div class="resume-row"><div class="resume-icon">PM</div><div class="resume-info"><h4>Senior PM — Flipkart version</h4><p>Edited 2h ago · 487 words</p></div><span class="score-pill score-orange">72</span><div class="resume-actions"><button class="rs-btn" onclick="openBuilder('Senior PM — Flipkart version')">Edit</button><button class="rs-btn">Download</button></div></div>
+            <div class="resume-row"><div class="resume-icon">PM</div><div class="resume-info"><h4>PM — General Application</h4><p>Edited 2d ago · 510 words</p></div><span class="score-pill score-green">81</span><div class="resume-actions"><button class="rs-btn" onclick="openBuilder('PM — General')">Edit</button><button class="rs-btn">Download</button></div></div>
+          </div>
+          <div class="section-hd" style="text-align:left;margin-bottom:16px"><h3 style="font-size:18px">+ New Resume — Choose Template</h3></div>
+          <div class="tpl-filters" id="ws-filters"></div>
+          <div class="tpl-grid" id="ws-tpl-grid"></div>
+        </div>
+      </div>
+      <div id="ws-builder" style="display:none">
+        <div class="ws-hero"><div class="ws-hero-row"><div><h2 id="builder-title">Building resume</h2><p>Complete each step to finish your resume.</p></div><button class="rs-btn" onclick="closeBuilder()" style="background:rgba(255,255,255,.2);color:#fff;border-color:rgba(255,255,255,.3)">← Back to list</button></div></div>
+        <div class="ws-content">
+          <div class="steps-nav">
+            <div class="step-pill active" id="sp0" onclick="goBuilderStep(0)">Personal</div>
+            <div class="step-pill" id="sp1" onclick="goBuilderStep(1)">Experience</div>
+            <div class="step-pill" id="sp2" onclick="goBuilderStep(2)">Education</div>
+            <div class="step-pill" id="sp3" onclick="goBuilderStep(3)">Skills</div>
+            <div class="step-pill" id="sp4" onclick="goBuilderStep(4)">More</div>
+            <div class="step-pill" id="sp5" onclick="goBuilderStep(5)">Design</div>
+          </div>
+          <!-- Step 0: Personal -->
+          <div class="builder-pane active" id="bp0">
+            <div class="ws-card"><h3 style="font-size:15px;margin-bottom:16px">Personal Information</h3>
+              <div class="form-row"><div class="form-group"><label>Full Name</label><input class="form-control" value="Priya Sharma"></div><div class="form-group"><label>Job Title</label><input class="form-control" value="Product Manager"></div></div>
+              <div class="form-row"><div class="form-group"><label>Email</label><input class="form-control" value="priya@email.com"></div><div class="form-group"><label>Phone</label><input class="form-control" value="+91 98765 43210"></div></div>
+              <div class="form-row"><div class="form-group"><label>City</label><input class="form-control" value="Bengaluru"></div><div class="form-group"><label>LinkedIn URL</label><input class="form-control" value="linkedin.com/in/priyasharma"></div></div>
+              <div class="form-group"><label>Professional Summary</label><textarea class="form-control" rows="3">5 years driving roadmap decisions at B2B SaaS companies. Led 3 product launches, each reaching ₹1Cr ARR within 6 months.</textarea></div>
+            </div>
+          </div>
+          <!-- Step 1: Experience -->
+          <div class="builder-pane" id="bp1">
+            <div id="exp-blocks">
+              <div class="ws-card" style="margin-bottom:12px"><h3 style="font-size:15px;margin-bottom:14px">Work Experience #1</h3>
+                <div class="form-row"><div class="form-group"><label>Job Title</label><input class="form-control" value="Senior Product Manager"></div><div class="form-group"><label>Company</label><input class="form-control" value="TechStart"></div></div>
+                <div class="form-row"><div class="form-group"><label>Start Date</label><input class="form-control" value="Jan 2022"></div><div class="form-group"><label>End Date</label><input class="form-control" value="Present"></div></div>
+                <div class="form-group"><label>Key Achievements (one per line)</label><textarea class="form-control" rows="3">Led cross-functional team of 14 to deliver mobile app (+67% DAU)
+Reduced churn by 28% through data-driven onboarding redesign
+Managed ₹2.4Cr budget across 3 product lines</textarea></div>
+              </div>
+            </div>
+            <button class="btn btn-outline" onclick="addExpBlock()" style="min-height:36px;font-size:13px">+ Add another role</button>
+          </div>
+          <!-- Step 2: Education -->
+          <div class="builder-pane" id="bp2">
+            <div id="edu-blocks">
+              <div class="ws-card" style="margin-bottom:12px"><h3 style="font-size:15px;margin-bottom:14px">Education #1</h3>
+                <div class="form-row"><div class="form-group"><label>Degree</label><input class="form-control" value="MBA — Marketing & Strategy"></div><div class="form-group"><label>Institution</label><input class="form-control" value="IIM Bangalore"></div></div>
+                <div class="form-row"><div class="form-group"><label>Year</label><input class="form-control" value="2022"></div><div class="form-group"><label>Grade / CGPA</label><input class="form-control" value="3.8 / 4.0"></div></div>
+              </div>
+            </div>
+            <button class="btn btn-outline" onclick="addEduBlock()" style="min-height:36px;font-size:13px">+ Add another degree</button>
+          </div>
+          <!-- Step 3: Skills -->
+          <div class="builder-pane" id="bp3">
+            <div class="ws-card"><h3 style="font-size:15px;margin-bottom:14px">Skills</h3>
+              <p style="font-size:13px;color:var(--muted);margin-bottom:12px">Type a skill and press Enter to add it.</p>
+              <div id="skill-tags" style="display:flex;flex-wrap:wrap;gap:4px;margin-bottom:12px;padding:10px;border:1.5px solid var(--line);border-radius:10px;min-height:48px">
+                <span class="skill-tag">Product Roadmap <span style="cursor:pointer" onclick="this.parentElement.remove()">×</span></span>
+                <span class="skill-tag">Agile / Scrum <span style="cursor:pointer" onclick="this.parentElement.remove()">×</span></span>
+                <span class="skill-tag">SQL <span style="cursor:pointer" onclick="this.parentElement.remove()">×</span></span>
+                <span class="skill-tag">A/B Testing <span style="cursor:pointer" onclick="this.parentElement.remove()">×</span></span>
+                <input id="skill-input" style="border:none;outline:none;font:inherit;font-size:13px;flex:1;min-width:120px;background:transparent" placeholder="Add skill…" onkeydown="addSkillTag(event,this)">
+              </div>
+            </div>
+          </div>
+          <!-- Step 4: More -->
+          <div class="builder-pane" id="bp4">
+            <div class="ws-card" style="margin-bottom:12px"><h3 style="font-size:15px;margin-bottom:14px">Certifications & Projects</h3>
+              <div class="form-group"><label>Certifications (one per line)</label><textarea class="form-control" rows="3">Google Project Management Certificate
+AWS Cloud Practitioner
+Meta Marketing Analytics</textarea></div>
+            </div>
+            <div class="ws-card"><h3 style="font-size:15px;margin-bottom:14px">Languages</h3>
+              <div class="form-row"><div class="form-group"><label>Language</label><input class="form-control" value="English — Fluent"></div><div class="form-group"><label>Language 2</label><input class="form-control" value="Hindi — Native"></div></div>
+            </div>
+          </div>
+          <!-- Step 5: Design -->
+          <div class="builder-pane" id="bp5">
+            <div class="ws-card"><h3 style="font-size:15px;margin-bottom:14px">Design Options</h3>
+              <div class="ws-label">Accent colour</div>
+              <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:20px">
+                <div class="color-dot" style="background:#1557d2;width:28px;height:28px;border:3px solid #1557d2;box-shadow:0 0 0 2px #fff,0 0 0 4px #1557d2" onclick="selectColor(this,'#1557d2')"></div>
+                <div class="color-dot" style="background:#6366f1;width:28px;height:28px" onclick="selectColor(this,'#6366f1')"></div>
+                <div class="color-dot" style="background:#0f172a;width:28px;height:28px" onclick="selectColor(this,'#0f172a')"></div>
+                <div class="color-dot" style="background:#15803d;width:28px;height:28px" onclick="selectColor(this,'#15803d')"></div>
+                <div class="color-dot" style="background:#b91c1c;width:28px;height:28px" onclick="selectColor(this,'#b91c1c')"></div>
+                <div class="color-dot" style="background:#0369a1;width:28px;height:28px" onclick="selectColor(this,'#0369a1')"></div>
+              </div>
+              <div class="ws-label">Font</div>
+              <select class="form-control" style="max-width:240px"><option>Inter (Modern)</option><option>Georgia (Classic)</option><option>Roboto (Clean)</option></select>
+            </div>
+          </div>
+          <div style="display:flex;justify-content:space-between;margin-top:20px">
+            <button id="builder-back" class="btn btn-ghost" onclick="builderStep(-1)" style="visibility:hidden">← Back</button>
+            <button id="builder-next" class="btn btn-primary" onclick="builderStep(1)">Next →</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ATS Match -->
+    <div class="ws-view" id="ws-match">
+      <div class="ws-hero"><h2>ATS Match Scanner</h2><p>See your keyword overlap and exact gaps against any job description.</p></div>
+      <div class="ws-content">
+        <div style="display:flex;gap:0;margin-bottom:20px">
+          <div class="ws-step-pill active" id="at0">1 · Add Docs</div>
+          <div class="ws-step-pill" id="at1">2 · Verify Text</div>
+          <div class="ws-step-pill" id="at2">3 · Action Plan</div>
+        </div>
+        <div class="ats-pane active" id="ap0">
+          <div class="ws-grid-2">
+            <div class="ws-card"><h3 style="font-size:15px;margin-bottom:12px">Your Resume</h3>
+              <select class="form-control" style="margin-bottom:12px"><option>Senior PM — Flipkart version (72)</option><option>PM — General Application (81)</option></select>
+              <p style="font-size:12px;color:var(--muted)">Or upload a new one:</p>
+              <div style="border:2px dashed var(--line);border-radius:10px;padding:16px;text-align:center;font-size:13px;color:var(--muted);cursor:pointer">📄 Upload PDF / DOCX</div>
+            </div>
+            <div class="ws-card"><h3 style="font-size:15px;margin-bottom:12px">Job Description</h3>
+              <input class="form-control" placeholder="https://www.naukri.com/..." style="margin-bottom:8px">
+              <p style="font-size:12px;color:var(--muted);text-align:center;margin:8px 0">— or —</p>
+              <textarea class="form-control" id="ws-jd-in" rows="4" placeholder="Paste JD text here…"></textarea>
+            </div>
+          </div>
+          <button class="btn btn-primary" onclick="wsAtsContinue()" style="padding:12px 32px">Continue →</button>
+        </div>
+        <div class="ats-pane" id="ap1">
+          <div class="ws-card" style="margin-bottom:16px"><h3 style="font-size:15px;margin-bottom:12px">Verify extracted text</h3>
+            <textarea class="form-control" id="ws-resume-verify" rows="5" style="margin-bottom:8px">Priya Sharma, Product Manager, 5 years experience. Led product launches, managed teams, reduced churn by 28%, improved DAU by 67%, built roadmaps, coordinated with engineering and design teams, owned metrics and KPIs, stakeholder management, agile project delivery…</textarea>
+            <textarea class="form-control" id="ws-jd-verify" rows="5">Senior Product Manager needed. Requirements: 5+ years PM experience, roadmap ownership, agile scrum, stakeholder management, SQL data analysis, KPI definition, cross-functional team leadership, product strategy, growth metrics, B2B SaaS experience…</textarea>
+          </div>
+          <div style="display:flex;gap:10px"><button class="btn btn-ghost" onclick="wsAtsStep(0)">← Back</button><button class="btn btn-primary" onclick="runWsScan()">⚡ Analyse →</button></div>
+        </div>
+        <div class="ats-pane" id="ap2">
+          <div class="result-top" style="margin-bottom:20px">
+            <svg class="score-ring" viewBox="0 0 90 90">
+              <circle class="ring-bg" cx="45" cy="45" r="36"/>
+              <circle class="ring-fg" id="ws-ring-fg" cx="45" cy="45" r="36" stroke="#6366f1" stroke-dasharray="226.2" stroke-dashoffset="226.2" transform="rotate(-90 45 45)"/>
+              <text class="score-num" id="ws-ring-num" x="45" y="45" fill="#0f172a" font-weight="900" font-family="Inter,sans-serif" font-size="18">–</text>
+            </svg>
+            <div class="result-meta"><h4 id="ws-result-headline">Your result</h4><p id="ws-result-sub"></p></div>
+          </div>
+          <div id="ws-kw-section">
+            <div class="ws-label">Matched</div><div id="ws-matched-chips" class="result-chips" style="margin-bottom:10px"></div>
+            <div class="ws-label">Missing</div><div id="ws-missing-chips" class="result-chips" style="margin-bottom:10px"></div>
+            <div class="ws-label">Action Verbs</div><div id="ws-verb-chips" class="result-chips" style="margin-bottom:16px"></div>
+          </div>
+          <div id="ws-issues-section"></div>
+          <button class="btn btn-ghost" onclick="wsAtsStep(0)" style="margin-top:12px">← Run another scan</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Cover Letters -->
+    <div class="ws-view" id="ws-cover">
+      <div class="ws-hero"><h2>Cover Letters</h2><p>3-step builder — personalised to every job description.</p></div>
+      <div class="ws-content">
+        <div style="display:flex;gap:0;margin-bottom:20px">
+          <div class="ws-step-pill active" id="cl0">1 · Choose Template</div>
+          <div class="ws-step-pill" id="cl1">2 · Your Details</div>
+          <div class="ws-step-pill" id="cl2">3 · Preview</div>
+        </div>
+        <div class="ats-pane active" id="clp0">
+          <div class="ws-label" style="margin-bottom:12px">Pick a cover letter template</div>
+          <div class="cl-grid" id="cl-ws-grid"></div>
+          <button class="btn btn-primary" onclick="clStep(1)" style="margin-top:16px;padding:12px 32px">Continue →</button>
+        </div>
+        <div class="ats-pane" id="clp1">
+          <div class="ws-card" style="max-width:640px"><h3 style="font-size:15px;margin-bottom:16px">Your Details</h3>
+            <div class="form-row"><div class="form-group"><label>Your Name</label><input class="form-control" value="Priya Sharma"></div><div class="form-group"><label>Role applying for</label><input class="form-control" placeholder="Senior Product Manager"></div></div>
+            <div class="form-group" style="margin-bottom:12px"><label>Company Name</label><input class="form-control" placeholder="Flipkart"></div>
+            <div class="form-group" style="margin-bottom:12px"><label>Why this company?</label><textarea class="form-control" rows="3" placeholder="1–2 sentences about why you want to join…"></textarea></div>
+            <div class="form-group"><label>Key achievement to highlight</label><textarea class="form-control" rows="2" placeholder="Led a team of 14, reduced churn by 28%…"></textarea></div>
+          </div>
+          <div style="display:flex;gap:10px;margin-top:16px"><button class="btn btn-ghost" onclick="clStep(0)">← Back</button><button class="btn btn-primary" onclick="clStep(2)">Preview →</button></div>
+        </div>
+        <div class="ats-pane" id="clp2">
+          <div class="ws-card" style="max-width:640px;font-size:13px;line-height:1.7">
+            <div style="border-bottom:1px solid var(--line);padding-bottom:12px;margin-bottom:16px"><b style="font-size:15px">Priya Sharma</b><br><span style="color:var(--muted)">priya@email.com · +91 98765 43210 · Bengaluru</span></div>
+            <p>Dear Hiring Manager,</p><br>
+            <p>I am writing to express my interest in the Senior Product Manager position at your organisation. With five years of experience driving product roadmaps at B2B SaaS companies, I have consistently delivered outcomes that matter.</p><br>
+            <p>In my current role at TechStart, I led a cross-functional team of 14 engineers and designers to ship a mobile app that grew DAU by 67%. I also redesigned the onboarding flow, reducing churn by 28% — a result that directly impacted ARR.</p><br>
+            <p>I am excited by the opportunity to bring this experience to your team. I look forward to discussing how I can contribute.</p><br>
+            <p>Warm regards,<br><b>Priya Sharma</b></p>
+          </div>
+          <div style="display:flex;gap:10px;margin-top:16px"><button class="btn btn-ghost" onclick="clStep(1)">← Edit</button><button class="btn btn-primary">⬇ Download PDF</button></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Applications -->
+    <div class="ws-view" id="ws-applications">
+      <div class="ws-hero"><h2>Application Tracker</h2><p>Track every job from saved to offer.</p></div>
+      <div class="ws-content">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+          <div class="ws-label" style="margin:0">3 applications</div>
+          <button class="btn btn-primary" style="min-height:36px;font-size:13px">+ Add application</button>
+        </div>
+        <div class="pipeline">
+          <div class="pipeline-col"><div class="pipeline-col-hd"><h4>Saved</h4><span class="pipeline-count">2</span></div>
+            <div class="pipeline-item"><div class="pi-role">Product Manager</div><div class="pi-co">Meesho</div><div class="pi-date">Oct 10</div><div style="display:flex;gap:4px;margin-top:6px"><button class="rs-btn" style="font-size:11px;padding:3px 8px" onclick="moveApp(this,'applied')">→ Applied</button></div></div>
+            <div class="pipeline-item"><div class="pi-role">Growth PM</div><div class="pi-co">Razorpay</div><div class="pi-date">Oct 11</div><div style="display:flex;gap:4px;margin-top:6px"><button class="rs-btn" style="font-size:11px;padding:3px 8px" onclick="moveApp(this,'applied')">→ Applied</button></div></div>
+          </div>
+          <div class="pipeline-col" id="app-applied"><div class="pipeline-col-hd"><h4>Applied</h4><span class="pipeline-count" id="cnt-applied">1</span></div>
+            <div class="pipeline-item"><div class="pi-role">Senior PM</div><div class="pi-co">Flipkart</div><div class="pi-date">Oct 9</div><div style="display:flex;gap:4px;margin-top:6px"><button class="rs-btn" style="font-size:11px;padding:3px 8px" onclick="moveApp(this,'interview')">→ Interview</button></div></div>
+          </div>
+          <div class="pipeline-col" id="app-interview"><div class="pipeline-col-hd"><h4>Interview</h4><span class="pipeline-count" id="cnt-interview">0</span></div><div class="empty-state" style="padding:20px 10px" id="empty-interview"><p style="font-size:12px">No interviews yet</p></div></div>
+          <div class="pipeline-col" id="app-offer"><div class="pipeline-col-hd"><h4>Offer</h4><span class="pipeline-count" id="cnt-offer">0</span></div><div class="empty-state" style="padding:20px 10px"><p style="font-size:12px">Your offer awaits 🎯</p></div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- User Guide -->
+    <div class="ws-view" id="ws-guide">
+      <div class="ws-hero"><h2>User Guide</h2><p>Get the most from CVTara in 5 steps.</p></div>
+      <div class="ws-content">
+        <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:16px">
+          <div class="ws-card"><div style="font-size:24px;margin-bottom:8px">1️⃣</div><h3 style="font-size:14px;margin-bottom:6px">Upload or build your resume</h3><p style="font-size:13px;color:var(--muted)">Go to My Resumes and choose a template or start fresh with the 6-step builder.</p></div>
+          <div class="ws-card"><div style="font-size:24px;margin-bottom:8px">2️⃣</div><h3 style="font-size:14px;margin-bottom:6px">Run an ATS scan</h3><p style="font-size:13px;color:var(--muted)">Paste the job description from Naukri or LinkedIn. See your score and keyword gaps instantly.</p></div>
+          <div class="ws-card"><div style="font-size:24px;margin-bottom:8px">3️⃣</div><h3 style="font-size:14px;margin-bottom:6px">Fix the gaps</h3><p style="font-size:13px;color:var(--muted)">Add the missing keywords where you have real experience. Re-run the scan until your score improves.</p></div>
+          <div class="ws-card"><div style="font-size:24px;margin-bottom:8px">4️⃣</div><h3 style="font-size:14px;margin-bottom:6px">Write a cover letter</h3><p style="font-size:13px;color:var(--muted)">Use the 3-step cover letter builder to create a tailored letter for each application.</p></div>
+          <div class="ws-card"><div style="font-size:24px;margin-bottom:8px">5️⃣</div><h3 style="font-size:14px;margin-bottom:6px">Track your applications</h3><p style="font-size:13px;color:var(--muted)">Add jobs to the kanban board and move them as you progress through rounds.</p></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Billing -->
+    <div class="ws-view" id="ws-billing">
+      <div class="ws-hero"><h2>Billing &amp; Plan</h2><p>Manage your subscription and credits.</p></div>
+      <div class="ws-content">
+        <div class="ws-grid-2">
+          <div class="ws-card"><div class="ws-card-hd"><h3>Current Plan</h3><span class="tag-pro">Fresher 60-Day</span></div><div style="font-size:22px;font-weight:900;color:var(--indigo);margin:8px 0">₹349 <small style="font-size:14px;color:var(--muted)">paid</small></div><p style="font-size:13px;color:var(--muted)">Valid until Dec 13, 2026 · All templates · Full ATS score</p><button class="btn btn-primary" style="margin-top:12px;min-height:36px;font-size:13px">Upgrade plan</button></div>
+          <div class="ws-card"><div class="ws-card-hd"><h3>Credits</h3></div><div style="font-size:26px;font-weight:900;color:var(--indigo)">17 <small style="font-size:13px;color:var(--muted)">remaining</small></div><p style="font-size:13px;color:var(--muted);margin-top:4px">3 credits used of 20.</p></div>
+        </div>
+        <div class="ws-card" style="margin-top:14px"><div class="ws-card-hd"><h3>Payment History</h3></div>
+          <table><thead><tr><th>Date</th><th>Plan</th><th>Amount</th><th>Ref</th><th>Status</th></tr></thead>
+          <tbody><tr><td>Oct 13, 2026</td><td>Fresher 60-Day</td><td>₹349</td><td>RZP-87321</td><td><span class="status-pill st-paid">Paid</span></td></tr></tbody></table>
+        </div>
+      </div>
+    </div>
+
+    <!-- Account -->
+    <div class="ws-view" id="ws-account">
+      <div class="ws-hero"><h2>Account Settings</h2><p>Update profile, password, and referral wallet.</p></div>
+      <div class="ws-content">
+        <div class="ws-grid-2">
+          <div class="ws-card"><div class="ws-card-hd"><h3>Profile</h3></div>
+            <div style="margin-bottom:12px"><div class="ws-label">Full name</div><input class="form-control" value="Priya Sharma"></div>
+            <div style="margin-bottom:12px"><div class="ws-label">Email</div><input class="form-control" value="priya@email.com"></div>
+            <div style="margin-bottom:16px"><div class="ws-label">Experience level</div>
+              <select class="form-control"><option>Fresher (0–2 years)</option><option selected>Professional (3–10 years)</option><option>Senior (10+ years)</option></select>
+            </div>
+            <button class="btn btn-primary" style="padding:10px 24px">Save changes</button>
+          </div>
+          <div class="ws-card"><div class="ws-card-hd"><h3>Referral &amp; Wallet</h3><span class="badge badge-success">₹120 earned</span></div>
+            <p style="font-size:13px;color:var(--muted);margin-bottom:12px">Earn ₹60 for every friend who buys any plan.</p>
+            <div style="background:var(--soft);border-radius:10px;padding:12px;margin-bottom:12px">
+              <div class="ws-label">Your referral link</div>
+              <div style="font-size:12px;font-family:monospace;color:var(--blue);word-break:break-all">cvtara.com/r/priya-xyz123</div>
+            </div>
+            <div style="font-size:13px;margin-bottom:10px"><b style="font-size:18px;color:var(--indigo)">₹120</b> <span style="color:var(--muted)">wallet balance</span></div>
+            <table style="font-size:12px;width:100%"><thead><tr><th>Friend</th><th>Plan</th><th>Commission</th><th>Status</th></tr></thead>
+            <tbody><tr><td>rahul@...</td><td>Fresher 30d</td><td>₹60</td><td><span class="badge badge-success">Paid</span></td></tr><tr><td>sneha@...</td><td>Fresher 30d</td><td>₹60</td><td><span class="badge badge-success">Paid</span></td></tr></tbody></table>
+            <button class="btn btn-outline" style="margin-top:12px;font-size:13px;min-height:36px">Withdraw ₹120 → UPI</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </main>
+</div>
+</div><!-- ws panel -->
+
+<!-- ===== ADMIN DASHBOARD ===== -->
+<div id="admin" class="tpanel">
+<div class="admin-shell">
+  <aside class="admin-sidebar">
+    <div class="admin-sidebar-top"><div class="brand">CVTara<small>Owner console</small></div></div>
+    <nav class="admin-nav">
+      <div class="admin-nav-divider">Main</div>
+      <div class="admin-nav-item active" onclick="adminNav(this,'adm-overview')">📊 <span>Overview</span></div>
+      <div class="admin-nav-item" onclick="adminNav(this,'adm-users')">👥 <span>Users</span></div>
+      <div class="admin-nav-item" onclick="adminNav(this,'adm-orders')">💳 <span>Orders</span></div>
+      <div class="admin-nav-divider">Operations</div>
+      <div class="admin-nav-item" onclick="toggleOps()">🔧 <span>Operations</span> <span id="ops-arrow" style="margin-left:auto;font-size:10px">▼</span></div>
+      <div class="ops-sub" id="ops-submenu">
+        <div class="admin-nav-item" onclick="adminNav(this,'adm-resume-lib')">📄 Resume Library</div>
+        <div class="admin-nav-item" onclick="adminNav(this,'adm-cl-lib')">✉️ CL Library</div>
+        <div class="admin-nav-item" onclick="adminNav(this,'adm-bizops')">💰 Business Ops</div>
+        <div class="admin-nav-item" onclick="adminNav(this,'adm-mailer')">📧 User Mailer</div>
+        <div class="admin-nav-item" onclick="adminNav(this,'adm-errorlog')">⚠️ Error Log</div>
+      </div>
+      <div class="admin-nav-item" onclick="adminNav(this,'adm-blog')">📝 <span>Blog &amp; SEO</span></div>
+      <div class="admin-nav-item" onclick="adminNav(this,'adm-reviews')">⭐ <span>Reviews</span></div>
+      <div class="admin-nav-item" onclick="adminNav(this,'adm-settings')">⚙️ <span>Settings</span></div>
+    </nav>
+  </aside>
+  <main class="admin-main">
+
+    <!-- Overview -->
+    <div class="admin-view active" id="adm-overview">
+      <div class="admin-topbar"><div><div class="breadcrumb">Owner console</div><h1>Overview</h1></div><button class="btn btn-primary" style="min-height:36px;font-size:13px" onclick="drawCharts()">↻ Refresh</button></div>
+      <div class="kpi-grid">
+        <div class="kpi-card"><div class="kpi-label">Total Members</div><div class="kpi-val">1,284</div><div class="kpi-sub">+12 this week</div></div>
+        <div class="kpi-card accent-green"><div class="kpi-label">Paid Users</div><div class="kpi-val">342</div><div class="kpi-sub">26.6% conversion</div></div>
+        <div class="kpi-card accent-blue"><div class="kpi-label">Revenue (all time)</div><div class="kpi-val">₹1.7L</div><div class="kpi-sub">₹12,400 today</div></div>
+        <div class="kpi-card accent-orange"><div class="kpi-label">ATS Scans Today</div><div class="kpi-val">847</div><div class="kpi-sub">+23% vs yesterday</div></div>
+        <div class="kpi-card accent-violet"><div class="kpi-label">Resumes Created</div><div class="kpi-val">4,102</div><div class="kpi-sub">31 today</div></div>
+        <div class="kpi-card"><div class="kpi-label">Scan→Paid Conv.</div><div class="kpi-val">8.3%</div><div class="kpi-sub">industry avg 3–5%</div></div>
+      </div>
+      <div class="admin-section">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+          <div class="chart-wrap"><h4>Sign-ups (7 days)</h4><canvas id="chart-signups" height="120"></canvas></div>
+          <div class="chart-wrap"><h4>Revenue (30 days)</h4><canvas id="chart-revenue" height="120"></canvas></div>
+        </div>
+        <div class="ws-label" style="margin:20px 0 8px">Recent Orders</div>
+        <div class="table-wrap"><table><thead><tr><th>User</th><th>Plan</th><th>Amount</th><th>Date</th><th>Status</th></tr></thead><tbody id="orders-tbody"></tbody></table></div>
+        <div class="ws-label" style="margin:20px 0 8px">Recent ATS Scans</div>
+        <div class="table-wrap"><table><thead><tr><th>User</th><th>Score</th><th>Job Title</th><th>Time</th></tr></thead><tbody id="scans-tbody"></tbody></table></div>
+      </div>
+    </div>
+
+    <!-- Users -->
+    <div class="admin-view" id="adm-users">
+      <div class="admin-topbar"><div><div class="breadcrumb">Owner console</div><h1>Users</h1></div></div>
+      <div class="admin-section">
+        <div class="admin-search"><input id="user-search" placeholder="Search by name or email…" oninput="filterUsers()"><select id="user-filter" onchange="filterUsers()" style="padding:9px 12px;border:1.5px solid var(--line);border-radius:10px;font:inherit;font-size:13px"><option value="">All users</option><option value="paid">Paid only</option><option value="free">Free only</option></select></div>
+        <div class="table-wrap"><table><thead><tr><th>Name</th><th>Email</th><th>Plan</th><th>Joined</th><th>Last Active</th><th>Status</th><th>Action</th></tr></thead><tbody id="users-tbody"></tbody></table></div>
+      </div>
+    </div>
+
+    <!-- Orders -->
+    <div class="admin-view" id="adm-orders">
+      <div class="admin-topbar"><div><div class="breadcrumb">Owner console</div><h1>Orders</h1></div></div>
+      <div class="admin-section">
+        <div class="table-wrap"><table><thead><tr><th>Order</th><th>User</th><th>Plan</th><th>Amount</th><th>Provider</th><th>Date</th><th>Status</th></tr></thead><tbody id="all-orders-tbody"></tbody></table></div>
+      </div>
+    </div>
+
+    <!-- Resume Library -->
+    <div class="admin-view" id="adm-resume-lib">
+      <div class="admin-topbar"><div><div class="breadcrumb">Operations</div><h1>Resume Library (88 templates)</h1></div><button class="btn btn-primary" style="min-height:36px;font-size:13px">+ Add Template</button></div>
+      <div class="admin-section">
+        <div class="table-wrap"><table><thead><tr><th>Name</th><th>Category</th><th>Type</th><th>Active</th><th>Action</th></tr></thead><tbody id="resume-lib-tbody"></tbody></table></div>
+      </div>
+    </div>
+
+    <!-- CL Library -->
+    <div class="admin-view" id="adm-cl-lib">
+      <div class="admin-topbar"><div><div class="breadcrumb">Operations</div><h1>Cover Letter Library (26 templates)</h1></div><button class="btn btn-primary" style="min-height:36px;font-size:13px">+ Add Template</button></div>
+      <div class="admin-section">
+        <div class="table-wrap"><table><thead><tr><th>Name</th><th>Region</th><th>Type</th><th>Active</th><th>Action</th></tr></thead><tbody id="cl-lib-tbody"></tbody></table></div>
+      </div>
+    </div>
+
+    <!-- Business Ops -->
+    <div class="admin-view" id="adm-bizops">
+      <div class="admin-topbar"><div><div class="breadcrumb">Operations</div><h1>Business Operations</h1></div></div>
+      <div class="admin-section">
+        <div style="display:flex;gap:8px;margin-bottom:20px">
+          <button class="btn btn-primary" onclick="showBizTab('pricing')">Pricing</button>
+          <button class="btn btn-outline" onclick="showBizTab('coupons')">Coupons</button>
+          <button class="btn btn-outline" onclick="showBizTab('referral')">Referral Rules</button>
+        </div>
+        <div class="biz-tab active" id="biz-pricing">
+          <div class="ws-grid-2">
+            <div class="ws-card"><h3 style="font-size:15px;margin-bottom:12px">Fresher Plans</h3>
+              <table><thead><tr><th>Plan</th><th>Days</th><th>Price</th><th>Action</th></tr></thead><tbody>
+                <tr><td>Fresher Basic</td><td>30</td><td><input style="width:60px;padding:4px;border:1px solid var(--line);border-radius:6px" value="199"></td><td><button class="rs-btn" style="font-size:11px">Save</button></td></tr>
+                <tr><td>Fresher Plus</td><td>60</td><td><input style="width:60px;padding:4px;border:1px solid var(--line);border-radius:6px" value="349"></td><td><button class="rs-btn" style="font-size:11px">Save</button></td></tr>
+                <tr><td>Fresher Pro</td><td>90</td><td><input style="width:60px;padding:4px;border:1px solid var(--line);border-radius:6px" value="499"></td><td><button class="rs-btn" style="font-size:11px">Save</button></td></tr>
+              </tbody></table>
+            </div>
+            <div class="ws-card"><h3 style="font-size:15px;margin-bottom:12px">Experienced Plans</h3>
+              <table><thead><tr><th>Plan</th><th>Days</th><th>Price</th><th>Action</th></tr></thead><tbody>
+                <tr><td>Professional</td><td>30</td><td><input style="width:60px;padding:4px;border:1px solid var(--line);border-radius:6px" value="299"></td><td><button class="rs-btn" style="font-size:11px">Save</button></td></tr>
+                <tr><td>Professional+</td><td>60</td><td><input style="width:60px;padding:4px;border:1px solid var(--line);border-radius:6px" value="499"></td><td><button class="rs-btn" style="font-size:11px">Save</button></td></tr>
+                <tr><td>Executive</td><td>90</td><td><input style="width:60px;padding:4px;border:1px solid var(--line);border-radius:6px" value="799"></td><td><button class="rs-btn" style="font-size:11px">Save</button></td></tr>
+              </tbody></table>
+            </div>
+          </div>
+        </div>
+        <div class="biz-tab" id="biz-coupons">
+          <div class="ws-card" style="max-width:500px;margin-bottom:16px"><h3 style="font-size:15px;margin-bottom:12px">Add Coupon</h3>
+            <div class="form-row"><div class="form-group"><label>Code</label><input class="form-control" placeholder="LAUNCH50"></div><div class="form-group"><label>Discount %</label><input class="form-control" placeholder="20"></div></div>
+            <div class="form-row"><div class="form-group"><label>Max uses</label><input class="form-control" placeholder="100"></div><div class="form-group"><label>Expires</label><input class="form-control" type="date"></div></div>
+            <button class="btn btn-primary" style="min-height:36px;font-size:13px">Add coupon</button>
+          </div>
+          <div class="table-wrap"><table><thead><tr><th>Code</th><th>Discount</th><th>Uses</th><th>Expires</th><th>Status</th></tr></thead><tbody>
+            <tr><td>LAUNCH50</td><td>50%</td><td>23/100</td><td>Nov 30</td><td><span class="status-pill st-paid">Active</span></td></tr>
+          </tbody></table></div>
+        </div>
+        <div class="biz-tab" id="biz-referral">
+          <div class="ws-card" style="max-width:500px"><h3 style="font-size:15px;margin-bottom:12px">Referral Rules</h3>
+            <div class="form-group" style="margin-bottom:12px"><label>Commission per referral (₹)</label><input class="form-control" value="60"></div>
+            <div class="form-group" style="margin-bottom:12px"><label>Min withdrawal (₹)</label><input class="form-control" value="200"></div>
+            <div class="form-group" style="margin-bottom:16px"><label>Payout method</label><select class="form-control"><option>UPI only</option><option>UPI + Bank</option></select></div>
+            <button class="btn btn-primary" style="min-height:36px;font-size:13px">Save rules</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- User Mailer -->
+    <div class="admin-view" id="adm-mailer">
+      <div class="admin-topbar"><div><div class="breadcrumb">Operations</div><h1>User Mailer</h1></div></div>
+      <div class="admin-section">
+        <div style="display:grid;grid-template-columns:260px 1fr;gap:20px">
+          <div>
+            <div style="background:#fff;border:1px solid var(--line);border-radius:12px;overflow:hidden;margin-bottom:16px">
+              <div style="padding:10px 16px;background:var(--soft);font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.06em">Email Templates</div>
+              <div id="mailer-list"></div>
+            </div>
+            <div style="background:#fff;border:1px solid var(--line);border-radius:12px;overflow:hidden">
+              <div style="padding:10px 16px;background:var(--soft);font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.06em">Delivery Queue</div>
+              <table><thead><tr><th>Recipient</th><th>Template</th><th>Status</th><th>Due</th></tr></thead>
+              <tbody>
+                <tr><td>priya@...</td><td>Welcome</td><td><span class="status-pill st-paid">Sent</span></td><td>Oct 13</td></tr>
+                <tr><td>rahul@...</td><td>Purchase</td><td><span class="status-pill st-paid">Sent</span></td><td>Oct 13</td></tr>
+                <tr><td>sneha@...</td><td>Expiry 7d</td><td><span class="status-pill st-started">Queued</span></td><td>Nov 5</td></tr>
+              </tbody></table>
+            </div>
+          </div>
+          <div style="background:#fff;border:1px solid var(--line);border-radius:12px;padding:20px">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+              <h3 id="mailer-editor-title" style="font-size:15px;font-weight:700">Select a template</h3>
+              <div style="display:flex;align-items:center;gap:8px;font-size:12px;color:var(--muted)">
+                Enabled: <label class="toggle"><input type="checkbox" id="mail-enabled" checked><span class="toggle-slider"></span></label>
+              </div>
+            </div>
+            <div style="background:var(--soft);border-radius:8px;padding:8px 12px;font-size:12px;margin-bottom:14px">
+              Trigger: <b id="mail-trigger-display" style="color:var(--blue)">profile_created</b> · 
+              Delay: <input id="mail-delay" type="number" min="0" max="720" value="0" style="width:50px;padding:2px 6px;border:1px solid var(--line);border-radius:6px;font:inherit;font-size:12px"> hours
+            </div>
+            <div class="form-group" style="margin-bottom:12px"><label>Subject</label><input class="form-control" id="mail-subject" placeholder="Email subject line…"></div>
+            <div class="form-group" style="margin-bottom:12px"><label>Body</label><textarea class="form-control" id="mail-body" rows="10" placeholder="Email body…" style="font-family:monospace;font-size:12px"></textarea></div>
+            <div style="background:#eff6ff;border-radius:8px;padding:10px 12px;font-size:11px;color:var(--muted);margin-bottom:14px">
+              Placeholders: <code>{{name}}</code> <code>{{email}}</code> <code>{{site_url}}</code> <code>{{payment_reference}}</code> <code>{{plan_name}}</code> <code>{{expiry_date}}</code>
+            </div>
+            <button class="btn btn-primary" onclick="saveMailTemplate(event)" style="padding:10px 24px">Save Template</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Error Log -->
+    <div class="admin-view" id="adm-errorlog">
+      <div class="admin-topbar"><div><div class="breadcrumb">Operations</div><h1>Error Log</h1></div><button class="btn btn-ghost" onclick="alert('Log cleared')" style="min-height:36px;font-size:13px">Clear log</button></div>
+      <div class="admin-section">
+        <div class="table-wrap" style="padding:16px">
+          <pre style="font-size:11px;color:var(--muted);font-family:monospace;line-height:1.8">[2026-10-13 08:14] INFO  App booted (v3.2.0-RC1)
+[2026-10-13 08:14] INFO  DB connected (mysql:host=localhost;dbname=cvtara_db)
+[2026-10-13 09:22] WARN  Slow query: 340ms — SELECT FROM ats_scans WHERE user_id=...
+[2026-10-13 11:45] INFO  Cron: 3 transactional emails sent
+[2026-10-13 13:10] INFO  Razorpay webhook received — order_JXYabc123
+[2026-10-13 14:33] WARN  Rate limit hit: 192.168.1.47 → /api/scan.php (10 req/60s)
+[2026-10-13 15:01] INFO  Resume download: user_id=342, template=Prism</pre>
+        </div>
+      </div>
+    </div>
+
+    <!-- Blog & SEO -->
+    <div class="admin-view" id="adm-blog">
+      <div class="admin-topbar"><div><div class="breadcrumb">Owner console</div><h1>Blog &amp; SEO (64+ posts)</h1></div><button class="btn btn-primary" style="min-height:36px;font-size:13px">+ New Post</button></div>
+      <div class="admin-section">
+        <div style="display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap" id="blog-filters"></div>
+        <div class="table-wrap"><table><thead><tr><th>Title</th><th>Category</th><th>SEO Score</th><th>Status</th><th>Action</th></tr></thead><tbody id="blog-tbody"></tbody></table></div>
+      </div>
+    </div>
+
+    <!-- Reviews -->
+    <div class="admin-view" id="adm-reviews">
+      <div class="admin-topbar"><div><div class="breadcrumb">Owner console</div><h1>Reviews</h1></div></div>
+      <div class="admin-section">
+        <div style="display:flex;gap:8px;margin-bottom:16px">
+          <button class="btn btn-primary" onclick="showReviewTab('pending')">Pending</button>
+          <button class="btn btn-outline" onclick="showReviewTab('published')">Published</button>
+        </div>
+        <div id="reviews-pending-tab" id="reviews-pending-tab"></div>
+        <div id="reviews-published-tab" style="display:none"></div>
+      </div>
+    </div>
+
+    <!-- Settings -->
+    <div class="admin-view" id="adm-settings">
+      <div class="admin-topbar"><div><div class="breadcrumb">Owner console</div><h1>Settings</h1></div></div>
+      <div class="admin-section">
+        <div class="ws-grid-2" style="margin-bottom:16px">
+          <div class="ws-card"><h3 style="font-size:15px;margin-bottom:12px">Razorpay</h3>
+            <div class="form-group" style="margin-bottom:10px"><label>Key ID</label><input type="password" class="form-control" placeholder="rzp_live_…"></div>
+            <div class="form-group" style="margin-bottom:12px"><label>Secret</label><input type="password" class="form-control" placeholder="••••••••"></div>
+            <div class="form-group" style="margin-bottom:12px"><label>Environment</label><select class="form-control"><option>sandbox</option><option>live</option></select></div>
+            <button class="btn btn-primary" style="min-height:36px;font-size:13px">Save</button>
+          </div>
+          <div class="ws-card"><h3 style="font-size:15px;margin-bottom:12px">SMTP Mail</h3>
+            <div class="form-group" style="margin-bottom:10px"><label>Host</label><input class="form-control" placeholder="smtp.hostinger.com"></div>
+            <div class="form-group" style="margin-bottom:10px"><label>From Email</label><input class="form-control" placeholder="hello@cvtara.com"></div>
+            <div class="form-group" style="margin-bottom:10px"><label>Username</label><input class="form-control" placeholder="hello@cvtara.com"></div>
+            <div class="form-group" style="margin-bottom:12px"><label>Password</label><input type="password" class="form-control" placeholder="••••••••"></div>
+            <button class="btn btn-primary" style="min-height:36px;font-size:13px">Save &amp; Test</button>
+          </div>
+          <div class="ws-card"><h3 style="font-size:15px;margin-bottom:12px">Analytics</h3>
+            <div class="form-group" style="margin-bottom:10px"><label>Google Analytics ID</label><input class="form-control" placeholder="G-XXXXXXXXXX"></div>
+            <div class="form-group" style="margin-bottom:12px"><label>Meta Pixel ID</label><input class="form-control" placeholder="1234567890"></div>
+            <button class="btn btn-primary" style="min-height:36px;font-size:13px">Save</button>
+          </div>
+          <div class="ws-card"><h3 style="font-size:15px;margin-bottom:12px">OneSignal (Push)</h3>
+            <div class="form-group" style="margin-bottom:10px"><label>App ID</label><input class="form-control" placeholder="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"></div>
+            <div class="form-group" style="margin-bottom:12px"><label>REST API Key</label><input type="password" class="form-control" placeholder="••••••••"></div>
+            <button class="btn btn-primary" style="min-height:36px;font-size:13px">Save</button>
+          </div>
+        </div>
+        <div class="ws-card" style="max-width:500px"><h3 style="font-size:15px;margin-bottom:12px">Brand</h3>
+          <div class="form-group" style="margin-bottom:10px"><label>App Name</label><input class="form-control" value="CVTara"></div>
+          <div class="form-group" style="margin-bottom:12px"><label>App URL</label><input class="form-control" value="https://cvtara.com"></div>
+          <button class="btn btn-primary" style="min-height:36px;font-size:13px">Save</button>
+        </div>
+      </div>
+    </div>
+
+  </main>
+</div>
+</div><!-- admin panel -->
+
+<!-- Live Overview floating panel -->
+<div id="live-panel">
+  <div style="display:flex;justify-content:space-between;align-items:center;padding-bottom:8px;border-bottom:1px solid var(--line)">
+    <b style="font-size:12px;color:var(--indigo)">● Live Overview</b>
+    <button onclick="toggleLivePanel()" style="background:none;border:none;cursor:pointer;color:var(--muted);font-size:14px;padding:0">☰</button>
+  </div>
+  <div class="lp-content">
+    <div class="lp-row"><span style="color:var(--muted)">Active users</span><b id="live-active" style="color:var(--success)">47</b></div>
+    <div class="lp-row"><span style="color:var(--muted)">Resumes today</span><b>31</b></div>
+    <div class="lp-row"><span style="color:var(--muted)">Revenue today</span><b>₹4,200</b></div>
+    <div class="lp-row"><span style="color:var(--muted)">ATS scans</span><b>128</b></div>
+    <div class="lp-row"><span style="color:var(--muted)">Signups today</span><b>12</b></div>
+    <div id="live-updated" style="font-size:10px;color:var(--muted);margin-top:4px;border-top:1px solid var(--line);padding-top:6px">Updated just now</div>
+  </div>
+</div>
+<script>
+// ── Data ────────────────────────────────────────────────────────────────────
+const TEMPLATES = [
+  {id:1,n:'Nova',cat:'Fresher',type:'free'},{id:2,n:'Prism',cat:'Fresher',type:'paid'},
+  {id:3,n:'Clarity',cat:'Fresher',type:'free'},{id:4,n:'Vector',cat:'Fresher',type:'paid'},
+  {id:5,n:'Pulse',cat:'Fresher',type:'free'},{id:6,n:'Orbit',cat:'Fresher',type:'paid'},
+  {id:7,n:'Zenith',cat:'Fresher',type:'free'},{id:8,n:'Apex',cat:'Fresher',type:'paid'},
+  {id:9,n:'Base',cat:'IT/Tech',type:'free'},{id:10,n:'Matrix',cat:'IT/Tech',type:'paid'},
+  {id:11,n:'Circuit',cat:'IT/Tech',type:'paid'},{id:12,n:'Stack',cat:'IT/Tech',type:'free'},
+  {id:13,n:'Deploy',cat:'IT/Tech',type:'paid'},{id:14,n:'DevKit',cat:'IT/Tech',type:'paid'},
+  {id:15,n:'Terminal',cat:'IT/Tech',type:'free'},{id:16,n:'Lambda',cat:'IT/Tech',type:'paid'},
+  {id:17,n:'Sigma',cat:'IT/Tech',type:'paid'},{id:18,n:'Kernel',cat:'IT/Tech',type:'free'},
+  {id:19,n:'Finance Pro',cat:'Finance',type:'paid'},{id:20,n:'Ledger',cat:'Finance',type:'free'},
+  {id:21,n:'Capital',cat:'Finance',type:'paid'},{id:22,n:'Equity',cat:'Finance',type:'paid'},
+  {id:23,n:'Yield',cat:'Finance',type:'free'},{id:24,n:'Bullion',cat:'Finance',type:'paid'},
+  {id:25,n:'CFA Edge',cat:'Finance',type:'paid'},{id:26,n:'Revenue',cat:'Finance',type:'free'},
+  {id:27,n:'Sales Blitz',cat:'Sales',type:'paid'},{id:28,n:'Quota',cat:'Sales',type:'free'},
+  {id:29,n:'Pipeline',cat:'Sales',type:'paid'},{id:30,n:'Closer',cat:'Sales',type:'paid'},
+  {id:31,n:'Pitch',cat:'Sales',type:'free'},{id:32,n:'Growth',cat:'Sales',type:'paid'},
+  {id:33,n:'Target',cat:'Sales',type:'paid'},{id:34,n:'Revenue Pro',cat:'Sales',type:'free'},
+  {id:35,n:'Market Edge',cat:'Marketing',type:'paid'},{id:36,n:'Campaign',cat:'Marketing',type:'free'},
+  {id:37,n:'Brand',cat:'Marketing',type:'paid'},{id:38,n:'Social',cat:'Marketing',type:'paid'},
+  {id:39,n:'SEO Edge',cat:'Marketing',type:'free'},{id:40,n:'Growth Hack',cat:'Marketing',type:'paid'},
+  {id:41,n:'Funnel',cat:'Marketing',type:'paid'},{id:42,n:'Content',cat:'Marketing',type:'free'},
+  {id:43,n:'Teach',cat:'Education',type:'free'},{id:44,n:'Scholar',cat:'Education',type:'paid'},
+  {id:45,n:'Campus',cat:'Education',type:'free'},{id:46,n:'Mentor',cat:'Education',type:'paid'},
+  {id:47,n:'Grade',cat:'Education',type:'paid'},{id:48,n:'Syllabus',cat:'Education',type:'free'},
+  {id:49,n:'Heal',cat:'Healthcare',type:'free'},{id:50,n:'Medic',cat:'Healthcare',type:'paid'},
+  {id:51,n:'Clinic',cat:'Healthcare',type:'paid'},{id:52,n:'Pulse Pro',cat:'Healthcare',type:'free'},
+  {id:53,n:'Care',cat:'Healthcare',type:'paid'},{id:54,n:'Vital',cat:'Healthcare',type:'paid'},
+  {id:55,n:'Operate',cat:'Operations',type:'free'},{id:56,n:'Process',cat:'Operations',type:'paid'},
+  {id:57,n:'Workflow',cat:'Operations',type:'paid'},{id:58,n:'Optimize',cat:'Operations',type:'free'},
+  {id:59,n:'Supply',cat:'Operations',type:'paid'},{id:60,n:'Execute',cat:'Operations',type:'paid'},
+  {id:61,n:'Blueprint',cat:'Engineering',type:'paid'},{id:62,n:'Infra',cat:'Engineering',type:'free'},
+  {id:63,n:'Build',cat:'Engineering',type:'paid'},{id:64,n:'Fabricate',cat:'Engineering',type:'paid'},
+  {id:65,n:'Tension',cat:'Engineering',type:'free'},{id:66,n:'Current',cat:'Engineering',type:'paid'},
+  {id:67,n:'Canvas',cat:'Design/Creative',type:'paid'},{id:68,n:'Palette',cat:'Design/Creative',type:'free'},
+  {id:69,n:'Sketch',cat:'Design/Creative',type:'paid'},{id:70,n:'Hue',cat:'Design/Creative',type:'paid'},
+  {id:71,n:'Render',cat:'Design/Creative',type:'free'},{id:72,n:'Motion',cat:'Design/Creative',type:'paid'},
+  {id:73,n:'Frame',cat:'Design/Creative',type:'paid'},{id:74,n:'Contrast',cat:'Design/Creative',type:'free'},
+  {id:75,n:'Verdict',cat:'Legal/Admin',type:'paid'},{id:76,n:'Counsel',cat:'Legal/Admin',type:'free'},
+  {id:77,n:'Bench',cat:'Legal/Admin',type:'paid'},{id:78,n:'Statute',cat:'Legal/Admin',type:'paid'},
+  {id:79,n:'Govern',cat:'Govt/PSU',type:'free'},{id:80,n:'Public',cat:'Govt/PSU',type:'free'},
+  {id:81,n:'Bureau',cat:'Govt/PSU',type:'paid'},{id:82,n:'Mandate',cat:'Govt/PSU',type:'paid'},
+  {id:83,n:'Hospit',cat:'Hospitality',type:'free'},{id:84,n:'Serve',cat:'Hospitality',type:'paid'},
+  {id:85,n:'Resort',cat:'Hospitality',type:'paid'},{id:86,n:'Culinary',cat:'Hospitality',type:'free'},
+  {id:87,n:'EventPro',cat:'Hospitality',type:'paid'},{id:88,n:'Lobby',cat:'Hospitality',type:'free'}
+];
+const CATS = [...new Set(TEMPLATES.map(t=>t.cat))];
+const CL_TEMPLATES = [
+  {id:1,n:'Nova CL',region:'Any',type:'free'},{id:2,n:'Formal',region:'Any',type:'paid'},
+  {id:3,n:'Impact',region:'India',type:'paid'},{id:4,n:'Startup',region:'India',type:'free'},
+  {id:5,n:'BPO Pro',region:'India',type:'paid'},{id:6,n:'MNC Edge',region:'India',type:'paid'},
+  {id:7,n:'IT Apply',region:'India',type:'free'},{id:8,n:'Finance CL',region:'India',type:'paid'},
+  {id:9,n:'Minimal',region:'Any',type:'free'},{id:10,n:'Bold CL',region:'Any',type:'paid'},
+  {id:11,n:'Classic',region:'Any',type:'free'},{id:12,n:'Modern',region:'Any',type:'paid'},
+  {id:13,n:'Executive CL',region:'Any',type:'paid'},{id:14,n:'Campus CL',region:'India',type:'free'},
+  {id:15,n:'MBA CL',region:'India',type:'paid'},{id:16,n:'PSU Apply',region:'India',type:'free'},
+  {id:17,n:'Govt CL',region:'India',type:'paid'},{id:18,n:'Nurse CL',region:'India',type:'free'},
+  {id:19,n:'Sales CL',region:'India',type:'paid'},{id:20,n:'Creative CL',region:'Any',type:'paid'},
+  {id:21,n:'Internship CL',region:'India',type:'free'},{id:22,n:'Referral CL',region:'Any',type:'paid'},
+  {id:23,n:'Career Change',region:'Any',type:'paid'},{id:24,n:'Returning CL',region:'Any',type:'free'},
+  {id:25,n:'Remote First',region:'Any',type:'paid'},{id:26,n:'LinkedIn CL',region:'Any',type:'paid'}
+];
+const FAQ_DATA = [
+  {q:'Is CVTara free to use?',a:'Yes — you can create a free account, explore all templates, and download your resume in our free tier. Paid plans unlock premium templates, unlimited downloads, and cover letters.'},
+  {q:'How accurate is the ATS score?',a:'Our ATS analyzer checks keyword density, formatting compatibility, and section completeness against the job description. It gives you an actionable score so you can improve your chances.'},
+  {q:'Can I create a cover letter too?',a:'Absolutely. CVTara includes 26 cover letter templates. You can customize them for any job posting in just a few minutes.'},
+  {q:'Which Indian job boards does CVTara support?',a:'Our ATS scan accepts JD URLs from Naukri, LinkedIn, Indeed India, Shine, and Foundit (Monster India). You can also paste the JD text directly.'},
+  {q:'What payment methods are accepted?',a:'We accept all major UPI apps (GPay, PhonePe, Paytm), net banking, debit/credit cards, and BNPL via Razorpay. All payments are in INR.'},
+  {q:'Is my data secure?',a:'Yes. We use encrypted HTTPS, hashed passwords, and never sell your data. Resumes are stored only for your account and deleted when you close it.'},
+  {q:'Can I download multiple formats?',a:'Paid users can download in PDF and DOCX. Free users get one PDF download per resume.'},
+  {q:'How does the referral program work?',a:'Share your referral link and earn ₹60 for every friend who purchases a plan. Withdraw via UPI once you hit ₹200 in your wallet.'},
+  {q:'Does CVTara support freshers?',a:'CVTara is built with the Indian fresher market in mind. We have 8 dedicated fresher templates and a 30/60/90-day fresher plan starting at ₹199.'},
+  {q:'What if I need help creating my resume?',a:'Use the built-in User Guide inside your workspace, or check our blog for 60+ tips on resume writing, interview prep, and job searching in India.'}
+];
+const PROOFS = [
+  '🔥 Rahul from Mumbai just purchased 60-day Fresher plan',
+  '✅ Priya from Bengaluru downloaded her resume just now',
+  '🎉 Amit from Delhi upgraded to Professional+ plan',
+  '🚀 Sneha from Hyderabad scored 58% on ATS — improved by 22%',
+  '💼 Karthik from Chennai purchased Executive 90-day plan',
+  '🌟 Deepika from Pune created her first resume 2 min ago',
+  '🔥 Arjun from Kolkata just purchased 30-day Fresher plan',
+  '✅ Meera from Ahmedabad matched her resume to a Naukri JD',
+  '🎉 Vikram from Jaipur created a cover letter just now',
+  '🚀 Neha from Noida scored 61% on ATS — ready to apply!'
+];
+const EMAIL_TEMPLATES = {
+  welcome:{label:'Welcome',trigger:'profile_created',delay:0,subject:'Welcome to CVTara, {{name}}! 🎉',body:`Hi {{name}},\n\nWelcome to CVTara! Your account is ready at {{site_url}}.\n\nStart by choosing a template and building your resume in under 10 minutes.\n\nHappy job hunting! 🚀\n\nTeam CVTara`},
+  resume_saved:{label:'Resume Saved',trigger:'resume_saved',delay:0,subject:'Your resume "{{resume_name}}" is saved',body:`Hi {{name}},\n\nGreat work! Your resume has been saved to your CVTara account.\n\nLog in anytime at {{site_url}} to edit, download, or share it.\n\nTeam CVTara`},
+  purchase:{label:'Purchase Confirmation',trigger:'payment_success',delay:0,subject:'Payment confirmed — {{plan_name}} activated',body:`Hi {{name}},\n\nThank you for your purchase!\n\nPlan: {{plan_name}}\nRef: {{payment_reference}}\nValid until: {{expiry_date}}\n\nLog in at {{site_url}} and start building.\n\nTeam CVTara`},
+  expiry_7d:{label:'Access Reminder (7d)',trigger:'subscription_expiry',delay:-168,subject:'Your CVTara plan expires in 7 days',body:`Hi {{name}},\n\nYour {{plan_name}} plan expires on {{expiry_date}} — that's 7 days from now.\n\nRenew early to keep uninterrupted access: {{site_url}}/billing\n\nTeam CVTara`},
+  expiry_1d:{label:'Access Reminder (1d)',trigger:'subscription_expiry',delay:-24,subject:'Last day — your CVTara plan expires tomorrow',body:`Hi {{name}},\n\nQuick heads-up: your {{plan_name}} plan expires tomorrow ({{expiry_date}}).\n\nRenew now and never lose your progress: {{site_url}}/billing\n\nTeam CVTara`},
+  followup:{label:'Application Follow-up',trigger:'application_status_change',delay:72,subject:'Following up on your application at {{company}}',body:`Hi {{name}},\n\nJust a friendly reminder to follow up on your job application at {{company}}.\n\nA polite email can make a real difference. Check your Applications tracker: {{site_url}}/applications\n\nTeam CVTara`},
+  forgot:{label:'Forgot Password',trigger:'password_reset_request',delay:0,subject:'Reset your CVTara password',body:`Hi {{name}},\n\nWe received a request to reset your password.\n\nClick here to reset: {{reset_url}}\n\nThis link expires in 2 hours. If you didn't request this, ignore this email.\n\nTeam CVTara`},
+  abandoned:{label:'Abandoned Purchase',trigger:'checkout_abandoned',delay:2,subject:'You left something behind at CVTara 👀',body:`Hi {{name}},\n\nYou were so close! You started upgrading your plan but didn't complete it.\n\nFinish your purchase here: {{checkout_url}}\n\nTeam CVTara`}
+};
+const BLOG_CATS = ['Resume Tips','ATS Guide','Interview Prep','Salary','Job Search','Career Change'];
+const BLOG_POSTS = [
+  {t:'How to Write a Fresher Resume in India (2026)',cat:'Resume Tips',seo:91,st:'Published'},
+  {t:'Top 10 ATS Keywords for IT Jobs',cat:'ATS Guide',seo:88,st:'Published'},
+  {t:'Naukri vs LinkedIn: Which is Better for Freshers?',cat:'Job Search',seo:86,st:'Published'},
+  {t:'How to Negotiate Salary in India',cat:'Salary',seo:84,st:'Published'},
+  {t:'Best Resume Formats for MNC Applications',cat:'Resume Tips',seo:83,st:'Published'},
+  {t:'5 Common ATS Mistakes and How to Fix Them',cat:'ATS Guide',seo:81,st:'Published'},
+  {t:'How to Crack Infosys InfyTQ Interview',cat:'Interview Prep',seo:80,st:'Published'},
+  {t:'Cover Letter Tips for Indian Job Seekers',cat:'Resume Tips',seo:79,st:'Published'},
+  {t:'IT Fresher Salary 2026: What to Expect',cat:'Salary',seo:78,st:'Published'},
+  {t:'How to Switch from BPO to IT',cat:'Career Change',seo:77,st:'Draft'}
+];
+
+// ── State ─────────────────────────────────────────────────────────────────
+let tickerIdx=0,tickerInterval=null,exitShown=false,opsOpen=true;
+let currentMailKey=null,liveExpanded=true;
+let currentBizTab='pricing',currentReviewTab='pending';
+let builderStep=0, atsWsStepN=0, clStepN=0;
+let selectedTemplate=null,selectedClTemplate=null;
+let allUsers=[
+  {n:'Rahul Sharma',e:'rahul@example.com',plan:'Fresher Plus',joined:'Oct 1',active:'Oct 13',st:'Active'},
+  {n:'Priya Nair',e:'priya@example.com',plan:'Professional',joined:'Sep 15',active:'Oct 12',st:'Active'},
+  {n:'Amit Kumar',e:'amit@example.com',plan:'Free',joined:'Oct 10',active:'Oct 11',st:'Active'},
+  {n:'Sneha Reddy',e:'sneha@example.com',plan:'Executive',joined:'Aug 20',active:'Oct 8',st:'Active'},
+  {n:'Karthik M',e:'karthik@example.com',plan:'Free',joined:'Oct 13',active:'Oct 13',st:'Active'},
+  {n:'Deepika S',e:'deepika@example.com',plan:'Fresher Basic',joined:'Oct 5',active:'Oct 9',st:'Active'},
+  {n:'Vikram P',e:'vikram@example.com',plan:'Professional+',joined:'Sep 28',active:'Oct 7',st:'Suspended'}
+];
+
+// ── Tab Switching ──────────────────────────────────────────────────────────
+function showTab(t){
+  document.querySelectorAll('.tab-btn').forEach(b=>b.classList.toggle('active',b.dataset.tab===t));
+  document.querySelectorAll('.tpanel').forEach(p=>p.style.display=p.id===t?'block':'none');
+  document.getElementById('live-panel').style.display=(t==='admin')?'block':'none';
+  if(t==='landing'){startTicker();}else{stopTicker();}
+  if(t==='admin'){setTimeout(drawCharts,200);}
+}
+function startTicker(){
+  if(tickerInterval) return;
+  rotateTicker();
+  tickerInterval=setInterval(rotateTicker,4000);
+}
+function stopTicker(){clearInterval(tickerInterval);tickerInterval=null;}
+function rotateTicker(){
+  const el=document.getElementById('proof-ticker');
+  if(!el) return;
+  el.style.opacity='0';
+  setTimeout(()=>{el.textContent=PROOFS[tickerIdx%PROOFS.length];tickerIdx++;el.style.opacity='1';},400);
+}
+
+// ── ATS Landing ────────────────────────────────────────────────────────────
+let _rMode='upload',_jMode='url';
+function setATSMode(m){
+  _rMode=m;
+  document.getElementById('ats-upload-area').style.display=m==='upload'?'flex':'none';
+  document.getElementById('ats-paste-area').style.display=m==='paste'?'block':'none';
+  document.querySelectorAll('.seg-btn[data-res]').forEach(b=>b.classList.toggle('active',b.dataset.res===m));
+}
+function setJDMode(m){
+  _jMode=m;
+  document.getElementById('ats-jd-url').style.display=m==='url'?'block':'none';
+  document.getElementById('ats-jd-paste').style.display=m==='paste'?'block':'none';
+  document.querySelectorAll('.seg-btn[data-jd]').forEach(b=>b.classList.toggle('active',b.dataset.jd===m));
+}
+function handleResumeFile(input){
+  const f=input.files[0];
+  if(!f) return;
+  document.getElementById('ats-upload-label').textContent='✔ '+f.name+' loaded';
+}
+function analyzeResume(resume,job){
+  let seed=0;
+  for(let i=0;i<(resume+job).length;i++) seed=(seed+((resume+job).charCodeAt(i)))%21;
+  return Math.max(40,Math.min(61,40+seed));
+}
+function runScan(){
+  const btn=document.getElementById('ats-scan-btn');
+  btn.textContent='Analyzing…'; btn.disabled=true;
+  const resume=_rMode==='paste'?(document.getElementById('ats-resume-text')||{value:''}).value:'uploaded';
+  const job=_jMode==='url'?(document.getElementById('ats-jd-url-input')||{value:''}).value
+                          :(document.getElementById('ats-jd-text')||{value:''}).value;
+  setTimeout(()=>{
+    const score=analyzeResume(resume,job);
+    const pct=(score/100)*283;
+    const ring=document.getElementById('ring-fg');
+    if(ring){ring.style.strokeDasharray=`${pct} 283`;}
+    const sn=document.getElementById('score-number');
+    if(sn){sn.textContent=score+'%';}
+    const res=document.getElementById('ats-result');
+    if(res) res.style.display='block';
+    btn.textContent='Analyze Resume'; btn.disabled=false;
+    const tips=['Add 3–5 more keywords from the JD','Use bullet points for experience','Include measurable achievements'];
+    const tl=document.getElementById('ats-tips-list');
+    if(tl){tl.innerHTML=tips.map(t=>`<li>${t}</li>`).join('');}
+  },1400);
+}
+
+// ── Template Grid ─────────────────────────────────────────────────────────
+function buildTPLGrid(containerId,filterRowId,context){
+  const fc=document.getElementById(filterRowId);
+  const gc=document.getElementById(containerId);
+  if(!fc||!gc) return;
+  fc.innerHTML='<button class="filter-btn active" onclick="filterTPL(this,\'all\',\''+containerId+'\')">All</button>'
+    +CATS.map(c=>`<button class="filter-btn" onclick="filterTPL(this,'${c}','${containerId}')">${c}</button>`).join('');
+  renderTPLGrid(TEMPLATES,gc,context);
+}
+function filterTPL(btn,cat,containerId){
+  btn.closest('.filter-row').querySelectorAll('.filter-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  const list=cat==='all'?TEMPLATES:TEMPLATES.filter(t=>t.cat===cat);
+  renderTPLGrid(list,document.getElementById(containerId),'lp');
+}
+function renderTPLGrid(list,container,context){
+  const colors=['#667EEA','#F093FB','#4FACFE','#43E97B','#FA709A','#FEE140','#30CFD0','#A18CD1'];
+  container.innerHTML=list.map((t,i)=>`
+    <div class="tpl-card" onclick="selectTemplate(${t.id},'${context}')">
+      <div class="tpl-thumb" style="background:linear-gradient(135deg,${colors[i%8]}33,${colors[(i+2)%8]}22)">
+        <div style="width:70%;height:8px;background:${colors[i%8]};border-radius:4px;margin-bottom:6px"></div>
+        <div style="width:90%;height:4px;background:#ccc;border-radius:2px;margin-bottom:3px"></div>
+        <div style="width:80%;height:4px;background:#ccc;border-radius:2px"></div>
+        ${t.type==='paid'?'<span style="position:absolute;top:6px;right:6px;background:#FFB300;color:#fff;font-size:9px;padding:1px 5px;border-radius:4px;font-weight:700">PRO</span>':''}
+      </div>
+      <div style="padding:8px;font-size:12px;font-weight:600">${t.n}</div>
+      <div style="padding:0 8px 8px;font-size:10px;color:var(--muted)">${t.cat}</div>
+    </div>`).join('');
+}
+function selectTemplate(id,context){
+  selectedTemplate=id;
+  if(context==='ws'){
+    document.getElementById('ws-tpl-chooser').style.display='none';
+    document.getElementById('ws-builder').style.display='block';
+    goBuilderStep(0);
+  }
+}
+
+// ── CL Preview Landing ───────────────────────────────────────────────────
+function buildCLPreview(){
+  const g=document.getElementById('cl-preview-grid');
+  if(!g) return;
+  const colors=['#667EEA','#F093FB','#4FACFE','#43E97B','#FA709A','#FEE140'];
+  g.innerHTML=CL_TEMPLATES.slice(0,6).map((t,i)=>`
+    <div class="tpl-card">
+      <div class="tpl-thumb" style="background:linear-gradient(135deg,${colors[i]}33,${colors[(i+2)%6]}22);padding:12px">
+        <div style="width:40%;height:6px;background:${colors[i]};border-radius:3px;margin-bottom:8px"></div>
+        <div style="width:100%;height:3px;background:#ccc;border-radius:2px;margin-bottom:3px"></div>
+        <div style="width:90%;height:3px;background:#ccc;border-radius:2px;margin-bottom:3px"></div>
+        <div style="width:95%;height:3px;background:#ccc;border-radius:2px"></div>
+      </div>
+      <div style="padding:8px;font-size:12px;font-weight:600">${t.n}</div>
+      <div style="padding:0 8px 8px;font-size:10px;color:var(--muted)">${t.region}</div>
+    </div>`).join('');
+}
+
+// ── FAQ ────────────────────────────────────────────────────────────────────
+function buildFAQ(){
+  const c=document.getElementById('faq-list');
+  if(!c) return;
+  c.innerHTML=FAQ_DATA.map((f,i)=>`
+    <div class="faq-item" id="faq-${i}">
+      <div class="faq-q" onclick="toggleFAQ(${i})">${f.q}<span class="faq-arrow">▼</span></div>
+      <div class="faq-a" id="faq-a-${i}">${f.a}</div>
+    </div>`).join('');
+}
+function toggleFAQ(i){
+  const a=document.getElementById('faq-a-'+i);
+  const item=document.getElementById('faq-'+i);
+  const open=a.style.display==='block';
+  document.querySelectorAll('.faq-a').forEach(el=>el.style.display='none');
+  document.querySelectorAll('.faq-item').forEach(el=>el.classList.remove('open'));
+  if(!open){a.style.display='block';item.classList.add('open');}
+}
+
+// ── Exit Intent ────────────────────────────────────────────────────────────
+document.addEventListener('mouseleave',function handler(e){
+  if(e.clientY<=0 && !exitShown && document.getElementById('landing').style.display!=='none'){
+    exitShown=true;
+    const p=document.getElementById('exit-popup');
+    if(p) p.style.display='flex';
+    document.removeEventListener('mouseleave',handler);
+  }
+});
+function closeExit(){
+  const p=document.getElementById('exit-popup');
+  if(p) p.style.display='none';
+}
+
+// ── Workspace Navigation ────────────────────────────────────────────────
+function wsNav(){
+  document.querySelectorAll('.ws-nav-item').forEach(it=>{
+    it.addEventListener('click',function(){
+      const view=this.dataset.view;
+      if(!view) return;
+      showWSView(view);
+      document.querySelectorAll('.ws-nav-item').forEach(x=>x.classList.remove('active'));
+      this.classList.add('active');
+    });
+  });
+}
+function showWSView(name){
+  document.querySelectorAll('.ws-view').forEach(v=>v.style.display='none');
+  const v=document.getElementById('ws-'+name);
+  if(v) v.style.display='block';
+  if(name==='resumes') buildCLWsGrid();
+}
+
+// ── Resume Builder ─────────────────────────────────────────────────────────
+function goBuilderStep(n){
+  builderStep=n;
+  document.querySelectorAll('[id^="bp"]').forEach(p=>p.style.display='none');
+  const pane=document.getElementById('bp'+n);
+  if(pane) pane.style.display='block';
+  document.querySelectorAll('.step-node').forEach((sn,i)=>{
+    sn.classList.toggle('active',i===n);
+    sn.classList.toggle('done',i<n);
+  });
+}
+function builderStepDir(dir){
+  goBuilderStep(Math.max(0,Math.min(5,builderStep+dir)));
+}
+function addExpBlock(){
+  const c=document.getElementById('exp-blocks');
+  if(!c) return;
+  const d=document.createElement('div');
+  d.className='exp-block';
+  d.innerHTML='<div class="form-row"><div class="form-group"><label>Company</label><input class="form-control" placeholder="Company name"></div><div class="form-group"><label>Role</label><input class="form-control" placeholder="Job title"></div></div>';
+  c.appendChild(d);
+}
+function addEduBlock(){
+  const c=document.getElementById('edu-blocks');
+  if(!c) return;
+  const d=document.createElement('div');
+  d.className='exp-block';
+  d.innerHTML='<div class="form-row"><div class="form-group"><label>Institution</label><input class="form-control" placeholder="College/University"></div><div class="form-group"><label>Degree</label><input class="form-control" placeholder="B.Tech / MBA…"></div></div>';
+  c.appendChild(d);
+}
+function addSkillTag(){
+  const inp=document.getElementById('skill-input');
+  if(!inp||!inp.value.trim()) return;
+  const c=document.getElementById('skill-tags');
+  if(!c) return;
+  const span=document.createElement('span');
+  span.className='skill-tag';
+  span.innerHTML=inp.value.trim()+' <button onclick="this.parentElement.remove()">×</button>';
+  c.appendChild(span);
+  inp.value='';
+}
+function selectColor(btn,color){
+  document.querySelectorAll('.color-swatch').forEach(s=>s.classList.remove('active'));
+  btn.classList.add('active');
+}
+
+// ── ATS Workspace ─────────────────────────────────────────────────────────
+function atsWsStep(n){
+  atsWsStepN=n;
+  document.querySelectorAll('[id^="ap"]').forEach(p=>p.style.display='none');
+  const p=document.getElementById('ap'+n);
+  if(p) p.style.display='block';
+}
+function runWsScan(){
+  const btn=document.getElementById('ws-scan-btn');
+  if(btn){btn.textContent='Scanning…';btn.disabled=true;}
+  setTimeout(()=>{
+    const score=analyzeResume('sample','job');
+    const pct=(score/100)*283;
+    const ring=document.getElementById('ws-ring-fg');
+    if(ring) ring.style.strokeDasharray=`${pct} 283`;
+    const num=document.getElementById('ws-ring-num');
+    if(num) num.textContent=score+'%';
+    atsWsStep(2);
+    if(btn){btn.textContent='Analyze Match';btn.disabled=false;}
+  },1400);
+}
+
+// ── Cover Letter Workspace ───────────────────────────────────────────────
+function clStep(n){
+  clStepN=n;
+  document.querySelectorAll('[id^="clp"]').forEach(p=>p.style.display='none');
+  const p=document.getElementById('clp'+n);
+  if(p) p.style.display='block';
+}
+function buildCLWsGrid(){
+  const g=document.getElementById('cl-ws-grid');
+  if(!g) return;
+  const colors=['#667EEA','#F093FB','#4FACFE','#43E97B','#FA709A','#FEE140'];
+  g.innerHTML=CL_TEMPLATES.map((t,i)=>`
+    <div class="tpl-card" onclick="selectCLTemplate(${t.id})">
+      <div class="tpl-thumb" style="background:linear-gradient(135deg,${colors[i%6]}33,${colors[(i+2)%6]}22)">
+        ${t.type==='paid'?'<span style="position:absolute;top:6px;right:6px;background:#FFB300;color:#fff;font-size:9px;padding:1px 5px;border-radius:4px;font-weight:700">PRO</span>':''}
+      </div>
+      <div style="padding:8px;font-size:12px;font-weight:600">${t.n}</div>
+    </div>`).join('');
+}
+function selectCLTemplate(id){
+  selectedClTemplate=id;
+  clStep(1);
+}
+
+// ── Applications Kanban ────────────────────────────────────────────────────
+function moveApp(btn,dir){
+  const cols=['app-col-wish','app-col-applied','app-col-interview','app-col-offer'];
+  const card=btn.closest('.kanban-card');
+  const col=card.closest('.kanban-col');
+  const ci=cols.indexOf(col.id);
+  const ni=Math.max(0,Math.min(3,ci+dir));
+  if(ni!==ci) document.getElementById(cols[ni]).querySelector('.kanban-cards').appendChild(card);
+}
+
+// ── Admin Navigation ───────────────────────────────────────────────────────
+function adminNav(el,viewId){
+  document.querySelectorAll('.admin-nav-item').forEach(x=>x.classList.remove('active'));
+  el.classList.add('active');
+  document.querySelectorAll('.admin-view').forEach(v=>v.classList.remove('active'));
+  const v=document.getElementById(viewId);
+  if(v) v.classList.add('active');
+  if(viewId==='adm-overview') setTimeout(drawCharts,100);
+}
+function toggleOps(){
+  opsOpen=!opsOpen;
+  const sub=document.getElementById('ops-submenu');
+  const arr=document.getElementById('ops-arrow');
+  if(sub) sub.style.display=opsOpen?'block':'none';
+  if(arr) arr.textContent=opsOpen?'▼':'►';
+}
+function showBizTab(t){
+  currentBizTab=t;
+  document.querySelectorAll('.biz-tab').forEach(x=>x.classList.remove('active'));
+  const tab=document.getElementById('biz-'+t);
+  if(tab) tab.classList.add('active');
+  document.querySelectorAll('#adm-bizops .btn').forEach(b=>{
+    b.classList.toggle('btn-primary',b.textContent.toLowerCase()===t);
+    b.classList.toggle('btn-outline',b.textContent.toLowerCase()!==t);
+  });
+}
+function showReviewTab(t){
+  currentReviewTab=t;
+  document.getElementById('reviews-pending-tab').style.display=t==='pending'?'block':'none';
+  document.getElementById('reviews-published-tab').style.display=t==='published'?'block':'none';
+}
+
+// ── Mailer ─────────────────────────────────────────────────────────────────
+function buildMailer(){
+  const list=document.getElementById('mailer-list');
+  if(!list) return;
+  list.innerHTML=Object.entries(EMAIL_TEMPLATES).map(([k,v])=>`
+    <div style="padding:10px 16px;cursor:pointer;border-bottom:1px solid var(--line);font-size:13px;display:flex;align-items:center;gap:8px" onclick="loadMailTemplate('${k}')" id="mail-item-${k}">
+      <span>📧</span><span>${v.label}</span>
+    </div>`).join('');
+}
+function loadMailTemplate(k){
+  currentMailKey=k;
+  const t=EMAIL_TEMPLATES[k];
+  document.getElementById('mailer-editor-title').textContent=t.label;
+  document.getElementById('mail-subject').value=t.subject;
+  document.getElementById('mail-body').value=t.body;
+  document.getElementById('mail-trigger-display').textContent=t.trigger;
+  document.getElementById('mail-delay').value=t.delay||0;
+  document.querySelectorAll('[id^="mail-item-"]').forEach(x=>x.style.background='');
+  const item=document.getElementById('mail-item-'+k);
+  if(item) item.style.background='var(--soft)';
+}
+function saveMailTemplate(){
+  if(!currentMailKey) return;
+  EMAIL_TEMPLATES[currentMailKey].subject=document.getElementById('mail-subject').value;
+  EMAIL_TEMPLATES[currentMailKey].body=document.getElementById('mail-body').value;
+  const btn=document.querySelector('#adm-mailer button.btn-primary');
+  if(btn){const orig=btn.textContent;btn.textContent='✔ Saved';setTimeout(()=>btn.textContent=orig,1500);}
+}
+
+// ── Users Table ─────────────────────────────────────────────────────────────
+function buildUsersTable(){
+  renderUsers(allUsers);
+  buildOrdersTable();
+}
+function renderUsers(list){
+  const tb=document.getElementById('users-tbody');
+  if(!tb) return;
+  tb.innerHTML=list.map(u=>`<tr>
+    <td>${u.n}</td><td>${u.e}</td>
+    <td><span class="status-pill ${u.plan==='Free'?'st-started':'st-paid'}">${u.plan}</span></td>
+    <td>${u.joined}</td><td>${u.active}</td>
+    <td><span class="status-pill ${u.st==='Active'?'st-paid':'st-paused'}">${u.st}</span></td>
+    <td><button class="rs-btn" style="font-size:11px">View</button></td>
+  </tr>`).join('');
+}
+function filterUsers(){
+  const q=(document.getElementById('user-search')||{}).value.toLowerCase();
+  const f=(document.getElementById('user-filter')||{}).value;
+  let list=allUsers.filter(u=>{
+    const match=!q||u.n.toLowerCase().includes(q)||u.e.toLowerCase().includes(q);
+    const planMatch=!f||(f==='paid'&&u.plan!=='Free')||(f==='free'&&u.plan==='Free');
+    return match&&planMatch;
+  });
+  renderUsers(list);
+}
+function buildOrdersTable(){
+  const orders=[
+    {id:'ORD-001',u:'Rahul Sharma',plan:'Fresher Plus',amt:'₹349',prov:'Razorpay',date:'Oct 13',st:'Success'},
+    {id:'ORD-002',u:'Priya Nair',plan:'Professional',amt:'₹299',prov:'UPI',date:'Oct 12',st:'Success'},
+    {id:'ORD-003',u:'Sneha Reddy',plan:'Executive',amt:'₹799',prov:'Card',date:'Oct 10',st:'Success'},
+    {id:'ORD-004',u:'Amit Kumar',plan:'Fresher Basic',amt:'₹199',prov:'Razorpay',date:'Oct 9',st:'Refunded'}
+  ];
+  const otb=document.getElementById('all-orders-tbody');
+  if(otb) otb.innerHTML=orders.map(o=>`<tr>
+    <td>${o.id}</td><td>${o.u}</td><td>${o.plan}</td><td>${o.amt}</td>
+    <td>${o.prov}</td><td>${o.date}</td>
+    <td><span class="status-pill ${o.st==='Success'?'st-paid':o.st==='Refunded'?'st-paused':'st-started'}">${o.st}</span></td>
+  </tr>`).join('');
+  const rtb=document.getElementById('orders-tbody');
+  if(rtb) rtb.innerHTML=orders.slice(0,3).map(o=>`<tr>
+    <td>${o.u}</td><td>${o.plan}</td><td>${o.amt}</td><td>${o.date}</td>
+    <td><span class="status-pill ${o.st==='Success'?'st-paid':'st-paused'}">${o.st}</span></td>
+  </tr>`).join('');
+  const stb=document.getElementById('scans-tbody');
+  if(stb) stb.innerHTML=[
+    {u:'karthik@e.com',score:'58%',jt:'Frontend Dev',time:'2 min ago'},
+    {u:'neha@e.com',score:'61%',jt:'Data Analyst',time:'15 min ago'},
+    {u:'vikram@e.com',score:'47%',jt:'HR Executive',time:'1h ago'}
+  ].map(s=>`<tr><td>${s.u}</td><td>${s.score}</td><td>${s.jt}</td><td>${s.time}</td></tr>`).join('');
+}
+
+// ── Blog Table ──────────────────────────────────────────────────────────────
+function buildBlog(){
+  const fb=document.getElementById('blog-filters');
+  const tb=document.getElementById('blog-tbody');
+  if(!fb||!tb) return;
+  fb.innerHTML='<button class="filter-btn active" onclick="filterBlog(this,\'\')">All</button>'
+    +BLOG_CATS.map(c=>`<button class="filter-btn" onclick="filterBlog(this,'${c}')">${c}</button>`).join('');
+  renderBlog(BLOG_POSTS);
+}
+function filterBlog(btn,cat){
+  btn.closest('#blog-filters').querySelectorAll('.filter-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  renderBlog(cat?BLOG_POSTS.filter(p=>p.cat===cat):BLOG_POSTS);
+}
+function renderBlog(list){
+  const tb=document.getElementById('blog-tbody');
+  if(!tb) return;
+  tb.innerHTML=list.map(p=>`<tr>
+    <td>${p.t}</td><td>${p.cat}</td>
+    <td><span style="color:${p.seo>85?'var(--success)':'var(--warn)'}">${p.seo}</span></td>
+    <td><span class="status-pill ${p.st==='Published'?'st-paid':'st-started'}">${p.st}</span></td>
+    <td><button class="rs-btn" style="font-size:11px">Edit</button></td>
+  </tr>`).join('');
+}
+
+// ── Resume Lib & CL Lib ─────────────────────────────────────────────────────
+function buildResumeLib(){
+  const tb=document.getElementById('resume-lib-tbody');
+  if(!tb) return;
+  tb.innerHTML=TEMPLATES.map(t=>`<tr>
+    <td>${t.n}</td><td>${t.cat}</td>
+    <td><span class="status-pill ${t.type==='paid'?'st-paid':'st-started'}">${t.type}</span></td>
+    <td><label class="toggle" style="scale:.8"><input type="checkbox" checked><span class="toggle-slider"></span></label></td>
+    <td><button class="rs-btn" style="font-size:11px">Edit</button></td>
+  </tr>`).join('');
+}
+function buildCLLib(){
+  const tb=document.getElementById('cl-lib-tbody');
+  if(!tb) return;
+  tb.innerHTML=CL_TEMPLATES.map(t=>`<tr>
+    <td>${t.n}</td><td>${t.region}</td>
+    <td><span class="status-pill ${t.type==='paid'?'st-paid':'st-started'}">${t.type}</span></td>
+    <td><label class="toggle" style="scale:.8"><input type="checkbox" checked><span class="toggle-slider"></span></label></td>
+    <td><button class="rs-btn" style="font-size:11px">Edit</button></td>
+  </tr>`).join('');
+}
+
+// ── Reviews ─────────────────────────────────────────────────────────────────
+function buildReviews(){
+  const pending=[
+    {n:'Rahul S',star:5,t:'Amazing template! Got interview calls within a week.',u:'Hyderabad'},
+    {n:'Ananya K',star:5,t:'Very easy to use, professional looking resume.',u:'Bengaluru'}
+  ];
+  const published=[
+    {n:'Priya N',star:5,t:'Best resume builder I have used. Totally worth it.',u:'Chennai'},
+    {n:'Amit K',star:4,t:'Good templates. ATS score helped me understand gaps.',u:'Delhi'}
+  ];
+  const pt=document.getElementById('reviews-pending-tab');
+  const pbt=document.getElementById('reviews-published-tab');
+  if(pt) pt.innerHTML=pending.map(r=>`<div class="review-card">
+    <div class="review-header"><b>${r.n}</b><span style="color:var(--muted);font-size:12px">${r.u}</span><span style="color:#FFB300">★</span> ${r.star}</div>
+    <div style="margin-bottom:10px;font-size:14px">"${r.t}"</div>
+    <button class="rs-btn" style="background:var(--success);color:#fff;font-size:11px">Approve</button>
+    <button class="rs-btn" style="font-size:11px;margin-left:6px">Hide</button>
+  </div>`).join('');
+  if(pbt) pbt.innerHTML=published.map(r=>`<div class="review-card">
+    <div class="review-header"><b>${r.n}</b><span style="color:var(--muted);font-size:12px">${r.u}</span><span style="color:#FFB300">★</span> ${r.star}</div>
+    <div style="margin-bottom:10px;font-size:14px">"${r.t}"</div>
+    <span class="status-pill st-paid">Published</span>
+    <button class="rs-btn" style="font-size:11px;margin-left:6px">Hide</button>
+  </div>`).join('');
+}
+
+// ── Live Panel ─────────────────────────────────────────────────────────────
+function toggleLivePanel(){
+  liveExpanded=!liveExpanded;
+  const c=document.querySelector('#live-panel .lp-content');
+  if(c) c.style.display=liveExpanded?'block':'none';
+}
+function updateLive(){
+  const a=document.getElementById('live-active');
+  if(a) a.textContent=Math.floor(40+Math.random()*20);
+  const upd=document.getElementById('live-updated');
+  if(upd) upd.textContent='Updated '+new Date().toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'});
+}
+setInterval(updateLive,30000);
+
+// ── Canvas Charts ─────────────────────────────────────────────────────────
+function drawCharts(){
+  const signupData=[5,8,12,7,15,10,12];
+  const revenueData=[1200,2100,1800,3400,2800,4200,3100,5000,4400,3800,6200,5100,4800,6500,5900,7100,6300,5700,8000,7400,6800,9200,8100,7500,10000,9300,8700,11500,10400,9800];
+  drawBar('chart-signups',signupData,['M','T','W','T','F','S','S'],'var(--indigo)');
+  drawLine('chart-revenue',revenueData,'var(--success)');
+}
+function drawBar(id,data,labels,color){
+  const canvas=document.getElementById(id);
+  if(!canvas||!canvas.getContext) return;
+  const ctx=canvas.getContext('2d');
+  canvas.width=canvas.parentElement.clientWidth||400;
+  const W=canvas.width,H=canvas.height,pad=20,barW=(W-pad*2)/data.length*0.6;
+  const max=Math.max(...data)||1;
+  ctx.clearRect(0,0,W,H);
+  data.forEach((v,i)=>{
+    const x=pad+i*(W-pad*2)/data.length;
+    const barH=(v/max)*(H-pad*2);
+    ctx.fillStyle=color||'var(--indigo)';
+    ctx.beginPath();ctx.roundRect(x,H-pad-barH,barW,barH,3);ctx.fill();
+    ctx.fillStyle='#888';ctx.font='9px Inter,sans-serif';ctx.textAlign='center';
+    ctx.fillText(labels[i]||'',x+barW/2,H-4);
+  });
+}
+function drawLine(id,data,color){
+  const canvas=document.getElementById(id);
+  if(!canvas||!canvas.getContext) return;
+  const ctx=canvas.getContext('2d');
+  canvas.width=canvas.parentElement.clientWidth||400;
+  const W=canvas.width,H=canvas.height,pad=20;
+  const max=Math.max(...data)||1,min=Math.min(...data)||0;
+  const sx=(i)=>pad+i*(W-pad*2)/(data.length-1);
+  const sy=(v)=>H-pad-(v-min)/(max-min)*(H-pad*2);
+  ctx.clearRect(0,0,W,H);
+  const grad=ctx.createLinearGradient(0,0,0,H);
+  grad.addColorStop(0,(color||'#43E97B')+'55');
+  grad.addColorStop(1,(color||'#43E97B')+'00');
+  ctx.beginPath();ctx.moveTo(sx(0),sy(data[0]));
+  data.forEach((v,i)=>i>0&&ctx.lineTo(sx(i),sy(v)));
+  ctx.lineTo(sx(data.length-1),H-pad);ctx.lineTo(sx(0),H-pad);ctx.closePath();
+  ctx.fillStyle=grad;ctx.fill();
+  ctx.beginPath();ctx.moveTo(sx(0),sy(data[0]));
+  data.forEach((v,i)=>i>0&&ctx.lineTo(sx(i),sy(v)));
+  ctx.strokeStyle=color||'#43E97B';ctx.lineWidth=2;ctx.stroke();
+}
+
+// ── Init ───────────────────────────────────────────────────────────────────
+document.addEventListener('DOMContentLoaded',()=>{
+  showTab('landing');
+  buildTPLGrid('lp-tpl-grid','lp-filters','lp');
+  buildCLPreview();
+  buildFAQ();
+  buildMailer();
+  buildUsersTable();
+  buildBlog();
+  buildResumeLib();
+  buildCLLib();
+  buildReviews();
+  wsNav();
+  showWSView('dashboard');
+  goBuilderStep(0);
+  atsWsStep(0);
+  clStep(0);
+  startTicker();
+  document.getElementById('adm-overview').classList.add('active');
+});
+</script>
+</body></html>
