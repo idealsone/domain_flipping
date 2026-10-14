@@ -135,3 +135,34 @@ Both patches apply cleanly to the pristine package. They cover H1, H4, M1, M2 an
 4. Add coupon limits and a minimum qualifying amount for referrals (M6).
 5. Enable the email templates and test one real receipt (M10).
 6. Do the live provider, Hostinger and device acceptance listed in `LAUNCH_READINESS.md`.
+
+---
+
+## Addendum — status in CVTara v3.3.0 (2026-10-14)
+
+Everything above was reworked into **`cvtara-v3.3/`** (source, build script, docs). Status of each finding:
+
+| Finding | Status in v3.3 |
+|---|---|
+| **NEW — H0: fresh install returns HTTP 500 on `/login`, `/register`, `/forgot-password`** | Found while testing the v3.3 build; **the original 3.2.0-RC1 package has the same defect** (it ships without `storage/framework/{views,cache,sessions}`; my first audit missed it because my test copy had those folders). Fixed: folders now ship in the package and `install.php` creates them. Fresh-install test passes. |
+| H1 docx export corrupt | Fixed |
+| H2 no way to block users | Fixed — Admin → Users & access (search, pagination, block/unblock with audit note and re-verification) |
+| H3 Guided setup had no UI | Fixed — Admin → Setup & health |
+| H4 referral attribution lost | Fixed |
+| H5 Cashfree checkout trap | Fixed — Razorpay only; Cashfree rejected server-side |
+| M1 swallowed API errors | Fixed |
+| M2 guide-page JS error | Fixed |
+| M3 match-engine years/priority | Fixed |
+| M4 overlapping purchases | Fixed — strongest plan wins; same-plan renewals stack; add-ons need an active plan |
+| M5 partial refund removes access | Fixed — partial refund keeps access; full refund or dispute removes it |
+| M6 coupon limits / ₹1 referrals | Fixed — total and per-customer limits; minimum qualifying purchase (default ₹99) |
+| M7 chargebacks | Fixed — `payment.dispute.*` revokes access and reverses commission; a won dispute restores |
+| M8 false "Preview controls" banner | Fixed |
+| M9 users capped at 500 / N+1 | Fixed — 100 per page, server-side search, batched queries |
+| M10 emails off by default | Fixed — welcome, receipt, expiry, follow-up, password reset on by default |
+| M11 mail queue limits | Fixed — 40/run, transactional first, stuck rows recovered, no reminder cap |
+| M12 data export / deletion | Fixed — "Download my data" and "Delete my account" in the customer account page |
+| M13 shared API rate limit | Raised to 400/min (`API_RATE_LIMIT`); logged-in users are limited per account |
+| Low: traffic path, export 402 message, language options, calculators | Traffic path fixed; export message fixed; Hindi/Bengali removed; calculator wording left as is |
+
+Not done / still open: live-provider acceptance, Hostinger and real-device testing, and plan perks that are listed text rather than features (Naukri/LinkedIn export, 1-on-1 call, priority support, lifetime updates).

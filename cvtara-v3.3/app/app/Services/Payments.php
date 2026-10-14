@@ -1,0 +1,121 @@
+<?php
+
+namespace App\Services;
+
+use App\Models\User;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Str;
+use Illuminate\Validation\ValidationException;
+
+class Payments
+{
+    public static function start(User $u, string $plan, string $phone = '', string $coupon = ''): array
+    {
+        $plans = Settings::plans();
+        abort_unless(isset($plans[$plan]) && $plan !== 'free', 422);
+        $i = Settings::get('integrations');
+        $p = Settings::providers()['payments'] ?? [];
+        if (! ($i['payments'] ?? false) || ($p['provider'] ?? 'razorpay') !== 'razorpay' || empty($p['razorpayKeyId']) || empty($p['razorpayKeySecret'])) {
+            throw ValidationException::withMessages(['payments' => 'Checkout is not configured. The owner must enable Razorpay and verify its keys.']);
+        }$id = (string) Str::uuid();
+        $quote = BusinessControls::quote($plan, $coupon, $u->id);
+        $price = $quote['totalPaise'];
+        abort_unless($price > 0 && $price < 100000000, 422);
+        $result = Http::withBasicAuth($p['razorpayKeyId'], $p['razorpayKeySecret'])->timeout(20)->post('https://api.razorpay.com/v1/orders', ['amount' => $price, 'currency' => 'INR', 'receipt' => $id])->throw()->json();
+        DB::table('purchases')->insert(['id' => $id, 'owner_id' => $u->id, 'plan' => $plan, 'amount_paise' => $price, 'coupon_code' => $quote['code'] ?: null, 'discount_paise' => $quote['discountPaise'], 'provider_order_id' => $result['id'], 'is_live' => str_starts_with($p['razorpayKeyId'], 'rzp_live_'), 'limits_json' => json_encode($plans[$plan]), 'access_days' => $plans[$plan]['accessDays'], 'created_at' => now(), 'updated_at' => now()]);
+        Settings::audit($u->id, 'checkout_started', $id);
+
+        return ['id' => $id, 'provider' => 'razorpay', 'orderId' => $result['id'], 'keyId' => $p['razorpayKeyId'], 'amount' => $price, 'currency' => 'INR', 'test' => ! str_starts_with($p['razorpayKeyId'], 'rzp_live_')];
+    }
+
+    public static function guardAddon(User $u, string $plan): void
+    {
+        if (str_starts_with($plan, 'addon-') && ! Settings::access($u->id)['paid']) {
+            abort(422, 'Add-on packs need an active plan. Choose a plan first.');
+        }
+    }
+
+    public static function capture(array $entity, string $provider = 'razorpay'): void
+    {
+        DB::transaction(function () use ($entity, $provider) {
+            $p = DB::table('purchases')->where('provider', $provider)->where('provider_order_id', $entity['order_id'] ?? '')->lockForUpdate()->first();
+            if (! $p) {
+                throw ValidationException::withMessages(['payment' => 'Order not available yet; retry this event.']);
+            }if (($entity['currency'] ?? '') !== $p->currency || (int) ($entity['amount'] ?? 0) !== $p->amount_paise || ($entity['status'] ?? '') !== 'captured') {
+                throw ValidationException::withMessages(['payment' => 'Payment verification failed.']);
+            }if (in_array($p->status, ['paid', 'refunded', 'partially_refunded', 'disputed'])) {
+                return;
+            }$running = DB::table('purchases')->where('owner_id', $p->owner_id)->where('id', '!=', $p->id)->where('plan', $p->plan)->whereIn('status', ['paid', 'partially_refunded'])->where('access_until', '>', now())->max('access_until');
+            $start = $running ? max(now(), \Illuminate\Support\Carbon::parse($running)) : now();
+            if (str_starts_with($p->plan, 'addon-')) {
+                $end = Settings::access($p->owner_id)['accessUntil'];
+                $until = $end ? \Illuminate\Support\Carbon::parse($end) : now()->addDays(30);
+                DB::table('purchases')->where('id', $p->id)->update(['status' => 'paid', 'payment_reference' => $entity['id'], 'purchased_at' => now(), 'access_until' => $until, 'updated_at' => now()]);
+            } else {
+                DB::table('purchases')->where('id', $p->id)->update(['status' => 'paid', 'payment_reference' => $entity['id'], 'purchased_at' => now(), 'access_until' => $start->copy()->addDays($p->access_days), 'updated_at' => now()]);
+            }
+            $p = DB::table('purchases')->where('id', $p->id)->first();
+            Referrals::credit($p);
+            Settings::audit($p->owner_id, 'purchase_verified', $p->id);
+            MailAutomation::queue(User::findOrFail($p->owner_id), 'purchase_verified', $entity['id']);
+        });
+    }
+
+    public static function verify(User $u, array $d): void
+    {
+        $p = Settings::providers()['payments'] ?? [];
+        $order = DB::table('purchases')->where('owner_id', $u->id)->where('provider_order_id', $d['razorpay_order_id'])->first();
+        abort_unless($order, 404);
+        $sig = hash_hmac('sha256', $order->provider_order_id.'|'.$d['razorpay_payment_id'], $p['razorpayKeySecret'] ?? '');
+        abort_unless(! empty($p['razorpayKeySecret']) && hash_equals($sig, $d['razorpay_signature']), 403);
+        $entity = Http::withBasicAuth($p['razorpayKeyId'], $p['razorpayKeySecret'])->timeout(20)->get('https://api.razorpay.com/v1/payments/'.rawurlencode($d['razorpay_payment_id']))->throw()->json();
+        abort_unless(($entity['order_id'] ?? '') === $order->provider_order_id && ($entity['id'] ?? '') === $d['razorpay_payment_id'], 422);
+        self::capture($entity);
+    }
+
+    public static function webhook(string $raw, string $signature, string $eventId): void
+    {
+        $p = Settings::providers()['payments'] ?? [];
+        abort_unless(! empty($p['razorpayWebhookSecret']) && hash_equals(hash_hmac('sha256', $raw, $p['razorpayWebhookSecret']), $signature), 403);
+        $d = json_decode($raw, true, 64, JSON_THROW_ON_ERROR);
+        $key = substr($eventId ?: hash('sha256', $raw), 0, 190);
+        DB::transaction(function () use ($d, $key) {
+            if (DB::table('webhook_events')->where('id', $key)->exists()) {
+                return;
+            }$type = $d['event'] ?? '';
+            $refundKey = $type === 'refund.processed' ? 'refund:'.($d['payload']['refund']['entity']['id'] ?? '') : null;
+            if ($refundKey && DB::table('webhook_events')->where('id', $refundKey)->exists()) {
+                return;
+            }if (in_array($type, ['payment.captured', 'order.paid'])) {
+                self::capture($d['payload']['payment']['entity'] ?? []);
+            }if ($type === 'refund.processed') {
+                $refund = $d['payload']['refund']['entity'] ?? [];
+                $p = DB::table('purchases')->where('payment_reference', $refund['payment_id'] ?? '')->lockForUpdate()->first();
+                if (! $p) {
+                    throw ValidationException::withMessages(['payment' => 'Original payment not received yet; retry.']);
+                }$total = min($p->amount_paise, $p->refunded_paise + (int) ($refund['amount'] ?? 0));
+                DB::table('purchases')->where('id', $p->id)->update(['refunded_paise' => $total, 'status' => $total === $p->amount_paise ? 'refunded' : 'partially_refunded', 'updated_at' => now()]);
+                Referrals::reverse($p, $total);
+                Settings::audit($p->owner_id, 'payment_refunded', $p->id);
+            }if (str_starts_with($type, 'payment.dispute.')) {
+                $dispute = $d['payload']['dispute']['entity'] ?? [];
+                $p = DB::table('purchases')->where('payment_reference', $dispute['payment_id'] ?? '')->lockForUpdate()->first();
+                if (! $p) {
+                    throw ValidationException::withMessages(['payment' => 'Original payment not received yet; retry.']);
+                }$won = $type === 'payment.dispute.won' || ($type === 'payment.dispute.closed' && ($dispute['status'] ?? '') === 'won');
+                if ($won && $p->status === 'disputed') {
+                    DB::table('purchases')->where('id', $p->id)->update(['status' => $p->refunded_paise > 0 ? 'partially_refunded' : 'paid', 'updated_at' => now()]);
+                    Referrals::restore($p);
+                    Settings::audit($p->owner_id, 'payment_dispute_won', $p->id);
+                } elseif (! $won && in_array($p->status, ['paid', 'partially_refunded'])) {
+                    DB::table('purchases')->where('id', $p->id)->update(['status' => 'disputed', 'updated_at' => now()]);
+                    Referrals::reverse($p, $p->amount_paise);
+                    Settings::audit($p->owner_id, 'payment_disputed', $p->id);
+                }
+            }if ($refundKey) {
+                DB::table('webhook_events')->insert(['id' => $refundKey, 'type' => $type, 'created_at' => now(), 'updated_at' => now()]);
+            }DB::table('webhook_events')->insert(['id' => $key, 'type' => $type, 'created_at' => now(), 'updated_at' => now()]);
+        });
+    }
+}

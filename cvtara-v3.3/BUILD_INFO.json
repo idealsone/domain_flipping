@@ -1,0 +1,19 @@
+{
+  "brand": "CVTara",
+  "version": "3.3.0",
+  "package_date": "2026-10-14",
+  "source": "3.2.0-RC1 (2026-10-10) audited and extended: primary resume + JD variants, 6 plans + 3 add-ons, new UI, audit fixes",
+  "status": "Private Hostinger acceptance package; not approved for public paid launch",
+  "runtime": "PHP 8.3+, Laravel 13, MySQL/MariaDB",
+  "verification": {
+    "audit_scenarios": "~100 backend checks + browser click-through of all public, customer and admin pages",
+    "live_provider_tests": false,
+    "hostinger_acceptance": false
+  },
+  "known_launch_blockers": [
+    "Live Razorpay, email, Twilio and Cashfree payout acceptance remains pending.",
+    "Hostinger staging install and real-device validation remain pending.",
+    "Some plan perks (Naukri/LinkedIn export, 1-on-1 call, priority support, lifetime updates) are listed text, not built features.",
+    "Identity, tax, fraud-review and payout operating policies require owner approval."
+  ]
+}
