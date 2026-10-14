@@ -13,7 +13,7 @@ class AccountSecurity
 {
     public static function send(Request $r): void
     {
-        abort_unless(Settings::get('integrations')['email'] ?? false, 422, 'Email delivery must be configured before account verification.');
+        abort_unless(config('app.preview') || (Settings::get('integrations')['email'] ?? false), 422, 'Email delivery must be configured before account verification.');
         $key = 'verification-send:'.$r->user()->id;
         abort_if(RateLimiter::tooManyAttempts($key, 3), 429);
         RateLimiter::hit($key, 900);
@@ -47,6 +47,9 @@ class AccountSecurity
 
     public static function requireRecent(Request $r): void
     {
+        if (config('app.preview')) {
+            return; // preview/demo environments skip the email-code step; never enable on a live site
+        }
         if (! $r->user()->email_verified_at || $r->session()->get('sensitive_until', 0) < now()->timestamp || $r->session()->get('sensitive_user') !== $r->user()->id) {
             throw ValidationException::withMessages(['verification' => 'Verify your email code and current password first. Sensitive actions unlock for 10 minutes.']);
         }

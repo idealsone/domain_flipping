@@ -47,6 +47,13 @@
     button.disabled = true; status.textContent = 'Creating your secure order…';
     try {
       const order = await api('/api/checkout/start', { method: 'POST', body: { plan: active, coupon: window.CVTaraCoupon?.plan === active ? window.CVTaraCoupon.code : '' } });
+      if (order.provider === 'demo') {
+        status.textContent = 'Demo payment (preview only) — activating your plan…';
+        await api('/api/checkout/verify', { method: 'POST', body: { provider: 'demo', orderId: order.orderId } });
+        status.textContent = 'Demo payment complete. Opening your dashboard…';
+        location.href = '/workspace.html?view=billing';
+        return;
+      }
       if (!window.Razorpay) await new Promise((resolve, reject) => { const s = document.createElement('script'); s.src = 'https://checkout.razorpay.com/v1/checkout.js'; s.onload = resolve; s.onerror = () => reject(Error('Payment checkout could not load. Retry without paying again.')); document.head.append(s); });
       const checkout = new Razorpay({ key: order.keyId, order_id: order.orderId, amount: order.amount, currency: order.currency, name: 'CVTara', description: order.test ? 'TEST PAYMENT — no real charge' : plans[active]?.name || active,
         handler: async response => { try { status.textContent = 'Verifying payment…'; await api('/api/checkout/verify', { method: 'POST', body: response }); status.textContent = 'Payment verified. Opening your dashboard…'; location.href = '/workspace.html?view=billing'; } catch (e) { status.textContent = e.message + ' If money was debited, do not pay again. Your webhook confirmation may still arrive.'; } },

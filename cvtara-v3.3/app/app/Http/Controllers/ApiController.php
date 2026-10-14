@@ -128,7 +128,7 @@ class ApiController extends Controller
             return $ok();
         }
         if ($path === 'security/status') {
-            return $ok(['verified' => (bool) $u->email_verified_at, 'recent' => $r->session()->get('sensitive_until', 0) > now()->timestamp && $r->session()->get('sensitive_user') === $u->id]);
+            return $ok(['verified' => (bool) $u->email_verified_at, 'recent' => config('app.preview') || $r->session()->get('sensitive_until', 0) > now()->timestamp && $r->session()->get('sensitive_user') === $u->id]);
         }
         if ($path === 'security/send-code') {
             AccountSecurity::send($r);
@@ -272,6 +272,12 @@ class ApiController extends Controller
             Payments::guardAddon($u, $r->plan);
 
             return $ok(Payments::start($u, $r->plan, (string) $r->input('phone', ''), (string) $r->input('coupon', '')));
+        }
+        if ($path === 'checkout/verify' && config('app.preview') && $r->input('provider') === 'demo') {
+            $r->validate(['orderId' => 'required|string|max:80']);
+            Payments::demoVerify($u, $r->orderId);
+
+            return $ok();
         }
         if ($path === 'checkout/verify') {
             if ($r->input('provider') === 'cashfree') {

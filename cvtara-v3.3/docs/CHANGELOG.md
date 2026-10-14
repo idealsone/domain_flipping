@@ -39,3 +39,9 @@ Source: the 3.2.0-RC1 Hostinger package (2026-10-10), audited and extended on 20
 - Redesigned landing page, checkout, sign-in/sign-up, customer dashboard (welcome banner, usage, billing & plans, primary-resume panel) and admin console (new design system `cvtara-ui.css`).
 - **Social-proof popup**: appears bottom-left after 40 seconds and rotates. Messages come from your *real* activity counts, real plan savings and messages you write in Admin → Offers & popup. No invented customers or counts.
 - **/preview shell** with three views — Website home, Customer dashboard, Admin dashboard — plus demo accounts. Enable with `CVTARA_PREVIEW=true` and `php artisan cvtara:demo`. Never enable on a live site.
+
+## Preview bundle
+`python3 tools/build_preview.py --vendor <vendor>` builds `CVTara_Preview_v3.3.zip`: SQLite + demo data + demo payments, started with `start-preview.bat` / `start-preview.sh`, opened at `/preview` (Website home · Customer dashboard · Admin dashboard). In preview mode (`CVTARA_PREVIEW=true`) payments are clearly-labelled demos and the email-code re-check is skipped. Never use it on a live site.
+
+## Fixed after first v3.3 test
+- Fresh installs returned HTTP 500 on `/login`, `/register`, `/forgot-password` (missing `storage/framework/views`). The folders now ship and the installer creates them. (The original 3.2.0-RC1 package had the same defect.)

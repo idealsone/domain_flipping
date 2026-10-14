@@ -16,6 +16,9 @@ class Payments
         abort_unless(isset($plans[$plan]) && $plan !== 'free', 422);
         $i = Settings::get('integrations');
         $p = Settings::providers()['payments'] ?? [];
+        if (config('app.preview') && (empty($p['razorpayKeyId']) || empty($p['razorpayKeySecret']))) {
+            return self::demoStart($u, $plan, $coupon);
+        }
         if (! ($i['payments'] ?? false) || ($p['provider'] ?? 'razorpay') !== 'razorpay' || empty($p['razorpayKeyId']) || empty($p['razorpayKeySecret'])) {
             throw ValidationException::withMessages(['payments' => 'Checkout is not configured. The owner must enable Razorpay and verify its keys.']);
         }$id = (string) Str::uuid();
@@ -27,6 +30,27 @@ class Payments
         Settings::audit($u->id, 'checkout_started', $id);
 
         return ['id' => $id, 'provider' => 'razorpay', 'orderId' => $result['id'], 'keyId' => $p['razorpayKeyId'], 'amount' => $price, 'currency' => 'INR', 'test' => ! str_starts_with($p['razorpayKeyId'], 'rzp_live_')];
+    }
+
+    // Preview environments only (CVTARA_PREVIEW=true, no Razorpay keys): a clearly-labelled demo payment, never live money.
+    private static function demoStart(User $u, string $plan, string $coupon): array
+    {
+        $plans = Settings::plans();
+        $quote = BusinessControls::quote($plan, $coupon, $u->id);
+        $id = (string) Str::uuid();
+        $order = 'demo_'.str_replace('-', '', $id);
+        DB::table('purchases')->insert(['id' => $id, 'owner_id' => $u->id, 'plan' => $plan, 'amount_paise' => $quote['totalPaise'], 'coupon_code' => $quote['code'] ?: null, 'discount_paise' => $quote['discountPaise'], 'provider' => 'demo', 'provider_order_id' => $order, 'is_live' => false, 'limits_json' => json_encode($plans[$plan]), 'access_days' => $plans[$plan]['accessDays'], 'created_at' => now(), 'updated_at' => now()]);
+        Settings::audit($u->id, 'checkout_started', $id);
+
+        return ['id' => $id, 'provider' => 'demo', 'orderId' => $order, 'amount' => $quote['totalPaise'], 'currency' => 'INR', 'test' => true];
+    }
+
+    public static function demoVerify(User $u, string $orderId): void
+    {
+        abort_unless(config('app.preview'), 404);
+        $p = DB::table('purchases')->where('owner_id', $u->id)->where('provider', 'demo')->where('provider_order_id', $orderId)->first();
+        abort_unless($p, 404);
+        self::capture(['order_id' => $orderId, 'id' => 'demo_pay_'.Str::random(10), 'amount' => $p->amount_paise, 'currency' => 'INR', 'status' => 'captured'], 'demo');
     }
 
     public static function guardAddon(User $u, string $plan): void
