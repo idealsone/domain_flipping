@@ -11,7 +11,7 @@
 <link rel="stylesheet" href="/template-designs.css">
 <link rel="stylesheet" href="/owner-console.css">
 <link rel="stylesheet" href="/premium-products.css">
-<link rel="icon" href="/favicon.ico" sizes="any"><link rel="icon" type="image/svg+xml" href="/assets/brand/cvtara-mark.svg"><link rel="apple-touch-icon" href="/apple-touch-icon.png"><meta name="theme-color" content="#214ed3"><link rel="stylesheet" href="/brand-polish.css"><link rel="stylesheet" href="/cvtara-ui.css"></head>
+<link rel="icon" href="/favicon.ico" sizes="any"><link rel="icon" type="image/svg+xml" href="/assets/brand/cvtara-mark.svg"><link rel="apple-touch-icon" href="/apple-touch-icon.png"><meta name="theme-color" content="#214ed3"><link rel="stylesheet" href="/brand-polish.css"><link rel="stylesheet" href="/cvtara-ui.css"><link rel="stylesheet" href="/cvtara-ds.css"></head>
 <body class="admin-body" data-page="admin">
 <div class="admin-shell">
 <aside class="side-panel admin-side">
@@ -19,45 +19,15 @@
 <span class="brand-mark"><img src="/assets/brand/cvtara-mark.svg" width="39" height="39" alt="" decoding="async"></span>
 <span>
 <b>CVTara</b>
-<small>Owner console</small>
+<small>Owner Console · v3.3.0</small>
 </span>
 </a>
 <nav class="side-nav">
-<button class="active" data-admin-view="overview">
-<i>⌂</i>Business overview</button>
-<button data-admin-view="design">
-<i>◈</i>Website & design</button>
-<button data-admin-view="features">
-<i>⌁</i>Product controls</button>
-<button data-admin-view="templates">
-<i>▤</i>Resume templates <span class="nav-count">77</span>
-</button>
-<button data-admin-view="letters">
-<i>✉</i>Cover-letter library <span class="nav-count">12</span>
-</button>
-<button data-admin-view="users">
-<i>●</i>Users & access</button>
-<button data-admin-view="business"><i>⚙</i>Business controls</button><button data-admin-view="pricing"><i>₹</i>Pricing &amp; add-ons</button><button data-admin-view="commerce">
-<i>💳</i>Orders &amp; payments</button><button data-admin-view="popup"><i>🔔</i>Offers &amp; popup</button>
-<button data-admin-view="blog">
-<i>¶</i>Blog & SEO <span class="nav-count">68</span>
-</button>
-<button data-admin-view="seo"><i>◎</i>SEO & sitemap</button>
-<button data-admin-view="keywords">
-<i>⌕</i>Keyword intelligence</button>
-<button data-admin-view="emails">
-<i>✉</i>Email automation</button>
-<button data-admin-view="reviews">
-<i>★</i>Customer feedback</button>
-<button data-admin-view="analytics">
-<i>↗</i>Analytics</button>
-<button data-admin-view="integrations">
-<i>⚙</i>Integrations</button>
-<button data-admin-view="push">
-<i>◉</i>Push notifications</button>
-<button data-admin-view="legal">
-<i>§</i>Footer & policies</button>
-<button data-admin-view="setup"><i>✔</i>Setup &amp; health</button>
+<button data-admin-view="dashboard" data-title="Overview"><i>📊</i><span>Overview</span></button><button data-admin-view="users" data-title="Users"><i>👥</i><span>Users</span></button><button data-admin-view="orders" data-title="Orders"><i>🛒</i><span>Orders</span></button>
+<button class="nav-toggle" data-ops-toggle aria-expanded="true"><i>⚙️</i><span>Operations</span><em>▲</em></button>
+<div class="nav-sub" id="opsNav">
+<button data-admin-view="templates" data-title="Resume Library"><i>📄</i><span>Resume Library</span><span class="nav-count">77</span></button><button data-admin-view="letters" data-title="CL Library"><i>✉️</i><span>CL Library</span><span class="nav-count">12</span></button><button data-admin-view="design" data-title="Templates"><i>🎨</i><span>Templates</span></button><button data-admin-view="business" data-title="Business Ops"><i>💹</i><span>Business Ops</span></button><button data-admin-view="referral" data-title="Referral Ops"><i>🎁</i><span>Referral Ops</span></button><button data-admin-view="emails" data-title="User Mailer"><i>📧</i><span>User Mailer</span></button><button data-admin-view="errors" data-title="Error Log"><i>🔴</i><span>Error Log</span></button><button data-admin-view="blog" data-title="Blog & SEO"><i>📝</i><span>Blog & SEO</span><span class="nav-count">68</span></button><button data-admin-view="desk" data-title="Reviews"><i>⭐</i><span>Reviews</span></button><button data-admin-view="pricing" data-title="Pricing Plans"><i>💰</i><span>Pricing Plans</span></button><button data-admin-view="settings" data-title="Settings"><i>🔧</i><span>Settings</span></button><a class="nav-link" href="admin-guide.html" data-title="Platform Guide"><i>📖</i><span>Platform Guide</span></a>
+</div>
 </nav>
 <div class="side-plan">
 <span>SUPER ADMINISTRATOR</span>
@@ -80,7 +50,7 @@
 </header>
 <main class="admin-content">
 
-<section class="admin-view" id="admin-pricing"><p>Loading pricing…</p></section><section class="admin-view" id="admin-popup"><p>Loading…</p></section><section class="admin-view" id="admin-setup"><p>Loading…</p></section><section class="admin-view" id="admin-business"><p>Loading business controls…</p></section><section class="admin-view active" id="admin-overview">
+<section class="admin-view active" id="admin-dashboard"><div class="ops-skel"></div></section><section class="admin-view" id="admin-orders"><p>Loading…</p></section><section class="admin-view" id="admin-desk"><p>Loading…</p></section><section class="admin-view" id="admin-settings"><p>Loading…</p></section><section class="admin-view" id="admin-errors"><p>Loading…</p></section><section class="admin-view" id="admin-referral"><p>Loading…</p></section><section class="admin-view" id="admin-pricing"><p>Loading pricing…</p></section><section class="admin-view" id="admin-popup"><p>Loading…</p></section><section class="admin-view" id="admin-setup"><p>Loading…</p></section><section class="admin-view" id="admin-business"><p>Loading business controls…</p></section><section class="admin-view" id="admin-overview">
 <div class="admin-heading">
 <div>
 <span class="eyebrow">TODAY · SAMPLE ADMIN DATA</span>
@@ -1190,5 +1160,5 @@
 <script src="/owner-advanced.js"></script>
 <script src="/profile-onboarding.js"></script>
 <script src="/product-roadmap.js"></script>
-<script src="/business-ui.js" defer></script><script src="/plans-ui.js" defer></script><script src="/admin-extras.js" defer></script></body>
+<script src="/business-ui.js" defer></script><script src="/plans-ui.js" defer></script><script src="/admin-extras.js" defer></script><script src="/admin-ops.js" defer></script></body>
 </html>

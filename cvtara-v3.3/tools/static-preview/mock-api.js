@@ -157,14 +157,17 @@
       if (st.theme === 'dark') { document.body.classList.add('dark'); document.documentElement.setAttribute('data-theme', 'dark'); }
       const bar = document.createElement('div'); bar.className = 'cv-topbar';
       const cur = name === 'workspace.html' ? 'w' : name === 'admin.html' ? 'a' : 'l';
-      bar.innerHTML = '<span class="cv-brand">CVTara</span><div class="cv-tabs"><button data-t="l">Landing</button><button data-t="w">Workspace</button><button data-t="a">Admin</button></div><button data-t="theme" title="Day / night">🌓</button>';
+      bar.innerHTML = '<span class="cv-brand">CVTara v3.3.0</span><div class="cv-tabs"><button data-t="l">Landing Page</button><button data-t="w">Customer Workspace</button><button data-t="a">Admin Dashboard</button></div><button data-t="theme" title="Day / night">🌙 Dark</button>';
       bar.querySelectorAll('[data-t]').forEach(b => { if (b.dataset.t === cur) b.classList.add('on'); b.onclick = () => {
         const t = b.dataset.t;
-        if (t === 'theme') { const d = !document.body.classList.contains('dark'); document.body.classList.toggle('dark', d); document.documentElement.setAttribute('data-theme', d ? 'dark' : 'light'); st.theme = d ? 'dark' : 'light'; save(); return; }
+        if (t === 'theme') { const d = !document.body.classList.contains('dark'); document.body.classList.toggle('dark', d); document.documentElement.setAttribute('data-theme', d ? 'dark' : 'light'); st.theme = d ? 'dark' : 'light'; save(); b.textContent = d ? '☀ Light' : '🌙 Dark'; return; }
         if (t === 'l') return M.render('home.html');
         M.signIn(t === 'a' ? 'owner' : 'customer'); M.render(t === 'a' ? 'admin.html' : 'workspace.html');
       }; });
       document.body.insertBefore(bar, document.body.firstChild);
+      const cover = document.createElement('div'); cover.className = 'cv-loading'; cover.innerHTML = '<i></i>'; document.body.appendChild(cover);
+      const done = () => setTimeout(() => { cover.classList.add('off'); setTimeout(() => cover.remove(), 400); }, name === 'admin.html' ? 1100 : 500);
+      if (document.readyState === 'complete') done(); else window.addEventListener('load', done, { once: true });
     } catch (e) {}
   };
   M.go = function (url) {
