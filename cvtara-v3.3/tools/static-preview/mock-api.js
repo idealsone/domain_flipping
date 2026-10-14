@@ -136,6 +136,9 @@
     if (p.startsWith('admin/')) {
       // admin saves: store the payload so the matching GET reflects it
       if (p === 'admin/plans') { const d = get('admin/plans'); const pl = b.plans || b; if (pl && typeof pl === 'object') { d.plans = Array.isArray(d.plans) ? pl : Object.assign(d.plans || {}, pl); const bp = get('business-public'); bp.plans = Object.assign(bp.plans || {}, pl); put('business-public', bp); } put('admin/plans', d); return ok({ plans: d.plans }); }
+      if (p === 'admin/referrals/settings') { const d = get('admin/referrals'); d.rules = Object.assign(d.rules || {}, b); put('admin/referrals', d); return ok(); }
+      if (/^admin\/referrals\/(creators|profiles)\/\d+$/.test(p)) { const d = get('admin/referrals'), id = +p.split('/').pop(), kind = p.split('/')[2]; (d[kind] || []).forEach(x => { if (+x.owner_id === id) { x.status = b.status; if (b.rateBps != null) x.rate_bps = b.rateBps; x.review_note = b.note; } }); put('admin/referrals', d); return ok(); }
+      if (/^admin\/referrals\/withdrawals\//.test(p)) { const d = get('admin/referrals'), parts = p.split('/'), id = parts[3], act = parts[4]; (d.withdrawals || []).forEach(w => { if (w.id === id) { if (act === 'review') w.approved_at = new Date().toISOString(); else if (act === 'send') w.status = 'processing'; else if (!act) w.status = b.status; } }); put('admin/referrals', d); return ok(); }
       if (p === 'admin/settings') { const d = get('admin/settings'); d.settings = Object.assign(d.settings || {}, b.settings || b); put('admin/settings', d); return ok({ settings: d.settings }); }
       if (p.startsWith('admin/content/')) { const d = get(p); if (d) { d.data = b.data || b; d.revision = (d.revision || 0) + 1; put(p, d); } return ok({ revision: d ? d.revision : 1, data: d && d.data }); }
       if (p === 'admin/users/block') { const d = get('admin/users'); const u2 = d.users.find(x => x.id == b.id); if (u2) u2.blocked = b.blocked ? 1 : 0; put('admin/users', d); return ok({}); }
@@ -194,17 +197,18 @@
   M.chrome = function (name) {
     try {
       document.body.classList.add('has-topbar');
-      if (st.theme === 'dark') { document.body.classList.add('dark'); document.documentElement.setAttribute('data-theme', 'dark'); }
       const bar = document.createElement('div'); bar.className = 'cv-topbar';
       const cur = name === 'workspace.html' ? 'w' : (name === 'admin.html' || name === 'admin-guide.html') ? 'a' : 'l';
-      bar.innerHTML = '<span class="cv-brand">CVTara v3.4.0</span><div class="cv-tabs"><button data-t="l">Landing Page</button><button data-t="w">Customer Workspace</button><button data-t="a">Admin Dashboard</button></div><button data-t="theme" title="Day / night">🌙 Dark</button>';
+      bar.innerHTML = '<span class="cv-brand">CVTara v3.4.1</span><div class="cv-tabs"><button data-t="l">Landing Page</button><button data-t="w">Customer Workspace</button><button data-t="a">Admin Dashboard</button></div><button data-t="theme" title="Day / night">🌙 Dark</button>';
       bar.querySelectorAll('[data-t]').forEach(b => { if (b.dataset.t === cur) b.classList.add('on'); b.onclick = () => {
         const t = b.dataset.t;
-        if (t === 'theme') { const d = !document.body.classList.contains('dark'); document.body.classList.toggle('dark', d); document.documentElement.setAttribute('data-theme', d ? 'dark' : 'light'); st.theme = d ? 'dark' : 'light'; save(); b.textContent = d ? '☀ Light' : '🌙 Dark'; return; }
+        if (t === 'theme') { if (window.CVTaraTheme) window.CVTaraTheme.toggle(); return; }
         if (t === 'l') return M.render('home.html');
         M.signIn(t === 'a' ? 'owner' : 'customer'); M.render(t === 'a' ? 'admin.html' : 'workspace.html');
       }; });
       document.body.insertBefore(bar, document.body.firstChild);
+      const tb = bar.querySelector('[data-t=theme]'), lab = () => { const d = document.documentElement.classList.contains('dark'); tb.textContent = d ? '☀ Day mode' : '🌙 Night mode'; };
+      lab(); document.addEventListener('cvtara-theme', lab);
       const cover = document.createElement('div'); cover.className = 'cv-loading'; cover.innerHTML = '<i></i>'; document.body.appendChild(cover);
       const finish = () => { cover.classList.add('off'); setTimeout(() => cover.remove(), 400); };
       const t0 = Date.now(); const ready = () => name !== 'admin.html' ? Date.now() - t0 > 500 : (document.body.classList.contains('admin-ready') && Date.now() - t0 > 600) || Date.now() - t0 > 9000;
