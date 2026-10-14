@@ -2,7 +2,7 @@
 (function () {
   if (window.__cvm) return;
   const M = window.__cvm = {};
-  const SNAP = window.__SNAP, PAGES = window.__PAGES, KEY = 'cvtara_demo_v1';
+  const BUILD = '__BUILD__'; const SNAP = window.__SNAP, PAGES = window.__PAGES, KEY = 'cvtara_demo_v1';
   let st;
   try { st = JSON.parse(localStorage.getItem(KEY) || 'null'); } catch (e) { st = null; }
   if (!st) st = { role: null, over: {}, seq: 0 };
@@ -56,6 +56,45 @@
     p = p.slice(i + 5).replace(/\/$/, ''); const q = u.search;
     let b = body; if (typeof b === 'string') { try { b = JSON.parse(b); } catch (e) { b = {}; } } b = b || {};
     await new Promise(r => setTimeout(r, 60));
+    const sp = u.searchParams;
+    if (p.startsWith('admin/') && st.role !== 'owner') return fail('Owner access required.', 403);
+    // ----- users list with search / paging -----
+    if (method === 'GET' && p === 'admin/users') { const d = get('admin/users'); const term = (sp.get('q') || '').toLowerCase(); let list = d.users; if (term) list = list.filter(x => ((x.name || '') + ' ' + (x.email || '')).toLowerCase().includes(term)); d.usersTotal = list.length; d.users = list.slice(((+sp.get('page') || 1) - 1) * 100, (+sp.get('page') || 1) * 100); return new Response(JSON.stringify(d), { status: 200, headers: { 'Content-Type': 'application/json' } }); }
+    // ----- error log -----
+    if (method === 'GET' && p === 'admin/errors') {
+      const d = get('admin/errors?days=30') || { ok: true, errors: [] }; const days = +sp.get('days') || 30; const cut = Date.now() - days * 864e5;
+      let rows = d.errors.filter(e => new Date(String(e.last_seen).replace(' ', 'T') + 'Z').getTime() >= cut || /^20/.test('') );
+      if (sp.get('level')) rows = rows.filter(e => e.level === sp.get('level')); if (sp.get('source')) rows = rows.filter(e => e.source === sp.get('source')); if (sp.get('state') === 'open') rows = rows.filter(e => !e.resolved_at); const q2 = (sp.get('q') || '').toLowerCase(); if (q2) rows = rows.filter(e => e.message.toLowerCase().includes(q2));
+      const c = l => rows.filter(e => e.level === l && !e.resolved_at).length;
+      return ok({ errors: rows, summary: { error: c('error'), warning: c('warning'), info: c('info'), total: rows.length } });
+    }
+    if (method === 'POST' && p === 'admin/errors/clear') { const d = get('admin/errors?days=30'); const ids = (b.ids || []).map(String); const hit = e => !ids.length || ids.includes(String(e.id)); if (b.mode === 'delete') d.errors = d.errors.filter(e => !hit(e)); else d.errors.forEach(e => { if (hit(e) && !e.resolved_at) { e.resolved_at = now(); e.resolved = 'yes'; } }); put('admin/errors?days=30', d); return ok({ affected: ids.length || d.errors.length }); }
+    // ----- order detail -----
+    let om = p.match(/^admin\/orders\/([0-9a-f-]{36})$/);
+    if (method === 'GET' && om) { const pre = get(p); if (pre) return new Response(JSON.stringify(pre), { status: 200, headers: { 'Content-Type': 'application/json' } }); const pu = get('admin/purchases').purchases.find(x => x.id === om[1]); if (!pu) return fail('Record or page not found.', 404); const usr = get('admin/users').users.find(x => String(x.owner_id) === String(pu.owner_id)) || {}; return ok({ order: pu, orderNo: 'ORD-' + pu.id.slice(0, 6).toUpperCase(), user: { id: pu.owner_id, name: usr.name, email: usr.email, created_at: usr.created_at }, profile: { phone: usr.phone, city: usr.city, profession: usr.profession, experience_level: usr.experience_level }, limits: JSON.parse(pu.limits_json || '{}'), timeline: [{ event: 'purchase_verified', reference: pu.payment_reference, created_at: pu.created_at }], emails: [{ subject: 'Thank you for subscribing to CVTara ' + (JSON.parse(pu.limits_json || '{}').name || ''), status: 'sent', sent_at: pu.created_at, created_at: pu.created_at }], net: pu.amount_paise - pu.refunded_paise }); }
+    // ----- user management -----
+    if (method === 'POST' && /^admin\/users\/(grant|update|revoke|delete)$/.test(p)) {
+      const act = p.split('/')[2], ud = get('admin/users'), usr = ud.users.find(x => String(x.owner_id) === String(b.userId)); if (!usr) return fail('Record or page not found.', 404);
+      if (usr.isAdmin && act !== 'update') return fail('Owner accounts cannot be changed here.', 422);
+      const pd = get('admin/purchases');
+      if (act === 'update') { if (ud.users.some(x => x !== usr && x.email === String(b.email).toLowerCase())) return fail('That email address belongs to another account.', 422); Object.assign(usr, { name: b.name, email: String(b.email).toLowerCase() }, b.phone != null ? { phone: b.phone } : {}, b.profession != null ? { profession: b.profession } : {}, b.city != null ? { city: b.city } : {}, b.experienceLevel ? { experience_level: b.experienceLevel } : {}); put('admin/users', ud); return ok(); }
+      if (act === 'delete') { ud.users = ud.users.filter(x => x !== usr); ud.totalUsers--; ud.usersTotal--; ud.freeUsers = Math.max(0, (ud.freeUsers || 1) - (usr.paid ? 0 : 1)); if (usr.paid) ud.paidUsers--; put('admin/users', ud); return ok(); }
+      if (act === 'revoke') { let n = 0; pd.purchases.forEach(x => { if (String(x.owner_id) === String(usr.owner_id) && /paid|partially/.test(x.status) && x.access_until && new Date(String(x.access_until).replace(' ', 'T') + 'Z') > new Date()) { x.status = 'refunded'; x.refunded_paise = x.amount_paise; n++; } }); if (usr.paid) { usr.paid = false; ud.paidUsers--; } put('admin/purchases', pd); put('admin/users', ud); return ok({ revoked: n }); }
+      // grant
+      const pl = planByKey(b.plan); if (!pl || pl.type === 'free') return fail('Choose one of the paid plans or add-on packs.', 422);
+      if (pl.type === 'addon' && !usr.paid) return fail('Add-on packs need an active plan. Choose a plan first.', 422);
+      const days = b.days || pl.accessDays || 0, amt = Math.round((b.amount ?? pl.price) * 100), until = new Date(Date.now() + days * 864e5).toISOString().slice(0, 19).replace('T', ' ');
+      const row = { id: crypto.randomUUID ? crypto.randomUUID() : uid() + '-0000-0000-0000-000000000000'.slice(0, 24), owner_id: Number(usr.owner_id), plan: b.plan, amount_paise: amt, refunded_paise: 0, currency: 'INR', status: 'paid', provider: 'manual', provider_order_id: 'manual_' + Date.now(), payment_reference: 'manual_' + Math.random().toString(36).slice(2, 12), is_live: amt > 0 ? 1 : 0, limits_json: JSON.stringify(pl), coupon_code: null, discount_paise: 0, created_at: now(), purchased_at: now(), access_until: pl.type === 'addon' ? usr.accessUntil : until, access_days: days };
+      pd.purchases.unshift(row); put('admin/purchases', pd);
+      if (pl.type !== 'addon') { if (!usr.paid) ud.paidUsers++; Object.assign(usr, { paid: true, ever_paid: true, last_plan: b.plan, accessUntil: until }); }
+      put('admin/users', ud);
+      let sent = 0; if (b.sendEmail !== false) { const jd = get('admin/email/jobs') || { jobs: [] }; jd.jobs = jd.jobs || []; jd.jobs.unshift({ id: uid(), recipient: usr.email, trigger: 'purchase_verified', subject: 'Thank you for subscribing to CVTara ' + pl.name, status: 'sent', sent_at: now(), due_at: now(), created_at: now(), attempts: 1, error: '' }); put('admin/email/jobs', jd); sent = 1; }
+      return ok({ purchaseId: row.id, mail: sent ? { sent: 1, processed: 1 } : null, access: { plan: b.plan, paid: true, accessUntil: until } });
+    }
+    if (method === 'POST' && p === 'admin/health/run') { const d = get('admin/health/history'); const snap = JSON.parse(JSON.stringify(d.today)); snap.at = new Date().toISOString(); snap.date = snap.at.slice(0, 10); d.history = [snap, ...d.history.filter(h => h.date !== snap.date)]; d.today = snap; put('admin/health/history', d); return ok({ snapshot: snap, history: d.history }); }
+    if (method === 'POST' && p === 'admin/media') return ok({ url: '/media/' + uid() + '.webp' });
+    if (method === 'POST' && p === 'admin/email/process') return ok({ sent: 0, processed: 0 });
+    if (method === 'POST' && p === 'admin/setup/email-test') return ok({ delivery: { sent: 1, processed: 1 } });
     if (method === 'GET') {
       if (p === 'profile' && !st.role) return fail('Please sign in.', 401, { signIn: true });
       if (!SNAP.pub[p] && !st.role && !['public-activity'].includes(p)) return fail('Please sign in.', 401, { signIn: true });
@@ -110,6 +149,7 @@
   window.fetch = async function (input, init) {
     const url = typeof input === 'string' ? input : (input && input.url) || String(input);
     const method = ((init && init.method) || (input && input.method) || 'GET').toUpperCase();
+    if (/\/client-error/.test(url) && method === 'POST') { try { const b = JSON.parse(init.body); const d = get('admin/errors?days=30') || { ok: true, errors: [] }; const hit = d.errors.find(e => e.source === 'browser' && e.message === b.message); if (hit) { hit.occurrences++; hit.last_seen = now(); hit.resolved_at = null; } else d.errors.unshift({ id: uid(), level: 'error', source: 'browser', message: b.message, location: (b.source || '').split('/').pop() + ':' + (b.line || 0), url: b.url, occurrences: 1, first_seen: now(), last_seen: now(), resolved_at: null, resolved: 'no' }); put('admin/errors?days=30', d); } catch (e) { /* ignore */ } return new Response(null, { status: 204 }); }
     if (/\/api\//.test(url)) { const r = await handle(method, url, init && init.body); if (r) return r; }
     const pg = M.pageFor(url); if (pg && !/\.(js|css|mjs|json|png|ico|svg)(\?|$)/.test(url)) return new Response(PAGES[pg], { status: 200, headers: { 'Content-Type': 'text/html' } });
     if (/^https?:\/\/(?!.*claude)/.test(url) && !url.startsWith(location.origin)) return new Response('{}', { status: 200 });
@@ -138,9 +178,9 @@
   const ASSET = /\.(js|css|mjs|png|ico|svg|webp|jpg|woff2?)(\?|$)/;
   function transform(html) {
     return html
-      .replace(/(src|href)="\/(?!\/)([^"]*)"/g, (m, a, v) => ASSET.test(v) ? `${a}="${v}"` : m)
+      .replace(/(src|href)="\/(?!\/)([^"]*)"/g, (m, a, v) => ASSET.test(v) ? `${a}="${v}${v.includes('?') ? '' : '?v=' + BUILD}"` : m)
       .replace(/(<meta name="cvtara-user" content=")[^"]*"/, (m, a) => a + (st.role === 'owner' ? '1' : st.role ? '2' : 'guest') + '"')
-      .replace('</head>', '<link rel="stylesheet" href="cvtara-ds.css"></head>')
+      .replace('</head>', '<link rel="stylesheet" href="cvtara-ds.css?v=' + BUILD + '"></head>')
       .replace(/<meta[^>]*http-equiv="refresh"[^>]*>/gi, '')
       .replace(/(<script[^>]*src=")(?!(https?:|\/\/))([^"]*)"/gi, (m, a, b, c) => a + c + '"');
   }
@@ -156,8 +196,8 @@
       document.body.classList.add('has-topbar');
       if (st.theme === 'dark') { document.body.classList.add('dark'); document.documentElement.setAttribute('data-theme', 'dark'); }
       const bar = document.createElement('div'); bar.className = 'cv-topbar';
-      const cur = name === 'workspace.html' ? 'w' : name === 'admin.html' ? 'a' : 'l';
-      bar.innerHTML = '<span class="cv-brand">CVTara v3.3.0</span><div class="cv-tabs"><button data-t="l">Landing Page</button><button data-t="w">Customer Workspace</button><button data-t="a">Admin Dashboard</button></div><button data-t="theme" title="Day / night">🌙 Dark</button>';
+      const cur = name === 'workspace.html' ? 'w' : (name === 'admin.html' || name === 'admin-guide.html') ? 'a' : 'l';
+      bar.innerHTML = '<span class="cv-brand">CVTara v3.4.0</span><div class="cv-tabs"><button data-t="l">Landing Page</button><button data-t="w">Customer Workspace</button><button data-t="a">Admin Dashboard</button></div><button data-t="theme" title="Day / night">🌙 Dark</button>';
       bar.querySelectorAll('[data-t]').forEach(b => { if (b.dataset.t === cur) b.classList.add('on'); b.onclick = () => {
         const t = b.dataset.t;
         if (t === 'theme') { const d = !document.body.classList.contains('dark'); document.body.classList.toggle('dark', d); document.documentElement.setAttribute('data-theme', d ? 'dark' : 'light'); st.theme = d ? 'dark' : 'light'; save(); b.textContent = d ? '☀ Light' : '🌙 Dark'; return; }
@@ -166,8 +206,9 @@
       }; });
       document.body.insertBefore(bar, document.body.firstChild);
       const cover = document.createElement('div'); cover.className = 'cv-loading'; cover.innerHTML = '<i></i>'; document.body.appendChild(cover);
-      const done = () => setTimeout(() => { cover.classList.add('off'); setTimeout(() => cover.remove(), 400); }, name === 'admin.html' ? 1100 : 500);
-      if (document.readyState === 'complete') done(); else window.addEventListener('load', done, { once: true });
+      const finish = () => { cover.classList.add('off'); setTimeout(() => cover.remove(), 400); };
+      const t0 = Date.now(); const ready = () => name !== 'admin.html' ? Date.now() - t0 > 500 : (document.body.classList.contains('admin-ready') && Date.now() - t0 > 600) || Date.now() - t0 > 9000;
+      const poll = () => document.readyState === 'complete' && ready() ? finish() : setTimeout(poll, 120); poll();
     } catch (e) {}
   };
   M.go = function (url) {
@@ -180,6 +221,7 @@
     const k = M.pageFor(url);
     // route access
     if (k === 'workspace.html' && !st.role) { M.toast('Please log in first'); return M.render('login.html'); }
+    if (k === 'admin-guide.html' && st.role !== 'owner') { M.toast('The platform guide is private — log in as the owner'); return M.render('login.html'); }
     if (k === 'admin.html' && st.role !== 'owner') { M.toast(st.role ? 'Owner access required — log in as the owner.' : 'Please log in as the owner first'); return M.render('login.html'); }
     if (/\/(export|media)\//.test(u.pathname) || /\/api\//.test(u.pathname)) { M.download(u.pathname); return; }
     if (!k) { M.toast('This page is not part of the demo.'); return; }
@@ -188,7 +230,7 @@
     window.__cvq = search;
     const real = history.replaceState.bind(history);
     try { real(null, '', location.pathname + u.search + u.hash); } catch (e) {}
-    M.render(k.endsWith('.html') ? k : key(k));
+    M.render(PAGES[k] ? k : key(k));
   };
   M.download = function (name) {
     const blob = new Blob(['CVTara demo export\n\nIn the real app this is your resume/cover letter as PDF, DOCX or TXT.\n'], { type: 'text/plain' });
@@ -199,7 +241,7 @@
   window.addEventListener('click', e => {
     const a = e.target.closest && e.target.closest('a[href]'); if (!a || e.defaultPrevented) return;
     if (e.metaKey || e.ctrlKey) return;
-    const h = a.getAttribute('href'); if (!h || h.startsWith('#') || /^(mailto|tel|javascript):/.test(h)) return;
+    const h = a.getAttribute('href'); if (!h || h.startsWith('#') || /^(mailto|tel|javascript|blob|data):/.test(h)) return;
     if (a.hasAttribute('download') && !/\/(export|api)\//.test(h)) { e.preventDefault(); M.download(h); return; }
     e.preventDefault(); M.go(a.href);
   }, true);

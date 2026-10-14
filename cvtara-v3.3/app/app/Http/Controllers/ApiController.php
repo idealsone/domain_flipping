@@ -73,7 +73,7 @@ class ApiController extends Controller
         }
         if ($path === 'public-content') {
             $content = [];
-            foreach (['legal', 'features', 'library', 'blog', 'integrations', 'seo'] as $k) {
+            foreach (['legal', 'features', 'library', 'blog', 'integrations', 'seo', 'site'] as $k) {
                 $content[$k] = Settings::get($k);
             }$content['plans'] = Settings::plans();
             $content['integrations']['measurementId'] = Settings::providers()['analytics']['measurementId'] ?? '';
@@ -387,7 +387,7 @@ class ApiController extends Controller
     }
 
     // Personal data is erased. Purchase and payout records stay (legal/financial) but are detached from the person.
-    private function deleteAccount(User $u): void
+    public function deleteAccount(User $u): void
     {
         abort_if($u->is_admin, 422, 'The owner account cannot be deleted here.');
         abort_if(DB::table('withdrawals')->where('owner_id', $u->id)->whereIn('status', ['requested', 'processing'])->exists(), 422, 'Finish or cancel your open withdrawal first.');

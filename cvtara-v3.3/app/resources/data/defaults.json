@@ -1,1 +1,243 @@
-{"seo":{"sitemapEnabled":true,"searchIndexing":false,"siteUrl":"","pages":{}},"legal":{"footerText":"India-first career tools for clear resumes and organised applications.","copyright":"© 2026 CVTara. All rights reserved.","supportEmail":"","grievanceEmail":"","phone":"","address":"","hours":"Monday–Friday, 10:00–18:00 IST","privacy":"","terms":"","refund":"","about":"# About CVTara\n\nCVTara helps job seekers organise their experience, build resumes and cover letters, and track applications.\n\n## Our approach\n\nClear layouts, truthful experience and useful guidance. Resume editing and profile drafts are available without a purchase.\n\n## Contact\n\nUse our Contact page for support and business enquiries.","contactIntro":"Get help with your profile, purchases or resume workspace."},"integrations":{"payments":false,"email":false,"ai":false,"analytics":false,"push":false,"measurementId":"","aiPurpose":"Suggest clearer summaries and achievement wording using only the user’s supplied facts. The user reviews every suggestion."},"features":{"builder":{"enabled":true,"position":1,"limit":500},"match":{"enabled":true,"position":2,"limit":20},"letter":{"enabled":true,"position":3,"limit":26,"draftLimit":500},"tracker":{"enabled":true,"position":4,"limit":100},"templates":{"enabled":true,"position":5,"limit":91},"blog":{"enabled":true,"position":6,"limit":68},"watermarkText":"CVTara · Free preview"},"library":{"templates":{},"letters":{}},"blog":{},"emails":[{"id":"welcome","name":"Welcome","trigger":"profile_created","enabled":true,"delayHours":0,"subject":"Welcome to CVTara, {{name}}","body":"Hi {{name}},\nYour profile is ready. Choose a template and save your first resume.\n{{site_url}}/workspace.html?view=builder"},{"id":"resume","name":"Resume saved","trigger":"resume_saved","enabled":false,"delayHours":0,"subject":"Your resume draft is saved","body":"Hi {{name}},\nYour draft is saved in your profile.\n{{site_url}}/workspace.html?view=account"},{"id":"purchase","name":"Purchase confirmation","trigger":"purchase_verified","enabled":true,"delayHours":0,"subject":"Your CVTara purchase","body":"Hi {{name}},\nYour verified purchase reference: {{payment_reference}}.\nView your history: {{site_url}}/workspace.html?view=account"},{"id":"expiry","name":"Access reminder","trigger":"access_expiring","enabled":true,"delayHours":24,"subject":"Your access is expiring","body":"Hi {{name}},\nReview your plan and access dates in your profile."},{"id":"followup","name":"Application follow-up","trigger":"followup_due","enabled":true,"delayHours":0,"subject":"Your application needs a follow-up","body":"Hi {{name}},\nOpen your tracker to review the next action."},{"id":"reset","name":"Forgot password","trigger":"password_reset","enabled":true,"delayHours":0,"subject":"Reset your password","body":"Hi {{name}},\nReset your password using this single-use link: {{reset_url}}\nThis link expires after 60 minutes. If you did not request it, ignore this email."},{"id":"abandoned","name":"Abandoned purchase","trigger":"abandoned_purchase","enabled":false,"delayHours":24,"subject":"Continue your CVTara checkout","body":"Hi {{name}},\nReview your plan at {{site_url}}/checkout.html. You receive this reminder because you opted in to updates."},{"id":"blog","name":"New blog post","trigger":"blog_published","enabled":false,"delayHours":0,"subject":"New guide: {{blog_title}}","body":"Hi {{name}},\nRead our latest guide: {{blog_url}}\nManage update preferences in your profile."}],"popup":{"enabled":true,"delaySeconds":40,"showSeconds":7,"gapSeconds":10,"useLiveActivity":true,"custom":[]}}
+{
+ "seo": {
+  "sitemapEnabled": true,
+  "searchIndexing": false,
+  "siteUrl": "https://cvtara.com",
+  "pages": {
+   "/": {
+    "title": "Resume Builder India — primary resume + job-tailored versions",
+    "description": "Build one premium ATS-friendly primary resume, then create a tailored version and cover letter for every job description. Plans from ₹299, pay once.",
+    "keywords": "resume builder india, ats friendly resume builder, resume for freshers india, job description tailored resume, cover letter builder india",
+    "includeInSitemap": true
+   },
+   "/templates.html": {
+    "title": "ATS-Friendly Resume Templates for India",
+    "description": "Browse professional, ATS-friendly resume templates by profession and layout. Preview the full design, adjust colours and fonts and build your resume with editable sections.",
+    "keywords": "ats friendly resume templates, resume templates india, resume format for freshers, professional resume templates download",
+    "includeInSitemap": true
+   },
+   "/cover-letters.html": {
+    "title": "Cover Letter Examples & Templates for India",
+    "description": "Explore coordinated cover-letter designs and complete examples, then write a tailored application letter with editable sections and your saved profile.",
+    "keywords": "cover letter examples india, cover letter format for freshers, job application cover letter template, cover letter for experienced professionals",
+    "includeInSitemap": true
+   },
+   "/blog.html": {
+    "title": "Career Guides & Salary Calculators",
+    "description": "Practical guides and calculators for resumes, cover letters, interviews, salary and job search in India, written by an experienced HR team.",
+    "keywords": "career guides india, resume tips, interview questions india, salary calculator india, job search guide",
+    "includeInSitemap": true
+   },
+   "/guides.html": {
+    "title": "Career Guides & Calculators",
+    "description": "CVTara guides and calculators for resumes, salaries, benefits, interviews and job-search decisions in India.",
+    "keywords": "career guides, resume guides, salary calculators, interview preparation guides india",
+    "includeInSitemap": true
+   },
+   "/about.html": {
+    "title": "About CVTara — an experienced HR team in Bangalore",
+    "description": "CVTara is a resume and cover-letter service by an experienced HR team in Bangalore, helping Indian job seekers build a primary resume and tailor it to every job.",
+    "keywords": "about cvtara, hr team bangalore resume service, resume writing service india",
+    "includeInSitemap": true
+   },
+   "/contact.html": {
+    "title": "Contact & Support",
+    "description": "Contact CVTara at support@cvtara.com for account, payment, privacy and product support. Based in Bangalore, India.",
+    "keywords": "cvtara support, contact cvtara, resume service support",
+    "includeInSitemap": true
+   },
+   "/privacy.html": {
+    "title": "Privacy Policy",
+    "description": "How CVTara collects, uses and protects your personal data, your rights under Indian law and how to reach our grievance contact.",
+    "keywords": "cvtara privacy policy",
+    "includeInSitemap": true
+   },
+   "/terms.html": {
+    "title": "Terms & Conditions",
+    "description": "The terms that apply to using CVTara plans, add-on packs, resume tools and referral programme.",
+    "keywords": "cvtara terms and conditions",
+    "includeInSitemap": true
+   },
+   "/refund.html": {
+    "title": "Refund & Cancellation Policy",
+    "description": "When CVTara payments are refundable: duplicate charges, non-delivery and wrong amounts, how to ask and how long refunds take.",
+    "keywords": "cvtara refund policy",
+    "includeInSitemap": true
+   }
+  }
+ },
+ "legal": {
+  "footerText": "CVTara is a resume and cover-letter service by an experienced HR team in Bangalore, India.",
+  "copyright": "© 2026 CVTara. All rights reserved.",
+  "supportEmail": "support@cvtara.com",
+  "grievanceEmail": "support@cvtara.com",
+  "phone": "",
+  "address": "CVTara, Bangalore, Karnataka, India",
+  "hours": "Monday–Saturday, 10:00–18:00 IST",
+  "privacy": "# Privacy Policy\n\nLast updated: 14 October 2026\n\nCVTara (\"we\", \"us\") respects your privacy. This policy explains what personal data we collect when you use cvtara.com, why we collect it, who we share it with and the choices you have. It is written to be consistent with India's Digital Personal Data Protection Act, 2023 and the Information Technology Act, 2000.\n\n## 1. Data we collect\n\n- **Account details:** name, email address, password (stored only as a secure hash) and, if you add it, phone number and city.\n- **Profile and document content:** your profession, experience level, resumes, cover letters, job descriptions you paste and applications you track.\n- **Purchase records:** plan, amount, date and payment reference. Card, UPI and bank details are handled by our payment partner Razorpay and are never stored by us.\n- **Usage and device data:** pages visited, features used and basic technical data, so we can run and improve the service. Optional analytics run only if you accept analytics cookies.\n- **Support messages:** what you send to support@cvtara.com.\n\n## 2. Why we use your data\n\nTo create and secure your account, store and export your documents, process payments and give you access, send service emails (for example receipts, access reminders and password resets), provide support, prevent fraud and abuse, and improve CVTara. We send marketing emails only if you agree and you can withdraw consent at any time.\n\n## 3. Who we share data with\n\nWe do not sell your personal data. We share it only with service providers who help us run CVTara, such as payment processing (Razorpay), email delivery, hosting and, where you choose to use them, phone verification and writing assistance. They may use the data only to provide their service to us. We may disclose data if required by law or to protect rights and safety.\n\n## 4. Your resume content\n\nYour resumes and letters are yours. We do not publish them and do not use them to train public models. Writing assistance, when you choose to use it, sends only the text you submit and the suggestions are shown to you for review.\n\n## 5. Retention\n\nWe keep your account and documents while your account is active. Purchase and tax records are retained as required by Indian law. When you delete your account, your personal data and documents are erased and purchase records are detached from your identity.\n\n## 6. Your rights\n\nYou can access and correct your information in your account, download a copy of your data, withdraw consent for optional processing, and delete your account from Account settings. You can also write to us to exercise any right under applicable law, including the right to nominate someone to act for you and the right to grievance redressal.\n\n## 7. Security\n\nWe use encrypted connections, hashed passwords, access controls and monitoring. No system is completely secure, so please use a strong, unique password.\n\n## 8. Children\n\nCVTara is for adults. We do not knowingly collect data from anyone under 18.\n\n## 9. Cookies\n\nWe use essential cookies for sign-in and security. Optional analytics cookies load only after you accept them.\n\n## 10. Grievance and contact\n\nFor privacy questions or complaints, write to our grievance contact at **support@cvtara.com** (CVTara, Bangalore, Karnataka, India). We aim to acknowledge requests within 72 hours and resolve them within 30 days.\n\n## 11. Changes\n\nIf we change this policy we will update the date above and, for material changes, notify you by email or in the product.",
+  "terms": "# Terms & Conditions\n\nLast updated: 14 October 2026\n\nThese Terms & Conditions (\"Terms\") govern your use of CVTara (cvtara.com) and its resume, cover-letter, ATS-match and application-tracking tools. By creating an account or using the service you agree to them. If you do not agree, please do not use CVTara.\n\n## 1. About the service\n\nCVTara is operated from Bangalore, India by the CVTara team (\"CVTara\", \"we\", \"us\"). We provide software and guidance to help you prepare job applications. We are not a recruitment agency, we do not place candidates, and we do not guarantee interviews, offers, salary outcomes or ATS scores with any employer.\n\n## 2. Eligibility and accounts\n\nYou must be at least 18 years old and provide accurate information when you register. You are responsible for keeping your password confidential and for all activity under your account. Tell us immediately at support@cvtara.com if you suspect unauthorised use.\n\n## 3. Plans and payment\n\nAccess to downloads and plan features is provided through paid plans and add-on packs shown on our pricing page. Prices are in Indian rupees and are charged once for the stated access period. Plans do not renew automatically. Payments are processed by our payment partner (Razorpay); we never see or store your full card details. Access starts when payment is verified and ends when the access period ends. Add-on packs are available only while a plan is active and end when the plan ends.\n\n## 4. Your content\n\nYou own the resumes, cover letters and other content you create. You grant us a limited licence to store and process that content only to operate the service for you. You are responsible for the accuracy of what you submit and for making sure it does not infringe anyone else's rights. We do not claim ownership of your documents.\n\n## 5. Acceptable use\n\nDo not misuse the service: no unlawful, misleading or fraudulent content, no false claims about your experience or qualifications, no attempts to break or overload the platform, no scraping, no sharing paid access with others, and no abuse of referral or reward programmes. We may suspend or close accounts that break these rules.\n\n## 6. Referral programme\n\nIf the referral programme is available to you, rewards are subject to the rules shown in your account, including eligibility, holding periods and payout checks. We may reverse rewards linked to refunded, disputed or fraudulent purchases.\n\n## 7. Intellectual property\n\nThe CVTara name, logo, templates, software and guide content belong to CVTara or its licensors. Templates are licensed for creating your own documents, not for resale or redistribution.\n\n## 8. Availability and changes\n\nWe work to keep CVTara available but do not promise uninterrupted service. We may improve, change or retire features, and we will update these Terms when needed. Continued use after an update means you accept the updated Terms.\n\n## 9. Disclaimers and liability\n\nCVTara is provided \"as is\". Guidance and calculators are for general information and are not legal, tax or financial advice; please verify important decisions with a qualified professional or the official source. To the extent permitted by law, our total liability for any claim relating to the service is limited to the amount you paid for the plan in the 12 months before the claim, and we are not liable for indirect or consequential loss.\n\n## 10. Refunds\n\nRefunds are handled under our Refund Policy.\n\n## 11. Governing law\n\nThese Terms are governed by the laws of India. Courts at Bengaluru, Karnataka have exclusive jurisdiction, subject to any rights you have as a consumer under applicable law.\n\n## 12. Contact\n\nCVTara, Bangalore, Karnataka, India. Email: support@cvtara.com",
+  "refund": "# Refund & Cancellation Policy\n\nLast updated: 14 October 2026\n\nCVTara plans and add-on packs are digital products delivered as soon as your payment is verified. This policy explains when a refund is available.\n\n## 1. Digital delivery\n\nBecause access is delivered immediately, payments for plans and add-on packs are generally **non-refundable once access has been delivered** (for example, once your plan is active and you can build and download documents). Plans are one-time purchases and do not renew automatically, so there is nothing to cancel.\n\n## 2. When we will refund\n\n- **Duplicate charge:** you were charged more than once for the same purchase. We refund the extra payment in full.\n- **Payment taken but no access:** your payment was successful but access was not delivered and we cannot fix it within a reasonable time.\n- **Wrong amount:** you were charged an amount different from the price shown at checkout.\n- **Unauthorised payment:** a payment you did not make, reported promptly.\n\n## 3. How to ask\n\nEmail **support@cvtara.com** from your registered email address within 7 days of the payment, with your order or payment reference and a short description. We will reply within 2 working days.\n\n## 4. How refunds are paid\n\nApproved refunds go back to the original payment method through our payment partner. Banks usually take 5–7 working days to show the credit. If a refund is partial, your access continues. When a purchase is fully refunded, the related access ends.\n\n## 5. Add-on packs\n\nAdd-on packs are tied to an active plan. If a plan is fully refunded, its add-on packs end with it.\n\n## 6. Referral rewards\n\nRewards earned from a purchase that is refunded or disputed are reversed.\n\n## 7. Contact\n\nCVTara, Bangalore, Karnataka, India. Email: support@cvtara.com",
+  "about": "# About CVTara\n\nCVTara is a resume and cover-letter service built by an experienced HR team based in Bangalore, India. We have spent years reading resumes, screening candidates and sitting on hiring panels, and we built CVTara to give job seekers the clarity that recruiters wish every application had.\n\n## What we do\n\n- **One premium primary resume.** Every plan starts with an ATS-friendly master resume built around your real experience.\n- **Tailored versions for every job.** Paste a job description and create a focused variant of your primary resume, with a matching cover letter, in minutes.\n- **ATS match checks.** See how your resume lines up with a role before you apply.\n- **Application tracking.** Keep every role, stage and follow-up in one place.\n\n## How we work\n\nWe believe a resume should be truthful, easy to read and specific to the role. CVTara never invents experience for you: you stay in control of every word, and you decide what to send.\n\n## Where we are\n\nWe operate from Bangalore, Karnataka, India, and support job seekers across India. Questions are answered by our own team at **support@cvtara.com**.",
+  "contactIntro": "Questions about your account, a payment or a resume? Write to support@cvtara.com and our team will reply within 2 working days."
+ },
+ "integrations": {
+  "payments": false,
+  "email": true,
+  "ai": false,
+  "analytics": false,
+  "push": false,
+  "measurementId": "",
+  "aiPurpose": "Suggest clearer summaries and achievement wording using only the user’s supplied facts. The user reviews every suggestion."
+ },
+ "features": {
+  "builder": {
+   "enabled": true,
+   "position": 1,
+   "limit": 500
+  },
+  "match": {
+   "enabled": true,
+   "position": 2,
+   "limit": 20
+  },
+  "letter": {
+   "enabled": true,
+   "position": 3,
+   "limit": 26,
+   "draftLimit": 500
+  },
+  "tracker": {
+   "enabled": true,
+   "position": 4,
+   "limit": 100
+  },
+  "templates": {
+   "enabled": true,
+   "position": 5,
+   "limit": 91
+  },
+  "blog": {
+   "enabled": true,
+   "position": 6,
+   "limit": 68
+  },
+  "watermarkText": "CVTara · Preview"
+ },
+ "library": {
+  "templates": {},
+  "letters": {}
+ },
+ "blog": {},
+ "emails": [
+  {
+   "id": "welcome",
+   "name": "Welcome",
+   "trigger": "profile_created",
+   "enabled": true,
+   "delayHours": 0,
+   "subject": "Welcome to CVTara, {{name}}",
+   "body": "Hi {{name}},\nYour profile is ready. Choose a template and save your first resume.\n{{site_url}}/workspace.html?view=builder\n\nTeam CVTara · support@cvtara.com"
+  },
+  {
+   "id": "resume",
+   "name": "Resume saved",
+   "trigger": "resume_saved",
+   "enabled": false,
+   "delayHours": 0,
+   "subject": "Your resume draft is saved",
+   "body": "Hi {{name}},\nYour draft is saved in your profile.\n{{site_url}}/workspace.html?view=account\n\nTeam CVTara · support@cvtara.com"
+  },
+  {
+   "id": "purchase",
+   "name": "Subscription thank-you",
+   "trigger": "purchase_verified",
+   "enabled": true,
+   "delayHours": 0,
+   "subject": "Thank you for subscribing to CVTara {{plan_name}}",
+   "body": "Hi {{name}},\n\nThank you for your subscription! Your {{plan_name}} plan is now active.\n\nWhat you get:\n- 1 premium ATS-friendly primary resume\n- {{resumes}} tailored resumes and {{letters}} cover letters\n- Clean PDF and Word downloads\n\nValid until: {{access_until}}\nPayment reference: {{payment_reference}}\n\nOpen your workspace: {{site_url}}/workspace.html?view=resumes\n\nNeed help? Reply to this email or write to support@cvtara.com.\n\nTeam CVTara\nBangalore, India"
+  },
+  {
+   "id": "expiry",
+   "name": "Access reminder",
+   "trigger": "access_expiring",
+   "enabled": true,
+   "delayHours": 24,
+   "subject": "Your access is expiring",
+   "body": "Hi {{name}},\nReview your plan and access dates in your profile.\n\nTeam CVTara · support@cvtara.com"
+  },
+  {
+   "id": "followup",
+   "name": "Application follow-up",
+   "trigger": "followup_due",
+   "enabled": true,
+   "delayHours": 0,
+   "subject": "Your application needs a follow-up",
+   "body": "Hi {{name}},\nOpen your tracker to review the next action.\n\nTeam CVTara · support@cvtara.com"
+  },
+  {
+   "id": "reset",
+   "name": "Forgot password",
+   "trigger": "password_reset",
+   "enabled": true,
+   "delayHours": 0,
+   "subject": "Reset your password",
+   "body": "Hi {{name}},\nReset your password using this single-use link: {{reset_url}}\nThis link expires after 60 minutes. If you did not request it, ignore this email.\n\nTeam CVTara · support@cvtara.com"
+  },
+  {
+   "id": "abandoned",
+   "name": "Abandoned purchase",
+   "trigger": "abandoned_purchase",
+   "enabled": false,
+   "delayHours": 24,
+   "subject": "Continue your CVTara checkout",
+   "body": "Hi {{name}},\nReview your plan at {{site_url}}/checkout.html. You receive this reminder because you opted in to updates.\n\nTeam CVTara · support@cvtara.com"
+  },
+  {
+   "id": "blog",
+   "name": "New blog post",
+   "trigger": "blog_published",
+   "enabled": false,
+   "delayHours": 0,
+   "subject": "New guide: {{blog_title}}",
+   "body": "Hi {{name}},\nRead our latest guide: {{blog_url}}\nManage update preferences in your profile.\n\nTeam CVTara · support@cvtara.com"
+  },
+  {
+   "id": "download-locked",
+   "name": "Subscribe to download",
+   "trigger": "download_locked",
+   "enabled": true,
+   "delayHours": 0,
+   "subject": "Your updated resume is ready — subscribe to download it",
+   "body": "Hi {{name}},\n\nYou asked to download your resume, and it is ready. Downloads without a watermark are part of a CVTara plan.\n\nChoose a plan here: {{site_url}}/checkout.html\n\nOnce your plan is active you can download your primary resume, every tailored version and your cover letters as PDF or Word.\n\nNeed help choosing? Write to support@cvtara.com.\n\nTeam CVTara\nBangalore, India"
+  }
+ ],
+ "popup": {
+  "enabled": true,
+  "delaySeconds": 40,
+  "showSeconds": 7,
+  "gapSeconds": 10,
+  "useLiveActivity": true,
+  "custom": []
+ },
+ "site": {
+  "announce": "Create your account, build and preview · Plans from {{from}} · Pay once, no auto-renewal",
+  "announceLink": "See plans",
+  "heroPill": "ATS-friendly resumes for Indian job seekers",
+  "heroTitle": "Land your dream job as a",
+  "heroRoles": [
+   "Data Analyst",
+   "Software Engineer",
+   "HR Manager",
+   "Marketing Lead",
+   "Product Designer",
+   "Finance Analyst"
+  ],
+  "heroLead": "Create one premium, ATS-friendly **primary resume** — then turn it into a tailored version and cover letter for every job description in minutes.",
+  "ctaPrimary": "Build my resume →",
+  "ctaSecondary": "Try the ATS check",
+  "ctaFinalTitle": "Your next job offer starts with a better resume",
+  "ctaFinalText": "Create your primary resume today and tailor it to every job you want.",
+  "pages": {},
+  "ctaFinalButton": "Create my resume →"
+ }
+}

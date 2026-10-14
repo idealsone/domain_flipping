@@ -82,7 +82,8 @@ class Payments
             $p = DB::table('purchases')->where('id', $p->id)->first();
             Referrals::credit($p);
             Settings::audit($p->owner_id, 'purchase_verified', $p->id);
-            MailAutomation::queue(User::findOrFail($p->owner_id), 'purchase_verified', $entity['id']);
+            $pl = json_decode((string) $p->limits_json, true) ?: [];
+            MailAutomation::queue(User::findOrFail($p->owner_id), 'purchase_verified', $entity['id'], ['plan_name' => $pl['name'] ?? $p->plan, 'access_until' => $p->access_until ? \Illuminate\Support\Carbon::parse($p->access_until)->format('j F Y') : '', 'amount' => '₹'.number_format($p->amount_paise / 100, 2), 'resumes' => (string) ($pl['savedResumes'] ?? ''), 'letters' => (string) ($pl['savedLetters'] ?? '')]);
         });
     }
 

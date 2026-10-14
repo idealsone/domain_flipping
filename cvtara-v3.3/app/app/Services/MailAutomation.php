@@ -14,7 +14,7 @@ class MailAutomation
     public static function queue(User $u, string $trigger, string $ref, array $vars = [], bool $essential = false): void
     {
         $templates = Settings::get('emails', []);
-        $template = collect($templates)->firstWhere('trigger', $trigger);
+        $template = collect($templates)->firstWhere('trigger', $trigger) ?: collect(Settings::defaults()['emails'])->firstWhere('trigger', $trigger);
         if ($essential) {
             $template = $template ?: ['id' => 'reset', 'subject' => 'Reset your CVTara password', 'body' => 'Reset your password: {{reset_url}}', 'delayHours' => 0];
             $template['body'] = str_contains($template['body'], '{{reset_url}}') ? $template['body'] : "Use this link to reset your password: {{reset_url}}\nThis link expires in 60 minutes.";
@@ -42,8 +42,8 @@ class MailAutomation
             if (($p['provider'] ?? 'smtp') === 'resend') {
                 config(['mail.default' => 'resend', 'services.resend.key' => $p['resendApiKey'] ?? '']);
             } else {
-                config(['mail.default' => 'smtp', 'mail.mailers.smtp.host' => $p['smtpHost'] ?? '', 'mail.mailers.smtp.port' => (int) ($p['smtpPort'] ?? 587), 'mail.mailers.smtp.username' => $p['smtpUser'] ?? '', 'mail.mailers.smtp.password' => $p['smtpPassword'] ?? '', 'mail.mailers.smtp.scheme' => ($p['smtpPort'] ?? 587) == 465 ? 'smtps' : null, 'mail.mailers.smtp.timeout' => 15]);
-            }config(['mail.from.address' => $p['fromEmail'] ?? '', 'mail.from.name' => $p['fromName'] ?? 'CVTara']);
+                config(['mail.default' => 'smtp', 'mail.mailers.smtp.host' => $p['smtpHost'] ?? config('mail.mailers.smtp.host'), 'mail.mailers.smtp.port' => (int) ($p['smtpPort'] ?? config('mail.mailers.smtp.port', 587)), 'mail.mailers.smtp.username' => $p['smtpUser'] ?? config('mail.mailers.smtp.username'), 'mail.mailers.smtp.password' => $p['smtpPassword'] ?? config('mail.mailers.smtp.password'), 'mail.mailers.smtp.scheme' => ($p['smtpPort'] ?? config('mail.mailers.smtp.port', 587)) == 465 ? 'smtps' : null, 'mail.mailers.smtp.timeout' => 15]);
+            }config(['mail.from.address' => $p['fromEmail'] ?? config('mail.from.address'), 'mail.from.name' => $p['fromName'] ?? 'CVTara']);
             app('mail.manager')->purge();
             DB::table('mail_outbox')->where('status', 'sending')->where('updated_at', '<', now()->subMinutes(10))->update(['status' => 'failed', 'due_at' => now()]);
             DB::table('mail_outbox')->where('trigger', 'security_verification')->where('created_at', '<', now()->subMinutes(10))->whereIn('status', ['queued', 'failed'])->update(['status' => 'cancelled', 'body' => 'Expired security code removed']);
@@ -61,7 +61,7 @@ class MailAutomation
                 }DB::table('mail_outbox')->where('id', $j->id)->update(['status' => 'sending', 'attempts' => $j->attempts + 1, 'updated_at' => now()]);
                 try {
                     if (($p['provider'] ?? 'smtp') === 'resend') {
-                        Http::withToken($p['resendApiKey'] ?? '')->withHeaders(['Idempotency-Key' => $j->id])->timeout(15)->post('https://api.resend.com/emails', ['from' => ($p['fromName'] ?? 'CVTara').' <'.$p['fromEmail'].'>', 'to' => [$j->recipient], 'subject' => $j->subject, 'text' => $j->body])->throw();
+                        Http::withToken($p['resendApiKey'] ?? '')->withHeaders(['Idempotency-Key' => $j->id])->timeout(15)->post('https://api.resend.com/emails', ['from' => ($p['fromName'] ?? 'CVTara').' <'.($p['fromEmail'] ?? config('mail.from.address')).'>', 'to' => [$j->recipient], 'subject' => $j->subject, 'text' => $j->body])->throw();
                     } else {
                         Mail::raw($j->body, fn ($m) => $m->to($j->recipient)->subject($j->subject));
                     }DB::table('mail_outbox')->where('id', $j->id)->update(['status' => 'sent', 'sent_at' => now(), 'error' => '', 'body' => $j->trigger === 'security_verification' ? 'Security code delivered and removed' : $j->body]);

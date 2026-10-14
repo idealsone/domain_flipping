@@ -1,3 +1,36 @@
+# CVTara v3.4.0 — owner-console rebuild, content and operations
+
+Built on 3.3.0. Everything below was verified against the PHP app (preview mode and production mode) and in a headless browser.
+
+## Owner console (admin)
+- **New menu:** Overview · Users · Orders · Operations ▸ Resume Library, CL Library, Templates, Business Ops, Referral Ops, User Mailer, Error Log, Blog & SEO, Reviews, Pricing Plans, Settings, Platform Guide. Everything else (integrations, push, policies, product controls, popup, keywords, analytics, setup tools) is inside Settings.
+- **No flash of half-built UI:** the console stays covered until its first data is rendered, with an 8-second safety timeout. Fixed layout (220 px sidebar, stable scrollbar gutter) so menu clicks never change widths; page transitions fade instead of flashing white.
+- **Sidebar contrast:** menu text is readable in the normal and the night theme.
+- **Users:** search/filter/export; **Mark as paid** with plan, days, amount received and a note (creates a verified manual purchase, activates access at once and emails the customer "Thank you for subscribing"); edit details; revoke access; block/unblock; delete (erases personal data, keeps purchase records). Sensitive actions need the fresh e-mail-code check in production.
+- **Orders:** filters (status, plan, payment source, date range, amount range, search), CSV export, and a detail popup (payment, customer, plan snapshot, timeline, e-mails).
+- **Overview:** KPI cards, 7-day signups chart, 30-day revenue chart, recent orders and activity, floating live-stats card.
+- **Resume Library / CL Library:** thumbnail grids with search and filters; the preview popup is 70 % document / 30 % details on desktop and stacks on phones, with the document scaled to fit.
+- **Templates & site design:** homepage headline, rotating job titles, buttons and announcement bar plus title/description/keywords for every main page — pre-filled with what the site says today and editable. The public homepage reads this content.
+- **User Mailer:** active/paused switch, sender `support@cvtara.com`, template editor with variables and preview, delivery queue. New template "Subscribe to download" is e-mailed (once a day) when a normal user tries a clean download.
+- **Error Log:** server exceptions, browser errors (`/client-error`), failed e-mails and daily-health warnings are collected, de-duplicated and counted; filter, download CSV/JSON, mark resolved.
+- **Blog & SEO:** every post with its web address (`/guides/<category>/<slug>/`), focus keyword, word count and status; premium editor (toolbar, live preview, image upload to WebP, links, Q&A, 13-point SEO checklist); sitemap/robots switches; `sitemap.xml` and `robots.txt` use `https://cvtara.com`.
+- **Footer & policies:** company details, About / Terms / Privacy / Refund pages (written for CVTara, Bangalore, support@cvtara.com) with **Auto-generate**, and a list of **every website URL** with a review checkbox. The legal pages now actually display the saved text (previously the saved text was never shown). "Credits & licences" page removed.
+- **Setup & health:** a health check runs daily from the cron (database, storage, HTTPS, domain, scheduler, e-mail, payments, debug flag) and keeps 60 days of history; on-demand "Run check now".
+- **Platform guide:** rewritten handbook; owner-only (requires the owner login), `noindex`, not in the sitemap, not linked publicly.
+
+## Product wording
+- No free package: everyone who registers is a **normal user**; a plan unlocks downloads. "Free" removed from plan names, dashboards and marketing copy. "Naukri / LinkedIn export" perks removed.
+
+## Content
+- All **68 guide and calculator pages** now have unique bodies of 428–557 words, a focus keyword, 6–8 advanced keywords, three FAQs, internal links and image alt text.
+
+## Hostinger
+- `install.php` is the single setup link: domain (defaults to cvtara.com), database, owner, and the support@cvtara.com SMTP mailbox. It enables the mailer, writes the `.env`, migrates, creates the owner and locks itself.
+- `APP_URL`, `MAIL_*` defaults point to cvtara.com / support@cvtara.com.
+
+## Tools
+- `tools/static-preview/` builds the browser-only demo (three entry pages) from a running preview server (`snapshot.py` + `build_static.py`).
+
 # CVTara v3.3.0 — what changed since 3.2.0-RC1
 
 Source: the 3.2.0-RC1 Hostinger package (2026-10-10), audited and extended on 2026-10-14.

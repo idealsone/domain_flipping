@@ -25,13 +25,16 @@ class AdminController extends Controller
         if ($get && in_array($path, ['feedback/add', 'email/process', 'media', 'search/import', 'search/sync', 'referrals/settings'])) {
             abort(405);
         }
+        if (preg_match(AdminOpsController::ROUTES, $path)) {
+            return app(AdminOpsController::class)->run($r, $path);
+        }
         if (str_starts_with($path, 'setup/')) {
             return app(SetupController::class)->run($r, substr($path, 6));
         }
         if (str_starts_with($path, 'referrals')) {
             return app(AffiliateAdminController::class)->run($r, $path);
         }
-        if (preg_match('#^content/(legal|features|library|blog|integrations|emails|seo|popup)$#', $path, $m)) {
+        if (preg_match('#^content/(legal|features|library|blog|integrations|emails|seo|popup|site)$#', $path, $m)) {
             $key = $m[1];
             if ($get) {
                 return $ok(['data' => Settings::get($key), 'revision' => Settings::revision($key), 'connections' => ['payments' => ! empty(Settings::providers()['payments']), 'email' => ! empty(Settings::providers()['email']), 'ai' => ! empty(Settings::providers()['ai'])]]);
@@ -286,12 +289,15 @@ class AdminController extends Controller
             validator($d, ['enabled' => 'required|boolean', 'delaySeconds' => 'required|integer|min:0|max:600', 'showSeconds' => 'required|integer|min:3|max:30', 'gapSeconds' => 'required|integer|min:3|max:120', 'useLiveActivity' => 'required|boolean', 'custom' => 'present|array|max:20', 'custom.*.title' => 'nullable|string|max:60', 'custom.*.text' => 'required|string|max:200', 'custom.*.icon' => 'nullable|string|max:8', 'custom.*.enabled' => 'required|boolean'])->validate();
             \Illuminate\Support\Facades\Cache::forget('public-activity');
         }
+        if ($k === 'site') {
+            validator($d, ['announce' => 'nullable|string|max:300', 'announceLink' => 'nullable|string|max:300', 'heroPill' => 'nullable|string|max:120', 'heroTitle' => 'required|string|max:200', 'heroRoles' => 'required|array|min:1|max:12', 'heroRoles.*' => 'string|max:60', 'heroLead' => 'required|string|max:600', 'ctaPrimary' => 'required|string|max:60', 'ctaSecondary' => 'required|string|max:60', 'ctaFinalTitle' => 'nullable|string|max:200', 'ctaFinalText' => 'nullable|string|max:400', 'pages' => 'present|array', 'pages.*.title' => 'nullable|string|max:180', 'pages.*.description' => 'nullable|string|max:400', 'pages.*.keywords' => 'nullable|string|max:400'])->validate();
+        }
         if ($k === 'seo') {
             validator($d, ['sitemapEnabled' => 'required|boolean', 'searchIndexing' => 'required|boolean', 'siteUrl' => 'nullable|url:https|max:255', 'pages' => 'present|array'])->validate();
         }
         if ($k === 'emails') {
             foreach ($d as $t) {
-                validator($t, ['id' => 'required|string|max:80', 'subject' => 'required|string|max:180', 'body' => 'required|string|max:20000', 'enabled' => 'required|boolean', 'trigger' => 'required|in:profile_created,password_reset,resume_saved,purchase_verified,abandoned_purchase,blog_published,access_expiring,followup_due,manual', 'delayHours' => 'required|integer|min:0|max:720'])->validate();
+                validator($t, ['id' => 'required|string|max:80', 'subject' => 'required|string|max:180', 'body' => 'required|string|max:20000', 'enabled' => 'required|boolean', 'trigger' => 'required|in:profile_created,password_reset,resume_saved,purchase_verified,abandoned_purchase,blog_published,access_expiring,followup_due,download_locked,manual', 'delayHours' => 'required|integer|min:0|max:720'])->validate();
             }
         }
         if ($k === 'legal') {

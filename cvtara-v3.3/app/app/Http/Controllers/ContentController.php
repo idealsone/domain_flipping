@@ -57,14 +57,14 @@ class ContentController extends Controller
             $xml = '<?xml version="1.0" encoding="UTF-8"?><urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">';
             foreach ($this->pages() as $p) {
                 if ($p['included']) {
-                    $xml .= '<url><loc>'.e(url($p['path'])).'</loc></url>';
+                    $xml .= '<url><loc>'.e(rtrim($seo['siteUrl'] ?: config('app.url'), '/').$p['path']).'</loc></url>';
                 }
             }
 
             return response($xml.'</urlset>', 200, ['Content-Type' => 'application/xml']);
         }
         if ($path === 'robots.txt') {
-            return response("User-agent: *\n".(Settings::get('seo')['searchIndexing'] ? "Disallow: /admin\nDisallow: /workspace\nDisallow: /api/\nDisallow: /login\nDisallow: /register\n" : "Disallow: /\n").'Sitemap: '.url('/sitemap.xml')."\n", 200, ['Content-Type' => 'text/plain']);
+            return response("User-agent: *\n".(Settings::get('seo')['searchIndexing'] ? "Disallow: /admin\nDisallow: /workspace\nDisallow: /api/\nDisallow: /login\nDisallow: /register\nDisallow: /forgot-password\nDisallow: /reset-password\nDisallow: /checkout.html\nDisallow: /install.php\nDisallow: /preview\n" : "Disallow: /\n").'Sitemap: '.rtrim(Settings::get('seo')['siteUrl'] ?: config('app.url'), '/')."/sitemap.xml\n", 200, ['Content-Type' => 'text/plain']);
         }
         $aliases = ['resume-builder' => 'workspace.html?view=builder', 'resume-templates' => 'templates.html', 'cover-letter' => 'workspace.html?view=letter', 'resume-match' => 'workspace.html?view=match', 'admin' => 'admin.html', 'privacy-policy' => 'privacy.html', 'terms-and-conditions' => 'terms.html', 'about-us' => 'about.html', 'contact-us' => 'contact.html'];
         if (isset($aliases[$path])) {
@@ -126,9 +126,14 @@ class ContentController extends Controller
         $legal = Settings::get('legal');
         $legalKey = ['about.html' => 'about', 'privacy.html' => 'privacy', 'terms.html' => 'terms', 'refund.html' => 'refund'][$path] ?? null;
         if ($legalKey && ! empty($legal[$legalKey])) {
-            $html = preg_replace('#(<article[^>]*>).*?(</article>)#s', '$1'.Str::markdown($legal[$legalKey], ['html_input' => 'strip', 'allow_unsafe_links' => false]).'$2', $html);
+            $legalHtml = Str::markdown($legal[$legalKey], ['html_input' => 'strip', 'allow_unsafe_links' => false]);
+            $html = preg_match('#<main[^>]*class="legal-shell"#', $html)
+                ? preg_replace_callback('#(<main[^>]*class="legal-shell"[^>]*>).*?(</main>)#s', fn ($m) => $m[1].$legalHtml.$m[2], $html)
+                : preg_replace_callback('#(<article[^>]*>).*?(</article>)#s', fn ($m) => $m[1].$legalHtml.$m[2], $html);
         }
         $seo = Settings::get('seo');
+        $siteBase = rtrim($seo['siteUrl'] ?: config('app.url'), '/');
+        $abs = fn ($u) => preg_match('#^https?://#', $u) ? $u : $siteBase.$u;
         $uri = '/'.$path;
         $custom = $seo['pages'][$uri] ?? [];
         $title = $custom['title'] ?? $post['title'] ?? null;
@@ -140,22 +145,26 @@ class ContentController extends Controller
         }
         $html = preg_replace('#<link[^>]*rel="canonical"[^>]*>|<meta[^>]*name="robots"[^>]*>#', '', $html);
         $index = $seo['searchIndexing'] && ! $admin && ! in_array($path, ['workspace.html', 'checkout.html']);
-        $head = '<link rel="canonical" href="'.e(url($uri)).'"><meta name="robots" content="'.($index ? 'index,follow' : 'noindex,nofollow').'"><meta name="csrf-token" content="'.e(csrf_token()).'"><meta name="cvtara-user" content="'.e((string) ($r->user()?->id ?? 'guest')).'"><link rel="stylesheet" href="/launch.css"><link rel="stylesheet" href="/experience.css"><link rel="stylesheet" href="/cvtara-ui.css"><link rel="stylesheet" href="/cvtara-ds.css">';
+        $head = '<link rel="canonical" href="'.e($siteBase.$uri).'"><meta name="robots" content="'.($index ? 'index,follow' : 'noindex,nofollow').'"><meta name="csrf-token" content="'.e(csrf_token()).'"><meta name="cvtara-user" content="'.e((string) ($r->user()?->id ?? 'guest')).'"><link rel="stylesheet" href="/launch.css"><link rel="stylesheet" href="/experience.css"><link rel="stylesheet" href="/cvtara-ui.css"><link rel="stylesheet" href="/cvtara-ds.css"><script src="/error-report.js" defer></script>';
+        $kw = trim((string) ($custom['keywords'] ?? $post['keywords'] ?? ''));
+        if ($kw !== '') {
+            $head .= '<meta name="keywords" content="'.e($kw).'">';
+        }
         // Keep brand identity and sharing metadata in the server response, including without JavaScript.
         preg_match('#<title>(.*?)</title>#s', $html, $titleMatch);
         preg_match('#<meta[^>]*name="description"[^>]*content="([^"]*)"#', $html, $descriptionMatch);
         $pageTitle = html_entity_decode($titleMatch[1] ?? 'CVTara — Resume and cover-letter builder', ENT_QUOTES, 'UTF-8');
         $pageDescription = html_entity_decode($descriptionMatch[1] ?? 'Create your resume, write a matching cover letter and prepare your next application with CVTara.', ENT_QUOTES, 'UTF-8');
         $shareImage = ! empty($post['imageUrl']) ? $post['imageUrl'] : '/assets/brand/cvtara-social.png';
-        $head .= '<meta property="og:site_name" content="CVTara"><meta property="og:title" content="'.e($pageTitle).'"><meta property="og:description" content="'.e($pageDescription).'"><meta property="og:url" content="'.e(url($uri)).'"><meta property="og:type" content="'.($post ? 'article' : 'website').'"><meta property="og:image" content="'.e(url($shareImage)).'"><meta property="og:image:alt" content="CVTara — Your next move starts here."><meta name="twitter:card" content="summary_large_image"><meta name="twitter:image" content="'.e(url($shareImage)).'">';
+        $head .= '<meta property="og:site_name" content="CVTara"><meta property="og:title" content="'.e($pageTitle).'"><meta property="og:description" content="'.e($pageDescription).'"><meta property="og:url" content="'.e($siteBase.$uri).'"><meta property="og:type" content="'.($post ? 'article' : 'website').'"><meta property="og:image" content="'.e($abs($shareImage)).'"><meta property="og:image:alt" content="CVTara — Your next move starts here."><meta name="twitter:card" content="summary_large_image"><meta name="twitter:image" content="'.e($abs($shareImage)).'">';
         if ($path === '') {
-            $head .= '<script type="application/ld+json">'.json_encode(['@context' => 'https://schema.org', '@type' => 'WebSite', 'name' => 'CVTara', 'url' => url('/'), 'publisher' => ['@type' => 'Organization', 'name' => 'CVTara', 'logo' => url('/assets/brand/cvtara-mark.svg')]], JSON_HEX_TAG | JSON_HEX_AMP | JSON_UNESCAPED_SLASHES).'</script>';
+            $head .= '<script type="application/ld+json">'.json_encode(['@context' => 'https://schema.org', '@type' => 'WebSite', 'name' => 'CVTara', 'url' => $siteBase.'/', 'publisher' => ['@type' => 'Organization', 'name' => 'CVTara', 'logo' => $siteBase.'/assets/brand/cvtara-mark.svg', 'email' => 'support@cvtara.com', 'address' => ['@type' => 'PostalAddress', 'addressLocality' => 'Bangalore', 'addressCountry' => 'IN']]], JSON_HEX_TAG | JSON_HEX_AMP | JSON_UNESCAPED_SLASHES).'</script>';
         }
         if ($post) {
             $image = $post['imageUrl'] ?? '';
-            $schema = ['@context' => 'https://schema.org', '@type' => 'BlogPosting', 'headline' => $post['title'], 'description' => $post['description'], 'url' => url($uri), 'author' => ['@type' => 'Organization', 'name' => $post['author'] ?? 'CVTara'], 'publisher' => ['@type' => 'Organization', 'name' => 'CVTara']];
+            $schema = ['@context' => 'https://schema.org', '@type' => 'BlogPosting', 'headline' => $post['title'], 'description' => $post['description'], 'url' => $siteBase.$uri, 'author' => ['@type' => 'Organization', 'name' => $post['author'] ?? 'CVTara'], 'publisher' => ['@type' => 'Organization', 'name' => 'CVTara']];
             if ($image) {
-                $schema['image'] = url($image);
+                $schema['image'] = $abs($image);
             }$head .= '<script type="application/ld+json">'.json_encode($schema, JSON_HEX_TAG | JSON_HEX_AMP | JSON_UNESCAPED_SLASHES).'</script>';
         }
         if (! $admin) {

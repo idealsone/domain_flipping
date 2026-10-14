@@ -24,6 +24,8 @@
     });
   }
 
+  window.CVTaraEnsureRecent = ensureRecent;
+
   /* ---------- users ---------- */
   const U = { page: 1, q: '', plans: null };
   async function usersPanel() {
@@ -67,7 +69,7 @@
       host.dataset.tab = tab;
       const groups = { fresher: Object.keys(plans).filter(k => plans[k].type === 'plan' && plans[k].audience === 'fresher'), experienced: Object.keys(plans).filter(k => plans[k].type === 'plan' && plans[k].audience === 'experienced'), addons: Object.keys(plans).filter(k => plans[k].type === 'addon'), free: ['free'] };
       host.innerHTML = `<div class="admin-heading"><div><h2>Pricing &amp; add-ons</h2><p>Everything here is live on the website, checkout and dashboards the moment you save. Each plan = 1 premium primary resume + the JD-tailored resumes and cover letters below.</p></div><a class="button secondary" href="/#pricing" target="_blank" rel="noopener">View public pricing ↗</a></div>
-        <div class="ad-tabs">${[['fresher', '🎓 Fresher plans'], ['experienced', '💼 Experienced plans'], ['addons', '➕ Add-on packs'], ['free', '🆓 Free plan']].map(([t, l]) => `<button type="button" class="${tab === t ? 'active' : ''}" data-tab="${t}">${l}</button>`).join('')}</div>
+        <div class="ad-tabs">${[['fresher', '🎓 Fresher plans'], ['experienced', '💼 Experienced plans'], ['addons', '➕ Add-on packs'], ['free', '👤 Normal user']].map(([t, l]) => `<button type="button" class="${tab === t ? 'active' : ''}" data-tab="${t}">${l}</button>`).join('')}</div>
         <form id="adPlansForm">${groups[tab].map(k => card(k, plans[k])).join('')}<div class="ad-save"><button class="button primary">Save ${tab === 'addons' ? 'add-ons' : 'plans'}</button><span role="status" id="adPlanSt"></span></div></form>`;
       $$('[data-tab]', host).forEach(b => b.onclick = () => { collect(); tab = b.dataset.tab; draw(); });
       $('#adPlansForm').onsubmit = async e => {

@@ -18,6 +18,12 @@ return Application::configure(basePath: dirname(__DIR__))
         $m->web(append: [OwnerMaintenance::class]);
     })
     ->withExceptions(function (Exceptions $e): void {
+        $e->report(function (\Throwable $x) {
+            if ($x instanceof ValidationException || $x instanceof \Illuminate\Auth\AuthenticationException || ($x instanceof HttpExceptionInterface && $x->getStatusCode() < 500)) {
+                return;
+            }
+            \App\Services\ErrorLog::exception($x, auth()->id(), request()->path());
+        });
         $e->render(function (ValidationException $x, Request $r) {
             if ($r->is('api/*')) {
                 return response()->json(['ok' => false, 'error' => collect($x->errors())->flatten()->first(), 'errors' => $x->errors()], 422);

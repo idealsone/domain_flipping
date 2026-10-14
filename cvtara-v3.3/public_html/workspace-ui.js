@@ -16,7 +16,7 @@
   function sidebar() {
     const box = $('.side-plan');
     if (!box || !al) return;
-    box.innerHTML = `<span>YOUR PLAN</span><b>${E(al.planName)}</b><small>${al.paid ? `${al.daysLeft} days left · until ${fmt(al.accessUntil)}` : 'Free preview — upgrade for tailored resumes, clean downloads and ATS scans.'}</small><button class="button mint full small" style="margin-top:10px" data-workspace-view="billing">${al.paid ? 'Renew / add-ons' : 'See plans'}</button>`;
+    box.innerHTML = `<span>YOUR PLAN</span><b>${E(al.planName)}</b><small>${al.paid ? `${al.daysLeft} days left · until ${fmt(al.accessUntil)}` : 'Preview — upgrade for tailored resumes, clean downloads and ATS scans.'}</small><button class="button mint full small" style="margin-top:10px" data-workspace-view="billing">${al.paid ? 'Renew / add-ons' : 'See plans'}</button>`;
   }
 
   const use = (label, used, cap, note) => {
@@ -32,15 +32,15 @@
     if (!top) { top = document.createElement('div'); top.id = 'wsDash'; host.prepend(top); }
     const name = (profile.profile?.name || profile.user?.email || '').split(' ')[0] || 'there';
     const c = al.caps, u = al.used, free = !al.paid;
-    top.innerHTML = `<div class="ws-hero"><div><span class="eyebrow" style="color:#c7d2fe">WELCOME BACK</span><h2>Welcome back, ${E(name)} 👋</h2><p>${free ? 'You’re on the free preview. Build your primary resume, then upgrade for tailored versions and clean downloads.' : `You’re on ${E(al.planName)} — ${al.daysLeft} days left. Tailor a version of your primary resume for each job.`}</p><p style="margin-top:14px;display:flex;gap:10px;flex-wrap:wrap"><button class="button mint" data-workspace-view="resumes">My resumes →</button><button class="button secondary" data-workspace-view="match">Check ATS match</button></p></div><div class="ws-ring" style="--p:${free ? 0 : Math.min(100, Math.round(al.daysLeft / 90 * 100))}%"><b>${free ? 'Free' : al.daysLeft}</b><small>${free ? 'plan' : 'days left'}</small></div></div>
-      <div class="ws-usage">${use('Resumes (primary + tailored)', u.savedResumes, c.resumes, free ? 'free allowance' : 'across your plan')}${use('Cover letters', u.savedLetters, c.letters, 'saved drafts')}${use('ATS scans', free ? u.dailyMatches : u.atsScans, free ? al.limits.dailyMatches : c.atsScans, free ? 'today' : 'this plan')}${use('Clean downloads', u.exports, c.exports, free ? 'plan required' : 'PDF / Word exports')}</div>`;
+    top.innerHTML = `<div class="ws-hero"><div><span class="eyebrow" style="color:#c7d2fe">WELCOME BACK</span><h2>Welcome back, ${E(name)} 👋</h2><p>${free ? 'You’re a normal user — subscribe to download. Build your primary resume, then upgrade for tailored versions and clean downloads.' : `You’re on ${E(al.planName)} — ${al.daysLeft} days left. Tailor a version of your primary resume for each job.`}</p><p style="margin-top:14px;display:flex;gap:10px;flex-wrap:wrap"><button class="button mint" data-workspace-view="resumes">My resumes →</button><button class="button secondary" data-workspace-view="match">Check ATS match</button></p></div><div class="ws-ring" style="--p:${free ? 0 : Math.min(100, Math.round(al.daysLeft / 90 * 100))}%"><b>${free ? 'Free' : al.daysLeft}</b><small>${free ? 'plan' : 'days left'}</small></div></div>
+      <div class="ws-usage">${use('Resumes (primary + tailored)', u.savedResumes, c.resumes, free ? 'preview allowance' : 'across your plan')}${use('Cover letters', u.savedLetters, c.letters, 'saved drafts')}${use('ATS scans', free ? u.dailyMatches : u.atsScans, free ? al.limits.dailyMatches : c.atsScans, free ? 'today' : 'this plan')}${use('Clean downloads', u.exports, c.exports, free ? 'plan required' : 'PDF / Word exports')}</div>`;
   }
 
   function billing() {
     const host = $('#view-billing');
     if (!host || !al) return;
     host.innerHTML = `<div class="admin-heading"><div><h2>Billing &amp; plans</h2><p>Manage your plan, renew, or add extra resume and cover-letter packs.</p></div></div>
-      <div class="bl-current"><div><h3>${E(al.planName)}</h3><p>${al.paid ? `Active · expires ${fmt(al.accessUntil)} · ${al.daysLeft} days left` : 'No active plan — you are on the free preview.'}</p></div><span class="bl-status">${al.paid ? 'Active' : 'Free'}</span></div>
+      <div class="bl-current"><div><h3>${E(al.planName)}</h3><p>${al.paid ? `Active · expires ${fmt(al.accessUntil)} · ${al.daysLeft} days left` : 'No active plan — you are a normal user. Choose a plan to download your resumes.'}</p></div><span class="bl-status">${al.paid ? 'Active' : 'Free'}</span></div>
       <div class="pr-panel"><h2 style="font-size:20px">Your allowance</h2><div class="ws-usage" style="margin:12px 0 0">${use('Resumes', al.used.savedResumes, al.caps.resumes, 'primary + tailored')}${use('Cover letters', al.used.savedLetters, al.caps.letters, 'saved')}${use('ATS scans', al.paid ? al.used.atsScans : al.used.dailyMatches, al.paid ? al.caps.atsScans : al.limits.dailyMatches, al.paid ? 'this plan' : 'today')}${use('Downloads', al.used.exports, al.caps.exports, 'exports')}</div></div>
       <h3 style="margin:22px 0 14px">${al.paid ? 'Upgrade, renew or add a pack' : 'Choose a plan'}</h3><div id="billingPlans"></div>
       <p style="margin-top:18px;color:var(--muted)">Purchase history and invoices are in <a href="#" data-workspace-view="account" style="color:var(--blue);font-weight:700">Account &amp; purchases</a>.</p>`;

@@ -20,6 +20,9 @@
       })();
     }
   }
+  let site = null;
+  const announceHtml = from => E((site && site.announce) || 'Create your account, build and preview · Plans from {{from}} · Pay once, no auto-renewal').replace('{{from}}', from) + ' · <a href="#pricing">' + E((site && site.announceLink) || 'See plans') + '</a>';
+  const rich = t => E(t).replace(/\*\*(.+?)\*\*/g, '<b>$1</b>');
   // stats from real library + plan data
   const D = window.CVTARA_DATA;
   if (D) { if ($('#stTemplates')) $('#stTemplates').textContent = D.templates.length; if ($('#stLetters')) $('#stLetters').textContent = D.coverLetters.length; }
@@ -29,7 +32,7 @@
       const min = Math.min(...prices), inr = n => '₹' + n.toLocaleString('en-IN');
       if ($('#stFrom')) $('#stFrom').textContent = inr(min);
       const a = $('#lpAnnounce');
-      if (a) a.innerHTML = `Build and preview free · Plans from ${inr(min)} · Pay once, no auto-renewal · <a href="#pricing">See plans</a>`;
+      if (a) a.innerHTML = announceHtml(inr(min));
     }
   };
   window.CVTaraPlans?.load ? window.CVTaraPlans.load().then(apply).catch(() => {}) : fetch('/api/business-public').then(r => r.json()).then(apply).catch(() => {});
@@ -49,4 +52,18 @@
     box.innerHTML = rev.length ? rev.map(r => `<article class="lp-review"><div class="stars" aria-label="${r.rating} out of 5">${'★'.repeat(r.rating)}${'☆'.repeat(5 - r.rating)}</div><p>“${E(r.content)}”</p><b>${E(r.display_name)}</b></article>`).join('')
       : '<div class="lp-empty">Customer reviews will appear here once approved. <a href="/register">Be one of the first to build your resume →</a></div>';
   }).catch(() => { box.innerHTML = ''; });
+  // owner-editable homepage copy (Owner console → Templates & site design)
+  fetch('/api/public-content', { headers: { Accept: 'application/json' } }).then(r => r.json()).then(d => {
+    const s = d.content && d.content.site; if (!s) return; site = s;
+    if (Array.isArray(s.heroRoles) && s.heroRoles.length) { roles.length = 0; roles.push(...s.heroRoles); }
+    const h1 = $('.lp-hero h1'); if (h1 && h1.firstChild && s.heroTitle) h1.firstChild.nodeValue = s.heroTitle + ' ';
+    const pill = $('.lp-pill'); if (pill && pill.lastChild && s.heroPill) pill.lastChild.nodeValue = s.heroPill;
+    if ($('.lp-lead') && s.heroLead) $('.lp-lead').innerHTML = rich(s.heroLead);
+    if ($('.lp-cta .primary') && s.ctaPrimary) $('.lp-cta .primary').textContent = s.ctaPrimary;
+    if ($('.lp-cta .secondary') && s.ctaSecondary) $('.lp-cta .secondary').textContent = s.ctaSecondary;
+    if ($('.lp-final h2') && s.ctaFinalTitle) $('.lp-final h2').textContent = s.ctaFinalTitle;
+    if ($('.lp-final p') && s.ctaFinalText) $('.lp-final p').textContent = s.ctaFinalText;
+    if ($('.lp-final .button') && s.ctaFinalButton) $('.lp-final .button').textContent = s.ctaFinalButton;
+    const a = $('#lpAnnounce'), from = $('#stFrom') ? $('#stFrom').textContent : '₹299'; if (a) a.innerHTML = announceHtml(from);
+  }).catch(() => {});
 })();

@@ -33,12 +33,12 @@
     legal: ['§', 'Footer & policies', 'Footer links, legal pages and contact details.'],
     setup: ['✔', 'Setup & health', 'Launch checklist, cron, webhooks and test tools.']
   };
-  const HUB = ['overview', 'commerce', 'features', 'popup', 'seo', 'keywords', 'analytics', 'integrations', 'push', 'legal', 'setup'];
+  const HUB = ['policies', 'health', 'features', 'popup', 'keywords', 'analytics', 'integrations', 'push', 'seo', 'overview'];
   let current = 'overview';
 
   function banner(k) {
     const v = $('#admin-' + k); if (!v) return;
-    if (['dashboard', 'orders', 'desk', 'referral'].includes(k)) return;
+    if (['dashboard', 'orders', 'desk', 'referral', 'people', 'resumelib', 'letterlib', 'sitedesign', 'mailer', 'errors', 'bloghub', 'policies', 'health'].includes(k)) return;
     let b = v.querySelector(':scope > .ops-banner'); const m = META[k]; if (!m) return;
     if (!b) { b = document.createElement('div'); b.className = 'ops-banner'; v.prepend(b); }
     b.innerHTML = `<span class="ops-ic">${m[0]}</span><div><h2>${E(m[1])}</h2><p>${E(m[2])}</p></div>${k !== 'overview' && HUB.includes(k) ? '<button class="button secondary small" data-admin-view="settings">← Settings</button>' : ''}`;
@@ -207,7 +207,7 @@
 
   /* ---- Live stats card ---- */
   async function live() {
-    if (!$('#opsLive')) { const c = document.createElement('aside'); c.id = 'opsLive'; c.className = 'ops-live'; c.innerHTML = '<header><span class="live-dot"></span> LIVE STATS <button type="button" aria-label="Collapse">⤢</button></header><div></div><footer></footer>'; document.body.appendChild(c); c.querySelector('button').onclick = () => c.classList.toggle('min'); }
+    if (!$('#opsLive')) { const c = document.createElement('aside'); c.id = 'opsLive'; c.className = 'ops-live'; c.innerHTML = '<header><span class="live-dot"></span> LIVE STATS <button type="button" aria-label="Collapse">⤢</button></header><div></div><footer></footer>'; document.body.appendChild(c); c.querySelector('button').onclick = () => { c.dataset.manual = '1'; c.classList.toggle('min'); }; }
     try {
       const d = await data(true), now = new Date(), act = d.dash.activity || [];
       const today = act.filter(a => sameDay(parse(a.created_at), now));
@@ -218,8 +218,30 @@
   }
 
   const render = { settings, referral, errors, dashboard, orders, desk };
+
+  /* ================= shared kit for the owner-console modules ================= */
+  function modal(title, html, o = {}) {
+    const wrap = document.createElement('div'); wrap.className = 'ad-modal';
+    wrap.innerHTML = `<div class="ad-modal-box ${o.wide ? 'wide' : ''}" role="dialog" aria-modal="true" aria-label="${E(title)}"><header><h3>${E(title)}</h3><button type="button" class="ad-x" aria-label="Close">×</button></header><div class="ad-modal-body">${html}</div></div>`;
+    document.body.append(wrap); document.body.classList.add('ad-modal-open');
+    const esc = e => { if (e.key === 'Escape') close(); };
+    const close = () => { wrap.remove(); if (!document.querySelector('.ad-modal')) document.body.classList.remove('ad-modal-open'); document.removeEventListener('keydown', esc); if (o.onClose) o.onClose(); };
+    document.addEventListener('keydown', esc); wrap.addEventListener('mousedown', e => { if (e.target === wrap) close(); }); wrap.querySelector('.ad-x').onclick = close;
+    return { el: wrap, body: wrap.querySelector('.ad-modal-body'), close };
+  }
+  let toastTimer;
+  function toast(msg, bad) {
+    let t = $('#adToast'); if (!t) { t = document.createElement('div'); t.id = 'adToast'; t.setAttribute('role', 'status'); document.body.append(t); }
+    t.textContent = msg; t.className = 'show' + (bad ? ' bad' : ''); clearTimeout(toastTimer); toastTimer = setTimeout(() => { t.className = ''; }, 4200);
+  }
+  const ensureRecent = async () => (window.CVTaraEnsureRecent ? window.CVTaraEnsureRecent() : true);
+  const download = (name, text, type) => { const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([text], { type: type || 'text/plain' })); a.download = name; document.body.append(a); a.click(); setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 500); };
+  const csv = (rows, cols) => cols.join(',') + '\n' + rows.map(r => cols.map(c => '"' + String(r[c] ?? '').replace(/"/g, '""').replace(/^[=+\-@\t\r]/, "'$&") + '"').join(',')).join('\n');
+  window.CVTaraAdminKit = { $, $$, E, api, inr, short, parse, dmy, pill, data, userMap, planName, modal, toast, ensureRecent, download, csv, META, HUB, register: (k, fn, meta) => { render[k] = fn; if (meta) META[k] = meta; }, open: k => open(k) };
+
   function open(k) {
     current = k; title(k); banner(k);
+    const lv = $('#opsLive'); if (lv && !lv.dataset.manual) lv.classList.toggle('min', k !== 'dashboard');
     $$('.side-nav [data-admin-view]').forEach(b => b.classList.toggle('active', b.dataset.adminView === (HUB.includes(k) ? 'settings' : k)));
     if (render[k]) render[k]();
     const c = $('.admin-content'); if (c) c.scrollTop = 0;
@@ -230,7 +252,8 @@
     const b = e.target.closest('[data-admin-view]'); if (!b) return;
     setTimeout(() => open(b.dataset.adminView), 20);
   });
-  addEventListener('load', () => setTimeout(() => { Object.keys(META).forEach(banner); settings(); document.body.classList.add('admin-ready'); const first = $('.side-nav [data-admin-view="dashboard"]'); if (first) first.click(); live(); setInterval(live, 30000); }, 700));
+  addEventListener('load', () => setTimeout(() => { Object.keys(META).forEach(banner); settings(); const first = $('.side-nav [data-admin-view="dashboard"]'); if (first) first.click(); const D = window.CVTARA_DATA; const cnt = (v, n) => { const el = $('.side-nav [data-admin-view="' + v + '"] .nav-count'); if (el && n) el.textContent = n; }; if (D) { cnt('resumelib', D.templates.length); cnt('letterlib', D.coverLetters.length); cnt('bloghub', (D.blog || []).length); }
+    Promise.resolve(dashboard()).catch(() => 0).finally(() => { document.body.classList.add('admin-ready'); live(); setInterval(live, 30000); }); }, 400));
   // banners must survive panels re-rendering themselves
   new MutationObserver(() => { const v = $('.admin-view.active'); if (v && !v.querySelector(':scope > .ops-banner')) banner(v.id.replace('admin-', '')); }).observe(document.body, { childList: true, subtree: true });
 })();
