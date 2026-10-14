@@ -1,3 +1,11 @@
+# CVTara v3.4.1 — Referral Ops consolidation, working night mode, test runner
+
+## Fixed
+- **Referral rules were in two places** (Business Ops and Referral Ops). They now live only in **Referral Ops**: commission %, tier, minimum withdrawal, hold days, payout window, qualifying order amount, free-download and premium rewards, PAN requirement and "paid plans only". Referral Ops also holds affiliates, creator applications, payout identity reviews and the withdrawal queue (review, send, mark paid/rejected, sync). Business Ops and Orders no longer show referral boxes.
+- **Night mode** is applied to both `html` and `body` on every page, follows the device preference first, remembers the choice, and no longer flashes light first. The sign-in / register / password pages (server-rendered) now have the same switch. Low-contrast text in night mode (blue links, Delete buttons, template filters, guide table of contents) fixed; the contrast scan now reports zero issues in both themes.
+- Sign-up copy no longer says "free" ("Create your account").
+- **Python test errors:** the old `tests/audit-harness` scripts were order-dependent, mixed MariaDB and SQLite and contained `$AUDIT_DIR` placeholders. New `python3 tests/run_tests.py` is self-contained (throw-away SQLite DB, own PHP server, exit codes 0/1/2, clear message if PHP or `vendor/` is missing) and also checks production mode (preview sign-in closed, owner API needs login). Browser checks: `tests/ui/`.
+
 # CVTara v3.4.0 — owner-console rebuild, content and operations
 
 Built on 3.3.0. Everything below was verified against the PHP app (preview mode and production mode) and in a headless browser.

@@ -11,7 +11,7 @@
     desk: ['⭐', 'User Reviews', 'Add, moderate and publish user reviews shown on the landing page'],
     overview: ['📈', 'Detailed analytics', 'Profiles, funnels, pipeline and activity in depth.'],
     users: ['👥', 'Users', 'Search accounts, review plans and block abusive users.'],
-    commerce: ['🛒', 'Orders', 'Verified purchases, refunds, coupons and referral payouts.'],
+    commerce: ['🛒', 'Orders', 'Verified purchases, refunds and coupons.'],
     templates: ['📄', 'Resume Library', 'Every resume template customers can pick, with its category.'],
     letters: ['✉️', 'CL Library', 'Cover-letter designs and sample copy.'],
     design: ['🎨', 'Templates & site design', 'Homepage copy, colours and the look of the public website.'],
@@ -51,28 +51,6 @@
     h.innerHTML = `<div class="ops-grid">${HUB.map(k => `<article class="ops-card"><span class="ops-ic">${META[k][0]}</span><h3>${E(META[k][1])}</h3><p>${E(META[k][2])}</p><button class="button secondary small" data-admin-view="${k}">Open</button></article>`).join('')}
       <article class="ops-card"><span class="ops-ic">📖</span><h3>Platform guide</h3><p>How every part of the owner console works.</p><a class="button secondary small" href="admin-guide.html">Read guide</a></article></div>`;
     banner('settings');
-  }
-
-  /* ---- Referral Ops ---- */
-  async function referral() {
-    const h = $('#admin-referral'); if (!h) return;
-    h.innerHTML = '<div class="ops-skel"></div>';
-    try {
-      const [d, dd] = await Promise.all([api('/api/admin/referrals'), data()]);
-      const r = d.rules || {}, aff = d.affiliates || [], wd = d.withdrawals || [], um = userMap(dd);
-      h.innerHTML = `<div class="pg-head"><h2>Referral Ops</h2><p>Manage the referral programme, affiliate balances, and payout requests</p></div>
-        <section class="panel panel-pad"><h3>Programme Settings</h3><form id="opsRefForm" class="ops-form four"><label>Status<span class="ops-sw"><input type="checkbox" name="enabled" ${r.enabled ? 'checked' : ''}> <em>${r.enabled ? 'Enabled' : 'Disabled'}</em></span></label>
-          <label>Standard commission<input value="${(r.rateBps || 0) / 100}%" disabled></label><label>Tier threshold (buyers)<input value="${r.tierThreshold || 0} → ${(r.tierRateBps || 0) / 100}%" disabled></label><label>Min withdrawal<input value="${short(r.minimumPaise)}" disabled></label>
-          <label>Hold period (days)<input type="number" min="0" max="60" name="holdDays" value="${r.holdDays ?? 7}"></label><label>Require PAN<span class="ops-sw"><input type="checkbox" name="requirePan" ${r.requirePan ? 'checked' : ''}> <em>${r.requirePan ? 'Yes' : 'No'}</em></span></label>
-          <label>Pro plans only<input value="${r.proOnly ? 'Yes' : 'No'}" disabled></label><div class="ops-end"><button class="button primary">Save Settings</button> <span id="opsRefSt" role="status"></span></div></form>
-          <p class="ops-note">Commission %, tiers and qualifying amount are edited in <button class="linklike" data-admin-view="business">Business Ops</button>.</p></section>
-        <h3 class="ops-h3">Affiliate Balances</h3><section class="panel"><table class="ad-table"><thead><tr><th>Name</th><th>Email</th><th>Rate</th><th>Available</th><th>In Review</th><th>Total Paid</th><th>Status</th></tr></thead><tbody>${aff.map(a => `<tr><td><b>${E(a.name)}</b></td><td>${E(a.email)}</td><td>${(a.rateBps || 0) / 100}%</td><td>${short(a.availablePaise)}</td><td>${short((a.pendingPaise || 0) + (a.reservedPaise || 0))}</td><td>${short(a.paidPaise)}</td><td>${pill(um[String(a.id)] && um[String(a.id)].blocked ? 'blocked' : 'active')}</td></tr>`).join('') || '<tr><td colspan="7">No affiliates yet.</td></tr>'}</tbody></table></section>
-        <h3 class="ops-h3">Pending Withdrawal Queue</h3><section class="panel"><table class="ad-table"><thead><tr><th>Customer</th><th>Amount</th><th>Method</th><th>Requested</th><th>Status</th><th>Actions</th></tr></thead><tbody>${wd.map(w => `<tr><td>${E((um[String(w.owner_id)] || {}).name || 'Customer')}</td><td><b>${short(w.amount_paise)}</b></td><td>${E(w.method || w.provider || 'Manual')}</td><td>${dmy(parse(w.created_at))}</td><td>${pill(w.status || 'pending')}</td><td><button class="button small ops-ok" data-admin-view="commerce">Review →</button></td></tr>`).join('') || '<tr><td colspan="6">No withdrawal requests right now.</td></tr>'}</tbody></table></section>`;
-      $('#opsRefForm').onsubmit = async e => {
-        e.preventDefault(); const f = e.target.elements, st = $('#opsRefSt'); st.textContent = 'Saving…';
-        try { await api('/api/admin/referrals/settings', { method: 'POST', body: { enabled: f.enabled.checked, requirePan: f.requirePan.checked, holdDays: Number(f.holdDays.value) } }); st.textContent = 'Saved.'; } catch (err) { st.textContent = err.message; }
-      };
-    } catch (e) { h.innerHTML = `<div class="panel panel-pad" role="alert">${E(e.message)}</div>`; }
   }
 
   /* ---- Error Log ---- */
@@ -217,7 +195,7 @@
     } catch (e) { /* keep last values */ }
   }
 
-  const render = { settings, referral, errors, dashboard, orders, desk };
+  const render = { settings, errors, dashboard, orders, desk };
 
   /* ================= shared kit for the owner-console modules ================= */
   function modal(title, html, o = {}) {

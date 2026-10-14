@@ -28,8 +28,11 @@ class AffiliateAdminController extends Controller
         }
         AccountSecurity::requireRecent($r);
         if ($path === 'referrals/settings') {
-            $d = $r->validate(['enabled' => 'required|boolean', 'requirePan' => 'required|boolean', 'holdDays' => 'required|integer|min:1|max:60']);
-            Settings::put('referrals', [...Referrals::config(), ...$d]);
+            // One place for every referral rule (Owner console -> Referral Ops).
+            $d = $r->validate(['enabled' => 'required|boolean', 'requirePan' => 'required|boolean', 'holdDays' => 'required|integer|min:1|max:60', 'rateBps' => 'sometimes|integer|min:0|max:5000', 'tierRateBps' => 'sometimes|integer|min:0|max:5000', 'tierThreshold' => 'sometimes|integer|min:1|max:100000', 'minimumPaise' => 'sometimes|integer|min:100|max:100000000', 'payoutHours' => 'sometimes|integer|min:1|max:720', 'downloadThreshold' => 'sometimes|integer|min:1|max:10000', 'premiumThreshold' => 'sometimes|integer|min:2|max:10000', 'premiumDays' => 'sometimes|integer|min:1|max:365', 'minQualifyingPaise' => 'sometimes|integer|min:0|max:1000000', 'proOnly' => 'sometimes|boolean']);
+            $merged = [...Referrals::config(), ...$d];
+            abort_unless($merged['premiumThreshold'] > $merged['downloadThreshold'], 422, 'Premium reward needs more paying friends than the free-download reward.');
+            Settings::put('referrals', $merged);
             Settings::audit($admin->id, 'referral_rules_saved');
 
             return $ok();

@@ -398,3 +398,31 @@ body.dark #dialogResume,body.dark #dialogLetter{background:#0b1220}
 .ops-form label{align-content:start}
 .ops-live.min{width:auto}.ops-live.min header{padding:10px 14px}
 .ed-actions{position:static!important;order:-1}
+
+/* ---- theme: html + body both carry the dark state, so no light edges anywhere ---- */
+html.dark,html[data-theme=dark]{--bg:#0f1117;--paper:#1a1f2e;--ink:#f1f5f9;--ink2:#cbd5e1;--muted:#94a3b8;--line:#2d3748;--soft:#1e293b;--canvas:#0f1117;--ink-2:#cbd5e1;color-scheme:dark;background:#0f1117}
+html:not(.dark){color-scheme:light}
+html.dark body{background:var(--bg);color:var(--ink)}
+button[data-theme]{display:inline-grid;place-items:center;min-width:38px;min-height:38px;padding:0;line-height:0}
+body.dark .site-header .brand img,body.dark .cv-brand-logo,body.dark .brand img{background:transparent!important;filter:brightness(0) invert(1);padding:0!important}
+/* dark-mode contrast fixes */
+html.dark .category-tabs button.active,body.dark .category-tabs button.active{background:#3b6cf0;color:#fff;border-color:#3b6cf0}
+body.dark .pl-plus,body.dark .workspace-main b,body.dark .workspace-main em,body.dark .workspace-main small,body.dark .workspace-main s,body.dark dd#checkoutPrice,body.dark .workspace-main a.active,body.dark button.linklike,body.dark .workspace-main a:not(.button){--blue:#8fb2ff}
+body.dark .pl-plus,body.dark dd#checkoutPrice,body.dark .workspace-main a.active,body.dark button.linklike,body.dark .workspace-main em{color:#8fb2ff}
+body.dark .workspace-main button.button.secondary{color:#fca5a5;border-color:rgba(252,165,165,.35)}
+body.dark .toc a,body.dark .toc b,body.dark aside.toc{color:#e2e8f0}
+body.dark .toc a.active{color:#8fb2ff}
+body.dark a.active,body.dark .nav a.active,body.dark nav a.active{color:#8fb2ff}
+body.dark .toc,body.dark aside.toc{background:#1a1f2e!important}
+body.dark .toc b,body.dark .toc a{color:#e2e8f0!important}
+body.dark .checkout b,body.dark #checkoutDialog b,body.dark dialog b,body.dark main b{--x:1}
+body.dark .button.secondary{color:#fca5a5}
+body.dark .button.secondary[class*=primary]{color:inherit}
+body.dark .blog-toc{background:#1a1f2e!important;border-color:#2d3748}
+body.dark .pl-stats>div{background:#1e293b}
+body.dark .pl-stats b,body.dark .pl-stats em{color:#8fb2ff}
+body.dark a.active{color:#8fb2ff!important}
+body.dark .workspace-main .button.secondary,body.dark .panel .button.secondary{color:#fca5a5}
+body.dark .ad-danger,body.dark .danger,body.dark button.danger,body.dark [class*=danger]{color:#fca5a5!important}
+body.dark button.button.secondary[style*="b91c1c"],body.dark button.button.secondary[style*="#b91c1c"]{color:#fca5a5!important}
+body.dark [data-del]{color:#fca5a5!important}

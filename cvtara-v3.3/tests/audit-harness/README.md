@@ -1,3 +1,7 @@
+> **Legacy.** These scripts are order-dependent, print-only and mix MariaDB with SQLite, which is why they raised
+> errors on repeated runs. Use `python3 tests/run_tests.py` instead (self-contained, SQLite, repeatable, exit codes).
+> Browser checks live in `tests/ui/` (`BASE=http://127.0.0.1:8000 node tests/ui/contrast_scan.cjs`).
+
 # Audit harness
 
 Scripts used to exercise the CVTara 3.2.0-RC1 package. Everything here ran against a
