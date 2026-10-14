@@ -838,9 +838,17 @@ select{padding:8px 12px;border:1.5px solid var(--line);border-radius:6px;backgro
 /* ============================================================
    BLOG LISTING PAGE
    ============================================================ */
-.blog-listing-header{text-align:center;padding:40px 0 28px}
-.blog-listing-header h1{font-size:clamp(26px,4vw,38px);font-weight:800;color:var(--ink);margin-bottom:10px}
-.blog-listing-header p{color:var(--muted);font-size:16px;max-width:580px;margin:0 auto}
+/* === PUBLIC PAGES NAV === */
+.pub-topbar{position:sticky;top:0;z-index:200;background:var(--bg);border-bottom:1px solid var(--line);padding:11px 24px;display:flex;align-items:center;gap:14px}
+.pub-back-btn{display:flex;align-items:center;gap:6px;background:transparent;border:1.5px solid var(--line);color:var(--muted);padding:7px 14px;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600;transition:border-color .15s,color .15s;white-space:nowrap}
+.pub-back-btn:hover{border-color:var(--blue);color:var(--blue)}
+#pub-breadcrumb{font-size:14px;color:var(--muted)}
+.pub-constrained{max-width:900px;margin:0 auto;padding:32px 24px 64px}
+/* === BLOG LISTING === */
+.blog-eyebrow{font-size:12px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--blue);display:block;margin-bottom:14px}
+.blog-listing-header{text-align:center;padding:52px 20px 32px;max-width:720px;margin:0 auto}
+.blog-listing-header h1{font-size:clamp(28px,4.5vw,48px);font-weight:800;letter-spacing:-.03em;color:var(--ink);line-height:1.15;margin:0 0 14px}
+.blog-listing-header p{color:var(--muted);font-size:16px;max-width:560px;margin:0 auto 24px}
 .blog-search-bar{display:flex;gap:10px;margin:0 0 24px;max-width:520px;margin-left:auto;margin-right:auto}
 .blog-search-bar input{flex:1;padding:10px 16px;border:1.5px solid var(--line);border-radius:10px;font-size:15px;background:var(--paper);color:var(--ink);outline:none}
 .blog-search-bar input:focus{border-color:var(--blue)}
@@ -2507,37 +2515,44 @@ select{padding:8px 12px;border:1.5px solid var(--line);border-radius:6px;backgro
 </div><!-- end admin -->
 
 <!-- PUBLIC PAGES -->
-<div id="public-pages">
-  <div style="max-width:900px;margin:0 auto;padding:0 20px">
+<div id="public-pages" style="display:none">
+  <!-- Sticky back nav -->
+  <div class="pub-topbar">
+    <button onclick="hidePage()" class="pub-back-btn">← Back to CVTara</button>
+    <span id="pub-breadcrumb"></span>
+  </div>
 
-    <!-- Back button (shared) -->
-    <button onclick="hidePage()" style="display:flex;align-items:center;gap:6px;margin-bottom:28px;background:transparent;border:1.5px solid var(--line);color:var(--muted);padding:8px 16px;border-radius:8px;cursor:pointer;font-size:14px">← Back to CVTara</button>
-
-    <!-- BLOG -->
-    <div id="page-blog" class="pub-page" style="display:none">
-      <div class="blog-listing-header">
-        <h1>CVTara Resources</h1>
-        <p>68 calculators and guides for salary, career and job search — built for Indian professionals.</p>
-      </div>
+  <!-- BLOG — full width -->
+  <div id="page-blog" class="pub-page" style="display:none">
+    <div class="blog-listing-header">
+      <span class="blog-eyebrow">CAREER RESOURCES &amp; TOOLS</span>
+      <h1>Useful answers you can<br>calculate, apply and act on.</h1>
+      <p>Salary calculators, exit benefit estimators, resume guides and interview prep — built for Indian professionals.</p>
       <div class="blog-search-bar">
-        <input id="blog-search" type="text" placeholder="Search resources…" oninput="blogFilter()">
+        <input id="blog-search" type="text" placeholder="Search salary, gratuity, ATS, interview…" oninput="blogFilter()">
       </div>
-      <div class="blog-cat-tabs">
-        <button class="blog-cat-tab active" onclick="blogCatFilter(this,'all')">All (68)</button>
-        <button class="blog-cat-tab" onclick="blogCatFilter(this,'Calculator')">⚡ Calculators</button>
-        <button class="blog-cat-tab" onclick="blogCatFilter(this,'Guide')">📖 Guides</button>
-        <button class="blog-cat-tab" onclick="blogCatFilter(this,'Income &amp; tax')">Income &amp; tax</button>
-        <button class="blog-cat-tab" onclick="blogCatFilter(this,'Resume formatting')">Resume</button>
-        <button class="blog-cat-tab" onclick="blogCatFilter(this,'Job search')">Job search</button>
-        <button class="blog-cat-tab" onclick="blogCatFilter(this,'Salary &amp; offers')">Salary &amp; offers</button>
-        <button class="blog-cat-tab" onclick="blogCatFilter(this,'Exit &amp; benefits')">Exit &amp; benefits</button>
-      </div>
-      <div id="blog-count-bar" class="blog-count-bar"></div>
-      <div id="blog-grid-full" class="blog-grid-full"></div>
     </div>
+    <div class="blog-cat-tabs" id="blog-cat-tabs">
+      <button class="blog-cat-tab active" onclick="blogCatFilter(this,'all')">All (68)</button>
+      <button class="blog-cat-tab" onclick="blogCatFilter(this,'Calculator')">⚡ Calculators</button>
+      <button class="blog-cat-tab" onclick="blogCatFilter(this,'Guide')">📖 Guides</button>
+      <button class="blog-cat-tab" onclick="blogCatFilter(this,'Income &amp; tax')">Income &amp; Tax</button>
+      <button class="blog-cat-tab" onclick="blogCatFilter(this,'Resume formatting')">Resume</button>
+      <button class="blog-cat-tab" onclick="blogCatFilter(this,'Job search')">Job Search</button>
+      <button class="blog-cat-tab" onclick="blogCatFilter(this,'Salary &amp; offers')">Salary</button>
+      <button class="blog-cat-tab" onclick="blogCatFilter(this,'Exit &amp; benefits')">Exit Benefits</button>
+      <button class="blog-cat-tab" onclick="blogCatFilter(this,'Interview preparation')">Interview</button>
+    </div>
+    <p class="blog-count-bar" id="blog-count-bar"></p>
+    <div id="blog-grid-full" class="blog-grid-full"></div>
+    <p style="text-align:center;padding:32px 20px 48px;color:var(--muted);font-size:13px">Planning tools show their assumptions. Verify current tax, legal, payroll and investment rules before acting on estimates.</p>
+  </div>
 
-    <!-- ARTICLE -->
-    <div id="page-article" class="pub-page" style="display:none"></div>
+  <!-- ARTICLE — full width, populated by openArticle() -->
+  <div id="page-article" class="pub-page" style="display:none"></div>
+
+  <!-- CONSTRAINED PAGES (legal, about, contact, sitemap) -->
+  <div class="pub-constrained">
 
     <!-- ABOUT -->
     <div id="page-about" class="pub-page" style="display:none">
@@ -2652,7 +2667,7 @@ select{padding:8px 12px;border:1.5px solid var(--line);border-radius:6px;backgro
       </div>
     </div>
 
-  </div>
+  </div><!-- end pub-constrained -->
 </div><!-- end public-pages -->
 
 <!-- LIVE PANEL -->
@@ -4844,18 +4859,17 @@ function renderAdminGuide() {
 // PUBLIC PAGES
 // ============================================================
 function showPage(pageId) {
-  // Normalise short IDs to full panel IDs
   if (pageId === 'blog') pageId = 'page-blog';
   if (pageId === 'article') pageId = 'page-article';
-  // Hide all tabs/panels and show the public pages overlay
   document.querySelectorAll('.tab-content').forEach(t => t.style.display = 'none');
   const overlay = document.getElementById('public-pages');
   if (overlay) overlay.style.display = 'block';
-  // Show only the requested page
   document.querySelectorAll('.pub-page').forEach(p => { p.style.display = 'none'; });
   const page = document.getElementById(pageId);
   if (page) page.style.display = 'block';
-  // Initialise blog listing on first open
+  const titles = {'page-blog':'Blog','page-article':'Article','page-about':'About Us','page-contact':'Contact','page-privacy':'Privacy Policy','page-terms':'Terms of Service','page-refund':'Refund Policy','page-sitemap':'Site Map'};
+  const bc = document.getElementById('pub-breadcrumb');
+  if (bc) bc.textContent = titles[pageId] || '';
   if (pageId === 'page-blog') initBlogPage();
   window.scrollTo({ top: 0, behavior: 'smooth' });
 }
