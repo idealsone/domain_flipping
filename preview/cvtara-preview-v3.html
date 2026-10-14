@@ -834,6 +834,88 @@ select{padding:8px 12px;border:1.5px solid var(--line);border-radius:6px;backgro
 .sitemap-link{padding:7px 14px;background:var(--paper);border:1px solid var(--line);border-radius:8px;font-size:13px;color:var(--blue);cursor:pointer;transition:all .2s}
 .sitemap-link:hover{background:var(--soft);border-color:var(--blue)}
 @media(max-width:700px){.contact-grid,.about-values,.about-team{grid-template-columns:1fr}.blog-grid{grid-template-columns:1fr}}
+
+/* ============================================================
+   BLOG LISTING PAGE
+   ============================================================ */
+.blog-listing-header{text-align:center;padding:40px 0 28px}
+.blog-listing-header h1{font-size:clamp(26px,4vw,38px);font-weight:800;color:var(--ink);margin-bottom:10px}
+.blog-listing-header p{color:var(--muted);font-size:16px;max-width:580px;margin:0 auto}
+.blog-search-bar{display:flex;gap:10px;margin:0 0 24px;max-width:520px;margin-left:auto;margin-right:auto}
+.blog-search-bar input{flex:1;padding:10px 16px;border:1.5px solid var(--line);border-radius:10px;font-size:15px;background:var(--paper);color:var(--ink);outline:none}
+.blog-search-bar input:focus{border-color:var(--blue)}
+.blog-cat-tabs{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:28px;justify-content:center}
+.blog-cat-tab{padding:7px 15px;background:var(--paper);border:1.5px solid var(--line);border-radius:20px;font-size:13px;font-weight:600;cursor:pointer;transition:all .18s;color:var(--muted)}
+.blog-cat-tab:hover{border-color:var(--blue);color:var(--blue)}
+.blog-cat-tab.active{background:var(--blue);border-color:var(--blue);color:#fff}
+.blog-count-bar{font-size:13px;color:var(--muted);margin-bottom:18px;text-align:center}
+.blog-grid-full{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:22px;margin-bottom:48px}
+.blog-post-card{background:var(--paper);border:1.5px solid var(--line);border-radius:14px;overflow:hidden;cursor:pointer;transition:transform .18s,box-shadow .18s}
+.blog-post-card:hover{transform:translateY(-3px);box-shadow:0 6px 24px rgba(0,0,0,.1)}
+.bpc-image{width:100%;height:140px;overflow:hidden;display:flex;align-items:center;justify-content:center;background:var(--soft)}
+.bpc-image svg{width:100%;height:100%;object-fit:cover}
+.bpc-body{padding:16px}
+.bpc-tags{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px}
+.bpc-tag{padding:3px 10px;border-radius:20px;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.4px}
+.bpc-tag.calc{background:#eff6ff;color:#1d4ed8}
+.bpc-tag.guide{background:#f0fdf4;color:#16a34a}
+.bpc-tag.cat{background:var(--soft);color:var(--muted)}
+.bpc-title{font-size:16px;font-weight:700;color:var(--ink);line-height:1.4;margin:0 0 8px}
+.bpc-desc{font-size:13px;color:var(--muted);line-height:1.5;margin:0 0 12px}
+.bpc-footer{display:flex;justify-content:space-between;font-size:13px;font-weight:600;color:var(--muted)}
+
+/* ============================================================
+   ARTICLE PAGE
+   ============================================================ */
+.article-shell{display:grid;grid-template-columns:220px 1fr;gap:40px;max-width:1000px;margin:0 auto;align-items:start}
+.art-toc{position:sticky;top:20px;background:var(--paper);border:1.5px solid var(--line);border-radius:12px;padding:16px;font-size:13px}
+.art-toc b{display:block;font-size:12px;text-transform:uppercase;letter-spacing:.8px;color:var(--muted);margin-bottom:10px}
+.art-toc a{display:block;padding:5px 0;color:var(--muted);text-decoration:none;border-left:2px solid transparent;padding-left:10px;margin-left:-10px;transition:all .15s;line-height:1.4}
+.art-toc a:hover,.art-toc a.active{color:var(--blue);border-left-color:var(--blue)}
+.art-body{min-width:0}
+.art-breadcrumb{font-size:13px;color:var(--muted);margin-bottom:16px}
+.art-breadcrumb a{color:var(--blue);text-decoration:none;cursor:pointer}
+.art-breadcrumb a:hover{text-decoration:underline}
+.art-hero{width:100%;height:180px;border-radius:14px;overflow:hidden;margin-bottom:20px;background:var(--soft)}
+.art-hero svg{width:100%;height:100%}
+.art-eyebrow{font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:var(--blue);margin-bottom:10px}
+.art-title{font-size:clamp(22px,3vw,32px);font-weight:800;color:var(--ink);line-height:1.3;margin:0 0 16px}
+.art-meta{display:flex;flex-wrap:wrap;gap:14px;font-size:13px;color:var(--muted);margin-bottom:28px;padding-bottom:20px;border-bottom:1.5px solid var(--line)}
+.art-content h2{font-size:20px;font-weight:800;color:var(--ink);margin:32px 0 12px;line-height:1.3}
+.art-content h3{font-size:16px;font-weight:700;color:var(--ink);margin:24px 0 10px}
+.art-content p{font-size:15px;line-height:1.75;color:var(--ink-light,#374151);margin-bottom:16px}
+.art-content ul,.art-content ol{padding-left:22px;margin-bottom:16px}
+.art-content li{font-size:15px;line-height:1.75;color:var(--ink-light,#374151);margin-bottom:6px}
+.art-content blockquote{border-left:3px solid var(--blue);margin:20px 0;padding:12px 20px;background:var(--soft);border-radius:0 10px 10px 0;font-style:italic;color:var(--muted)}
+.art-content strong{font-weight:700;color:var(--ink)}
+.art-calc-box{background:linear-gradient(135deg,#eff6ff 0%,#f0fdf4 100%);border:1.5px solid #bfdbfe;border-radius:14px;padding:24px;margin:28px 0}
+.art-calc-box h3{font-size:18px;font-weight:800;color:var(--ink);margin:0 0 18px}
+.art-calc-row{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px}
+.art-calc-label{display:block;font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);margin-bottom:6px}
+.art-calc-input{width:100%;padding:9px 13px;border:1.5px solid var(--line);border-radius:8px;font-size:15px;background:#fff;color:var(--ink);outline:none;box-sizing:border-box}
+.art-calc-input:focus{border-color:var(--blue)}
+.art-calc-result{background:#fff;border:1.5px solid #bfdbfe;border-radius:10px;padding:16px 20px;margin-top:14px;text-align:center}
+.rcr-label{font-size:12px;color:var(--muted);font-weight:700;text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px}
+.rcr-value{font-size:28px;font-weight:800;color:var(--blue)}
+.art-cta-box{background:linear-gradient(135deg,#1e40af,#1d4ed8);border-radius:14px;padding:28px;margin-top:36px;text-align:center;color:#fff}
+.art-cta-box h3{font-size:20px;font-weight:800;margin:0 0 10px}
+.art-cta-box p{margin:0 0 18px;opacity:.9;font-size:15px}
+.art-related{margin-top:40px;padding-top:28px;border-top:1.5px solid var(--line)}
+.art-related h3{font-size:18px;font-weight:800;color:var(--ink);margin-bottom:16px}
+.art-related-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:14px}
+.art-related-card{background:var(--paper);border:1.5px solid var(--line);border-radius:10px;padding:14px;cursor:pointer;transition:all .18s}
+.art-related-card:hover{border-color:var(--blue);box-shadow:0 2px 10px rgba(0,0,0,.07)}
+@media(max-width:760px){
+  .article-shell{grid-template-columns:1fr}
+  .art-toc{position:static;display:none}
+  .art-calc-row{grid-template-columns:1fr}
+  .blog-grid-full{grid-template-columns:1fr}
+}
+/* Admin blog table */
+#adm-blog-table table{width:100%;border-collapse:collapse;font-size:14px}
+#adm-blog-table thead th{text-align:left;padding:10px 12px;background:var(--soft);font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--muted)}
+#adm-blog-table tbody td{padding:10px 12px;border-bottom:1px solid var(--line);vertical-align:middle}
+#adm-blog-table tbody tr:hover{background:var(--soft)}
 </style>
 </head>
 <body>
@@ -2248,17 +2330,23 @@ select{padding:8px 12px;border:1.5px solid var(--line);border-radius:6px;backgro
       <!-- BLOG & SEO -->
       <div id="adm-blog" class="admin-view">
         <div class="page-title">Blog &amp; SEO</div>
-        <div class="page-sub">Manage blog posts and SEO content</div>
-        <div class="table-toolbar">
-          <button class="btn btn-primary btn-sm">+ New Post</button>
-          <div class="blog-filter-row" id="blog-filters">
-            <button class="filter-btn active" onclick="filterBlog(this,'all')">All</button>
-            <button class="filter-btn" onclick="filterBlog(this,'published')">Published</button>
-            <button class="filter-btn" onclick="filterBlog(this,'draft')">Draft</button>
-            <button class="filter-btn" onclick="filterBlog(this,'seo')">SEO Tips</button>
-          </div>
+        <div class="page-sub">68 published resources — Calculators &amp; Guides</div>
+        <div class="table-toolbar" style="flex-wrap:wrap;gap:10px">
+          <input id="adm-blog-search" type="text" placeholder="Search posts…" style="padding:8px 14px;border:1.5px solid var(--line);border-radius:8px;font-size:14px;min-width:200px;background:var(--paper);color:var(--ink)" oninput="adminBlogFilter()">
+          <select id="adm-blog-cat" style="padding:8px 12px;border:1.5px solid var(--line);border-radius:8px;font-size:14px;background:var(--paper);color:var(--ink)" onchange="adminBlogFilter()">
+            <option value="">All categories</option>
+            <option>Work choices</option><option>Exit &amp; benefits</option><option>Income &amp; tax</option>
+            <option>Career growth</option><option>Wealth planning</option><option>Salary resources</option>
+            <option>Resume formatting</option><option>Job search</option><option>Salary &amp; offers</option>
+            <option>Interview preparation</option>
+          </select>
+          <select id="adm-blog-type" style="padding:8px 12px;border:1.5px solid var(--line);border-radius:8px;font-size:14px;background:var(--paper);color:var(--ink)" onchange="adminBlogFilter()">
+            <option value="">All types</option>
+            <option>Calculator</option><option>Guide</option>
+          </select>
+          <span id="adm-blog-count" style="font-size:13px;color:var(--muted);margin-left:4px"></span>
         </div>
-        <div class="table-wrap"><table class="data-table"><thead><tr><th>Title</th><th>Category</th><th>Author</th><th>Views</th><th>Status</th><th>Date</th><th>Actions</th></tr></thead><tbody id="blog-tbody"></tbody></table></div>
+        <div id="adm-blog-table" style="margin-top:16px;overflow-x:auto"></div>
       </div>
 
       <!-- REVIEWS -->
@@ -2427,17 +2515,29 @@ select{padding:8px 12px;border:1.5px solid var(--line);border-radius:6px;backgro
 
     <!-- BLOG -->
     <div id="page-blog" class="pub-page" style="display:none">
-      <h1>CVTara Blog</h1>
-      <p style="color:var(--muted);font-size:16px;margin-bottom:32px">Resume tips, career advice, and job search strategies for Indian professionals.</p>
-      <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:22px">
-        <div class="pub-card"><div class="pub-card-tag">Resume Tips</div><h3>5 ATS Mistakes That Get Resumes Rejected Instantly</h3><p>Most job applicants lose out before a human ever reads their resume. Here's what the bots reject first — and how to fix each mistake.</p><div class="pub-card-meta">Dec 2024 · 6 min read</div></div>
-        <div class="pub-card"><div class="pub-card-tag">Career Advice</div><h3>How to Write a Fresher Resume With Zero Experience</h3><p>Your first resume feels impossible when every job asks for experience. We show you what to put instead — and it works.</p><div class="pub-card-meta">Nov 2024 · 5 min read</div></div>
-        <div class="pub-card"><div class="pub-card-tag">Cover Letters</div><h3>The 3-Sentence Cover Letter That Gets Interviews</h3><p>Hiring managers read hundreds of letters. A short, specific letter in the right structure outperforms a long generic one every time.</p><div class="pub-card-meta">Nov 2024 · 4 min read</div></div>
-        <div class="pub-card"><div class="pub-card-tag">Job Search</div><h3>Naukri vs LinkedIn: Which Platform Actually Gets You Hired?</h3><p>We analysed application-to-interview rates from 3 000+ CVTara users across both platforms. The results may surprise you.</p><div class="pub-card-meta">Oct 2024 · 7 min read</div></div>
-        <div class="pub-card"><div class="pub-card-tag">Resume Tips</div><h3>Best Resume Formats for IT Professionals in 2024</h3><p>Single-column, two-column, or hybrid? The right format signals competence before the recruiter reads a single word.</p><div class="pub-card-meta">Oct 2024 · 5 min read</div></div>
-        <div class="pub-card"><div class="pub-card-tag">Salary</div><h3>How to Negotiate a Salary Increase When Switching Jobs</h3><p>The average salary jump when switching jobs in India is 20–40%. These five scripts get you into that range.</p><div class="pub-card-meta">Sep 2024 · 8 min read</div></div>
+      <div class="blog-listing-header">
+        <h1>CVTara Resources</h1>
+        <p>68 calculators and guides for salary, career and job search — built for Indian professionals.</p>
       </div>
+      <div class="blog-search-bar">
+        <input id="blog-search" type="text" placeholder="Search resources…" oninput="blogFilter()">
+      </div>
+      <div class="blog-cat-tabs">
+        <button class="blog-cat-tab active" onclick="blogCatFilter(this,'all')">All (68)</button>
+        <button class="blog-cat-tab" onclick="blogCatFilter(this,'Calculator')">⚡ Calculators</button>
+        <button class="blog-cat-tab" onclick="blogCatFilter(this,'Guide')">📖 Guides</button>
+        <button class="blog-cat-tab" onclick="blogCatFilter(this,'Income &amp; tax')">Income &amp; tax</button>
+        <button class="blog-cat-tab" onclick="blogCatFilter(this,'Resume formatting')">Resume</button>
+        <button class="blog-cat-tab" onclick="blogCatFilter(this,'Job search')">Job search</button>
+        <button class="blog-cat-tab" onclick="blogCatFilter(this,'Salary &amp; offers')">Salary &amp; offers</button>
+        <button class="blog-cat-tab" onclick="blogCatFilter(this,'Exit &amp; benefits')">Exit &amp; benefits</button>
+      </div>
+      <div id="blog-count-bar" class="blog-count-bar"></div>
+      <div id="blog-grid-full" class="blog-grid-full"></div>
     </div>
+
+    <!-- ARTICLE -->
+    <div id="page-article" class="pub-page" style="display:none"></div>
 
     <!-- ABOUT -->
     <div id="page-about" class="pub-page" style="display:none">
@@ -3004,7 +3104,7 @@ function adminNav(el, viewId) {
   if (viewId === 'adm-resume-lib') buildResumeLib();
   if (viewId === 'adm-cl-lib') buildCLLib();
   if (viewId === 'adm-mailer') buildMailer();
-  if (viewId === 'adm-blog') buildBlog();
+  if (viewId === 'adm-blog') initAdminBlogTable();
   if (viewId === 'adm-reviews') buildReviews();
   if (viewId === 'adm-pricing') buildAdminPricing();
   if (viewId === 'adm-templates') buildAdminTemplates();
@@ -3940,36 +4040,7 @@ function buildCLLib() {
   });
 }
 
-const BLOG_POSTS = [
-  {title:'How to write an ATS-friendly resume for Indian job boards',cat:'seo',author:'CVTara Team',views:4821,status:'published',date:'Dec 10'},
-  {title:'Top 10 resume mistakes Indian freshers make',cat:'seo',author:'CVTara Team',views:3204,status:'published',date:'Dec 8'},
-  {title:'Naukri vs LinkedIn: which one to use for job search in 2024',cat:'published',author:'CVTara Team',views:2890,status:'published',date:'Dec 5'},
-  {title:'How to get past Infosys ATS in 2024',cat:'seo',author:'CVTara Team',views:2410,status:'published',date:'Dec 2'},
-  {title:'Best resume format for MBA freshers in India',cat:'published',author:'CVTara Team',views:1980,status:'published',date:'Nov 28'},
-  {title:'Cover letter tips for IT companies in Bangalore',cat:'published',author:'CVTara Team',views:1540,status:'published',date:'Nov 25'},
-  {title:'How to negotiate salary in India — complete guide',cat:'draft',author:'CVTara Team',views:0,status:'draft',date:'Draft'},
-  {title:'UPSC interview tips and resume format',cat:'draft',author:'CVTara Team',views:0,status:'draft',date:'Draft'},
-  {title:'Resume format for government jobs in India',cat:'seo',author:'CVTara Team',views:3100,status:'published',date:'Nov 20'},
-  {title:'Fresher resume guide: from college to corporate',cat:'published',author:'CVTara Team',views:2750,status:'published',date:'Nov 15'}
-];
-function buildBlog() {
-  const tb = document.getElementById('blog-tbody');
-  if (!tb || tb.dataset.built) return;
-  tb.dataset.built = '1';
-  BLOG_POSTS.forEach(p => {
-    const tr = document.createElement('tr');
-    tr.dataset.cat = p.cat; tr.dataset.status = p.status;
-    tr.innerHTML = `<td>${p.title}</td><td>${p.cat}</td><td>${p.author}</td><td>${p.views.toLocaleString()}</td><td><span class="pill st-${p.status}">${p.status}</span></td><td>${p.date}</td><td><button class="btn btn-outline btn-sm">Edit</button></td>`;
-    tb.appendChild(tr);
-  });
-}
-function filterBlog(btn, cat) {
-  document.querySelectorAll('#blog-filters .filter-btn').forEach(b => b.classList.remove('active'));
-  btn.classList.add('active');
-  document.querySelectorAll('#blog-tbody tr').forEach(tr => {
-    tr.style.display = (cat === 'all' || tr.dataset.cat === cat || tr.dataset.status === cat) ? '' : 'none';
-  });
-}
+// buildBlog() replaced by initAdminBlogTable() — see blog system below
 
 const ADM_PENDING_REVIEWS = [
   {id:100,name:'Kiran Patel',company:'Zomato · Associate',city:'Surat',stars:5,text:'Very helpful tool for freshers like me. Got 2 interview calls within 2 weeks!',status:'pending'},
@@ -4773,6 +4844,9 @@ function renderAdminGuide() {
 // PUBLIC PAGES
 // ============================================================
 function showPage(pageId) {
+  // Normalise short IDs to full panel IDs
+  if (pageId === 'blog') pageId = 'page-blog';
+  if (pageId === 'article') pageId = 'page-article';
   // Hide all tabs/panels and show the public pages overlay
   document.querySelectorAll('.tab-content').forEach(t => t.style.display = 'none');
   const overlay = document.getElementById('public-pages');
@@ -4781,6 +4855,8 @@ function showPage(pageId) {
   document.querySelectorAll('.pub-page').forEach(p => { p.style.display = 'none'; });
   const page = document.getElementById(pageId);
   if (page) page.style.display = 'block';
+  // Initialise blog listing on first open
+  if (pageId === 'page-blog') initBlogPage();
   window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
@@ -4792,6 +4868,1075 @@ function hidePage() {
     t.style.display = t.id === 'tab-lp' ? 'block' : 'none';
   });
   window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+// ============================================================
+// BLOG SYSTEM — DATA
+// ============================================================
+const BLOG_POSTS = [
+  {id:1,slug:'remote-work-savings-calculator',title:'Remote Work Savings Calculator',cat:'Work choices',desc:'Compare monthly cash and time costs across remote, hybrid and office work.',type:'Calculator'},
+  {id:2,slug:'contractor-vs-full-time-salary-calculator',title:'Contractor vs Full-Time Salary Calculator',cat:'Work choices',desc:'Compare contract income with salary, paid leave and employer benefits.',type:'Calculator'},
+  {id:3,slug:'gratuity-calculation-formula',title:'Gratuity Calculation Formula',cat:'Exit & benefits',desc:'Estimate gratuity with editable wages, service and cap assumptions.',type:'Calculator'},
+  {id:4,slug:'how-to-calculate-gratuity-amount',title:'How to Calculate Gratuity Amount',cat:'Exit & benefits',desc:'Work through service rounding and the gratuity formula step by step.',type:'Calculator'},
+  {id:5,slug:'side-hustle-tax-estimator',title:'Side Hustle Tax Estimator',cat:'Income & tax',desc:'Estimate the additional tax impact of freelance or side-business profit.',type:'Calculator'},
+  {id:6,slug:'education-loan-calculator-roi',title:'Education Loan ROI Calculator',cat:'Career growth',desc:'Model course cost, loan interest, salary uplift and payback time.',type:'Calculator'},
+  {id:7,slug:'take-home-salary-calculator',title:'Take-Home Salary Calculator',cat:'Income & tax',desc:'Estimate monthly in-hand pay with visible deductions and assumptions.',type:'Calculator'},
+  {id:8,slug:'ctc-to-in-hand-salary-calculator',title:'CTC to In-Hand Salary Calculator',cat:'Income & tax',desc:'Translate employer CTC into an estimated monthly bank credit.',type:'Calculator'},
+  {id:9,slug:'salary-breakup-calculator',title:'Salary Breakup Calculator',cat:'Income & tax',desc:'Model basic, HRA, employer costs, variable pay and deductions.',type:'Calculator'},
+  {id:10,slug:'hourly-to-salary-finder',title:'Hourly to Salary Finder',cat:'Income & tax',desc:'Convert an hourly rate into comparable monthly and annual income.',type:'Calculator'},
+  {id:11,slug:'paycheck-tax-deduction-calculator',title:'Paycheck Tax Deduction Calculator',cat:'Income & tax',desc:'Estimate monthly tax, PF and other payroll deductions.',type:'Calculator'},
+  {id:12,slug:'gratuity-calculator-online',title:'Gratuity Calculator Online',cat:'Exit & benefits',desc:'Calculate an illustrative gratuity amount from wages and service.',type:'Calculator'},
+  {id:13,slug:'leave-encashment-taxable-formula',title:'Leave Encashment Taxable Formula',cat:'Exit & benefits',desc:'Estimate gross encashment and identify tax questions to verify.',type:'Calculator'},
+  {id:14,slug:'notice-period-buyout-calculator',title:'Notice Period Buyout Calculator',cat:'Exit & benefits',desc:'Estimate notice recovery from the salary basis stated in your contract.',type:'Calculator'},
+  {id:15,slug:'resignation-paycheck-estimator',title:'Resignation Paycheck Estimator',cat:'Exit & benefits',desc:'Model final salary, leave, bonus, gratuity and known recoveries.',type:'Calculator'},
+  {id:16,slug:'sip-calculator-monthly-income',title:'SIP Calculator for Monthly Income',cat:'Wealth planning',desc:'Project a monthly investment corpus with editable return assumptions.',type:'Calculator'},
+  {id:17,slug:'step-up-sip-calculator',title:'Step-Up SIP Calculator',cat:'Wealth planning',desc:'Explore how an annual SIP increase changes an illustrative corpus.',type:'Calculator'},
+  {id:18,slug:'salary-increment-percentage-calculator',title:'Salary Increment Percentage Calculator',cat:'Career growth',desc:'Calculate raise percentage, annual difference and monthly change.',type:'Calculator'},
+  {id:19,slug:'mutual-fund-return-calculator',title:'Mutual Fund Return Calculator',cat:'Wealth planning',desc:'Estimate absolute return and CAGR for a lump-sum investment.',type:'Calculator'},
+  {id:20,slug:'cost-of-living-calculator-by-city',title:'Cost of Living Calculator by City',cat:'Work choices',desc:'Compare two cities using your own budget and current cost indices.',type:'Calculator'},
+  {id:21,slug:'salary-slip-format-excel',title:'Salary Slip Format in Excel',cat:'Salary resources',desc:'Build a clear earnings, deductions and net-pay structure.',type:'Calculator'},
+  {id:22,slug:'current-salary-in-resume',title:'Current Salary Resume Wording Helper',cat:'Salary resources',desc:'Get privacy-aware guidance for salary disclosure.',type:'Calculator'},
+  {id:23,slug:'expected-salary-interview-calculator',title:'Expected Salary Calculator for Interviews',cat:'Salary resources',desc:'Build a defensible minimum, target and stretch range.',type:'Calculator'},
+  {id:24,slug:'compensation-package-builder',title:'Compensation Package Builder',cat:'Salary resources',desc:'Compare fixed pay, expected variable pay and benefits.',type:'Calculator'},
+  {id:25,slug:'average-salary-job-title',title:'Average Salary for Any Job Title',cat:'Salary resources',desc:'Turn multiple dated market benchmarks into a comparison range.',type:'Calculator'},
+  {id:26,slug:'bonus-net-payout-estimator',title:'Bonus Net Payout Estimator',cat:'Income & tax',desc:'Estimate the cash left after bonus withholding assumptions.',type:'Calculator'},
+  {id:27,slug:'debt-to-income-career-planner',title:'Debt-to-Income Career Planner',cat:'Career growth',desc:'Calculate DTI and the salary needed for a chosen target ratio.',type:'Calculator'},
+  {id:28,slug:'maternity-paternity-leave-pay-calculator',title:'Maternity / Paternity Leave Pay Calculator',cat:'Exit & benefits',desc:'Model paid, partially paid and unpaid parental leave.',type:'Calculator'},
+  {id:29,slug:'overtime-pay-calculator',title:'Overtime Pay Calculator',cat:'Income & tax',desc:'Estimate overtime pay from hours, wage and an editable multiplier.',type:'Calculator'},
+  {id:30,slug:'dual-employment-moonlighting-tax-estimator',title:'Dual Employment / Moonlighting Tax Estimator',cat:'Income & tax',desc:'Estimate combined tax impact across primary and second income.',type:'Calculator'},
+  {id:31,slug:'expat-net-salary-tax-calculator',title:'Expat Net Salary & Tax Calculator',cat:'Work choices',desc:'Convert a foreign package with editable tax, housing and FX assumptions.',type:'Calculator'},
+  {id:32,slug:'fire-career-milestone-tracker',title:'Early Retirement (FIRE) Career Milestone Tracker',cat:'Wealth planning',desc:'Estimate target corpus, savings gap and time to a milestone.',type:'Calculator'},
+  {id:33,slug:'resume/how-to-write-current-salary',title:'How to Write Current Salary in a Resume',cat:'Resume formatting',desc:'When to omit salary, when disclosure is required and safer wording.',type:'Guide'},
+  {id:34,slug:'resume/achievements-bullet-points',title:'Key Achievement Examples for a Resume',cat:'Resume formatting',desc:'Turn duties into action, context and verifiable outcomes.',type:'Guide'},
+  {id:35,slug:'resume/no-experience-format',title:'How to Make a Resume With No Experience',cat:'Resume formatting',desc:'Use projects, coursework, internships and campus evidence effectively.',type:'Guide'},
+  {id:36,slug:'resume/skills-section-keywords',title:'Hard Skills to Put on a Resume',cat:'Resume formatting',desc:'Choose job-relevant tools and methods you can genuinely demonstrate.',type:'Guide'},
+  {id:37,slug:'resume/gap-in-employment-explanation',title:'How to Explain an Employment Gap',cat:'Resume formatting',desc:'Use a brief, honest explanation without oversharing private details.',type:'Guide'},
+  {id:38,slug:'resume/action-verbs-list',title:'Resume Action Verbs and Power Words',cat:'Resume formatting',desc:'Choose precise verbs and support them with real context.',type:'Guide'},
+  {id:39,slug:'resume/references-available-upon-request',title:'Should You Put References on a Resume?',cat:'Resume formatting',desc:'Know when to keep a separate reference sheet instead.',type:'Guide'},
+  {id:40,slug:'resume/pdf-vs-word-ats',title:'Is DOCX or PDF Better for ATS?',cat:'Resume formatting',desc:'Choose the requested format and avoid unreadable exports.',type:'Guide'},
+  {id:41,slug:'cover-letter/short-email-format',title:'Short Cover Letter for an Email Body',cat:'Resume formatting',desc:'Write a concise application email with one evidence point.',type:'Guide'},
+  {id:42,slug:'resume/ats-friendly-format-india',title:'ATS-Friendly Resume Format for India',cat:'Resume formatting',desc:'Use a text-first structure recruiters and software can parse.',type:'Guide'},
+  {id:43,slug:'resume/fresher-projects-guide',title:'Fresher Resume Projects That Show Evidence',cat:'Resume formatting',desc:'Select projects that prove role-specific actions and outputs.',type:'Guide'},
+  {id:44,slug:'resume/professional-summary-guide',title:'How to Write a Professional Summary',cat:'Resume formatting',desc:'Create a focused summary from role, experience and evidence.',type:'Guide'},
+  {id:45,slug:'jobs/how-many-jobs-to-apply',title:'How Many Jobs Should You Apply to Each Day?',cat:'Job search',desc:'Balance sustainable volume with tailoring and follow-up.',type:'Guide'},
+  {id:46,slug:'jobs/follow-up-email-template',title:'Follow-Up Email After a Job Application',cat:'Job search',desc:'Send one concise, useful follow-up after a reasonable interval.',type:'Guide'},
+  {id:47,slug:'jobs/linkedin-open-to-work-setting',title:'Should You Use LinkedIn Open to Work?',cat:'Job search',desc:'Choose public or recruiter-only visibility based on privacy.',type:'Guide'},
+  {id:48,slug:'jobs/how-to-withdraw-application',title:'How to Withdraw a Job Application Politely',cat:'Job search',desc:'Withdraw quickly while preserving a professional relationship.',type:'Guide'},
+  {id:49,slug:'jobs/signs-you-will-get-the-job',title:'Signs You May Get the Job After a Final Interview',cat:'Job search',desc:'Treat positive process signals carefully until a written offer exists.',type:'Guide'},
+  {id:50,slug:'jobs/job-application-status-meaning',title:'What Does Application Under Review Mean?',cat:'Job search',desc:'Understand common portal status language without overreading it.',type:'Guide'},
+  {id:51,slug:'jobs/how-to-reject-job-offer',title:'How to Decline a Job Offer After Accepting',cat:'Job search',desc:'Respond promptly and understand signed obligations.',type:'Guide'},
+  {id:52,slug:'jobs/best-time-to-apply',title:'What Is the Best Time to Apply for Jobs?',cat:'Job search',desc:'Prioritise freshness and strong tailoring over a mythical perfect hour.',type:'Guide'},
+  {id:53,slug:'jobs/remote-job-scams-signs',title:'How to Tell if a Remote Job Is Legit',cat:'Job search',desc:'Verify employer identity and recognise serious payment and data risks.',type:'Guide'},
+  {id:54,slug:'jobs/application-tracker-method',title:'How to Track Job Applications',cat:'Job search',desc:'Build a simple pipeline with stages, dates and next actions.',type:'Guide'},
+  {id:55,slug:'salary/counter-offer-email',title:'Salary Negotiation Counter-Offer Email',cat:'Salary & offers',desc:'Connect a researched target with role scope and evidence.',type:'Guide'},
+  {id:56,slug:'salary/what-is-good-starting-salary',title:'What Is a Good Starting Salary?',cat:'Salary & offers',desc:'Benchmark the exact role, city and level—not age alone.',type:'Guide'},
+  {id:57,slug:'salary/exempt-vs-nonexempt-pay',title:'Exempt vs Nonexempt Salary',cat:'Salary & offers',desc:'Understand why title or salary alone does not decide classification.',type:'Guide'},
+  {id:58,slug:'salary/asking-for-raise-script',title:'How to Ask Your Boss for a Raise',cat:'Salary & offers',desc:'Prepare evidence, market context and a clear target.',type:'Guide'},
+  {id:59,slug:'salary/benefits-package-value',title:'How Much Is a Salary Worth With Benefits?',cat:'Salary & offers',desc:'Compare guaranteed cash, conditional pay and annualised benefits.',type:'Guide'},
+  {id:60,slug:'salary/negotiation-counter-percentage',title:'How Much Higher Should You Counter an Offer?',cat:'Salary & offers',desc:'Build a counter from market range, scope and your walk-away point.',type:'Guide'},
+  {id:61,slug:'salary/pay-transparency-laws',title:'Salary Transparency Laws by State',cat:'Salary & offers',desc:'Verify current state and local rules before relying on a directory.',type:'Guide'},
+  {id:62,slug:'salary/is-overtime-taxed-more',title:'Why Does Overtime Pay Look More Heavily Taxed?',cat:'Salary & offers',desc:'Separate paycheck withholding from final annual tax.',type:'Guide'},
+  {id:63,slug:'salary/glassdoor-alternatives',title:'Salary Comparison Sites and Research Alternatives',cat:'Salary & offers',desc:'Combine several dated and comparable market sources.',type:'Guide'},
+  {id:64,slug:'interview/thank-you-email-template',title:'Thank-You Email After an Interview',cat:'Interview preparation',desc:'Send a specific, concise note within a reasonable timeframe.',type:'Guide'},
+  {id:65,slug:'interview/tell-me-about-yourself',title:'How to Answer Tell Me About Yourself',cat:'Interview preparation',desc:'Use a present–past–future structure with evidence.',type:'Guide'},
+  {id:66,slug:'interview/questions-to-ask-them',title:'Smart Questions to Ask at the End of an Interview',cat:'Interview preparation',desc:'Evaluate success measures, team context and next steps.',type:'Guide'},
+  {id:67,slug:'interview/star-method-examples',title:'STAR Method Examples and Template',cat:'Interview preparation',desc:'Build factual situation, task, action and result stories.',type:'Guide'},
+  {id:68,slug:'interview/salary-expectations-answer',title:'How to Answer Salary Expectations',cat:'Interview preparation',desc:'Give a researched range and clarify the compensation basis.',type:'Guide'}
+];
+
+const BLOG_CONTENT = {
+'resume/achievements-bullet-points': `## Turn duties into evidence
+
+Start with an action, explain the scope, and describe the result you can support. A useful achievement tells the reader what changed because of your work. Numbers are helpful when you can verify them; clear qualitative outcomes are better than invented percentages.
+
+## A practical example
+
+Screened applications against agreed hiring criteria and coordinated interview schedules with hiring managers.
+
+This is an illustration, not a statement about your experience. Replace names, dates and claims with your own information. If a number cannot be checked, use a clear description of the work instead.
+
+## Before you use this advice
+
+Check your tracker, project notes or performance review. Separate your contribution from the team result. Use a timeframe and denominator when giving a percentage.
+
+Read the actual job posting again and follow its instructions. A relevant application can differ between employers, roles and markets. Keep a saved master copy so that tailoring one application does not overwrite information you need for another.
+
+## Mistakes to avoid
+
+Using an impressive number without a source; claiming team revenue as an individual result; repeating the same action verb in every bullet.
+
+Review the complete document rather than only the edited sentence. Check that the dates, role title and examples agree with the rest of your application and with what you can explain in an interview.
+
+## Your next action
+
+Choose three recent tasks. For each, write the action, audience, difficulty and outcome. Keep the strongest two and remove context that does not help the target role.
+
+## Final review checklist
+
+- The information is accurate and relevant to this role.
+- Sample wording has been replaced with my own facts.
+- Names, dates, links and attachments have been checked.
+- The document is readable on screen and in the exported file.
+- I have saved the version used for this application.`,
+
+'resume/no-experience-format': `## Show evidence before job titles
+
+A fresher resume can lead with education, relevant projects, internships and practical skills. Paid employment is not the only evidence of ability. Choose examples that explain what you actually built, analysed, organised or delivered.
+
+## A practical example
+
+Built a spreadsheet to track campus-event registrations, checked duplicate entries and summarised attendance for the organising team.
+
+This is an illustration, not a statement about your experience. Replace names, dates and claims with your own information. If a number cannot be checked, use a clear description of the work instead.
+
+## Before you use this advice
+
+Add your qualification, graduation date, two relevant projects, tools used and a working portfolio link. Explain your own role in group projects.
+
+Read the actual job posting again and follow its instructions. A relevant application can differ between employers, roles and markets. Keep a saved master copy so that tailoring one application does not overwrite information you need for another.
+
+## Mistakes to avoid
+
+Filling a page with self-ratings, listing every school subject, or describing tutorial work as a client project.
+
+Review the complete document rather than only the edited sentence. Check that the dates, role title and examples agree with the rest of your application and with what you can explain in an interview.
+
+## Your next action
+
+Pick a target role. Highlight its main tasks. Match each task to one academic, volunteer or independent example. Start with one readable page and expand only when the evidence requires it.
+
+## Final review checklist
+
+- The information is accurate and relevant to this role.
+- Sample wording has been replaced with my own facts.
+- Names, dates, links and attachments have been checked.
+- The document is readable on screen and in the exported file.
+- I have saved the version used for this application.`,
+
+'resume/skills-section-keywords': `## Make the skills section credible
+
+List skills you can explain or demonstrate in an interview. Group tools and methods into useful categories and support the important ones in your experience or projects. Copying a job description into a skills list does not prove competence.
+
+## A practical example
+
+Analysis: Excel, pivot tables, data cleaning. Reporting: dashboard preparation and weekly stakeholder summaries.
+
+This is an illustration, not a statement about your experience. Replace names, dates and claims with your own information. If a number cannot be checked, use a clear description of the work instead.
+
+## Before you use this advice
+
+Compare the required skills with work you have done. Distinguish tools you used independently from those you have only studied.
+
+Read the actual job posting again and follow its instructions. A relevant application can differ between employers, roles and markets. Keep a saved master copy so that tailoring one application does not overwrite information you need for another.
+
+## Mistakes to avoid
+
+Claiming expert knowledge after a short introduction; hiding relevant skills in a long comma-separated list; including unrelated keywords.
+
+Review the complete document rather than only the edited sentence. Check that the dates, role title and examples agree with the rest of your application and with what you can explain in an interview.
+
+## Your next action
+
+Choose six to twelve relevant skills as a starting point, then remove those that do not support this application. For each key skill, prepare one example showing its use and your level of ownership.
+
+## Final review checklist
+
+- The information is accurate and relevant to this role.
+- Sample wording has been replaced with my own facts.
+- Names, dates, links and attachments have been checked.
+- The document is readable on screen and in the exported file.
+- I have saved the version used for this application.`,
+
+'resume/gap-in-employment-explanation': `## Explain the timeline plainly
+
+Keep dates accurate and use a short, neutral explanation where it helps the reader understand your timeline. You do not need to share sensitive personal details. Focus the rest of the application on your current readiness and relevant evidence.
+
+## A practical example
+
+Career break, 2024-2025. Returned to active job search after completing personal commitments and refreshing reporting skills through an independent project.
+
+This is an illustration, not a statement about your experience. Replace names, dates and claims with your own information. If a number cannot be checked, use a clear description of the work instead.
+
+## Before you use this advice
+
+Check start and end dates against employment records. Include study, caregiving or independent work only when the description is accurate and you are comfortable sharing it.
+
+Read the actual job posting again and follow its instructions. A relevant application can differ between employers, roles and markets. Keep a saved master copy so that tailoring one application does not overwrite information you need for another.
+
+## Mistakes to avoid
+
+Changing dates to hide a gap; inventing freelance clients; writing a long defensive paragraph.
+
+Review the complete document rather than only the edited sentence. Check that the dates, role title and examples agree with the rest of your application and with what you can explain in an interview.
+
+## Your next action
+
+Write a one-sentence explanation, then prepare a slightly fuller interview answer. Move back to the role: what you can contribute now, what you have refreshed and when you are available.
+
+## Final review checklist
+
+- The information is accurate and relevant to this role.
+- Sample wording has been replaced with my own facts.
+- Names, dates, links and attachments have been checked.
+- The document is readable on screen and in the exported file.
+- I have saved the version used for this application.`,
+
+'resume/action-verbs-list': `## Choose the verb that matches your contribution
+
+Useful verbs describe real work: analysed, coordinated, built, reviewed, reconciled, organised, documented, tested and improved. Choose based on what you did, not how impressive the word sounds.
+
+## A practical example
+
+Coordinated interview schedules across three hiring teams and maintained a shared tracker for follow-up.
+
+This is an illustration, not a statement about your experience. Replace names, dates and claims with your own information. If a number cannot be checked, use a clear description of the work instead.
+
+## Before you use this advice
+
+Use led only when you had leadership responsibility. Use supported, contributed or collaborated when that better describes your role.
+
+Read the actual job posting again and follow its instructions. A relevant application can differ between employers, roles and markets. Keep a saved master copy so that tailoring one application does not overwrite information you need for another.
+
+## Mistakes to avoid
+
+Replacing every ordinary verb with a grand claim; using led for a task you only observed; starting every bullet with responsible for.
+
+Review the complete document rather than only the edited sentence. Check that the dates, role title and examples agree with the rest of your application and with what you can explain in an interview.
+
+## Your next action
+
+Review the first word of each bullet. Replace vague openings with an accurate action, then add the object of that action and one useful detail about scope or outcome.
+
+## Final review checklist
+
+- The information is accurate and relevant to this role.
+- Sample wording has been replaced with my own facts.
+- Names, dates, links and attachments have been checked.
+- The document is readable on screen and in the exported file.
+- I have saved the version used for this application.`,
+
+'resume/references-available-upon-request': `## Use resume space for relevant evidence
+
+Reference details are usually easier to provide separately when an employer asks. Follow the specific application instructions. Before sharing a referee's contact details, ask their permission and confirm that they are comfortable discussing your work.
+
+## A practical example
+
+References can be provided separately at the requested stage. A reference sheet can contain the person's name, role, working relationship and approved contact details.
+
+This is an illustration, not a statement about your experience. Replace names, dates and claims with your own information. If a number cannot be checked, use a clear description of the work instead.
+
+## Before you use this advice
+
+Prepare two people who know your work, confirm their current contact details and explain the role you are applying for.
+
+Read the actual job posting again and follow its instructions. A relevant application can differ between employers, roles and markets. Keep a saved master copy so that tailoring one application does not overwrite information you need for another.
+
+## Mistakes to avoid
+
+Publishing someone's phone number without consent; listing a friend as a former manager; using references to fill an otherwise empty resume.
+
+Review the complete document rather than only the edited sentence. Check that the dates, role title and examples agree with the rest of your application and with what you can explain in an interview.
+
+## Your next action
+
+Keep a private reference sheet and update it before the final interview stage. Spend the resume space on projects, experience or skills that help the employer assess your fit.
+
+## Final review checklist
+
+- The information is accurate and relevant to this role.
+- Sample wording has been replaced with my own facts.
+- Names, dates, links and attachments have been checked.
+- The document is readable on screen and in the exported file.
+- I have saved the version used for this application.`,
+
+'resume/pdf-vs-word-ats': `## Follow the employer's file instructions first
+
+If a posting specifies PDF or DOCX, use that format. When either is accepted, export a text-based document and check how its contents copy into plain text. Different recruitment systems handle files differently; no format guarantees a parsing score.
+
+## A practical example
+
+Export the document, select the text, copy it into a plain-text editor and check the order of your name, role, employers, dates and skills.
+
+This is an illustration, not a statement about your experience. Replace names, dates and claims with your own information. If a number cannot be checked, use a clear description of the work instead.
+
+## Before you use this advice
+
+Check that the file opens, the text is selectable, links work, page breaks make sense and the filename identifies you and the role.
+
+Read the actual job posting again and follow its instructions. A relevant application can differ between employers, roles and markets. Keep a saved master copy so that tailoring one application does not overwrite information you need for another.
+
+## Mistakes to avoid
+
+Uploading a scan as if it were searchable text; using decorative text boxes that scramble the reading order; submitting an unreviewed export.
+
+Review the complete document rather than only the edited sentence. Check that the dates, role title and examples agree with the rest of your application and with what you can explain in an interview.
+
+## Your next action
+
+Try both supported formats if a portal preview looks wrong. Review the extracted text where the employer provides it and correct fields manually before submitting.
+
+## Final review checklist
+
+- The information is accurate and relevant to this role.
+- Sample wording has been replaced with my own facts.
+- Names, dates, links and attachments have been checked.
+- The document is readable on screen and in the exported file.
+- I have saved the version used for this application.`,
+
+'cover-letter/short-email-format': `## Write an introduction the recipient can scan
+
+A short application email needs a clear subject, the role you want, one or two relevant examples and a courteous close. It should complement the resume rather than repeat every section. Use the employer's requested application channel.
+
+## A practical example
+
+Subject: Application for Recruitment Executive — Your Name. Dear Hiring Team, I am applying for the advertised role. My recent work includes candidate screening and interview coordination. I have attached my resume and would welcome a discussion about the role. Regards, Your Name.
+
+This is an illustration, not a statement about your experience. Replace names, dates and claims with your own information. If a number cannot be checked, use a clear description of the work instead.
+
+## Before you use this advice
+
+Confirm the company, job title, recipient, attachments and contact details. Use a real reason for your interest.
+
+Read the actual job posting again and follow its instructions. A relevant application can differ between employers, roles and markets. Keep a saved master copy so that tailoring one application does not overwrite information you need for another.
+
+## Mistakes to avoid
+
+Sending a different company's name; attaching the wrong document; using a long generic story instead of relevant evidence.
+
+Review the complete document rather than only the edited sentence. Check that the dates, role title and examples agree with the rest of your application and with what you can explain in an interview.
+
+## Your next action
+
+Keep the email focused enough to read on a phone. Replace the sample with your actual experience and check that every attachment opens before sending.
+
+## Final review checklist
+
+- The information is accurate and relevant to this role.
+- Sample wording has been replaced with my own facts.
+- Names, dates, links and attachments have been checked.
+- The document is readable on screen and in the exported file.
+- I have saved the version used for this application.`,
+
+'resume/ats-friendly-format-india': `## Prioritise readable structure and accurate content
+
+An ATS-conscious resume uses clear section headings, a consistent date format and a sensible reading order. Start with the employer's instructions, then choose a layout that keeps your evidence easy to find. A comparison tool is useful guidance, not the employer's private screening system.
+
+## A practical example
+
+Use headings such as Experience, Education, Skills and Projects. Keep the employer name, role and dates together for each position.
+
+This is an illustration, not a statement about your experience. Replace names, dates and claims with your own information. If a number cannot be checked, use a clear description of the work instead.
+
+## Before you use this advice
+
+Review text extraction, contact details, chronology, relevant skills and the most recent responsibilities. Use a photo only when the application context supports it.
+
+Read the actual job posting again and follow its instructions. A relevant application can differ between employers, roles and markets. Keep a saved master copy so that tailoring one application does not overwrite information you need for another.
+
+## Mistakes to avoid
+
+Keyword stuffing; claiming a universal ATS score; hiding text; removing useful context just to force a one-page document.
+
+Review the complete document rather than only the edited sentence. Check that the dates, role title and examples agree with the rest of your application and with what you can explain in an interview.
+
+## Your next action
+
+Compare your resume against the actual role. Mark evidence that is present, missing or unclear. Rewrite unclear evidence truthfully rather than adding unsupported keywords.
+
+## Final review checklist
+
+- The information is accurate and relevant to this role.
+- Sample wording has been replaced with my own facts.
+- Names, dates, links and attachments have been checked.
+- The document is readable on screen and in the exported file.
+- I have saved the version used for this application.`,
+
+'resume/fresher-projects-guide': `## Explain the project, not just its title
+
+A project becomes useful evidence when a reader can understand its problem, your contribution, the tools you used and the result. A small completed project with a clear explanation can be more convincing than a list of ambitious unfinished ideas.
+
+## A practical example
+
+Created a candidate-status dashboard from a sample dataset, cleaned inconsistent entries and documented the steps so another person could reproduce the report.
+
+This is an illustration, not a statement about your experience. Replace names, dates and claims with your own information. If a number cannot be checked, use a clear description of the work instead.
+
+## Before you use this advice
+
+Include the context, your role, the deliverable, tools, verification method and a public link when appropriate. Label sample or synthetic data clearly.
+
+Read the actual job posting again and follow its instructions. A relevant application can differ between employers, roles and markets. Keep a saved master copy so that tailoring one application does not overwrite information you need for another.
+
+## Mistakes to avoid
+
+Copying a tutorial description; using a team deliverable without explaining your contribution; linking to a private or broken repository.
+
+Review the complete document rather than only the edited sentence. Check that the dates, role title and examples agree with the rest of your application and with what you can explain in an interview.
+
+## Your next action
+
+Select two projects relevant to the role. Write three concise bullets for each: problem, action and result. Open the link in a signed-out browser before submitting.
+
+## Final review checklist
+
+- The information is accurate and relevant to this role.
+- Sample wording has been replaced with my own facts.
+- Names, dates, links and attachments have been checked.
+- The document is readable on screen and in the exported file.
+- I have saved the version used for this application.`,
+
+'resume/professional-summary-guide': `## Summarise the value already supported below
+
+A professional summary should help the reader place your experience quickly. Mention your role or direction, a relevant area of work and one concrete strength supported elsewhere in the resume. It is optional when the document is already clear.
+
+## A practical example
+
+Recruitment professional with experience in candidate screening, interview coordination and hiring trackers. Interested in recruitment operations roles that combine structured follow-up and stakeholder communication.
+
+This is an illustration, not a statement about your experience. Replace names, dates and claims with your own information. If a number cannot be checked, use a clear description of the work instead.
+
+## Before you use this advice
+
+Choose the target role, two relevant responsibilities and evidence that differentiates your experience. Keep the language proportionate to your actual level.
+
+Read the actual job posting again and follow its instructions. A relevant application can differ between employers, roles and markets. Keep a saved master copy so that tailoring one application does not overwrite information you need for another.
+
+## Mistakes to avoid
+
+Calling yourself an expert without evidence; stacking adjectives; adding a generic objective about joining a dynamic organisation.
+
+Review the complete document rather than only the edited sentence. Check that the dates, role title and examples agree with the rest of your application and with what you can explain in an interview.
+
+## Your next action
+
+Draft the summary after writing your experience. Remove any claim that the rest of the resume does not support. Check that it still fits when you tailor the application for a different role.
+
+## Final review checklist
+
+- The information is accurate and relevant to this role.
+- Sample wording has been replaced with my own facts.
+- Names, dates, links and attachments have been checked.
+- The document is readable on screen and in the exported file.
+- I have saved the version used for this application.`,
+
+'resume/how-to-write-current-salary': `## Keep compensation separate from your main evidence
+
+Your resume's main job is to explain your experience and suitability. Add compensation only when the employer specifically requests it. Use a separate application field or conversation when available, and distinguish fixed, variable and total compensation.
+
+## A practical example
+
+Current fixed compensation: [verified amount]. Variable component: [amount and conditions]. Expected compensation: open to discussion based on responsibilities and the complete package.
+
+This is an illustration, not a statement about your experience. Replace names, dates and claims with your own information. If a number cannot be checked, use a clear description of the work instead.
+
+## Before you use this advice
+
+Check the offer letter or compensation statement and use the requested annual or monthly basis consistently.
+
+Read the actual job posting again and follow its instructions. A relevant application can differ between employers, roles and markets. Keep a saved master copy so that tailoring one application does not overwrite information you need for another.
+
+## Mistakes to avoid
+
+Confusing take-home pay with CTC; presenting a maximum incentive as guaranteed pay; sharing payslips publicly.
+
+Review the complete document rather than only the edited sentence. Check that the dates, role title and examples agree with the rest of your application and with what you can explain in an interview.
+
+## Your next action
+
+Keep a private compensation summary for applications that request it. Ask for clarification if a form does not specify whether it expects fixed salary, gross pay or total employer cost.
+
+## Final review checklist
+
+- The information is accurate and relevant to this role.
+- Sample wording has been replaced with my own facts.
+- Names, dates, links and attachments have been checked.
+- The document is readable on screen and in the exported file.
+- I have saved the version used for this application.`,
+
+'jobs/application-tracker-method': `## Record the next action, not only the company name
+
+A job tracker should tell you what you applied for, which document you used and what happens next. Keep the fields simple enough that you will update them after every meaningful interaction.
+
+## A practical example
+
+Company: Example Ltd. Role: Analyst. Stage: Applied. Resume version: Analyst-October. Next action: check the stated timeline. Follow-up date: your chosen date.
+
+This is an illustration, not a statement about your experience. Replace names, dates and claims with your own information. If a number cannot be checked, use a clear description of the work instead.
+
+## Before you use this advice
+
+Record the job link, application date, contact, resume version, current stage and next action. Keep sensitive interview notes private.
+
+Read the actual job posting again and follow its instructions. A relevant application can differ between employers, roles and markets. Keep a saved master copy so that tailoring one application does not overwrite information you need for another.
+
+## Mistakes to avoid
+
+Adding every saved job as an application; leaving completed interviews in the applied stage; following up repeatedly without checking the timeline.
+
+Review the complete document rather than only the edited sentence. Check that the dates, role title and examples agree with the rest of your application and with what you can explain in an interview.
+
+## Your next action
+
+Review the tracker at a regular time. Close stale opportunities, prepare the next interview and identify where you need a stronger application rather than simply increasing volume.
+
+## Final review checklist
+
+- The information is accurate and relevant to this role.
+- Sample wording has been replaced with my own facts.
+- Names, dates, links and attachments have been checked.
+- The document is readable on screen and in the exported file.
+- I have saved the version used for this application.`,
+
+'jobs/follow-up-email-template': `## Make the follow-up easy to answer
+
+Use the employer's stated timeline as your starting point. A useful follow-up identifies the role, refers to the previous interaction and asks for an update without pressuring the recipient. Avoid repeated messages through several channels.
+
+## A practical example
+
+Hello [Name], I am following up on my application for [Role], submitted on [Date]. I remain interested and would appreciate any update on the next steps when convenient. Please let me know if further information would help. Thank you, [Name].
+
+This is an illustration, not a statement about your experience. Replace names, dates and claims with your own information. If a number cannot be checked, use a clear description of the work instead.
+
+## Before you use this advice
+
+Check the role title, application date, recipient and any timeline they already provided.
+
+Read the actual job posting again and follow its instructions. A relevant application can differ between employers, roles and markets. Keep a saved master copy so that tailoring one application does not overwrite information you need for another.
+
+## Mistakes to avoid
+
+Sending a follow-up immediately after applying; copying multiple people unnecessarily; implying an offer was promised.
+
+Review the complete document rather than only the edited sentence. Check that the dates, role title and examples agree with the rest of your application and with what you can explain in an interview.
+
+## Your next action
+
+Add the follow-up date to your tracker. If there is no response, continue other applications and keep your wording professional.
+
+## Final review checklist
+
+- The information is accurate and relevant to this role.
+- Sample wording has been replaced with my own facts.
+- Names, dates, links and attachments have been checked.
+- The document is readable on screen and in the exported file.
+- I have saved the version used for this application.`,
+
+'jobs/how-many-jobs-to-apply': `## Choose a sustainable application target
+
+There is no useful universal number of applications per day. Your target should leave time to understand the role, tailor relevant evidence and maintain follow-up. Track outcomes so that you can improve the process instead of measuring effort only by volume.
+
+## A practical example
+
+Set aside one session to shortlist suitable roles and another to prepare the strongest applications. Record what you submitted and the resume version used.
+
+This is an illustration, not a statement about your experience. Replace names, dates and claims with your own information. If a number cannot be checked, use a clear description of the work instead.
+
+## Before you use this advice
+
+Consider role availability, application complexity, your current commitments and interview preparation time.
+
+Read the actual job posting again and follow its instructions. A relevant application can differ between employers, roles and markets. Keep a saved master copy so that tailoring one application does not overwrite information you need for another.
+
+## Mistakes to avoid
+
+Applying to unrelated roles to hit a quota; submitting identical documents everywhere; treating silence as evidence that every application failed.
+
+Review the complete document rather than only the edited sentence. Check that the dates, role title and examples agree with the rest of your application and with what you can explain in an interview.
+
+## Your next action
+
+Choose a manageable weekly goal, review the response pattern and adjust one part of the process at a time: targeting, evidence, presentation or follow-up.
+
+## Final review checklist
+
+- The information is accurate and relevant to this role.
+- Sample wording has been replaced with my own facts.
+- Names, dates, links and attachments have been checked.
+- The document is readable on screen and in the exported file.
+- I have saved the version used for this application.`,
+
+'jobs/how-to-withdraw-application': `## Close the loop politely
+
+Tell the recruiter promptly when you decide not to continue. Keep the message brief, name the role and thank them for their time. You can give a short reason if useful, but you do not need to disclose private details.
+
+## A practical example
+
+Hello [Name], thank you for considering my application for [Role]. I would like to withdraw from the process as my circumstances have changed. I appreciate your time and wish you well with the search. Regards, [Name].
+
+This is an illustration, not a statement about your experience. Replace names, dates and claims with your own information. If a number cannot be checked, use a clear description of the work instead.
+
+## Before you use this advice
+
+Check whether an interview is scheduled and cancel it through the agreed channel. Update your tracker to avoid duplicate follow-ups.
+
+Read the actual job posting again and follow its instructions. A relevant application can differ between employers, roles and markets. Keep a saved master copy so that tailoring one application does not overwrite information you need for another.
+
+## Mistakes to avoid
+
+Not attending an interview without notice; sharing unnecessary criticism; leaving the recruiter to infer your decision.
+
+Review the complete document rather than only the edited sentence. Check that the dates, role title and examples agree with the rest of your application and with what you can explain in an interview.
+
+## Your next action
+
+Send one clear message, keep a record and withdraw through the application portal if that option is available.
+
+## Final review checklist
+
+- The information is accurate and relevant to this role.
+- Sample wording has been replaced with my own facts.
+- Names, dates, links and attachments have been checked.
+- The document is readable on screen and in the exported file.
+- I have saved the version used for this application.`
+};
+
+// ============================================================
+// BLOG SYSTEM — COLOURS & SVG HEROES
+// ============================================================
+const BLOG_CAT_COLORS = {
+  'Work choices':         {bg:'#f0f9ff',accent:'#0284c7',icon:'🏠'},
+  'Exit & benefits':      {bg:'#fef3c7',accent:'#d97706',icon:'📋'},
+  'Income & tax':         {bg:'#f0fdf4',accent:'#16a34a',icon:'💰'},
+  'Career growth':        {bg:'#fdf4ff',accent:'#9333ea',icon:'📈'},
+  'Wealth planning':      {bg:'#fff7ed',accent:'#ea580c',icon:'💎'},
+  'Salary resources':     {bg:'#eff6ff',accent:'#1d4ed8',icon:'💼'},
+  'Resume formatting':    {bg:'#fef2f2',accent:'#dc2626',icon:'📄'},
+  'Job search':           {bg:'#f0fdfa',accent:'#0d9488',icon:'🔍'},
+  'Salary & offers':      {bg:'#fefce8',accent:'#ca8a04',icon:'🤝'},
+  'Interview preparation':{bg:'#fdf2f8',accent:'#c026d3',icon:'🎯'}
+};
+
+function blogCategoryHeroSVG(cat, type) {
+  const c = BLOG_CAT_COLORS[cat] || {bg:'#f8fafc',accent:'#1d4ed8',icon:'📚'};
+  const patterns = {
+    'Income & tax':`<rect width="600" height="240" fill="${c.bg}"/><circle cx="480" cy="60" r="120" fill="${c.accent}10"/><circle cx="80" cy="180" r="80" fill="${c.accent}08"/><text x="40" y="130" font-size="64" opacity=".9">${c.icon}</text><text x="130" y="105" font-family="Arial" font-size="28" font-weight="800" fill="${c.accent}">&#8377;</text><rect x="145" y="115" width="80" height="6" rx="3" fill="${c.accent}40"/><rect x="145" y="131" width="60" height="6" rx="3" fill="${c.accent}30"/><rect x="145" y="147" width="100" height="6" rx="3" fill="${c.accent}20"/>`,
+    'Exit & benefits':`<rect width="600" height="240" fill="${c.bg}"/><path d="M500 0 L600 0 L600 240 Z" fill="${c.accent}10"/><text x="40" y="130" font-size="64" opacity=".9">${c.icon}</text><rect x="140" y="70" width="200" height="100" rx="12" fill="${c.accent}15" stroke="${c.accent}30" stroke-width="2"/><rect x="156" y="88" width="160" height="14" rx="4" fill="${c.accent}40"/><rect x="156" y="112" width="120" height="10" rx="3" fill="${c.accent}25"/><rect x="156" y="132" width="140" height="10" rx="3" fill="${c.accent}25"/>`,
+    'Work choices':`<rect width="600" height="240" fill="${c.bg}"/><circle cx="540" cy="200" r="160" fill="${c.accent}08"/><text x="40" y="130" font-size="64" opacity=".9">${c.icon}</text><rect x="140" y="70" width="70" height="70" rx="10" fill="${c.accent}20"/><rect x="220" y="90" width="70" height="50" rx="10" fill="${c.accent}15"/><rect x="300" y="80" width="70" height="60" rx="10" fill="${c.accent}25"/>`,
+    'Resume formatting':`<rect width="600" height="240" fill="${c.bg}"/><rect x="120" y="40" width="160" height="200" rx="8" fill="${c.accent}12" stroke="${c.accent}25" stroke-width="1.5"/><rect x="134" y="56" width="80" height="12" rx="3" fill="${c.accent}50"/><rect x="134" y="76" width="136" height="8" rx="2" fill="${c.accent}25"/><rect x="134" y="92" width="116" height="8" rx="2" fill="${c.accent}20"/><rect x="134" y="110" width="136" height="8" rx="2" fill="${c.accent}25"/><rect x="134" y="126" width="100" height="8" rx="2" fill="${c.accent}20"/><text x="320" y="150" font-size="64" opacity=".9">${c.icon}</text>`,
+    'Job search':`<rect width="600" height="240" fill="${c.bg}"/><circle cx="200" cy="110" r="80" fill="none" stroke="${c.accent}30" stroke-width="16"/><line x1="258" y1="168" x2="340" y2="220" stroke="${c.accent}40" stroke-width="16" stroke-linecap="round"/><text x="380" y="130" font-size="64" opacity=".9">${c.icon}</text>`,
+    'Salary & offers':`<rect width="600" height="240" fill="${c.bg}"/><rect x="80" y="85" width="240" height="80" rx="12" fill="${c.accent}12" stroke="${c.accent}25" stroke-width="1.5"/><text x="100" y="140" font-family="Arial" font-size="32" font-weight="800" fill="${c.accent}70">OFFER</text><text x="380" y="140" font-size="64" opacity=".9">${c.icon}</text>`,
+    'Career growth':`<rect width="600" height="240" fill="${c.bg}"/><polyline points="80,180 160,140 240,155 320,100 400,110 480,60" fill="none" stroke="${c.accent}50" stroke-width="3" stroke-linecap="round"/><circle cx="480" cy="60" r="8" fill="${c.accent}"/><text x="40" y="80" font-size="64" opacity=".9">${c.icon}</text>`,
+    'Wealth planning':`<rect width="600" height="240" fill="${c.bg}"/><rect x="80" y="160" width="40" height="60" rx="4" fill="${c.accent}60"/><rect x="135" y="130" width="40" height="90" rx="4" fill="${c.accent}70"/><rect x="190" y="100" width="40" height="120" rx="4" fill="${c.accent}80"/><rect x="245" y="70" width="40" height="150" rx="4" fill="${c.accent}"/><text x="350" y="140" font-size="64" opacity=".9">${c.icon}</text>`,
+    'Salary resources':`<rect width="600" height="240" fill="${c.bg}"/><rect x="100" y="75" width="260" height="120" rx="10" fill="${c.accent}12" stroke="${c.accent}25" stroke-width="1.5"/><rect x="116" y="92" width="80" height="10" rx="3" fill="${c.accent}50"/><rect x="116" y="112" width="228" height="8" rx="2" fill="${c.accent}25"/><rect x="116" y="130" width="200" height="8" rx="2" fill="${c.accent}20"/><rect x="116" y="148" width="220" height="8" rx="2" fill="${c.accent}25"/><text x="400" y="150" font-size="64" opacity=".9">${c.icon}</text>`,
+    'Interview preparation':`<rect width="600" height="240" fill="${c.bg}"/><circle cx="200" cy="120" r="60" fill="${c.accent}15" stroke="${c.accent}30" stroke-width="2"/><text x="180" y="136" font-family="Arial" font-size="32" font-weight="800" fill="${c.accent}80">?</text><text x="320" y="140" font-size="64" opacity=".9">${c.icon}</text>`
+  };
+  const svg = patterns[cat] || `<rect width="600" height="240" fill="${c.bg}"/><text x="40" y="140" font-size="64">${c.icon}</text>`;
+  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 240">${svg}</svg>`;
+}
+
+// ============================================================
+// BLOG LISTING
+// ============================================================
+let blogActiveCat = 'all';
+
+function initBlogPage() {
+  const grid = document.getElementById('blog-grid-full');
+  if (!grid || grid.dataset.built) return;
+  grid.dataset.built = '1';
+  renderBlogGrid(BLOG_POSTS);
+}
+
+function renderBlogGrid(posts) {
+  const grid = document.getElementById('blog-grid-full');
+  if (!grid) return;
+  const E = v => String(v||'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  grid.innerHTML = posts.map(p => {
+    const c = BLOG_CAT_COLORS[p.cat] || {accent:'#1d4ed8'};
+    return `<div class="blog-post-card" onclick="openArticle('${E(p.slug)}')">
+      <div class="bpc-image">${blogCategoryHeroSVG(p.cat, p.type)}</div>
+      <div class="bpc-body">
+        <div class="bpc-tags">
+          <span class="bpc-tag ${p.type==='Calculator'?'calc':'guide'}">${p.type==='Calculator'?'⚡ Calculator':'📖 Guide'}</span>
+          <span class="bpc-tag cat">${E(p.cat)}</span>
+        </div>
+        <h3 class="bpc-title">${E(p.title)}</h3>
+        <p class="bpc-desc">${E(p.desc)}</p>
+        <div class="bpc-footer"><span>Read article →</span><span style="color:${c.accent}">${p.type==='Calculator'?'Interactive':'Practical guide'}</span></div>
+      </div>
+    </div>`;
+  }).join('');
+  const bar = document.getElementById('blog-count-bar');
+  if (bar) bar.textContent = `Showing ${posts.length} of 68 resources`;
+}
+
+function blogCatFilter(btn, cat) {
+  document.querySelectorAll('.blog-cat-tab').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  blogActiveCat = cat;
+  blogFilter();
+}
+
+function blogFilter() {
+  const q = (document.getElementById('blog-search')?.value || '').toLowerCase();
+  let posts = BLOG_POSTS;
+  if (blogActiveCat !== 'all') {
+    if (blogActiveCat === 'Calculator' || blogActiveCat === 'Guide') {
+      posts = posts.filter(p => p.type === blogActiveCat);
+    } else {
+      posts = posts.filter(p => p.cat === blogActiveCat);
+    }
+  }
+  if (q) posts = posts.filter(p => (p.title + p.desc + p.cat).toLowerCase().includes(q));
+  renderBlogGrid(posts);
+}
+
+// ============================================================
+// MARKDOWN RENDERER
+// ============================================================
+function renderMarkdown(md) {
+  if (!md) return '';
+  let html = md;
+  html = html.replace(/^## (.+)$/gm, (_, t) => {
+    const id = t.toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'');
+    return `<h2 id="${id}">${t}</h2>`;
+  });
+  html = html.replace(/^### (.+)$/gm, (_, t) => {
+    const id = t.toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'');
+    return `<h3 id="${id}">${t}</h3>`;
+  });
+  html = html.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
+  html = html.replace(/\*([^*]+)\*/g, '<em>$1</em>');
+  html = html.replace(/^> (.+)$/gm, '<blockquote>$1</blockquote>');
+  html = html.replace(/^[-*] (.+)$/gm, '<li>$1</li>');
+  html = html.replace(/(<li>[^]+?<\/li>\n?)+/g, m => `<ul>${m}</ul>`);
+  html = html.split(/\n\n+/).map(block => {
+    block = block.trim();
+    if (!block) return '';
+    if (/^<(h[23]|ul|ol|blockquote)/.test(block)) return block;
+    return `<p>${block.replace(/\n/g,'<br>')}</p>`;
+  }).join('\n');
+  return html;
+}
+
+// ============================================================
+// CALCULATOR WIDGETS
+// ============================================================
+function renderCalculatorWidget(post) {
+  const slug = post.slug;
+  if (slug==='take-home-salary-calculator'||slug==='ctc-to-in-hand-salary-calculator'||slug==='salary-breakup-calculator'||slug==='paycheck-tax-deduction-calculator') {
+    return `<div class="art-calc-box">
+      <h3>💰 CTC → In-Hand Calculator</h3>
+      <div class="art-calc-row">
+        <div><label class="art-calc-label">Annual CTC (₹)</label><input class="art-calc-input" id="cc-ctc" type="number" placeholder="1200000" value="1200000"></div>
+        <div><label class="art-calc-label">PF opt-in?</label><select class="art-calc-input" id="cc-pf"><option value="1">Yes</option><option value="0">No</option></select></div>
+      </div>
+      <button class="btn btn-primary" onclick="(function(b){var ctc=+document.getElementById('cc-ctc').value||0;var pf=+document.getElementById('cc-pf').value;var basic=ctc*0.4;var hra=ctc*0.2;var pfAmt=pf?(basic*0.12):0;var tax=ctc>1200000?(ctc-1200000)*0.3+150000:ctc>700000?(ctc-700000)*0.2+30000:ctc>500000?(ctc-500000)*0.1:0;var net=Math.round((ctc-pfAmt*2-tax)/12);var r=b.closest('.art-calc-box').querySelector('.art-calc-result');r.style.display='block';r.querySelector('.rcr-value').textContent='₹'+net.toLocaleString('en-IN');r.querySelector('.rcr-label').textContent='Estimated monthly in-hand (approx)';b.closest('.art-calc-box').querySelector('.calc-extra').innerHTML='Basic: ₹'+Math.round(basic/12).toLocaleString('en-IN')+'/mo \xB7 HRA: ₹'+Math.round(hra/12).toLocaleString('en-IN')+'/mo \xB7 PF: ₹'+Math.round(pfAmt/12).toLocaleString('en-IN')+'/mo';})(this)">Calculate</button>
+      <div class="art-calc-result" style="display:none"><div class="rcr-label">Estimated monthly in-hand</div><div class="rcr-value">—</div></div>
+      <div class="calc-extra" style="font-size:13px;color:var(--muted);margin-top:10px"></div>
+      <p style="font-size:12px;color:var(--muted);margin-top:12px">Illustrative estimate. Verify with your actual offer letter, HR and a tax professional.</p>
+    </div>`;
+  }
+  if (slug==='gratuity-calculation-formula'||slug==='how-to-calculate-gratuity-amount'||slug==='gratuity-calculator-online') {
+    return `<div class="art-calc-box">
+      <h3>📋 Gratuity Calculator</h3>
+      <div class="art-calc-row">
+        <div><label class="art-calc-label">Last drawn monthly basic (₹)</label><input class="art-calc-input" id="gc-basic" type="number" placeholder="40000" value="40000"></div>
+        <div><label class="art-calc-label">Years of service</label><input class="art-calc-input" id="gc-years" type="number" placeholder="5" value="5"></div>
+      </div>
+      <button class="btn btn-primary" onclick="(function(b){var basic=+document.getElementById('gc-basic').value||0;var yrs=+document.getElementById('gc-years').value||0;var g=Math.round(basic*15*yrs/26);var r=b.closest('.art-calc-box').querySelector('.art-calc-result');r.style.display='block';r.querySelector('.rcr-value').textContent='₹'+g.toLocaleString('en-IN');r.querySelector('.rcr-label').textContent='Gratuity = Basic \xD7 15 \xD7 Years \xF7 26';})(this)">Calculate</button>
+      <div class="art-calc-result" style="display:none"><div class="rcr-label">Gratuity = Basic \xD7 15 \xD7 Years \xF7 26</div><div class="rcr-value">—</div></div>
+      <p style="font-size:12px;color:var(--muted);margin-top:12px">Applies to organisations with 10+ employees. Minimum 5 years of continuous service required. Confirm current rules with HR.</p>
+    </div>`;
+  }
+  if (slug==='remote-work-savings-calculator') {
+    return `<div class="art-calc-box">
+      <h3>🏠 Remote Work Savings Calculator</h3>
+      <div class="art-calc-row">
+        <div><label class="art-calc-label">Monthly commute cost (₹)</label><input class="art-calc-input" id="rw-commute" type="number" placeholder="3000" value="3000"></div>
+        <div><label class="art-calc-label">Daily meal cost at office (₹)</label><input class="art-calc-input" id="rw-meal" type="number" placeholder="200" value="200"></div>
+      </div>
+      <div class="art-calc-row">
+        <div><label class="art-calc-label">WFH days per month</label><input class="art-calc-input" id="rw-wfh" type="number" placeholder="20" value="20"></div>
+        <div><label class="art-calc-label">Office days per month</label><input class="art-calc-input" id="rw-office" type="number" placeholder="4" value="4"></div>
+      </div>
+      <button class="btn btn-primary" onclick="(function(b){var com=+document.getElementById('rw-commute').value||0;var meal=+document.getElementById('rw-meal').value||0;var wfh=+document.getElementById('rw-wfh').value||0;var off=+document.getElementById('rw-office').value||0;var total=wfh+off||1;var saved=Math.round(com*(wfh/total)+meal*wfh);var r=b.closest('.art-calc-box').querySelector('.art-calc-result');r.style.display='block';r.querySelector('.rcr-value').textContent='₹'+saved.toLocaleString('en-IN');r.querySelector('.rcr-label').textContent='Monthly savings \xB7 ₹'+Math.round(saved*12).toLocaleString('en-IN')+' annually';})(this)">Calculate</button>
+      <div class="art-calc-result" style="display:none"><div class="rcr-label">Monthly savings</div><div class="rcr-value">—</div></div>
+    </div>`;
+  }
+  if (slug==='contractor-vs-full-time-salary-calculator') {
+    return `<div class="art-calc-box">
+      <h3>⚖️ Contractor vs Full-Time Comparison</h3>
+      <div class="art-calc-row">
+        <div><label class="art-calc-label">Contract day rate (₹)</label><input class="art-calc-input" id="ct-rate" type="number" placeholder="5000" value="5000"></div>
+        <div><label class="art-calc-label">Billable days/year</label><input class="art-calc-input" id="ct-days" type="number" placeholder="220" value="220"></div>
+      </div>
+      <div class="art-calc-row">
+        <div><label class="art-calc-label">Full-time CTC (₹)</label><input class="art-calc-input" id="ct-ctc" type="number" placeholder="1500000" value="1500000"></div>
+        <div><label class="art-calc-label">Self-employed tax rate (%)</label><input class="art-calc-input" id="ct-tax" type="number" placeholder="30" value="30"></div>
+      </div>
+      <button class="btn btn-primary" onclick="(function(b){var rate=+document.getElementById('ct-rate').value||0;var days=+document.getElementById('ct-days').value||0;var ctc=+document.getElementById('ct-ctc').value||0;var tax=+document.getElementById('ct-tax').value||0;var gross=rate*days;var net=Math.round(gross*(1-tax/100));var diff=net-Math.round(ctc*0.72);var r=b.closest('.art-calc-box').querySelector('.art-calc-result');r.style.display='block';r.querySelector('.rcr-value').textContent=(diff>=0?'+':'')+' ₹'+diff.toLocaleString('en-IN');r.querySelector('.rcr-label').textContent='Contract net ₹'+net.toLocaleString('en-IN')+' vs FT est. ₹'+Math.round(ctc*0.72).toLocaleString('en-IN');})(this)">Compare</button>
+      <div class="art-calc-result" style="display:none"><div class="rcr-label">Annual difference</div><div class="rcr-value">—</div></div>
+      <p style="font-size:12px;color:var(--muted);margin-top:12px">Excludes benefits, job security, EPF and professional tax. Use as a starting point only.</p>
+    </div>`;
+  }
+  if (slug==='notice-period-buyout-calculator') {
+    return `<div class="art-calc-box">
+      <h3>📄 Notice Period Buyout</h3>
+      <div class="art-calc-row">
+        <div><label class="art-calc-label">Monthly CTC (₹)</label><input class="art-calc-input" id="np-ctc" type="number" placeholder="100000" value="100000"></div>
+        <div><label class="art-calc-label">Notice period (months)</label><input class="art-calc-input" id="np-months" type="number" placeholder="3" value="3"></div>
+      </div>
+      <div class="art-calc-row">
+        <div><label class="art-calc-label">Buyout % of notice salary</label><input class="art-calc-input" id="np-pct" type="number" placeholder="100" value="100"></div>
+        <div></div>
+      </div>
+      <button class="btn btn-primary" onclick="(function(b){var ctc=+document.getElementById('np-ctc').value||0;var m=+document.getElementById('np-months').value||0;var pct=+document.getElementById('np-pct').value||100;var amt=Math.round(ctc*m*pct/100);var r=b.closest('.art-calc-box').querySelector('.art-calc-result');r.style.display='block';r.querySelector('.rcr-value').textContent='₹'+amt.toLocaleString('en-IN');r.querySelector('.rcr-label').textContent='Estimated buyout amount';})(this)">Calculate</button>
+      <div class="art-calc-result" style="display:none"><div class="rcr-label">Estimated buyout amount</div><div class="rcr-value">—</div></div>
+    </div>`;
+  }
+  if (slug==='leave-encashment-taxable-formula') {
+    return `<div class="art-calc-box">
+      <h3>📋 Leave Encashment Estimate</h3>
+      <div class="art-calc-row">
+        <div><label class="art-calc-label">Basic salary per day (₹)</label><input class="art-calc-input" id="le-daily" type="number" placeholder="1333" value="1333"></div>
+        <div><label class="art-calc-label">Accumulated leave days</label><input class="art-calc-input" id="le-days" type="number" placeholder="30" value="30"></div>
+      </div>
+      <button class="btn btn-primary" onclick="(function(b){var d=+document.getElementById('le-daily').value||0;var days=+document.getElementById('le-days').value||0;var amt=Math.round(d*days);var r=b.closest('.art-calc-box').querySelector('.art-calc-result');r.style.display='block';r.querySelector('.rcr-value').textContent='₹'+amt.toLocaleString('en-IN');r.querySelector('.rcr-label').textContent='Gross encashment (tax treatment varies)';})(this)">Calculate</button>
+      <div class="art-calc-result" style="display:none"><div class="rcr-label">Gross encashment</div><div class="rcr-value">—</div></div>
+      <p style="font-size:12px;color:var(--muted);margin-top:12px">Tax treatment on leave encashment differs for government and private sector. Confirm with your HR and a tax professional.</p>
+    </div>`;
+  }
+  if (slug==='sip-calculator-monthly-income'||slug==='step-up-sip-calculator'||slug==='mutual-fund-return-calculator') {
+    if (slug==='mutual-fund-return-calculator') {
+      return `<div class="art-calc-box">
+        <h3>💎 Lump-Sum Return Calculator</h3>
+        <div class="art-calc-row">
+          <div><label class="art-calc-label">Investment amount (₹)</label><input class="art-calc-input" id="mf-inv" type="number" placeholder="100000" value="100000"></div>
+          <div><label class="art-calc-label">Expected CAGR (%)</label><input class="art-calc-input" id="mf-rate" type="number" placeholder="12" value="12"></div>
+        </div>
+        <div class="art-calc-row">
+          <div><label class="art-calc-label">Years</label><input class="art-calc-input" id="mf-yrs" type="number" placeholder="10" value="10"></div>
+          <div></div>
+        </div>
+        <button class="btn btn-primary" onclick="(function(b){var inv=+document.getElementById('mf-inv').value||0;var r=+document.getElementById('mf-rate').value||0;var y=+document.getElementById('mf-yrs').value||0;var mat=Math.round(inv*Math.pow(1+r/100,y));var res=b.closest('.art-calc-box').querySelector('.art-calc-result');res.style.display='block';res.querySelector('.rcr-value').textContent='₹'+mat.toLocaleString('en-IN');res.querySelector('.rcr-label').textContent='Maturity \xB7 Returns: ₹'+(mat-inv).toLocaleString('en-IN');})(this)">Calculate</button>
+        <div class="art-calc-result" style="display:none"><div class="rcr-label">Maturity value</div><div class="rcr-value">—</div></div>
+        <p style="font-size:12px;color:var(--muted);margin-top:12px">Illustrative only. Mutual fund returns are not guaranteed. Past performance does not predict future results.</p>
+      </div>`;
+    }
+    return `<div class="art-calc-box">
+      <h3>💎 SIP Calculator</h3>
+      <div class="art-calc-row">
+        <div><label class="art-calc-label">Monthly SIP (₹)</label><input class="art-calc-input" id="sip-amt" type="number" placeholder="5000" value="5000"></div>
+        <div><label class="art-calc-label">Expected annual return (%)</label><input class="art-calc-input" id="sip-rate" type="number" placeholder="12" value="12"></div>
+      </div>
+      <div class="art-calc-row">
+        <div><label class="art-calc-label">Investment period (years)</label><input class="art-calc-input" id="sip-yrs" type="number" placeholder="10" value="10"></div>
+        <div></div>
+      </div>
+      <button class="btn btn-primary" onclick="(function(b){var pmt=+document.getElementById('sip-amt').value||0;var r=(+document.getElementById('sip-rate').value||0)/100/12;var n=(+document.getElementById('sip-yrs').value||0)*12;var mat=Math.round(pmt*(Math.pow(1+r,n)-1)/r*(1+r));var inv=pmt*n;var res=b.closest('.art-calc-box').querySelector('.art-calc-result');res.style.display='block';res.querySelector('.rcr-value').textContent='₹'+mat.toLocaleString('en-IN');res.querySelector('.rcr-label').textContent='Invested ₹'+inv.toLocaleString('en-IN')+' \xB7 Returns ₹'+(mat-inv).toLocaleString('en-IN');})(this)">Calculate</button>
+      <div class="art-calc-result" style="display:none"><div class="rcr-label">Estimated maturity value</div><div class="rcr-value">—</div></div>
+      <p style="font-size:12px;color:var(--muted);margin-top:12px">Illustrative only. Mutual fund returns are not guaranteed. Past performance does not predict future results.</p>
+    </div>`;
+  }
+  if (slug==='hourly-to-salary-finder') {
+    return `<div class="art-calc-box">
+      <h3>⏰ Hourly to Annual Salary</h3>
+      <div class="art-calc-row">
+        <div><label class="art-calc-label">Hourly rate (₹)</label><input class="art-calc-input" id="hs-rate" type="number" placeholder="500" value="500"></div>
+        <div><label class="art-calc-label">Hours per week</label><input class="art-calc-input" id="hs-hrs" type="number" placeholder="40" value="40"></div>
+      </div>
+      <button class="btn btn-primary" onclick="(function(b){var rate=+document.getElementById('hs-rate').value||0;var hrs=+document.getElementById('hs-hrs').value||0;var monthly=Math.round(rate*hrs*52/12);var annual=rate*hrs*52;var res=b.closest('.art-calc-box').querySelector('.art-calc-result');res.style.display='block';res.querySelector('.rcr-value').textContent='₹'+monthly.toLocaleString('en-IN')+'/mo';res.querySelector('.rcr-label').textContent='Annual: ₹'+annual.toLocaleString('en-IN');})(this)">Calculate</button>
+      <div class="art-calc-result" style="display:none"><div class="rcr-label">Monthly equivalent</div><div class="rcr-value">—</div></div>
+    </div>`;
+  }
+  if (slug==='salary-increment-percentage-calculator') {
+    return `<div class="art-calc-box">
+      <h3>📈 Salary Increment Calculator</h3>
+      <div class="art-calc-row">
+        <div><label class="art-calc-label">Current annual CTC (₹)</label><input class="art-calc-input" id="si-ctc" type="number" placeholder="1000000" value="1000000"></div>
+        <div><label class="art-calc-label">Increment (%)</label><input class="art-calc-input" id="si-pct" type="number" placeholder="15" value="15"></div>
+      </div>
+      <button class="btn btn-primary" onclick="(function(b){var ctc=+document.getElementById('si-ctc').value||0;var pct=+document.getElementById('si-pct').value||0;var newctc=Math.round(ctc*(1+pct/100));var diff=newctc-ctc;var res=b.closest('.art-calc-box').querySelector('.art-calc-result');res.style.display='block';res.querySelector('.rcr-value').textContent='₹'+newctc.toLocaleString('en-IN');res.querySelector('.rcr-label').textContent='New CTC \xB7 Monthly: ₹'+Math.round(newctc/12).toLocaleString('en-IN')+' \xB7 Increase: ₹'+diff.toLocaleString('en-IN');})(this)">Calculate</button>
+      <div class="art-calc-result" style="display:none"><div class="rcr-label">New annual CTC</div><div class="rcr-value">—</div></div>
+    </div>`;
+  }
+  if (slug==='expected-salary-interview-calculator'||slug==='compensation-package-builder') {
+    return `<div class="art-calc-box">
+      <h3>🤝 Expected Salary Range Builder</h3>
+      <div class="art-calc-row">
+        <div><label class="art-calc-label">Current CTC (₹)</label><input class="art-calc-input" id="es-ctc" type="number" placeholder="1000000" value="1000000"></div>
+        <div><label class="art-calc-label">Target hike (%)</label><input class="art-calc-input" id="es-hike" type="number" placeholder="30" value="30"></div>
+      </div>
+      <div class="art-calc-row">
+        <div><label class="art-calc-label">Market range low (₹)</label><input class="art-calc-input" id="es-mlow" type="number" placeholder="1200000" value="1200000"></div>
+        <div><label class="art-calc-label">Market range high (₹)</label><input class="art-calc-input" id="es-mhigh" type="number" placeholder="1600000" value="1600000"></div>
+      </div>
+      <button class="btn btn-primary" onclick="(function(b){var ctc=+document.getElementById('es-ctc').value||0;var hike=+document.getElementById('es-hike').value||0;var mlow=+document.getElementById('es-mlow').value||0;var mhigh=+document.getElementById('es-mhigh').value||0;var target=Math.round(ctc*(1+hike/100));var low=Math.max(target,mlow);var high=Math.max(low,mhigh);var res=b.closest('.art-calc-box').querySelector('.art-calc-result');res.style.display='block';res.querySelector('.rcr-value').textContent='₹'+low.toLocaleString('en-IN')+' – ₹'+high.toLocaleString('en-IN');res.querySelector('.rcr-label').textContent='Suggested ask range (anchor: ₹'+target.toLocaleString('en-IN')+')';})(this)">Build Range</button>
+      <div class="art-calc-result" style="display:none"><div class="rcr-label">Suggested ask range</div><div class="rcr-value">—</div></div>
+    </div>`;
+  }
+  if (slug==='side-hustle-tax-estimator'||slug==='dual-employment-moonlighting-tax-estimator') {
+    return `<div class="art-calc-box">
+      <h3>💰 Additional Income Tax Estimator</h3>
+      <div class="art-calc-row">
+        <div><label class="art-calc-label">Primary annual income (₹)</label><input class="art-calc-input" id="sh-primary" type="number" placeholder="1000000" value="1000000"></div>
+        <div><label class="art-calc-label">Side income (₹/year)</label><input class="art-calc-input" id="sh-side" type="number" placeholder="200000" value="200000"></div>
+      </div>
+      <button class="btn btn-primary" onclick="(function(b){var p=+document.getElementById('sh-primary').value||0;var s=+document.getElementById('sh-side').value||0;function tax(i){if(i<=300000)return 0;if(i<=700000)return(i-300000)*0.05;if(i<=1000000)return 20000+(i-700000)*0.1;if(i<=1200000)return 50000+(i-1000000)*0.15;if(i<=1500000)return 80000+(i-1200000)*0.2;return 140000+(i-1500000)*0.3;}var extra=Math.round(tax(p+s)-tax(p));var res=b.closest('.art-calc-box').querySelector('.art-calc-result');res.style.display='block';res.querySelector('.rcr-value').textContent='₹'+extra.toLocaleString('en-IN');res.querySelector('.rcr-label').textContent='Estimated additional tax on side income';})(this)">Estimate</button>
+      <div class="art-calc-result" style="display:none"><div class="rcr-label">Additional tax estimate</div><div class="rcr-value">—</div></div>
+      <p style="font-size:12px;color:var(--muted);margin-top:12px">Uses new regime slabs (FY2024-25). Actual tax depends on deductions, regimes chosen and TDS already deducted. Consult a CA.</p>
+    </div>`;
+  }
+  if (slug==='bonus-net-payout-estimator') {
+    return `<div class="art-calc-box">
+      <h3>💰 Bonus Net Payout Estimator</h3>
+      <div class="art-calc-row">
+        <div><label class="art-calc-label">Gross bonus (₹)</label><input class="art-calc-input" id="bn-gross" type="number" placeholder="100000" value="100000"></div>
+        <div><label class="art-calc-label">Withholding rate (%)</label><input class="art-calc-input" id="bn-rate" type="number" placeholder="30" value="30"></div>
+      </div>
+      <button class="btn btn-primary" onclick="(function(b){var g=+document.getElementById('bn-gross').value||0;var r=+document.getElementById('bn-rate').value||0;var net=Math.round(g*(1-r/100));var res=b.closest('.art-calc-box').querySelector('.art-calc-result');res.style.display='block';res.querySelector('.rcr-value').textContent='₹'+net.toLocaleString('en-IN');res.querySelector('.rcr-label').textContent='Net after '+r+'% withholding';})(this)">Calculate</button>
+      <div class="art-calc-result" style="display:none"><div class="rcr-label">Net payout</div><div class="rcr-value">—</div></div>
+    </div>`;
+  }
+  if (slug==='fire-career-milestone-tracker') {
+    return `<div class="art-calc-box">
+      <h3>💎 FIRE Milestone Tracker</h3>
+      <div class="art-calc-row">
+        <div><label class="art-calc-label">Monthly expenses (₹)</label><input class="art-calc-input" id="fr-exp" type="number" placeholder="60000" value="60000"></div>
+        <div><label class="art-calc-label">Safe withdrawal rate (%)</label><input class="art-calc-input" id="fr-swr" type="number" placeholder="4" value="4"></div>
+      </div>
+      <div class="art-calc-row">
+        <div><label class="art-calc-label">Current corpus (₹)</label><input class="art-calc-input" id="fr-corpus" type="number" placeholder="2000000" value="2000000"></div>
+        <div><label class="art-calc-label">Monthly savings (₹)</label><input class="art-calc-input" id="fr-save" type="number" placeholder="30000" value="30000"></div>
+      </div>
+      <button class="btn btn-primary" onclick="(function(b){var exp=+document.getElementById('fr-exp').value||0;var swr=+document.getElementById('fr-swr').value||4;var corpus=+document.getElementById('fr-corpus').value||0;var save=+document.getElementById('fr-save').value||0;var target=Math.round(exp*12*100/swr);var gap=Math.max(0,target-corpus);var yrs=save>0?Math.round(gap/save/12*10)/10:0;var res=b.closest('.art-calc-box').querySelector('.art-calc-result');res.style.display='block';res.querySelector('.rcr-value').textContent='₹'+target.toLocaleString('en-IN');res.querySelector('.rcr-label').textContent='Target corpus \xB7 Gap: ₹'+gap.toLocaleString('en-IN')+(yrs?' \xB7 ~'+yrs+' years at current savings':'');})(this)">Calculate</button>
+      <div class="art-calc-result" style="display:none"><div class="rcr-label">FIRE corpus target</div><div class="rcr-value">—</div></div>
+    </div>`;
+  }
+  return `<div class="art-calc-box">
+    <h3>⚡ ${post.title}</h3>
+    <p style="color:var(--muted);font-size:14px;margin-bottom:16px">${post.desc} Enter your figures below for an illustrative estimate.</p>
+    <div class="art-calc-row">
+      <div><label class="art-calc-label">Primary input (₹ or number)</label><input class="art-calc-input" id="gen-a" type="number" placeholder="Enter value"></div>
+      <div><label class="art-calc-label">Secondary input</label><input class="art-calc-input" id="gen-b" type="number" placeholder="Enter value"></div>
+    </div>
+    <button class="btn btn-primary" onclick="(function(b){var a=+document.getElementById('gen-a').value||0;var bv=+document.getElementById('gen-b').value||0;var res=b.closest('.art-calc-box').querySelector('.art-calc-result');res.style.display='block';res.querySelector('.rcr-value').textContent='₹'+(a&&bv?Math.round(a*bv).toLocaleString('en-IN'):(a||bv).toLocaleString('en-IN'));res.querySelector('.rcr-label').textContent='Illustrative result — verify with authoritative sources';})(this)">Calculate</button>
+    <div class="art-calc-result" style="display:none"><div class="rcr-label">Illustrative result</div><div class="rcr-value">—</div></div>
+    <p style="font-size:12px;color:var(--muted);margin-top:12px">This estimate uses simplified assumptions. Verify current tax, legal and payroll rules before acting on any figure.</p>
+  </div>`;
+}
+
+// ============================================================
+// GENERATED ARTICLE CONTENT
+// ============================================================
+function generateArticleContent(post) {
+  const intro = post.desc + ' This guide covers what you need to know, with a practical approach you can apply to your own situation.';
+  const templates = {
+    'Income & tax': `## Understanding ${post.title}\n\n${intro}\n\n## The key formula\n\nThe calculation follows the relevant statutory rules. Always confirm current rates from official sources — tax slabs and limits change annually with the Union Budget.\n\n## A worked example\n\nThis is an illustrative scenario. Replace figures with your own verified information. Do not act on any estimate without checking the applicable rules.\n\n## What to check first\n\nVerify your offer letter, payslip or Form 16. Confirm whether figures are gross, net or CTC. Speak to your HR or a qualified tax consultant for authoritative guidance.\n\n## Common mistakes\n\nUsing a single headline number without checking what it includes. Assuming last year's slabs still apply. Not accounting for professional tax and employer PF contributions.\n\n## Next step\n\nBuild a resume that reflects your compensation context accurately. Use CVTara to create an ATS-friendly resume with the right structure.`,
+    'Exit & benefits': `## Understanding ${post.title}\n\n${intro}\n\n## The formula and method\n\nStatutory exit benefits follow specific rules under Indian labour law. Service period rounding, the applicable ceiling and tax treatment each affect the final amount.\n\n## A worked example\n\nFigures in any example are illustrative. Replace them with your actual last drawn salary, confirmed service dates and current rules from your HR department.\n\n## Before you rely on this estimate\n\nConfirm your actual service dates, last drawn salary and the applicable rules with your HR. Statutory entitlements and company policies can differ.\n\n## Common mistakes\n\nAssuming every employer's policy matches the statutory minimum. Not accounting for service period rounding. Overlooking tax treatment differences.\n\n## Next step\n\nA strong resume helps you move to your next role quickly. Use CVTara's templates to build an evidence-first resume ready for your next application.`,
+    'Career growth': `## Understanding ${post.title}\n\n${intro}\n\n## Key inputs for your calculation\n\nModel realistic figures based on verified market data, your actual cost of borrowing and a conservative salary projection. Avoid assuming a best-case scenario.\n\n## How to use the result\n\nThis estimate is a planning tool, not a guarantee. Career outcomes depend on many factors beyond the numbers — job market conditions, personal performance and timing.\n\n## What to verify\n\nConfirm loan terms, interest rates and salary benchmarks from authoritative sources before making any financial commitment.\n\n## Next step\n\nWhen you are ready to apply for your target role, use CVTara to build an ATS-friendly resume that reflects your new qualifications and evidence.`,
+    'Wealth planning': `## Understanding ${post.title}\n\n${intro}\n\n## How the estimate works\n\nThis uses standard financial formulas with assumptions about return rates, time horizon and contribution amounts. All projections are illustrative.\n\n## Important caveats\n\nMutual fund and investment returns are not guaranteed. Past performance does not predict future results. Inflation, taxation and changes in income all affect real outcomes.\n\n## Before you act\n\nConsult a SEBI-registered investment adviser before making significant financial decisions. Understand the risk level of any instrument before committing.\n\n## Next step\n\nA higher income accelerates wealth building. Use CVTara to create a resume that targets roles with the salary range you need.`,
+    'Salary resources': `## Understanding ${post.title}\n\n${intro}\n\n## How to use salary data\n\nMarket salary data is time-sensitive and varies by city, company size and individual profile. Treat any benchmark as a range, not a fixed number.\n\n## Building your target range\n\nCombine multiple sources: job postings with disclosed salaries, peer conversations, and published industry surveys. Check the date of each source.\n\n## Negotiation principles\n\nAnchor on your verified market data and your own evidence of impact. Be specific about scope and be willing to clarify the full compensation basis.\n\n## Next step\n\nA strong resume supports a strong negotiation. Build yours with CVTara and verify your evidence before any salary conversation.`,
+    'Resume formatting': `## Understanding ${post.title}\n\n${intro}\n\n## The core principle\n\nEvery formatting and content decision should serve the reader's ability to assess your experience quickly. Clear structure, accurate dates and verified claims matter more than visual design.\n\n## A practical approach\n\nRead the employer's instructions first. Check that your resume answers the role's main requirements. Keep a master copy and tailor each application separately.\n\n## Before submitting\n\nExport and open the file. Check that the text is selectable and the order makes sense. Confirm all dates and claims are accurate.\n\n## Next step\n\nUse CVTara's resume builder to apply these principles with a text-first template that passes ATS parsing and looks clear to a human recruiter.`,
+    'Job search': `## Understanding ${post.title}\n\n${intro}\n\n## The key principle\n\nConsistency, evidence and professional follow-through matter more than speed or volume. A targeted, well-prepared application outperforms ten generic ones.\n\n## A practical approach\n\nRead the employer's process instructions carefully. Keep a tracker so you know the status, document version and next action for every live application.\n\n## What to avoid\n\nFollowing up too soon or too often. Interpreting silence as rejection. Applying to roles you are not genuinely qualified for just to maintain activity.\n\n## Next step\n\nEvery application needs a strong resume. Use CVTara to build a version tailored to the specific role you are targeting.`,
+    'Salary & offers': `## Understanding ${post.title}\n\n${intro}\n\n## Building your case\n\nAnchor your target on verified market data, your own demonstrated evidence and the full scope of the role. Separate fixed pay, variable pay and benefits in any comparison.\n\n## The negotiation approach\n\nBe specific. Name a number or range. Connect it to market data and your evidence. Prepare for a counter and know your walk-away point.\n\n## What to check\n\nConfirm whether figures are CTC, gross or net. Understand bonus conditions, joining bonuses with clawbacks and vesting schedules.\n\n## Next step\n\nStronger evidence on your resume supports stronger salary conversations. Build your evidence base with CVTara before the next negotiation.`,
+    'Interview preparation': `## Understanding ${post.title}\n\n${intro}\n\n## The preparation method\n\nUse the role's requirements to select specific examples from your own experience. Prepare the context, your action and the outcome — all verifiable.\n\n## A practical example\n\nFor a behavioural question, describe a real situation. Include the constraint, your specific decision and the result you can verify. Avoid a generic or hypothetical answer.\n\n## Common mistakes\n\nGiving vague answers without specific evidence. Using team results as personal results. Preparing a script that breaks down when interrupted.\n\n## Next step\n\nYour interview evidence is stronger when it matches what is on your resume. Build a verified, evidence-first resume with CVTara.`
+  };
+  return templates[post.cat] || templates['Resume formatting'];
+}
+
+// ============================================================
+// ARTICLE RENDERER
+// ============================================================
+function openArticle(slug) {
+  const post = BLOG_POSTS.find(p => p.slug === slug);
+  if (!post) return;
+  showPage('page-article');
+  const E = v => String(v||'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  let bodyMd = BLOG_CONTENT[slug] || generateArticleContent(post);
+  let bodyHtml = renderMarkdown(bodyMd);
+  if (post.type === 'Calculator') bodyHtml += renderCalculatorWidget(post);
+  bodyHtml += `<div class="art-cta-box"><h3>Build your resume today</h3><p>Apply what you have learnt — create an ATS-friendly resume with CVTara's professional templates.</p><button class="btn btn-primary" onclick="hidePage();showSection('workspace')" style="background:#fff;color:#1e40af;font-weight:700;padding:10px 24px;border-radius:8px">Open Resume Builder →</button></div>`;
+  const related = BLOG_POSTS.filter(p => p.slug !== slug && (p.cat === post.cat || p.type === post.type)).slice(0,3);
+  updateArticleSEO(post);
+  const headings = [];
+  const hRe = /<h([23])[^>]*id="([^"]+)"[^>]*>([^<]+)<\/h/g;
+  let m;
+  while ((m = hRe.exec(bodyHtml)) !== null) headings.push({level:m[1],id:m[2],text:m[3]});
+  const tocHtml = headings.length > 2 ? `<div class="art-toc"><b>On this page</b>${headings.map(h=>`<a href="#${E(h.id)}" style="${h.level==='3'?'padding-left:22px;font-size:13px':''}">${E(h.text)}</a>`).join('')}</div>` : '<div class="art-toc" style="display:none"></div>';
+  const page = document.getElementById('page-article');
+  page.innerHTML = `<div class="article-shell">
+    ${tocHtml}
+    <div class="art-body">
+      <div class="art-breadcrumb"><a href="#" onclick="showPage('page-blog');return false">Blog</a> › <span>${E(post.cat)}</span></div>
+      <div class="art-hero">${blogCategoryHeroSVG(post.cat, post.type)}</div>
+      <div class="art-eyebrow">${E(post.cat)} \xB7 ${E(post.type)}</div>
+      <h1 class="art-title">${E(post.title)}</h1>
+      <div class="art-meta">
+        <span>✍️ CVTara Editorial</span>
+        <span>📅 October 2024</span>
+        <span>${post.type==='Calculator'?'⚡ Interactive tool':'📖 '+Math.max(3,Math.ceil(bodyMd.length/1200))+' min read'}</span>
+      </div>
+      <div class="art-content">${bodyHtml}</div>
+      ${related.length?`<div class="art-related"><h3>Related resources</h3><div class="art-related-grid">${related.map(r=>`<div class="art-related-card" onclick="openArticle('${E(r.slug)}')"><div class="bpc-tag ${r.type==='Calculator'?'calc':'guide'}" style="margin-bottom:8px">${r.type}</div><div style="font-weight:700;font-size:15px;line-height:1.4">${E(r.title)}</div></div>`).join('')}</div></div>`:''}
+    </div>
+  </div>`;
+  window.scrollTo(0,0);
+  setTimeout(()=>{
+    const links = page.querySelectorAll('.art-toc a');
+    if (!links.length) return;
+    const obs = new IntersectionObserver(entries=>{
+      entries.forEach(entry=>{
+        if (entry.isIntersecting){
+          links.forEach(l=>l.classList.remove('active'));
+          const lnk = page.querySelector('.art-toc a[href="#'+entry.target.id+'"]');
+          if (lnk) lnk.classList.add('active');
+        }
+      });
+    },{rootMargin:'-20% 0px -70%'});
+    page.querySelectorAll('.art-content h2, .art-content h3').forEach(h=>obs.observe(h));
+  },100);
+}
+
+function updateArticleSEO(post) {
+  document.title = post.title + ' | CVTara';
+  const dm = document.querySelector('meta[name="description"]');
+  if (dm) dm.setAttribute('content', post.desc);
+  const schema = document.querySelector('script[type="application/ld+json"]');
+  if (schema) {
+    schema.textContent = JSON.stringify({
+      "@context":"https://schema.org","@type":"Article",
+      "headline":post.title,"description":post.desc,
+      "author":{"@type":"Organization","name":"CVTara Editorial"},
+      "publisher":{"@type":"Organization","name":"CVTara","url":"https://cvtara.com"},
+      "datePublished":"2024-10-01","dateModified":"2024-10-01"
+    });
+  }
+}
+
+// ============================================================
+// ADMIN BLOG TABLE
+// ============================================================
+function initAdminBlogTable() {
+  const table = document.getElementById('adm-blog-table');
+  if (!table || table.dataset.built) return;
+  table.dataset.built = '1';
+  adminBlogFilter();
+}
+
+function adminBlogFilter() {
+  const E = v => String(v||'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  const q = (document.getElementById('adm-blog-search')?.value || '').toLowerCase();
+  const cat = document.getElementById('adm-blog-cat')?.value || '';
+  const type = document.getElementById('adm-blog-type')?.value || '';
+  let posts = BLOG_POSTS;
+  if (q) posts = posts.filter(p => (p.title+p.cat).toLowerCase().includes(q));
+  if (cat) posts = posts.filter(p => p.cat === cat);
+  if (type) posts = posts.filter(p => p.type === type);
+  const count = document.getElementById('adm-blog-count');
+  if (count) count.textContent = posts.length + ' posts';
+  const table = document.getElementById('adm-blog-table');
+  if (!table) return;
+  table.innerHTML = `<table><thead><tr><th>ID</th><th>Title</th><th>Category</th><th>Type</th><th>Status</th><th>Actions</th></tr></thead><tbody>${
+    posts.map(p=>`<tr>
+      <td style="color:var(--muted);font-size:13px">${p.id}</td>
+      <td style="font-weight:600;max-width:300px">${E(p.title)}<br><small style="color:var(--muted);font-weight:400">${E(p.slug)}</small></td>
+      <td><span class="pill" style="background:var(--soft)">${E(p.cat)}</span></td>
+      <td><span class="pill ${p.type==='Calculator'?'st-paid':'st-active'}">${p.type}</span></td>
+      <td><span class="pill st-paid">Published</span></td>
+      <td><button class="btn btn-outline btn-sm" onclick="openArticle('${E(p.slug)}');showPage('page-article')">Preview</button></td>
+    </tr>`).join('')
+  }</tbody></table>`;
 }
 </script>
 <!-- Fullscreen preview modal -->
