@@ -140,7 +140,7 @@ class ContentController extends Controller
         }
         $html = preg_replace('#<link[^>]*rel="canonical"[^>]*>|<meta[^>]*name="robots"[^>]*>#', '', $html);
         $index = $seo['searchIndexing'] && ! $admin && ! in_array($path, ['workspace.html', 'checkout.html']);
-        $head = '<link rel="canonical" href="'.e(url($uri)).'"><meta name="robots" content="'.($index ? 'index,follow' : 'noindex,nofollow').'"><meta name="csrf-token" content="'.e(csrf_token()).'"><meta name="cvtara-user" content="'.e((string) ($r->user()?->id ?? 'guest')).'"><link rel="stylesheet" href="/launch.css"><link rel="stylesheet" href="/experience.css"><link rel="stylesheet" href="/cvtara-ui.css">';
+        $head = '<link rel="canonical" href="'.e(url($uri)).'"><meta name="robots" content="'.($index ? 'index,follow' : 'noindex,nofollow').'"><meta name="csrf-token" content="'.e(csrf_token()).'"><meta name="cvtara-user" content="'.e((string) ($r->user()?->id ?? 'guest')).'"><link rel="stylesheet" href="/launch.css"><link rel="stylesheet" href="/experience.css"><link rel="stylesheet" href="/cvtara-ui.css"><link rel="stylesheet" href="/cvtara-ds.css">';
         // Keep brand identity and sharing metadata in the server response, including without JavaScript.
         preg_match('#<title>(.*?)</title>#s', $html, $titleMatch);
         preg_match('#<meta[^>]*name="description"[^>]*content="([^"]*)"#', $html, $descriptionMatch);

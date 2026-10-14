@@ -126,7 +126,7 @@
   M.pageFor = function (url) {
     let u; try { u = new URL(url, location.href); } catch (e) { return null; }
     if (u.origin !== location.origin && !/^about:|^blob:/.test(u.protocol)) return null;
-    let p = u.pathname; const base = location.pathname.replace(/[^/]*$/, ''); if (p.startsWith(base) && base !== '/') p = p.slice(base.length); p = p.replace(/^\/+/, '').replace(/\/$/, '');
+    let p = u.pathname; let base = location.pathname.replace(/[^/]*$/, ''); try { const bp = new URL(window.__BASE || './', location.href).pathname; if (p.startsWith(bp)) base = bp; } catch (e) {} if (p.startsWith(base) && base !== '/') p = p.slice(base.length); p = p.replace(/^\/+/, '').replace(/\/$/, '');
     if (p === '' || p === 'index.html') return 'home.html';
     if (PAGES[p]) return p; if (PAGES[p + '.html']) return p + '.html';
     if (/^(guides|blog|resume|cover-letter)\//.test(p)) return 'article.html';
@@ -140,6 +140,7 @@
     return html
       .replace(/(src|href)="\/(?!\/)([^"]*)"/g, (m, a, v) => ASSET.test(v) ? `${a}="${v}"` : m)
       .replace(/(<meta name="cvtara-user" content=")[^"]*"/, (m, a) => a + (st.role === 'owner' ? '1' : st.role ? '2' : 'guest') + '"')
+      .replace('</head>', '<link rel="stylesheet" href="cvtara-ds.css"></head>')
       .replace(/<meta[^>]*http-equiv="refresh"[^>]*>/gi, '')
       .replace(/(<script[^>]*src=")(?!(https?:|\/\/))([^"]*)"/gi, (m, a, b, c) => a + c + '"');
   }
@@ -147,8 +148,24 @@
     let html = PAGES[name]; if (!html) html = PAGES['home.html'];
     st.cur = name; save();
     try { history.replaceState(null, '', location.pathname + location.search + (hash || '')); } catch (e) {}
-    document.open(); document.write(transform(html)); document.close(); M.attach();
+    document.open(); document.write(transform(html).replace(/<head([^>]*)>/i, '<head$1><base href="' + (window.__BASE || './') + '">')); document.close(); M.attach(); M.chrome(name);
     window.scrollTo(0, 0);
+  };
+  M.chrome = function (name) {
+    try {
+      document.body.classList.add('has-topbar');
+      if (st.theme === 'dark') { document.body.classList.add('dark'); document.documentElement.setAttribute('data-theme', 'dark'); }
+      const bar = document.createElement('div'); bar.className = 'cv-topbar';
+      const cur = name === 'workspace.html' ? 'w' : name === 'admin.html' ? 'a' : 'l';
+      bar.innerHTML = '<span class="cv-brand">CVTara</span><div class="cv-tabs"><button data-t="l">Landing</button><button data-t="w">Workspace</button><button data-t="a">Admin</button></div><button data-t="theme" title="Day / night">🌓</button>';
+      bar.querySelectorAll('[data-t]').forEach(b => { if (b.dataset.t === cur) b.classList.add('on'); b.onclick = () => {
+        const t = b.dataset.t;
+        if (t === 'theme') { const d = !document.body.classList.contains('dark'); document.body.classList.toggle('dark', d); document.documentElement.setAttribute('data-theme', d ? 'dark' : 'light'); st.theme = d ? 'dark' : 'light'; save(); return; }
+        if (t === 'l') return M.render('home.html');
+        M.signIn(t === 'a' ? 'owner' : 'customer'); M.render(t === 'a' ? 'admin.html' : 'workspace.html');
+      }; });
+      document.body.insertBefore(bar, document.body.firstChild);
+    } catch (e) {}
   };
   M.go = function (url) {
     if (/^(mailto|tel|javascript):/.test(url)) return;

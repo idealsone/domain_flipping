@@ -26,7 +26,7 @@
       el.classList.add('show');
       timer = setTimeout(function hide() {
         if (hover) { timer = setTimeout(hide, 1500); return; }
-        el.classList.remove('show');
+        el.classList.add('hide'); setTimeout(() => el.classList.remove('show', 'hide'), 420);
         i = (i + 1) % d.messages.length; st.i = i; save();
         timer = setTimeout(cycle, Math.max(3, d.settings.gapSeconds) * 1000);
       }, Math.max(3, d.settings.showSeconds) * 1000);
