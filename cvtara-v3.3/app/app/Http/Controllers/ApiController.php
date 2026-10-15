@@ -8,6 +8,7 @@ use App\Services\AffiliateProfiles;
 use App\Services\BusinessControls;
 use App\Services\CashfreeCheckout;
 use App\Services\Credits;
+use App\Services\JobPage;
 use App\Services\MailAutomation;
 use App\Services\Payments;
 use App\Services\ReferralRewards;
@@ -26,7 +27,7 @@ class ApiController extends Controller
         $u = $r->user();
         $id = $u?->id;
         $get = $r->isMethod('GET');
-        if ($get && preg_match('#^(checkout/|features/use|traffic$|security/(send|verify)-code|referrals/(withdraw|creator|payout-profile)$|account/delete$|feedback/[^/]+/withdraw$)#', $path)) {
+        if ($get && preg_match('#^(checkout/|ats/scan$|traffic$|security/(send|verify)-code|referrals/(withdraw|creator|payout-profile)$|account/delete$|feedback/[^/]+/withdraw$)#', $path)) {
             abort(405);
         }if ($r->isMethod('DELETE') && ! preg_match('#^(resumes|letters|applications)/[a-f0-9-]{36}$#', $path)) {
             abort(405);
@@ -179,11 +180,12 @@ class ApiController extends Controller
             $l = $a['limits'];
             $pid = $a['purchase']?->id;
             $exports = $pid ? DB::table('product_usage')->where('owner_id', $id)->where('action', 'export')->where('reference', 'like', $pid.':%')->count() : 0;
-            $scans = $pid ? DB::table('product_usage')->where('owner_id', $id)->where('action', 'match')->where('reference', $pid)->count() : 0;
+            $cs = Credits::status($id);
+            $scans = $a['paid'] ? $cs['scans']['used'] : DB::table('ats_scans')->where('owner_id', $id)->where('status', '!=', 'void')->count();
             $plans = Settings::plans();
             unset($a['purchase']);
 
-            return $ok([...$a, 'planName' => $plans[$a['plan']]['name'] ?? 'Free', 'daysLeft' => $a['accessUntil'] ? max(0, (int) ceil((strtotime($a['accessUntil']) - time()) / 86400)) : 0, 'credits' => Credits::status($id), 'caps' => ['resumes' => (int) $l['savedResumes'] + 1, 'letters' => (int) $l['savedLetters'], 'atsScans' => $l['atsScans'] ?? null, 'exports' => null], 'used' => ['exports' => $exports, 'savedResumes' => DB::table('resume_drafts')->where('owner_id', $id)->count(), 'savedLetters' => DB::table('cover_letter_drafts')->where('owner_id', $id)->count(), 'atsScans' => $scans, 'dailyMatches' => DB::table('product_usage')->where('owner_id', $id)->where('action', 'match')->whereDate('created_at', today())->count()]]);
+            return $ok([...$a, 'planName' => $plans[$a['plan']]['name'] ?? 'Free', 'daysLeft' => $a['accessUntil'] ? max(0, (int) ceil((strtotime($a['accessUntil']) - time()) / 86400)) : 0, 'credits' => $cs, 'caps' => ['resumes' => (int) $l['savedResumes'] + 1, 'letters' => (int) $l['savedLetters'], 'atsScans' => $cs['scans']['total'], 'exports' => null], 'used' => ['exports' => $exports, 'savedResumes' => DB::table('resume_drafts')->where('owner_id', $id)->count(), 'savedLetters' => DB::table('cover_letter_drafts')->where('owner_id', $id)->count(), 'atsScans' => $scans, 'dailyMatches' => DB::table('ats_scans')->where('owner_id', $id)->where('status', '!=', 'void')->whereDate('created_at', today())->count()]]);
         }
         if (preg_match('#^resumes/([a-f0-9-]{36})/(primary|variant)$#', $path, $m)) {
             abort_unless($r->isMethod('POST'), 405);
@@ -207,26 +209,86 @@ class ApiController extends Controller
         if (preg_match('#^(resumes|letters)(?:/([a-f0-9-]{36}))?$#', $path, $m)) {
             return $this->documents($r, $m[1], $m[2] ?? null);
         }
-        if ($path === 'features/use') {
-            $r->validate(['action' => 'required|in:match']);
-            DB::transaction(function () use ($id) {
+        if ($path === 'ats/scan' && $r->isMethod('POST')) {
+            $v = $r->validate(['resumeId' => ['required', 'regex:/^[a-f0-9-]{36}$/'], 'source' => 'required|in:link,file,text', 'url' => 'nullable|string|max:1000', 'text' => 'nullable|string|max:60000', 'title' => 'nullable|string|max:180', 'company' => 'nullable|string|max:180']);
+            abort_unless(Settings::get('features')['match']['enabled'], 403);
+            if ($v['source'] === 'link' && \Illuminate\Support\Facades\RateLimiter::tooManyAttempts('ats-link:'.$id, 10)) {
+                throw ValidationException::withMessages(['url' => 'Too many job links in a minute. Wait a moment and try again.']);
+            }
+            if ($v['source'] === 'link') {
+                \Illuminate\Support\Facades\RateLimiter::hit('ats-link:'.$id, 60);
+            }
+            abort_unless(DB::table('resume_drafts')->where('id', $v['resumeId'])->where('owner_id', $id)->exists(), 422, 'Choose one of your saved resumes.');
+            $title = trim((string) ($v['title'] ?? ''));
+            $company = trim((string) ($v['company'] ?? ''));
+            if ($v['source'] === 'link') {
+                if (empty($v['url'])) {
+                    throw ValidationException::withMessages(['url' => 'Paste the link of the job posting.']);
+                }
+                $page = JobPage::fetch($v['url']);
+                $text = $page['text'];
+                $title = $title ?: $page['title'];
+                $company = $company ?: $page['company'];
+            } else {
+                $text = trim((string) ($v['text'] ?? ''));
+                if (mb_strlen($text) < 80) {
+                    throw ValidationException::withMessages(['text' => 'The job description is too short to review. Include the responsibilities and requirements.']);
+                }
+                $text = mb_substr($text, 0, 40000);
+            }
+            $scanId = (string) Str::uuid();
+            $res = DB::transaction(function () use ($id, $scanId, $v, $text, $title, $company) {
                 User::whereKey($id)->lockForUpdate()->first();
+                foreach (DB::table('ats_scans')->where('owner_id', $id)->where('status', 'reserved')->where('created_at', '<', now()->subMinutes(15))->pluck('id') as $stale) {
+                    Credits::releaseScan($id, $stale);
+                    DB::table('ats_scans')->where('id', $stale)->update(['status' => 'void', 'updated_at' => now()]);
+                }
                 $f = Settings::get('features')['match'];
-                abort_unless($f['enabled'], 403);
                 $a = Settings::access($id);
                 $l = $a['limits'];
-                $count = DB::table('product_usage')->where('owner_id', $id)->where('action', 'match')->whereDate('created_at', today())->count();
+                $today = DB::table('ats_scans')->where('owner_id', $id)->where('status', '!=', 'void')->whereDate('created_at', today())->count();
                 $cap = $a['paid'] ? (int) ($l['dailyMatches'] ?? 100) : min((int) $f['limit'], (int) $l['dailyMatches']);
-                if ($count >= $cap) {
-                    throw ValidationException::withMessages(['limit' => 'Daily review allowance reached. Try again tomorrow.']);
+                if ($today >= $cap) {
+                    throw ValidationException::withMessages(['limit' => $a['paid'] ? 'Daily ATS check limit reached. Try again tomorrow.' : 'Your free ATS checks for today are used. Try again tomorrow or choose a plan for more scans.']);
                 }
-                if ($a['paid'] && ($l['atsScans'] ?? null) !== null && DB::table('product_usage')->where('owner_id', $id)->where('action', 'match')->where('reference', $a['purchase']->id)->count() >= (int) $l['atsScans']) {
-                    throw ValidationException::withMessages(['limit' => 'Your ATS scan allowance is used. Upgrade your plan for more scans.']);
-                }DB::table('product_usage')->insert(['id' => (string) Str::uuid(), 'owner_id' => $id, 'action' => 'match', 'reference' => $a['purchase']->id ?? '', 'created_at' => now(), 'updated_at' => now()]);
-                Settings::audit($id, 'resume_compared');
+                Credits::reserveScan($id, $scanId);
+                DB::table('ats_scans')->insert(['id' => $scanId, 'owner_id' => $id, 'resume_id' => $v['resumeId'], 'source' => $v['source'], 'job_url' => $v['source'] === 'link' ? mb_substr((string) $v['url'], 0, 1000) : '', 'job_title' => $title, 'company' => $company, 'job_text' => $text, 'status' => 'reserved', 'created_at' => now(), 'updated_at' => now()]);
+
+                return true;
             });
 
+            return $ok(['scanId' => $scanId, 'jobText' => $text, 'title' => $title, 'company' => $company, 'credits' => Credits::status($id)]);
+        }
+        if (preg_match('#^ats/scans/([a-f0-9-]{36})/(result|void)$#', $path, $m) && $r->isMethod('POST')) {
+            $scan = DB::table('ats_scans')->where('id', $m[1])->where('owner_id', $id)->first();
+            abort_unless($scan, 404);
+            if ($m[2] === 'void') {
+                if ($scan->status === 'reserved') {
+                    DB::transaction(function () use ($id, $scan) {
+                        Credits::releaseScan($id, $scan->id);
+                        DB::table('ats_scans')->where('id', $scan->id)->update(['status' => 'void', 'updated_at' => now()]);
+                    });
+                }
+
+                return $ok(['credits' => Credits::status($id)]);
+            }
+            $v = $r->validate(['score' => 'required|integer|min:0|max:100', 'counts' => 'required|array', 'counts.*' => 'integer|min:0|max:1000', 'gaps' => 'nullable|array|max:40', 'gaps.*' => 'string|max:240', 'title' => 'nullable|string|max:180', 'company' => 'nullable|string|max:180']);
+            abort_unless($scan->status !== 'void', 409);
+            DB::table('ats_scans')->where('id', $scan->id)->update(['score' => $v['score'], 'result_json' => json_encode(['counts' => $v['counts'], 'gaps' => $v['gaps'] ?? []]), 'status' => 'done', 'job_title' => mb_substr(trim((string) ($v['title'] ?? '')) ?: $scan->job_title, 0, 180), 'company' => mb_substr(trim((string) ($v['company'] ?? '')) ?: $scan->company, 0, 180), 'updated_at' => now()]);
+            Settings::audit($id, 'resume_compared');
+
             return $ok();
+        }
+        if ($path === 'ats/scans' && $get) {
+            $rows = DB::table('ats_scans')->where('owner_id', $id)->where('status', 'done')->orderByDesc('created_at')->limit(30)->get(['id', 'resume_id', 'source', 'job_url', 'job_title', 'company', 'score', 'result_json', 'created_at']);
+
+            return $ok(['scans' => $rows->map(fn ($x) => ['id' => $x->id, 'resumeId' => $x->resume_id, 'source' => $x->source, 'jobUrl' => $x->job_url, 'title' => $x->job_title, 'company' => $x->company, 'score' => $x->score, 'result' => json_decode((string) $x->result_json, true), 'createdAt' => $x->created_at]), 'credits' => Credits::status($id)]);
+        }
+        if (preg_match('#^ats/scans/([a-f0-9-]{36})$#', $path, $m) && $get) {
+            $x = DB::table('ats_scans')->where('id', $m[1])->where('owner_id', $id)->where('status', 'done')->first();
+            abort_unless($x, 404);
+
+            return $ok(['scan' => ['id' => $x->id, 'resumeId' => $x->resume_id, 'source' => $x->source, 'jobUrl' => $x->job_url, 'title' => $x->job_title, 'company' => $x->company, 'score' => $x->score, 'result' => json_decode((string) $x->result_json, true), 'jobText' => $x->job_text, 'createdAt' => $x->created_at]]);
         }
         if ($path === 'applications' && $get) {
             return $ok(['applications' => DB::table('applications')->where('owner_id', $id)->orderByDesc('updated_at')->get()]);
@@ -355,7 +417,7 @@ class ApiController extends Controller
 
             return response()->json(['ok' => true]);
         }
-        $v = $r->validate(['company' => 'required|string|max:160', 'role' => 'required|string|max:160', 'jobDescription' => 'nullable|string|max:40000']);
+        $v = $r->validate(['company' => 'required|string|max:160', 'role' => 'required|string|max:160', 'jobDescription' => 'nullable|string|max:40000', 'jobUrl' => 'nullable|url:http,https|max:1000']);
         $new = DB::transaction(function () use ($id, $row, $v) {
             User::whereKey($id)->lockForUpdate()->first();
             abort_unless(Settings::get('features')['builder']['enabled'], 403);
@@ -371,7 +433,7 @@ class ApiController extends Controller
             $data['company'] = $v['company'];
             $data['role'] = $v['role'];
             $nid = (string) Str::uuid();
-            DB::table('resume_drafts')->insert(['id' => $nid, 'owner_id' => $id, 'title' => substr($data['title'], 0, 180), 'template' => $row->template, 'company' => $v['company'], 'role' => $v['role'], 'content_json' => json_encode($data), 'revision' => 1, 'is_primary' => false, 'parent_id' => $row->id, 'job_description' => $v['jobDescription'] ?? null, 'created_at' => now(), 'updated_at' => now()]);
+            DB::table('resume_drafts')->insert(['id' => $nid, 'owner_id' => $id, 'title' => substr($data['title'], 0, 180), 'template' => $row->template, 'company' => $v['company'], 'role' => $v['role'], 'content_json' => json_encode($data), 'revision' => 1, 'is_primary' => false, 'parent_id' => $row->id, 'job_description' => $v['jobDescription'] ?? null, 'job_url' => $v['jobUrl'] ?? null, 'created_at' => now(), 'updated_at' => now()]);
             Settings::audit($id, 'resume_variant_created', $nid);
 
             return $nid;
@@ -391,7 +453,7 @@ class ApiController extends Controller
             return $x;
         }, $list);
 
-        return ['generatedAt' => now()->toIso8601String(), 'account' => ['name' => $u->name, 'email' => $u->email, 'createdAt' => $u->created_at, 'referralCode' => $u->referral_code], 'profile' => (array) DB::table('profiles')->where('owner_id', $id)->first(), 'resumes' => $decode($rows('resume_drafts')), 'coverLetters' => $decode($rows('cover_letter_drafts')), 'applications' => $rows('applications'), 'purchases' => $rows('purchases', ['id', 'plan', 'amount_paise', 'refunded_paise', 'currency', 'status', 'coupon_code', 'purchased_at', 'access_until']), 'reviews' => $rows('feedback', ['display_name', 'rating', 'content', 'status', 'created_at']), 'referralCommissions' => DB::table('referral_commissions')->where('referrer_id', $id)->get(['amount_paise', 'rate_bps', 'created_at'])->map(fn ($x) => (array) $x)->all(), 'withdrawals' => $rows('withdrawals', ['amount_paise', 'destination_masked', 'status', 'reference', 'created_at']), 'payoutProfile' => (array) DB::table('payout_profiles')->where('owner_id', $id)->first(['status', 'destination_masked']), 'creatorApplication' => (array) DB::table('creator_applications')->where('owner_id', $id)->first(['status', 'audience', 'rate_bps', 'created_at']), 'activity' => DB::table('activity_events')->where('owner_id', $id)->orderByDesc('created_at')->limit(500)->get(['event', 'reference', 'created_at'])->map(fn ($x) => (array) $x)->all()];
+        return ['generatedAt' => now()->toIso8601String(), 'account' => ['name' => $u->name, 'email' => $u->email, 'createdAt' => $u->created_at, 'referralCode' => $u->referral_code], 'profile' => (array) DB::table('profiles')->where('owner_id', $id)->first(), 'resumes' => $decode($rows('resume_drafts')), 'coverLetters' => $decode($rows('cover_letter_drafts')), 'applications' => $rows('applications'), 'purchases' => $rows('purchases', ['id', 'plan', 'amount_paise', 'refunded_paise', 'currency', 'status', 'coupon_code', 'purchased_at', 'access_until']), 'reviews' => $rows('feedback', ['display_name', 'rating', 'content', 'status', 'created_at']), 'referralCommissions' => DB::table('referral_commissions')->where('referrer_id', $id)->get(['amount_paise', 'rate_bps', 'created_at'])->map(fn ($x) => (array) $x)->all(), 'withdrawals' => $rows('withdrawals', ['amount_paise', 'destination_masked', 'status', 'reference', 'created_at']), 'payoutProfile' => (array) DB::table('payout_profiles')->where('owner_id', $id)->first(['status', 'destination_masked']), 'creatorApplication' => (array) DB::table('creator_applications')->where('owner_id', $id)->first(['status', 'audience', 'rate_bps', 'created_at']), 'atsChecks' => $rows('ats_scans', ['id', 'source', 'job_url', 'job_title', 'company', 'score', 'result_json', 'status', 'created_at']), 'activity' => DB::table('activity_events')->where('owner_id', $id)->orderByDesc('created_at')->limit(500)->get(['event', 'reference', 'created_at'])->map(fn ($x) => (array) $x)->all()];
     }
 
     // Personal data is erased. Purchase and payout records stay (legal/financial) but are detached from the person.
@@ -430,7 +492,7 @@ class ApiController extends Controller
                 $row = (clone $query)->where('id', $doc)->first();
                 abort_unless($row, 404);
 
-                return response()->json(['ok' => true, $one => ['id' => $row->id, 'revision' => $row->revision, 'isPrimary' => (bool) ($row->is_primary ?? false), 'parentId' => $row->parent_id ?? null, 'jobDescription' => $row->job_description ?? '', 'data' => json_decode($row->content_json, true)]]);
+                return response()->json(['ok' => true, $one => ['id' => $row->id, 'revision' => $row->revision, 'isPrimary' => (bool) ($row->is_primary ?? false), 'parentId' => $row->parent_id ?? null, 'jobDescription' => $row->job_description ?? '', 'jobUrl' => $row->job_url ?? '', 'data' => json_decode($row->content_json, true)]]);
             }
 
             return response()->json(['ok' => true, $type => $query->orderByDesc('updated_at')->get($type === 'resumes' ? ['id', 'title', 'template', 'company', 'role', 'revision', 'is_primary', 'parent_id', 'created_at', 'updated_at'] : ['id', 'title', 'template', 'company', 'role', 'revision', 'created_at', 'updated_at']), 'limit' => $limit, 'credits' => Credits::status($id)]);

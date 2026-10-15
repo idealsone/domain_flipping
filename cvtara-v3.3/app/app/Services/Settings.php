@@ -77,18 +77,18 @@ return $value;
 
         return [
             'free' => ['type' => 'plan', 'name' => 'Normal user', 'audience' => 'all', 'tagline' => 'Create an account, build 1 resume and 1 cover letter, preview with a watermark — subscribe to download', 'price' => 0, 'mrp' => 0, 'accessDays' => 0, 'savedResumes' => 1, 'savedLetters' => 1, 'atsScans' => null, 'dailyMatches' => 3, 'exports' => 0, 'rank' => 0, 'perks' => [], 'popular' => false, 'referral' => false],
-            'fresher-basic' => $mk('Fresher Basic', 'fresher', 'Perfect for your first job application', 299, 399, 30, 10, 10, 1, ['PDF & Word downloads', 'Email support']),
-            'fresher-standard' => $mk('Fresher Standard', 'fresher', 'Apply to more jobs with more variations', 399, 549, 60, 20, null, 2, ['Unlimited ATS scans', 'Priority support'], ['popular' => true]),
-            'fresher-pro' => $mk('Fresher Pro', 'fresher', 'Maximum applications, maximum chances', 499, 699, 90, 30, null, 3, ['Unlimited ATS Scans', 'Priority Support', 'Referral Programme Access'], ['referral' => true]),
-            'pro-basic' => $mk('Professional Basic', 'experienced', 'For professionals targeting new opportunities', 399, 549, 30, 10, 10, 1, ['PDF & Word downloads', 'Email support']),
-            'pro-standard' => $mk('Professional Standard', 'experienced', 'Most chosen by mid-level professionals', 499, 699, 60, 20, null, 2, ['Unlimited ATS scans', 'Priority support'], ['popular' => true]),
-            'pro-pro' => $mk('Professional Pro', 'experienced', 'For senior professionals & career changers', 599, 849, 90, 30, null, 3, ['Unlimited ATS Scans', '1-on-1 Resume Review Call', 'Referral Programme Access'], ['referral' => true]),
+            'fresher-basic' => $mk('Fresher Basic', 'fresher', 'Perfect for your first job application', 299, 399, 30, 10, 20, 1, ['PDF & Word downloads', '20 ATS scans', 'Email support']),
+            'fresher-standard' => $mk('Fresher Standard', 'fresher', 'Apply to more jobs with more variations', 399, 549, 60, 20, 40, 2, ['40 ATS scans', 'Priority support'], ['popular' => true]),
+            'fresher-pro' => $mk('Fresher Pro', 'fresher', 'Maximum applications, maximum chances', 499, 699, 90, 30, 60, 3, ['60 ATS scans', 'Priority Support', 'Referral Programme Access'], ['referral' => true]),
+            'pro-basic' => $mk('Professional Basic', 'experienced', 'For professionals targeting new opportunities', 399, 549, 30, 10, 20, 1, ['PDF & Word downloads', '20 ATS scans', 'Email support']),
+            'pro-standard' => $mk('Professional Standard', 'experienced', 'Most chosen by mid-level professionals', 499, 699, 60, 20, 40, 2, ['40 ATS scans', 'Priority support'], ['popular' => true]),
+            'pro-pro' => $mk('Professional Pro', 'experienced', 'For senior professionals & career changers', 599, 849, 90, 30, 60, 3, ['60 ATS scans', '1-on-1 Resume Review Call', 'Referral Programme Access'], ['referral' => true]),
         ] + self::addonDefaults();
     }
 
     public static function addonDefaults(): array
     {
-        $a = fn ($n, $price) => ['type' => 'addon', 'name' => "Add-on · $n resumes + $n cover letters", 'audience' => 'all', 'tagline' => "Extra $n resume downloads and $n cover-letter downloads", 'price' => $price, 'mrp' => 0, 'accessDays' => 45, 'savedResumes' => $n, 'savedLetters' => $n, 'atsScans' => null, 'dailyMatches' => 0, 'exports' => 0, 'rank' => 0, 'perks' => [], 'popular' => false, 'referral' => false];
+        $a = fn ($n, $price) => ['type' => 'addon', 'name' => "Add-on · $n resumes + $n cover letters", 'audience' => 'all', 'tagline' => "Extra $n resume downloads, $n cover-letter downloads and ".($n * 2)." ATS scans", 'price' => $price, 'mrp' => 0, 'accessDays' => 45, 'savedResumes' => $n, 'savedLetters' => $n, 'atsScans' => $n * 2, 'dailyMatches' => 0, 'exports' => 0, 'rank' => 0, 'perks' => [], 'popular' => false, 'referral' => false];
 
         return ['addon-10' => $a(10, 149), 'addon-20' => $a(20, 249), 'addon-30' => $a(30, 399)];
     }

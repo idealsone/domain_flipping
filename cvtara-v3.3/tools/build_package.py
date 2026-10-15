@@ -12,7 +12,7 @@ from datetime import date
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
-VERSION = "3.7.0"
+VERSION = "3.8.0"
 SKIP_DIRS = {".git", "node_modules", "tests"}
 SKIP_FILES = {".env", ".DS_Store"}
 

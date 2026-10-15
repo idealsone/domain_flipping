@@ -10,10 +10,10 @@ CVTara is an ATS-friendly resume and cover-letter builder run by an experienced 
 
 | Plan | Price | Access | Resume downloads | Cover-letter downloads | ATS scans |
 |---|---|---|---|---|---|
-| Fresher Basic / Standard / Pro | ₹299 / 399 / 499 | 30 / 60 / 90 days | 10 / 20 / 30 | 10 / 20 / 30 | 10 / unlimited / unlimited |
-| Experienced (pro-basic / standard / pro) | ₹399 / 499 / 599 | 30 / 60 / 90 days | 10 / 20 / 30 | 10 / 20 / 30 | 10 / unlimited / unlimited |
-| Add-ons +10 / +20 / +30 | ₹149 / 249 / 399 | **45 days from purchase** | +10 / +20 / +30 | +10 / +20 / +30 | — |
-| Normal user (`free`) | ₹0 | account only | none (previews only) | none | 3 a day |
+| Fresher Basic / Standard / Pro | ₹299 / 399 / 499 | 30 / 60 / 90 days | 10 / 20 / 30 | 10 / 20 / 30 | 20 / 40 / 60 |
+| Experienced (pro-basic / standard / pro) | ₹399 / 499 / 599 | 30 / 60 / 90 days | 10 / 20 / 30 | 10 / 20 / 30 | 20 / 40 / 60 |
+| Add-ons +10 / +20 / +30 | ₹149 / 249 / 399 | **45 days from purchase** | +10 / +20 / +30 | +10 / +20 / +30 | +20 / +40 / +60 |
+| Normal user (`free`) | ₹0 | account only | none (previews only; 1 resume + 1 letter kept) | none | 3 a day |
 
 **Rules**
 1. Saving, editing and previewing are free (a draft cap per kind prevents abuse). A free account can keep **1 resume and 1 cover letter**; its on-screen previews carry a watermark with the account code and cannot be copied or printed, and downloading requires a plan. Paid accounts see clean previews and download without a watermark.
@@ -27,6 +27,13 @@ All prices, credits, validity, perks, popular badge and ranks are editable in **
 **Screenshot protection (honest limits):** the site discourages casual copying — traceable watermark on every free-account preview, no selecting/copying/dragging/printing of previews, previews blur when the window loses focus or Print Screen is pressed. No website can fully stop screenshots, screen recordings or phone cameras; the watermark with the account code makes a leak traceable, and only a paid download gives a clean file.
 
 Other purchase rules (verified by automated tests): the strongest plan wins; a cheaper plan is refused while a higher one is active; the same plan renewed stacks time; a partial bank reversal keeps access, a full reversal or dispute removes that purchase; webhooks are idempotent; coupons support plan lists, expiry, total and per-user limits and always leave a minimum ₹1; Cashfree is the primary gateway (Razorpay optional); all payments are final and non-refundable.
+
+**ATS Match (check a job, then build)**
+1. The customer chooses a saved resume from a dropdown (no uploading). The job is a link (read fresh on every check, public pages only), a PDF/DOCX/text file read in the browser, or pasted text.
+2. Starting a check reserves **1 ATS scan** on the server (plan scans first, then add-ons); if the review cannot finish, the scan is given back and nothing is used. Unfinished checks are released after 15 minutes. Free accounts have only the small daily limit.
+3. The report: match estimate (requirement evidence weighted Required 3 / other 2 / Preferred 1, blended with keyword coverage), keywords found/missing, a prioritised list of what is lacking, and the full requirement-by-requirement view. It is guidance, not a real employer ATS result. The summary and job text are saved (a year) so the customer can build from it later.
+4. The customer chooses a tailored resume, a cover letter or both. Drafts are free. Downloads use 1 credit of their own kind each (1 resume + 2 letters = 1 resume credit + 2 letter credits) and a credit notice is shown after every download.
+5. Each clean download of a document that has a company and role adds or updates one entry in **Applications** (stage Saved, job link, credits used). Downloads without a job (the primary resume) are not added.
 
 ## 3. What a customer does (after the landing page)
 1. **Landing page** → choose "Build my resume" / "Check my resume" / pricing. Visitors may arrive through a referral link `/r/<code>` (stored in session).

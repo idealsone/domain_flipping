@@ -24,7 +24,7 @@
     set('checkoutAccess', addon ? 'Valid as long as your current plan' : p.accessDays + ' days');
     set('checkoutResumes', (addon ? '+' : '') + p.savedResumes + ' downloads');
     set('checkoutLetters', (addon ? '+' : '') + p.savedLetters + ' downloads');
-    set('checkoutScans', addon ? 'Unchanged' : p.atsScans == null ? 'Unlimited' : p.atsScans + ' scans');
+    set('checkoutScans', addon ? (p.atsScans ? '+' + p.atsScans + ' scans' : 'Unchanged') : p.atsScans == null ? 'Unlimited' : p.atsScans + ' scans');
     const price = document.getElementById('checkoutPrice'); if (price) price.innerHTML = inr(p.price) + (p.mrp > p.price ? ` <s style="font-weight:500;opacity:.6;font-size:14px">${inr(p.mrp)}</s>` : '');
     state();
   }

@@ -51,6 +51,11 @@ def main():
         t.check("preview sign-in is closed", c.raw("GET", "/preview/go/admin")[0] in (403, 404), "open!")
         t.check("owner API needs login", c.api("GET", "admin/users")[0] in (401, 403))
         t.check("owner page needs login", c.raw("GET", "/admin.html")[0] in (302, 401, 403))
+        c.register("ssrf@test.local"); sr, jr = c.api("POST", "resumes", {"data": {"version": "1", "title": "R", "template": "suite-prism", "accent": "#1557d2", "font": "Arial", "personal": {"name": "A"}, "summary": "x", "order": ["summary"], "experience": [], "education": [], "projects": [], "certifications": []}})
+        for u in ("http://127.0.0.1/", "http://127.0.0.1:8080/x", "http://169.254.169.254/latest/meta-data/", "http://localhost/", "http://10.0.0.5/job", "file:///etc/passwd", "http://user:pw@example.com/"):
+            sj, jj = c.api("POST", "ats/scan", {"resumeId": jr.get("id", ""), "source": "link", "url": u})
+            t.check(f"job link to {u} is refused (private/internal addresses)", sj == 422 and "url" in str(jj), (sj, str(jj)[:120]))
+        t.check("a refused link used no scan", c.api("GET", "ats/scans")[1].get("scans") == [] and c.api("GET", "allowance")[1]["used"]["atsScans"] == 0)
     except Setup as e:
         print("\nSETUP PROBLEM (not a CVTara bug):", e); return 2
     finally:

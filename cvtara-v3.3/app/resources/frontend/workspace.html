@@ -11,7 +11,7 @@
 <link rel="stylesheet" href="/template-designs.css">
 <link rel="stylesheet" href="/owner-console.css">
 <link rel="stylesheet" href="/resume-experience.css">
-<link rel="stylesheet" href="/premium-products.css">
+<link rel="stylesheet" href="/premium-products.css"><link rel="stylesheet" href="/ats-flow.css">
 <link rel="icon" href="/favicon.ico" sizes="any"><link rel="icon" type="image/svg+xml" href="/assets/brand/cvtara-mark.svg"><link rel="apple-touch-icon" href="/apple-touch-icon.png"><meta name="theme-color" content="#214ed3"><link rel="stylesheet" href="/referral-dashboard.css"><link rel="stylesheet" href="/brand-polish.css"><link rel="stylesheet" href="/launch.css"><link rel="stylesheet" href="/cvtara-ui.css"></head>
 <body class="workspace-body free-resume-preview" data-page="workspace">
 <div class="workspace-shell">
@@ -119,87 +119,7 @@
 </section>
 </div>
 </section>
-<section class="workspace-view" id="view-match">
-<div class="admin-heading">
-<div>
-<span class="eyebrow">CORRECTABLE RESUME PARSING</span>
-<h2>See what the recruiter can verify.</h2>
-<p>Upload PDF/DOCX, review the resume-shaped extraction, then compare it with one role.</p>
-</div>
-<button class="button secondary" data-demo-action="Sample resume and job description loaded.">Load sample</button>
-</div>
-<div class="match-layout">
-<section class="panel panel-pad">
-<label class="upload-zone">
-<span class="file-icon">CV</span>
-<div>
-<b>ananya-sharma-resume.pdf</b>
-<small>PDF · parsed locally · review required</small>
-</div>
-<button class="button secondary small">Replace</button>
-</label>
-<p>
-<select class="form-control">
-<option>HR / Talent Acquisition</option>
-<option>Software Engineer</option>
-<option>Data Analyst</option>
-<option>Other / add manually</option>
-</select>
-</p>
-<div class="editor-preview" style="padding:15px">
-<article class="resume-sheet" style="--resume-accent:#2864ff;width:100%">
-<header>
-<b contenteditable="true">ANANYA SHARMA</b>
-<span contenteditable="true">Talent Acquisition · Bengaluru · ananya@email.com</span>
-</header>
-<section>
-<h5>PROFILE</h5>
-<p contenteditable="true">HR graduate with practical sourcing, screening and interview-coordination experience.</p>
-</section>
-<section>
-<h5>EXPERIENCE</h5>
-<p class="job" contenteditable="true">PEOPLE OPERATIONS INTERN · NORTHSTAR</p>
-<p contenteditable="true">• Screened 120+ applications against agreed criteria.<br>• Coordinated 45 candidate interviews.<br>• Maintained weekly Excel funnel reports.</p>
-</section>
-</article>
-</div>
-<label style="display:block;margin:10px 0">
-<input type="checkbox" checked> I reviewed and corrected the parsed resume.</label>
-<textarea class="form-control">Manage end-to-end recruitment, partner with hiring managers, source on Naukri and LinkedIn, screen candidates, update ATS records and report funnel metrics.</textarea>
-<p>
-<button class="button primary full" id="workspaceAnalyse">Analyse visible fit →</button>
-</p>
-</section>
-<section class="panel result-panel">
-<div class="result-inner">
-<span class="eyebrow" style="color:var(--mint)">LIVE MATCH REPORT</span>
-<div class="result-score">
-<strong>62</strong>
-<span>explainable fit<br>out of 100</span>
-</div>
-<div class="progress-bars">
-<div>Job signals · 31/45<i style="--w:69%">
-</i>
-</div>
-<div>Evidence · 7/20<i style="--w:35%">
-</i>
-</div>
-<div>Structure · 17/20<i style="--w:85%">
-</i>
-</div>
-<div>Career narrative · 7/15<i style="--w:47%">
-</i>
-</div>
-</div>
-<div id="workspaceResult" hidden>
-<h3>Work on this first</h3>
-<p style="color:#b7c5dc">Add one verifiable example of hiring-manager coordination. Do not add numbers you cannot prove.</p>
-<button class="button mint full" data-workspace-view="builder">Open builder with corrected data →</button>
-</div>
-</div>
-</section>
-</div>
-</section>
+<section class="workspace-view" id="view-match"><p class="ats-muted">Loading ATS Match…</p></section>
 <section class="workspace-view" id="view-builder">
 <div id="resumeStudio"></div>
 </section>
@@ -374,5 +294,5 @@
 <script src="/profile-onboarding.js"></script>
 <script src="/cover-letter-studio.js"></script>
 <script src="/product-roadmap.js"></script>
-<script src="/referral-dashboard.js" defer></script><script src="/business-ui.js" defer></script><script src="/plans-ui.js" defer></script><script src="/workspace-ui.js" defer></script><script src="/primary-resume.js" defer></script><script src="/fomo-popup.js" defer></script></body>
+<script src="/referral-dashboard.js" defer></script><script src="/business-ui.js" defer></script><script src="/plans-ui.js" defer></script><script src="/workspace-ui.js" defer></script><script src="/primary-resume.js" defer></script><script src="/ats-flow.js" defer></script><script src="/fomo-popup.js" defer></script></body>
 </html>

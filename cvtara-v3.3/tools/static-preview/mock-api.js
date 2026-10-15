@@ -119,6 +119,21 @@
     if (method === 'POST' && p === 'admin/media') return ok({ url: '/media/' + uid() + '.webp' });
     if (method === 'POST' && p === 'admin/email/process') return ok({ sent: 0, processed: 0 });
     if (method === 'POST' && p === 'admin/setup/email-test') return ok({ delivery: { sent: 1, processed: 1 } });
+    if (method === 'GET' && p === 'ats/scans') { st.scans = st.scans || []; return ok({ scans: st.scans.filter(x => x.status === 'done') }); }
+    if (method === 'GET' && /^ats\/scans\/[^/]+$/.test(p)) { const x = (st.scans || []).find(y => y.id === p.split('/')[2]); return x ? ok({ scan: x }) : fail('Not found.', 404); }
+    if (method === 'POST' && p === 'ats/scan') {
+      if (!st.role) return fail('Please sign in.', 401, { signIn: true });
+      const link = b.source === 'link', text = link ? 'Business Analyst. We are hiring a Business Analyst to gather requirements, write SQL queries, build Power BI dashboards and present insights to stakeholders. Required: 3+ years of experience in analytics, strong SQL, Excel and stakeholder communication. Preferred: Python, Tableau.' : String(b.text || '');
+      if (!link && text.length < 80) return fail('The job description is too short to review. Include the responsibilities and requirements.', 422);
+      st.scans = st.scans || []; const id = uid();
+      st.scans.unshift({ id, resumeId: b.resumeId, source: b.source, jobUrl: link ? b.url : '', title: b.title || (link ? 'Business Analyst' : ''), company: b.company || (link ? 'Sample Co' : ''), score: null, result: null, jobText: text, status: 'reserved', createdAt: now() }); save();
+      return ok({ scanId: id, jobText: text, title: b.title || (link ? 'Business Analyst' : ''), company: b.company || (link ? 'Sample Co' : ''), credits: {} });
+    }
+    if (method === 'POST' && /^ats\/scans\/[^/]+\/(result|void)$/.test(p)) {
+      const [, , id, act] = p.split('/'), x = (st.scans || []).find(y => y.id === id);
+      if (x) { if (act === 'void') x.status = 'void'; else Object.assign(x, { score: b.score, result: { counts: b.counts, gaps: b.gaps }, title: b.title || x.title, company: b.company || x.company, status: 'done' }); save(); }
+      return ok({});
+    }
     if (method === 'GET') {
       if (p === 'profile' && !st.role) return fail('Please sign in.', 401, { signIn: true });
       if (!SNAP.pub[p] && !st.role && !['public-activity'].includes(p)) return fail('Please sign in.', 401, { signIn: true });
@@ -151,7 +166,6 @@
     }
     if (p === 'profile') { const d = get('profile'); d.profile = Object.assign(d.profile || {}, b.profile || b); put('profile', d); return ok({ profile: d.profile }); }
     if (p === 'feedback') { const d = get('feedback') || { reviews: [] }; d.reviews.unshift(Object.assign({ id: uid(), status: 'pending', created_at: now() }, b)); put('feedback', d); return ok({}); }
-    if (p === 'features/use') return ok({ allowed: true, remaining: 99 });
     if (p === 'account/export') return ok({ message: 'In the real app this downloads a JSON file of your data.' });
     if (p === 'account/delete') return ok({ message: 'Demo: your account is not really deleted.' });
     if (p === 'security/send-code') return ok({ message: 'Demo mode: any 6-digit code works.' });
@@ -223,7 +237,7 @@
       document.body.classList.add('has-topbar');
       const bar = document.createElement('div'); bar.className = 'cv-topbar';
       const cur = name === 'workspace.html' ? 'w' : (name === 'admin.html' || name === 'admin-guide.html') ? 'a' : 'l';
-      bar.innerHTML = '<span class="cv-brand">CVTara v3.7.0</span><div class="cv-tabs"><button data-t="l">Landing Page</button><button data-t="w">Customer Workspace</button><button data-t="a">Admin Dashboard</button></div><button data-t="theme" title="Day / night">🌙 Dark</button>';
+      bar.innerHTML = '<span class="cv-brand">CVTara v3.8.0</span><div class="cv-tabs"><button data-t="l">Landing Page</button><button data-t="w">Customer Workspace</button><button data-t="a">Admin Dashboard</button></div><button data-t="theme" title="Day / night">🌙 Dark</button>';
       bar.querySelectorAll('[data-t]').forEach(b => { if (b.dataset.t === cur) b.classList.add('on'); b.onclick = () => {
         const t = b.dataset.t;
         if (t === 'theme') { if (window.CVTaraTheme) window.CVTaraTheme.toggle(); return; }

@@ -1,3 +1,14 @@
+# CVTara v3.8.0 — ATS Match flow, scan limits, automatic application tracking
+
+- **ATS Match rebuilt.** No resume upload: the customer picks a saved resume from a dropdown (primary first) and adds a job by **link** (read fresh on every check), **PDF / DOCX / text file**, or **pasted text**. The report shows a match estimate, the job's keywords found and missing, every requirement lacking (with what to fix) and the full requirement-by-requirement evidence. The estimate is labelled as guidance, not a real employer ATS result.
+- **Then build:** the customer chooses a tailored resume, a cover letter or both; the resume copy is created with the job description and link, the cover letter opens with role and company filled in. Saved checks are listed with their summaries.
+- **Scan limits, same formula as downloads:** Basic 20, Standard 40, Pro 60 scans (editable per plan); add-on packs add 2 scans per resume credit, valid 45 days, used after the plan's scans. A scan is reserved on the server before the review and given back if the review cannot finish; unfinished scans are released after 15 minutes. Free accounts keep the small daily limit. Old purchases that said "unlimited" now use their plan's current limit.
+- **Safe job links:** only public http(s) pages; private, loopback and reserved addresses are refused (address pinned per request, redirects re-checked), 2.5 MB / 12 s caps, 10 link reads a minute per customer. Login-only portals fail with a clear message and use no scan.
+- **Credit notice after every clean download:** "1 resume credit used" / "1 cover-letter credit used" (or free primary, same version, reward), credits left in both pools, a running total for the visit (for example 1 resume + 2 letters = 3 credits), and whether the job was added to Applications.
+- **Applications are added automatically** when a clean resume or letter is downloaded for a job with a company and role (one entry per company + role, stage "Saved"), with the job link and the credits used per job. Primary-resume downloads without a job are not added.
+- **Sidebar no longer changes size** between pages (ATS Match, Resume Builder and Cover Letters were resizing the menu and its text).
+- Owner console: new **ATS checks** report (filter, columns, CSV/Excel/print export); plan editor wording; customer guide, admin guide, front page and package details describe the flow and limits. Account export includes ATS checks; old unfinished checks are pruned after 7 days and finished ones after a year.
+
 # CVTara v3.7.0 — credits are spent on download, separate pools, preview protection
 
 - **Credits move to download time:** saving drafts is free; the first clean download of a tailored resume or a cover letter uses 1 credit of its own kind. One primary resume download is free once for life, after the first purchase only (no repeat on renewals, none without a plan); the same version in another format is free; an edited version needs a new credit.

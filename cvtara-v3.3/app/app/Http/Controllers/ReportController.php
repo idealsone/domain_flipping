@@ -84,6 +84,8 @@ class ReportController extends Controller
                 ['key' => 'date', 'label' => 'Requested'], ['key' => 'customer', 'label' => 'Customer'], ['key' => 'email', 'label' => 'Email'], ['key' => 'amount_inr', 'label' => 'Amount (INR)', 'num' => true], ['key' => 'method', 'label' => 'Method'], ['key' => 'destination', 'label' => 'Destination (masked)'], ['key' => 'status', 'label' => 'Status'], ['key' => 'reference', 'label' => 'Reference'], ['key' => 'paid_at', 'label' => 'Paid at']]],
             'errors' => ['label' => 'Error log', 'filters' => ['q', 'status', 'from', 'to'], 'defaults' => ['last_seen', 'level', 'source', 'message', 'occurrences'], 'columns' => [
                 ['key' => 'last_seen', 'label' => 'Last seen'], ['key' => 'first_seen', 'label' => 'First seen'], ['key' => 'level', 'label' => 'Level'], ['key' => 'source', 'label' => 'Source'], ['key' => 'message', 'label' => 'Message'], ['key' => 'url', 'label' => 'Page'], ['key' => 'occurrences', 'label' => 'Times', 'num' => true], ['key' => 'resolved', 'label' => 'Resolved']]],
+            'scans' => ['label' => 'ATS checks', 'filters' => ['q', 'status', 'from', 'to'], 'defaults' => ['date', 'customer', 'job_title', 'company', 'source', 'score', 'status'], 'columns' => [
+                ['key' => 'date', 'label' => 'Checked'], ['key' => 'customer', 'label' => 'Customer'], ['key' => 'email', 'label' => 'Email'], ['key' => 'job_title', 'label' => 'Job title'], ['key' => 'company', 'label' => 'Company'], ['key' => 'source', 'label' => 'Job source'], ['key' => 'score', 'label' => 'Match %', 'num' => true], ['key' => 'status', 'label' => 'Status'], ['key' => 'job_url', 'label' => 'Job link']]],
             'mail' => ['label' => 'Email queue', 'filters' => ['q', 'status', 'from', 'to'], 'defaults' => ['date', 'recipient', 'subject', 'trigger', 'status'], 'columns' => [
                 ['key' => 'date', 'label' => 'Created'], ['key' => 'recipient', 'label' => 'To'], ['key' => 'subject', 'label' => 'Subject'], ['key' => 'trigger', 'label' => 'Type'], ['key' => 'status', 'label' => 'Status'], ['key' => 'attempts', 'label' => 'Attempts', 'num' => true], ['key' => 'error', 'label' => 'Error'], ['key' => 'sent_at', 'label' => 'Sent']]],
         ];
@@ -238,6 +240,20 @@ class ReportController extends Controller
 
             return [$q->select(['w.id', 'w.amount_paise', 'w.method', 'w.destination_masked', 'w.status', 'w.reference', 'w.created_at', 'w.paid_at', 'u.name as u_name', 'u.email as u_email']), ['_default' => 'w.created_at', 'date' => 'w.created_at', 'amount_inr' => 'w.amount_paise', 'status' => 'w.status'], null, $count];
         }
+        if ($set === 'scans') {
+            $q = DB::table('ats_scans as a')->join('users as u', 'u.id', '=', 'a.owner_id');
+            $this->dates($q, $r, 'a.created_at');
+            if (in_array($r->query('status'), ['done', 'void', 'reserved'], true)) {
+                $q->where('a.status', $r->query('status'));
+            }
+            if ($term !== '') {
+                $l = $this->like($term);
+                $q->where(fn ($w) => $w->where('u.email', 'like', $l)->orWhere('u.name', 'like', $l)->orWhere('a.job_title', 'like', $l)->orWhere('a.company', 'like', $l));
+            }
+            $count = clone $q;
+
+            return [$q->select(['a.id', 'a.source', 'a.job_url', 'a.job_title', 'a.company', 'a.score', 'a.status', 'a.created_at', 'u.name as u_name', 'u.email as u_email']), ['_default' => 'a.created_at', 'date' => 'a.created_at', 'score' => 'a.score', 'status' => 'a.status'], null, $count];
+        }
         if ($set === 'errors') {
             $q = DB::table('error_logs as e');
             $this->dates($q, $r, 'e.last_seen');
@@ -284,6 +300,7 @@ class ReportController extends Controller
                 'users' => ['id' => (int) $x->id, 'name' => $x->name, 'email' => $x->email, 'phone' => $x->phone, 'city' => $x->city, 'level' => $x->experience_level, 'profession' => $x->profession, 'joined' => $x->created_at, 'plan' => ($acc[$x->id]['paid'] ?? false) ? ($plans[$acc[$x->id]['plan']]['name'] ?? $acc[$x->id]['plan']) : 'Normal user', 'paid' => ($acc[$x->id]['paid'] ?? false) ? 'Yes' : 'No', 'status' => $x->blocked ? 'Blocked' : ($x->is_admin ? 'Owner' : 'Active'), 'resumes' => (int) ($res[$x->id] ?? 0)],
                 'commissions' => ['date' => $x->created_at, 'referrer' => $x->a_name, 'referrer_email' => $x->a_email, 'buyer' => $x->b_name, 'amount_inr' => (float) self::inr($x->amount_paise), 'rate' => $x->rate_bps / 100, 'reversed_inr' => (float) self::inr($x->reversed_paise), 'purchase' => 'ORD-'.strtoupper(substr($x->purchase_id, 0, 6))],
                 'withdrawals' => ['date' => $x->created_at, 'customer' => $x->u_name, 'email' => $x->u_email, 'amount_inr' => (float) self::inr($x->amount_paise), 'method' => $x->method, 'destination' => $x->destination_masked, 'status' => $x->status, 'reference' => $x->reference, 'paid_at' => $x->paid_at],
+                'scans' => ['date' => $x->created_at, 'customer' => $x->u_name, 'email' => $x->u_email, 'job_title' => $x->job_title, 'company' => $x->company, 'source' => $x->source, 'score' => $x->score, 'status' => $x->status, 'job_url' => $x->job_url],
                 'errors' => ['last_seen' => $x->last_seen, 'first_seen' => $x->first_seen, 'level' => $x->level, 'source' => $x->source, 'message' => $x->message, 'url' => $x->url, 'occurrences' => (int) $x->occurrences, 'resolved' => $x->resolved_at ? 'Yes' : 'No'],
                 default => ['date' => $x->created_at, 'recipient' => $x->recipient, 'subject' => $x->subject, 'trigger' => $x->trigger, 'status' => $x->status, 'attempts' => (int) $x->attempts, 'error' => $x->error, 'sent_at' => $x->sent_at],
             };

@@ -87,7 +87,7 @@
   scan();
 
   /* ---------- Reports & Export view ---------- */
-  const STATUS = { orders: ['paid', 'pending', 'created', 'refunded', 'partially_refunded', 'disputed'], users: ['paid', 'normal', 'blocked', 'owner'], withdrawals: ['requested', 'processing', 'paid', 'rejected'], errors: ['open', 'error', 'warning', 'info'], mail: ['queued', 'sent', 'failed'], commissions: [] };
+  const STATUS = { orders: ['paid', 'pending', 'created', 'refunded', 'partially_refunded', 'disputed'], users: ['paid', 'normal', 'blocked', 'owner'], withdrawals: ['requested', 'processing', 'paid', 'rejected'], errors: ['open', 'error', 'warning', 'info'], mail: ['queued', 'sent', 'failed'], scans: ['done', 'void', 'reserved'], commissions: [] };
   const STATUS_LABEL = { refunded: 'Reversed by bank', partially_refunded: 'Partly reversed', normal: 'Normal users', paid: 'Paid', open: 'Open (unresolved)' };
   const PRESETS = 'cvtara-report-presets';
   const loadPresets = () => { try { return JSON.parse(localStorage.getItem(PRESETS) || '[]'); } catch (e) { return []; } };
@@ -167,5 +167,5 @@
     } catch (e) { tbl.innerHTML = `<tbody><tr><td role="alert">${E(err(e))}</td></tr></tbody>`; }
   }
   K.openReport = (preset) => { Object.assign(R, { q: '', status: 'all', plan: 'all', provider: 'all', from: '', to: '', min: '', max: '', live: '', sort: '', page: 1, columns: null }, preset || {}); K.open('reports'); const b = $('.side-nav [data-admin-view="reports"]'); if (b) b.click(); };
-  K.register('reports', reports, ['📊', 'Reports & Export', 'Custom reports on orders, users, referral commissions, withdrawals, errors and email — filter, choose columns and export.']);
+  K.register('reports', reports, ['📊', 'Reports & Export', 'Custom reports on orders, users, referral commissions, withdrawals, ATS checks, errors and email — filter, choose columns and export.']);
 })();

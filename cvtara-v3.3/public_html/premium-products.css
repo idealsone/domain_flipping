@@ -41,6 +41,6 @@
 @media(hover:none){.letter-template-art>span{opacity:1}}
 @media(prefers-reduced-motion:reduce){#view-letter *,#view-match *{scroll-behavior:auto!important;transition:none!important}}
 
-.product-active .workspace-shell{grid-template-columns:190px minmax(0,1fr)}.product-active .workspace-content{padding:26px}.product-active .side-nav button{font-size:14px}@media(max-width:760px){.product-active .workspace-shell{display:block}.product-active .workspace-content{padding:18px 14px}}
+.product-active .workspace-content{padding:26px}@media(max-width:760px){.product-active .workspace-shell{display:block}.product-active .workspace-content{padding:18px 14px}}
 
 .application-roadmap-grid [hidden]{display:none!important}
