@@ -6,6 +6,7 @@ use App\Models\User;
 Route::get('/login',fn(Request $r)=>app(AuthController::class)->page($r))->name('login');
 foreach(['register','forgot-password'] as $mode){Route::get('/'.$mode.($mode==='reset-password'?'/ {token}':''),fn(Request $r)=>app(AuthController::class)->page($r,$mode));}
 Route::get('/reset-password/{token}',fn(Request $r)=>app(AuthController::class)->page($r,'reset-password'));
+foreach(config('app.owner_paths') as $ownerPath){Route::get('/'.$ownerPath,fn(Request $r)=>app(AuthController::class)->page($r,'owner'));Route::post('/'.$ownerPath,[AuthController::class,'ownerLogin'])->middleware('throttle:20,1,owner-login');}
 Route::post('/login',[AuthController::class,'login'])->middleware('throttle:20,1,login');
 Route::post('/register',[AuthController::class,'register'])->middleware('throttle:5,1,auth-change');
 Route::post('/forgot-password',[AuthController::class,'forgot'])->middleware('throttle:3,1,password-email');

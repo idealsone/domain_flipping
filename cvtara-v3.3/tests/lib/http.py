@@ -52,5 +52,5 @@ class Client:
             time.sleep(int(r[1].get("Retry-After", "10")) + 1); r = self.form("/register", data)
         self.page("/workspace.html"); return r
 
-    def login(self, email, password, **extra):
-        r = self.form("/login", dict({"email": email, "password": password}, **extra)); self.page("/workspace.html"); return r
+    def login(self, email, password, path="/login", **extra):
+        r = self.form(path, dict({"email": email, "password": password}, **extra)); self.page("/workspace.html"); return r

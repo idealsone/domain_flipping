@@ -1,6 +1,12 @@
 <IfModule mod_rewrite.c>
 Options -Indexes -MultiViews
 RewriteEngine On
+# One-time installer lives at a private address; the file itself cannot be requested directly.
+RewriteRule ^setup/afsar/?$ install.php [L]
+RewriteCond %{THE_REQUEST} \s/install\.php [NC]
+RewriteRule ^install\.php$ - [R=404,L]
+RewriteCond %{QUERY_STRING} (^|&)v=[a-f0-9]{12}(&|$)
+RewriteRule \.(js|mjs|css)$ - [E=CVT_FINGERPRINTED:1]
 RewriteCond %{HTTP:Authorization} .
 RewriteRule .* - [E=HTTP_AUTHORIZATION:%{HTTP:Authorization}]
 RewriteCond %{REQUEST_FILENAME} !-d
@@ -10,12 +16,17 @@ RewriteRule ^ index.php [L]
 <IfModule mod_headers.c>
 Header always set X-Content-Type-Options "nosniff"
 Header always set X-Frame-Options "SAMEORIGIN"
-<FilesMatch "\.(css|js|mjs|woff2|webp|png|jpg|svg)$">
+<FilesMatch "\.(css|js|mjs)$">
 Header set Cache-Control "public, max-age=3600"
 </FilesMatch>
+<FilesMatch "\.(woff2|webp|png|jpg|jpeg|svg|ico)$">
+Header set Cache-Control "public, max-age=2592000"
+</FilesMatch>
+# Scripts and styles requested with a ?v=<fingerprint> change address whenever they change, so browsers may keep them for a year.
+Header set Cache-Control "public, max-age=31536000, immutable" env=CVT_FINGERPRINTED
 </IfModule>
 <IfModule mod_deflate.c>
-AddOutputFilterByType DEFLATE text/html text/css application/javascript text/javascript application/json image/svg+xml
+AddOutputFilterByType DEFLATE text/html text/css application/javascript text/javascript application/json image/svg+xml application/xml text/plain application/vnd.ms-excel
 </IfModule>
 <FilesMatch "^\.">
 Require all denied

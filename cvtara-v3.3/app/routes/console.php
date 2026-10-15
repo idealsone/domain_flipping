@@ -15,6 +15,13 @@ Artisan::command('cvtara:cron', function () {
     if (\Illuminate\Support\Facades\Cache::add('retention-run', 1, 86400)) {
         \App\Services\Retention::run();
     }
+    if (\Illuminate\Support\Facades\Cache::add('backup-run', 1, 86400)) {
+        try {
+            \App\Services\Backup::run();
+        } catch (\Throwable $e) {
+            \App\Services\ErrorLog::exception($e);
+        }
+    }
     try {
         \App\Services\Health::run();
     } catch (\Throwable $e) {
@@ -23,6 +30,9 @@ Artisan::command('cvtara:cron', function () {
     CashfreePayouts::reconcile();
     $this->info(json_encode(MailAutomation::process()));
 })->purpose('Process due mail and record cron health');
+Artisan::command('cvtara:backup', function () {
+    $this->info('Backup written to '.\App\Services\Backup::run());
+})->purpose('Write a compressed database backup to storage/app/backups');
 Schedule::command('cvtara:cron')->everyMinute()->withoutOverlapping();
 Artisan::command('cvtara:admin {email} {name}', function () {
     $password = $this->secret('Owner password (12+ characters)');

@@ -1,3 +1,11 @@
+# CVTara v3.5.1 — private addresses, backups, caching
+
+- **Private setup link:** `cvtara.com/setup/afsar` runs the installer (the file `install.php` cannot be opened directly; after installation the link sends visitors to the home page).
+- **Private owner sign-in:** `cvtara.com/afsar` and `cvtara.com/sanaulla` (set in `.env` as `OWNER_LOGIN_PATHS`). Owners can no longer sign in on the public `/login`; customers cannot sign in on the owner pages; the addresses appear nowhere in pages, `robots.txt` or the sitemap, are `noindex` and rate-limited.
+- **Daily database backup** (`cvtara:backup`, also run by the cron once a day, newest 14 kept in the private storage folder) and a Health check that turns red when no backup is newer than 36 hours.
+- **Browser caching:** fingerprinted scripts/styles are cached for a year, images for 30 days; more file types are compressed.
+- New guide `docs/HOSTING_PLAN_GUIDE.md` (what Hostinger plans, minifying, caching, backups and security really give you).
+
 # CVTara v3.5.0 — Cashfree checkout, reports and export, no-refund policy
 
 ## Payments

@@ -70,6 +70,8 @@ return [
     // Preview shell (/preview) and demo data are only enabled when CVTARA_PREVIEW=true.
     // The preview shell can never switch on for a real site: it needs a development environment AND a local address.
     'preview' => (bool) env('CVTARA_PREVIEW', false) && env('APP_ENV', 'production') !== 'production' && in_array(parse_url((string) env('APP_URL', ''), PHP_URL_HOST), ['localhost', '127.0.0.1', '::1'], true),
+    // Hidden sign-in addresses for the owners (cvtara.com/afsar, cvtara.com/sanaulla). Owners cannot sign in on /login.
+    'owner_paths' => array_values(array_filter(array_map(fn ($p) => strtolower(trim($p, " /\t")), explode(',', (string) env('OWNER_LOGIN_PATHS', 'afsar,sanaulla'))), fn ($p) => preg_match('/^[a-z0-9][a-z0-9_-]{2,40}$/', $p) && ! in_array($p, ['admin', 'login', 'register', 'api', 'setup', 'console', 'workspace', 'checkout', 'preview'], true))),
     'demo_password' => 'DemoPass#2026!x',
 
     /*

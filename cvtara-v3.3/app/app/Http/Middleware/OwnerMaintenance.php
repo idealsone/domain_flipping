@@ -10,7 +10,7 @@ class OwnerMaintenance
 {
     public function handle(Request $r, Closure $next)
     {
-        if ($r->is('admin*', 'api/admin/*', 'login', 'logout', 'webhooks/*', 'up')) {
+        if ($r->is('admin*', 'api/admin/*', 'login', 'logout', 'webhooks/*', 'up') || in_array($r->path(), config('app.owner_paths'), true)) {
             return $next($r);
         }
         $m = BusinessControls::get()['maintenance'];

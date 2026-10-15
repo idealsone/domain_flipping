@@ -10,7 +10,7 @@ def run(ctx, t):
     try:
         r = inst.artisan("tinker", "--execute", "$u=new App\\Models\\User(); $u->forceFill(['name'=>'Owner','email'=>'owner@test.local','password'=>Hash::make('" + PW + "'),'is_admin'=>true,'email_verified_at'=>now(),'referral_code'=>'ownercode000001'])->save();")
         from lib.http import Client
-        o = Client(inst.base); s, h, _ = o.login("owner@test.local", PW); t.check("owner can sign in", s in (302, 303), s)
+        o = Client(inst.base); s, h, _ = o.login("owner@test.local", PW, path="/afsar"); t.check("owner can sign in", s in (302, 303), s)
         o.page("/admin.html")
         t.check("owner can read plans", o.api("GET", "admin/plans")[0] == 200)
         plans = o.api("GET", "admin/plans")[1].get("plans", {})

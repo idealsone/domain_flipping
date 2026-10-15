@@ -15,7 +15,7 @@ class SecurityHeaders
         $res->headers->set('Referrer-Policy', 'strict-origin-when-cross-origin');
         $res->headers->set('Permissions-Policy', 'camera=(), microphone=(), geolocation=()');
         $res->headers->set('Content-Security-Policy', "base-uri 'self'; object-src 'none'; frame-ancestors 'self'; form-action 'self'; script-src 'self' 'unsafe-inline' blob: https://checkout.razorpay.com https://*.razorpay.com https://sdk.cashfree.com https://*.cashfree.com https://*.onesignal.com https://www.googletagmanager.com https://www.google-analytics.com; worker-src 'self' blob: https://*.onesignal.com");
-        if ($res->getStatusCode() >= 400 || preg_match('#^(admin|console|api|workspace|checkout|login|register|forgot-password|reset-password|preview|install|setup|export|r/|client-error|webhooks)#', $r->path())) {
+        if ($res->getStatusCode() >= 400 || in_array($r->path(), config('app.owner_paths'), true) || preg_match('#^(admin|console|api|workspace|checkout|login|register|forgot-password|reset-password|preview|install|setup|export|r/|client-error|webhooks)#', $r->path())) {
             $res->headers->set('X-Robots-Tag', 'noindex, nofollow, noarchive');
         }
         $res->headers->remove('X-Powered-By');

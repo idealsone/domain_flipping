@@ -52,3 +52,13 @@ def run(ctx, t):
 
     # marketing / copy
     s, _, html = ctx.client().page("/login"); t.check("sign-in page says nothing is free", "free account" not in html.lower())
+
+    # daily backup
+    out = ctx.inst.artisan("cvtara:backup")
+    import glob, gzip, os
+    files = glob.glob(os.path.join(ctx.inst.app, "storage", "app", "backups", "cvtara-*.sql.gz"))
+    t.check("backup command writes a compressed SQL file", out.returncode == 0 and len(files) == 1, (out.stdout + out.stderr)[-200:])
+    if files:
+        sql = gzip.open(files[0], "rt", encoding="utf8").read()
+        t.check("backup contains users and purchases but no sessions", "INSERT INTO \"users\"" in sql and "CREATE TABLE \"purchases\"" in sql and "\"sessions\"" not in sql)
+        t.check("backup file is private (owner-only)", (os.stat(files[0]).st_mode & 0o077) == 0)

@@ -15,6 +15,12 @@ Hiding code does not protect a site; **server-side checks do**. Every secret and
 | Demo mode | Cannot switch on in production: it needs a development `APP_ENV` and a local address. The Health page flags it if the variable is present. |
 | Data | Payout details are encrypted; account deletion erases them; Error Log never stores passwords or card data. |
 
+## Private addresses
+- **Setup:** `https://cvtara.com/setup/afsar` (the installer; `install.php` itself cannot be opened directly and the link is dead once the site is installed).
+- **Owner sign-in:** `https://cvtara.com/afsar` and `https://cvtara.com/sanaulla`. Owner accounts **cannot** sign in on the public `/login` page, customers cannot sign in on these pages, and the addresses are not in `robots.txt`, the sitemap, or any page. They are `noindex`, rate-limited (5 wrong attempts lock the address for 15 minutes) and still need the password plus the email-code confirmation for sensitive actions.
+- To change them, edit `OWNER_LOGIN_PATHS=afsar,sanaulla` in `.env` (3–40 letters, digits, `-` or `_`). The setup address is the `setup/afsar` rule in `public_html/.htaccess` and `public_html/index.php`.
+- A secret address is a second lock, not the only lock: the password, lockout and confirmation codes do the real protecting. Use a long unique password for each owner.
+
 ## Privacy from search engines and strangers
 - Admin pages (`/admin*`), the owner scripts (`/console/*`), the platform guide, sign-in pages, workspace, checkout, API, preview and install URLs all send `X-Robots-Tag: noindex, nofollow` and are disallowed in `robots.txt`; they are never in the sitemap.
 - Anyone who opens an owner URL without being the signed-in owner is sent to the home page.

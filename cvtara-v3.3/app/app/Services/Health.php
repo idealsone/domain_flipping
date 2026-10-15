@@ -27,6 +27,7 @@ class Health
             'storageWritable' => $check(fn () => Storage::disk('local')->put('health.tmp', 'ok') && Storage::disk('local')->delete('health.tmp')),
             'https' => str_starts_with((string) config('app.url'), 'https://'),
             'domain' => str_contains((string) config('app.url'), (string) env('CVTARA_DOMAIN', 'cvtara.com')),
+            'backupFresh' => ($b = Settings::get('lastBackup', [])) && ! empty($b['at']) && strtotime($b['at']) > now()->subHours(36)->timestamp,
             'previewOff' => ! filter_var(env('CVTARA_PREVIEW', false), FILTER_VALIDATE_BOOLEAN),
             'privateFolder' => ! str_starts_with(base_path(), public_path().DIRECTORY_SEPARATOR),
             'scheduler' => isset($hb['at']) && strtotime($hb['at']) > now()->subMinutes(10)->timestamp,
