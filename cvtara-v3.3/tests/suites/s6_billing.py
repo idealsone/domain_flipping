@@ -15,14 +15,16 @@ def run(ctx, t):
     db = ctx.db(); o = ctx.client(); o.raw("GET", "/preview/go/admin"); o.page("/admin.html")
     uid = lambda e: db.q("select id from users where email=?", e)[0][0]
 
-    # F-02: renewing a plan must carry the live add-on with it
+    # add-on credits keep their own 45-day validity and carry forward through a renewal
     a = ctx.client(); a.register("bill-a@test.local")
     t.check("buy plan", buy(a, "fresher-basic")[0] == 200)
     t.check("buy add-on", buy(a, "addon-10")[0] == 200)
     t.check("renew plan", buy(a, "fresher-basic")[0] == 200)
-    rows = db.q("select plan, access_until from purchases where owner_id=? and status='paid'", uid("bill-a@test.local"))
-    plan_end = max(r[1] for r in rows if r[0] == "fresher-basic"); addon_end = max(r[1] for r in rows if r[0] == "addon-10")
-    t.check("add-on lasts as long as the renewed plan", addon_end >= plan_end, f"addon {addon_end} plan {plan_end}")
+    rows = db.q("select plan, access_until, purchased_at from purchases where owner_id=? and status='paid' and plan='addon-10'", uid("bill-a@test.local"))
+    import datetime as dt
+    days = (dt.datetime.fromisoformat(rows[0][1]) - dt.datetime.fromisoformat(rows[0][2])).days
+    t.check("add-on credits are valid for 45 days from purchase", 44 <= days <= 45, days)
+    t.check("pool after plan + add-on + renewal still includes the add-on", a.api("GET", "allowance")[1]["credits"]["total"] == 40, a.api("GET", "allowance")[1].get("credits"))
 
     # F-03: coupon limits
     s, j = o.api("GET", "admin/business-controls"); bc = j["data"]

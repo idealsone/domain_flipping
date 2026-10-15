@@ -33,7 +33,7 @@
   }
 
   function cardHTML(key, p, o) {
-    const stats = [[p.savedResumes, 'Resumes'], [p.savedLetters, 'Cover Letters'], [p.atsScans == null ? '∞' : p.atsScans, 'ATS Scans']];
+    const stats = [[(p.savedResumes || 0) + (p.savedLetters || 0), 'Document credits'], [1, 'Primary resume'], [p.atsScans == null ? '∞' : p.atsScans, 'ATS Scans']];
     const save = p.mrp > p.price ? p.mrp - p.price : 0;
     const current = o.current === key;
     const href = '/checkout.html?plan=' + encodeURIComponent(key);
@@ -55,7 +55,7 @@
   }
 
   function addonHTML(key, p, o) {
-    return `<article class="pl-addon" data-addon-card="${E(key)}"><div><b>+${p.savedResumes} resumes &amp; +${p.savedLetters} cover letters</b><span>Extra JD-tailored slots for your current plan</span></div><strong>${inr(p.price)}</strong>${o.mode === 'checkout' ? `<button class="button ${o.selected === key ? 'primary' : 'secondary'} small" type="button" data-pl-select="${E(key)}">${o.selected === key ? '✓ Selected' : 'Choose'}</button>` : `<a class="button secondary small" href="/checkout.html?plan=${E(key)}" data-pl-go="${E(key)}">Add on</a>`}</article>`;
+    return `<article class="pl-addon" data-addon-card="${E(key)}"><div><b>+${(p.savedResumes || 0) + (p.savedLetters || 0)} document credits</b><span>+${p.savedResumes} resumes &amp; +${p.savedLetters} cover letters, in any mix · valid ${p.accessDays || 45} days from purchase</span></div><strong>${inr(p.price)}</strong>${o.mode === 'checkout' ? `<button class="button ${o.selected === key ? 'primary' : 'secondary'} small" type="button" data-pl-select="${E(key)}">${o.selected === key ? '✓ Selected' : 'Choose'}</button>` : `<a class="button secondary small" href="/checkout.html?plan=${E(key)}" data-pl-go="${E(key)}">Add on</a>`}</article>`;
   }
 
   async function mount(el, opts = {}) {

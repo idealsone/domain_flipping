@@ -182,7 +182,7 @@ class ApiController extends Controller
             $plans = Settings::plans();
             unset($a['purchase']);
 
-            return $ok([...$a, 'planName' => $plans[$a['plan']]['name'] ?? 'Free', 'daysLeft' => $a['accessUntil'] ? max(0, (int) ceil((strtotime($a['accessUntil']) - time()) / 86400)) : 0, 'caps' => ['resumes' => (int) $l['savedResumes'] + 1, 'letters' => (int) $l['savedLetters'], 'atsScans' => $l['atsScans'] ?? null, 'exports' => (int) ($l['exports'] ?? 0)], 'used' => ['exports' => $exports, 'savedResumes' => DB::table('resume_drafts')->where('owner_id', $id)->count(), 'savedLetters' => DB::table('cover_letter_drafts')->where('owner_id', $id)->count(), 'atsScans' => $scans, 'dailyMatches' => DB::table('product_usage')->where('owner_id', $id)->where('action', 'match')->whereDate('created_at', today())->count()]]);
+            return $ok([...$a, 'planName' => $plans[$a['plan']]['name'] ?? 'Free', 'daysLeft' => $a['accessUntil'] ? max(0, (int) ceil((strtotime($a['accessUntil']) - time()) / 86400)) : 0, 'credits' => ['total' => (int) $l['credits'], ...Settings::creditsUsed($id), 'includesAddOns' => $a['extras']['resumes'] + $a['extras']['letters']], 'caps' => ['resumes' => (int) $l['savedResumes'] + 1, 'letters' => (int) $l['savedLetters'], 'atsScans' => $l['atsScans'] ?? null, 'exports' => null], 'used' => ['exports' => $exports, 'savedResumes' => DB::table('resume_drafts')->where('owner_id', $id)->count(), 'savedLetters' => DB::table('cover_letter_drafts')->where('owner_id', $id)->count(), 'atsScans' => $scans, 'dailyMatches' => DB::table('product_usage')->where('owner_id', $id)->where('action', 'match')->whereDate('created_at', today())->count()]]);
         }
         if (preg_match('#^resumes/([a-f0-9-]{36})/(primary|variant)$#', $path, $m)) {
             abort_unless($r->isMethod('POST'), 405);
@@ -358,9 +358,10 @@ class ApiController extends Controller
         $new = DB::transaction(function () use ($id, $row, $v) {
             User::whereKey($id)->lockForUpdate()->first();
             abort_unless(Settings::get('features')['builder']['enabled'], 403);
-            $limit = min(Settings::access($id)['limits']['savedResumes'] + 1, Settings::get('features')['builder']['limit']);
-            if (DB::table('resume_drafts')->where('owner_id', $id)->count() >= $limit) {
-                throw ValidationException::withMessages(['limit' => 'Your resume allowance is full. Delete a draft or add an add-on pack.']);
+            $pool = Settings::access($id)['limits']['credits'];
+            $cu = Settings::creditsUsed($id);
+            if ($cu['used'] >= $pool || DB::table('resume_drafts')->where('owner_id', $id)->count() >= Settings::get('features')['builder']['limit']) {
+                throw ValidationException::withMessages(['limit' => "All {$pool} document credits are used ({$cu['tailored']} tailored resumes + {$cu['letters']} cover letters). Delete a draft or add an add-on pack."]);
             }
             $data = json_decode($row->content_json, true);
             unset($data['_profileId'], $data['_profileRevision']);
@@ -420,7 +421,8 @@ class ApiController extends Controller
         $table = $type === 'resumes' ? 'resume_drafts' : 'cover_letter_drafts';
         $one = $type === 'resumes' ? 'resume' : 'letter';
         $acc = Settings::access($id)['limits'];
-        $limit = $type === 'resumes' ? min($acc['savedResumes'] + 1, Settings::get('features')['builder']['limit']) : min($acc['savedLetters'], Settings::get('features')['letter']['draftLimit'] ?? 500);
+        $pool = (int) $acc['credits'];
+        $limit = $pool; // shared pool; checked per kind below
         $query = DB::table($table)->where('owner_id', $id);
         if ($r->isMethod('GET')) {
             if ($doc) {
@@ -430,7 +432,7 @@ class ApiController extends Controller
                 return response()->json(['ok' => true, $one => ['id' => $row->id, 'revision' => $row->revision, 'isPrimary' => (bool) ($row->is_primary ?? false), 'parentId' => $row->parent_id ?? null, 'jobDescription' => $row->job_description ?? '', 'data' => json_decode($row->content_json, true)]]);
             }
 
-            return response()->json(['ok' => true, $type => $query->orderByDesc('updated_at')->get($type === 'resumes' ? ['id', 'title', 'template', 'company', 'role', 'revision', 'is_primary', 'parent_id', 'created_at', 'updated_at'] : ['id', 'title', 'template', 'company', 'role', 'revision', 'created_at', 'updated_at']), 'limit' => $limit]);
+            return response()->json(['ok' => true, $type => $query->orderByDesc('updated_at')->get($type === 'resumes' ? ['id', 'title', 'template', 'company', 'role', 'revision', 'is_primary', 'parent_id', 'created_at', 'updated_at'] : ['id', 'title', 'template', 'company', 'role', 'revision', 'created_at', 'updated_at']), 'limit' => $limit, 'credits' => ['total' => $pool, ...Settings::creditsUsed($id)]]);
         }
         if ($r->isMethod('DELETE')) {
             abort_unless($doc && (clone $query)->where('id', $doc)->delete(), 404);
@@ -468,7 +470,7 @@ class ApiController extends Controller
             $r->validate(['data.company' => 'required|string|max:160', 'data.role' => 'required|string|max:160', 'data.opening' => 'required|string|max:8000', 'data.evidence' => 'required|string|max:12000']);
         }
         unset($data['_profileId'],$data['_profileRevision']);
-        $result = DB::transaction(function () use ($r, $table, $id, $data, $limit, $one, $type) {
+        $result = DB::transaction(function () use ($r, $table, $id, $data, $limit, $one, $type, $pool) {
             User::whereKey($id)->lockForUpdate()->first();
             abort_unless(Settings::get('features')[$type === 'resumes' ? 'builder' : 'letter']['enabled'], 403);
             $slug = $data['template'];
@@ -483,8 +485,11 @@ class ApiController extends Controller
                 abort_unless(DB::table($table)->where('id', $did)->where('owner_id', $id)->where('revision', $rev)->update([...$record, 'revision' => $rev + 1]), 409);
                 $rev++;
             } else {
-                if (DB::table($table)->where('owner_id', $id)->count() >= $limit) {
-                    throw ValidationException::withMessages(['limit' => 'Your saved draft allowance is full. Edit or delete an existing draft.']);
+                $cu = Settings::creditsUsed($id);
+                $isPrimary = $type === 'resumes' && ! DB::table('resume_drafts')->where('owner_id', $id)->exists();
+                $cap = $type === 'resumes' ? (int) Settings::get('features')['builder']['limit'] : (int) (Settings::get('features')['letter']['draftLimit'] ?? 500);
+                if (! $isPrimary && $cu['used'] >= $pool || DB::table($table)->where('owner_id', $id)->count() >= $cap) {
+                    throw ValidationException::withMessages(['limit' => "All {$pool} document credits are used ({$cu['tailored']} tailored resumes + {$cu['letters']} cover letters). Delete a draft or add an add-on pack."]);
                 }$did = (string) Str::uuid();
                 $rev = 1;
                 DB::table($table)->insert([...$record, 'id' => $did, 'owner_id' => $id, 'revision' => 1, 'created_at' => now(), ...($type === 'resumes' ? ['is_primary' => ! DB::table('resume_drafts')->where('owner_id', $id)->exists()] : [])]);

@@ -6,16 +6,19 @@ Version 3.4.1 · prepared 14 Oct 2026 · companion files: `architecture_and_logi
 CVTara is an ATS-friendly resume and cover-letter builder run by an experienced HR team in Bangalore. A person registers (everyone starts as a **normal user** — there is no free package), builds **one premium primary resume**, then creates job-tailored versions and cover letters from job descriptions, checks ATS match, tracks applications, and pays once (one-time plan, no subscription) to unlock clean PDF/Word downloads and larger allowances. The owner runs everything from one private Owner Console.
 
 ## 2. Packages and rules
-| Plan | Price | Access | Saved resumes | Saved letters | ATS scans | Notes |
-|---|---|---|---|---|---|---|
-| Fresher Basic / Standard / Pro | ₹299 / 399 / 499 | 60 days | 10 + 1 primary | 10 | 10 / unlimited / unlimited | Pro adds referral earning |
-| Experienced (pro-basic / standard / pro) | ₹399 / 499 / 599 | per plan | as edited by owner | | | Pro tier includes a review call |
-| Add-ons | +10 ₹149 · +20 ₹249 · +30 ₹399 | on top of an active plan | adds resumes **and** letters | | | cannot be bought without an active plan |
-| Normal user (`free` key) | ₹0 | account only | draft building | | | baseline, never purchasable |
+**The allowance model (one shared pool):** every plan gives **1 free premium primary resume** plus a pool of **document credits** shared by tailored resumes and cover letters. Pool = tailored-resume credits + cover-letter credits of the plan. Using a credit = saving a new tailored resume or a new cover letter; editing a saved document, re-downloading it and the primary resume cost nothing. When the pool is empty the customer must delete a draft or buy an add-on.
 
-Every plan includes "1 premium primary resume". All prices, perks, limits, popular badge and ranks are editable in **Owner Console → Pricing Plans** and are reflected on the public site immediately.
+| Plan | Price | Access | Primary resume | Credit pool | ATS scans |
+|---|---|---|---|---|---|
+| Fresher Basic / Standard / Pro | ₹299 / 399 / 499 | 60 / 60 / 90 days | 1 free | 20 / 40 / 60 | 10 / unlimited / unlimited |
+| Experienced (pro-basic / standard / pro) | ₹399 / 499 / 599 | 60 / 60 / 90 days | 1 free | 20 / 40 / 60 | 10 / unlimited / unlimited |
+| Add-ons +10 / +20 / +30 | ₹149 / 249 / 399 | **45 days from purchase** | — | +20 / +40 / +60 (+10 resumes & +10 letters = +20) | — |
+| Normal user (`free`) | ₹0 | account only | 1 | 3 (preview) | 3 a day |
 
-Purchase rules (all verified by automated tests): the strongest plan wins; a cheaper plan never downgrades; the same plan renewed stacks time (+60 days); add-ons raise limits; a partial refund keeps access; a dispute or full refund removes that purchase (access falls back to the next valid one) and a won dispute restores it; webhooks are idempotent; coupons support plan lists, expiry, total and per-user limits, and always leave a minimum ₹1; Razorpay is the live provider (demo/manual payments for previews and "Mark as paid").
+**Worked example (Fresher Basic):** 1 primary + 20 credits. A customer can create 15 tailored resumes + 5 letters (pool empty: no more of either), or 10 + 10. Buying "+10 resumes & +10 letters" adds 20 credits: 20 + 20 = **40**, so 1 + 20 + 10 + 10 documents in total, in any mix. Unused add-on credits carry forward for 45 days and through a plan renewal inside those 45 days. Add-on credits count only while a plan is active. A stronger plan replaces (does not add to) the weaker plan's pool; add-ons stay on top.
+All prices, credits, validity, perks, popular badge and ranks are editable in **Owner Console → Pricing Plans**.
+
+Purchase rules (all verified by automated tests): the strongest plan wins; a cheaper plan is refused while a higher one is active; the same plan renewed stacks time; a partial bank reversal keeps access, a full reversal or dispute removes that purchase; webhooks are idempotent; coupons support plan lists, expiry, total and per-user limits and always leave a minimum ₹1; Cashfree is the primary gateway (Razorpay optional); all payments are final and non-refundable.
 
 ## 3. What a customer does (after the landing page)
 1. **Landing page** → choose "Build my resume" / "Check my resume" / pricing. Visitors may arrive through a referral link `/r/<code>` (stored in session).

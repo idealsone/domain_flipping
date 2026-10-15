@@ -1,3 +1,11 @@
+# CVTara v3.6.0 — shared document credits
+
+- **One shared pool for every plan:** 1 free premium primary resume + document credits (tailored-resume credits + cover-letter credits) used by tailored resumes and cover letters alike. Fresher Basic = 1 + 20 (for example 15 resumes + 5 letters, or 10 + 10); the same rule applies to every plan and add-on.
+- **Add-ons add to the pool and carry forward:** "+10 resumes & +10 letters" = +20 credits (20 + 20 = 40 total), valid **45 days from purchase** (editable per pack), counted whenever a plan is active, and kept through a renewal inside the 45 days.
+- Dashboard, My Resumes, Cover Letters and Account show "Document credits used / total" with the split; the separate "downloads / exports" meter is gone (clean downloads of saved documents are no longer counted separately).
+- Pricing Plans editor and public plan cards describe credits; the customer guide explains the model.
+- Tests: `Document credits (shared pool)` checks 1 + 20, 15 + 5, blocking at 20, +20 add-on to 40, and the 45-day validity.
+
 # CVTara v3.5.2 — customer portal polish
 
 - **My saved cover letters** (with "x / 30 draft slots used") now appears under the **Cover Letters** section and refreshes after you save a letter.

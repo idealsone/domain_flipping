@@ -73,7 +73,7 @@ return $value;
 
     public static function planDefaults(): array
     {
-        $mk = fn ($name, $aud, $tag, $price, $mrp, $days, $docs, $ats, $rank, $perks, $extra = []) => array_merge(['type' => 'plan', 'name' => $name, 'audience' => $aud, 'tagline' => $tag, 'price' => $price, 'mrp' => $mrp, 'accessDays' => $days, 'savedResumes' => $docs, 'savedLetters' => $docs, 'atsScans' => $ats, 'dailyMatches' => 100, 'exports' => $docs * 4, 'rank' => $rank, 'perks' => $perks, 'popular' => false, 'referral' => false], $extra);
+        $mk = fn ($name, $aud, $tag, $price, $mrp, $days, $docs, $ats, $rank, $perks, $extra = []) => array_merge(['type' => 'plan', 'name' => $name, 'audience' => $aud, 'tagline' => $tag, 'price' => $price, 'mrp' => $mrp, 'accessDays' => $days, 'savedResumes' => $docs, 'savedLetters' => $docs, 'atsScans' => $ats, 'dailyMatches' => 100, 'exports' => 0, 'rank' => $rank, 'perks' => $perks, 'popular' => false, 'referral' => false], $extra);
 
         return [
             'free' => ['type' => 'plan', 'name' => 'Normal user', 'audience' => 'all', 'tagline' => 'Create an account, build and preview — subscribe to download', 'price' => 0, 'mrp' => 0, 'accessDays' => 0, 'savedResumes' => 1, 'savedLetters' => 2, 'atsScans' => null, 'dailyMatches' => 3, 'exports' => 0, 'rank' => 0, 'perks' => [], 'popular' => false, 'referral' => false],
@@ -88,7 +88,7 @@ return $value;
 
     public static function addonDefaults(): array
     {
-        $a = fn ($n, $price) => ['type' => 'addon', 'name' => "Add-on · $n resumes + $n cover letters", 'audience' => 'all', 'tagline' => "Extra $n JD-tailored resumes and $n cover letters", 'price' => $price, 'mrp' => 0, 'accessDays' => 0, 'savedResumes' => $n, 'savedLetters' => $n, 'atsScans' => null, 'dailyMatches' => 0, 'exports' => $n * 4, 'rank' => 0, 'perks' => [], 'popular' => false, 'referral' => false];
+        $a = fn ($n, $price) => ['type' => 'addon', 'name' => "Add-on · $n resumes + $n cover letters", 'audience' => 'all', 'tagline' => "Extra $n JD-tailored resumes and $n cover letters", 'price' => $price, 'mrp' => 0, 'accessDays' => 45, 'savedResumes' => $n, 'savedLetters' => $n, 'atsScans' => null, 'dailyMatches' => 0, 'exports' => 0, 'rank' => 0, 'perks' => [], 'popular' => false, 'referral' => false];
 
         return ['addon-10' => $a(10, 149), 'addon-20' => $a(20, 249), 'addon-30' => $a(30, 399)];
     }
@@ -134,6 +134,8 @@ return $value;
     {
         $free = self::plans()['free'];
         if (! $best) {
+            $free['credits'] = (int) $free['savedResumes'] + (int) $free['savedLetters'];
+
             return ['plan' => 'free', 'paid' => false, 'limits' => $free, 'accessUntil' => null, 'purchase' => null, 'extras' => ['resumes' => 0, 'letters' => 0]];
         }
         $limits = array_merge($free, $best[2]);
@@ -146,6 +148,8 @@ return $value;
         }
         $limits['savedResumes'] += $extra['resumes'];
         $limits['savedLetters'] += $extra['letters'];
+        // One shared pool of document credits: every tailored resume or cover letter uses one, whichever kind it is.
+        $limits['credits'] = (int) $limits['savedResumes'] + (int) $limits['savedLetters'];
 
         return ['plan' => $best[1]->plan, 'paid' => true, 'limits' => $limits, 'accessUntil' => $best[1]->access_until, 'purchase' => $best[1], 'extras' => $extra];
     }
@@ -168,6 +172,15 @@ return $value;
         }
 
         return $out;
+    }
+
+    /** Credits already used: tailored resumes (the primary resume is free) plus cover letters. */
+    public static function creditsUsed(int $user): array
+    {
+        $tailored = (int) DB::table('resume_drafts')->where('owner_id', $user)->where('is_primary', false)->count();
+        $letters = (int) DB::table('cover_letter_drafts')->where('owner_id', $user)->count();
+
+        return ['tailored' => $tailored, 'letters' => $letters, 'used' => $tailored + $letters];
     }
 
     public static function audit($user, string $event, string $ref = ''): void
