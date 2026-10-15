@@ -42,7 +42,8 @@ def run(ctx, t):
     t.check("the front page no longer asks for a resume upload", "resumeFile" not in open(os.path.join(ctx.app, "resources/frontend/index.html"), encoding="utf8").read())
     for f in ("premium-products.css", "resume-experience.css", "resume-studio.css"):
         css = open(os.path.join(pub, f), encoding="utf8").read()
-        t.check(f"{f} does not resize the sidebar per page", not re.search(r"\.(product|builder)-active \.(workspace-shell\{grid-template-columns|side-nav button\{font-size)", css))
+        t.check(f"{f} does not resize the sidebar or shift the page per view", not re.search(r"\.(product|builder)-active \.(workspace-shell\{grid-template-columns|side-nav button\{font-size|workspace-content\{|workspace-top\{)", css))
+    t.check("the page reserves scrollbar space so every view has the same width", "scrollbar-gutter:stable" in open(os.path.join(pub, "cvtara-ds.css"), encoding="utf8").read())
 
     srv = http.server.ThreadingHTTPServer(("127.0.0.1", 0), Handler); port = srv.server_address[1]
     threading.Thread(target=srv.serve_forever, daemon=True).start(); base = f"http://127.0.0.1:{port}"

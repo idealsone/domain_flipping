@@ -55,7 +55,7 @@
   }
 
   function addonHTML(key, p, o) {
-    return `<article class="pl-addon" data-addon-card="${E(key)}"><div><b>+${p.savedResumes} resume downloads &amp; +${p.savedLetters} cover-letter downloads${p.atsScans ? ` &amp; +${p.atsScans} ATS scans` : ''}</b><span>Kept separately · valid ${p.accessDays || 45} days from purchase · carries into a renewal</span></div><strong>${inr(p.price)}</strong>${o.mode === 'checkout' ? `<button class="button ${o.selected === key ? 'primary' : 'secondary'} small" type="button" data-pl-select="${E(key)}">${o.selected === key ? '✓ Selected' : 'Choose'}</button>` : `<a class="button secondary small" href="/checkout.html?plan=${E(key)}" data-pl-go="${E(key)}">Add on</a>`}</article>`;
+    return `<article class="pl-addon" data-addon-card="${E(key)}"><div><b>+${p.savedResumes} resume downloads &amp; +${p.savedLetters} cover-letter downloads${p.atsScans ? ` &amp; +${p.atsScans} ATS scans` : ''}</b><span>Kept separately · valid until your plan ends · follows a renewal</span></div><strong>${inr(p.price)}</strong>${o.mode === 'checkout' ? `<button class="button ${o.selected === key ? 'primary' : 'secondary'} small" type="button" data-pl-select="${E(key)}">${o.selected === key ? '✓ Selected' : 'Choose'}</button>` : `<a class="button secondary small" href="/checkout.html?plan=${E(key)}" data-pl-go="${E(key)}">Add on</a>`}</article>`;
   }
 
   async function mount(el, opts = {}) {

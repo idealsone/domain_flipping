@@ -1,5 +1,5 @@
 """Download credits: drafts are free; a clean download uses 1 credit of its own kind (resume / cover letter, separate pools);
-one primary resume is free once for life after a first purchase; the same version again is free; add-ons add to each pool for 45 days."""
+one primary resume is free once for life after a first purchase; the same version again is free; add-ons add to each pool until the plan ends."""
 import datetime as dt
 NAME = "Download credits (separate pools)"
 
@@ -59,9 +59,8 @@ def run(ctx, t):
     t.check("add-on adds 10 to each pool (20 + 20, separate)", k["resumes"]["total"] == 20 and k["letters"]["total"] == 20 and k["addOns"]["resumes"] == 10 and k["addOns"]["letters"] == 10, k)
     t.check("the edited resume and an 11th resume can now be downloaded", download("resume", vids[0])[0] == 200 and download("resume", vids[10])[0] == 200 and cr()["resumes"]["used"] == 12)
     t.check("a letter can be downloaded again after the add-on", download("letter", lids[10])[0] == 200 and cr()["letters"]["used"] == 11)
-    row = db.q("select access_until, purchased_at from purchases where plan='addon-10' and owner_id=(select id from users where email='credit-a@test.local')")[0]
-    days = (dt.datetime.fromisoformat(row[0]) - dt.datetime.fromisoformat(row[1])).days
-    t.check("add-on credits are valid 45 days from purchase", 44 <= days <= 45, days)
+    q = "select access_until from purchases where owner_id=(select id from users where email='credit-a@test.local') and plan=? order by access_until desc"
+    t.check("add-on credits end when the subscription ends", db.q(q, "addon-10")[0][0] == db.q(q, "fresher-basic")[0][0])
     t.check("plan renewal keeps unused add-on credits", buy("fresher-basic") == 200 and cr()["addOns"]["resumes"] + cr()["addOns"]["letters"] > 0, cr())
     s, g = c.api("GET", f"resumes/{pid}"); d = g["resume"]["data"]; d["summary"] = "primary edited"
     c.api("POST", "resumes", {"data": d, "id": pid, "revision": g["resume"]["revision"]}); before = cr()["resumes"]["used"]

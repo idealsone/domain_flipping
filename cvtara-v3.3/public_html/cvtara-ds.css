@@ -456,3 +456,5 @@ body.dark .rp-tabs button.active{background:#3b6cf0;border-color:#3b6cf0}
 .side-domain{margin:12px 14px 16px;font-size:12px;color:rgba(255,255,255,.7);line-height:1.8}.side-domain a{color:inherit;text-decoration:underline;text-underline-offset:2px}
 .fb-form .connected-check{display:flex;gap:10px;align-items:flex-start;font-weight:500;line-height:1.5}.fb-form .connected-check input{width:18px;height:18px;margin-top:2px;flex:none}
 .side-nav{overflow-y:auto}
+/* Keep every page the same width: reserve the scrollbar space so short and long pages do not shift sideways. */
+html{overflow-y:scroll;scrollbar-gutter:stable}

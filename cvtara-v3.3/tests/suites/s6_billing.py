@@ -15,15 +15,16 @@ def run(ctx, t):
     db = ctx.db(); o = ctx.client(); o.raw("GET", "/preview/go/admin"); o.page("/admin.html")
     uid = lambda e: db.q("select id from users where email=?", e)[0][0]
 
-    # add-on credits keep their own 45-day validity and carry forward through a renewal
+    # add-on credits last as long as the subscription and follow it into a renewal
     a = ctx.client(); a.register("bill-a@test.local")
     t.check("buy plan", buy(a, "fresher-basic")[0] == 200)
     t.check("buy add-on", buy(a, "addon-10")[0] == 200)
+    q1 = "select access_until from purchases where owner_id=? and status='paid' and plan=? order by access_until desc"
+    plan_end = db.q(q1, uid("bill-a@test.local"), "fresher-basic")[0][0]; add_end = db.q(q1, uid("bill-a@test.local"), "addon-10")[0][0]
+    t.check("an add-on ends exactly when the subscription ends", plan_end == add_end, (plan_end, add_end))
     t.check("renew plan", buy(a, "fresher-basic")[0] == 200)
-    rows = db.q("select plan, access_until, purchased_at from purchases where owner_id=? and status='paid' and plan='addon-10'", uid("bill-a@test.local"))
-    import datetime as dt
-    days = (dt.datetime.fromisoformat(rows[0][1]) - dt.datetime.fromisoformat(rows[0][2])).days
-    t.check("add-on credits are valid for 45 days from purchase", 44 <= days <= 45, days)
+    plan_end2 = db.q(q1, uid("bill-a@test.local"), "fresher-basic")[0][0]; add_end2 = db.q(q1, uid("bill-a@test.local"), "addon-10")[0][0]
+    t.check("after an early renewal the add-on moves to the end of the renewed plan", plan_end2 > plan_end and add_end2 == plan_end2, (plan_end2, add_end2))
     k = a.api("GET", "allowance")[1]["credits"]
     t.check("after plan + add-on + renewal the add-on credits are still there", k["resumes"]["total"] == 20 and k["letters"]["total"] == 20 and k["addOns"]["resumes"] == 10, k)
 

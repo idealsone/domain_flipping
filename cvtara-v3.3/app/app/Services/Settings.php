@@ -88,7 +88,7 @@ return $value;
 
     public static function addonDefaults(): array
     {
-        $a = fn ($n, $price) => ['type' => 'addon', 'name' => "Add-on · $n resumes + $n cover letters", 'audience' => 'all', 'tagline' => "Extra $n resume downloads, $n cover-letter downloads and ".($n * 2)." ATS scans", 'price' => $price, 'mrp' => 0, 'accessDays' => 45, 'savedResumes' => $n, 'savedLetters' => $n, 'atsScans' => $n * 2, 'dailyMatches' => 0, 'exports' => 0, 'rank' => 0, 'perks' => [], 'popular' => false, 'referral' => false];
+        $a = fn ($n, $price) => ['type' => 'addon', 'name' => "Add-on · $n resumes + $n cover letters", 'audience' => 'all', 'tagline' => "Extra $n resume downloads, $n cover-letter downloads and ".($n * 2)." ATS scans", 'price' => $price, 'mrp' => 0, 'accessDays' => 0, 'savedResumes' => $n, 'savedLetters' => $n, 'atsScans' => $n * 2, 'dailyMatches' => 0, 'exports' => 0, 'rank' => 0, 'perks' => [], 'popular' => false, 'referral' => false];
 
         return ['addon-10' => $a(10, 149), 'addon-20' => $a(20, 249), 'addon-30' => $a(30, 399)];
     }

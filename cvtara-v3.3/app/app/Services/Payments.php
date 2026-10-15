@@ -94,12 +94,15 @@ class Payments
             }$running = DB::table('purchases')->where('owner_id', $p->owner_id)->where('id', '!=', $p->id)->where('plan', $p->plan)->whereIn('status', ['paid', 'partially_refunded'])->where('access_until', '>', now())->max('access_until');
             $start = $running ? max(now(), \Illuminate\Support\Carbon::parse($running)) : now();
             if (str_starts_with($p->plan, 'addon-')) {
-                // Add-on credits stay valid for their own period (45 days by default) and carry forward into any renewal inside it.
-                $days = (int) (json_decode((string) $p->limits_json, true)['accessDays'] ?? 0) ?: 45;
-                $until = now()->addDays($days);
+                // An add-on lasts exactly as long as the subscription it was bought on, and follows the plan into a renewal.
+                $planEnd = Settings::access($p->owner_id)['accessUntil'] ?? null;
+                $until = $planEnd ? \Illuminate\Support\Carbon::parse($planEnd) : now()->addDays((int) (json_decode((string) $p->limits_json, true)['accessDays'] ?? 0) ?: 30);
                 DB::table('purchases')->where('id', $p->id)->update(['status' => 'paid', 'payment_reference' => $entity['id'], 'purchased_at' => now(), 'access_until' => $until, 'updated_at' => now()]);
             } else {
-                DB::table('purchases')->where('id', $p->id)->update(['status' => 'paid', 'payment_reference' => $entity['id'], 'purchased_at' => now(), 'access_until' => $start->copy()->addDays($p->access_days), 'updated_at' => now()]);
+                $end = $start->copy()->addDays($p->access_days);
+                DB::table('purchases')->where('id', $p->id)->update(['status' => 'paid', 'payment_reference' => $entity['id'], 'purchased_at' => now(), 'access_until' => $end, 'updated_at' => now()]);
+                // Unused add-on credits still running move to the end of the renewed subscription.
+                DB::table('purchases')->where('owner_id', $p->owner_id)->where('plan', 'like', 'addon-%')->whereIn('status', ['paid', 'partially_refunded'])->where('access_until', '>', now())->where('access_until', '<', $end)->update(['access_until' => $end, 'updated_at' => now()]);
             }
             $p = DB::table('purchases')->where('id', $p->id)->first();
             if ($p->coupon_code) {

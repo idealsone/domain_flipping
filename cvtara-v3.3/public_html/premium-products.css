@@ -41,6 +41,6 @@
 @media(hover:none){.letter-template-art>span{opacity:1}}
 @media(prefers-reduced-motion:reduce){#view-letter *,#view-match *{scroll-behavior:auto!important;transition:none!important}}
 
-.product-active .workspace-content{padding:26px}@media(max-width:760px){.product-active .workspace-shell{display:block}.product-active .workspace-content{padding:18px 14px}}
+@media(max-width:760px){.product-active .workspace-shell{display:block}}
 
 .application-roadmap-grid [hidden]{display:none!important}

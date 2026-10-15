@@ -10,7 +10,7 @@ use Illuminate\Validation\ValidationException;
  * Download credits. Saving a draft is free; the first clean (watermark-free) download of a tailored resume or a cover letter
  * uses one credit of its own kind. Resume and cover-letter credits are separate pools:
  *   plan:   e.g. Fresher Basic = 10 resume downloads + 10 cover-letter downloads (plus one primary resume free for life, given once after a first purchase, never again on renewals)
- *   add-on: e.g. +10 resume downloads + 10 cover-letter downloads, valid for its own period (45 days) and carried into renewals.
+ *   add-on: e.g. +10 resume downloads + 10 cover-letter downloads, valid until the subscription it was bought on ends (and follows it into a renewal).
  * Downloading the same version again (another format) is free; an edited version is a new document and uses a new credit.
  */
 class Credits
@@ -107,7 +107,7 @@ class Credits
                 return true;
             }
         }
-        throw ValidationException::withMessages(['limit' => 'All your ATS scans are used. Buy an add-on pack for more scans (valid 45 days), or renew your plan.']);
+        throw ValidationException::withMessages(['limit' => 'All your ATS scans are used. Buy an add-on pack for more scans (valid until your plan ends), or renew your plan.']);
     }
 
     public static function releaseScan(int $uid, string $scanId): void
@@ -151,6 +151,6 @@ class Credits
             }
         }
         $label = $kind === 'resume' ? 'resume' : 'cover-letter';
-        throw ValidationException::withMessages(['limit' => "All your {$label} download credits are used. Buy an add-on pack for more {$label} downloads (valid 45 days), or use a new plan period."]);
+        throw ValidationException::withMessages(['limit' => "All your {$label} download credits are used. Buy an add-on pack for more {$label} downloads (valid until your plan ends), or use a new plan period."]);
     }
 }
