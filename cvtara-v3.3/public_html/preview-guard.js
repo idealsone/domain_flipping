@@ -1,4 +1,4 @@
-/* Preview protection: on-screen resume and cover-letter previews always carry a traceable watermark and cannot be
+/* Preview protection: on-screen resume and cover-letter previews of FREE accounts carry a traceable watermark and cannot be
    selected, copied, dragged or printed from the page. This discourages casual copying; no website can fully stop a
    screenshot or screen recording (the browser gives pages no control over the operating system's screen capture). */
 (() => {

@@ -9,7 +9,7 @@ use Illuminate\Validation\ValidationException;
 /**
  * Download credits. Saving a draft is free; the first clean (watermark-free) download of a tailored resume or a cover letter
  * uses one credit of its own kind. Resume and cover-letter credits are separate pools:
- *   plan:   e.g. Fresher Basic = 10 resume downloads + 10 cover-letter downloads (the primary resume is always free)
+ *   plan:   e.g. Fresher Basic = 10 resume downloads + 10 cover-letter downloads (plus one primary resume free for life, given once after a first purchase, never again on renewals)
  *   add-on: e.g. +10 resume downloads + 10 cover-letter downloads, valid for its own period (45 days) and carried into renewals.
  * Downloading the same version again (another format) is free; an edited version is a new document and uses a new credit.
  */
@@ -39,7 +39,7 @@ class Credits
 
     public static function status(int $uid): array
     {
-        $s = ['resumes' => ['total' => 0, 'used' => 0, 'remaining' => 0], 'letters' => ['total' => 0, 'used' => 0, 'remaining' => 0], 'addOns' => ['resumes' => 0, 'letters' => 0, 'validUntil' => null], 'primaryFree' => true];
+        $s = ['resumes' => ['total' => 0, 'used' => 0, 'remaining' => 0], 'letters' => ['total' => 0, 'used' => 0, 'remaining' => 0], 'addOns' => ['resumes' => 0, 'letters' => 0, 'validUntil' => null], 'primaryFree' => ! self::primaryClaimed($uid)];
         foreach (self::pools($uid) as $p) {
             foreach (['resume' => 'resumes', 'letter' => 'letters'] as $kind => $key) {
                 $u = min($p[$kind], self::used($uid, $kind, $p['id']));
@@ -60,9 +60,25 @@ class Credits
         return $s;
     }
 
-    /** Returns true when a credit was used, false when this exact version was already paid for. */
-    public static function consume(int $uid, string $kind, string $docId, int $revision): bool
+    /** The one-time lifetime primary resume is available once per account, and only to someone who has bought a plan. */
+    public static function primaryClaimed(int $uid): bool
     {
+        return DB::table('product_usage')->where('owner_id', $uid)->where('action', 'primary_free')->exists();
+    }
+
+    /** Returns true when a credit was used, false when this exact version was already paid for (or is the lifetime free primary). */
+    public static function consume(int $uid, string $kind, string $docId, int $revision, bool $primary = false): bool
+    {
+        if ($kind === 'resume' && $primary) {
+            if (! self::primaryClaimed($uid)) {
+                DB::table('product_usage')->insert(['id' => (string) Str::uuid(), 'owner_id' => $uid, 'action' => 'primary_free', 'reference' => $docId.'|'.$revision, 'created_at' => now(), 'updated_at' => now()]);
+
+                return false;
+            }
+            if (DB::table('product_usage')->where('owner_id', $uid)->where('action', 'primary_free')->where('reference', $docId.'|'.$revision)->exists()) {
+                return false;
+            }
+        }
         if (DB::table('product_usage')->where('owner_id', $uid)->where('action', 'doc_'.$kind)->where('reference', 'like', $docId.'|'.$revision.'|%')->exists()) {
             return false;
         }

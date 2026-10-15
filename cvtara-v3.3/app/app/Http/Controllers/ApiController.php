@@ -359,6 +359,9 @@ class ApiController extends Controller
         $new = DB::transaction(function () use ($id, $row, $v) {
             User::whereKey($id)->lockForUpdate()->first();
             abort_unless(Settings::get('features')['builder']['enabled'], 403);
+            if (! Settings::access($id)['paid']) {
+                throw ValidationException::withMessages(['limit' => 'A free account keeps one resume. Choose a plan to create job-tailored versions and download.']);
+            }
             if (DB::table('resume_drafts')->where('owner_id', $id)->count() >= Settings::get('features')['builder']['limit']) {
                 throw ValidationException::withMessages(['limit' => 'You have reached the saved-draft limit. Delete an old draft to save a new one.']);
             }
@@ -483,6 +486,9 @@ class ApiController extends Controller
                 abort_unless(DB::table($table)->where('id', $did)->where('owner_id', $id)->where('revision', $rev)->update([...$record, 'revision' => $rev + 1]), 409);
                 $rev++;
             } else {
+                if (! Settings::access($id)['paid'] && DB::table($table)->where('owner_id', $id)->count() >= 1) {
+                    throw ValidationException::withMessages(['limit' => 'A free account keeps one '.($type === 'resumes' ? 'resume' : 'cover letter').'. Choose a plan to create more and to download.']);
+                }
                 if (DB::table($table)->where('owner_id', $id)->count() >= $limit) {
                     throw ValidationException::withMessages(['limit' => 'You have reached the saved-draft limit. Delete an old draft to save a new one.']);
                 }$did = (string) Str::uuid();

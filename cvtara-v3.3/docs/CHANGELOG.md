@@ -1,8 +1,8 @@
 # CVTara v3.7.0 — credits are spent on download, separate pools, preview protection
 
-- **Credits move to download time:** saving drafts is free; the first clean download of a tailored resume or a cover letter uses 1 credit of its own kind. The primary resume is always free; the same version in another format is free; an edited version needs a new credit.
+- **Credits move to download time:** saving drafts is free; the first clean download of a tailored resume or a cover letter uses 1 credit of its own kind. One primary resume download is free once for life, after the first purchase only (no repeat on renewals, none without a plan); the same version in another format is free; an edited version needs a new credit.
 - **Separate pools (replaces the shared pool of v3.6.0):** Fresher Basic = 10 resume downloads + 10 cover-letter downloads; using one pool never touches the other. Add-ons add to each pool (+10 & +10), valid 45 days from purchase, carried into renewals, spent after plan credits.
-- **Previews are always watermarked** (paid users too) with an account code, and cannot be selected, copied, dragged or printed from the page; they blur when the window loses focus or Print Screen is pressed. This deters casual copying; it cannot stop every screenshot.
+- **Free-account previews are watermarked** (paid accounts see clean previews and clean downloads) with an account code, and cannot be selected, copied, dragged or printed from the page; they blur when the window loses focus or Print Screen is pressed. This deters casual copying; it cannot stop every screenshot.
 - The download dialog shows how many credits are left and asks before using one.
 - Credit meters (dashboard, billing, My Resumes, Cover Letters, Account), plan and add-on cards, checkout, front page FAQ, customer guide, Pricing Plans editor and admin guide all describe the new rules.
 - Tests: `Download credits (separate pools)` (25 checks) plus preview-protection checks.
