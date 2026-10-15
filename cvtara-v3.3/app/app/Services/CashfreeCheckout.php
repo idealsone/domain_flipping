@@ -10,6 +10,17 @@ use Illuminate\Validation\ValidationException;
 
 class CashfreeCheckout
 {
+    // The gateway address. Tests may point it at a local stand-in, but never on a production site.
+    private static function base(bool $live): string
+    {
+        $o = env('CASHFREE_API_BASE');
+        if ($o && config('app.env') !== 'production') {
+            return rtrim($o, '/');
+        }
+
+        return $live ? 'https://api.cashfree.com/pg' : 'https://sandbox.cashfree.com/pg';
+    }
+
     private static function client(bool $live)
     {
         $p = Settings::providers()['payments'] ?? [];
@@ -17,20 +28,25 @@ class CashfreeCheckout
             throw ValidationException::withMessages(['payments' => 'Add Cashfree checkout credentials in owner setup.']);
         }
 
-return Http::baseUrl($live ? 'https://api.cashfree.com/pg' : 'https://sandbox.cashfree.com/pg')->withHeaders(['x-api-version' => '2026-01-01', 'x-client-id' => $p['cashfreeClientId'], 'x-client-secret' => $p['cashfreeClientSecret']])->acceptJson()->connectTimeout(5)->timeout(20);
+return Http::baseUrl(self::base($live))->withHeaders(['x-api-version' => $p['cashfreeApiVersion'] ?? '2025-01-01', 'x-client-id' => $p['cashfreeClientId'], 'x-client-secret' => $p['cashfreeClientSecret']])->acceptJson()->connectTimeout(5)->timeout(20);
     }
 
     public static function start(User $u, string $plan, string $phone, string $coupon = ''): array
     {
         $plans = Settings::plans();
         abort_unless(isset($plans[$plan]) && $plan !== 'free', 422);
+        $phone = preg_replace('/\D/', '', $phone) ?: (string) DB::table('profiles')->where('owner_id', $u->id)->value('phone');
+        $phone = substr(preg_replace('/\D/', '', $phone), -10);
         if (! preg_match('/^[6-9][0-9]{9}$/', $phone)) {
             throw ValidationException::withMessages(['phone' => 'Enter your Indian mobile number for secure checkout.']);
         }$p = Settings::providers()['payments'];
         $live = ($p['mode'] ?? 'test') === 'live';
         $id = (string) Str::uuid();
         $orderId = 'cvt_'.str_replace('-', '', $id);
-        $quote = BusinessControls::quote($plan, $coupon);
+        $lock = $coupon !== '' ? \Illuminate\Support\Facades\Cache::lock('coupon:'.strtoupper(trim($coupon)), 25) : null;
+        $lock?->block(15);
+        try {
+        $quote = BusinessControls::quote($plan, $coupon, $u->id);
         $amount = $quote['totalPaise'];
         abort_unless($amount >= 100 && $amount < 100000000, 422);
         DB::table('purchases')->insert(['id' => $id, 'owner_id' => $u->id, 'plan' => $plan, 'amount_paise' => $amount, 'coupon_code' => $quote['code'] ?: null, 'discount_paise' => $quote['discountPaise'], 'provider' => 'cashfree', 'provider_order_id' => $orderId, 'is_live' => $live, 'limits_json' => json_encode($plans[$plan]), 'access_days' => $plans[$plan]['accessDays'], 'created_at' => now(), 'updated_at' => now()]);
@@ -44,6 +60,9 @@ return Http::baseUrl($live ? 'https://api.cashfree.com/pg' : 'https://sandbox.ca
             throw ValidationException::withMessages(['payment' => 'Could not open checkout. No payment has been requested in your browser. Check purchase history before trying again.']);
         }
         Settings::audit($u->id, 'checkout_started', $id);
+        } finally {
+            $lock?->release();
+        }
 
         return ['id' => $id, 'provider' => 'cashfree', 'orderId' => $orderId, 'paymentSessionId' => $res['payment_session_id'], 'mode' => $live ? 'production' : 'sandbox', 'test' => ! $live, 'amount' => $amount, 'currency' => 'INR'];
     }
@@ -100,7 +119,11 @@ return Http::baseUrl($live ? 'https://api.cashfree.com/pg' : 'https://sandbox.ca
         $d = json_decode($raw, true, 64, JSON_THROW_ON_ERROR);
         $id = $d['data']['order']['order_id'] ?? $d['data']['refund']['order_id'] ?? $d['data']['order_id'] ?? '';
         $p = DB::table('purchases')->where('provider', 'cashfree')->where('provider_order_id', $id)->first();
-        abort_unless($p,404);
+        if (! $p) {
+            ErrorLog::record('warning', 'billing', 'Ignored a Cashfree event that matches no order here.');
+
+            return;
+        }
         self::reconcile($p);
         Settings::put('cashfreeWebhookSeen',['at' => now()->toIso8601String()]);
     }

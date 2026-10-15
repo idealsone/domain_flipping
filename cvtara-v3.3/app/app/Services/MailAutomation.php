@@ -78,13 +78,23 @@ class MailAutomation
         }
     }
 
+    // Reminder scans run once an hour; the cron heartbeat still updates every minute.
     public static function reminders(): void
     {
+        if (! \Illuminate\Support\Facades\Cache::add('reminders-run', 1, 3600)) {
+            return;
+        }
         foreach (DB::table('purchases')->where('status', 'paid')->whereBetween('access_until', [now(), now()->addDays(7)])->where('plan', 'not like', 'addon-%')->get() as $p) {
+            if (DB::table('purchases')->where('owner_id', $p->owner_id)->whereIn('status', ['paid', 'partially_refunded'])->where('access_until', '>', $p->access_until)->exists()) {
+                continue;
+            }
             if ($u = User::find($p->owner_id)) {
                 self::queue($u, 'access_expiring', $p->id);
             }
         }foreach (DB::table('purchases')->where('status', 'created')->whereBetween('created_at', [now()->subDays(7), now()->subHour()])->get() as $p) {
+            if (DB::table('purchases')->where('owner_id', $p->owner_id)->whereIn('status', ['paid', 'partially_refunded'])->where('created_at', '>', $p->created_at)->exists()) {
+                continue;
+            }
             if ($u = User::find($p->owner_id)) {
                 self::queue($u, 'abandoned_purchase', $p->id);
             }
@@ -92,6 +102,6 @@ class MailAutomation
             if ($u = User::find($a->owner_id)) {
                 self::queue($u, 'followup_due', $a->id.':'.today()->toDateString());
             }
-        }Settings::put('cronHeartbeat',['at' => now()->toIso8601String()]);
+        }
     }
 }

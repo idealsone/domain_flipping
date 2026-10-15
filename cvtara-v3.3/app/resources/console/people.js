@@ -21,11 +21,11 @@
         <section class="panel"><table class="ad-table"><thead><tr><th>User</th><th>Subscription</th><th>Resumes</th><th>Joined</th><th>Status</th><th class="r">Actions</th></tr></thead><tbody id="pbody"><tr><td colspan="6"><div class="ops-skel" style="height:60px;margin:0"></div></td></tr></tbody></table></section>
         <div class="ops-pager" id="ppager"></div>`;
       $('#pq').oninput = e => { clearTimeout(U.timer); U.timer = setTimeout(() => { U.q = e.target.value.trim(); U.page = 1; people(); }, 300); };
-      $('#pf').onchange = e => { U.f = e.target.value; paint(); };
+      $('#pf').onchange = e => { U.f = e.target.value; U.page = 1; people(); };
       h.addEventListener('click', onClick);
     }
     try {
-      const [d, pl] = await Promise.all([api(`/api/admin/users?page=${U.page}&q=${encodeURIComponent(U.q)}`), plans()]);
+      const [d, pl] = await Promise.all([api(`/api/admin/users?page=${U.page}&q=${encodeURIComponent(U.q)}&f=${encodeURIComponent(U.f)}`), plans()]);
       U.data = d; U.pl = pl; paint();
     } catch (e) { $('#pbody').innerHTML = `<tr><td colspan="6" role="alert">${E(err(e))}</td></tr>`; }
   }
@@ -33,9 +33,9 @@
   function paint() {
     const d = U.data; if (!d) return;
     const all = d.users || [];
-    const rows = all.filter(u => U.f === 'all' || state(u) === U.f);
-    $('#pkpi').innerHTML = [['Total users', d.totalUsers], ['Paid (active)', d.paidUsers], ['Normal users', d.totalUsers - d.paidUsers], ['Blocked', all.filter(u => u.blocked).length]].map(([l, v]) => `<div class="kpi"><span>${l}</span><b>${v}</b></div>`).join('');
-    $('#pcount').textContent = `${rows.length} shown · ${d.usersTotal} match`;
+    const rows = all;
+    $('#pkpi').innerHTML = [['Total users', d.totalUsers], ['Paid (active)', d.paidUsers], ['Normal users', d.totalUsers - d.paidUsers], ['Blocked', d.blockedUsers ?? 0]].map(([l, v]) => `<div class="kpi"><span>${l}</span><b>${v}</b></div>`).join('');
+    $('#pcount').textContent = `${rows.length} shown · ${d.usersTotal} match the filter`;
     $('#pbody').innerHTML = rows.map(u => {
       const st = state(u), me = u.isAdmin;
       const sub = u.paid ? `<span class="pill st-paid">${E(planLabel(U.pl, u.last_plan))}</span><br><small>until ${dmy(parse(u.accessUntil))}</small>` : u.ever_paid ? `<span class="pill st-failed">Expired</span><br><small>was ${E(planLabel(U.pl, u.last_plan))}</small>` : '<span class="pill st-free">Normal user</span>';
@@ -45,7 +45,7 @@
     }).join('') || '<tr><td colspan="6">No users match.</td></tr>';
     const pages = Math.max(1, Math.ceil((d.usersTotal || 0) / (d.perPage || 100)));
     $('#ppager').innerHTML = pages > 1 ? `<button class="button secondary small" data-pg="-1" ${U.page <= 1 ? 'disabled' : ''}>← Previous</button><span>Page ${U.page} of ${pages}</span><button class="button secondary small" data-pg="1" ${U.page >= pages ? 'disabled' : ''}>Next →</button>` : '';
-    $('#pexport').onclick = () => download('cvtara-users.csv', csv(rows.map(u => ({ name: u.name, email: u.email, status: state(u), plan: u.paid ? planLabel(U.pl, u.last_plan) : '', access_until: u.accessUntil || '', resumes: u.resumes, joined: u.created_at })), ['name', 'email', 'status', 'plan', 'access_until', 'resumes', 'joined']), 'text/csv');
+    $('#pexport').onclick = () => { toast('Preparing export…'); K.exportReport({ dataset: 'users', q: U.q, status: ['paid', 'normal', 'blocked', 'owner'].includes(U.f) ? U.f : 'all', columns: 'id,name,email,phone,city,level,profession,joined,plan,paid,status,resumes' }, 'csv').then(() => toast('Export ready'), x => toast(err(x), true)); };
   }
   function onClick(e) {
     const pg = e.target.closest('[data-pg]'); if (pg) { U.page += Number(pg.dataset.pg); return people(); }
@@ -111,33 +111,38 @@
   async function orders() {
     const h = $('#admin-orders'); if (!h) return; h.innerHTML = '<div class="ops-skel"></div>';
     try {
-      const d = await K.data(true), um = K.userMap(d), list = [...d.purchases].sort((a, b) => parse(b.created_at) - parse(a.created_at));
-      const planOpts = [...new Set(list.map(p => K.planName(p)))].sort(), provOpts = [...new Set(list.map(p => p.provider))].sort();
-      const sel = (id, label, opts, val) => `<label class="ops-f">${label}<select id="${id}"><option value="all">All</option>${opts.map(o => `<option value="${E(o[0] ?? o)}" ${val === (o[0] ?? o) ? 'selected' : ''}>${E(o[1] ?? o)}</option>`).join('')}</select></label>`;
-      h.innerHTML = `<div class="pg-head"><h2>All Orders</h2><p>Complete transaction history — click any order for every detail</p></div>
-        <section class="panel panel-pad ops-filterbox"><label class="ops-f grow">Search<input id="oq" type="search" placeholder="Customer, email, plan, reference or order no." value="${E(O.q)}"></label>
-          ${sel('os', 'Status', [['paid', 'Paid'], ['refunded', 'Refunded'], ['partially_refunded', 'Partially refunded'], ['disputed', 'Disputed'], ['pending', 'Pending']], O.status)}${sel('op', 'Plan', planOpts, O.plan)}${sel('ov', 'Payment source', provOpts, O.provider)}
+      const pl = await plans(), planOpts = Object.keys(pl).filter(k => k !== 'free').map(k => [k, planLabel(pl, k)]), provOpts = [['cashfree', 'Cashfree'], ['razorpay', 'Razorpay'], ['manual', 'Recorded by owner'], ['referral_reward', 'Referral reward'], ['demo', 'Demo']];
+      const sel = (id, label, opts, val) => `<label class="ops-f">${label}<select id="${id}"><option value="all">All</option>${opts.map(o => `<option value="${E(o[0])}" ${val === o[0] ? 'selected' : ''}>${E(o[1])}</option>`).join('')}</select></label>`;
+      O.page = O.page || 1;
+      h.innerHTML = `<div class="pg-head"><h2>All Orders</h2><p>Complete transaction history — every filter runs on the server, so nothing is cut off. Click any order for every detail.</p></div>
+        <section class="panel panel-pad ops-filterbox" data-nokit><label class="ops-f grow">Search<input id="oq" type="search" placeholder="Customer, email, reference or order no." value="${E(O.q)}"></label>
+          ${sel('os', 'Status', [['paid', 'Paid'], ['refunded', 'Reversed by bank'], ['partially_refunded', 'Partly reversed'], ['disputed', 'Disputed'], ['pending', 'Pending'], ['created', 'Started, not paid']], O.status)}${sel('op', 'Plan', planOpts, O.plan)}${sel('ov', 'Payment source', provOpts, O.provider)}
           <label class="ops-f">From<input id="of" type="date" value="${O.from}"></label><label class="ops-f">To<input id="ot" type="date" value="${O.to}"></label><label class="ops-f">Min ₹<input id="omin" type="number" min="0" value="${O.min}" style="width:90px"></label><label class="ops-f">Max ₹<input id="omax" type="number" min="0" value="${O.max}" style="width:90px"></label>
-          <div class="ops-f"><span>&nbsp;</span><span><button class="button secondary small" id="oreset">Reset</button> <button class="button primary small" id="oexport">Export CSV</button></span></div></section>
+          <div class="ops-f"><span>&nbsp;</span><span><button class="button secondary small" id="oreset">Reset</button> <button class="button secondary small" id="ocustom">Custom report…</button> <span class="kit-menu"><button class="button primary small" data-k="exp" id="oexp">Export all ▾</button><div class="kit-pop" hidden><button type="button" data-xf="csv">CSV (Excel-ready)</button><button type="button" data-xf="xls">Excel (.xls)</button><button type="button" data-xf="json">JSON</button><button type="button" data-xf="print">Print / Save as PDF</button></div></span></span></div></section>
         <div class="ops-kpis" id="okpi"></div>
-        <section class="panel"><table class="ad-table ops-click"><thead><tr><th>Order ID</th><th>Customer</th><th>Plan</th><th>Amount</th><th>Source</th><th>Status</th><th>Date</th></tr></thead><tbody id="obody"></tbody></table></section>`;
-      const rows = () => list.filter(p => {
-        const u = um[String(p.owner_id)] || {}, txt = (K.planName(p) + ' ' + (u.name || '') + ' ' + (u.email || '') + ' ' + (p.payment_reference || '') + ' ' + p.id).toLowerCase();
-        const when = parse(p.created_at), amt = p.amount_paise / 100;
-        return (!O.q || txt.includes(O.q.toLowerCase())) && (O.status === 'all' || p.status === O.status) && (O.plan === 'all' || K.planName(p) === O.plan) && (O.provider === 'all' || p.provider === O.provider) && (!O.from || when >= new Date(O.from)) && (!O.to || when < new Date(new Date(O.to).getTime() + 864e5)) && (O.min === '' || amt >= Number(O.min)) && (O.max === '' || amt <= Number(O.max));
-      });
-      const draw = () => {
-        const r = rows(), rev = r.filter(p => /paid|refund/.test(p.status)).reduce((s, p) => s + p.amount_paise - p.refunded_paise, 0);
-        $('#okpi').innerHTML = `<div class="kpi"><span>Orders shown</span><b>${r.length}</b></div><div class="kpi"><span>Net revenue</span><b>${short(rev)}</b></div><div class="kpi"><span>Refunded</span><b>${short(r.reduce((s, p) => s + p.refunded_paise, 0))}</b></div><div class="kpi"><span>Avg. order</span><b>${r.length ? short(r.reduce((s, p) => s + p.amount_paise, 0) / r.length) : '₹0'}</b></div>`;
-        $('#obody').innerHTML = r.map(p => `<tr data-oid="${p.id}" tabindex="0"><td><b>ORD-${String(p.id).slice(0, 6).toUpperCase()}</b></td><td>${E((um[String(p.owner_id)] || {}).name || 'Customer')}<br><small>${E((um[String(p.owner_id)] || {}).email || '')}</small></td><td>${E(K.planName(p))}</td><td><b>${short(p.amount_paise)}</b>${p.refunded_paise ? `<br><small>refunded ${short(p.refunded_paise)}</small>` : ''}</td><td><span class="tag">${E(p.provider)}</span></td><td>${pill(p.status)}</td><td>${dmy(parse(p.created_at))}</td></tr>`).join('') || '<tr><td colspan="7">No orders match these filters.</td></tr>';
+        <section class="panel"><table class="ad-table ops-click"><thead><tr><th>Order ID</th><th>Customer</th><th>Plan</th><th>Amount</th><th>Source</th><th>Status</th><th>Date</th></tr></thead><tbody id="obody"></tbody></table></section><div class="ops-pager" id="opager"></div>`;
+      const prm = () => { const p = { dataset: 'orders', q: O.q, status: O.status, plan: O.plan, provider: O.provider, from: O.from, to: O.to, min: O.min, max: O.max, columns: 'order,date,customer,email,plan,amount_inr,discount_inr,reversed_inr,net_inr,coupon,status,provider,reference,access_until', per: '50', page: String(O.page) }; Object.keys(p).forEach(k => { if (p[k] === '' || p[k] === 'all') delete p[k]; }); return p; };
+      const draw = async () => {
+        $('#obody').innerHTML = '<tr><td colspan="7">Loading…</td></tr>';
+        const d = await api('/api/admin/report?' + new URLSearchParams({ ...prm(), format: 'json', columns: 'order,date,customer,email,plan,amount_inr,reversed_inr,status,provider' })), s = d.sums || {};
+        $('#okpi').innerHTML = `<div class="kpi"><span>Orders found</span><b>${d.total.toLocaleString('en-IN')}</b></div><div class="kpi"><span>Billed</span><b>${short((s.amount_inr || 0) * 100)}</b></div><div class="kpi"><span>Reversed by bank</span><b>${short((s.reversed_inr || 0) * 100)}</b></div><div class="kpi"><span>Net</span><b>${short((s.net_inr || 0) * 100)}</b></div>`;
+        $('#obody').innerHTML = d.rows.map(p => `<tr data-oid="${E(p.id || '')}" tabindex="0"><td><b>${E(p.order)}</b></td><td>${E(p.customer || 'Customer')}<br><small>${E(p.email || '')}</small></td><td>${E(planLabel(pl, p.plan))}</td><td><b>${short(p.amount_inr * 100)}</b>${p.reversed_inr ? `<br><small>reversed ${short(p.reversed_inr * 100)}</small>` : ''}</td><td>${E(p.provider === 'manual' ? 'Recorded by owner' : p.provider)}</td><td>${pill(p.status)}</td><td>${dtm(p.date)}</td></tr>`).join('') || '<tr><td colspan="7">No orders match these filters.</td></tr>';
+        const pages = Math.max(1, Math.ceil(d.total / d.per));
+        $('#opager').innerHTML = d.total ? `<span>Page ${d.page} of ${pages}</span> <button class="button secondary small" data-op="${d.page - 1}" ${d.page <= 1 ? 'disabled' : ''}>← Prev</button> <button class="button secondary small" data-op="${d.page + 1}" ${d.page >= pages ? 'disabled' : ''}>Next →</button>` : '';
       };
-      const bind = (id, k, ev = 'input') => { $('#' + id).addEventListener(ev, e => { O[k] = e.target.value; draw(); }); };
+      const bind = (id, k, ev = 'input') => { $('#' + id).addEventListener(ev, e => { O[k] = e.target.value; O.page = 1; clearTimeout(bind.t); bind.t = setTimeout(() => draw().catch(x => toast(err(x), true)), ev === 'input' ? 350 : 0); }); };
       bind('oq', 'q'); bind('os', 'status', 'change'); bind('op', 'plan', 'change'); bind('ov', 'provider', 'change'); bind('of', 'from', 'change'); bind('ot', 'to', 'change'); bind('omin', 'min'); bind('omax', 'max');
-      $('#oreset').onclick = () => { Object.assign(O, { q: '', status: 'all', plan: 'all', provider: 'all', from: '', to: '', min: '', max: '' }); orders(); };
-      $('#oexport').onclick = () => download('cvtara-orders.csv', csv(rows().map(p => ({ order: 'ORD-' + String(p.id).slice(0, 6).toUpperCase(), customer: (um[String(p.owner_id)] || {}).name, email: (um[String(p.owner_id)] || {}).email, plan: K.planName(p), amount_inr: p.amount_paise / 100, refunded_inr: p.refunded_paise / 100, source: p.provider, reference: p.payment_reference, status: p.status, date: p.created_at })), ['order', 'customer', 'email', 'plan', 'amount_inr', 'refunded_inr', 'source', 'reference', 'status', 'date']), 'text/csv');
-      const open = tr => tr && orderDetail(tr.dataset.oid);
+      $('#oreset').onclick = () => { Object.assign(O, { q: '', status: 'all', plan: 'all', provider: 'all', from: '', to: '', min: '', max: '', page: 1 }); orders(); };
+      $('#ocustom').onclick = () => K.openReport({ dataset: 'orders', q: O.q, status: O.status, plan: O.plan, provider: O.provider, from: O.from, to: O.to, min: O.min, max: O.max });
+      h.addEventListener('click', e => {
+        const b = e.target.closest('button'); if (!b) return;
+        if (b.dataset.k) { b.nextElementSibling.hidden = !b.nextElementSibling.hidden; }
+        else if (b.dataset.xf) { b.closest('.kit-pop').hidden = true; toast('Preparing export…'); K.exportReport(prm(), b.dataset.xf).then(() => toast('Export ready'), x => toast(err(x), true)); }
+        else if (b.dataset.op) { O.page = Number(b.dataset.op); draw().catch(x => toast(err(x), true)); }
+      });
+      const open = tr => tr && tr.dataset.oid && orderDetail(tr.dataset.oid);
       $('#obody').onclick = e => open(e.target.closest('tr[data-oid]')); $('#obody').onkeydown = e => { if (e.key === 'Enter') open(e.target.closest('tr[data-oid]')); };
-      draw();
+      await draw();
     } catch (e) { h.innerHTML = `<div class="panel panel-pad" role="alert">${E(err(e))}</div>`; }
   }
   async function orderDetail(id) {

@@ -26,7 +26,14 @@ No Critical finding was verified. There is no unauthenticated code execution, SQ
 | F-19 export of unsaved edits | **Fixed** |
 | F-23 plan perks | **Partly fixed** (lifetime updates removed; owner must confirm support/call perks) |
 | F-24 demo mode in production | **Fixed** |
-| Open: F-08, F-09, F-11, F-20, F-21, F-22, F-25 and the 40 low items | Scheduled for later releases |
+| F-08 dashboard numbers in the browser | **Fixed** (server totals) |
+| F-09 Orders/Users pagination and filters | **Fixed** (server-side) |
+| F-11 print watermark | **Improved** (tiled in the document, restored if removed; a determined user can still screenshot) |
+| F-20 reminder scans, F-21 settings reads, F-22 retention | **Fixed** |
+| F-25 verified reviews | **Fixed** |
+| Low: F-26, F-27, F-28, F-31, F-33, F-34, F-35, F-36, F-39, F-40, F-41, F-42, F-43, F-44, F-53, F-55, F-56, F-60, F-61, F-65 | **Fixed** |
+| Low: F-37 | **Superseded** (Cashfree checkout is now the primary gateway) |
+| Low, deliberately left for later (UI refactors or product decisions): F-29, F-30, F-32, F-38, F-45–F-52, F-54, F-57–F-59, F-62–F-64 | Open |
 
 ## Summary
 

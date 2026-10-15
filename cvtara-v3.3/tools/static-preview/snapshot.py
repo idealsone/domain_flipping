@@ -21,6 +21,8 @@ for r in snap['cust']['resumes']['resumes']: g(cust,'cust','resumes/'+r['id'])
 for r in snap['cust']['letters']['letters']: g(cust,'cust','letters/'+r['id'])
 own_paths=['admin/dashboard?days=30','admin/overview?days=30','admin/users','admin/plans','admin/business-controls','admin/settings','admin/providers','admin/purchases','admin/reports?days=30','admin/reviews','admin/email/jobs','admin/seo','admin/page-audit','admin/letter-summary','admin/referrals','admin/setup/status','admin/errors?days=30','admin/site-urls','admin/health/history','admin/legal/generate']+['admin/content/'+k for k in ['blog','features','library','legal','emails','seo','integrations','popup','site']]+['profile','allowance']
 for p in own_paths: g(own,'own',p)
+meta=g(own,'own','admin/report/meta'); g(own,'own','admin/report/kpis?days=30')
+for ds,m in meta['datasets'].items(): g(own,'own','admin/report?dataset=%s&per=500&columns=ALL&format=json'%ds)
 for pu in snap['own']['admin/purchases']['purchases']: g(own,'own','admin/orders/'+pu['id'])
 json.dump(snap,open(OUT+'/api.json','w'))
 print({k:len(v) for k,v in snap.items()})

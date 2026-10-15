@@ -59,7 +59,31 @@
     const sp = u.searchParams;
     if (p.startsWith('admin/') && st.role !== 'owner') return fail('Owner access required.', 403);
     // ----- users list with search / paging -----
-    if (method === 'GET' && p === 'admin/users') { const d = get('admin/users'); const term = (sp.get('q') || '').toLowerCase(); let list = d.users; if (term) list = list.filter(x => ((x.name || '') + ' ' + (x.email || '')).toLowerCase().includes(term)); d.usersTotal = list.length; d.users = list.slice(((+sp.get('page') || 1) - 1) * 100, (+sp.get('page') || 1) * 100); return new Response(JSON.stringify(d), { status: 200, headers: { 'Content-Type': 'application/json' } }); }
+    if (method === 'GET' && p === 'admin/users') { const d = get('admin/users'); const term = (sp.get('q') || '').toLowerCase(); let list = d.users; if (term) list = list.filter(x => ((x.name || '') + ' ' + (x.email || '')).toLowerCase().includes(term)); const fl = sp.get('f') || 'all'; if (fl !== 'all') list = list.filter(x => (x.isAdmin ? 'owner' : x.blocked ? 'blocked' : x.paid ? 'paid' : x.ever_paid ? 'expired' : 'normal') === fl); d.blockedUsers = d.users.filter(x => x.blocked).length; d.usersTotal = list.length; d.users = list.slice(((+sp.get('page') || 1) - 1) * 100, (+sp.get('page') || 1) * 100); return new Response(JSON.stringify(d), { status: 200, headers: { 'Content-Type': 'application/json' } }); }
+    // ----- reports (built from the captured full data sets) -----
+    if (method === 'GET' && (p === 'admin/report/meta' || p === 'admin/report/kpis')) return new Response(JSON.stringify(get(p === 'admin/report/meta' ? 'admin/report/meta' : 'admin/report/kpis?days=30')), { status: 200, headers: { 'Content-Type': 'application/json' } });
+    if (method === 'GET' && p === 'admin/report') {
+      const ds = sp.get('dataset') || 'orders', full = get('admin/report?dataset=' + ds + '&per=500&columns=ALL&format=json'); if (!full) return fail('Unknown report.', 422);
+      const meta = get('admin/report/meta').datasets[ds], allKeys = meta.columns.map(c => c.key), want = (sp.get('columns') || '').split(',').filter(k => allKeys.includes(k)); const keys = want.length ? want : meta.defaults;
+      let rows = full.rows.slice(); const q = (sp.get('q') || '').toLowerCase(), stt = sp.get('status'), pl = sp.get('plan'), pv = sp.get('provider'), fr = sp.get('from'), to = sp.get('to'), mn = sp.get('min'), mx = sp.get('max');
+      const dk = ds === 'users' ? 'joined' : ds === 'errors' ? 'last_seen' : 'date';
+      if (q) rows = rows.filter(r => Object.values(r).some(v => String(v == null ? '' : v).toLowerCase().includes(q)));
+      if (stt && stt !== 'all' && ds !== 'users') rows = rows.filter(r => ds === 'errors' ? (stt === 'open' ? r.resolved !== 'Yes' : r.level === stt) : r.status === stt);
+      if (stt && stt !== 'all' && ds === 'users') rows = rows.filter(r => stt === 'paid' ? r.paid === 'Yes' : stt === 'normal' ? r.paid === 'No' : stt === 'blocked' ? r.status === 'Blocked' : r.status === 'Owner');
+      if (pl && pl !== 'all') rows = rows.filter(r => r.plan === pl); if (pv && pv !== 'all') rows = rows.filter(r => r.provider === pv);
+      if (fr) rows = rows.filter(r => String(r[dk]).slice(0, 10) >= fr); if (to) rows = rows.filter(r => String(r[dk]).slice(0, 10) <= to);
+      if (mn !== null && mn !== '') rows = rows.filter(r => r.amount_inr >= +mn); if (mx !== null && mx !== '') rows = rows.filter(r => r.amount_inr <= +mx);
+      const sk = sp.get('sort'); if (sk && allKeys.includes(sk)) { const dr = sp.get('dir') === 'asc' ? 1 : -1; rows.sort((a, b) => (a[sk] > b[sk] ? 1 : a[sk] < b[sk] ? -1 : 0) * dr); }
+      const cols = keys.map(k => meta.columns.find(c => c.key === k)), fmt = sp.get('format') || 'json';
+      const sums = ds === 'orders' ? { amount_inr: rows.reduce((s, r) => s + r.amount_inr, 0), reversed_inr: rows.reduce((s, r) => s + r.reversed_inr, 0), discount_inr: rows.reduce((s, r) => s + r.discount_inr, 0), net_inr: rows.reduce((s, r) => s + r.net_inr, 0) } : null;
+      if (fmt === 'csv' || fmt === 'xls') {
+        const head = cols.map(c => c.label), lines = rows.map(r => keys.map(k => r[k] ?? '')), esc = v => { v = String(v); return /[",\n]/.test(v) ? '"' + v.replace(/"/g, '""') + '"' : v; };
+        const text = fmt === 'csv' ? '\ufeff' + [head, ...lines].map(l => l.map(esc).join(',')).join('\r\n') : '<table border="1">' + [head, ...lines].map(l => '<tr>' + l.map(c => '<td>' + String(c).replace(/&/g, '&amp;').replace(/</g, '&lt;') + '</td>').join('') + '</tr>').join('') + '</table>';
+        return new Response(text, { status: 200, headers: { 'Content-Type': fmt === 'csv' ? 'text/csv' : 'application/vnd.ms-excel', 'Content-Disposition': 'attachment; filename="cvtara-' + ds + '.' + fmt + '"' } });
+      }
+      const per = Math.min(500, Math.max(10, +sp.get('per') || 50)), page = Math.max(1, +sp.get('page') || 1);
+      return ok({ dataset: ds, columns: cols, rows: rows.slice((page - 1) * per, page * per).map(r => Object.fromEntries([...keys, ...(ds === 'orders' ? ['id'] : [])].map(k => [k, r[k]]))), total: rows.length, page, per, sums });
+    }
     // ----- error log -----
     if (method === 'GET' && p === 'admin/errors') {
       const d = get('admin/errors?days=30') || { ok: true, errors: [] }; const days = +sp.get('days') || 30; const cut = Date.now() - days * 864e5;

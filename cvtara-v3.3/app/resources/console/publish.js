@@ -120,7 +120,7 @@
   }
 
   /* ======================= FOOTER & POLICIES ======================= */
-  const DOCS = [['about', 'About us', 'about.html'], ['terms', 'Terms & Conditions', 'terms.html'], ['privacy', 'Privacy Policy', 'privacy.html'], ['refund', 'Refund Policy', 'refund.html']];
+  const DOCS = [['about', 'About us', 'about.html'], ['terms', 'Terms & Conditions', 'terms.html'], ['privacy', 'Privacy Policy', 'privacy.html'], ['refund', 'No-Refund Policy', 'refund.html']];
   async function policies() {
     const h = $('#admin-policies'); if (!h) return; h.innerHTML = '<div class="ops-skel"></div><div class="ops-skel"></div>';
     try {

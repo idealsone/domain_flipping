@@ -26,12 +26,12 @@ class Health
             'database' => $check(fn () => DB::select('select 1')),
             'storageWritable' => $check(fn () => Storage::disk('local')->put('health.tmp', 'ok') && Storage::disk('local')->delete('health.tmp')),
             'https' => str_starts_with((string) config('app.url'), 'https://'),
-            'domain' => str_contains((string) config('app.url'), 'cvtara.com'),
+            'domain' => str_contains((string) config('app.url'), (string) env('CVTARA_DOMAIN', 'cvtara.com')),
             'previewOff' => ! filter_var(env('CVTARA_PREVIEW', false), FILTER_VALIDATE_BOOLEAN),
             'privateFolder' => ! str_starts_with(base_path(), public_path().DIRECTORY_SEPARATOR),
             'scheduler' => isset($hb['at']) && strtotime($hb['at']) > now()->subMinutes(10)->timestamp,
             'emailConfigured' => ! empty($providers['email']['fromEmail']),
-            'paymentsConfigured' => ! empty($providers['payments']['razorpayKeyId']) && ! empty($providers['payments']['razorpayKeySecret']),
+            'paymentsConfigured' => (! empty($providers['payments']['cashfreeClientId']) && ! empty($providers['payments']['cashfreeClientSecret'])) || (! empty($providers['payments']['razorpayKeyId']) && ! empty($providers['payments']['razorpayKeySecret'])),
             'debugOff' => ! config('app.debug'),
         ];
         $metrics = [

@@ -8,7 +8,7 @@
 
 ## Still required before public launch
 - Hostinger installation, cron, permissions and backup/restore testing.
-- Live Razorpay payment + webhook (including disputes), email delivery and Cashfree payout acceptance.
+- Live Cashfree payment + webhook, email delivery and Cashfree payout acceptance.
 - Real-device visual checks.
 - Confirm operator/contact/legal details, refund terms, referral disclosures, tax handling, identity retention and payout review ownership.
 - Perks shown on plan cards that are **not product features yet** — fulfil them or edit the text in Admin → Pricing: *Naukri / LinkedIn export, LinkedIn profile tips, priority support, 1-on-1 resume review call, lifetime updates, email support*.

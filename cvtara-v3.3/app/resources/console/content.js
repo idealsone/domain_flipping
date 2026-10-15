@@ -68,7 +68,7 @@
       const [site, seo] = await Promise.all([api('/api/admin/content/site'), api('/api/admin/content/seo')]);
       const s = { announce: '', announceLink: '', heroPill: '', heroTitle: '', heroRoles: [], heroLead: '', ctaPrimary: '', ctaSecondary: '', ctaFinalTitle: '', ctaFinalText: '', ctaFinalButton: '', pages: {}, ...site.data };
       const pages = { ...(seo.data.pages || {}) };
-      const lab = { '/': 'Home', '/templates.html': 'Resume templates', '/cover-letters.html': 'Cover letters', '/blog.html': 'Blog', '/guides.html': 'Guides & calculators', '/about.html': 'About us', '/contact.html': 'Contact & support', '/privacy.html': 'Privacy policy', '/terms.html': 'Terms & conditions', '/refund.html': 'Refund policy' };
+      const lab = { '/': 'Home', '/templates.html': 'Resume templates', '/cover-letters.html': 'Cover letters', '/blog.html': 'Blog', '/guides.html': 'Guides & calculators', '/about.html': 'About us', '/contact.html': 'Contact & support', '/privacy.html': 'Privacy policy', '/terms.html': 'Terms & conditions', '/refund.html': 'No-refund policy' };
       const keys = Object.keys(lab).filter(k => pages[k] || true);
       const inp = (n, l, v, o = {}) => `<label class="${o.wide ? 'wide' : ''}">${l}${o.area ? `<textarea name="${n}" rows="${o.rows || 3}" maxlength="${o.max || 600}">${E(v)}</textarea>` : `<input name="${n}" maxlength="${o.max || 200}" value="${E(v)}">`}${o.hint ? `<small>${o.hint}</small>` : ''}</label>`;
       h.innerHTML = `<div class="pg-head"><h2>Templates & site design</h2><p>What the public website says, prefilled from the live site. Change anything and it updates the website — no files to edit.</p></div>

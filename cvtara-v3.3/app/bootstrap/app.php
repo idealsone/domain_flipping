@@ -13,6 +13,9 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(web: __DIR__.'/../routes/web.php', commands: __DIR__.'/../routes/console.php', health: '/up')
     ->withMiddleware(function (Middleware $m): void {
         $m->validateCsrfTokens(except: ['webhooks/razorpay', 'webhooks/cashfree']);
+        if ($proxies = env('TRUSTED_PROXIES')) {
+            $m->trustProxies(at: $proxies === '*' ? '*' : array_map('trim', explode(',', $proxies)));
+        }
         $m->append(SecurityHeaders::class);
         $m->redirectGuestsTo('/login');
         $m->web(append: [OwnerMaintenance::class, \Illuminate\Routing\Middleware\ThrottleRequests::class.':240,1,pages']);
@@ -53,6 +56,6 @@ return Application::configure(basePath: dirname(__DIR__))
                 return $code >= 500 ? response('<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>CVTara</title><body style="font:16px system-ui;display:grid;place-items:center;min-height:100vh;margin:0;background:#f8fafc;color:#0f172a;text-align:center"><div><h1>We will be right back</h1><p>CVTara is being updated. Please refresh in a minute.</p></div>', 503, ['Retry-After' => '60']) : null;
             }
 
-            return redirect('/');
+            return response('<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex,nofollow"><meta http-equiv="refresh" content="3;url=/"><title>Page not available | CVTara</title><style>body{margin:0;min-height:100vh;display:grid;place-items:center;background:#f8fafc;color:#0f172a;font:16px/1.5 system-ui,sans-serif;text-align:center}@media(prefers-color-scheme:dark){body{background:#0f1117;color:#f1f5f9}}.b{display:inline-block;margin-top:14px;padding:12px 22px;border-radius:12px;background:#1557d2;color:#fff;font-weight:700;text-decoration:none}p{color:#64748b;margin:6px 0}</style></head><body><main><h1>This page is not available</h1><p>The link may be old or broken. Taking you to the home page in a few seconds.</p><a class="b" href="/">Go to the home page</a></main></body></html>', $code >= 500 ? 500 : 404, ['X-Robots-Tag' => 'noindex, nofollow']);
         });
     })->create();

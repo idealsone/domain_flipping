@@ -264,6 +264,11 @@ class ApiController extends Controller
             abort_unless($r->isMethod('POST'), 405);
             $v = $r->validate(['plan' => 'required|in:'.implode(',', Settings::paidPlanKeys()), 'coupon' => 'nullable|string|max:30']);
             Payments::guardAddon($u, $v['plan']);
+            if (! empty($v['coupon'])) {
+                $rk = 'coupon-try:'.$u->id;
+                abort_if(\Illuminate\Support\Facades\RateLimiter::tooManyAttempts($rk, 10), 429, 'Too many coupon attempts. Wait a minute.');
+                \Illuminate\Support\Facades\RateLimiter::hit($rk, 60);
+            }
 
             return $ok(BusinessControls::quote($v['plan'], $v['coupon'] ?? '', $u->id));
         }

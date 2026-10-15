@@ -14,7 +14,7 @@ class SetupController extends Controller {
   if($path==='email-test'){AccountSecurity::send($r);$result=MailAutomation::process();return $ok(['delivery'=>$result]);}
   AccountSecurity::requireRecent($r);
   if($path==='payout-policy'){$v=$r->validate(['identityProcess'=>'required|string|min:20|max:2000','taxProcess'=>'required|string|min:20|max:2000','retentionDays'=>'required|integer|min:1|max:3650','reviewer'=>'required|string|min:3|max:120','confirmed'=>'accepted']);Settings::put('payoutPolicyReviewed',[...$v,'at'=>now()->toIso8601String(),'owner'=>$r->user()->id]);Settings::audit($r->user()->id,'payout_policy_recorded');return $ok();}
-  if($path==='reward-review'){$v=$r->validate(['ownerId'=>'required|integer','decision'=>'required|in:verified,rejected','note'=>'required|string|min:10|max:1000']);abort_if($v['ownerId']===$r->user()->id,403);$n=DB::table('referral_identities')->where('owner_id',$v['ownerId'])->where('status','held')->update(['status'=>$v['decision'],'review_note'=>$v['note'],'updated_at'=>now()]);abort_unless($n,409);Settings::audit($r->user()->id,'reward_identity_reviewed',(string)$v['ownerId']);return $ok();}
+  if($path==='reward-review'){$v=$r->validate(['ownerId'=>'required|integer','decision'=>'required|in:verified,rejected','note'=>'required|string|min:10|max:1000']);abort_if((int)$v['ownerId']===$r->user()->id,403);$n=DB::table('referral_identities')->where('owner_id',$v['ownerId'])->where('status','held')->update(['status'=>$v['decision'],'review_note'=>$v['note'],'updated_at'=>now()]);abort_unless($n,409);Settings::audit($r->user()->id,'reward_identity_reviewed',(string)$v['ownerId']);return $ok();}
   abort(404);
  }
 }

@@ -16,11 +16,16 @@ class Payments
         abort_unless(isset($plans[$plan]) && $plan !== 'free', 422);
         $i = Settings::get('integrations');
         $p = Settings::providers()['payments'] ?? [];
-        if (config('app.preview') && (empty($p['razorpayKeyId']) || empty($p['razorpayKeySecret']))) {
+        $provider = $p['provider'] ?? 'cashfree';
+        $keys = $provider === 'cashfree' ? (! empty($p['cashfreeClientId']) && ! empty($p['cashfreeClientSecret'])) : (! empty($p['razorpayKeyId']) && ! empty($p['razorpayKeySecret']));
+        if (config('app.preview') && ! $keys) {
             return self::demoStart($u, $plan, $coupon);
         }
-        if (! ($i['payments'] ?? false) || ($p['provider'] ?? 'razorpay') !== 'razorpay' || empty($p['razorpayKeyId']) || empty($p['razorpayKeySecret'])) {
-            throw ValidationException::withMessages(['payments' => 'Checkout is not configured. The owner must enable Razorpay and verify its keys.']);
+        if (! ($i['payments'] ?? false) || ! in_array($provider, ['cashfree', 'razorpay'], true) || ! $keys) {
+            throw ValidationException::withMessages(['payments' => 'Checkout is not configured. The owner must enable the payment gateway and save its keys.']);
+        }
+        if ($provider === 'cashfree') {
+            return CashfreeCheckout::start($u, $plan, $phone, $coupon);
         }$id = (string) Str::uuid();
         $lock = $coupon !== '' ? \Illuminate\Support\Facades\Cache::lock('coupon:'.strtoupper(trim($coupon)), 25) : null;
         $lock?->block(15);
@@ -77,6 +82,9 @@ class Payments
     {
         DB::transaction(function () use ($entity, $provider) {
             $p = DB::table('purchases')->where('provider', $provider)->where('provider_order_id', $entity['order_id'] ?? '')->lockForUpdate()->first();
+            if ($p) {
+                User::whereKey($p->owner_id)->lockForUpdate()->first();
+            }
             if (! $p) {
                 throw ValidationException::withMessages(['payment' => 'Order not available yet; retry this event.']);
             }if (($entity['currency'] ?? '') !== $p->currency || (int) ($entity['amount'] ?? 0) !== $p->amount_paise || ($entity['status'] ?? '') !== 'captured') {
@@ -182,7 +190,7 @@ class Payments
                 }
             }if ($refundKey) {
                 DB::table('webhook_events')->insert(['id' => $refundKey, 'type' => $type, 'created_at' => now(), 'updated_at' => now()]);
-            }DB::table('webhook_events')->insert(['id' => $key, 'type' => $type, 'created_at' => now(), 'updated_at' => now()]);
+            }DB::table('webhook_events')->insertOrIgnore(['id' => $key, 'type' => $type, 'created_at' => now(), 'updated_at' => now()]);
         });
     }
 }

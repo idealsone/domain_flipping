@@ -10,7 +10,11 @@ use Illuminate\Support\Facades\Schedule;
 use Illuminate\Support\Str;
 
 Artisan::command('cvtara:cron', function () {
+    \App\Services\Settings::put('cronHeartbeat', ['at' => now()->toIso8601String()]);
     MailAutomation::reminders();
+    if (\Illuminate\Support\Facades\Cache::add('retention-run', 1, 86400)) {
+        \App\Services\Retention::run();
+    }
     try {
         \App\Services\Health::run();
     } catch (\Throwable $e) {
@@ -26,8 +30,8 @@ Artisan::command('cvtara:admin {email} {name}', function () {
         $this->error('Use at least 12 characters.');
 
         return 1;
-    } $u = User::firstOrCreate(['email' => $this->argument('email')], ['name' => $this->argument('name'), 'password' => Hash::make($password)]);
-    $u->forceFill(['is_admin' => true])->save();
+    } $u = User::firstOrCreate(['email' => strtolower($this->argument('email'))], ['name' => $this->argument('name'), 'password' => Hash::make($password)]);
+    $u->forceFill(['is_admin' => true, 'password' => Hash::make($password), 'email_verified_at' => $u->email_verified_at ?: now()])->save();
     $this->info('Owner account is ready.');
 });
 

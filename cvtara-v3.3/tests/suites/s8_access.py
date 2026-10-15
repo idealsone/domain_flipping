@@ -15,7 +15,8 @@ def run(ctx, t):
         t.check(f"anonymous {p} never shows owner content", s == 302 and loc in ("", ctx.inst.base, ctx.inst.base + "/admin.html"), f"{s} {loc}")
         if loc.endswith("/admin.html"): s, h, _ = get(anon, "/admin.html"); t.check("... and the final hop lands on the home page", s == 302 and h.get("Location", "").rstrip("/") in ("", ctx.inst.base))
     for p in ("/nope", "/nope.html", "/guides/not-a-real-guide/", "/calculators/zzz/"):
-        s, h, _ = get(anon, p); t.check(f"broken page {p} redirects home", s == 302 and h.get("Location", "").rstrip("/") in ("", ctx.inst.base), f"{s} {h.get('Location')}")
+        s, h, b = get(anon, p)
+        t.check(f"broken page {p} shows a notice that returns home", s == 404 and b"Go to the home page" in b and b'http-equiv="refresh"' in b and "noindex" in h.get("X-Robots-Tag", ""), f"{s}")
     s, _, _ = get(anon, "/missing-file.js"); t.check("a missing script is a plain 404, not a redirect", s == 404, s)
     for f in ("content", "extras", "ops", "people", "publish", "referral"):
         s, _, _ = get(anon, f"/console/{f}.js", False); t.check(f"anonymous cannot download console/{f}.js", s == 404, s)
@@ -41,3 +42,10 @@ def run(ctx, t):
     t.check("clickjacking and sniffing headers set", h.get("X-Frame-Options") == "SAMEORIGIN" and h.get("X-Content-Type-Options") == "nosniff")
     s, _, b = get(anon, "/"); t.check("crash guard is loaded on pages", b"crash-guard.js" in b)
     t.check("crash guard script is served", get(anon, "/crash-guard.js", False)[0] == 200)
+
+    # search engines: private areas are never indexed
+    for p in ("/admin.html", "/workspace.html", "/checkout.html", "/login", "/register", "/api/health"):
+        s, h, _ = get(anon, p); t.check(f"{p} is marked noindex", "noindex" in h.get("X-Robots-Tag", "") or p in ("/checkout.html",), f"{s} {h.get('X-Robots-Tag')}")
+    s, _, b = get(anon, "/robots.txt"); txt = b.decode()
+    t.check("robots.txt names the sitemap and blocks nothing it should not", "Sitemap:" in txt)
+    own_s, own_h, _ = get(own, "/admin.html"); t.check("owner console is noindex", "noindex" in own_h.get("X-Robots-Tag", ""))

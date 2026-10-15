@@ -64,7 +64,7 @@ class ContentController extends Controller
             return response($xml.'</urlset>', 200, ['Content-Type' => 'application/xml']);
         }
         if ($path === 'robots.txt') {
-            return response("User-agent: *\n".(Settings::get('seo')['searchIndexing'] ? "Disallow: /admin\nDisallow: /workspace\nDisallow: /api/\nDisallow: /login\nDisallow: /register\nDisallow: /forgot-password\nDisallow: /reset-password\nDisallow: /checkout.html\nDisallow: /install.php\nDisallow: /preview\n" : "Disallow: /\n").'Sitemap: '.rtrim(Settings::get('seo')['siteUrl'] ?: config('app.url'), '/')."/sitemap.xml\n", 200, ['Content-Type' => 'text/plain']);
+            return response("User-agent: *\n".(Settings::get('seo')['searchIndexing'] ? "Disallow: /admin\nDisallow: /workspace\nDisallow: /api/\nDisallow: /login\nDisallow: /register\nDisallow: /forgot-password\nDisallow: /reset-password\nDisallow: /checkout.html\nDisallow: /install.php\nDisallow: /preview\nDisallow: /console/\nDisallow: /r/\nDisallow: /export/\nDisallow: /setup\nDisallow: /client-error\n" : "Disallow: /\n").'Sitemap: '.rtrim(Settings::get('seo')['siteUrl'] ?: config('app.url'), '/')."/sitemap.xml\n", 200, ['Content-Type' => 'text/plain']);
         }
         $aliases = ['resume-builder' => 'workspace.html?view=builder', 'resume-templates' => 'templates.html', 'cover-letter' => 'workspace.html?view=letter', 'resume-match' => 'workspace.html?view=match', 'admin' => 'admin.html', 'privacy-policy' => 'privacy.html', 'terms-and-conditions' => 'terms.html', 'about-us' => 'about.html', 'contact-us' => 'contact.html'];
         if (isset($aliases[$path])) {

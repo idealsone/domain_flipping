@@ -25,6 +25,9 @@ class AdminController extends Controller
         if ($get && in_array($path, ['feedback/add', 'email/process', 'media', 'search/import', 'search/sync', 'referrals/settings'])) {
             abort(405);
         }
+        if (preg_match('#^report(/meta|/kpis)?$#', $path)) {
+            return app(ReportController::class)->run($r, $path);
+        }
         if (preg_match(AdminOpsController::ROUTES, $path)) {
             return app(AdminOpsController::class)->run($r, $path);
         }
@@ -112,8 +115,10 @@ class AdminController extends Controller
                 }
             }if ($r->service === 'payments') {
                 abort_unless(in_array($p['payments']['provider'] ?? 'razorpay', ['razorpay', 'cashfree']), 422);
-            }if ($r->service === 'payments') {
-                abort_unless(($p['payments']['provider'] ?? 'razorpay') === 'razorpay', 422, 'Only Razorpay checkout is available in this edition.');
+            }if ($r->service === 'payments' && ($p['payments']['provider'] ?? '') === 'cashfree') {
+                abort_unless(! empty($p['payments']['cashfreeClientId']) && ! empty($p['payments']['cashfreeClientSecret']), 422, 'Enter the Cashfree App ID and Secret key.');
+            }if ($r->service === 'payments' && ($p['payments']['provider'] ?? '') === 'razorpay') {
+                abort_unless(! empty($p['payments']['razorpayKeyId']) && ! empty($p['payments']['razorpayKeySecret']), 422, 'Enter the Razorpay Key ID and Key secret.');
             }if (! empty($p['email']['fromEmail'])) {
                 abort_unless(filter_var($p['email']['fromEmail'], FILTER_VALIDATE_EMAIL), 422);
             }Settings::put('providers', Crypt::encryptString(json_encode($p)));
@@ -162,6 +167,21 @@ class AdminController extends Controller
                     $like = '%'.addcslashes($term, '%_\\').'%';
                     $uq->where(fn ($w) => $w->where('email', 'like', $like)->orWhere('name', 'like', $like));
                 }
+                $f = (string) $r->query('f', 'all');
+                if ($f === 'owner') {
+                    $uq->where('is_admin', true);
+                } elseif (in_array($f, ['blocked', 'paid', 'expired', 'normal'], true)) {
+                    $uq->where('is_admin', false);
+                    $f === 'blocked' ? $uq->where('blocked', true) : $uq->where('blocked', false);
+                    $live = DB::table('purchases')->whereIn('status', ['paid', 'partially_refunded'])->where('access_until', '>', now())->where('provider', '!=', 'referral_reward')->select('owner_id');
+                    $ever = DB::table('purchases')->whereNotNull('purchased_at')->select('owner_id');
+                    match ($f) {
+                        'paid' => $uq->whereIn('id', $live),
+                        'expired' => $uq->whereIn('id', $ever)->whereNotIn('id', $live),
+                        'normal' => $uq->whereNotIn('id', $ever),
+                        default => null,
+                    };
+                }
                 $usersTotal = (clone $uq)->count();
                 $list = $uq->orderByDesc('id')->forPage($page, 100)->get(['id', 'name', 'email', 'created_at', 'blocked', 'is_admin']);
                 $ids = $list->pluck('id')->all();
@@ -177,7 +197,7 @@ class AdminController extends Controller
             $events = DB::table('activity_events')->where('created_at', '>=', now()->subDays($days))->selectRaw('event,count(*) as count')->groupBy('event')->get();
             $paid = DB::table('purchases')->where('provider', '!=', 'referral_reward')->whereIn('status', ['paid', 'partially_refunded'])->where('access_until', '>', now())->distinct('owner_id')->count('owner_id');
             $all = User::count();
-            $data = ['users' => $users, 'usersTotal' => $usersTotal, 'page' => $page, 'perPage' => 100, 'totalUsers' => $all, 'paidUsers' => $paid, 'freeUsers' => $all - $paid, 'resumes' => DB::table('resume_drafts')->count(), 'applications' => DB::table('applications')->count(), 'activityCount' => $events->sum('count'), 'activity' => $activity, 'eventCounts' => $events, 'reviews' => DB::table('feedback')->selectRaw('status,count(*) as count')->groupBy('status')->get(), 'purchases' => DB::table('purchases')->where('created_at', '>=', now()->subDays($days))->selectRaw('status,count(*) as count,SUM(amount_paise-refunded_paise) as amount')->groupBy('status')->get(), 'daily' => DB::table('activity_events')->where('created_at', '>=', now()->subDays($days))->selectRaw('DATE(created_at) as day,event,count(*) as count')->groupByRaw('DATE(created_at),event')->orderBy('day')->get()];
+            $data = ['users' => $users, 'usersTotal' => $usersTotal, 'page' => $page, 'perPage' => 100, 'blockedUsers' => User::where('blocked', true)->count(), 'totalUsers' => $all, 'paidUsers' => $paid, 'freeUsers' => $all - $paid, 'resumes' => DB::table('resume_drafts')->count(), 'applications' => DB::table('applications')->count(), 'activityCount' => $events->sum('count'), 'activity' => $activity, 'eventCounts' => $events, 'reviews' => DB::table('feedback')->selectRaw('status,count(*) as count')->groupBy('status')->get(), 'purchases' => DB::table('purchases')->where('created_at', '>=', now()->subDays($days))->selectRaw('status,count(*) as count,SUM(amount_paise-refunded_paise) as amount')->groupBy('status')->get(), 'daily' => DB::table('activity_events')->where('created_at', '>=', now()->subDays($days))->selectRaw('DATE(created_at) as day,event,count(*) as count')->groupByRaw('DATE(created_at),event')->orderBy('day')->get()];
             $data['totalResumes'] = $data['resumes'];
             $data['totalApplications'] = $data['applications'];
             $data['stages'] = DB::table('applications')->selectRaw('stage,count(*) as count')->groupBy('stage')->get();
@@ -227,9 +247,15 @@ class AdminController extends Controller
             return $ok();
         }
         if ($path === 'feedback/add') {
-            $v = $r->validate(['name' => 'required|string|max:100', 'content' => 'required|string|min:10|max:2000', 'rating' => 'required|integer|min:1|max:5', 'source' => 'required|in:dummy,verified', 'consentReference' => 'required_if:source,verified|nullable|string|min:10|max:1000', 'consent' => 'required_if:source,verified|boolean']);
+            $v = $r->validate(['name' => 'required|string|max:100', 'content' => 'required|string|min:10|max:2000', 'rating' => 'required|integer|min:1|max:5', 'source' => 'required|in:dummy,verified', 'consentReference' => 'required_if:source,verified|nullable|string|min:10|max:1000', 'consent' => 'required_if:source,verified|boolean', 'customerEmail' => 'required_if:source,verified|nullable|email|max:190']);
             $real = $v['source'] === 'verified';
             abort_if($real && ! $v['consent'], 422);
+            if ($real) {
+                $cust = User::where('email', mb_strtolower($v['customerEmail']))->first();
+                abort_unless($cust && ! $cust->is_admin && DB::table('purchases')->where('owner_id', $cust->id)->whereIn('status', ['paid', 'partially_refunded', 'refunded', 'disputed'])->whereNotNull('purchased_at')->where('provider', '!=', 'referral_reward')->exists(), 422, 'A verified review must belong to a real customer who has paid. Check the account email.');
+                $v['consentReference'] = 'customer #'.$cust->id.' · '.($v['consentReference'] ?? '');
+                Settings::audit($id, 'verified_review_added', (string) $cust->id);
+            }
             DB::table('feedback')->insert(['id' => (string) Str::uuid(), 'owner_id' => $id, 'display_name' => $v['name'], 'rating' => $v['rating'], 'content' => $v['content'], 'source' => $real ? 'owner_verified' : 'dummy', 'consent' => $real, 'consented_at' => $real ? now() : null, 'consent_reference' => $v['consentReference'] ?? '', 'created_at' => now(), 'updated_at' => now()]);
 
             return $ok();

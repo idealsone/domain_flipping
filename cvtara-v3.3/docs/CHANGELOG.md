@@ -1,3 +1,23 @@
+# CVTara v3.5.0 — Cashfree checkout, reports and export, no-refund policy
+
+## Payments
+- **Cashfree is the primary gateway** (Razorpay stays available as a second option). Checkout opens Cashfree's secure payment window, the server confirms the payment with Cashfree before granting access, signed webhooks handle later changes, and events for orders this site never created are acknowledged instead of failing. Choose the gateway and enter the App ID / Secret key in Settings → Integrations → Payments.
+- **All payments are final and non-refundable:** new policy page text, terms, checkout consent and note, contact form, admin guide and owner screens (the console has no refund control; bank reversals show as "Reversed by bank").
+
+## Owner console
+- **Reports & Export:** build custom reports on orders, users, referral commissions, withdrawals, errors and email; filter by dates, status, plan, source and amount, choose and order columns, sort, and export the full result as CSV, Excel, JSON or print; save report setups.
+- **Every data table** in the console now has a filter box, sortable columns, a column chooser and export (CSV, Excel, JSON, print, copy).
+- **Dashboard numbers come from the server** (full database, real money only); **Orders and Users filters and pages are server-side**, so nothing is cut off after 100 users or 500 orders.
+
+## Search engines and privacy
+- Private areas (admin, owner scripts, sign-in, workspace, checkout, API) send `noindex`; broken pages show a notice with a Go to home page button and return home automatically.
+
+## Fixed (audit follow-ups)
+- Print preview watermark is drawn into the document (and restored if removed); settings are read once per request; the public content is fetched once per page; reminder scans run hourly and skip customers who already renewed; old logs and sent-mail bodies are pruned daily; verified reviews must belong to a paying customer; coupon attempts are throttled; manual payout references are checked for duplicates; changing a user's email clears its verified flag; leftover "Free plan" wording removed; `.env.example` defaults are production-safe; draft copies are cleared from the browser at sign-out; privacy policy discloses the device cookie; commissions respect the minimum order; `cvtara:admin` resets the password; trusted proxies are configurable (`TRUSTED_PROXIES`).
+
+## Tests
+`python3 tests/run_tests.py` — 305 checks, including a Cashfree stand-in (order, verify, refund webhook, unknown orders), reports/exports, a crawl of the public site for broken links, and access-control checks.
+
 # CVTara v3.4.3 — access control, crash protection, launch fixes
 
 ## Security and protection

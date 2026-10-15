@@ -52,7 +52,11 @@ class Referrals
         }$ref = User::whereKey($buyer->referred_by)->lockForUpdate()->first();
         if (! $ref || $ref->blocked) {
             return;
+        }if ($p->amount_paise < (int) self::config()['minQualifyingPaise']) {
+            return;
         }if (self::config()['proOnly'] && ! (Settings::access($ref->id)['limits']['referral'] ?? false)) {
+            Settings::audit($ref->id, 'commission_skipped_referrer_not_eligible', $p->id);
+
             return;
         }$rate = self::rate($ref->id);
         DB::table('referral_commissions')->insertOrIgnore(['referrer_id' => $ref->id, 'buyer_id' => $buyer->id, 'purchase_id' => $p->id, 'amount_paise' => intdiv($p->amount_paise * $rate, 10000), 'rate_bps' => $rate, 'available_at' => now()->addDays(self::config()['holdDays']), 'created_at' => now(), 'updated_at' => now()]);
@@ -121,6 +125,9 @@ class Referrals
             }if ($status === 'processing' && ! $w->approved_at) {
                 throw ValidationException::withMessages(['review' => 'Complete the identity, destination and fraud review first.']);
             }if ($status === 'paid') {
+                if ($reference !== '' && DB::table('withdrawals')->where('reference', $reference)->where('id', '!=', $id)->exists()) {
+                    throw ValidationException::withMessages(['reference' => 'That transfer reference is already used for another withdrawal.']);
+                }
                 if (strlen(trim($reference)) < 6) {
                     throw ValidationException::withMessages(['reference' => 'Enter the real UPI/bank transfer reference.']);
                 }if (self::balance($w->owner_id)['availablePaise'] < 0) {

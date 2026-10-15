@@ -1,6 +1,6 @@
 # CVTara v3.4 — Hostinger package
 
-**Private acceptance build.** Live provider acceptance (Razorpay, email, Twilio, Cashfree Payouts), Hostinger staging tests and real-device checks are still pending — see `LAUNCH_READINESS.md`.
+**Private acceptance build.** Live provider acceptance (Cashfree checkout, email, Twilio, Cashfree Payouts), Hostinger staging tests and real-device checks are still pending — see `LAUNCH_READINESS.md`.
 
 ## Install
 1. Back up any existing site. Do not install over an existing CVTara database.
@@ -12,7 +12,7 @@
 
 ## First 30 minutes after install (Admin)
 1. **Setup & health** → save business details, review the checklist.
-2. **Integrations** → Razorpay keys + webhook secret, email (SMTP or Resend). Webhook URL: `https://YOUR-DOMAIN/webhooks/razorpay` with events `payment.captured`, `refund.processed`, `payment.dispute.created/won/lost/closed`.
+2. **Integrations** → Payment gateway **Cashfree** (App ID + Secret key, mode Test or Live) and email (SMTP or Resend). In the Cashfree dashboard add the webhook URL `https://YOUR-DOMAIN/webhooks/cashfree` for payment and refund events; the Secret key also verifies webhooks. Razorpay is still available as a second gateway (`/webhooks/razorpay`).
 3. **Pricing & add-ons** → confirm plan prices, validity, limits and perks.
 4. **Offers & popup** → choose the delay (default 40 s) and add your own messages.
 5. **Email automation** → review templates (welcome, receipt, expiry, follow-up and password reset are on by default).
@@ -22,14 +22,14 @@
 Add `CVTARA_PREVIEW=true` to `cvtara_app/.env`, run `php artisan cvtara:demo`, then open `/preview` for the three-view shell (Website · Customer dashboard · Admin dashboard) with demo logins. Remove the flag and demo users before going live.
 
 ## Notes
-- Checkout is Razorpay only. Cashfree Payouts exist but need provider acceptance and the payout policy (Admin → Setup & health).
+- Checkout uses Cashfree (Razorpay optional). Cashfree Payouts for referral withdrawals need provider acceptance and the payout policy (Admin → Setup & health). All payments are final and non-refundable.
 - Keep a backup of `cvtara_app/.env` (APP_KEY encrypts provider secrets and payout details).
 - English only. No job, ranking, uptime or error-free-operation guarantee is made.
 
 
 ## After installing (10 minutes)
 1. **Cron:** add a cron job every minute — the exact command is shown in Owner console → Settings → Setup & health → Setup tools. It sends e-mails and runs the daily health check.
-2. **Payments:** Settings → Integrations → Payments → add Razorpay key ID/secret and the webhook secret, verify, then switch Payments on.
+2. **Payments:** Settings → Integrations → Payments → choose Cashfree, add the App ID and Secret key, then switch Payments on and make one small live test payment.
 3. **Mail deliverability:** add the SPF and DKIM records Hostinger shows for `support@cvtara.com` to the cvtara.com DNS; use User Mailer → "Send me a test email".
 4. **Review every page:** Settings → Footer & policies → *All website URLs* (tick each as you confirm it). Adjust the policy texts if your lawyer asks.
 5. **Go live for search:** Blog & SEO → turn on "Let search engines index", save, and submit `https://cvtara.com/sitemap.xml` in Google Search Console.

@@ -38,7 +38,7 @@
 
   function banner(k) {
     const v = $('#admin-' + k); if (!v) return;
-    if (['dashboard', 'orders', 'desk', 'referral', 'people', 'resumelib', 'letterlib', 'sitedesign', 'mailer', 'errors', 'bloghub', 'policies', 'health'].includes(k)) return;
+    if (['dashboard', 'orders', 'desk', 'referral', 'people', 'resumelib', 'letterlib', 'sitedesign', 'mailer', 'errors', 'bloghub', 'policies', 'health', 'reports'].includes(k)) return;
     let b = v.querySelector(':scope > .ops-banner'); const m = META[k]; if (!m) return;
     if (!b) { b = document.createElement('div'); b.className = 'ops-banner'; v.prepend(b); }
     b.innerHTML = `<span class="ops-ic">${m[0]}</span><div><h2>${E(m[1])}</h2><p>${E(m[2])}</p></div>${k !== 'overview' && HUB.includes(k) ? '<button class="button secondary small" data-admin-view="settings">← Settings</button>' : ''}`;
@@ -104,20 +104,18 @@
   async function dashboard() {
     const h = $('#admin-dashboard'); if (!h) return; if (!h.dataset.ok) h.innerHTML = '<div class="ops-skel"></div><div class="ops-skel"></div>';
     try {
-      const d = await data(true); const now = new Date(), wk = new Date(now - 7 * 864e5);
-      const newThisWeek = d.users.filter(u => parse(u.created_at) > wk).length;
-      const paid = paidOnes(d), revenue = paid.reduce((s, p) => s + net(p), 0);
-      const revWeek = paid.filter(p => parse(p.created_at) > wk).reduce((s, p) => s + net(p), 0);
-      const ordersWeek = paid.filter(p => parse(p.created_at) > wk).length;
-      const ev = Object.fromEntries(((d.dash.eventCounts) || []).map(e => [e.event, e.count]));
+      // Every number comes from the server (full database, real money only), never from a truncated page of rows.
+      const [k, dash, ro] = await Promise.all([api('/api/admin/report/kpis?days=30'), api('/api/admin/dashboard?days=30').catch(() => ({})), api('/api/admin/report?dataset=orders&per=10&columns=customer,plan,amount_inr,status,date&format=json')]);
+      const d = { total: k.users, paidUsers: k.paidUsers, dash }, last7 = k.series.slice(-7);
+      const newThisWeek = k.signups7, revenue = k.netRevenuePaise, revWeek = last7.reduce((s, x) => s + x.revenuePaise, 0), ordersWeek = last7.reduce((s, x) => s + x.orders, 0);
+      const ev = Object.fromEntries(((dash.eventCounts) || []).map(e => [e.event, e.count]));
       const scans = (ev.resume_compared || 0) + (ev.ats_scan || 0);
-      const conv = d.total ? (d.paidUsers / d.total * 100) : 0;
-      const days = [...Array(7)].map((_, i) => { const x = new Date(now - (6 - i) * 864e5); return x; });
-      const signups = days.map(x => d.users.filter(u => sameDay(parse(u.created_at), x)).length);
-      const rev30 = [...Array(30)].map((_, i) => { const x = new Date(now - (29 - i) * 864e5); return paid.filter(p => sameDay(parse(p.created_at), x)).reduce((s, p) => s + net(p) / 100, 0); });
-      const um = userMap(d);
-      const recent = [...paid].sort((a, b) => parse(b.created_at) - parse(a.created_at)).slice(0, 5);
-      const act = (d.dash.activity || []).slice(0, 5);
+      const conv = k.conversionPct;
+      const days = last7.map(x => new Date(x.date + 'T00:00:00'));
+      const signups = last7.map(x => x.signups);
+      const rev30 = k.series.map(x => x.revenuePaise / 100);
+      const recent = ro.rows;
+      const act = (dash.activity || []).slice(0, 5);
       h.dataset.ok = '1';
       h.innerHTML = `
         <div class="pg-head"><h2>Overview</h2><p>How the business is doing right now</p></div>
@@ -134,8 +132,8 @@
           <section class="panel panel-pad"><h3>Revenue — Last 30 Days</h3>${lineChart(rev30)}</section>
         </div>
         <div class="ops-two">
-          <div><h3 class="ops-h3">Recent Orders</h3><section class="panel"><table class="ad-table"><thead><tr><th>User</th><th>Plan</th><th>Amount</th><th>Status</th><th>Date</th></tr></thead><tbody>${recent.map(p => `<tr><td>${E((um[String(p.owner_id)] || {}).name || 'Customer')}</td><td>${E(planName(p))}</td><td><b>${short(p.amount_paise)}</b></td><td>${pill(p.status)}</td><td>${dmy(parse(p.created_at))}</td></tr>`).join('') || '<tr><td colspan="5">No orders yet.</td></tr>'}</tbody></table></section></div>
-          <div><h3 class="ops-h3">Recent Activity</h3><section class="panel"><table class="ad-table"><thead><tr><th>User</th><th>Event</th><th>Time</th></tr></thead><tbody>${act.map(a => `<tr><td>${E((um[String(a.owner_id)] || {}).name || 'Visitor')}</td><td>${E(String(a.event).replace(/_/g, ' '))}</td><td>${dmy(parse(a.created_at))}</td></tr>`).join('') || '<tr><td colspan="3">No activity recorded yet.</td></tr>'}</tbody></table></section></div>
+          <div><h3 class="ops-h3">Recent Orders</h3><section class="panel"><table class="ad-table"><thead><tr><th>User</th><th>Plan</th><th>Amount</th><th>Status</th><th>Date</th></tr></thead><tbody>${recent.map(p => `<tr><td>${E(p.customer || 'Customer')}</td><td>${E(p.plan)}</td><td><b>${short(p.amount_inr * 100)}</b></td><td>${pill(p.status)}</td><td>${dmy(parse(p.date))}</td></tr>`).join('') || '<tr><td colspan="5">No orders yet.</td></tr>'}</tbody></table></section></div>
+          <div><h3 class="ops-h3">Recent Activity</h3><section class="panel"><table class="ad-table"><thead><tr><th>User</th><th>Event</th><th>Time</th></tr></thead><tbody>${act.map(a => `<tr><td>${E(a.name || 'Visitor')}</td><td>${E(String(a.event).replace(/_/g, ' '))}</td><td>${dmy(parse(a.created_at))}</td></tr>`).join('') || '<tr><td colspan="3">No activity recorded yet.</td></tr>'}</tbody></table></section></div>
         </div>`;
     } catch (e) { h.innerHTML = `<div class="panel panel-pad" role="alert">${E(e.message)}</div>`; }
   }
@@ -147,11 +145,11 @@
       let q = '', st = 'all';
       const draw = () => {
         const rows = d.purchases.filter(p => (st === 'all' || p.status === st) && (!q || (planName(p) + ' ' + ((um[String(p.owner_id)] || {}).name || '') + ' ' + (p.payment_reference || '')).toLowerCase().includes(q)));
-        $('#opsOrdBody').innerHTML = rows.map(p => `<tr><td><b>ORD-${String(p.id).slice(0, 6).toUpperCase()}</b></td><td>${E((um[String(p.owner_id)] || {}).name || 'Customer')}</td><td>${E(planName(p))}</td><td><b>${short(p.amount_paise)}</b>${p.refunded_paise ? `<br><small>refunded ${short(p.refunded_paise)}</small>` : ''}</td><td><code>${E(p.payment_reference || p.provider_order_id || '—')}</code></td><td>${pill(p.status)}</td><td>${dmy(parse(p.created_at))}</td></tr>`).join('') || '<tr><td colspan="7">No orders match.</td></tr>';
+        $('#opsOrdBody').innerHTML = rows.map(p => `<tr><td><b>ORD-${String(p.id).slice(0, 6).toUpperCase()}</b></td><td>${E((um[String(p.owner_id)] || {}).name || 'Customer')}</td><td>${E(planName(p))}</td><td><b>${short(p.amount_paise)}</b>${p.refunded_paise ? `<br><small>reversed ${short(p.refunded_paise)}</small>` : ''}</td><td><code>${E(p.payment_reference || p.provider_order_id || '—')}</code></td><td>${pill(p.status)}</td><td>${dmy(parse(p.created_at))}</td></tr>`).join('') || '<tr><td colspan="7">No orders match.</td></tr>';
         $('#opsOrdCount').textContent = rows.length + ' of ' + d.purchases.length + ' orders';
       };
       h.innerHTML = `<div class="pg-head"><h2>All Orders</h2><p>Complete transaction history</p></div>
-        <div class="ops-filters"><input id="opsOrdQ" placeholder="Search by name, plan or reference" aria-label="Search orders"><select id="opsOrdS"><option value="all">All statuses</option><option value="paid">Paid</option><option value="refunded">Refunded</option><option value="partially_refunded">Partially refunded</option><option value="disputed">Disputed</option></select><span id="opsOrdCount"></span><button class="button secondary small" data-admin-view="commerce">Refunds, coupons &amp; payouts →</button></div>
+        <div class="ops-filters"><input id="opsOrdQ" placeholder="Search by name, plan or reference" aria-label="Search orders"><select id="opsOrdS"><option value="all">All statuses</option><option value="paid">Paid</option><option value="refunded">Reversed by bank</option><option value="partially_refunded">Partially refunded</option><option value="disputed">Disputed</option></select><span id="opsOrdCount"></span><button class="button secondary small" data-admin-view="commerce">Coupons &amp; payouts →</button></div>
         <section class="panel"><table class="ad-table"><thead><tr><th>Order ID</th><th>User</th><th>Plan</th><th>Amount</th><th>Payment Ref</th><th>Status</th><th>Date</th></tr></thead><tbody id="opsOrdBody"></tbody></table></section>`;
       $('#opsOrdQ').oninput = e => { q = e.target.value.toLowerCase(); draw(); }; $('#opsOrdS').onchange = e => { st = e.target.value; draw(); }; draw();
     } catch (e) { h.innerHTML = `<div class="panel panel-pad" role="alert">${E(e.message)}</div>`; }
@@ -168,11 +166,11 @@
       $('#opsRvList').innerHTML = by(tab).map(r => `<article class="panel panel-pad ops-rv"><span class="av">${E(initials(r.display_name))}</span><div><b>${E(r.display_name)}</b> <small>${'★'.repeat(r.rating)}${'☆'.repeat(5 - r.rating)} · ${E(r.source === 'owner_verified' ? 'verified, with consent' : r.source === 'dummy' ? 'sample' : r.source)}</small><p>“${E(r.content)}”</p><div class="ops-rv-act">${r.status !== 'published' ? `<button class="button small ops-ok" data-rv="${r.id}" data-st="published">✓ Approve &amp; Publish</button>` : `<button class="button small secondary" data-rv="${r.id}" data-st="hidden">Unpublish</button>`}${r.status !== 'hidden' ? `<button class="button small ops-no" data-rv="${r.id}" data-st="hidden">✕ Reject</button>` : `<button class="button small secondary" data-rv="${r.id}" data-st="pending">Restore</button>`}</div></div></article>`).join('') || '<div class="panel panel-pad"><p>Nothing here.</p></div>';
     };
     h.innerHTML = `<div class="pg-head"><h2>User Reviews</h2><p>Add, moderate and publish user reviews shown on the landing page</p></div>
-      <section class="panel panel-pad"><h3>＋ Add New Review</h3><form id="opsRvForm" class="ops-form"><label>Full name<input name="name" required maxlength="100" placeholder="Priya Sharma"></label><label>Company &amp; role<input name="role" maxlength="100" placeholder="TCS · Software Engineer"></label><label>City<input name="city" maxlength="60" placeholder="Mumbai"></label><label>Star rating<select name="rating"><option value="5">★★★★★ 5 Stars</option><option value="4">★★★★ 4 Stars</option><option value="3">★★★ 3 Stars</option></select></label><label class="wide">Review text<textarea name="content" required minlength="10" maxlength="2000" rows="3" placeholder="Write the review feedback…"></textarea></label><label>Source<select name="source"><option value="dummy">Sample (cannot be published)</option><option value="verified">Verified customer (consent on file)</option></select></label><label>Consent reference<input name="consentReference" placeholder="Required for verified reviews — where consent is recorded"></label><div class="wide"><button class="button primary">Add Review</button> <span id="opsRvSt" role="status"></span></div></form></section>
+      <section class="panel panel-pad"><h3>＋ Add New Review</h3><form id="opsRvForm" class="ops-form"><label>Full name<input name="name" required maxlength="100" placeholder="Priya Sharma"></label><label>Company &amp; role<input name="role" maxlength="100" placeholder="TCS · Software Engineer"></label><label>City<input name="city" maxlength="60" placeholder="Mumbai"></label><label>Star rating<select name="rating"><option value="5">★★★★★ 5 Stars</option><option value="4">★★★★ 4 Stars</option><option value="3">★★★ 3 Stars</option></select></label><label class="wide">Review text<textarea name="content" required minlength="10" maxlength="2000" rows="3" placeholder="Write the review feedback…"></textarea></label><label>Source<select name="source"><option value="dummy">Sample (cannot be published)</option><option value="verified">Verified customer (consent on file)</option></select></label><label>Customer account email<input name="customerEmail" type="email" placeholder="Required for verified reviews — a paying customer"></label><label>Consent reference<input name="consentReference" placeholder="Required for verified reviews — where consent is recorded"></label><div class="wide"><button class="button primary">Add Review</button> <span id="opsRvSt" role="status"></span></div></form></section>
       <div class="ops-tabs" id="opsRvTabs"></div><div id="opsRvList"></div>`;
     $('#opsRvForm').onsubmit = async e => {
       e.preventDefault(); const f = e.target, v = Object.fromEntries(new FormData(f)), st = $('#opsRvSt'); st.textContent = 'Saving…';
-      try { await api('/api/admin/feedback/add', { method: 'POST', body: { name: v.name + (v.role ? ' · ' + v.role : '') + (v.city ? ', ' + v.city : ''), content: v.content, rating: Number(v.rating), source: v.source, consent: v.source === 'verified', consentReference: v.consentReference || '' } }); st.textContent = 'Added.'; f.reset(); await load(); }
+      try { await api('/api/admin/feedback/add', { method: 'POST', body: { name: v.name + (v.role ? ' · ' + v.role : '') + (v.city ? ', ' + v.city : ''), content: v.content, rating: Number(v.rating), source: v.source, consent: v.source === 'verified', consentReference: v.consentReference || '', customerEmail: v.customerEmail || '' } }); st.textContent = 'Added.'; f.reset(); await load(); }
       catch (err) { st.textContent = err.message; }
     };
     h.onclick = async e => {

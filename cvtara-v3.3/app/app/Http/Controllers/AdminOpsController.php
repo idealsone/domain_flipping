@@ -123,7 +123,8 @@ class AdminOpsController extends Controller
             abort_if($target->is_admin && $target->id !== $admin, 422, 'Edit other owner accounts from their own login.');
             abort_if(User::where('email', $v['email'])->where('id', '!=', $target->id)->exists(), 422, 'That email address belongs to another account.');
             DB::transaction(function () use ($target, $v, $admin) {
-                DB::table('users')->where('id', $target->id)->update(['name' => $v['name'], 'email' => mb_strtolower($v['email']), 'updated_at' => now()]);
+                $changed = mb_strtolower($v['email']) !== mb_strtolower($target->email);
+                DB::table('users')->where('id', $target->id)->update(['name' => $v['name'], 'email' => mb_strtolower($v['email']), 'updated_at' => now()] + ($changed ? ['email_verified_at' => null] : []));
                 $p = array_filter(['name' => $v['name'], 'phone' => $v['phone'] ?? null, 'profession' => $v['profession'] ?? null, 'category' => $v['category'] ?? null, 'city' => $v['city'] ?? null, 'experience_level' => $v['experienceLevel'] ?? null], fn ($x) => $x !== null);
                 if ($p) {
                     DB::table('profiles')->where('owner_id', $target->id)->update($p + ['updated_at' => now()]);

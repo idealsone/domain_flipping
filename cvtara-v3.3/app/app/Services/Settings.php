@@ -8,17 +8,39 @@ use Illuminate\Support\Str;
 
 class Settings
 {
-    public static function defaults(): array
+    private static array $memo = [];
+
+    private static ?array $defaults = null;
+
+    private static ?array $editorial = null;
+
+    public static function forget(): void
     {
-        return json_decode(file_get_contents(resource_path('data/defaults.json')), true);
+        self::$memo = [];
     }
 
+    public static function defaults(): array
+    {
+        return self::$defaults ??= json_decode(file_get_contents(resource_path('data/defaults.json')), true);
+    }
+
+    // Read each setting once per request; saving clears the memo.
     public static function get(string $key, $fallback = null)
+    {
+        $k = $key.'|'.md5(json_encode($fallback));
+        if (array_key_exists($k, self::$memo)) {
+            return self::$memo[$k];
+        }
+
+        return self::$memo[$k] = self::read($key, $fallback);
+    }
+
+    private static function read(string $key, $fallback)
     {
         $r = DB::table('site_settings')->where('key', $key)->first();
         $value = $r ? json_decode($r->value_json, true) : (self::defaults()[$key] ?? $fallback);
         if ($key === 'blog') {
-            foreach (json_decode(file_get_contents(resource_path('data/editorial-content.json')), true) as $slug => $post) {
+            foreach ((self::$editorial ??= json_decode(file_get_contents(resource_path('data/editorial-content.json')), true)) as $slug => $post) {
                 if (empty($value[$slug]['body'])) {
                     $value[$slug] = array_merge($post, $value[$slug] ?? [], ['body' => $post['body']]);
                 }
@@ -35,7 +57,11 @@ return $value;
 
     public static function put(string $key, $data): void
     {
-        DB::table('site_settings')->updateOrInsert(['key' => $key], ['value_json' => json_encode($data), 'revision' => self::revision($key) + 1, 'updated_at' => now(), 'created_at' => now()]);
+        self::$memo = [];
+        $json = json_encode($data);
+        if (DB::table('site_settings')->where('key', $key)->update(['value_json' => $json, 'revision' => DB::raw('revision + 1'), 'updated_at' => now()]) === 0) {
+            DB::table('site_settings')->insertOrIgnore(['key' => $key, 'value_json' => $json, 'revision' => 1, 'updated_at' => now(), 'created_at' => now()]);
+        }
     }
 
     public static function providers(): array
