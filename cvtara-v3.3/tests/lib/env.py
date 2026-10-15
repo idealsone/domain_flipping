@@ -14,8 +14,9 @@ def free_port():
 
 class Instance:
     def __init__(self, app, public, preview=True):
-        self.app, self.public, self.preview = app, public, preview
+        self.src_app, self.src_public, self.preview = app, public, preview
         self.tmp = tempfile.mkdtemp(prefix="cvtara-test-")
+        self.app = os.path.join(self.tmp, "site"); self.public = os.path.join(self.app, "public_html")
         self.db = os.path.join(self.tmp, "test.sqlite"); open(self.db, "w").close()
         self.port = free_port(); self.base = f"http://127.0.0.1:{self.port}"; self.proc = None
         self.env = dict(os.environ, DB_CONNECTION="sqlite", DB_DATABASE=self.db, APP_ENV="local", APP_DEBUG="false",
@@ -27,9 +28,17 @@ class Instance:
 
     def start(self):
         if not shutil.which("php"): raise Setup("PHP 8.2+ is not installed or not on PATH.")
-        if not os.path.isfile(os.path.join(self.app, "vendor", "autoload.php")):
-            raise Setup(f"{self.app}/vendor is missing. Run `composer install --no-dev` in that folder first.")
-        if not os.path.isfile(os.path.join(self.app, ".env")) and not self.env.get("APP_KEY"):
+        vendor = os.path.join(self.src_app, "vendor")
+        if not os.path.isfile(os.path.join(vendor, "autoload.php")):
+            raise Setup(f"{vendor} is missing. Run `composer install --no-dev` in {self.src_app} first.")
+        # Run a private copy so tests never touch the real storage, .env or database.
+        shutil.copytree(self.src_app, self.app, ignore=shutil.ignore_patterns("vendor", "*.sqlite", "*.log", ".env", "public_html"), symlinks=True)
+        os.symlink(os.path.realpath(vendor), os.path.join(self.app, "vendor"))
+        shutil.copytree(self.src_public, self.public, ignore=shutil.ignore_patterns(".install-key-hash", "*.zip"))
+        open(os.path.join(self.app, ".env"), "w").write("APP_NAME=CVTara\n")
+        for d in ("storage/framework/cache", "storage/framework/sessions", "storage/framework/views", "storage/logs", "bootstrap/cache"):
+            os.makedirs(os.path.join(self.app, d), exist_ok=True)
+        if not self.env.get("APP_KEY"):
             self.env["APP_KEY"] = "base64:" + __import__("base64").b64encode(os.urandom(32)).decode()
         r = self.artisan("migrate", "--force")
         if r.returncode: raise Setup("migrate failed:\n" + (r.stdout + r.stderr)[-800:])

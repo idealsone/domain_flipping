@@ -24,3 +24,14 @@ Require all denied
 <FilesMatch "\.(zip|env|sqlite|log)$">
 Require all denied
 </FilesMatch>
+
+# Do not advertise the server stack
+ServerSignature Off
+<IfModule mod_headers.c>
+Header always unset X-Powered-By
+Header always set Cross-Origin-Opener-Policy "same-origin-allow-popups"
+</IfModule>
+# Owner area: never cached by shared proxies
+<FilesMatch "^(admin|owner)[-.]">
+Header set Cache-Control "private, no-store"
+</FilesMatch>

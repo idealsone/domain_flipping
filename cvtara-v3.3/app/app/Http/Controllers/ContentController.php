@@ -80,12 +80,12 @@ class ContentController extends Controller
         }
         $admin = str_starts_with($path, 'admin');
         if ($admin || $path === 'workspace.html') {
+            if ($admin && (! $r->user() || $r->user()->blocked || ! $r->user()->is_admin)) {
+                return redirect('/'); // owner pages are invisible to everyone else
+            }
             if (! $r->user()) {
                 return redirect('/login');
             }abort_if($r->user()->blocked, 403);
-            if ($admin) {
-                abort_unless($r->user()->is_admin, 403);
-            }
         }
         if ($path === 'setup.html') {
             return redirect('/admin.html');
@@ -145,7 +145,7 @@ class ContentController extends Controller
         }
         $html = preg_replace('#<link[^>]*rel="canonical"[^>]*>|<meta[^>]*name="robots"[^>]*>#', '', $html);
         $index = $seo['searchIndexing'] && ! $admin && ! in_array($path, ['workspace.html', 'checkout.html']);
-        $head = '<script>(function(){try{var t=localStorage.getItem("cvtara-theme");if(t==="dark"||(!t&&window.matchMedia&&matchMedia("(prefers-color-scheme: dark)").matches)){var r=document.documentElement;r.classList.add("dark");r.setAttribute("data-theme","dark");r.style.colorScheme="dark"}}catch(e){}})()</script><link rel="canonical" href="'.e($siteBase.$uri).'"><meta name="robots" content="'.($index ? 'index,follow' : 'noindex,nofollow').'"><meta name="csrf-token" content="'.e(csrf_token()).'"><meta name="cvtara-user" content="'.e((string) ($r->user()?->id ?? 'guest')).'"><link rel="stylesheet" href="/launch.css"><link rel="stylesheet" href="/experience.css"><link rel="stylesheet" href="/cvtara-ui.css"><link rel="stylesheet" href="/cvtara-ds.css"><script src="/error-report.js" defer></script>';
+        $head = '<script>(function(){try{var t=localStorage.getItem("cvtara-theme");if(t==="dark"||(!t&&window.matchMedia&&matchMedia("(prefers-color-scheme: dark)").matches)){var r=document.documentElement;r.classList.add("dark");r.setAttribute("data-theme","dark");r.style.colorScheme="dark"}}catch(e){}})()</script><link rel="canonical" href="'.e($siteBase.$uri).'"><meta name="robots" content="'.($index ? 'index,follow' : 'noindex,nofollow').'"><meta name="csrf-token" content="'.e(csrf_token()).'"><meta name="cvtara-user" content="'.e((string) ($r->user()?->id ?? 'guest')).'"><link rel="stylesheet" href="/launch.css"><link rel="stylesheet" href="/experience.css"><link rel="stylesheet" href="/cvtara-ui.css"><link rel="stylesheet" href="/cvtara-ds.css"><script src="/error-report.js" defer></script><script src="/crash-guard.js" defer></script>';
         $kw = trim((string) ($custom['keywords'] ?? $post['keywords'] ?? ''));
         if ($kw !== '') {
             $head .= '<meta name="keywords" content="'.e($kw).'">';
@@ -186,7 +186,6 @@ class ContentController extends Controller
             $scripts .= '<script src="/fomo-popup.js" defer></script>';
         }
         $html = str_replace('</body>', $scripts.'</body>', $html);
-        $html = preg_replace('#href="/signin-with-chatgpt[^" ]*"#', 'href="/login"', $html);
 
         if ($admin && is_file(public_path('setup-assistant.js'))) {
             $html = str_replace('</body>', '<script src="/setup-assistant.js" defer></script></body>', $html);
