@@ -24,3 +24,12 @@ def run(ctx, t):
     t.check("guide has a dark-mode theme and mobile layout", "html.dark" in g and "@media(max-width:900px)" in g)
     t.check("guide has no placeholder addresses", "example.com" not in low and "yourdomain" not in low)
     s, _, ct = ctx.client().page("/contact.html"); t.check("contact page uses cvtara.com details", "support@cvtara.com" in ct and "example.com" not in ct)
+
+    # previews are protected and always watermarked until a clean download
+    s, _, ws = c.page("/workspace.html")
+    t.check("workspace loads the preview protection script", "preview-guard.js" in ws)
+    guard = open(os.path.join(ctx.public, "preview-guard.js"), encoding="utf8").read()
+    t.check("preview protection blocks copy, print, drag and context menu and blurs on focus loss", all(k in guard for k in ("contextmenu", "dragstart", "copy", "@media print", "pg-hide", "PrintScreen")))
+    t.check("preview watermark carries an account code", "ID '" in guard or "ID ' +" in guard)
+    pub2 = open(os.path.join(ctx.public, "owner-public.js"), encoding="utf8").read()
+    t.check("on-screen previews are watermarked for every user, paid or not", "applyWatermark(p.isPaid)" not in pub2 and "applyWatermark(false)" in pub2)

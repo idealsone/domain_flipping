@@ -33,7 +33,7 @@
   }
 
   function cardHTML(key, p, o) {
-    const stats = [[(p.savedResumes || 0) + (p.savedLetters || 0), 'Document credits'], [1, 'Primary resume'], [p.atsScans == null ? '∞' : p.atsScans, 'ATS Scans']];
+    const stats = [[p.savedResumes, 'Resume downloads'], [p.savedLetters, 'Letter downloads'], [p.atsScans == null ? '∞' : p.atsScans, 'ATS Scans']];
     const save = p.mrp > p.price ? p.mrp - p.price : 0;
     const current = o.current === key;
     const href = '/checkout.html?plan=' + encodeURIComponent(key);
@@ -48,14 +48,14 @@
       ${save ? `<span class="pl-save">Save ${inr(save)} · ${Math.round(save / p.mrp * 100)}% off</span>` : ''}
       <div class="pl-sub">What you get</div>
       <div class="pl-primary"><i>👑</i><div><b>1 Premium Primary Resume</b><span>ATS-optimised, built for your target role — your master copy</span></div></div>
-      <div class="pl-plus">+ JD-Tailored Variants &amp; Cover Letters</div>
+      <div class="pl-plus">Drafts are free · clean downloads use credits</div>
       <div class="pl-stats">${stats.map(([n, l]) => `<div><b>${E(n)}</b><span>${l}</span></div>`).join('')}</div>
       <ul class="pl-perks">${(p.perks || []).map(x => `<li>${E(x)}</li>`).join('')}</ul>
       ${cta}</article>`;
   }
 
   function addonHTML(key, p, o) {
-    return `<article class="pl-addon" data-addon-card="${E(key)}"><div><b>+${(p.savedResumes || 0) + (p.savedLetters || 0)} document credits</b><span>+${p.savedResumes} resumes &amp; +${p.savedLetters} cover letters, in any mix · valid ${p.accessDays || 45} days from purchase</span></div><strong>${inr(p.price)}</strong>${o.mode === 'checkout' ? `<button class="button ${o.selected === key ? 'primary' : 'secondary'} small" type="button" data-pl-select="${E(key)}">${o.selected === key ? '✓ Selected' : 'Choose'}</button>` : `<a class="button secondary small" href="/checkout.html?plan=${E(key)}" data-pl-go="${E(key)}">Add on</a>`}</article>`;
+    return `<article class="pl-addon" data-addon-card="${E(key)}"><div><b>+${p.savedResumes} resume downloads &amp; +${p.savedLetters} cover-letter downloads</b><span>Kept separately · valid ${p.accessDays || 45} days from purchase · carries into a renewal</span></div><strong>${inr(p.price)}</strong>${o.mode === 'checkout' ? `<button class="button ${o.selected === key ? 'primary' : 'secondary'} small" type="button" data-pl-select="${E(key)}">${o.selected === key ? '✓ Selected' : 'Choose'}</button>` : `<a class="button secondary small" href="/checkout.html?plan=${E(key)}" data-pl-go="${E(key)}">Add on</a>`}</article>`;
   }
 
   async function mount(el, opts = {}) {

@@ -24,7 +24,8 @@ def run(ctx, t):
     import datetime as dt
     days = (dt.datetime.fromisoformat(rows[0][1]) - dt.datetime.fromisoformat(rows[0][2])).days
     t.check("add-on credits are valid for 45 days from purchase", 44 <= days <= 45, days)
-    t.check("pool after plan + add-on + renewal still includes the add-on", a.api("GET", "allowance")[1]["credits"]["total"] == 40, a.api("GET", "allowance")[1].get("credits"))
+    k = a.api("GET", "allowance")[1]["credits"]
+    t.check("after plan + add-on + renewal the add-on credits are still there", k["resumes"]["total"] == 20 and k["letters"]["total"] == 20 and k["addOns"]["resumes"] == 10, k)
 
     # F-03: coupon limits
     s, j = o.api("GET", "admin/business-controls"); bc = j["data"]

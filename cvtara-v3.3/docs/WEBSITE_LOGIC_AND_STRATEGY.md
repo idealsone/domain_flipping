@@ -6,19 +6,27 @@ Version 3.4.1 · prepared 14 Oct 2026 · companion files: `architecture_and_logi
 CVTara is an ATS-friendly resume and cover-letter builder run by an experienced HR team in Bangalore. A person registers (everyone starts as a **normal user** — there is no free package), builds **one premium primary resume**, then creates job-tailored versions and cover letters from job descriptions, checks ATS match, tracks applications, and pays once (one-time plan, no subscription) to unlock clean PDF/Word downloads and larger allowances. The owner runs everything from one private Owner Console.
 
 ## 2. Packages and rules
-**The allowance model (one shared pool):** every plan gives **1 free premium primary resume** plus a pool of **document credits** shared by tailored resumes and cover letters. Pool = tailored-resume credits + cover-letter credits of the plan. Using a credit = saving a new tailored resume or a new cover letter; editing a saved document, re-downloading it and the primary resume cost nothing. When the pool is empty the customer must delete a draft or buy an add-on.
+**Download credits (the allowance model):** drafts are free; credits are used only for clean (watermark-free) downloads. Resume downloads and cover-letter downloads are **separate pools**, so using all 10 resume downloads never touches the 10 letter downloads. Every plan also includes **1 premium primary resume that is always free to download**.
 
-| Plan | Price | Access | Primary resume | Credit pool | ATS scans |
+| Plan | Price | Access | Resume downloads | Cover-letter downloads | ATS scans |
 |---|---|---|---|---|---|
-| Fresher Basic / Standard / Pro | ₹299 / 399 / 499 | 60 / 60 / 90 days | 1 free | 20 / 40 / 60 | 10 / unlimited / unlimited |
-| Experienced (pro-basic / standard / pro) | ₹399 / 499 / 599 | 60 / 60 / 90 days | 1 free | 20 / 40 / 60 | 10 / unlimited / unlimited |
-| Add-ons +10 / +20 / +30 | ₹149 / 249 / 399 | **45 days from purchase** | — | +20 / +40 / +60 (+10 resumes & +10 letters = +20) | — |
-| Normal user (`free`) | ₹0 | account only | 1 | 3 (preview) | 3 a day |
+| Fresher Basic / Standard / Pro | ₹299 / 399 / 499 | 60 / 60 / 90 days | 10 / 20 / 30 | 10 / 20 / 30 | 10 / unlimited / unlimited |
+| Experienced (pro-basic / standard / pro) | ₹399 / 499 / 599 | 60 / 60 / 90 days | 10 / 20 / 30 | 10 / 20 / 30 | 10 / unlimited / unlimited |
+| Add-ons +10 / +20 / +30 | ₹149 / 249 / 399 | **45 days from purchase** | +10 / +20 / +30 | +10 / +20 / +30 | — |
+| Normal user (`free`) | ₹0 | account only | none (previews only) | none | 3 a day |
 
-**Worked example (Fresher Basic):** 1 primary + 20 credits. A customer can create 15 tailored resumes + 5 letters (pool empty: no more of either), or 10 + 10. Buying "+10 resumes & +10 letters" adds 20 credits: 20 + 20 = **40**, so 1 + 20 + 10 + 10 documents in total, in any mix. Unused add-on credits carry forward for 45 days and through a plan renewal inside those 45 days. Add-on credits count only while a plan is active. A stronger plan replaces (does not add to) the weaker plan's pool; add-ons stay on top.
+**Rules**
+1. Saving, editing and previewing are free (a draft cap per kind prevents abuse). Previews on screen always carry a watermark with the customer's account code and cannot be copied or printed from the page.
+2. A credit is used when a clean file of a **tailored resume** or a **cover letter** is downloaded for the first time. The same version in another format (PDF then Word) is free; an edited version is a new version and needs a new credit. The primary resume is free.
+3. Each pool is its own counter. When one is empty the customer buys an add-on; the other pool is unaffected.
+4. **Add-on packs** add the same number to the resume pool **and** the letter pool, valid 45 days from purchase (editable per pack), counted whenever a plan is active, and carried into a renewal inside the 45 days. Credits are spent from the plan first, then from the add-on that expires soonest, so add-on credits last as long as possible.
+5. A stronger plan replaces a weaker plan's credits; add-ons stay on top. A renewed plan gives a fresh set of plan credits.
+Example (Fresher Basic): 1 free primary + 10 resume downloads + 10 letter downloads; with "+10 resumes & +10 cover letters" that becomes 20 + 20 (plus the free primary resume) until the add-on's 45 days end.
 All prices, credits, validity, perks, popular badge and ranks are editable in **Owner Console → Pricing Plans**.
 
-Purchase rules (all verified by automated tests): the strongest plan wins; a cheaper plan is refused while a higher one is active; the same plan renewed stacks time; a partial bank reversal keeps access, a full reversal or dispute removes that purchase; webhooks are idempotent; coupons support plan lists, expiry, total and per-user limits and always leave a minimum ₹1; Cashfree is the primary gateway (Razorpay optional); all payments are final and non-refundable.
+**Screenshot protection (honest limits):** the site discourages casual copying — traceable watermark on every preview, no selecting/copying/dragging/printing of previews, previews blur when the window loses focus or Print Screen is pressed. No website can fully stop screenshots, screen recordings or phone cameras; the watermark with the account code makes a leak traceable, and only a paid download gives a clean file.
+
+Other purchase rules (verified by automated tests): the strongest plan wins; a cheaper plan is refused while a higher one is active; the same plan renewed stacks time; a partial bank reversal keeps access, a full reversal or dispute removes that purchase; webhooks are idempotent; coupons support plan lists, expiry, total and per-user limits and always leave a minimum ₹1; Cashfree is the primary gateway (Razorpay optional); all payments are final and non-refundable.
 
 ## 3. What a customer does (after the landing page)
 1. **Landing page** → choose "Build my resume" / "Check my resume" / pricing. Visitors may arrive through a referral link `/r/<code>` (stored in session).

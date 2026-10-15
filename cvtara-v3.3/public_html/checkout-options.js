@@ -13,7 +13,7 @@
     button.disabled = !guest && (!consent.checked || !live || !plans[active]);
     status.innerHTML = guest ? 'Please <a href="/login?next=' + encodeURIComponent('/checkout.html?plan=' + active) + '">sign in</a> or <a href="/register?next=' + encodeURIComponent('/checkout.html?plan=' + active) + '">create a free account</a> to buy a plan.'
       : !live ? 'Payments are not enabled yet. Please check back soon.'
-      : consent.checked ? 'Your payment is handled by Razorpay. Access activates after verification.' : 'Accept the policies to continue.';
+      : consent.checked ? 'Your payment is handled securely by Cashfree. Access activates after verification.' : 'Accept the policies to continue.';
   }
   function render() {
     const p = plans[active];
@@ -22,8 +22,8 @@
     const addon = p.type === 'addon';
     set('checkoutPlanName', p.name); set('checkoutPlanDescription', p.tagline);
     set('checkoutAccess', addon ? 'Valid as long as your current plan' : p.accessDays + ' days');
-    set('checkoutResumes', (addon ? '+' : '') + p.savedResumes + ' variants');
-    set('checkoutLetters', (addon ? '+' : '') + p.savedLetters + ' cover letters');
+    set('checkoutResumes', (addon ? '+' : '') + p.savedResumes + ' downloads');
+    set('checkoutLetters', (addon ? '+' : '') + p.savedLetters + ' downloads');
     set('checkoutScans', addon ? 'Unchanged' : p.atsScans == null ? 'Unlimited' : p.atsScans + ' scans');
     const price = document.getElementById('checkoutPrice'); if (price) price.innerHTML = inr(p.price) + (p.mrp > p.price ? ` <s style="font-weight:500;opacity:.6;font-size:14px">${inr(p.mrp)}</s>` : '');
     state();
