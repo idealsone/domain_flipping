@@ -1,3 +1,11 @@
+# CVTara v3.5.2 — customer portal polish
+
+- **My saved cover letters** (with "x / 30 draft slots used") now appears under the **Cover Letters** section and refreshes after you save a letter.
+- **Share feedback** has its own page in the customer menu: display name, star rating, feedback text with a counter, optional permission to publish, and your earlier feedback with withdraw-consent.
+- **Downloads label explained:** "Clean PDF / Word downloads 0 / 120" means how many watermark-free downloads your plan allows (each one uses 1); previews are free.
+- **Customer guide rebuilt** (`/customer-guide.html`): hero with a 3-step quick start, sticky chapter menu, step-by-step cards, live package prices, FAQ, help and privacy; works in light and night mode and on phones.
+- **cvtara.com details** in the customer portal (menu footer, page title, contact page, guide).
+
 # CVTara v3.5.1 — private addresses, backups, caching
 
 - **Private setup link:** `cvtara.com/setup/afsar` runs the installer (the file `install.php` cannot be opened directly; after installation the link sends visitors to the home page).

@@ -441,3 +441,18 @@ th.kit-sort{cursor:pointer;user-select:none}th.kit-sort:after{content:" ↕";opa
 .rp-actions{display:flex;flex-wrap:wrap;gap:12px;align-items:flex-end;margin-top:8px}.rp-btns{display:flex;gap:8px;flex-wrap:wrap;margin-left:auto}
 .rp-presets{margin-top:10px;font-size:13px;display:flex;gap:6px;flex-wrap:wrap;align-items:center}.rp-chip{display:inline-flex;border:1px solid var(--line);border-radius:999px;overflow:hidden}.rp-chip button{border:0;background:var(--soft);color:var(--ink);padding:5px 10px;cursor:pointer;font:inherit}
 body.dark .rp-tabs button.active{background:#3b6cf0;border-color:#3b6cf0}
+/* feedback view */
+.fb-card{max-width:760px;margin:0 auto;background:var(--paper);border:1px solid var(--line);border-radius:18px;padding:26px 28px;box-shadow:0 12px 34px rgba(15,23,42,.06)}
+.fb-head h2{margin:2px 0 6px}.fb-head p{color:var(--muted);margin:0 0 14px}
+.fb-form{display:grid;gap:14px}.fb-form label{display:grid;gap:6px;font-weight:700;font-size:13px}
+.fb-form input:not([type=radio]):not([type=checkbox]),.fb-form textarea{width:100%;box-sizing:border-box;padding:11px 13px;border:1.5px solid var(--line);border-radius:11px;background:var(--bg);color:var(--ink);font:inherit}
+.fb-stars{border:0;padding:0;margin:0}.fb-stars legend{font-weight:700;font-size:13px;margin-bottom:6px}
+.fb-starrow{display:inline-flex;flex-direction:row-reverse;gap:4px}.fb-starrow input{position:absolute;opacity:0;pointer-events:none}
+.fb-starrow label{font-size:32px;line-height:1;color:#cbd5e1;cursor:pointer;transition:color .15s,transform .15s}
+.fb-starrow label:hover,.fb-starrow label:hover~label,.fb-starrow input:checked~label{color:#f59e0b}.fb-starrow label:hover{transform:scale(1.12)}
+.fb-starrow input:focus-visible+label{outline:2px solid #1557d2;outline-offset:2px;border-radius:6px}
+.fb-count{justify-self:end;color:var(--muted);font-weight:500}
+.owner-my-feedback{margin-top:20px}.owner-my-feedback article{border:1px solid var(--line);border-radius:12px;padding:12px 14px;margin:10px 0}
+.side-domain{margin:12px 14px 16px;font-size:12px;color:rgba(255,255,255,.7);line-height:1.8}.side-domain a{color:inherit;text-decoration:underline;text-underline-offset:2px}
+.fb-form .connected-check{display:flex;gap:10px;align-items:flex-start;font-weight:500;line-height:1.5}.fb-form .connected-check input{width:18px;height:18px;margin-top:2px;flex:none}
+.side-nav{overflow-y:auto}
