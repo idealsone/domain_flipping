@@ -68,7 +68,8 @@ return [
     'timezone' => 'UTC',
 
     // Preview shell (/preview) and demo data are only enabled when CVTARA_PREVIEW=true.
-    'preview' => (bool) env('CVTARA_PREVIEW', false),
+    // The preview shell can never switch on for a real site: it needs a development environment AND a local address.
+    'preview' => (bool) env('CVTARA_PREVIEW', false) && env('APP_ENV', 'production') !== 'production' && in_array(parse_url((string) env('APP_URL', ''), PHP_URL_HOST), ['localhost', '127.0.0.1', '::1'], true),
     'demo_password' => 'DemoPass#2026!x',
 
     /*

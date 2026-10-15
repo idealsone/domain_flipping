@@ -310,7 +310,7 @@ class ApiController extends Controller
         }
         if ($path === 'referrals/withdraw' && $r->isMethod('POST')) {
             AccountSecurity::requireRecent($r);
-            $v = $r->validate(['amountPaise' => 'required|integer|min:100000|max:100000000']);
+            $v = $r->validate(['amountPaise' => 'required|integer|min:'.max(100, (int) Referrals::config()['minimumPaise']).'|max:100000000']);
 
             return $ok(['id' => Referrals::request($u, $v)]);
         }
@@ -467,7 +467,8 @@ class ApiController extends Controller
             User::whereKey($id)->lockForUpdate()->first();
             abort_unless(Settings::get('features')[$type === 'resumes' ? 'builder' : 'letter']['enabled'], 403);
             $slug = $data['template'];
-            abort_if((Settings::get('library')[$type === 'resumes' ? 'templates' : 'letters'][$slug]['published'] ?? true) === false, 422);
+            $already = $r->input('id') && DB::table($table)->where('id', $r->input('id'))->where('owner_id', $id)->where('template', $slug)->exists();
+            abort_if(! $already && (Settings::get('library')[$type === 'resumes' ? 'templates' : 'letters'][$slug]['published'] ?? true) === false, 422, 'This template is no longer available. Choose another template.');
             $catalog = json_decode(file_get_contents(resource_path('data/catalog.json')), true);
             abort_unless(collect($catalog[$type === 'resumes' ? 'templates' : 'coverLetters'])->contains('slug', $slug), 422);
             $record = ['title' => $data['title'], 'template' => $slug, 'content_json' => json_encode($data), 'company' => $data['company'] ?? '', 'role' => $data['role'] ?? '', 'updated_at' => now()];

@@ -1,3 +1,25 @@
+# CVTara v3.4.3 — access control, crash protection, launch fixes
+
+## Security and protection
+- **Owner area is invisible to everyone else:** visitors and signed-in customers who open an owner URL are sent to the home page. The six console scripts moved out of the public folder and are served only to the signed-in owner (`/console/*.js`).
+- **Broken pages fall back to the home page** (missing pages, server errors); files still return a plain 404. A "back soon" page shows if the home page itself fails.
+- **UI crash guard** (`crash-guard.js`): repeated script errors on public pages send the visitor home once; workspace, checkout and owner pages show a Reload/Home bar instead.
+- Script-source policy (CSP), HSTS with subdomains, no server version headers, 240 page requests/min per address.
+- **Release package:** scripts are minified and `composer.lock` is not shipped; no tool or authorship notes anywhere in shipped source (checked by a test). Removed a leftover "Anthropic" option from the AI provider list (not implemented).
+- Demo mode can no longer run on a production site; Health flags it.
+
+## Fixed (audit)
+- Webhook events for payments this site never saw are acknowledged after 6 hours instead of failing for days; recent unmatched events answer 409 so the gateway retries.
+- Buying a lower plan while a higher one is active is refused with an explanation.
+- Hidden templates no longer block saving drafts that already use them.
+- Withdrawal minimum follows the Referral Ops setting (message and API).
+- Payout approval is bound to the details the owner reviewed (409 if the customer changed them).
+- "Download options" saves the draft first so the export matches the screen.
+- Removed the "Lifetime Updates" promise from the Pro plan text.
+
+## Tests
+`python3 tests/run_tests.py` — 250 checks (access control, fallbacks, launch checks added). Docs: `SECURITY_AND_HOSTING.md`.
+
 # CVTara v3.4.2 — audit fixes (billing, security, privacy)
 
 ## Fixed

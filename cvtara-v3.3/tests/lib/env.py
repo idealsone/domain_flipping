@@ -13,7 +13,7 @@ def free_port():
 
 
 class Instance:
-    def __init__(self, app, public, preview=True):
+    def __init__(self, app, public, preview=True, extra_env=None):
         self.src_app, self.src_public, self.preview = app, public, preview
         self.tmp = tempfile.mkdtemp(prefix="cvtara-test-")
         self.app = os.path.join(self.tmp, "site"); self.public = os.path.join(self.app, "public_html")
@@ -22,6 +22,7 @@ class Instance:
         self.env = dict(os.environ, DB_CONNECTION="sqlite", DB_DATABASE=self.db, APP_ENV="local", APP_DEBUG="false",
                         CVTARA_PREVIEW="true" if preview else "false", API_RATE_LIMIT="6000", SESSION_DRIVER="database",
                         CACHE_STORE="database", MAIL_MAILER="log", APP_URL=self.base, QUEUE_CONNECTION="sync")
+        self.env.update(extra_env or {})
 
     def artisan(self, *a):
         return subprocess.run(["php", "artisan", *a], cwd=self.app, env=self.env, capture_output=True, text=True, timeout=300)

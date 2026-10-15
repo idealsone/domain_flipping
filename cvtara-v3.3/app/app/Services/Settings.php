@@ -56,7 +56,7 @@ return $value;
             'fresher-pro' => $mk('Fresher Pro', 'fresher', 'Maximum applications, maximum chances', 499, 699, 90, 30, null, 3, ['Unlimited ATS Scans', 'Priority Support', 'Referral Programme Access'], ['referral' => true]),
             'pro-basic' => $mk('Professional Basic', 'experienced', 'For professionals targeting new opportunities', 399, 549, 60, 10, 10, 1, ['PDF & Word downloads', 'Email support']),
             'pro-standard' => $mk('Professional Standard', 'experienced', 'Most chosen by mid-level professionals', 499, 699, 60, 20, null, 2, ['Unlimited ATS scans', 'Priority support'], ['popular' => true]),
-            'pro-pro' => $mk('Professional Pro', 'experienced', 'For senior professionals & career changers', 599, 849, 90, 30, null, 3, ['Unlimited ATS Scans', '1-on-1 Resume Review Call', 'Referral Programme + Lifetime Updates'], ['referral' => true]),
+            'pro-pro' => $mk('Professional Pro', 'experienced', 'For senior professionals & career changers', 599, 849, 90, 30, null, 3, ['Unlimited ATS Scans', '1-on-1 Resume Review Call', 'Referral Programme Access'], ['referral' => true]),
         ] + self::addonDefaults();
     }
 

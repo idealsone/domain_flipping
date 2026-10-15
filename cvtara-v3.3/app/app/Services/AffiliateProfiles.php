@@ -58,6 +58,7 @@ class AffiliateProfiles
             User::whereKey($id)->lockForUpdate()->first();
             $p = DB::table('payout_profiles')->where('owner_id', $id)->lockForUpdate()->first();
             abort_unless($p, 404);
+            abort_if(! empty($d['destinationHash']) && ! hash_equals((string) $p->destination_hash, (string) $d['destinationHash']), 409, 'The customer changed their payout details after you opened them. Open the profile again and review the new details.');
             abort_if($id === $admin->id, 422, 'An owner cannot approve their own payout identity.');
             abort_if(DB::table('withdrawals')->where('owner_id', $id)->whereIn('status', ['requested', 'processing'])->exists(), 422, 'Resolve the open withdrawal first.');
             DB::table('payout_profiles')->where('owner_id', $id)->update(['status' => $d['status'], 'review_note' => $d['note'], 'beneficiary_id' => $d['beneficiaryId'] ?? null, 'reviewed_by' => $admin->id, 'reviewed_at' => now(), 'updated_at' => now()]);

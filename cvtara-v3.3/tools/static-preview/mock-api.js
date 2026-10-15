@@ -199,7 +199,7 @@
       document.body.classList.add('has-topbar');
       const bar = document.createElement('div'); bar.className = 'cv-topbar';
       const cur = name === 'workspace.html' ? 'w' : (name === 'admin.html' || name === 'admin-guide.html') ? 'a' : 'l';
-      bar.innerHTML = '<span class="cv-brand">CVTara v3.4.2</span><div class="cv-tabs"><button data-t="l">Landing Page</button><button data-t="w">Customer Workspace</button><button data-t="a">Admin Dashboard</button></div><button data-t="theme" title="Day / night">🌙 Dark</button>';
+      bar.innerHTML = '<span class="cv-brand">CVTara v3.4.3</span><div class="cv-tabs"><button data-t="l">Landing Page</button><button data-t="w">Customer Workspace</button><button data-t="a">Admin Dashboard</button></div><button data-t="theme" title="Day / night">🌙 Dark</button>';
       bar.querySelectorAll('[data-t]').forEach(b => { if (b.dataset.t === cur) b.classList.add('on'); b.onclick = () => {
         const t = b.dataset.t;
         if (t === 'theme') { if (window.CVTaraTheme) window.CVTaraTheme.toggle(); return; }

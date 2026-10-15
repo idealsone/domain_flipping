@@ -103,7 +103,7 @@
     if(action==='confirm-new'){const d=document.getElementById('studioNewDialog');if(d.dataset.example==='1')example();else{data=blank();tab='personal';renderFields();renderPreview();save();}d.close();syncResumeURL(true);pickerQuery='';pickerCategory='all';pickerLayout='all';pickerPage=1;document.getElementById('studioTemplateSearch').value='';document.getElementById('studioCategory').value='all';document.getElementById('studioLayoutFilter').value='all';history=[];historyIndex=-1;captureHistory();setStage(data.template?'details':'template',true);}
     if(action==='expand'){fillPaper(document.getElementById('studioFullPaper'),templates.find(t=>t.slug===data.template));document.getElementById('studioFullDialog').showModal();}
     if(action==='next'){const tabs=['personal','experience','education','skills','more','design'];if(tab==='design')setStage('review',true);else{tab=tabs[tabs.indexOf(tab)+1];renderFields();host.querySelector('.studio-tabs').scrollIntoView({block:'nearest'});}}
-    if(action==='export'){save();window.CVTaraExport?.('resume',data._profileId);}
+    if(action==='export'){(async()=>{await saveProfile();window.CVTaraExport?.('resume',data._profileId);})();}
     if(action==='backup'){const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'}),url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download='CVTara_Resume_Draft.json';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);}
   });
   host.querySelectorAll('dialog').forEach(d=>d.addEventListener('click',e=>{if(e.target===d)d.close();}));

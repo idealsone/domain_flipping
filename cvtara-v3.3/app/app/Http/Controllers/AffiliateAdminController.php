@@ -21,7 +21,7 @@ class AffiliateAdminController extends Controller
         $admin = $r->user();
         $get = $r->isMethod('GET');
         if ($path === 'referrals' && $get) {
-            return $ok(['rules' => Referrals::config(), 'withdrawals' => DB::table('withdrawals as w')->join('users as u', 'u.id', '=', 'w.owner_id')->orderByDesc('w.created_at')->limit(500)->get(['w.id', 'w.owner_id', 'w.amount_paise', 'w.destination_masked', 'w.status', 'w.provider', 'w.provider_status', 'w.provider_transfer_id', 'w.approved_at', 'w.reference', 'w.note', 'w.due_at', 'w.created_at', 'u.name', 'u.email']), 'creators' => DB::table('creator_applications as c')->join('users as u', 'u.id', '=', 'c.owner_id')->get(['c.*', 'u.name', 'u.email']), 'profiles' => DB::table('payout_profiles as p')->join('users as u', 'u.id', '=', 'p.owner_id')->get(['p.owner_id', 'p.status', 'p.destination_masked', 'p.risk_flags_json', 'p.review_note', 'p.eligible_at', 'u.name', 'u.email']), 'affiliates' => User::whereNotNull('referral_code')->limit(500)->get(['id', 'name', 'email', 'referral_code'])->map(fn ($u) => [...$u->toArray(), ...Referrals::balance($u->id), 'rateBps' => Referrals::rate($u->id)])]);
+            return $ok(['rules' => Referrals::config(), 'withdrawals' => DB::table('withdrawals as w')->join('users as u', 'u.id', '=', 'w.owner_id')->orderByDesc('w.created_at')->limit(500)->get(['w.id', 'w.owner_id', 'w.amount_paise', 'w.destination_masked', 'w.status', 'w.provider', 'w.provider_status', 'w.provider_transfer_id', 'w.approved_at', 'w.reference', 'w.note', 'w.due_at', 'w.created_at', 'u.name', 'u.email']), 'creators' => DB::table('creator_applications as c')->join('users as u', 'u.id', '=', 'c.owner_id')->get(['c.*', 'u.name', 'u.email']), 'profiles' => DB::table('payout_profiles as p')->join('users as u', 'u.id', '=', 'p.owner_id')->get(['p.owner_id', 'p.status', 'p.destination_hash', 'p.destination_masked', 'p.risk_flags_json', 'p.review_note', 'p.eligible_at', 'u.name', 'u.email']), 'affiliates' => User::whereNotNull('referral_code')->limit(500)->get(['id', 'name', 'email', 'referral_code'])->map(fn ($u) => [...$u->toArray(), ...Referrals::balance($u->id), 'rateBps' => Referrals::rate($u->id)])]);
         }
         if ($get && ! preg_match('#^referrals/(profiles/[0-9]+|withdrawals/[a-f0-9-]{36})$#', $path)) {
             abort(405);
@@ -57,7 +57,7 @@ class AffiliateAdminController extends Controller
 
                 return $ok(['destination' => json_decode(Crypt::decryptString($p->details_encrypted), true)]);
             }
-            $d = $r->validate(['status' => 'required|in:approved,rejected', 'note' => 'required|string|min:10|max:1000', 'identityChecked' => 'exclude_unless:status,approved|accepted', 'destinationChecked' => 'exclude_unless:status,approved|accepted', 'riskChecked' => 'exclude_unless:status,approved|accepted', 'taxChecked' => 'exclude_unless:status,approved|accepted']);
+            $d = $r->validate(['status' => 'required|in:approved,rejected', 'note' => 'required|string|min:10|max:1000', 'destinationHash' => 'sometimes|nullable|string|max:64', 'identityChecked' => 'exclude_unless:status,approved|accepted', 'destinationChecked' => 'exclude_unless:status,approved|accepted', 'riskChecked' => 'exclude_unless:status,approved|accepted', 'taxChecked' => 'exclude_unless:status,approved|accepted']);
             AffiliateProfiles::approve($admin, (int) $m[1], $d);
 
             return $ok();

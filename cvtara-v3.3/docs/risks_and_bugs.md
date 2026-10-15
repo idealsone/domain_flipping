@@ -18,7 +18,15 @@ No Critical finding was verified. There is no unauthenticated code execution, SQ
 | F-15 reset link host | **Confirmed and fixed** (links use `APP_URL`) |
 | F-17 watermark for paying customers | **Fixed** (`/api/profile` returns `isPaid`) |
 | F-18 shared CSS removed for customers | **Confirmed and fixed** (file is no longer stripped) |
-| All other findings (F-04, F-05, F-08–F-11, F-13, F-16, F-19–F-25 and the 40 low items) | Open; scheduled for later releases |
+| F-04 lower plan purchases | **Fixed** (refused with a message) |
+| F-05 webhook errors for unmatched events | **Fixed** |
+| F-10 hidden template blocks saves | **Fixed** |
+| F-13 payout approval not bound to reviewed version | **Fixed** |
+| F-16 withdrawal minimum hard-coded | **Fixed** |
+| F-19 export of unsaved edits | **Fixed** |
+| F-23 plan perks | **Partly fixed** (lifetime updates removed; owner must confirm support/call perks) |
+| F-24 demo mode in production | **Fixed** |
+| Open: F-08, F-09, F-11, F-20, F-21, F-22, F-25 and the 40 low items | Scheduled for later releases |
 
 ## Summary
 

@@ -64,6 +64,13 @@ class Payments
         if (str_starts_with($plan, 'addon-') && ! Settings::access($u->id)['paid']) {
             abort(422, 'Add-on packs need an active plan. Choose a plan first.');
         }
+        if (! str_starts_with($plan, 'addon-')) {
+            $now = Settings::access($u->id);
+            $mine = (int) (Settings::plans()[$plan]['rank'] ?? 0);
+            if (! empty($now['paid']) && $mine < (int) ($now['limits']['rank'] ?? 0)) {
+                abort(422, 'You already have a higher plan active ('.($now['limits']['name'] ?? 'current plan').'). A lower plan would add nothing. Renew your current plan or buy an add-on instead.');
+            }
+        }
     }
 
     public static function capture(array $entity, string $provider = 'razorpay'): void
@@ -123,6 +130,23 @@ class Payments
         abort_unless(! empty($p['razorpayWebhookSecret']) && hash_equals(hash_hmac('sha256', $raw, $p['razorpayWebhookSecret']), $signature), 403);
         $d = json_decode($raw, true, 64, JSON_THROW_ON_ERROR);
         $key = substr($eventId ?: hash('sha256', $raw), 0, 190);
+        try {
+            self::process($d, $key);
+        } catch (ValidationException $e) {
+            // An event for a payment this site never saw (shared gateway account) must not be retried for days.
+            $created = (int) ($d['created_at'] ?? 0);
+            if ($created > 0 && now()->timestamp - $created > 6 * 3600) {
+                ErrorLog::record('warning', 'billing', 'Ignored a gateway event that matches no order here: '.($d['event'] ?? 'unknown'));
+                DB::table('webhook_events')->insertOrIgnore(['id' => $key, 'type' => 'unmatched', 'created_at' => now(), 'updated_at' => now()]);
+
+                return;
+            }
+            throw $e;
+        }
+    }
+
+    private static function process(array $d, string $key): void
+    {
         DB::transaction(function () use ($d, $key) {
             if (DB::table('webhook_events')->where('id', $key)->exists()) {
                 return;

@@ -143,7 +143,7 @@
     if (!host) return;
     let s;
     try { s = await api('/api/admin/setup/status'); } catch (e) { host.innerHTML = `<p role="alert">${E(e.message)}</p>`; return; }
-    const labels = { https: 'Site served over HTTPS', privateFolder: 'App folder is outside the public web root', emailConfigured: 'Email sender configured', scheduler: 'Scheduler (cron) ran in the last 5 minutes', phoneVerification: 'Phone verification (Twilio) enabled', payoutPolicy: 'Payout identity & tax policy recorded' };
+    const labels = { https: 'Site served over HTTPS', privateFolder: 'App folder is outside the public web root', previewOff: 'Demo mode is off', emailConfigured: 'Email sender configured', scheduler: 'Scheduler (cron) ran in the last 5 minutes', phoneVerification: 'Phone verification (Twilio) enabled', payoutPolicy: 'Payout identity & tax policy recorded' };
     const op = s.operator || {};
     host.innerHTML = `<div class="admin-heading"><div><h2>Setup &amp; health</h2><p>Launch checklist, business details, payout policy and held reward reviews.</p></div><button class="button secondary" id="adSetupRefresh">Refresh</button></div>
       <div class="panel panel-pad"><h3>Launch checklist</h3><div class="ad-check-list">${Object.entries(labels).map(([k, l]) => `<div><span class="ad-pill ${s.checks[k] ? 'ok' : 'bad'}">${s.checks[k] ? 'OK' : 'To do'}</span><b>${l}</b></div>`).join('')}</div>

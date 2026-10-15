@@ -94,7 +94,7 @@ class Referrals
             $d = $destination;
             $b = self::balance($u->id);
             if ($amount < self::config()['minimumPaise'] || $amount > $b['availablePaise']) {
-                throw ValidationException::withMessages(['amount' => 'Minimum withdrawal is ₹1,000 and must be within your available balance.']);
+                throw ValidationException::withMessages(['amount' => 'Minimum withdrawal is ₹'.number_format(self::config()['minimumPaise'] / 100).' and must be within your available balance.']);
             }$id = (string) Str::uuid();
             $masked = $profile->destination_masked;
             DB::table('withdrawals')->insert(['id' => $id, 'owner_id' => $u->id, 'amount_paise' => $amount, 'method' => $d['method'], 'destination_encrypted' => Crypt::encryptString(json_encode($d)), 'destination_masked' => $masked, 'status' => 'requested', 'due_at' => now()->addHours(24), 'created_at' => now(), 'updated_at' => now()]);
