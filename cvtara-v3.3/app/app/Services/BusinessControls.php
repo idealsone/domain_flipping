@@ -45,7 +45,7 @@ class BusinessControls
             abort_unless($c, 422, 'This coupon is invalid, expired or unavailable for this plan.');
             $base = fn () => DB::table('purchases')->where('coupon_code', $code);
             $max = (int) ($c['maxUses'] ?? 0);
-            if ($max > 0 && $base()->where(fn ($q) => $q->whereIn('status', ['paid', 'partially_refunded'])->orWhere(fn ($q) => $q->where('status', 'created')->where('created_at', '>', now()->subHour())))->count() >= $max) {
+            if ($max > 0 && $base()->where(fn ($q) => $q->whereIn('status', ['paid', 'partially_refunded'])->orWhere(fn ($q) => $q->where('status', 'created')->where('created_at', '>', now()->subDays(2))->when($userId, fn ($q) => $q->where('owner_id', '!=', $userId))))->count() >= $max) {
                 abort(422, 'This coupon has reached its redemption limit.');
             }
             $per = (int) ($c['perUser'] ?? 1);

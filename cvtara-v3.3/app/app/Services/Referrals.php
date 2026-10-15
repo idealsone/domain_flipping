@@ -44,7 +44,7 @@ class Referrals
     // Called only from verified payment processing, in its database transaction.
     public static function credit(object $p): void
     {
-        if (! $p->is_live || $p->status !== 'paid' || ! self::config()['enabled']) {
+        if (! $p->is_live || $p->status !== 'paid' || ! in_array($p->provider, ['razorpay', 'cashfree'], true) || ! self::config()['enabled']) {
             return;
         }$buyer = User::find($p->owner_id);
         if (! $buyer?->referred_by || $buyer->referred_by === $buyer->id) {

@@ -191,9 +191,6 @@ class ContentController extends Controller
         if ($admin && is_file(public_path('setup-assistant.js'))) {
             $html = str_replace('</body>', '<script src="/setup-assistant.js" defer></script></body>', $html);
         }
-        if (! $admin) {
-            $html = preg_replace('#<link[^>]*href="/?owner-console\.css"[^>]*>#', '', $html);
-        }
         $html = preg_replace_callback('#<script(\s+[^>]*src="[^" ]+"[^>]*)>#', fn ($m) => preg_match('/\b(defer|async)\b/', $m[1]) ? $m[0] : '<script'.$m[1].' defer>', $html);
         $html = preg_replace_callback('#(src|href)="((?!https?:|//)[^"?]+\.(?:js|css))"#', function ($m) use ($uri) {
             $relative = str_starts_with($m[2], '/') ? $m[2] : dirname($uri).'/'.$m[2];

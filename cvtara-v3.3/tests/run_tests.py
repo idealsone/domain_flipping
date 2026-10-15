@@ -10,6 +10,7 @@ import argparse, importlib, os, pkgutil, sys, time
 HERE = os.path.dirname(os.path.abspath(__file__)); sys.path.insert(0, HERE)
 from lib.env import Instance, Setup  # noqa: E402
 from lib.http import Client  # noqa: E402
+from lib.db import Db  # noqa: E402
 
 
 class T:
@@ -26,6 +27,7 @@ class T:
 class Ctx:
     def __init__(self, inst, app, public): self.inst, self.app, self.public, self.preview = inst, app, public, inst.preview
     def client(self): return Client(self.inst.base)
+    def db(self): return Db(self.inst.db)
 
 
 def main():
@@ -41,7 +43,9 @@ def main():
         for m in mods:
             print(f"\n== {m.NAME}")
             try: m.run(Ctx(inst, app, public), t)
-            except Exception as e: t.check(f"{m.NAME} ran without crashing", False, f"{type(e).__name__}: {e}")
+            except Exception as e:
+                tb = __import__("traceback").extract_tb(e.__traceback__)[-1]
+                t.check(f"{m.NAME} ran without crashing", False, f"{type(e).__name__}: {e} ({os.path.basename(tb.filename)}:{tb.lineno})")
         inst.stop(); inst = Instance(app, public, preview=False).start(); c = Ctx(inst, app, public).client()
         print("\n== Production mode (preview off)")
         t.check("preview sign-in is closed", c.raw("GET", "/preview/go/admin")[0] in (403, 404), "open!")

@@ -1,3 +1,21 @@
+# CVTara v3.4.2 — audit fixes (billing, security, privacy)
+
+## Fixed
+- **Owner step-up (F-01):** payment and email provider keys, plan prices, coupons/business controls and the integrations/email/legal/site content now require the email-code confirmation in production. The console opens the confirm dialog automatically and retries.
+- **Add-ons (F-02):** renewing a plan extends the customer's live add-on packs to the new end date.
+- **Watermark (F-17):** paying customers no longer see the "Preview" watermark (`/api/profile` returns `isPaid`).
+- **Coupons (F-03):** limits are checked under a lock; an open order from another customer reserves a single-use coupon; an extra redemption is flagged in the Error Log.
+- **Mark as paid (F-06):** the amount received defaults to 0; referral commission is paid only on real gateway payments.
+- **Revoke access (F-07):** ends access without recording a refund that never happened.
+- **Account deletion (F-12):** bank/UPI/PAN details inside past withdrawals are erased; the data export now includes payout and referral records.
+- **Password-reset links (F-15):** built from `APP_URL`, not from the request Host header (confirmed exploitable before the fix).
+- **Login redirect (F-14):** control characters in `next` rejected (a newline caused a server error).
+- **Shared styles (F-18):** `owner-console.css` is no longer removed for customers, so the consent banner, forms and article covers are styled.
+
+## Tests
+`python3 tests/run_tests.py` now runs 175 checks including add-on renewal, step-up confirmation (production mode), coupon limits, grants/revoke, account deletion and the security re-checks.
+Full audit status: `docs/risks_and_bugs.md`.
+
 # CVTara v3.4.1 — Referral Ops consolidation, working night mode, test runner
 
 ## Fixed

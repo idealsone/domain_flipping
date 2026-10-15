@@ -26,6 +26,17 @@
 
   window.CVTaraEnsureRecent = ensureRecent;
 
+  /* Any owner write that the server protects with the step-up check opens the confirm dialog once, then retries. */
+  const baseRequest = window.CVTaraAPI.request;
+  window.CVTaraAPI.request = async (path, options) => {
+    try { return await baseRequest(path, options); }
+    catch (e) {
+      if (!/^\/api\/admin\//.test(path) || !/Verify your email code/.test(e.message || '')) throw e;
+      if (!(await ensureRecent())) throw e;
+      return baseRequest(path, options);
+    }
+  };
+
   /* ---------- users ---------- */
   const U = { page: 1, q: '', plans: null };
   async function usersPanel() {

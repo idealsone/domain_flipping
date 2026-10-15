@@ -38,6 +38,8 @@ class AdminController extends Controller
             $key = $m[1];
             if ($get) {
                 return $ok(['data' => Settings::get($key), 'revision' => Settings::revision($key), 'connections' => ['payments' => ! empty(Settings::providers()['payments']), 'email' => ! empty(Settings::providers()['email']), 'ai' => ! empty(Settings::providers()['ai'])]]);
+            }if (in_array($key, ['integrations', 'emails', 'legal', 'site'], true)) {
+                AccountSecurity::requireRecent($r);
             }$r->validate(['data' => 'present|array', 'revision' => 'required|integer']);
             abort_if(strlen(json_encode($r->data)) > 4000000, 413);
             $data = $r->data;
@@ -54,7 +56,7 @@ class AdminController extends Controller
                         if ($post['published'] && ! ($old[$slug]['published'] ?? false)) {
                             User::whereIn('id', DB::table('profiles')->where('marketing_consent', true)->select('owner_id'))->chunkById(100, function ($users) use ($slug, $post) {
                                 foreach ($users as $u) {
-                                    MailAutomation::queue($u, 'blog_published', $slug, ['blog_title' => $post['title'], 'blog_url' => url('/article?slug='.$slug)]);
+                                    MailAutomation::queue($u, 'blog_published', $slug, ['blog_title' => $post['title'], 'blog_url' => rtrim((string) config('app.url'), '/').('/article?slug='.$slug)]);
                                 }
                             });
                         }
@@ -86,7 +88,8 @@ class AdminController extends Controller
                 }
 
                 return $ok(['providers' => $p, 'secureStorage' => true]);
-            }$r->validate(['service' => 'required|in:'.implode(',', array_keys($fields)), 'values' => 'required|array']);
+            }AccountSecurity::requireRecent($r);
+            $r->validate(['service' => 'required|in:'.implode(',', array_keys($fields)), 'values' => 'required|array']);
             if ($r->service === 'verification') {
                 AccountSecurity::requireRecent($r);
                 validator($r->values, ['enabled' => 'required|in:true,false', 'twilioAccountSid' => 'sometimes|regex:/^AC[a-f0-9]{32}$/', 'twilioVerifyServiceSid' => 'sometimes|regex:/^VA[a-f0-9]{32}$/'])->validate();
@@ -122,13 +125,15 @@ class AdminController extends Controller
             if ($get) {
                 return $ok(['data' => BusinessControls::get()]);
             }abort_unless($r->isMethod('POST'), 405);
+            AccountSecurity::requireRecent($r);
 
             return $ok(['data' => BusinessControls::save($r)]);
         }
         if ($path === 'plans') {
             if ($get) {
                 return $ok(['plans' => Settings::plans()]);
-            }$v = $r->validate(['plans' => 'required|array', 'plans.*.name' => 'required|string|max:120', 'plans.*.tagline' => 'nullable|string|max:200', 'plans.*.price' => 'required|integer|min:0|max:99999', 'plans.*.mrp' => 'nullable|integer|min:0|max:99999', 'plans.*.accessDays' => 'required|integer|min:0|max:3660', 'plans.*.savedResumes' => 'required|integer|min:0|max:500', 'plans.*.savedLetters' => 'required|integer|min:0|max:500', 'plans.*.atsScans' => 'nullable|integer|min:0|max:100000', 'plans.*.dailyMatches' => 'nullable|integer|min:0|max:1000', 'plans.*.exports' => 'nullable|integer|min:0|max:100000', 'plans.*.popular' => 'sometimes|boolean', 'plans.*.referral' => 'sometimes|boolean', 'plans.*.perks' => 'sometimes|array|max:12', 'plans.*.perks.*' => 'string|max:120', 'plans.*.audience' => 'sometimes|in:fresher,experienced,all']);
+            }AccountSecurity::requireRecent($r);
+            $v = $r->validate(['plans' => 'required|array', 'plans.*.name' => 'required|string|max:120', 'plans.*.tagline' => 'nullable|string|max:200', 'plans.*.price' => 'required|integer|min:0|max:99999', 'plans.*.mrp' => 'nullable|integer|min:0|max:99999', 'plans.*.accessDays' => 'required|integer|min:0|max:3660', 'plans.*.savedResumes' => 'required|integer|min:0|max:500', 'plans.*.savedLetters' => 'required|integer|min:0|max:500', 'plans.*.atsScans' => 'nullable|integer|min:0|max:100000', 'plans.*.dailyMatches' => 'nullable|integer|min:0|max:1000', 'plans.*.exports' => 'nullable|integer|min:0|max:100000', 'plans.*.popular' => 'sometimes|boolean', 'plans.*.referral' => 'sometimes|boolean', 'plans.*.perks' => 'sometimes|array|max:12', 'plans.*.perks.*' => 'string|max:120', 'plans.*.audience' => 'sometimes|in:fresher,experienced,all']);
             $out = Settings::plans();
             foreach ($v['plans'] as $k => $in) {
                 abort_unless(isset($out[$k]), 422, 'Unknown plan.');

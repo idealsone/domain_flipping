@@ -66,14 +66,14 @@
     const opt = k => `<option value="${k}">${E(pl[k].name)} — ₹${pl[k].price}${pl[k].accessDays ? ' · ' + pl[k].accessDays + ' days' : ''}</option>`;
     const m = modal(u.paid ? 'Manage subscription' : 'Mark as paid', `<p class="ops-note" style="margin-top:0"><b>${E(u.name)}</b> · ${E(u.email)} — ${u.paid ? `currently <b>${E(planLabel(pl, u.last_plan))}</b> until ${dmy(parse(u.accessUntil))}` : 'a normal user with no subscription'}.</p>
       <form class="ops-form"><label class="wide">Plan<select name="plan" required>${['fresher', 'experienced'].map(a => `<optgroup label="${a === 'fresher' ? 'Fresher plans' : 'Experienced plans'}">${grp(a).map(opt).join('')}</optgroup>`).join('')}<optgroup label="Add-on packs (need an active plan)">${grp('addon').map(opt).join('')}</optgroup></select></label>
-      <label>Access days<input name="days" type="number" min="1" max="1095" placeholder="plan default"></label><label>Amount received (₹)<input name="amount" type="number" min="0" step="1" placeholder="plan price"></label>
+      <label>Access days<input name="days" type="number" min="1" max="1095" placeholder="plan default"></label><label>Amount actually received (₹)<input name="amount" type="number" min="0" step="1" value="0" required title="Enter 0 for a complimentary plan. Only enter an amount you have really received."></label>
       <label class="wide">Note (kept in the audit log)<input name="note" required minlength="3" maxlength="300" placeholder="e.g. Paid by UPI on 14 Oct, ref 4821"></label>
       <label class="wide ops-check"><input type="checkbox" name="sendEmail" checked> Email the customer a thank-you now (plan, validity and download link)</label>
       <p class="ops-note wide" id="subPreview"></p>
       <div class="wide"><button class="button primary">${u.paid ? 'Add / extend plan' : 'Activate subscription'}</button> ${u.paid ? '<button type="button" class="button ops-no" id="revokeBtn">Revoke access</button>' : ''} <span role="status" class="ops-st"></span></div></form>`, { wide: false });
     const f = m.body.querySelector('form'), st = m.body.querySelector('.ops-st');
     const sum = () => { const p = pl[f.plan.value]; if (!p) return; const d = Number(f.days.value) || p.accessDays || 0; const until = new Date(Date.now() + d * 864e5); $('#subPreview', m.body).innerHTML = p.type === 'addon' ? `Adds <b>${p.savedResumes}</b> resumes and <b>${p.savedLetters}</b> cover letters until the base plan ends.` : `Gives <b>1 premium primary resume + ${p.savedResumes}</b> tailored resumes, <b>${p.savedLetters}</b> cover letters, clean PDF/Word downloads, valid about <b>${d} days</b> (until ${dmy(until)}).`; };
-    f.plan.onchange = () => { const p = pl[f.plan.value]; f.days.placeholder = p.accessDays ? String(p.accessDays) : 'until base plan ends'; f.amount.placeholder = String(p.price); sum(); }; f.days.oninput = sum; f.plan.onchange();
+    f.plan.onchange = () => { const p = pl[f.plan.value]; f.days.placeholder = p.accessDays ? String(p.accessDays) : 'until base plan ends'; sum(); }; f.days.oninput = sum; f.plan.onchange();
     f.onsubmit = async ev => {
       ev.preventDefault(); st.textContent = 'Activating…';
       try {

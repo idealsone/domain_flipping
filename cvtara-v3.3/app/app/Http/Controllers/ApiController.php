@@ -157,7 +157,7 @@ class ApiController extends Controller
             $p = DB::table('profiles')->where('owner_id', $id)->first();
             $p->email = $u->email;
 
-            return $ok(['profile' => $p, 'isOwner' => (bool) $u->is_admin, 'user' => ['id' => $id, 'email' => $u->email]]);
+            return $ok(['profile' => $p, 'isOwner' => (bool) $u->is_admin, 'isPaid' => (bool) (Settings::access($id)['paid'] ?? false) || (bool) $u->is_admin, 'user' => ['id' => $id, 'email' => $u->email]]);
         }
         if ($path === 'profile') {
             $v = $r->validate(['name' => 'required|string|max:120', 'phone' => 'nullable|string|max:40', 'language' => 'sometimes|in:en', 'experienceLevel' => 'required|in:fresher,experienced', 'profession' => 'required|string|max:120', 'category' => 'required|in:Technology,HR & Recruitment,Sales & Marketing,Finance,Operations,Education,Healthcare,Design,Other', 'experienceYears' => 'required|integer|min:0|max:60', 'city' => 'nullable|string|max:120', 'marketingConsent' => 'required|boolean']);
@@ -383,7 +383,7 @@ class ApiController extends Controller
             return $x;
         }, $list);
 
-        return ['generatedAt' => now()->toIso8601String(), 'account' => ['name' => $u->name, 'email' => $u->email, 'createdAt' => $u->created_at, 'referralCode' => $u->referral_code], 'profile' => (array) DB::table('profiles')->where('owner_id', $id)->first(), 'resumes' => $decode($rows('resume_drafts')), 'coverLetters' => $decode($rows('cover_letter_drafts')), 'applications' => $rows('applications'), 'purchases' => $rows('purchases', ['id', 'plan', 'amount_paise', 'refunded_paise', 'currency', 'status', 'coupon_code', 'purchased_at', 'access_until']), 'reviews' => $rows('feedback', ['display_name', 'rating', 'content', 'status', 'created_at']), 'activity' => DB::table('activity_events')->where('owner_id', $id)->orderByDesc('created_at')->limit(500)->get(['event', 'reference', 'created_at'])->map(fn ($x) => (array) $x)->all()];
+        return ['generatedAt' => now()->toIso8601String(), 'account' => ['name' => $u->name, 'email' => $u->email, 'createdAt' => $u->created_at, 'referralCode' => $u->referral_code], 'profile' => (array) DB::table('profiles')->where('owner_id', $id)->first(), 'resumes' => $decode($rows('resume_drafts')), 'coverLetters' => $decode($rows('cover_letter_drafts')), 'applications' => $rows('applications'), 'purchases' => $rows('purchases', ['id', 'plan', 'amount_paise', 'refunded_paise', 'currency', 'status', 'coupon_code', 'purchased_at', 'access_until']), 'reviews' => $rows('feedback', ['display_name', 'rating', 'content', 'status', 'created_at']), 'referralCommissions' => DB::table('referral_commissions')->where('referrer_id', $id)->get(['amount_paise', 'rate_bps', 'created_at'])->map(fn ($x) => (array) $x)->all(), 'withdrawals' => $rows('withdrawals', ['amount_paise', 'destination_masked', 'status', 'reference', 'created_at']), 'payoutProfile' => (array) DB::table('payout_profiles')->where('owner_id', $id)->first(['status', 'destination_masked']), 'creatorApplication' => (array) DB::table('creator_applications')->where('owner_id', $id)->first(['status', 'audience', 'rate_bps', 'created_at']), 'activity' => DB::table('activity_events')->where('owner_id', $id)->orderByDesc('created_at')->limit(500)->get(['event', 'reference', 'created_at'])->map(fn ($x) => (array) $x)->all()];
     }
 
     // Personal data is erased. Purchase and payout records stay (legal/financial) but are detached from the person.
@@ -396,6 +396,9 @@ class ApiController extends Controller
             foreach (['resume_drafts', 'cover_letter_drafts', 'applications', 'feedback', 'profiles', 'payout_profiles', 'creator_applications', 'referral_identities', 'referral_rewards', 'product_usage', 'mail_outbox'] as $t) {
                 DB::table($t)->where($t === 'profiles' || $t === 'payout_profiles' || $t === 'referral_identities' ? 'owner_id' : 'owner_id', $id)->delete();
             }
+            // Payout records stay for finance, but the bank/UPI/PAN details inside them are erased; only the masked destination remains.
+            DB::table('withdrawals')->where('owner_id', $id)->update(['destination_encrypted' => \Illuminate\Support\Facades\Crypt::encryptString('{}'), 'updated_at' => now()]);
+            DB::table('error_logs')->where('user_id', $id)->update(['user_id' => null]);
             DB::table('referral_clicks')->where('referrer_id', $id)->delete();
             DB::table('activity_events')->where('owner_id', $id)->delete();
             DB::table('sessions')->where('user_id', $id)->delete();

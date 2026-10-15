@@ -22,12 +22,18 @@ class Payments
         if (! ($i['payments'] ?? false) || ($p['provider'] ?? 'razorpay') !== 'razorpay' || empty($p['razorpayKeyId']) || empty($p['razorpayKeySecret'])) {
             throw ValidationException::withMessages(['payments' => 'Checkout is not configured. The owner must enable Razorpay and verify its keys.']);
         }$id = (string) Str::uuid();
+        $lock = $coupon !== '' ? \Illuminate\Support\Facades\Cache::lock('coupon:'.strtoupper(trim($coupon)), 25) : null;
+        $lock?->block(15);
+        try {
         $quote = BusinessControls::quote($plan, $coupon, $u->id);
         $price = $quote['totalPaise'];
         abort_unless($price > 0 && $price < 100000000, 422);
         $result = Http::withBasicAuth($p['razorpayKeyId'], $p['razorpayKeySecret'])->timeout(20)->post('https://api.razorpay.com/v1/orders', ['amount' => $price, 'currency' => 'INR', 'receipt' => $id])->throw()->json();
         DB::table('purchases')->insert(['id' => $id, 'owner_id' => $u->id, 'plan' => $plan, 'amount_paise' => $price, 'coupon_code' => $quote['code'] ?: null, 'discount_paise' => $quote['discountPaise'], 'provider_order_id' => $result['id'], 'is_live' => str_starts_with($p['razorpayKeyId'], 'rzp_live_'), 'limits_json' => json_encode($plans[$plan]), 'access_days' => $plans[$plan]['accessDays'], 'created_at' => now(), 'updated_at' => now()]);
         Settings::audit($u->id, 'checkout_started', $id);
+        } finally {
+            $lock?->release();
+        }
 
         return ['id' => $id, 'provider' => 'razorpay', 'orderId' => $result['id'], 'keyId' => $p['razorpayKeyId'], 'amount' => $price, 'currency' => 'INR', 'test' => ! str_starts_with($p['razorpayKeyId'], 'rzp_live_')];
     }
@@ -78,8 +84,20 @@ class Payments
                 DB::table('purchases')->where('id', $p->id)->update(['status' => 'paid', 'payment_reference' => $entity['id'], 'purchased_at' => now(), 'access_until' => $until, 'updated_at' => now()]);
             } else {
                 DB::table('purchases')->where('id', $p->id)->update(['status' => 'paid', 'payment_reference' => $entity['id'], 'purchased_at' => now(), 'access_until' => $start->copy()->addDays($p->access_days), 'updated_at' => now()]);
+                // A renewed plan carries the owner's live add-on packs with it (they were sold as "lasts as long as your plan").
+                $newEnd = $start->copy()->addDays($p->access_days);
+                DB::table('purchases')->where('owner_id', $p->owner_id)->where('plan', 'like', 'addon-%')->whereIn('status', ['paid', 'partially_refunded'])->where('access_until', '>', now())->where('access_until', '<', $newEnd)->update(['access_until' => $newEnd, 'updated_at' => now()]);
             }
             $p = DB::table('purchases')->where('id', $p->id)->first();
+            if ($p->coupon_code) {
+                $c = collect(BusinessControls::get()['coupons'])->firstWhere('code', $p->coupon_code);
+                $others = DB::table('purchases')->where('coupon_code', $p->coupon_code)->where('id', '!=', $p->id)->whereIn('status', ['paid', 'partially_refunded']);
+                if ($c && ((int) ($c['perUser'] ?? 1) > 0 && (clone $others)->where('owner_id', $p->owner_id)->count() >= (int) $c['perUser'] || (int) ($c['maxUses'] ?? 0) > 0 && (clone $others)->count() >= (int) $c['maxUses'])) {
+                    // The customer paid in good faith, so access is granted; the owner is told to review the extra redemption.
+                    Settings::audit($p->owner_id, 'coupon_limit_exceeded', $p->id);
+                    ErrorLog::record('warning', 'billing', 'Coupon '.$p->coupon_code.' was redeemed beyond its limit on order '.$p->id.'. Review the order.', null, null, $p->owner_id);
+                }
+            }
             Referrals::credit($p);
             Settings::audit($p->owner_id, 'purchase_verified', $p->id);
             $pl = json_decode((string) $p->limits_json, true) ?: [];

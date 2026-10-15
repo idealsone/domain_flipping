@@ -99,7 +99,7 @@ class AdminOpsController extends Controller
             abort_unless(in_array($v['plan'], Settings::paidPlanKeys(), true) && isset($plans[$v['plan']]), 422, 'Choose one of the paid plans or add-on packs.');
             Payments::guardAddon($target, $v['plan']);
             $plan = $plans[$v['plan']];
-            $paise = (int) round(((float) ($v['amount'] ?? $plan['price'])) * 100);
+            $paise = (int) round(((float) ($v['amount'] ?? 0)) * 100);
             $days = (int) ($v['days'] ?? ($plan['accessDays'] ?? 0));
             $id = (string) Str::uuid();
             $order = 'manual_'.str_replace('-', '', $id);
@@ -139,10 +139,8 @@ class AdminOpsController extends Controller
             $n = 0;
             DB::transaction(function () use ($target, $v, $admin, &$n) {
                 foreach (DB::table('purchases')->where('owner_id', $target->id)->whereIn('status', ['paid', 'partially_refunded'])->where('access_until', '>', now())->lockForUpdate()->get() as $p) {
-                    DB::table('purchases')->where('id', $p->id)->update(['status' => 'refunded', 'refunded_paise' => $p->amount_paise, 'updated_at' => now()]);
-                    if ($p->provider !== 'manual' || $p->amount_paise > 0) {
-                        Referrals::reverse($p, $p->amount_paise);
-                    }
+                    // Access ends now; no refund is recorded because no money moved. Real refunds arrive through the payment provider.
+                    DB::table('purchases')->where('id', $p->id)->update(['access_until' => now(), 'updated_at' => now()]);
                     $n++;
                 }
                 Settings::audit($admin, 'subscription_revoked', $target->id.': '.$v['note']);
