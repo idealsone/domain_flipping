@@ -154,7 +154,19 @@
     if (method === 'GET' && p === 'admin/speed/status') return ok({ cache: { pages: 79, bytes: 768881, builtAt: new Date().toISOString(), enabled: true }, traffic: { mode: st.busyMode || 'off', autoLoad: 2.5, load: 0.4, busyNow: false }, reader: { enabled: false, provider: 'scrapingbee', usage: { today: 0, limit: 200 }, configured: {}, customUrlTemplate: '' } });
     if (method === 'GET' && p === 'admin/providers') return ok({ providers: { jobreader: { enabled: 'false', provider: 'scrapingbee', dailyLimit: '200' } }, secureStorage: true });
     if (method === 'POST' && /^admin\/speed\//.test(p)) { if (p === 'admin/speed/save') { st.busyMode = b.busyMode; save(); } return ok({ result: { built: 79, skipped: [] }, removed: 79, message: 'Demo: nothing was sent.', cache: { pages: 79, bytes: 768881, builtAt: new Date().toISOString(), enabled: true }, traffic: { mode: st.busyMode || 'off', autoLoad: 2.5, load: 0.4, busyNow: false } }); }
-    if (method === 'GET' && p === 'ats/scans') { st.scans = st.scans || []; return ok({ scans: st.scans.map(x => ({ id: x.id, resumeId: x.resumeId, source: x.source, jobUrl: x.jobUrl, title: x.title, company: x.company, score: x.score, createdAt: x.createdAt })) }); }
+    const seedScans = () => {
+      if (st.scans) return;
+      st.scans = [];
+      try {
+        const rs = (get('resumes') || {}).resumes || [], prim = rs.find(x => x.is_primary) || rs[0]; if (!prim) return;
+        const data = ((get('resumes/' + prim.id) || {}).resume || {}).data || {};
+        [['Business Analyst', 'Infosys', 'We are hiring a Business Analyst. Responsibilities: gather requirements, write SQL queries, build Power BI dashboards and present insights to stakeholders. Required: 3+ years of experience in analytics, strong SQL, Excel and stakeholder communication. Preferred: Python, Tableau.', 30],
+         ['Data Analyst', 'Beta Labs', 'Data Analyst role. You will analyse large data sets, build dashboards in Tableau, write SQL and present insights. Required: SQL, Excel, 2+ years of experience. Preferred: Python. Bachelor degree required.', 80]]
+          .forEach(([title, company, text, hoursAgo]) => { const report = window.__atsReport(data, text, title); st.scans.push({ id: uid(), resumeId: prim.id, source: 'text', jobUrl: '', title, company, score: report.score, report, jobText: text, createdAt: new Date(Date.now() - hoursAgo * 3600e3).toISOString().slice(0, 19).replace('T', ' ') }); });
+        save();
+      } catch (e) { st.scans = []; }
+    };
+    if (method === 'GET' && p === 'ats/scans') { seedScans(); st.scans = st.scans || []; return ok({ scans: st.scans.map(x => ({ id: x.id, resumeId: x.resumeId, source: x.source, jobUrl: x.jobUrl, title: x.title, company: x.company, score: x.score, createdAt: x.createdAt })) }); }
     if (method === 'GET' && /^ats\/scans\/[^/]+$/.test(p)) { const x = (st.scans || []).find(y => y.id === p.split('/')[2]); return x ? ok({ scan: x }) : fail('Not found.', 404); }
     if (method === 'POST' && p === 'ats/scan') {
       if (!st.role) return fail('Please sign in.', 401, { signIn: true });

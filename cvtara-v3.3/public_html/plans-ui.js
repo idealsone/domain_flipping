@@ -33,7 +33,7 @@
   }
 
   function cardHTML(key, p, o) {
-    const stats = [[p.savedResumes, 'Resume downloads'], [p.savedLetters, 'Letter downloads'], [p.atsScans == null ? '∞' : p.atsScans, 'ATS Scans']];
+    const stats = [[p.savedResumes, 'Resume downloads'], [p.savedLetters, 'Letter downloads'], [p.atsScans == null ? '∞' : p.atsScans, 'ATS scans']];
     const save = p.mrp > p.price ? p.mrp - p.price : 0;
     const current = o.current === key;
     const href = '/checkout.html?plan=' + encodeURIComponent(key);

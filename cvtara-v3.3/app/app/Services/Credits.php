@@ -163,6 +163,6 @@ class Credits
             }
         }
         $label = $kind === 'resume' ? 'resume' : 'cover-letter';
-        throw ValidationException::withMessages(['limit' => "All your {$label} download credits are used. Buy an add-on pack for more {$label} downloads (valid until your plan ends), or use a new plan period."]);
+        throw ValidationException::withMessages(['limit' => "All your {$label} download credits are used. Buy an add-on pack for more {$label} downloads (valid until your plan ends), or renew your plan."]);
     }
 }

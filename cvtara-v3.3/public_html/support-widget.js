@@ -8,7 +8,7 @@
   const MAX_FILES = 5, MAX_BYTES = 2 * 1024 * 1024;
   if ((document.querySelector('meta[name=cvtara-user]')?.content || 'guest') === 'guest') return; // the feedback button is for signed-in customers
   const side = () => { try { return localStorage.getItem('cvtara-feedback-side') === 'left' ? 'left' : 'right'; } catch { return 'right'; } };
-  const areas = { 'resume-builder': 'Resume Builder', 'ats-match': 'ATS Match', 'cover-letters': 'Cover Letters', applications: 'Applications', downloads: 'Downloads & credits', billing: 'Billing & plans', account: 'Account & login', website: 'Website & pages', other: 'Something else' };
+  const areas = { 'resume-builder': 'Resume Builder', 'ats-match': 'ATS Match', 'cover-letters': 'Cover Letters', applications: 'Applications', downloads: 'Downloads & credits', billing: 'Billing & Plans', account: 'Account & login', website: 'Website & pages', other: 'Something else' };
   const kinds = { bug: 'Something is broken', idea: 'Suggestion', question: 'Question', praise: 'What I like' };
   const st = { files: [], rating: 0, kind: 'bug', open: false, busy: false, done: null };
 
