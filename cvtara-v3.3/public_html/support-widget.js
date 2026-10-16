@@ -30,7 +30,7 @@
   const fab = root.querySelector('#cvSupOpen'), panel = root.querySelector('#cvSupPanel');
 
   function form() {
-    panel.innerHTML = `<header><div><h2 id="cvSupTitle">Send feedback</h2><p>Tell us what is working, what is not, or what you would like to see.</p></div><div class="cv-sup-tools"><button type="button" class="cv-sup-x" data-flip aria-label="Move the feedback panel to the other side" title="Move to the other side">⇄</button><button type="button" class="cv-sup-x" data-close aria-label="Close feedback">×</button></div></header>
+    panel.innerHTML = `<header><div><h2 id="cvSupTitle">We need your feedback</h2><p>Tell us what is working, what is not, or what you would like to see.</p></div><div class="cv-sup-tools"><button type="button" class="cv-sup-x" data-flip aria-label="Move the feedback panel to the other side" title="Move to the other side">⇄</button><button type="button" class="cv-sup-x" data-close aria-label="Close feedback">×</button></div></header>
 <form novalidate>
 <label class="cv-sup-f"><span>What is this about?</span><select name="area">${Object.entries(areas).map(([k, l]) => `<option value="${k}">${E(l)}</option>`).join('')}</select></label>
 <div class="cv-sup-f"><span>Type</span><div class="cv-sup-kinds" role="radiogroup" aria-label="Type of feedback">${Object.entries(kinds).map(([k, l]) => `<button type="button" role="radio" aria-checked="${k === st.kind}" data-kind="${k}">${E(l)}</button>`).join('')}</div></div>
