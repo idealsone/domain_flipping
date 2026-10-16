@@ -118,15 +118,60 @@ class ContentController extends Controller
         $html = file_get_contents($full);
         if ($post) {
             $title = e($post['title']);
+            // The 68 ready-made article files carry an old internal note and a fixed list of anchors; use the shared structure instead.
+            $html = preg_replace('#<p style="font-size:1rem">Editorial structure reviewed[^<]*</p>#', '<p class="article-meta" id="articleMeta"></p>', $html);
+            $html = preg_replace('#<aside class="toc">.*?</aside>#s', '<aside class="toc" id="articleToc"><b>On this page</b></aside>', $html, 1);
             $html = preg_replace_callback('#(<h1[^>]*id="articleTitle"[^>]*>).*?(</h1>)#s', fn ($m) => $m[1].$title.$m[2], $html);
             $copy = Str::markdown($post['body'] ?? '', ['html_input' => 'strip', 'allow_unsafe_links' => false]);
+            // Headings get stable anchors; the "On this page" list is built from them (works without JavaScript).
+            $toc = [];
+            $used = [];
+            $copy = preg_replace_callback('#<h([23])>(.*?)</h\1>#s', function ($m) use (&$toc, &$used) {
+                $text = trim(strip_tags($m[2]));
+                $id = Str::slug($text) ?: 'section';
+                $id = isset($used[$id]) ? $id.'-'.(++$used[$id]) : tap($id, function ($i) use (&$used) {
+                    $used[$i] = 1;
+                });
+                if ($m[1] === '2') {
+                    $toc[] = [$id, $text];
+                }
+
+                return '<h'.$m[1].' id="'.e($id).'">'.$m[2].'</h'.$m[1].'>';
+            }, $copy);
             $faq = '';
+            $faqPairs = [];
             foreach (explode("\n", $post['faq'] ?? '') as $line) {
                 $pair = explode('|', $line, 2);
                 if (count($pair) === 2) {
                     $faq .= '<details><summary>'.e(trim($pair[0])).'</summary><p>'.e(trim($pair[1])).'</p></details>';
+                    $faqPairs[] = [trim($pair[0]), trim($pair[1])];
                 }
-            }$copy .= $faq ? '<section><h2>Frequently asked questions</h2>'.$faq.'</section>' : '';
+            }
+            $isCalc = ($post['type'] ?? '') === 'Calculator';
+            $words = str_word_count(strip_tags($copy));
+            $minutes = max(1, (int) ceil($words / 200));
+            $kind = $isCalc ? 'Calculator' : 'Guide';
+            $meta = 'By <b>'.e($post['author'] ?? 'CVTara Editorial Team').'</b> · '.$minutes.' min read · '.$kind.(! empty($post['category']) ? ' · '.e($post['category']) : '');
+            $html = preg_replace('#(<p class="article-meta" id="articleMeta">).*?(</p>)#s', '$1'.addcslashes($meta, '\\$').'$2', $html, 1);
+            if ($isCalc) {
+                array_unshift($toc, ['tool', 'Use the calculator']);
+            }
+            if ($faq) {
+                $toc[] = ['faq', 'Frequently asked questions'];
+            }
+            $tocHtml = '<b>On this page</b>'.implode('', array_map(fn ($t) => '<a href="#'.e($t[0]).'">'.e($t[1]).'</a>', $toc));
+            $html = preg_replace('#(<aside class="toc" id="articleToc">).*?(</aside>)#s', count($toc) >= 2 ? '$1'.addcslashes($tocHtml, '\\$').'$2' : '', $html, 1);
+            // Related reading and a next step.
+            $related = collect(Settings::get('blog'))->filter(fn ($p, $k) => $k !== $slug && ($p['published'] ?? false) && ($p['category'] ?? '') === ($post['category'] ?? '~'))->take(3);
+            if ($related->count() < 3) {
+                $related = $related->union(collect(Settings::get('blog'))->filter(fn ($p, $k) => $k !== $slug && ($p['published'] ?? false) && ($p['type'] ?? '') === ($post['type'] ?? '~'))->take(3 - $related->count()));
+            }
+            $after = '<aside class="article-cta"><div><b>Put this into practice</b><p>See exactly what your resume is missing for a real job, then build a tailored version and cover letter in minutes.</p></div><div class="article-cta-actions"><a class="button primary" href="/register">Check my resume free</a><a class="button secondary" href="/templates.html">Browse templates</a></div></aside>';
+            if ($related->isNotEmpty()) {
+                $after .= '<section class="article-related" aria-label="Related reading"><h2>Keep reading</h2><div>'.$related->map(fn ($p, $k) => '<a href="'.(($p['type'] ?? '') === 'Calculator' ? '/calculators/' : '/guides/').e($k).'/"><span>'.e($p['category'] ?? '').'</span><b>'.e($p['title']).'</b><small>'.e(Str::limit((string) ($p['description'] ?? ''), 110)).'</small></a>')->implode('').'</div></section>';
+            }
+            $copy .= ($faq ? '<section class="owner-faq" id="faq"><h2>Frequently asked questions</h2>'.$faq.'</section>' : '').$after;
+            $postFaq = $faqPairs;
             $html = preg_replace_callback('#<div id="articleContent"[^>]*>.*?</div></article>#s', fn () => '<div id="articleContent" data-editorial="true">'.$copy.'</div></article>', $html);
             $html = str_replace('data-page="article"', 'data-page="article" data-article-slug="'.e($slug).'"', $html);
         }
@@ -159,6 +204,9 @@ class ContentController extends Controller
         if (! $admin) {
             $head = str_replace('<script src="/error-report.js" defer></script>', '<script src="/csrf-lazy.js"></script><script src="/error-report.js" defer></script>', $head);
         }
+        if ($post || in_array($path, ['blog.html', 'contact.html'])) {
+            $head .= '<link rel="stylesheet" href="/blog-v2.css">';
+        }
         if ($path === 'workspace.html') {
             $head .= '<link rel="stylesheet" href="/support-widget.css">'; // the feedback button belongs to signed-in customers only
         }
@@ -181,7 +229,20 @@ class ContentController extends Controller
             $schema = ['@context' => 'https://schema.org', '@type' => 'BlogPosting', 'headline' => $post['title'], 'description' => $post['description'], 'url' => $siteBase.$uri, 'author' => ['@type' => 'Organization', 'name' => $post['author'] ?? 'CVTara'], 'publisher' => ['@type' => 'Organization', 'name' => 'CVTara']];
             if ($image) {
                 $schema['image'] = $abs($image);
-            }$head .= '<script type="application/ld+json">'.json_encode($schema, JSON_HEX_TAG | JSON_HEX_AMP | JSON_UNESCAPED_SLASHES).'</script>';
+            }$schema['mainEntityOfPage'] = $siteBase.$uri;
+            $schema['publisher']['logo'] = ['@type' => 'ImageObject', 'url' => $siteBase.'/assets/brand/cvtara-logo.webp'];
+            $schema['articleSection'] = $post['category'] ?? 'Career';
+            $ld = [$schema, ['@context' => 'https://schema.org', '@type' => 'BreadcrumbList', 'itemListElement' => [['@type' => 'ListItem', 'position' => 1, 'name' => 'Home', 'item' => $siteBase.'/'], ['@type' => 'ListItem', 'position' => 2, 'name' => 'Blog', 'item' => $siteBase.'/blog.html'], ['@type' => 'ListItem', 'position' => 3, 'name' => $post['title'], 'item' => $siteBase.$uri]]]];
+            if (! empty($postFaq)) {
+                $ld[] = ['@context' => 'https://schema.org', '@type' => 'FAQPage', 'mainEntity' => array_map(fn ($q) => ['@type' => 'Question', 'name' => $q[0], 'acceptedAnswer' => ['@type' => 'Answer', 'text' => $q[1]]], $postFaq)];
+            }
+            foreach ($ld as $block) {
+                $head .= '<script type="application/ld+json">'.json_encode($block, JSON_HEX_TAG | JSON_HEX_AMP | JSON_UNESCAPED_SLASHES).'</script>';
+            }
+        }
+        if ($path === 'blog.html') {
+            $items = collect(Settings::get('blog'))->filter(fn ($p) => $p['published'] ?? false)->map(fn ($p, $k) => ['@type' => 'ListItem', 'position' => 0, 'url' => $siteBase.(($p['type'] ?? '') === 'Calculator' ? '/calculators/' : '/guides/').$k.'/', 'name' => $p['title']])->values()->take(60)->map(fn ($x, $i) => ['position' => $i + 1] + $x)->all();
+            $head .= '<script type="application/ld+json">'.json_encode(['@context' => 'https://schema.org', '@type' => 'CollectionPage', 'name' => 'CVTara career blog, guides and calculators', 'url' => $siteBase.'/blog.html', 'mainEntity' => ['@type' => 'ItemList', 'itemListElement' => $items]], JSON_HEX_TAG | JSON_HEX_AMP | JSON_UNESCAPED_SLASHES).'</script>';
         }
         if (! $admin) {
             $html = preg_replace('#<script[^>]*src="/owner-(console|advanced)\.js"[^>]*></script>#', '', $html);
@@ -200,6 +261,9 @@ class ContentController extends Controller
         }
         if (! $admin && ! in_array($path, ['', 'workspace.html', 'checkout.html'])) {
             $scripts .= '<script src="/fomo-popup.js" defer></script>';
+        }
+        if (! $admin && ! in_array($path, ['workspace.html', 'checkout.html'])) {
+            $scripts .= '<script src="/promo.js" defer></script>';
         }
         if ($path === 'workspace.html') {
             $scripts .= '<script src="/support-widget.js" defer></script>';

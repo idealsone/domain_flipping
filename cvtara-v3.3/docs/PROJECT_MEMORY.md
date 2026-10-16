@@ -42,3 +42,10 @@ Keep this file current. It records what the owner asked for, what was built, the
 - Customers cannot delete resumes (owner switch `features.builder.allowDelete`). Letters can be deleted until downloaded.
 - Tracker reminders: 3 maximum per auto-added job (days 3, 7, 14 after adding), `Tracker::remind()`, `notifications` table, email trigger `application_status`.
 - Machine learning is deliberately not built yet. Reasons: shared hosting has no model runtime; there is no outcome data yet to learn from; the current engine is explainable, which customers need ("what am I lacking"). Plan when there is data: (1) log anonymised outcomes (stage reached per job) with the keyword and requirement evidence of the scan, (2) after a few thousand outcomes fit a small logistic model offline and ship only its weights as JSON that `AtsEngine::score()` can use, (3) optional embedding service for synonym matching behind a provider switch like the job reader. Do not send resume content to a third party without consent and a policy update.
+
+## v3.11.0 decisions (growth and content)
+
+- Offers: `App\Services\Promos` (settings key `promos`), `PromoAdminController`, public `GET /api/promo` (cached 30 s, cache key version bumped on every save and coupon change), `promo.js` + `promo.css`. One live campaign at a time; scheduled campaigns run inside their window; a campaign whose coupon is unusable is never shown.
+- Recent-activity notice: we deliberately do not show invented names or fake purchases (misleading to customers and risky under Indian consumer-protection rules). Only buyers who opted in at checkout (`profiles.show_in_activity`) are named, first name and city only. Do not add synthetic notices.
+- The 68 ready-made article files in `resources/frontend/guides` and `calculators` are only templates for the shell; the visible text comes from the editorial content and the owner's edits (server-rendered). Their old fixed note and anchor list are replaced by the shared structure.
+- Contact form posts to `/contact/message` (public) and lands in `support_reports` with area `contact`.

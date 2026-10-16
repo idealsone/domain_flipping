@@ -3,43 +3,39 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
-  <meta name="description" content="Explore interactive career calculators and practical guides for salary, benefits, resumes, job search and interviews.">
-  <title>Career Blog, Guides & Calculators | CVTara</title>
+  <meta name="description" content="Free salary and career calculators plus practical guides for Indian job seekers: take-home pay, gratuity, notice period, resumes, job search and interviews.">
+  <title>Career Blog, Salary Calculators & Resume Guides | CVTara</title>
   <link rel="stylesheet" href="styles.css">
 <link rel="stylesheet" href="/connected-ui.css">
 <link rel="stylesheet" href="/template-designs.css">
 <link rel="stylesheet" href="/owner-console.css">
 <link rel="stylesheet" href="/premium-products.css">
-<link rel="icon" href="/favicon.ico" sizes="any"><link rel="icon" type="image/svg+xml" href="/assets/brand/cvtara-mark.svg"><link rel="apple-touch-icon" href="/apple-touch-icon.png"><meta name="theme-color" content="#214ed3"><link rel="stylesheet" href="/brand-polish.css"></head>
+<link rel="icon" href="/favicon.ico" sizes="any"><link rel="icon" type="image/svg+xml" href="/assets/brand/cvtara-mark.svg"><link rel="apple-touch-icon" href="/apple-touch-icon.png"><meta name="theme-color" content="#214ed3"><link rel="stylesheet" href="/brand-polish.css"><link rel="stylesheet" href="/blog-v2.css"></head>
 <body data-page="blog">
   <div data-header></div>
-  <main>
-    <section class="page-hero">
-      <span class="eyebrow">CAREER BLOG + INTERACTIVE TOOLS</span>
-      <h1>Useful answers you can calculate, apply and act on.</h1>
-      <p>Explore salary, exit benefits, work choices, resumes, job search and interview decisions. Every page answers the query first, shows assumptions, includes an interactive tool or checklist, and links to the relevant CVTara workflow.</p>
-      <div class="pill-row"><span class="pill">Interactive calculators</span><span class="pill">Practical career guides</span><span class="pill">Answer-first structure</span><span class="pill">Visible assumptions</span></div>
+  <main class="blog2">
+    <section class="b2-hero">
+      <div class="b2-wrap">
+        <span class="eyebrow">CAREER BLOG &amp; FREE TOOLS</span>
+        <h1>Salary calculators and career guides that give you a straight answer.</h1>
+        <p>Know your real take-home pay, plan your exit benefits, negotiate offers and write a resume that gets read. Every page answers the question first, shows its assumptions and links to the next step.</p>
+        <div class="b2-cta"><button type="button" class="button primary" data-blog-type="Calculator">🧮 Open the calculators</button><button type="button" class="button secondary" data-blog-type="Guide">📘 Read the guides</button></div>
+        <ul class="b2-facts"><li><b id="blogNCalc">34</b> free calculators</li><li><b id="blogNGuide">34</b> practical guides</li><li>Assumptions always shown</li><li>No sign-up needed to read</li></ul>
+      </div>
     </section>
-    <section class="section" style="padding-top:18px">
-      <div class="panel panel-pad" style="margin-bottom:22px">
-        <div class="form-row"><label><b>Search career resources</b><input class="form-control" id="blogSearch" placeholder="Salary, gratuity, remote work, resume, interview..."></label><div><b id="blogCount">Browse calculators and practical guides</b><p style="margin:4px 0;color:var(--muted)">Planning tools show their assumptions. Verify current tax, legal, payroll and investment rules before acting.</p></div></div>
-      </div>
-      <div class="category-tabs">
-        <button class="active" data-blog-filter="All">All pages</button>
-        <button data-blog-filter="Income & tax">Income & tax</button>
-        <button data-blog-filter="Exit & benefits">Exit & benefits</button>
-        <button data-blog-filter="Work choices">Work choices</button>
-        <button data-blog-filter="Career growth">Career growth</button>
-        <button data-blog-filter="Wealth planning">Wealth planning</button>
-        <button data-blog-filter="Salary resources">Salary tools</button>
-        <button data-blog-filter="Resume formatting">Resume guides</button>
-        <button data-blog-filter="Job search">Job search</button>
-        <button data-blog-filter="Salary & offers">Salary & offers</button>
-        <button data-blog-filter="Interview preparation">Interview prep</button>
-      </div>
+    <section class="b2-wrap b2-tools" aria-label="Browse">
+      <div class="b2-types" role="tablist" aria-label="Type"><button role="tab" class="active" data-blog-type="All">All <span id="blogTAll"></span></button><button role="tab" data-blog-type="Calculator">🧮 Calculators <span id="blogTCalc"></span></button><button role="tab" data-blog-type="Guide">📘 Guides <span id="blogTGuide"></span></button></div>
+      <label class="b2-search"><span class="sr-only">Search career resources</span><input class="form-control" id="blogSearch" type="search" placeholder="Search: salary, gratuity, notice period, resume, interview…"></label>
+    </section>
+    <section class="b2-wrap" id="blogPopular" aria-label="Most used"><h2 class="b2-h">Most used right now</h2><div class="b2-pop" id="blogPopularGrid"></div></section>
+    <section class="b2-wrap">
+      <div class="b2-chips" id="blogChips" role="group" aria-label="Topics"></div>
+      <p class="b2-count" id="blogCount" role="status">Browse calculators and practical guides</p>
       <div class="blog-grid" id="blogGrid"></div>
+      <p class="b2-empty" id="blogEmpty" hidden>Nothing matches that search. Try a shorter word such as “salary” or “resume”.</p>
     </section>
-    <section class="section" style="padding-top:0"><div class="panel panel-pad"><div class="section-heading"><div><span class="eyebrow">CONTENT QUALITY STANDARD</span><h2 style="font-size:40px">Built for decisions—not empty traffic.</h2></div></div><div class="admin-grid three"><div><h3>Query answered first</h3><p style="color:var(--muted)">The specific question is answered before background material or conversion copy.</p></div><div><h3>Transparent interaction</h3><p style="color:var(--muted)">Calculators use page-specific inputs; guides contain a usable action checklist.</p></div><div><h3>Connected next step</h3><p style="color:var(--muted)">Every resource links to ATS Match, Builder or the relevant career workflow.</p></div></div></div></section>
+    <section class="b2-wrap"><div class="b2-band"><div><h2>Ready to turn the advice into an offer?</h2><p>Check your resume against a real job, see what is missing and build a tailored version, all in one place.</p></div><div class="b2-band-actions"><a class="button primary" href="/register">Check my resume free</a><a class="button secondary" href="/templates.html">See templates</a></div></div></section>
+    <section class="b2-wrap b2-standard"><div><b>Answer first</b><p>The question is answered before the background.</p></div><div><b>Assumptions shown</b><p>Every tool lists what it assumes. Check current tax and legal rules before acting.</p></div><div><b>Links to action</b><p>Each page points to the matching CVTara step.</p></div></section>
   </main>
   <div data-footer></div>
   <script src="data.js"></script><script src="/reference-templates.js"></script>

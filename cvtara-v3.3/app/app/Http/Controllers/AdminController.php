@@ -28,6 +28,9 @@ class AdminController extends Controller
         if (preg_match(SpeedAdminController::ROUTES, $path)) {
             return app(SpeedAdminController::class)->run($r, $path);
         }
+        if (preg_match(PromoAdminController::ROUTES, $path)) {
+            return app(PromoAdminController::class)->run($r, $path);
+        }
         if (preg_match(SupportAdminController::ROUTES, $path)) {
             return app(SupportAdminController::class)->run($r, $path);
         }

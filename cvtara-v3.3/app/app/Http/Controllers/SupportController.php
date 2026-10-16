@@ -14,7 +14,7 @@ class SupportController extends Controller
 {
     public const AREAS = [
         'resume-builder' => 'Resume Builder', 'ats-match' => 'ATS Match', 'cover-letters' => 'Cover Letters', 'applications' => 'Applications',
-        'downloads' => 'Downloads & credits', 'billing' => 'Billing & Plans', 'account' => 'Account & login', 'website' => 'Website & pages', 'other' => 'Something else',
+        'downloads' => 'Downloads & credits', 'billing' => 'Billing & Plans', 'account' => 'Account & login', 'website' => 'Website & pages', 'other' => 'Something else', 'contact' => 'Contact form',
     ];
 
     public const KINDS = ['bug' => 'Something is broken', 'idea' => 'Suggestion', 'question' => 'Question', 'praise' => 'What I like'];
@@ -84,6 +84,49 @@ class SupportController extends Controller
         Settings::audit($u->id, 'support_report', $id);
 
         return response()->json(['ok' => true, 'id' => substr($id, 0, 8), 'message' => 'Thank you — your feedback reached our team.']);
+    }
+
+    /** The public Contact page. Anyone can write; the message lands in the same owner inbox as feedback. */
+    public function contact(Request $r)
+    {
+        $limit = $this->bytes(ini_get('post_max_size'));
+        if ($limit > 0 && (int) $r->server('CONTENT_LENGTH', 0) > $limit) {
+            return response()->json(['ok' => false, 'error' => 'That attachment is too large. Use an image under 2 MB.'], 413);
+        }
+        $v = $r->validate([
+            'name' => 'required|string|min:2|max:120', 'email' => 'required|email|max:190',
+            'topic' => 'required|in:Account access,Payment query,Resume or document,Privacy request,Other',
+            'reference' => 'nullable|string|max:80', 'message' => 'required|string|min:10|max:4000', 'confirm' => 'accepted',
+            'attachment' => 'nullable|file|mimes:jpg,jpeg,png,webp|max:'.self::MAX_KB, 'company_site' => 'nullable|max:0',
+        ], ['message.min' => 'Please tell us a little more (at least 10 characters).', 'confirm.accepted' => 'Please confirm the message contains no password, PIN, CVV or OTP.', 'attachment.max' => 'The attachment must be 2 MB or smaller.', 'attachment.mimes' => 'Attach a JPG, PNG or WebP image.']);
+        $email = mb_strtolower(trim($v['email']));
+        foreach (['contact:ip:'.sha1((string) $r->ip()) => 25, 'contact:mail:'.sha1($email) => 5] as $k => $max) {
+            if (RateLimiter::tooManyAttempts($k, $max)) {
+                return response()->json(['ok' => false, 'error' => 'You have sent several messages already. Please wait a while, or write to support directly.'], 429);
+            }
+        }
+        $prepared = $r->file('attachment') ? [$this->prepare($r->file('attachment'))] : [];
+        $user = \App\Models\User::where('email', $email)->first();
+        $plan = null;
+        if ($user) {
+            $acc = Settings::access($user->id);
+            $plan = $acc['paid'] ? (Settings::plans()[$acc['plan']]['name'] ?? $acc['plan']) : 'Free';
+        }
+        $id = (string) Str::uuid();
+        $body = 'Topic: '.$v['topic'].(! empty($v['reference']) ? "\nReference: ".$v['reference'] : '')."\n\n".$v['message'];
+        DB::transaction(function () use ($id, $v, $email, $user, $plan, $body, $r, $prepared) {
+            DB::table('support_reports')->insert(['id' => $id, 'owner_id' => $user?->id, 'name' => $v['name'], 'email' => $email, 'area' => 'contact', 'kind' => 'question', 'page' => '/contact.html', 'message' => $body, 'rating' => null, 'status' => 'new', 'user_agent' => mb_substr((string) $r->userAgent(), 0, 255), 'viewport' => null, 'plan' => $plan, 'created_at' => now(), 'updated_at' => now()]);
+            foreach ($prepared as $img) {
+                $path = 'support/'.$id.'/'.Str::uuid().'.webp';
+                Storage::disk('local')->put($path, $img['data']);
+                DB::table('support_attachments')->insert(['id' => (string) Str::uuid(), 'report_id' => $id, 'path' => $path, 'bytes' => strlen($img['data']), 'width' => $img['w'], 'height' => $img['h'], 'created_at' => now()]);
+            }
+        });
+        foreach (['contact:ip:'.sha1((string) $r->ip()), 'contact:mail:'.sha1($email)] as $k) {
+            RateLimiter::hit($k, 3600);
+        }
+
+        return response()->json(['ok' => true, 'id' => strtoupper(substr($id, 0, 8)), 'message' => 'Thank you. Your message reached our team.']);
     }
 
     private function bytes(string $v): int

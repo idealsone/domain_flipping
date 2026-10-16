@@ -54,7 +54,7 @@
     if (guest) { location.href = '/login?next=' + encodeURIComponent('/checkout.html?plan=' + active); return; }
     button.disabled = true; status.textContent = 'Creating your secure order…';
     try {
-      const order = await api('/api/checkout/start', { method: 'POST', body: { plan: active, phone: document.getElementById('coPhone').value.replace(/\D/g, ''), coupon: window.CVTaraCoupon?.plan === active ? window.CVTaraCoupon.code : '' } });
+      const order = await api('/api/checkout/start', { method: 'POST', body: { plan: active, phone: document.getElementById('coPhone').value.replace(/\D/g, ''), coupon: window.CVTaraCoupon?.plan === active ? window.CVTaraCoupon.code : '', showInActivity: !!document.getElementById('coActivity')?.checked } });
       try { localStorage.setItem('cvtara-phone', document.getElementById('coPhone').value); } catch { /* storage blocked */ }
       if (order.provider === 'demo') {
         status.textContent = 'Demo payment (preview only) — activating your plan…';

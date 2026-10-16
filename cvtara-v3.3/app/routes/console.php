@@ -96,6 +96,19 @@ Artisan::command('cvtara:demo', function () {
         }
         DB::table('notifications')->insertOrIgnore(['id' => (string) Str::uuid(), 'owner_id' => $demo->id, 'kind' => 'application', 'title' => 'Business Analyst at Nimbus: what is the status now?', 'body' => 'Marked "Saved". Have you applied yet? Mark it as Applied once you have. (Reminder 1 of 3)', 'link' => '/workspace.html?view=tracker', 'ref' => 'demo:1', 'created_at' => now(), 'updated_at' => now()]);
     }
+    // Sample offers so the preview shows the Offers & festivals page with something live.
+    if (! \App\Services\Promos::all()) {
+        $paid = \App\Services\Settings::paidPlanKeys();
+        $bc = (array) \App\Services\Settings::get('business_controls', []);
+        $bc['coupons'] = [['code' => 'DIWALI25', 'type' => 'percent', 'value' => 25, 'plans' => $paid, 'expiresAt' => '', 'enabled' => true, 'maxUses' => 0, 'perUser' => 1], ['code' => 'EARLY100', 'type' => 'flat', 'value' => 100, 'plans' => $paid, 'expiresAt' => '', 'enabled' => true, 'maxUses' => 200, 'perUser' => 1]];
+        \App\Services\Settings::put('business_controls', $bc);
+        $mk = fn ($name, $tpl, $theme, $head, $sub, $badge, $code, $mode, $extra = []) => array_merge(['id' => (string) Str::uuid(), 'mode' => $mode, 'name' => $name, 'template' => $tpl, 'theme' => $theme, 'heading' => $head, 'subheading' => $sub, 'body' => '', 'badge' => $badge, 'cta' => 'Claim this offer', 'couponCode' => $code, 'planKey' => '', 'imageUrl' => '', 'startsAt' => '', 'endsAt' => '', 'countdown' => true, 'banner' => true, 'popup' => true, 'popupDelay' => 20, 'exit' => true, 'idle' => true, 'idleSeconds' => 45, 'exitHeading' => 'Wait, your offer is still here', 'exitText' => 'Claim it before you go. It applies automatically at checkout.', 'idleHeading' => 'Still thinking? This offer is waiting', 'idleText' => 'Take a minute: your coupon is ready.', 'pages' => 'all', 'frequencyHours' => 12, 'priority' => 0], $extra);
+        \App\Services\Promos::put([
+            $mk('Diwali '.date('Y'), 'diwali', 'diwali', 'Diwali Dhamaka {{year}}', 'Light up your career. Festive prices on every plan.', 'FESTIVE OFFER', 'DIWALI25', 'live', ['endsAt' => date('Y-m-d', strtotime('+5 days')).'T23:59']),
+            $mk('Early-bird', 'earlybird', 'earlybird', 'Early-bird price for early starters', 'Get the lowest price of the season, then keep it.', 'EARLY BIRD', 'EARLY100', 'off'),
+            $mk('Flash sale', 'flash', 'flash', '24-hour flash sale', 'This price disappears when the timer ends.', 'FLASH SALE', 'DIWALI25', 'off'),
+        ]);
+    }
     $names = ['Aarav Mehta', 'Diya Nair', 'Kabir Shah', 'Ishita Rao', 'Rohan Das', 'Meera Iyer', 'Vihaan Gupta', 'Anaya Singh', 'Arjun Verma', 'Saanvi Reddy', 'Kiran Patel', 'Neha Joshi'];
     $plans = ['fresher-basic', 'fresher-standard', 'pro-basic', 'pro-standard', 'pro-pro', 'fresher-pro'];
     foreach ($names as $i => $n) {

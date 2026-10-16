@@ -115,6 +115,7 @@
       host.innerHTML = `<div class="admin-heading"><div><h2>Offers &amp; social-proof popup</h2><p>A small notice appears at the bottom-left of public pages and the customer dashboard after the delay below, then rotates through the messages.</p></div></div>
         <form id="adPopup" class="ad-plan"><div class="ad-fields"><label class="ad-check full"><input type="checkbox" name="enabled" ${d.enabled ? 'checked' : ''}> Show the popup to visitors</label>
         <label>First popup after (seconds)<input type="number" name="delaySeconds" min="0" max="600" value="${d.delaySeconds}"></label><label>Show each message for (seconds)<input type="number" name="showSeconds" min="3" max="30" value="${d.showSeconds}"></label><label>Gap between messages (seconds)<input type="number" name="gapSeconds" min="3" max="120" value="${d.gapSeconds}"></label>
+        <label class="ad-check full"><input type="checkbox" name="showPurchases" ${d.showPurchases !== false ? 'checked' : ''}> Show real purchases: “Priya from Pune started Fresher Pro · 5 minutes ago”. Only customers who ticked the box at checkout are named (first name and city); nobody else is ever shown, and nothing is made up.</label>
         <label class="ad-check full"><input type="checkbox" name="useLiveActivity" ${d.useLiveActivity ? 'checked' : ''}> Include real activity (resumes saved today, ATS checks today, new members, plans started) and live plan savings. These use your real counts and only appear above a minimum number.</label></div>
         <h3 style="margin:20px 0 8px">Your own messages</h3><p style="color:var(--muted);margin:0 0 12px">Add offers, announcements or tips. Keep them truthful — do not invent customers, counts or deadlines.</p>
         <div id="adMsgs">${d.custom.map((m, i) => `<div class="ad-fields" style="margin-bottom:12px;padding:12px;border:1px dashed var(--line);border-radius:12px" data-i="${i}"><label>Icon<input data-m="icon" value="${E(m.icon || '✨')}" maxlength="8"></label><label class="wide">Title<input data-m="title" value="${E(m.title || '')}" maxlength="60"></label><label class="ad-check"><input type="checkbox" data-m="enabled" ${m.enabled ? 'checked' : ''}> Active</label><label class="full">Message<input data-m="text" value="${E(m.text || '')}" maxlength="200"></label><button type="button" class="button secondary small" data-rm="${i}">Remove</button></div>`).join('') || '<p style="color:var(--muted)">No custom messages yet.</p>'}</div>
@@ -130,7 +131,7 @@
     };
     function read() {
       const f = $('#adPopup'); if (!f) return;
-      d.enabled = f.elements.enabled.checked; d.useLiveActivity = f.elements.useLiveActivity.checked;
+      d.enabled = f.elements.enabled.checked; d.useLiveActivity = f.elements.useLiveActivity.checked; d.showPurchases = f.elements.showPurchases.checked;
       ['delaySeconds', 'showSeconds', 'gapSeconds'].forEach(k => d[k] = Number(f.elements[k].value));
       d.custom = $$('[data-i]', f).map(row => ({ icon: $('[data-m=icon]', row).value, title: $('[data-m=title]', row).value, text: $('[data-m=text]', row).value, enabled: $('[data-m=enabled]', row).checked }));
     }

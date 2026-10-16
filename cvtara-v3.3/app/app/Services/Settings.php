@@ -58,7 +58,7 @@ return $value;
     public static function put(string $key, $data): void
     {
         self::$memo = [];
-        if (! in_array($key, ['providers', 'operator', 'integrations', 'speed'], true)) {
+        if (! in_array($key, ['providers', 'operator', 'integrations', 'speed', 'promos'], true)) {
             PageCache::purge();
         }
         $json = json_encode($data);

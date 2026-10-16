@@ -47,13 +47,36 @@ class ApiController extends Controller
         if ($path === 'public-config') {
             return $ok(['settings' => array_merge(['heroTitle' => 'Your next resume starts with your real experience.', 'heroDescription' => 'Choose a design. Tell your story. Prepare a focused application.', 'primaryCTA' => 'Build my resume', 'secondaryCTA' => 'Check my resume', 'accent' => '#1557d2', 'pushEnabled' => false], Settings::get('public', []), ['oneSignalAppId' => Settings::providers()['push']['oneSignalAppId'] ?? Settings::get('public', [])['oneSignalAppId'] ?? '', 'pushEnabled' => (Settings::get('integrations')['push'] ?? false) && (Settings::get('public', [])['pushEnabled'] ?? false)])]);
         }
+        if ($path === 'promo' && $get) {
+            $offer = strtoupper(preg_replace('/[^A-Za-z0-9_-]/', '', (string) $r->query('offer', '')));
+            $promo = \Illuminate\Support\Facades\Cache::remember(\App\Services\Promos::cacheKey($offer), 30, fn () => \App\Services\Promos::active($offer ?: null));
+
+            return $ok(['promo' => $promo, 'serverTime' => gmdate('c')]);
+        }
+        if ($path === 'promo/event' && $r->isMethod('POST')) {
+            $v = $r->validate(['id' => 'required|string|max:40', 'kind' => 'required|in:shown,click,copy,close']);
+            \App\Services\Promos::track($v['id'], $v['kind']);
+
+            return $ok();
+        }
         if ($path === 'public-activity') {
-            $cfg = array_merge(['enabled' => true, 'delaySeconds' => 40, 'showSeconds' => 7, 'gapSeconds' => 10, 'useLiveActivity' => true, 'custom' => []], (array) Settings::get('popup', []));
+            $cfg = array_merge(['enabled' => true, 'delaySeconds' => 90, 'showSeconds' => 8, 'gapSeconds' => 25, 'useLiveActivity' => true, 'showPurchases' => true, 'custom' => []], (array) Settings::get('popup', []));
             $messages = \Illuminate\Support\Facades\Cache::remember('public-activity', 60, function () use ($cfg) {
                 $out = [];
                 foreach ($cfg['custom'] as $m) {
                     if (! empty($m['enabled']) && ! empty($m['text'])) {
                         $out[] = ['icon' => $m['icon'] ?? '✨', 'title' => $m['title'] ?? 'CVTara', 'text' => $m['text']];
+                    }
+                }
+                // Real buyers who chose to be named (first name and city only). Nothing here is made up.
+                if ($cfg['showPurchases']) {
+                    $plans = Settings::plans();
+                    foreach (DB::table('purchases')->join('profiles', 'profiles.owner_id', '=', 'purchases.owner_id')->where('purchases.status', 'paid')->where('purchases.amount_paise', '>', 0)->where('purchases.provider', '!=', 'referral_reward')->where('profiles.show_in_activity', true)->where('purchases.created_at', '>=', now()->subDays(14))->orderByDesc('purchases.created_at')->limit(8)->get(['purchases.plan', 'purchases.created_at as at', 'profiles.name', 'profiles.city']) as $p) {
+                        $first = Str::of($p->name)->trim()->before(' ')->limit(20, '')->toString();
+                        if ($first === '' || empty($plans[$p->plan])) {
+                            continue;
+                        }
+                        $out[] = ['kind' => 'purchase', 'icon' => '🛍️', 'name' => Str::title(mb_strtolower($first)), 'city' => Str::title(mb_strtolower(trim((string) $p->city))), 'plan' => $plans[$p->plan]['name'], 'at' => \Illuminate\Support\Carbon::parse($p->at, 'UTC')->toIso8601String()];
                     }
                 }
                 if ($cfg['useLiveActivity']) {
@@ -74,7 +97,7 @@ class ApiController extends Controller
                 return $out;
             });
 
-            return $ok(['settings' => ['enabled' => (bool) $cfg['enabled'], 'delaySeconds' => (int) $cfg['delaySeconds'], 'showSeconds' => (int) $cfg['showSeconds'], 'gapSeconds' => (int) $cfg['gapSeconds']], 'messages' => $messages]);
+            return $ok(['settings' => ['enabled' => (bool) $cfg['enabled'], 'delaySeconds' => (int) $cfg['delaySeconds'], 'showSeconds' => (int) $cfg['showSeconds'], 'gapSeconds' => (int) $cfg['gapSeconds']], 'messages' => $messages, 'now' => gmdate('c')]);
         }
         if ($path === 'public-content') {
             $content = [];
@@ -349,7 +372,10 @@ class ApiController extends Controller
             return $ok(BusinessControls::quote($v['plan'], $v['coupon'] ?? '', $u->id));
         }
         if ($path === 'checkout/start') {
-            $r->validate(['plan' => 'required|in:'.implode(',', Settings::paidPlanKeys())]);
+            $r->validate(['plan' => 'required|in:'.implode(',', Settings::paidPlanKeys()), 'showInActivity' => 'nullable|boolean']);
+            if ($r->has('showInActivity')) {
+                DB::table('profiles')->where('owner_id', $id)->update(['show_in_activity' => $r->boolean('showInActivity')]);
+            }
             Payments::guardAddon($u, $r->plan);
 
             return $ok(Payments::start($u, $r->plan, (string) $r->input('phone', ''), (string) $r->input('coupon', '')));

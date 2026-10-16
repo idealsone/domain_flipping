@@ -215,6 +215,27 @@
     }
     if (method === 'GET' && p === 'notifications') { if (!st.role) return ok({ notifications: [] }); if (!st.notes) { st.notes = [{ id: uid(), kind: 'application', title: 'Business Analyst at Nimbus: what is the status now?', body: 'Marked "Saved". Have you applied yet? Mark it as Applied once you have. (Reminder 1 of 3)', link: '/workspace.html?view=tracker', created_at: now() }]; save(); } return ok({ notifications: st.notes }); }
     if (method === 'POST' && p === 'notifications') { st.notes = (b.ids || []).length ? (st.notes || []).filter(x => !b.ids.includes(x.id)) : []; save(); return ok(); }
+    // ---- offers & festivals (owner) and the public offer ----
+    const pmSnap = () => get('admin/promos') || { campaigns: [], templates: [], themes: [], coupons: [], plans: [], siteUrl: location.origin };
+    const pmState = () => { if (!st.promos) { const s = pmSnap(); st.promos = { campaigns: JSON.parse(JSON.stringify(s.campaigns)), coupons: JSON.parse(JSON.stringify(s.coupons)) }; } return st.promos; };
+    const pmStatus = c => { if (c.mode === 'off') return 'off'; const to = c.endsAt ? Date.parse(c.endsAt + '+05:30') : 0, from = c.startsAt ? Date.parse(c.startsAt + '+05:30') : 0; if (to && Date.now() > to) return 'ended'; if (c.mode === 'live') return 'live'; if (from && Date.now() < from) return 'upcoming'; return from || to ? 'scheduled' : 'off'; };
+    const pmView = c => { const s = pmSnap(), th = s.themes.find(x => x.key === c.theme) || s.themes[0] || { from: '#1557d2', to: '#4f46e5', ink: '#fff', accent: '#fde047', art: '🚀' }, cp = pmState().coupons.find(k => k.code === (c.couponCode || '').toUpperCase()), disc = cp ? (cp.type === 'percent' ? cp.value + '% OFF' : '₹' + cp.value + ' OFF') : '', y = String(new Date().getFullYear()), fill = t => String(t || '').replace(/\{\{discount\}\}/g, disc).replace(/\{\{code\}\}/g, c.couponCode || '').replace(/\{\{year\}\}/g, y);
+      return { id: c.id, badge: fill(c.badge), heading: fill(c.heading), subheading: fill(c.subheading), body: fill(c.body), cta: c.cta || 'Claim this offer', code: (c.couponCode || '').toUpperCase(), discount: disc, plan: c.planKey || '', image: c.imageUrl || '', theme: { from: th.from, to: th.to, ink: th.ink, accent: th.accent, art: th.art }, endsAt: c.endsAt ? new Date(c.endsAt + '+05:30').toISOString() : null, countdown: !!c.countdown && !!c.endsAt,
+        triggers: { banner: !!c.banner, popup: { enabled: !!c.popup, delay: c.popupDelay || 20 }, exit: !!c.exit, idle: { enabled: !!c.idle, seconds: c.idleSeconds || 45 } }, variants: { exit: { heading: fill(c.exitHeading), text: fill(c.exitText) }, idle: { heading: fill(c.idleHeading), text: fill(c.idleText) } }, pages: c.pages || 'all', frequencyHours: c.frequencyHours || 12 }; };
+    const pmSnapshot = () => { const s = pmSnap(), S = pmState(); return Object.assign({}, s, { coupons: S.coupons, campaigns: S.campaigns.map(c => Object.assign({}, c, { status: pmStatus(c), view: pmView(c), couponOk: true, stats: c.stats || { shown: 0, click: 0, copy: 0, close: 0, orders: 0, revenuePaise: 0 } })) }); };
+    if (method === 'GET' && p === 'admin/promos') return st.role === 'owner' ? ok(pmSnapshot()) : fail('Owner access required.', 403);
+    if (method === 'POST' && p.startsWith('admin/promos/')) {
+      const S = pmState(), act = p.slice(13), id = b.id;
+      if (act === 'save') { const rec = Object.assign({ mode: 'off', stats: null }, S.campaigns.find(x => x.id === id) || {}, b, { id: id || uid() }); S.campaigns = S.campaigns.filter(x => x.id !== rec.id).concat([rec]); save(); return ok(Object.assign(pmSnapshot(), { id: rec.id })); }
+      if (act === 'coupon') { const code = String(b.code || '').toUpperCase(); S.coupons = S.coupons.filter(k => k.code !== code).concat([{ code, type: b.type, value: b.value, plans: b.plans, expiresAt: b.expiresAt || '', enabled: true, maxUses: b.maxUses || 0, perUser: b.perUser || 1 }]); save(); return ok(pmSnapshot()); }
+      if (act === 'live') S.campaigns.forEach(c => { if (c.id === id) c.mode = 'live'; else if (c.mode === 'live') c.mode = 'off'; });
+      else if (act === 'off') S.campaigns.forEach(c => { if (c.id === id) c.mode = 'off'; });
+      else if (act === 'schedule') S.campaigns.forEach(c => { if (c.id === id) c.mode = 'scheduled'; });
+      else if (act === 'delete') S.campaigns = S.campaigns.filter(c => c.id !== id);
+      save(); return ok(pmSnapshot());
+    }
+    if (method === 'GET' && p === 'promo') { const c = pmState().campaigns.find(x => pmStatus(x) === 'live') || pmState().campaigns.find(x => pmStatus(x) === 'scheduled'); return ok({ promo: c ? pmView(c) : null, serverTime: new Date().toISOString() }); }
+    if (method === 'POST' && p === 'promo/event') return ok();
     if (method === 'GET') {
       if (p === 'profile' && !st.role) return fail('Please sign in.', 401, { signIn: true });
       if (!SNAP.pub[p] && !st.role && !['public-activity'].includes(p)) return fail('Please sign in.', 401, { signIn: true });
@@ -271,6 +292,12 @@
   window.fetch = async function (input, init) {
     const url = typeof input === 'string' ? input : (input && input.url) || String(input);
     const method = ((init && init.method) || (input && input.method) || 'GET').toUpperCase();
+    if (/\/contact\/message/.test(url) && method === 'POST') {
+      let f = {}; try { init.body.forEach((v, k) => { if (k !== 'attachment') f[k] = v; }); } catch (e) {}
+      if (!f.message || f.message.length < 10) return new Response(JSON.stringify({ ok: false, error: 'Please tell us a little more (at least 10 characters).' }), { status: 422, headers: { 'Content-Type': 'application/json' } });
+      st.reports = st.reports || []; st.reports.unshift({ id: uid(), owner_id: null, name: f.name, email: f.email, area: 'contact', kind: 'question', page: '/contact.html', message: 'Topic: ' + f.topic + '\n\n' + f.message, rating: null, status: 'new', plan: null, images: 0, created_at: now() }); save();
+      return new Response(JSON.stringify({ ok: true, id: uid().slice(-8).toUpperCase(), message: 'Thank you. Your message reached our team.' }), { status: 200, headers: { 'Content-Type': 'application/json' } });
+    }
     if (/\/support\/report/.test(url) && method === 'POST') {
       let f = {}; try { init.body.forEach((v, k) => { if (k !== 'images[]') f[k] = v; }); } catch (e) {}
       const n = (() => { try { return init.body.getAll('images[]').length; } catch (e) { return 0; } })();
@@ -326,7 +353,7 @@
       document.body.classList.add('has-topbar');
       const bar = document.createElement('div'); bar.className = 'cv-topbar';
       const cur = name === 'workspace.html' ? 'w' : (name === 'admin.html' || name === 'admin-guide.html') ? 'a' : 'l';
-      bar.innerHTML = '<span class="cv-brand">CVTara v3.10.0</span><div class="cv-tabs"><button data-t="l">Landing Page</button><button data-t="w">Customer Workspace</button><button data-t="a">Admin Dashboard</button></div><button data-t="theme" title="Day / night">🌙 Dark</button>';
+      bar.innerHTML = '<span class="cv-brand">CVTara v3.11.0</span><div class="cv-tabs"><button data-t="l">Landing Page</button><button data-t="w">Customer Workspace</button><button data-t="a">Admin Dashboard</button></div><button data-t="theme" title="Day / night">🌙 Dark</button>';
       bar.querySelectorAll('[data-t]').forEach(b => { if (b.dataset.t === cur) b.classList.add('on'); b.onclick = () => {
         const t = b.dataset.t;
         if (t === 'theme') { if (window.CVTaraTheme) window.CVTaraTheme.toggle(); return; }

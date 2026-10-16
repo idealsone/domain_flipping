@@ -27,6 +27,7 @@ class BusinessControls
         DB::transaction(function () use ($v, $r) {
             unset($v['growth']); // referral rules live in Referral Ops only
             Settings::put('business_controls', $v);
+            Promos::bump();
             Settings::audit($r->user()->id, 'business_controls_saved');
         });
 

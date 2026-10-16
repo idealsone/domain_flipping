@@ -15,11 +15,11 @@ def g(c,key,path):
     s,j=c.api('GET',path); snap[key][path]=j
     if s!=200: print('!!',key,path,s)
     return j
-for p in ['business-public','public-config','public-content','public-activity','health']: g(pub,'pub',p)
+for p in ['business-public','public-config','public-content','public-activity','health','promo']: g(pub,'pub',p)
 for p in ['profile','allowance','resumes','letters','applications','purchases','referrals','referral-rewards','feedback','security/status']: g(cust,'cust',p)
 for r in snap['cust']['resumes']['resumes']: g(cust,'cust','resumes/'+r['id'])
 for r in snap['cust']['letters']['letters']: g(cust,'cust','letters/'+r['id'])
-own_paths=['admin/dashboard?days=30','admin/overview?days=30','admin/users','admin/plans','admin/business-controls','admin/settings','admin/providers','admin/purchases','admin/reports?days=30','admin/reviews','admin/email/jobs','admin/seo','admin/page-audit','admin/letter-summary','admin/referrals','admin/setup/status','admin/errors?days=30','admin/site-urls','admin/health/history','admin/legal/generate']+['admin/content/'+k for k in ['blog','features','library','legal','emails','seo','integrations','popup','site']]+['profile','allowance']
+own_paths=['admin/promos','admin/dashboard?days=30','admin/overview?days=30','admin/users','admin/plans','admin/business-controls','admin/settings','admin/providers','admin/purchases','admin/reports?days=30','admin/reviews','admin/email/jobs','admin/seo','admin/page-audit','admin/letter-summary','admin/referrals','admin/setup/status','admin/errors?days=30','admin/site-urls','admin/health/history','admin/legal/generate']+['admin/content/'+k for k in ['blog','features','library','legal','emails','seo','integrations','popup','site']]+['profile','allowance']
 for p in own_paths: g(own,'own',p)
 meta=g(own,'own','admin/report/meta'); g(own,'own','admin/report/kpis?days=30')
 for ds,m in meta['datasets'].items(): g(own,'own','admin/report?dataset=%s&per=500&columns=ALL&format=json'%ds)
