@@ -1,3 +1,10 @@
+# ES modules must be served as JavaScript or browsers refuse to load them
+<IfModule mod_mime.c>
+AddType application/javascript .mjs
+</IfModule>
+<FilesMatch "\.mjs$">
+ForceType application/javascript
+</FilesMatch>
 <IfModule mod_rewrite.c>
 Options -Indexes -MultiViews
 RewriteEngine On

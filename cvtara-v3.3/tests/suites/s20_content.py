@@ -92,3 +92,4 @@ def run(ctx, t):
     t.check("a message from a registered email is linked to that customer and shows the plan", s == 200 and r and r[0]["plan"] == "Free", str(r)[:160])
     codes = [contact(ctx.client(), dict(GOOD, email="rate@example.com"))[0] for _ in range(6)]
     t.check("the same email cannot flood the inbox", codes.count(200) == 5 and codes[5] == 429, codes)
+    t.check(".htaccess serves .mjs files as JavaScript (module imports fail otherwise)", "AddType application/javascript .mjs" in open(os.path.join(ctx.public, ".htaccess"), encoding="utf8").read())
