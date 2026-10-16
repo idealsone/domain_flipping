@@ -53,3 +53,6 @@
 .application-auto{color:var(--blue)!important;font-weight:600}
 .ats-kw{display:flex;flex-wrap:wrap;gap:6px}.ats-kw span{padding:4px 10px;border-radius:999px;font-size:12.5px;border:1px solid var(--line);background:var(--soft);color:var(--ink2)}
 .ats-kw .ok{border-color:rgba(34,197,94,.5);color:var(--ink)}.ats-kw .no{border-color:rgba(239,68,68,.5);color:var(--ink)}
+.ats-facts{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:10px;margin:0}
+.ats-facts div{padding:10px 12px;border:1px solid var(--line);border-radius:10px;background:var(--soft)}
+.ats-facts dt{font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted)}.ats-facts dd{margin:3px 0 0;font-size:13.5px;color:var(--ink);word-break:break-word}

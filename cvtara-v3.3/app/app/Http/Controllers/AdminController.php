@@ -25,6 +25,12 @@ class AdminController extends Controller
         if ($get && in_array($path, ['feedback/add', 'email/process', 'media', 'search/import', 'search/sync', 'referrals/settings'])) {
             abort(405);
         }
+        if (preg_match(SpeedAdminController::ROUTES, $path)) {
+            return app(SpeedAdminController::class)->run($r, $path);
+        }
+        if (preg_match(SupportAdminController::ROUTES, $path)) {
+            return app(SupportAdminController::class)->run($r, $path);
+        }
         if (preg_match('#^report(/meta|/kpis)?$#', $path)) {
             return app(ReportController::class)->run($r, $path);
         }
@@ -79,7 +85,7 @@ class AdminController extends Controller
         }
         if ($path === 'providers') {
             $p = Settings::providers();
-            $fields = ['verification' => ['enabled', 'twilioAccountSid', 'twilioAuthToken', 'twilioVerifyServiceSid'], 'payouts' => ['enabled', 'mode', 'cashfreeClientId', 'cashfreeClientSecret', 'cashfreePublicKey', 'maxTransferRupees', 'acceptanceConfirmed'], 'payments' => ['provider', 'mode', 'razorpayKeyId', 'razorpayKeySecret', 'razorpayWebhookSecret', 'cashfreeClientId', 'cashfreeClientSecret'], 'email' => ['provider', 'resendApiKey', 'smtpHost', 'smtpPort', 'smtpUser', 'smtpPassword', 'fromEmail', 'fromName', 'replyTo'], 'ai' => ['provider', 'openaiApiKey', 'model'], 'analytics' => ['measurementId', 'searchConsoleProperty', 'searchConsoleServiceAccount'], 'push' => ['oneSignalAppId', 'oneSignalRestApiKey']];
+            $fields = ['verification' => ['enabled', 'twilioAccountSid', 'twilioAuthToken', 'twilioVerifyServiceSid'], 'payouts' => ['enabled', 'mode', 'cashfreeClientId', 'cashfreeClientSecret', 'cashfreePublicKey', 'maxTransferRupees', 'acceptanceConfirmed'], 'jobreader' => ['enabled', 'provider', 'scrapingbeeApiKey', 'zenrowsApiKey', 'customUrlTemplate', 'customApiKey', 'dailyLimit'], 'payments' => ['provider', 'mode', 'razorpayKeyId', 'razorpayKeySecret', 'razorpayWebhookSecret', 'cashfreeClientId', 'cashfreeClientSecret'], 'email' => ['provider', 'resendApiKey', 'smtpHost', 'smtpPort', 'smtpUser', 'smtpPassword', 'fromEmail', 'fromName', 'replyTo'], 'ai' => ['provider', 'openaiApiKey', 'model'], 'analytics' => ['measurementId', 'searchConsoleProperty', 'searchConsoleServiceAccount'], 'push' => ['oneSignalAppId', 'oneSignalRestApiKey']];
             $secret = fn ($k) => preg_match('/Secret|ApiKey|Password|ServiceAccount|AuthToken/', $k);
             if ($get) {
                 foreach ($p as &$service) {
@@ -97,6 +103,12 @@ class AdminController extends Controller
                 AccountSecurity::requireRecent($r);
                 validator($r->values, ['enabled' => 'required|in:true,false', 'twilioAccountSid' => 'sometimes|regex:/^AC[a-f0-9]{32}$/', 'twilioVerifyServiceSid' => 'sometimes|regex:/^VA[a-f0-9]{32}$/'])->validate();
             }
+            if ($r->service === 'jobreader') {
+                validator($r->values, ['enabled' => 'required|in:true,false', 'provider' => 'required|in:'.implode(',', \App\Services\JobReader::PROVIDERS), 'dailyLimit' => 'nullable|integer|min:1|max:100000', 'customUrlTemplate' => 'nullable|string|max:600'])->validate();
+                if (($r->values['customUrlTemplate'] ?? '') !== '' && ! str_contains($r->values['customUrlTemplate'], '{url}')) {
+                    abort(422, 'The custom address must contain {url} where the job link goes.');
+                }
+            }
             if ($r->service === 'payouts') {
                 AccountSecurity::requireRecent($r);
                 if (DB::table('withdrawals')->where('provider', 'cashfree')->where(function ($q) {
@@ -113,6 +125,15 @@ class AdminController extends Controller
                 if (trim($v) !== '') {
                     $p[$r->service][$k] = trim($v);
                 }
+            }if ($r->service === 'jobreader' && ($p['jobreader']['enabled'] ?? 'false') === 'true') {
+                $j = $p['jobreader'];
+                $ready = match ($j['provider'] ?? '') {
+                    'scrapingbee' => ! empty($j['scrapingbeeApiKey']),
+                    'zenrows' => ! empty($j['zenrowsApiKey']),
+                    'custom' => ! empty($j['customUrlTemplate']),
+                    default => false,
+                };
+                abort_unless($ready, 422, 'Enter the key (or address) for the selected reading service first.');
             }if ($r->service === 'payments') {
                 abort_unless(in_array($p['payments']['provider'] ?? 'razorpay', ['razorpay', 'cashfree']), 422);
             }if ($r->service === 'payments' && ($p['payments']['provider'] ?? '') === 'cashfree') {

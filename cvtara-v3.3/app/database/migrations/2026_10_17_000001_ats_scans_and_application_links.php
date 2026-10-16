@@ -18,7 +18,7 @@ return new class extends Migration
             $t->string('company', 180)->default('');
             $t->mediumText('job_text');
             $t->unsignedTinyInteger('score')->nullable();
-            $t->text('result_json')->nullable();
+            $t->mediumText('result_json')->nullable();
             $t->string('status', 10)->default('reserved');
             $t->timestamps();
             $t->index(['owner_id', 'created_at']);

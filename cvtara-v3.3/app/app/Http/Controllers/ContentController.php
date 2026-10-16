@@ -95,6 +95,13 @@ class ContentController extends Controller
         }if (preg_match('#^(guides|calculators)/[a-z0-9/-]+$#', $path)) {
             $path = rtrim($path, '/').'/';
         }
+        $cacheable = \App\Services\PageCache::cacheable($r, $path);
+        if ($cacheable && ($ready = \App\Services\PageCache::read($path)) !== null) {
+            $res = response($ready)->header('Cache-Control', 'no-cache')->setEtag(md5($ready));
+            $res->isNotModified($r);
+
+            return $res;
+        }
         $file = $path === '' ? 'index.html' : (str_ends_with($path, '/') ? $path.'index.html' : $path);
         $post = null;
         $slug = null;
@@ -149,6 +156,12 @@ class ContentController extends Controller
         if ($path === 'workspace.html') {
             $head .= '<script src="/preview-guard.js" defer></script>';
         }
+        if (! $admin) {
+            $head = str_replace('<script src="/error-report.js" defer></script>', '<script src="/csrf-lazy.js"></script><script src="/error-report.js" defer></script>', $head);
+        }
+        if ($path === 'workspace.html') {
+            $head .= '<link rel="stylesheet" href="/support-widget.css">'; // the feedback button belongs to signed-in customers only
+        }
         $kw = trim((string) ($custom['keywords'] ?? $post['keywords'] ?? ''));
         if ($kw !== '') {
             $head .= '<meta name="keywords" content="'.e($kw).'">';
@@ -188,6 +201,9 @@ class ContentController extends Controller
         if (! $admin && ! in_array($path, ['', 'workspace.html', 'checkout.html'])) {
             $scripts .= '<script src="/fomo-popup.js" defer></script>';
         }
+        if ($path === 'workspace.html') {
+            $scripts .= '<script src="/support-widget.js" defer></script>';
+        }
         $html = str_replace('</body>', $scripts.'</body>', $html);
 
         if ($admin && is_file(public_path('setup-assistant.js'))) {
@@ -201,6 +217,10 @@ class ContentController extends Controller
 
             return $m[1].'="'.$m[2].($version ? '?v='.$version : '').'"';
         }, $html);
+
+        if ($cacheable) {
+            \App\Services\PageCache::write($path, $html);
+        }
 
         return response($html)->header('Cache-Control', $admin || $path === 'workspace.html' ? 'private, no-store' : 'no-cache');
     }

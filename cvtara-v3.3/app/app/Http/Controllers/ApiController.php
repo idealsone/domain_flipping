@@ -33,6 +33,9 @@ class ApiController extends Controller
             abort(405);
         }$d = $r->all();
         $ok = fn ($a = []) => response()->json(['ok' => true, ...$a]);
+        if ($path === 'csrf' && $get) {
+            return $ok(['token' => csrf_token()]);
+        }
         if ($path === 'health') {
             return $ok(['storage' => DB::connection()->getPdo() ? 'available' : 'unavailable']);
         }
@@ -212,83 +215,66 @@ class ApiController extends Controller
         if ($path === 'ats/scan' && $r->isMethod('POST')) {
             $v = $r->validate(['resumeId' => ['required', 'regex:/^[a-f0-9-]{36}$/'], 'source' => 'required|in:link,file,text', 'url' => 'nullable|string|max:1000', 'text' => 'nullable|string|max:60000', 'title' => 'nullable|string|max:180', 'company' => 'nullable|string|max:180']);
             abort_unless(Settings::get('features')['match']['enabled'], 403);
-            if ($v['source'] === 'link' && \Illuminate\Support\Facades\RateLimiter::tooManyAttempts('ats-link:'.$id, 10)) {
-                throw ValidationException::withMessages(['url' => 'Too many job links in a minute. Wait a moment and try again.']);
+            \App\Services\Traffic::guardHeavy();
+            $resume = DB::table('resume_drafts')->where('id', $v['resumeId'])->where('owner_id', $id)->first();
+            abort_unless($resume, 422, 'Choose one of your saved resumes.');
+            $access = Settings::access($id);
+            $today = DB::table('ats_scans')->where('owner_id', $id)->whereDate('created_at', today())->count();
+            $cap = $access['paid'] ? (int) ($access['limits']['dailyMatches'] ?? 100) : min((int) Settings::get('features')['match']['limit'], (int) $access['limits']['dailyMatches']);
+            if ($today >= $cap) {
+                throw ValidationException::withMessages(['limit' => $access['paid'] ? 'Daily ATS check limit reached. Try again tomorrow.' : 'Your free ATS checks for today are used. Try again tomorrow or choose a plan for more scans.']);
             }
-            if ($v['source'] === 'link') {
-                \Illuminate\Support\Facades\RateLimiter::hit('ats-link:'.$id, 60);
+            if (! Credits::scanAvailable($id)) {
+                throw ValidationException::withMessages(['limit' => 'All your ATS scans are used. Buy an add-on pack for more scans (valid until your plan ends), or renew your plan.']);
             }
-            abort_unless(DB::table('resume_drafts')->where('id', $v['resumeId'])->where('owner_id', $id)->exists(), 422, 'Choose one of your saved resumes.');
             $title = trim((string) ($v['title'] ?? ''));
             $company = trim((string) ($v['company'] ?? ''));
+            $details = [];
             if ($v['source'] === 'link') {
                 if (empty($v['url'])) {
                     throw ValidationException::withMessages(['url' => 'Paste the link of the job posting.']);
                 }
+                if (\Illuminate\Support\Facades\RateLimiter::tooManyAttempts('ats-link:'.$id, (int) env('ATS_LINK_RATE', 10))) {
+                    throw ValidationException::withMessages(['url' => 'Too many job links in a minute. Wait a moment and try again.']);
+                }
+                \Illuminate\Support\Facades\RateLimiter::hit('ats-link:'.$id, 60);
                 $page = JobPage::fetch($v['url']);
                 $text = $page['text'];
                 $title = $title ?: $page['title'];
                 $company = $company ?: $page['company'];
+                $details = $page['details'] ?? [];
             } else {
-                $text = trim((string) ($v['text'] ?? ''));
+                $text = mb_substr(trim((string) ($v['text'] ?? '')), 0, 40000);
                 if (mb_strlen($text) < 80) {
                     throw ValidationException::withMessages(['text' => 'The job description is too short to review. Include the responsibilities and requirements.']);
                 }
-                $text = mb_substr($text, 0, 40000);
             }
+            try {
+                $report = \App\Services\AtsEngine::report(json_decode((string) $resume->content_json, true) ?: [], $text, $title);
+            } catch (\InvalidArgumentException $e) {
+                throw ValidationException::withMessages(['text' => $e->getMessage()]);
+            }
+            $report['details'] = $details;
             $scanId = (string) Str::uuid();
-            $res = DB::transaction(function () use ($id, $scanId, $v, $text, $title, $company) {
+            DB::transaction(function () use ($id, $scanId, $v, $text, $title, $company, $report) {
                 User::whereKey($id)->lockForUpdate()->first();
-                foreach (DB::table('ats_scans')->where('owner_id', $id)->where('status', 'reserved')->where('created_at', '<', now()->subMinutes(15))->pluck('id') as $stale) {
-                    Credits::releaseScan($id, $stale);
-                    DB::table('ats_scans')->where('id', $stale)->update(['status' => 'void', 'updated_at' => now()]);
-                }
-                $f = Settings::get('features')['match'];
-                $a = Settings::access($id);
-                $l = $a['limits'];
-                $today = DB::table('ats_scans')->where('owner_id', $id)->where('status', '!=', 'void')->whereDate('created_at', today())->count();
-                $cap = $a['paid'] ? (int) ($l['dailyMatches'] ?? 100) : min((int) $f['limit'], (int) $l['dailyMatches']);
-                if ($today >= $cap) {
-                    throw ValidationException::withMessages(['limit' => $a['paid'] ? 'Daily ATS check limit reached. Try again tomorrow.' : 'Your free ATS checks for today are used. Try again tomorrow or choose a plan for more scans.']);
-                }
                 Credits::reserveScan($id, $scanId);
-                DB::table('ats_scans')->insert(['id' => $scanId, 'owner_id' => $id, 'resume_id' => $v['resumeId'], 'source' => $v['source'], 'job_url' => $v['source'] === 'link' ? mb_substr((string) $v['url'], 0, 1000) : '', 'job_title' => $title, 'company' => $company, 'job_text' => $text, 'status' => 'reserved', 'created_at' => now(), 'updated_at' => now()]);
-
-                return true;
+                DB::table('ats_scans')->insert(['id' => $scanId, 'owner_id' => $id, 'resume_id' => $v['resumeId'], 'source' => $v['source'], 'job_url' => $v['source'] === 'link' ? mb_substr(JobPage::canonical((string) $v['url']), 0, 1000) : '', 'job_title' => $title, 'company' => $company, 'job_text' => $text, 'score' => $report['score'], 'result_json' => json_encode($report), 'status' => 'done', 'created_at' => now(), 'updated_at' => now()]);
             });
-
-            return $ok(['scanId' => $scanId, 'jobText' => $text, 'title' => $title, 'company' => $company, 'credits' => Credits::status($id)]);
-        }
-        if (preg_match('#^ats/scans/([a-f0-9-]{36})/(result|void)$#', $path, $m) && $r->isMethod('POST')) {
-            $scan = DB::table('ats_scans')->where('id', $m[1])->where('owner_id', $id)->first();
-            abort_unless($scan, 404);
-            if ($m[2] === 'void') {
-                if ($scan->status === 'reserved') {
-                    DB::transaction(function () use ($id, $scan) {
-                        Credits::releaseScan($id, $scan->id);
-                        DB::table('ats_scans')->where('id', $scan->id)->update(['status' => 'void', 'updated_at' => now()]);
-                    });
-                }
-
-                return $ok(['credits' => Credits::status($id)]);
-            }
-            $v = $r->validate(['score' => 'required|integer|min:0|max:100', 'counts' => 'required|array', 'counts.*' => 'integer|min:0|max:1000', 'gaps' => 'nullable|array|max:40', 'gaps.*' => 'string|max:240', 'title' => 'nullable|string|max:180', 'company' => 'nullable|string|max:180']);
-            abort_unless($scan->status !== 'void', 409);
-            DB::table('ats_scans')->where('id', $scan->id)->update(['score' => $v['score'], 'result_json' => json_encode(['counts' => $v['counts'], 'gaps' => $v['gaps'] ?? []]), 'status' => 'done', 'job_title' => mb_substr(trim((string) ($v['title'] ?? '')) ?: $scan->job_title, 0, 180), 'company' => mb_substr(trim((string) ($v['company'] ?? '')) ?: $scan->company, 0, 180), 'updated_at' => now()]);
             Settings::audit($id, 'resume_compared');
 
-            return $ok();
+            return $ok(['scanId' => $scanId, 'title' => $title, 'company' => $company, 'jobUrl' => $v['source'] === 'link' ? JobPage::canonical((string) $v['url']) : '', 'report' => $report, 'credits' => Credits::status($id)]);
         }
         if ($path === 'ats/scans' && $get) {
-            $rows = DB::table('ats_scans')->where('owner_id', $id)->where('status', 'done')->orderByDesc('created_at')->limit(30)->get(['id', 'resume_id', 'source', 'job_url', 'job_title', 'company', 'score', 'result_json', 'created_at']);
+            $rows = DB::table('ats_scans')->where('owner_id', $id)->where('status', 'done')->orderByDesc('created_at')->limit(30)->get(['id', 'resume_id', 'source', 'job_url', 'job_title', 'company', 'score', 'created_at']);
 
-            return $ok(['scans' => $rows->map(fn ($x) => ['id' => $x->id, 'resumeId' => $x->resume_id, 'source' => $x->source, 'jobUrl' => $x->job_url, 'title' => $x->job_title, 'company' => $x->company, 'score' => $x->score, 'result' => json_decode((string) $x->result_json, true), 'createdAt' => $x->created_at]), 'credits' => Credits::status($id)]);
+            return $ok(['scans' => $rows->map(fn ($x) => ['id' => $x->id, 'resumeId' => $x->resume_id, 'source' => $x->source, 'jobUrl' => $x->job_url, 'title' => $x->job_title, 'company' => $x->company, 'score' => $x->score, 'createdAt' => $x->created_at]), 'credits' => Credits::status($id)]);
         }
         if (preg_match('#^ats/scans/([a-f0-9-]{36})$#', $path, $m) && $get) {
             $x = DB::table('ats_scans')->where('id', $m[1])->where('owner_id', $id)->where('status', 'done')->first();
             abort_unless($x, 404);
 
-            return $ok(['scan' => ['id' => $x->id, 'resumeId' => $x->resume_id, 'source' => $x->source, 'jobUrl' => $x->job_url, 'title' => $x->job_title, 'company' => $x->company, 'score' => $x->score, 'result' => json_decode((string) $x->result_json, true), 'jobText' => $x->job_text, 'createdAt' => $x->created_at]]);
+            return $ok(['scan' => ['id' => $x->id, 'resumeId' => $x->resume_id, 'source' => $x->source, 'jobUrl' => $x->job_url, 'title' => $x->job_title, 'company' => $x->company, 'score' => $x->score, 'report' => json_decode((string) $x->result_json, true), 'createdAt' => $x->created_at]]);
         }
         if ($path === 'applications' && $get) {
             return $ok(['applications' => DB::table('applications')->where('owner_id', $id)->orderByDesc('updated_at')->get()]);
@@ -417,7 +403,13 @@ class ApiController extends Controller
 
             return response()->json(['ok' => true]);
         }
-        $v = $r->validate(['company' => 'required|string|max:160', 'role' => 'required|string|max:160', 'jobDescription' => 'nullable|string|max:40000', 'jobUrl' => 'nullable|url:http,https|max:1000']);
+        $v = $r->validate(['company' => 'required|string|max:160', 'role' => 'required|string|max:160', 'jobDescription' => 'nullable|string|max:40000', 'jobUrl' => 'nullable|url:http,https|max:1000', 'scanId' => ['nullable', 'regex:/^[a-f0-9-]{36}$/']]);
+        if (! empty($v['scanId'])) {
+            $sc = DB::table('ats_scans')->where('id', $v['scanId'])->where('owner_id', $id)->where('status', 'done')->first();
+            abort_unless($sc, 422, 'That ATS check was not found.');
+            $v['jobDescription'] = $sc->job_text;
+            $v['jobUrl'] = $sc->job_url ?: null;
+        }
         $new = DB::transaction(function () use ($id, $row, $v) {
             User::whereKey($id)->lockForUpdate()->first();
             abort_unless(Settings::get('features')['builder']['enabled'], 403);

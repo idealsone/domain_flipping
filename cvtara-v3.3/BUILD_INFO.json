@@ -1,8 +1,8 @@
 {
   "brand": "CVTara",
-  "version": "3.8.0",
-  "package_date": "2026-10-14",
-  "source": "3.2.0-RC1 (2026-10-10) audited and extended: primary resume + JD variants, 6 plans + 3 add-ons, new UI, audit fixes",
+  "version": "3.9.0",
+  "package_date": "2026-10-16",
+  "source": "3.2.0-RC1 audited and extended through 3.9.0: credits and scans per plan, server-side ATS Match with job-link reading, feedback inbox, ready-made pages and busy mode",
   "status": "Private Hostinger acceptance package; not approved for public paid launch",
   "runtime": "PHP 8.3+, Laravel 13, MySQL/MariaDB",
   "verification": {
@@ -14,6 +14,8 @@
     "Live Razorpay, email, Twilio and Cashfree payout acceptance remains pending.",
     "Hostinger staging install and real-device validation remain pending.",
     "Some plan perks (Naukri/LinkedIn export, 1-on-1 call, priority support, lifetime updates) are listed text, not built features.",
-    "Identity, tax, fraud-review and payout operating policies require owner approval."
+    "Identity, tax, fraud-review and payout operating policies require owner approval.",
+    "Reading job links from login-protected portals needs the owner to add a page-rendering service key (Owner Console > Speed & traffic); real portals were not tested.",
+    "Ready-made pages are served by the web server only on Apache with mod_rewrite (Hostinger); run \"Rebuild all pages\" after every upload of a new version."
   ]
 }

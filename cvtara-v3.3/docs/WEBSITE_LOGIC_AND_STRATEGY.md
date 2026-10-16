@@ -35,6 +35,11 @@ Other purchase rules (verified by automated tests): the strongest plan wins; a c
 4. The customer chooses a tailored resume, a cover letter or both. Drafts are free. Downloads use 1 credit of their own kind each (1 resume + 2 letters = 1 resume credit + 2 letter credits) and a credit notice is shown after every download.
 5. Each clean download of a document that has a company and role adds or updates one entry in **Applications** (stage Saved, job link, credits used). Downloads without a job (the primary resume) are not added.
 
+**Feedback, speed and traffic (v3.9.0)**
+- Signed-in customers see a **Feedback** button on every portal page (right side, can be moved left). Reports (area, type, message, rating, up to 5 screenshots of 2 MB) go to **Owner Console → Support Inbox** with the customer's name, plan, page and screen size. Visitors who are not signed in do not see the button.
+- **Ready-made pages:** public pages are served as stored files to visitors with no session; rebuilt automatically when content changes. **Busy mode** pauses only the heavy work (ATS reviews, job-link reading, PDF/Word files) when the server is loaded, with a polite message; payments, sign-in and saved work are never paused.
+- **Job links:** read directly; for portals that refuse, the optional page-rendering service (owner-configured, daily cap, only the link is sent).
+
 ## 3. What a customer does (after the landing page)
 1. **Landing page** → choose "Build my resume" / "Check my resume" / pricing. Visitors may arrive through a referral link `/r/<code>` (stored in session).
 2. **Register / sign in** (email + password, ≥12 characters; reset by email). Night mode is available on these pages too.

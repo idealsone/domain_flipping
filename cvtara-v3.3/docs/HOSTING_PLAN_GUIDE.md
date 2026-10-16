@@ -50,3 +50,13 @@ After the first deploy, check with `curl -I https://cvtara.com/styles.css` and c
 - **Traffic:** shared plans limit simultaneous PHP processes. Cloudflare caching of static files and keeping the API un-cached means only real work reaches PHP.
 - **Storage:** backups use space (about the size of your database, compressed). Fourteen copies are kept.
 - **Not a load balancer:** a single shared server cannot be load-balanced; Cloudflare plus an upgrade path (Cloud/VPS) is the realistic scaling plan.
+
+## Ready-made pages and traffic protection (v3.9.0)
+- **What it is:** the public pages (home, templates, cover letters, blog, guides, calculators, policies) are saved as finished HTML in `public_html/_pages`. Apache (Hostinger) serves them directly to visitors who have no session cookie — no PHP, no database. If the web server rules are not active, PHP serves the same files before it starts a session, which is still very cheap.
+- **Never stored:** signed-in visitors, addresses with a query string, checkout, workspace, owner pages, API, login and register. Pages contain no visitor-specific data; the security token is fetched on demand (`/api/csrf`).
+- **After every upload of a new version:** open Owner Console → Speed & traffic → **Rebuild all pages now** (or run `php artisan cvtara:prebuild`). Old pages are replaced; until then the web server may serve the previous version's pages. The installer builds them on first install.
+- **Rebuilds automatically** whenever you save content, plans, legal text, SEO or features.
+- **Busy mode:** Off / Automatic / On. Automatic watches the server load per CPU core (default 2.5). It pauses only ATS reviews, job-link reading and PDF/Word creation for a minute at a time. On shared hosting that hides load figures, use On manually during a launch rush.
+- **Sessions:** with ready-made pages, visitors who only read pages no longer create a session row. For the rest, consider `SESSION_DRIVER=file` on Hostinger if the database is the bottleneck.
+- **Honest limits:** this removes most of the load from page views; it cannot make PDF generation, payments or the ATS review free. Cloudflare in front (free plan) is still the best protection against floods and bots.
+

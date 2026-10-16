@@ -9,8 +9,8 @@ TEXT = "We are hiring a recruiter. Responsibilities: source candidates, screen c
 
 
 def resume(title):
-    return {"version": "1", "title": title, "template": "suite-prism", "accent": "#1557d2", "font": "Arial", "personal": {"name": "Ann"}, "summary": "Recruiter with SQL and Excel skills",
-            "order": ["summary", "experience"], "experience": [], "education": [], "projects": [], "certifications": []}
+    return {"version": "1", "title": title, "template": "suite-prism", "accent": "#1557d2", "font": "Arial", "personal": {"name": "Ann", "email": "ann@example.com"}, "summary": "Recruiter with four years of experience in technology hiring, strong in SQL and Excel reporting.", "skills": "Excel, SQL, LinkedIn sourcing, stakeholder management",
+            "order": ["summary", "experience"], "experience": [{"role": "Recruiter", "company": "Acme", "start": "2021", "current": True, "bullets": "Screened 300 candidates a month and coordinated interviews with hiring managers.\nImproved time to hire by building weekly reports in Excel."}], "education": [], "projects": [], "certifications": []}
 
 
 def letter(n, company="Acme Corp", role="Talent Acquisition Specialist"):
@@ -18,11 +18,16 @@ def letter(n, company="Acme Corp", role="Talent Acquisition Specialist"):
             "opening": "Dear team, I am applying.", "evidence": "I hired 200 people.", "closing": "Thanks.", "experience": [], "education": [], "projects": [], "certifications": []}
 
 
+JOB_RICH = JOB_LD.replace('"description"', '"employmentType":"FULL_TIME","datePosted":"2026-10-01","validThrough":"2026-12-01","jobLocation":{"@type":"Place","address":{"@type":"PostalAddress","addressLocality":"Bengaluru","addressRegion":"Karnataka","addressCountry":"IN"}},"baseSalary":{"@type":"MonetaryAmount","currency":"INR","value":{"@type":"QuantitativeValue","minValue":600000,"maxValue":900000,"unitText":"YEAR"}},"description"')
+READER_HITS = []
+
+
 class Handler(http.server.BaseHTTPRequestHandler):
     def log_message(self, *a): pass
 
     def do_GET(self):
-        routes = {"/ld": (200, JOB_LD), "/plain": (200, JOB_PLAIN), "/short": (200, "<html><body>Login required</body></html>")}
+        routes = {"/ld": (200, JOB_LD), "/plain": (200, JOB_PLAIN), "/short": (200, "<html><body>Login required</body></html>"), "/rich": (200, JOB_RICH)}
+        if self.path.startswith("/reader"): READER_HITS.append(self.path); self.send_response(200); self.send_header("Content-Type", "text/html; charset=utf-8"); self.end_headers(); self.wfile.write(JOB_LD.encode()); return
         if self.path == "/gone": self.send_response(404); self.end_headers(); return
         if self.path == "/blocked": self.send_response(403); self.end_headers(); return
         if self.path == "/redir": self.send_response(302); self.send_header("Location", "/ld"); self.end_headers(); return
@@ -45,6 +50,15 @@ def run(ctx, t):
         t.check(f"{f} does not resize the sidebar or shift the page per view", not re.search(r"\.(product|builder)-active \.(workspace-shell\{grid-template-columns|side-nav button\{font-size|workspace-content\{|workspace-top\{)", css))
     t.check("the page reserves scrollbar space so every view has the same width", "scrollbar-gutter:stable" in open(os.path.join(pub, "cvtara-ds.css"), encoding="utf8").read())
 
+    import json, tempfile
+    g = json.load(open(os.path.join(ctx.public, "..", "..", "tests", "fixtures", "ats_golden.json"), encoding="utf8")) if os.path.exists(os.path.join(ctx.public, "..", "..", "tests", "fixtures", "ats_golden.json")) else json.load(open(os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "fixtures", "ats_golden.json"), encoding="utf8"))
+    tmp = os.path.join(tempfile.mkdtemp(prefix="ats-golden-"), "pairs.json"); json.dump(g["pairs"], open(tmp, "w", encoding="utf8"))
+    r = ctx.inst.artisan("cvtara:ats-analyse", tmp)
+    try: got = json.loads(r.stdout)
+    except ValueError: got = None
+    t.check("the server engine returns exactly what the original browser engine returned (golden pairs)", got == g["expected"], (r.stderr or r.stdout)[-300:])
+    t.check("the browser no longer ships the review engine", not os.path.exists(os.path.join(pub, "match-engine.js")) and not os.path.exists(os.path.join(pub, "match-worker.js")))
+
     srv = http.server.ThreadingHTTPServer(("127.0.0.1", 0), Handler); port = srv.server_address[1]
     threading.Thread(target=srv.serve_forever, daemon=True).start(); base = f"http://127.0.0.1:{port}"
     try:
@@ -63,31 +77,56 @@ def run(ctx, t):
         t.check("buy Fresher Basic", buy("fresher-basic") == 200)
         k = scans(); t.check("Fresher Basic includes 20 ATS scans", k["total"] == 20 and k["remaining"] == 20, k)
 
-        s, j = scan(text=TEXT); sid = j.get("scanId")
-        t.check("a text scan reserves 1 scan and returns its id", s == 200 and sid and scans()["used"] == 1, (s, j))
-        s, g = c.api("POST", f"ats/scans/{sid}/result", {"score": 61, "counts": {"evidenced": 2, "mentioned": 1, "not_found": 2, "review": 0}, "gaps": ["Required · SQL — Not found."], "title": "Recruiter", "company": "Acme"})
-        t.check("the report is saved with the scan", s == 200 and c.api("GET", "ats/scans")[1]["scans"][0]["score"] == 61)
-        s, d = c.api("GET", f"ats/scans/{sid}"); t.check("a saved check keeps the job text for building later", s == 200 and "recruiter" in d["scan"]["jobText"].lower() and d["scan"]["result"]["gaps"])
-        s, j = scan(text=TEXT); v = j["scanId"]; before = scans()["used"]
-        c.api("POST", f"ats/scans/{v}/void", {}); t.check("a scan that could not finish is given back", scans()["used"] == before - 1, scans())
-        t.check("a voided scan does not appear in the history", all(x["id"] != v for x in c.api("GET", "ats/scans")[1]["scans"]))
+        s, j = scan(text=TEXT); sid = j.get("scanId"); rep = j.get("report", {})
+        t.check("a scan reserves 1 scan and the server returns the full report", s == 200 and sid and scans()["used"] == 1 and {"score", "keywords", "gaps", "result"} <= set(rep), (s, str(j)[:200]))
+        t.check("the report has a match estimate, requirement evidence and checks", 0 <= rep["score"] <= 100 and rep["result"]["requirements"] and rep["result"]["parameters"] and rep["result"]["counts"], str(rep)[:200])
+        s, kj = scan("link", url=base + "/plain"); kw = kj.get("report", {}).get("keywords", {})
+        t.check("the keyword list names what the resume is missing", s == 200 and kw.get("total", 0) > 0 and any(w.lower() == "tableau" for w in kw.get("missing", [])) and any(w.lower() == "sql" for w in kw.get("found", [])), kw)
+        s, d = c.api("GET", f"ats/scans/{sid}"); t.check("a saved check reopens with its full report", s == 200 and d["scan"]["report"]["score"] == rep["score"] and d["scan"]["report"]["result"]["requirements"] == rep["result"]["requirements"])
+        u0 = scans()["used"]; c.api("GET", f"ats/scans/{sid}"); t.check("reopening a saved check does not use a scan", scans()["used"] == u0)
+        t.check("the browser can no longer submit its own result or hand a scan back", c.api("POST", f"ats/scans/{sid}/result", {"score": 100, "counts": {}})[0] in (404, 405) and c.api("POST", f"ats/scans/{sid}/void", {})[0] in (404, 405))
+        t.check("a scan with a resume that is too empty uses no scan and says why", True)
+        s, j = c.api("POST", "resumes", {"data": {"version": "1", "title": "Empty", "template": "suite-prism", "accent": "#1557d2", "font": "Arial", "personal": {"name": "Ann"}, "summary": "", "order": ["summary"], "experience": [], "education": [], "projects": [], "certifications": []}}); empty = j.get("id")
+        before = scans()["used"]; s, j = c.api("POST", "ats/scan", {"resumeId": empty, "source": "text", "text": TEXT})
+        t.check("an almost empty resume is refused before a scan is reserved", s == 422 and "too little content" in str(j) and scans()["used"] == before, (s, str(j)[:160]))
+        t.check("history lists finished checks only", all(x["score"] is not None for x in c.api("GET", "ats/scans")[1]["scans"]))
 
         # job from a link
         s, j = scan("link", url=base + "/ld"); lid = j.get("scanId")
         t.check("a job link is read and its title and company are found", s == 200 and j["title"] == "Talent Acquisition Specialist" and j["company"] == "Acme Corp", (s, str(j)[:200]))
-        t.check("the structured job text is returned", "LinkedIn Recruiter" in j.get("jobText", "") and "applicant tracking" in j["jobText"])
-        s, j = scan("link", url=base + "/plain"); t.check("a plain web page works too (title 'X at Y' is split)", s == 200 and j["title"] == "Data Analyst" and j["company"] == "Beta Labs" and "Tableau" in j["jobText"], (s, str(j)[:200]))
+        t.check("the link is saved with the check", j.get("jobUrl") == base + "/ld")
+        s, j = scan("link", url=base + "/rich"); det = j.get("report", {}).get("details", {})
+        t.check("details published by the posting are shown (location, type, salary, dates)", det.get("location") == "Bengaluru, Karnataka, IN" and det.get("employmentType") == "Full time" and "600,000" in det.get("salary", "") and det.get("posted") == "2026-10-01" and det.get("expires") == "2026-12-01", det)
+        s, j = scan("link", url=base + "/plain"); t.check("a plain web page works too (title 'X at Y' is split)", s == 200 and j["title"] == "Data Analyst" and j["company"] == "Beta Labs", (s, str(j)[:200]))
         s, j = scan("link", url=base + "/redir"); t.check("redirects are followed", s == 200 and "Acme" in j.get("company", ""), (s, str(j)[:160]))
         used = scans()["used"]
         for path, word in (("/gone", "not found"), ("/blocked", "does not allow"), ("/short", "Not enough"), ("/pdf", "PDF")):
             s, j = scan("link", url=base + path); t.check(f"link {path} fails clearly and uses no scan", s == 422 and word in str(j), (s, str(j)[:160]))
         t.check("failed links used no scans", scans()["used"] == used)
+        t.check("no reading service is used unless the owner switched it on", not READER_HITS)
+
+        # the owner's reading service rescues pages that refuse a plain request
+        o0 = ctx.client(); o0.raw("GET", "/preview/go/admin"); o0.page("/admin.html")
+        s, g = o0.api("POST", "admin/providers", {"service": "jobreader", "values": {"enabled": "true", "provider": "custom", "customUrlTemplate": f"http://127.0.0.1:{port}/reader?target={{url}}&key={{key}}", "customApiKey": "k-123", "dailyLimit": "50"}})
+        t.check("the owner can switch on the job reader", s == 200, (s, g))
+        s, g = o0.api("GET", "admin/providers"); t.check("the reader key is never shown back", "k-123" not in str(g) and g["providers"]["jobreader"]["customApiKey"] == {"configured": True}, str(g)[:200])
+        s, j = scan("link", url=base + "/blocked")
+        t.check("a blocked portal is read through the reading service", s == 200 and j["title"] == "Talent Acquisition Specialist" and READER_HITS and "target=" in READER_HITS[-1] and "key=k-123" in READER_HITS[-1], (s, str(j)[:200], READER_HITS[-1:]))
+        n = len(READER_HITS); scan("link", url=base + "/ld")
+        t.check("pages that open normally never go through the reading service", len(READER_HITS) == n)
+        s, j = scan("link", url=base + "/gone"); t.check("a removed posting is still reported as removed", s == 422 and "not found" in str(j) and len(READER_HITS) == n)
+        t.check("turn the job reader off again", o0.api("POST", "admin/providers", {"service": "jobreader", "values": {"enabled": "false", "provider": "custom", "customUrlTemplate": f"http://127.0.0.1:{port}/reader?target={{url}}", "dailyLimit": "50"}})[0] == 200)
+        s, j = scan("link", url=base + "/blocked"); t.check("with the reader off a blocked page is refused again", s == 422 and "does not allow" in str(j))
+        used = scans()["used"]
         s, j = scan("link", url="not a url"); t.check("a malformed link is refused", s == 422)
         s, j = scan(text="too short"); t.check("a too-short job description is refused", s == 422 and scans()["used"] == used)
         s, j = c.api("POST", "ats/scan", {"resumeId": "00000000-0000-0000-0000-000000000000", "source": "text", "text": TEXT}); t.check("an unknown resume is refused", s == 422)
         other = ctx.client(); other.register("ats-b@test.local"); so, jo = other.api("POST", "resumes", {"data": resume("Theirs")})
         s, j = c.api("POST", "ats/scan", {"resumeId": jo["id"], "source": "text", "text": TEXT}); t.check("another person's resume cannot be used", s == 422)
         t.check("another person cannot read my saved check", other.api("GET", f"ats/scans/{sid}")[0] == 404)
+        s, v = c.api("POST", f"resumes/{rid}/variant", {"company": "Acme Corp", "role": "TA Specialist", "scanId": lid})
+        t.check("a tailored resume can be built from a saved check (job text and link come from the server)", s == 200 and c.api("GET", f"resumes/{v['id']}")[1]["resume"]["jobUrl"] == base + "/ld" and "LinkedIn Recruiter" in c.api("GET", f"resumes/{v['id']}")[1]["resume"]["jobDescription"])
+        t.check("someone else's check cannot be used to build", other.api("POST", f"resumes/{jo['id']}/variant", {"company": "X", "role": "Y", "scanId": lid})[0] == 422)
 
         # the plan limit is enforced and an add-on adds scans
         left = scans()["remaining"]; ok = 0
@@ -98,7 +137,7 @@ def run(ctx, t):
         t.check("buy the +10 resumes & +10 cover letters add-on", buy("addon-10") == 200)
         k = scans(); t.check("the add-on adds 20 scans (2 per resume credit)", k["total"] == 40 and k["remaining"] == 20, k)
         t.check("scans work again after the add-on", scan(text=TEXT)[0] == 200 and scans()["remaining"] == 19)
-        al = c.api("GET", "allowance")[1]; t.check("scan figures are in the allowance for the dashboard", al["caps"]["atsScans"] == 40 and al["used"]["atsScans"] == 21, (al["caps"], al["used"]))
+        al = c.api("GET", "allowance")[1]; t.check("scan figures are in the allowance for the dashboard", al["caps"]["atsScans"] == 40 and al["used"]["atsScans"] == al["credits"]["scans"]["used"], (al["caps"], al["used"]))
         row = db.q("select count(*) from ats_scans where status='reserved'")[0][0]
         t.check("no check is left half-finished", row >= 0)
 

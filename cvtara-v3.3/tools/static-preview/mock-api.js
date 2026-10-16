@@ -119,20 +119,54 @@
     if (method === 'POST' && p === 'admin/media') return ok({ url: '/media/' + uid() + '.webp' });
     if (method === 'POST' && p === 'admin/email/process') return ok({ sent: 0, processed: 0 });
     if (method === 'POST' && p === 'admin/setup/email-test') return ok({ delivery: { sent: 1, processed: 1 } });
-    if (method === 'GET' && p === 'ats/scans') { st.scans = st.scans || []; return ok({ scans: st.scans.filter(x => x.status === 'done') }); }
+    // ----- feedback inbox and speed panel (demo data kept in this browser) -----
+    const AREAS = { 'resume-builder': 'Resume Builder', 'ats-match': 'ATS Match', 'cover-letters': 'Cover Letters', applications: 'Applications', downloads: 'Downloads & credits', billing: 'Billing & plans', account: 'Account & login', website: 'Website & pages', other: 'Something else' };
+    const KINDS = { bug: 'Something is broken', idea: 'Suggestion', question: 'Question', praise: 'What I like' };
+    if (!st.reports) {
+      const ago = h => new Date(Date.now() - h * 3600e3).toISOString().slice(0, 19).replace('T', ' ');
+      st.reports = [
+        { id: 'r1', owner_id: 2, name: 'Priya Nair', email: 'priya@example.com', area: 'ats-match', kind: 'bug', page: '/workspace.html?view=match', message: 'The job link from a company careers page was read correctly, but the keyword list shows my skills as missing even though they are in my resume.', rating: 3, status: 'new', plan: 'Fresher Standard', created_at: ago(2), resolved_at: null, images: 2, viewport: '1366x768', user_agent: 'Chrome on Windows', admin_note: '' },
+        { id: 'r2', owner_id: 3, name: 'Arjun Mehta', email: 'arjun@example.com', area: 'downloads', kind: 'question', page: '/workspace.html?view=builder', message: 'If I edit the resume after downloading, does the next download use another credit?', rating: null, status: 'seen', plan: 'Professional Basic', created_at: ago(20), resolved_at: null, images: 0, viewport: '390x800', user_agent: 'Safari on iPhone', admin_note: '' },
+        { id: 'r3', owner_id: 5, name: 'Karan Shah', email: 'karan@example.com', area: 'website', kind: 'idea', page: '/workspace.html', message: 'Please add a Hindi version of the site. Many of my friends would use it.', rating: 4, status: 'working', plan: 'Fresher Basic', created_at: ago(40), resolved_at: null, images: 1, viewport: '412x900', user_agent: 'Chrome on Android', admin_note: 'Planned for a later release.' },
+        { id: 'r4', owner_id: 4, name: 'Neha Rao', email: 'neha@example.com', area: 'billing', kind: 'praise', page: '/workspace.html?view=billing', message: 'Checkout was quick and the plan details were clear. Thank you!', rating: 5, status: 'resolved', plan: 'Fresher Pro', created_at: ago(90), resolved_at: ago(80), images: 0, viewport: '1440x900', user_agent: 'Firefox on Mac', admin_note: '' }
+      ];
+      save();
+    }
+    if (p === 'csrf') return ok({ token: 'demo-token-' + uid() });
+    if (method === 'GET' && p === 'admin/support/summary') {
+      const by = k => st.reports.reduce((a, r) => (a[r[k]] = (a[r[k]] || 0) + 1, a), {}); const rated = st.reports.filter(r => r.rating);
+      return ok({ days: 30, byStatus: by('status'), recent: { total: st.reports.length, byKind: by('kind'), byArea: by('area'), avgRating: rated.length ? Math.round(rated.reduce((a, r) => a + r.rating, 0) / rated.length * 10) / 10 : null }, areas: AREAS, kinds: KINDS });
+    }
+    if (method === 'GET' && p === 'admin/support') {
+      let rows = st.reports.slice(); const stt = sp.get('status'), term = (sp.get('q') || '').toLowerCase();
+      if (stt === 'open') rows = rows.filter(r => ['new', 'seen', 'working'].includes(r.status)); else if (stt && stt !== 'all') rows = rows.filter(r => r.status === stt);
+      if (sp.get('area')) rows = rows.filter(r => r.area === sp.get('area')); if (sp.get('kind')) rows = rows.filter(r => r.kind === sp.get('kind'));
+      if (term) rows = rows.filter(r => (r.message + ' ' + (r.email || '') + ' ' + (r.name || '')).toLowerCase().includes(term));
+      return ok({ total: rows.length, page: 1, per: 20, rows: rows.map(r => ({ ...r, message: r.message.slice(0, 220) })) });
+    }
+    const sup = p.match(/^admin\/support\/([^/]+)$/);
+    if (sup) {
+      const r = st.reports.find(x => x.id === sup[1]); if (!r) return fail('Not found.', 404);
+      if (method === 'GET') { if (r.status === 'new') r.status = 'seen'; save(); return ok({ report: r, images: [], earlierFromSamePerson: 0 }); }
+      if (b.action === 'delete') st.reports = st.reports.filter(x => x.id !== r.id); else { if (b.status) { r.status = b.status; r.resolved_at = ['resolved', 'closed'].includes(b.status) ? now() : null; } if ('adminNote' in b) r.admin_note = b.adminNote; }
+      save(); return ok({});
+    }
+    if (method === 'GET' && p === 'admin/speed/status') return ok({ cache: { pages: 79, bytes: 768881, builtAt: new Date().toISOString(), enabled: true }, traffic: { mode: st.busyMode || 'off', autoLoad: 2.5, load: 0.4, busyNow: false }, reader: { enabled: false, provider: 'scrapingbee', usage: { today: 0, limit: 200 }, configured: {}, customUrlTemplate: '' } });
+    if (method === 'GET' && p === 'admin/providers') return ok({ providers: { jobreader: { enabled: 'false', provider: 'scrapingbee', dailyLimit: '200' } }, secureStorage: true });
+    if (method === 'POST' && /^admin\/speed\//.test(p)) { if (p === 'admin/speed/save') { st.busyMode = b.busyMode; save(); } return ok({ result: { built: 79, skipped: [] }, removed: 79, message: 'Demo: nothing was sent.', cache: { pages: 79, bytes: 768881, builtAt: new Date().toISOString(), enabled: true }, traffic: { mode: st.busyMode || 'off', autoLoad: 2.5, load: 0.4, busyNow: false } }); }
+    if (method === 'GET' && p === 'ats/scans') { st.scans = st.scans || []; return ok({ scans: st.scans.map(x => ({ id: x.id, resumeId: x.resumeId, source: x.source, jobUrl: x.jobUrl, title: x.title, company: x.company, score: x.score, createdAt: x.createdAt })) }); }
     if (method === 'GET' && /^ats\/scans\/[^/]+$/.test(p)) { const x = (st.scans || []).find(y => y.id === p.split('/')[2]); return x ? ok({ scan: x }) : fail('Not found.', 404); }
     if (method === 'POST' && p === 'ats/scan') {
       if (!st.role) return fail('Please sign in.', 401, { signIn: true });
       const link = b.source === 'link', text = link ? 'Business Analyst. We are hiring a Business Analyst to gather requirements, write SQL queries, build Power BI dashboards and present insights to stakeholders. Required: 3+ years of experience in analytics, strong SQL, Excel and stakeholder communication. Preferred: Python, Tableau.' : String(b.text || '');
       if (!link && text.length < 80) return fail('The job description is too short to review. Include the responsibilities and requirements.', 422);
+      const rd = get('resumes/' + b.resumeId); const data = rd && rd.resume ? rd.resume.data : {};
+      const title = b.title || (link ? 'Business Analyst' : ''), company = b.company || (link ? 'Sample Co' : '');
+      let report; try { report = window.__atsReport(data, text, title); } catch (e) { return fail('The check could not finish.', 422); }
       st.scans = st.scans || []; const id = uid();
-      st.scans.unshift({ id, resumeId: b.resumeId, source: b.source, jobUrl: link ? b.url : '', title: b.title || (link ? 'Business Analyst' : ''), company: b.company || (link ? 'Sample Co' : ''), score: null, result: null, jobText: text, status: 'reserved', createdAt: now() }); save();
-      return ok({ scanId: id, jobText: text, title: b.title || (link ? 'Business Analyst' : ''), company: b.company || (link ? 'Sample Co' : ''), credits: {} });
-    }
-    if (method === 'POST' && /^ats\/scans\/[^/]+\/(result|void)$/.test(p)) {
-      const [, , id, act] = p.split('/'), x = (st.scans || []).find(y => y.id === id);
-      if (x) { if (act === 'void') x.status = 'void'; else Object.assign(x, { score: b.score, result: { counts: b.counts, gaps: b.gaps }, title: b.title || x.title, company: b.company || x.company, status: 'done' }); save(); }
-      return ok({});
+      const scan = { id, resumeId: b.resumeId, source: b.source, jobUrl: link ? b.url : '', title, company, score: report.score, report, jobText: text, createdAt: now() };
+      st.scans.unshift(scan); save();
+      return ok({ scanId: id, title, company, jobUrl: scan.jobUrl, report, credits: {} });
     }
     if (method === 'GET') {
       if (p === 'profile' && !st.role) return fail('Please sign in.', 401, { signIn: true });
@@ -190,6 +224,14 @@
   window.fetch = async function (input, init) {
     const url = typeof input === 'string' ? input : (input && input.url) || String(input);
     const method = ((init && init.method) || (input && input.method) || 'GET').toUpperCase();
+    if (/\/support\/report/.test(url) && method === 'POST') {
+      let f = {}; try { init.body.forEach((v, k) => { if (k !== 'images[]') f[k] = v; }); } catch (e) {}
+      const n = (() => { try { return init.body.getAll('images[]').length; } catch (e) { return 0; } })();
+      if (!f.message || f.message.length < 10) return new Response(JSON.stringify({ ok: false, error: 'Please tell us a little more (at least 10 characters).' }), { status: 422, headers: { 'Content-Type': 'application/json' } });
+      st.reports = st.reports || []; st.reports.unshift({ id: uid(), owner_id: 1, name: 'Demo customer', email: 'demo@cvtara.test', area: f.area, kind: f.kind, page: f.page, message: f.message, rating: f.rating ? +f.rating : null, status: 'new', plan: 'Demo plan', created_at: now(), resolved_at: null, images: n, viewport: f.viewport, user_agent: 'Demo browser', admin_note: '' }); save();
+      return new Response(JSON.stringify({ ok: true, id: uid().slice(-8), message: 'Thank you.' }), { status: 200, headers: { 'Content-Type': 'application/json' } });
+    }
+    if (/\/support\/options/.test(url)) return new Response(JSON.stringify({ ok: true, maxFiles: 5, maxKb: 2048 }), { status: 200, headers: { 'Content-Type': 'application/json' } });
     if (/\/client-error/.test(url) && method === 'POST') { try { const b = JSON.parse(init.body); const d = get('admin/errors?days=30') || { ok: true, errors: [] }; const hit = d.errors.find(e => e.source === 'browser' && e.message === b.message); if (hit) { hit.occurrences++; hit.last_seen = now(); hit.resolved_at = null; } else d.errors.unshift({ id: uid(), level: 'error', source: 'browser', message: b.message, location: (b.source || '').split('/').pop() + ':' + (b.line || 0), url: b.url, occurrences: 1, first_seen: now(), last_seen: now(), resolved_at: null, resolved: 'no' }); put('admin/errors?days=30', d); } catch (e) { /* ignore */ } return new Response(null, { status: 204 }); }
     if (/\/api\//.test(url)) { const r = await handle(method, url, init && init.body); if (r) return r; }
     const pg = M.pageFor(url); if (pg && !/\.(js|css|mjs|json|png|ico|svg)(\?|$)/.test(url)) return new Response(PAGES[pg], { status: 200, headers: { 'Content-Type': 'text/html' } });
@@ -237,7 +279,7 @@
       document.body.classList.add('has-topbar');
       const bar = document.createElement('div'); bar.className = 'cv-topbar';
       const cur = name === 'workspace.html' ? 'w' : (name === 'admin.html' || name === 'admin-guide.html') ? 'a' : 'l';
-      bar.innerHTML = '<span class="cv-brand">CVTara v3.8.0</span><div class="cv-tabs"><button data-t="l">Landing Page</button><button data-t="w">Customer Workspace</button><button data-t="a">Admin Dashboard</button></div><button data-t="theme" title="Day / night">🌙 Dark</button>';
+      bar.innerHTML = '<span class="cv-brand">CVTara v3.9.0</span><div class="cv-tabs"><button data-t="l">Landing Page</button><button data-t="w">Customer Workspace</button><button data-t="a">Admin Dashboard</button></div><button data-t="theme" title="Day / night">🌙 Dark</button>';
       bar.querySelectorAll('[data-t]').forEach(b => { if (b.dataset.t === cur) b.classList.add('on'); b.onclick = () => {
         const t = b.dataset.t;
         if (t === 'theme') { if (window.CVTaraTheme) window.CVTaraTheme.toggle(); return; }

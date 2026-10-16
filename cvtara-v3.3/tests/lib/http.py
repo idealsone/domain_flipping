@@ -23,8 +23,17 @@ class Client:
         if m: self.csrf = m.group(1).decode()
         return s, h, b.decode("utf8", "ignore")
 
-    def api(self, method, path, body=None):
+    def token(self):
+        """Pages served ready-made carry no token; ask for one the way the browser does."""
         if not self.csrf: self.page("/")
+        if not self.csrf:
+            s, _, b = self.raw("GET", "/api/csrf", None, {"Accept": "application/json"})
+            try: self.csrf = json.loads(b)["token"]
+            except (ValueError, KeyError): pass
+        return self.csrf
+
+    def api(self, method, path, body=None):
+        self.token()
         s, _, b = self.raw(method, "/api/" + path, body, {"Accept": "application/json", "X-CSRF-TOKEN": self.csrf or ""})
         try: return s, json.loads(b)
         except ValueError: return s, {"_raw": b[:200].decode("utf8", "ignore")}

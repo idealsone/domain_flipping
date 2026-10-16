@@ -7,6 +7,24 @@ RewriteCond %{THE_REQUEST} \s/install\.php [NC]
 RewriteRule ^install\.php$ - [R=404,L]
 RewriteCond %{QUERY_STRING} (^|&)v=[a-f0-9]{12}(&|$)
 RewriteRule \.(js|mjs|css)$ - [E=CVT_FINGERPRINTED:1]
+# Ready-made public pages (Owner Console > Speed & traffic, or php artisan cvtara:prebuild): a visitor with no session cookie is served
+# straight from disk. Signed-in visitors, queries and every other address go through the application as usual.
+RewriteCond %{REQUEST_METHOD} =GET
+RewriteCond %{QUERY_STRING} ^$
+RewriteCond %{HTTP_COOKIE} !(^|;\s*)[A-Za-z0-9_-]*session=
+RewriteCond %{DOCUMENT_ROOT}/_pages/.stamp -f
+RewriteCond %{DOCUMENT_ROOT}/_pages/.disabled !-f
+RewriteRule ^ - [E=CVT_PAGES:1]
+RewriteCond %{ENV:CVT_PAGES} 1
+RewriteCond %{DOCUMENT_ROOT}/_pages/index.html -f
+RewriteRule ^$ _pages/index.html [L]
+RewriteCond %{ENV:CVT_PAGES} 1
+RewriteCond %{REQUEST_URI} !^/index\.html$
+RewriteCond %{DOCUMENT_ROOT}/_pages/$1 -f
+RewriteRule ^([a-z0-9][a-z0-9_.-]*\.html)$ _pages/$1 [L]
+RewriteCond %{ENV:CVT_PAGES} 1
+RewriteCond %{DOCUMENT_ROOT}/_pages/$1/index.html -f
+RewriteRule ^((?:guides|calculators)/[a-z0-9/-]*[a-z0-9])/?$ _pages/$1/index.html [L]
 RewriteCond %{HTTP:Authorization} .
 RewriteRule .* - [E=HTTP_AUTHORIZATION:%{HTTP:Authorization}]
 RewriteCond %{REQUEST_FILENAME} !-d

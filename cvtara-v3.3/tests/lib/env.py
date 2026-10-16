@@ -20,7 +20,7 @@ class Instance:
         self.db = os.path.join(self.tmp, "test.sqlite"); open(self.db, "w").close()
         self.port = free_port(); self.base = f"http://127.0.0.1:{self.port}"; self.proc = None
         self.env = dict(os.environ, DB_CONNECTION="sqlite", DB_DATABASE=self.db, APP_ENV="local", APP_DEBUG="false",
-                        CVTARA_PREVIEW="true" if preview else "false", ATS_FETCH_ALLOW_PRIVATE="true" if preview else "false", API_RATE_LIMIT="6000", EXPORT_RATE_LIMIT="1000", SESSION_DRIVER="database",
+                        CVTARA_PREVIEW="true" if preview else "false", ATS_FETCH_ALLOW_PRIVATE="true" if preview else "false", API_RATE_LIMIT="6000", EXPORT_RATE_LIMIT="1000", ATS_LINK_RATE="1000", SESSION_DRIVER="database",
                         CACHE_STORE="database", MAIL_MAILER="log", APP_URL=self.base, QUEUE_CONNECTION="sync")
         self.env.update(extra_env or {})
 

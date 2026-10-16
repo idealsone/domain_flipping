@@ -110,6 +110,18 @@ class Credits
         throw ValidationException::withMessages(['limit' => 'All your ATS scans are used. Buy an add-on pack for more scans (valid until your plan ends), or renew your plan.']);
     }
 
+    /** Cheap check before any heavy work: does this account still have a scan to spend? (Free accounts have no pool.) */
+    public static function scanAvailable(int $uid): bool
+    {
+        foreach (self::pools($uid) as $p) {
+            if (self::usedScans($uid, $p['id']) < $p['scan']) {
+                return true;
+            }
+        }
+
+        return ! self::pools($uid);
+    }
+
     public static function releaseScan(int $uid, string $scanId): void
     {
         DB::table('product_usage')->where('owner_id', $uid)->where('action', 'ats_scan')->where('reference', 'like', $scanId.'|%')->delete();

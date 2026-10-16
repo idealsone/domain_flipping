@@ -27,7 +27,7 @@ for BASE,PFX in ((SRC,''),(CON,'console')):
 snap=json.load(open(SNAP+'/api.json')); pages=json.load(open(SNAP+'/pages.json'))
 open(OUT+'/snap.js','w').write('window.__SNAP='+json.dumps(snap)+';')
 open(OUT+'/pages.js','w').write('window.__PAGES='+json.dumps(pages)+';')
-open(OUT+'/mock-api.js','w').write(open(HERE+'/mock-api.js').read().replace('__BUILD__',BUILD))
+open(OUT+'/mock-api.js','w').write(open(HERE+'/mock-api.js').read().replace('__BUILD__',BUILD)+'\n'+open(HERE+'/match-engine.js').read()+'\n'+open(HERE+'/ats-mock.js').read())
 tpl=open(HERE+'/entry.html').read().replace('__BUILD__',BUILD)
 for name,title,role,page in [('entry-home','CVTara Home','null','home.html'),('entry-customer','CVTara Customer','"customer"','workspace.html'),('entry-admin','CVTara Admin','"owner"','admin.html')]:
     open(f'{OUT}/{name}.html','w').write(tpl.replace('__TITLE__',title).replace('__ROLE__',role).replace('__PAGE__',page))

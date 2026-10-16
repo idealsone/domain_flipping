@@ -127,3 +127,14 @@ Artisan::command('cvtara:demo', function () {
     \App\Services\Health::run(true);
     $this->info("Demo data ready. Customer: demo@cvtara.test · Owner: owner@cvtara.test · Password: {$pw}");
 })->purpose('Seed demo accounts for the /preview shell (preview environments only)');
+
+// Test helper: runs the ATS engine on a JSON file of [resume, job] pairs and prints the results (used by the automated tests).
+Artisan::command('cvtara:ats-analyse {file}', function (string $file) {
+    $pairs = json_decode((string) file_get_contents($file), true) ?: [];
+    $this->line(json_encode(array_map(fn ($p) => \App\Services\AtsEngine::analyse($p[0], $p[1]), $pairs), JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES));
+})->purpose('Run the ATS engine on resume/job pairs');
+
+Artisan::command('cvtara:prebuild', function () {
+    $r = \App\Services\PageCache::build();
+    $this->info('Pre-built '.$r['built'].' public pages'.($r['skipped'] ? '; could not build: '.implode(', ', $r['skipped']) : '').'.');
+})->purpose('Render every public page to a ready-made file so visitors are served without the database');

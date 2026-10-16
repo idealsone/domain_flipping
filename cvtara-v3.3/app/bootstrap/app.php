@@ -18,7 +18,7 @@ return Application::configure(basePath: dirname(__DIR__))
         }
         $m->append(SecurityHeaders::class);
         $m->redirectGuestsTo('/login');
-        $m->web(append: [OwnerMaintenance::class, \Illuminate\Routing\Middleware\ThrottleRequests::class.':240,1,pages']);
+        $m->web(prepend: [\App\Http\Middleware\ServeCachedPage::class], append: [OwnerMaintenance::class, \Illuminate\Routing\Middleware\ThrottleRequests::class.':240,1,pages']);
     })
     ->withExceptions(function (Exceptions $e): void {
         $e->report(function (\Throwable $x) {
@@ -35,7 +35,7 @@ return Application::configure(basePath: dirname(__DIR__))
         $e->render(function (HttpExceptionInterface $x, Request $r) {
             if ($r->is('api/*')) {
                 return response()->json(['ok' => false, 'error' => match ($x->getStatusCode()) {
-                    401 => 'Sign in to continue.',403 => 'You do not have access to this action.',404 => 'Record or page not found.',422 => $x->getMessage() ?: 'Check the request and retry.',409 => 'This record changed. Reload before saving.',413 => 'File or document is too large.',429 => 'Too many requests. Please wait.',default => 'Check the request and retry.'
+                    401 => 'Sign in to continue.',403 => 'You do not have access to this action.',404 => 'Record or page not found.',422 => $x->getMessage() ?: 'Check the request and retry.',409 => 'This record changed. Reload before saving.',413 => 'File or document is too large.',503 => $x->getMessage() ?: 'The service is busy. Try again in a minute.',429 => 'Too many requests. Please wait.',default => 'Check the request and retry.'
                 }, ...($x->getStatusCode() === 401 ? ['signIn' => '/login'] : [])], $x->getStatusCode());
             }
         });
