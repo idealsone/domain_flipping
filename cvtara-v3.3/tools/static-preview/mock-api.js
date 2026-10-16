@@ -180,6 +180,41 @@
       st.scans.unshift(scan); save();
       return ok({ scanId: id, title, company, jobUrl: scan.jobUrl, report, credits: {} });
     }
+    // ---- resume hub (upload, ATS-friendly score, delete lock, reminders) ----
+    const lines = t => String(t || '').split(/\r?\n/).map(x => x.trim()).filter(Boolean);
+    const qualityOf = d => {
+      const per = d.personal || {}, bl = [], ent = [...(d.experience || []), ...(d.projects || [])].filter(r => r.role || r.name || r.bullets || r.details);
+      ent.forEach(r => lines(r.bullets || r.details).forEach(x => bl.push(x.replace(/^[•*\-–]\s*/, ''))));
+      const verbs = bl.filter(x => /^\W*(built|developed|delivered|implemented|designed|created|led|managed|coordinated|screened|sourced|analy[sz]ed|improved|reduced|increased|maintained|automated|deployed|conducted|launched|achieved|generated|organi[sz]ed|planned|executed|completed|processed|ran|performed|presented)\b/i.test(x)).length, nums = bl.filter(x => /\d/.test(x)).length;
+      const skills = String(d.skills || '').split(/[,\n;|•]+/).map(x => x.trim()).filter(Boolean), sw = String(d.summary || '').trim().split(/\s+/).filter(Boolean).length;
+      const words = [per.name, per.role, d.summary, d.skills, ...ent.flatMap(r => [r.role, r.company, r.name, r.bullets, r.details]), ...(d.education || []).flatMap(r => [r.degree, r.school, r.details])].join(' ').split(/\s+/).filter(Boolean).length;
+      const dated = ent.filter(r => r.start || r.end || r.date || r.current).length, pe = ent.length ? bl.length / ent.length : 0;
+      const C = []; const add = (label, max, ratio, tip) => { const got = Math.round(max * Math.max(0, Math.min(1, ratio))); C.push({ key: label, label, got, max, tip: got >= max ? '' : tip }); };
+      add('Name', 6, per.name ? 1 : 0, 'Add your full name at the top.'); add('Email', 6, /@/.test(per.email || '') ? 1 : 0, 'Add a working email address.'); add('Phone', 6, String(per.phone || '').replace(/\D/g, '').length >= 8 ? 1 : 0, 'Add a phone number recruiters can call.');
+      add('City or profile link', 3, per.city || per.linkedin || per.portfolio ? 1 : 0, 'Add your city or a LinkedIn link.'); add('Professional summary', 10, sw >= 25 ? 1 : sw / 25, 'Write a summary of 25 to 80 words about your strengths and goal.');
+      add('Experience or projects with dates', 14, ent.length ? 0.6 + 0.4 * dated / ent.length : 0, 'Add your jobs, internships or projects with dates.'); add('Achievement bullets', 8, Math.min(1, pe / 2.5), 'Write 2 to 4 short bullet points under each job or project.');
+      add('Starts with action verbs', 8, bl.length ? Math.min(1, verbs / bl.length / 0.6) : 0, 'Start bullets with action verbs such as Built, Led, Reduced.'); add('Numbers and results', 8, bl.length ? Math.min(1, nums / bl.length / 0.3) : 0, 'Add numbers to some bullets: percentages, team size, volume, savings.');
+      add('Education', 8, (d.education || []).length ? 1 : 0, 'Add your education.'); add('Skills list', 12, Math.min(1, skills.length / 8), 'List at least 8 skills, tools and methods that match your target roles.'); add('Standard headings and plain text', 5, 1, '');
+      add('Length', 6, words >= 250 && words <= 900 ? 1 : words < 250 ? words / 250 : Math.max(0, 1 - (words - 900) / 600), words < 250 ? 'Add more detail: aim for 250 to 900 words.' : 'Shorten it: keep it under about 900 words.');
+      const score = Math.min(100, C.reduce((a, c) => a + c.got, 0)); return { score, checks: C, tips: C.map(c => c.tip).filter(Boolean).slice(0, 5), level: score >= 85 ? 'excellent' : score >= 70 ? 'good' : score >= 50 ? 'fair' : 'low' };
+    };
+    if (method === 'GET' && p === 'resumes') {
+      const d = get('resumes') || { ok: true, resumes: [] }; seedScans(); const order = d.resumes.slice().sort((a, b) => String(a.created_at).localeCompare(String(b.created_at))).map(x => x.id);
+      d.resumes.forEach(r => { const det = get('resumes/' + r.id); if (r.ats_score == null) r.ats_score = qualityOf(det && det.resume ? det.resume.data : {}).score; r.number = order.indexOf(r.id) + 1; r.locked = true; r.source = r.source || (r.parent_id ? 'tailored' : 'builder');
+        const sc = (st.scans || []).filter(x => x.resumeId === r.id); r.match = sc.length ? { score: sc[0].score, company: sc[0].company, role: sc[0].title, best: Math.max(...sc.map(x => x.score)), count: sc.length } : null; });
+      d.canDelete = false; return ok(d);
+    }
+    let qm; if (method === 'GET' && (qm = p.match(/^resumes\/([^/]+)\/quality$/))) { const det = get('resumes/' + qm[1]); return ok({ quality: qualityOf(det && det.resume ? det.resume.data : {}) }); }
+    if (method === 'DELETE' && /^resumes\/[^/]+$/.test(p)) return fail('Saved resumes stay in your account so your download credits stay accurate. Edit this resume instead, or contact support if you need it removed.', 422);
+    if (method === 'POST' && p === 'resumes/import') {
+      if (!st.role) return fail('Please sign in.', 401, { signIn: true });
+      const ls = lines(b.text), email = (b.text.match(/[A-Z0-9._%+\-]+@[A-Z0-9.\-]+\.[A-Z]{2,}/i) || [''])[0];
+      const data = { version: 1, title: (ls[0] || 'Imported') + ' · Imported', template: ((get('resumes') || {}).resumes || [{}])[0].template || 'classic', personal: { name: ls[0] || 'Your name', email }, summary: ls.slice(1, 4).join(' ').slice(0, 600), skills: 'Communication, Excel, Reporting', experience: [{ id: uid(), role: ls[1] || '', company: '', bullets: ls.slice(2, 6).join('\n') }], education: [], projects: [], certifications: [], order: ['summary', 'experience', 'education', 'projects', 'skills', 'certifications', 'languages', 'awards'], hidden: [] };
+      const out = upsert('resumes', 'resumes', { data }, { source: 'import', is_primary: ((get('resumes') || {}).resumes || []).length ? 0 : 1 }); const q = qualityOf(data);
+      return ok({ id: out.id, revision: 1, found: { experience: 1, education: 0, projects: 0, skills: 3, certifications: 0 }, warnings: ['This preview reads your file roughly. The real site reads every section.'], quality: { score: q.score, tips: q.tips } });
+    }
+    if (method === 'GET' && p === 'notifications') { if (!st.role) return ok({ notifications: [] }); if (!st.notes) { st.notes = [{ id: uid(), kind: 'application', title: 'Business Analyst at Nimbus: what is the status now?', body: 'Marked "Saved". Have you applied yet? Mark it as Applied once you have. (Reminder 1 of 3)', link: '/workspace.html?view=tracker', created_at: now() }]; save(); } return ok({ notifications: st.notes }); }
+    if (method === 'POST' && p === 'notifications') { st.notes = (b.ids || []).length ? (st.notes || []).filter(x => !b.ids.includes(x.id)) : []; save(); return ok(); }
     if (method === 'GET') {
       if (p === 'profile' && !st.role) return fail('Please sign in.', 401, { signIn: true });
       if (!SNAP.pub[p] && !st.role && !['public-activity'].includes(p)) return fail('Please sign in.', 401, { signIn: true });
@@ -291,7 +326,7 @@
       document.body.classList.add('has-topbar');
       const bar = document.createElement('div'); bar.className = 'cv-topbar';
       const cur = name === 'workspace.html' ? 'w' : (name === 'admin.html' || name === 'admin-guide.html') ? 'a' : 'l';
-      bar.innerHTML = '<span class="cv-brand">CVTara v3.9.0</span><div class="cv-tabs"><button data-t="l">Landing Page</button><button data-t="w">Customer Workspace</button><button data-t="a">Admin Dashboard</button></div><button data-t="theme" title="Day / night">🌙 Dark</button>';
+      bar.innerHTML = '<span class="cv-brand">CVTara v3.10.0</span><div class="cv-tabs"><button data-t="l">Landing Page</button><button data-t="w">Customer Workspace</button><button data-t="a">Admin Dashboard</button></div><button data-t="theme" title="Day / night">🌙 Dark</button>';
       bar.querySelectorAll('[data-t]').forEach(b => { if (b.dataset.t === cur) b.classList.add('on'); b.onclick = () => {
         const t = b.dataset.t;
         if (t === 'theme') { if (window.CVTaraTheme) window.CVTaraTheme.toggle(); return; }

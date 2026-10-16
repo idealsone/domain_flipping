@@ -93,7 +93,8 @@
     "builder": {
       "enabled": true,
       "position": 1,
-      "limit": 500
+      "limit": 500,
+      "allowDelete": false
     },
     "match": {
       "enabled": true,
@@ -173,6 +174,15 @@
       "delayHours": 0,
       "subject": "Your application needs a follow-up",
       "body": "Hi {{name}},\nOpen your tracker to review the next action.\n\nTeam CVTara · support@cvtara.com"
+    },
+    {
+      "id": "appstatus",
+      "name": "Application status reminder",
+      "trigger": "application_status",
+      "enabled": true,
+      "delayHours": 0,
+      "subject": "{{company}} · {{role}}: what is the status now? ({{n}} of 3)",
+      "body": "Hi {{name}},\nYou prepared your resume for {{role}} at {{company}}. It is marked \"{{status}}\" in your tracker.\n{{question}}\nUpdate it here: {{tracker_url}}\n\nThis is reminder {{n}} of 3. After the third we will not remind you again about this job.\n\nTeam CVTara · support@cvtara.com"
     },
     {
       "id": "reset",

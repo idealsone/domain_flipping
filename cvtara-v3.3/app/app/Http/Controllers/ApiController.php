@@ -190,6 +190,27 @@ class ApiController extends Controller
 
             return $ok([...$a, 'planName' => $plans[$a['plan']]['name'] ?? 'Free', 'daysLeft' => $a['accessUntil'] ? max(0, (int) ceil((strtotime($a['accessUntil']) - time()) / 86400)) : 0, 'credits' => $cs, 'caps' => ['resumes' => (int) $l['savedResumes'] + 1, 'letters' => (int) $l['savedLetters'], 'atsScans' => $cs['scans']['total'], 'exports' => null], 'used' => ['exports' => $exports, 'savedResumes' => DB::table('resume_drafts')->where('owner_id', $id)->count(), 'savedLetters' => DB::table('cover_letter_drafts')->where('owner_id', $id)->count(), 'atsScans' => $scans, 'dailyMatches' => DB::table('ats_scans')->where('owner_id', $id)->where('status', '!=', 'void')->whereDate('created_at', today())->count()]]);
         }
+        if ($path === 'resumes/import') {
+            abort_unless($r->isMethod('POST'), 405);
+
+            return $this->importResume($r);
+        }
+        if (preg_match('#^resumes/([a-f0-9-]{36})/quality$#', $path, $m) && $get) {
+            $row = DB::table('resume_drafts')->where('owner_id', $id)->where('id', $m[1])->first(['content_json']);
+            abort_unless($row, 404);
+
+            return $ok(['quality' => \App\Services\ResumeQuality::score(json_decode($row->content_json, true) ?: [])]);
+        }
+        if ($path === 'notifications') {
+            if ($r->isMethod('POST')) {
+                $ids = array_filter((array) $r->input('ids', []), fn ($x) => is_string($x) && preg_match('/^[a-f0-9-]{36}$/', $x));
+                DB::table('notifications')->where('owner_id', $id)->when($ids, fn ($q) => $q->whereIn('id', $ids))->whereNull('read_at')->update(['read_at' => now()]);
+
+                return $ok();
+            }
+
+            return $ok(['notifications' => DB::table('notifications')->where('owner_id', $id)->whereNull('read_at')->orderByDesc('created_at')->limit(10)->get(['id', 'kind', 'title', 'body', 'link', 'created_at'])]);
+        }
         if (preg_match('#^resumes/([a-f0-9-]{36})/(primary|variant)$#', $path, $m)) {
             abort_unless($r->isMethod('POST'), 405);
 
@@ -280,7 +301,7 @@ class ApiController extends Controller
             return $ok(['applications' => DB::table('applications')->where('owner_id', $id)->orderByDesc('updated_at')->get()]);
         }
         if ($path === 'applications' && $r->isMethod('POST')) {
-            $v = $r->validate(['company' => 'required|string|max:180', 'role' => 'required|string|max:180', 'stage' => 'required|in:saved,applied,interview,offer,closed', 'jobUrl' => 'nullable|url:http,https|max:1000', 'appliedAt' => 'nullable|date_format:Y-m-d', 'followUp' => 'nullable|date_format:Y-m-d', 'resumeId' => 'nullable|uuid', 'notes' => 'nullable|string|max:8000', 'id' => 'nullable|uuid', 'revision' => 'nullable|integer']);
+            $v = $r->validate(['company' => 'required|string|max:180', 'role' => 'required|string|max:180', 'stage' => 'required|in:saved,applied,interview,offer,closed', 'jobUrl' => 'nullable|url:http,https|max:1000', 'appliedAt' => 'nullable|date_format:Y-m-d', 'followUp' => 'nullable|date_format:Y-m-d', 'resumeId' => 'nullable|uuid', 'notes' => 'nullable|string|max:8000', 'id' => 'nullable|uuid', 'revision' => 'nullable|integer', 'remindersOff' => 'nullable|boolean']);
             $result = DB::transaction(function () use ($v, $id) {
                 User::whereKey($id)->lockForUpdate()->first();
                 $feature = Settings::get('features')['tracker'];
@@ -288,6 +309,12 @@ class ApiController extends Controller
                 if (! empty($v['resumeId'])) {
                     abort_unless(DB::table('resume_drafts')->where('owner_id', $id)->where('id', $v['resumeId'])->exists(), 422);
                 }$record = ['owner_id' => $id, 'company' => $v['company'], 'role' => $v['role'], 'stage' => $v['stage'], 'job_url' => $v['jobUrl'] ?? '', 'applied_at' => $v['appliedAt'] ?? null, 'follow_up' => $v['followUp'] ?? null, 'resume_id' => $v['resumeId'] ?? null, 'notes' => $v['notes'] ?? '', 'updated_at' => now()];
+                if (array_key_exists('remindersOff', $v) && $v['remindersOff'] !== null) {
+                    $record['reminders_off'] = (bool) $v['remindersOff'];
+                }
+                if (in_array($v['stage'], ['offer', 'closed'], true)) {
+                    $record['next_reminder_at'] = null;
+                }
                 $aid = $v['id'] ?? (string) Str::uuid();
                 if (! empty($v['id'])) {
                     abort_unless(DB::table('applications')->where('id', $aid)->where('owner_id', $id)->where('revision', $v['revision'] ?? 0)->update([...$record, 'revision' => DB::raw('revision+1')]), 409);
@@ -417,7 +444,7 @@ class ApiController extends Controller
                 throw ValidationException::withMessages(['limit' => 'A free account keeps one resume. Choose a plan to create job-tailored versions and download.']);
             }
             if (DB::table('resume_drafts')->where('owner_id', $id)->count() >= Settings::get('features')['builder']['limit']) {
-                throw ValidationException::withMessages(['limit' => 'You have reached the saved-draft limit. Delete an old draft to save a new one.']);
+                throw ValidationException::withMessages(['limit' => 'You have reached the saved resume limit for your plan. Edit an existing resume, or choose a plan with more room.']);
             }
             $data = json_decode($row->content_json, true);
             unset($data['_profileId'], $data['_profileRevision']);
@@ -425,13 +452,38 @@ class ApiController extends Controller
             $data['company'] = $v['company'];
             $data['role'] = $v['role'];
             $nid = (string) Str::uuid();
-            DB::table('resume_drafts')->insert(['id' => $nid, 'owner_id' => $id, 'title' => substr($data['title'], 0, 180), 'template' => $row->template, 'company' => $v['company'], 'role' => $v['role'], 'content_json' => json_encode($data), 'revision' => 1, 'is_primary' => false, 'parent_id' => $row->id, 'job_description' => $v['jobDescription'] ?? null, 'job_url' => $v['jobUrl'] ?? null, 'created_at' => now(), 'updated_at' => now()]);
+            DB::table('resume_drafts')->insert(['id' => $nid, 'owner_id' => $id, 'title' => substr($data['title'], 0, 180), 'template' => $row->template, 'company' => $v['company'], 'role' => $v['role'], 'content_json' => json_encode($data), 'revision' => 1, 'is_primary' => false, 'parent_id' => $row->id, 'job_description' => $v['jobDescription'] ?? null, 'job_url' => $v['jobUrl'] ?? null, 'ats_score' => \App\Services\ResumeQuality::score($data)['score'], 'source' => 'tailored', 'created_at' => now(), 'updated_at' => now()]);
             Settings::audit($id, 'resume_variant_created', $nid);
 
             return $nid;
         });
 
-        return response()->json(['ok' => true, 'id' => $new, 'revision' => 1]);
+        // A resume prepared for a job goes straight into the Applications tracker.
+        $tracked = \App\Services\Tracker::prepared($id, $v['company'], $v['role'], (string) ($v['jobUrl'] ?? ''), $v['scanId'] ?? null, $new);
+
+        return response()->json(['ok' => true, 'id' => $new, 'revision' => 1, 'tracker' => $tracked]);
+    }
+
+    /** Builds a resume from an uploaded file's text (already extracted in the browser) and saves it as a normal draft. */
+    private function importResume(Request $r)
+    {
+        $v = $r->validate(['text' => 'required|string|min:60|max:120000', 'fileName' => 'nullable|string|max:200', 'template' => 'nullable|string|max:120']);
+        $catalog = json_decode(file_get_contents(resource_path('data/catalog.json')), true)['templates'] ?? [];
+        $lib = Settings::get('library')['templates'] ?? [];
+        $ok = fn ($slug) => collect($catalog)->contains('slug', $slug) && ($lib[$slug]['published'] ?? true) !== false;
+        $slug = ! empty($v['template']) && $ok($v['template']) ? $v['template'] : (collect($catalog)->first(fn ($t) => $ok($t['slug']))['slug'] ?? null);
+        abort_unless($slug, 422, 'No resume template is available right now.');
+        $parsed = \App\Services\ResumeImport::parse($v['text'], $slug, (string) ($v['fileName'] ?? ''));
+        $data = $parsed['data'];
+        if (trim($data['personal']['name']) === '') {
+            $data['personal']['name'] = 'Your name';
+        }
+        $r->merge(['id' => null, 'data' => $data]);
+        $saved = $this->documents($r, 'resumes', null)->getData(true);
+        DB::table('resume_drafts')->where('id', $saved['id'])->where('owner_id', $r->user()->id)->update(['source' => 'import', 'content_json' => DB::raw("REPLACE(content_json, '\"sectionLabels\":[]', '\"sectionLabels\":{}')")]);
+        $q = \App\Services\ResumeQuality::score($data);
+
+        return response()->json(['ok' => true, 'id' => $saved['id'], 'revision' => $saved['revision'], 'found' => $parsed['found'], 'warnings' => $parsed['warnings'], 'quality' => ['score' => $q['score'], 'tips' => $q['tips']]]);
     }
 
     private function accountExport(User $u): array
@@ -487,10 +539,39 @@ class ApiController extends Controller
                 return response()->json(['ok' => true, $one => ['id' => $row->id, 'revision' => $row->revision, 'isPrimary' => (bool) ($row->is_primary ?? false), 'parentId' => $row->parent_id ?? null, 'jobDescription' => $row->job_description ?? '', 'jobUrl' => $row->job_url ?? '', 'data' => json_decode($row->content_json, true)]]);
             }
 
-            return response()->json(['ok' => true, $type => $query->orderByDesc('updated_at')->get($type === 'resumes' ? ['id', 'title', 'template', 'company', 'role', 'revision', 'is_primary', 'parent_id', 'created_at', 'updated_at'] : ['id', 'title', 'template', 'company', 'role', 'revision', 'created_at', 'updated_at']), 'limit' => $limit, 'credits' => Credits::status($id)]);
+            $rows = $query->orderByDesc('updated_at')->get($type === 'resumes' ? ['id', 'title', 'template', 'company', 'role', 'revision', 'is_primary', 'parent_id', 'ats_score', 'downloaded_at', 'source', 'created_at', 'updated_at'] : ['id', 'title', 'template', 'company', 'role', 'revision', 'downloaded_at', 'created_at', 'updated_at']);
+            if ($type === 'resumes') {
+                // Resumes saved before the score existed are scored the first time they are listed.
+                foreach ($rows->filter(fn ($x) => $x->ats_score === null)->take(40) as $x) {
+                    $c = DB::table('resume_drafts')->where('id', $x->id)->value('content_json');
+                    $x->ats_score = \App\Services\ResumeQuality::score(json_decode((string) $c, true) ?: [])['score'];
+                    DB::table('resume_drafts')->where('id', $x->id)->update(['ats_score' => $x->ats_score]);
+                }
+                // Best job match each resume has reached, and the latest one.
+                $scans = DB::table('ats_scans')->where('owner_id', $id)->where('status', 'done')->whereNotNull('score')->whereIn('resume_id', $rows->pluck('id'))->orderByDesc('created_at')->get(['resume_id', 'score', 'job_title', 'company', 'created_at'])->groupBy('resume_id');
+                $order = $rows->sortBy('created_at')->pluck('id')->values()->all();
+                $rows = $rows->map(function ($x) use ($scans, $order) {
+                    $x = (array) $x;
+                    $s = $scans[$x['id']] ?? collect();
+                    $last = $s->first();
+                    $x['match'] = $last ? ['score' => (int) $last->score, 'company' => $last->company, 'role' => $last->job_title, 'best' => (int) $s->max('score'), 'count' => $s->count()] : null;
+                    $x['locked'] = true;
+                    $x['number'] = array_search($x['id'], $order, true) + 1;
+
+                    return $x;
+                })->values();
+            }
+
+            return response()->json(['ok' => true, $type => $rows, 'limit' => $limit, 'canDelete' => $type !== 'resumes' || (bool) (Settings::get('features')['builder']['allowDelete'] ?? false), 'credits' => Credits::status($id)]);
         }
         if ($r->isMethod('DELETE')) {
-            abort_unless($doc && (clone $query)->where('id', $doc)->delete(), 404);
+            $existing = $doc ? (clone $query)->where('id', $doc)->first() : null;
+            abort_unless($existing, 404);
+            if ($type === 'resumes' && ! (Settings::get('features')['builder']['allowDelete'] ?? false)) {
+                abort(422, 'Saved resumes stay in your account so your download credits stay accurate. Edit this resume instead, or contact support if you need it removed.');
+            }
+            abort_if(! empty($existing->downloaded_at), 422, 'This '.$one.' has been downloaded, so it stays in your account. You can still edit it.');
+            abort_unless((clone $query)->where('id', $doc)->delete(), 404);
             if ($type === 'resumes' && ! DB::table('resume_drafts')->where('owner_id', $id)->where('is_primary', true)->exists()) {
                 $next = DB::table('resume_drafts')->where('owner_id', $id)->orderBy('created_at')->value('id');
                 if ($next) {
@@ -534,6 +615,9 @@ class ApiController extends Controller
             $catalog = json_decode(file_get_contents(resource_path('data/catalog.json')), true);
             abort_unless(collect($catalog[$type === 'resumes' ? 'templates' : 'coverLetters'])->contains('slug', $slug), 422);
             $record = ['title' => $data['title'], 'template' => $slug, 'content_json' => json_encode($data), 'company' => $data['company'] ?? '', 'role' => $data['role'] ?? '', 'updated_at' => now()];
+            if ($type === 'resumes') {
+                $record['ats_score'] = \App\Services\ResumeQuality::score($data)['score'];
+            }
             if ($r->input('id')) {
                 $did = $r->input('id');
                 $rev = (int) $r->input('revision');
@@ -544,13 +628,13 @@ class ApiController extends Controller
                     throw ValidationException::withMessages(['limit' => 'A free account keeps one '.($type === 'resumes' ? 'resume' : 'cover letter').'. Choose a plan to create more and to download.']);
                 }
                 if (DB::table($table)->where('owner_id', $id)->count() >= $limit) {
-                    throw ValidationException::withMessages(['limit' => 'You have reached the saved-draft limit. Delete an old draft to save a new one.']);
+                    throw ValidationException::withMessages(['limit' => 'You have reached the saved '.($type === 'resumes' ? 'resume' : 'cover letter').' limit for your plan. Open an existing one to edit it, or choose a plan with more room.']);
                 }$did = (string) Str::uuid();
                 $rev = 1;
                 DB::table($table)->insert([...$record, 'id' => $did, 'owner_id' => $id, 'revision' => 1, 'created_at' => now(), ...($type === 'resumes' ? ['is_primary' => ! DB::table('resume_drafts')->where('owner_id', $id)->exists()] : [])]);
             }Settings::audit($id, $one.'_saved', $did);
 
-            return ['id' => $did, 'revision' => $rev];
+            return ['id' => $did, 'revision' => $rev, ...($type === 'resumes' ? ['ats' => ['score' => $record['ats_score'], 'tips' => array_slice(\App\Services\ResumeQuality::score($data)['tips'], 0, 3)]] : [])];
         });
         if ($type === 'resumes') {
             MailAutomation::queue($u, 'resume_saved', $result['id'].':'.$result['revision']);

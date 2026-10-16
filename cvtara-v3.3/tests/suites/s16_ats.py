@@ -154,19 +154,19 @@ def run(ctx, t):
             return c.raw("POST", f"/export/{kind}/{doc}/{fmt}", {"clean": True}, {"Accept": "application/json", "X-CSRF-TOKEN": csrf})
         apps = lambda: c.api("GET", "applications")[1]["applications"]
         s, h, b = dl("resume", vid)
-        t.check("a clean resume download works and reports the credit used", s == 200 and h.get("X-CVTara-Credit") == "resume" and h.get("X-CVTara-Tracker") == "added", (s, h))
+        t.check("a clean resume download works and reports the credit used", s == 200 and h.get("X-CVTara-Credit") == "resume" and h.get("X-CVTara-Tracker") == "updated", (s, h))
         t.check("the download tells the page what is left", "resume=" in h.get("X-CVTara-Left", "") and "letter=" in h.get("X-CVTara-Left", ""), h.get("X-CVTara-Left"))
-        a = [x for x in apps() if x["company"] == "Acme Corp"]
-        t.check("the job was added to the tracker automatically", len(a) == 1 and a[0]["stage"] == "saved" and a[0]["origin"] == "download" and a[0]["job_url"] == base + "/ld" and a[0]["resume_id"] == vid and a[0]["resume_credits"] == 1, a)
+        a = [x for x in apps() if x["company"] == "Acme Corp" and x["role"] == "Talent Acquisition Specialist"]
+        t.check("the job went into the tracker when the resume was prepared, and the download added its credit", len(a) == 1 and a[0]["stage"] == "saved" and a[0]["origin"] == "prepared" and a[0]["job_url"] == base + "/ld" and a[0]["resume_id"] == vid and a[0]["resume_credits"] == 1 and a[0]["next_reminder_at"], a)
         s, h, b = dl("resume", vid, "docx")
-        t.check("the same version in another format is free and not duplicated", h.get("X-CVTara-Credit") == "none" and h.get("X-CVTara-Note") == "same-version" and len([x for x in apps() if x["company"] == "Acme Corp"]) == 1)
+        t.check("the same version in another format is free and not duplicated", h.get("X-CVTara-Credit") == "none" and h.get("X-CVTara-Note") == "same-version" and len([x for x in apps() if x["company"] == "Acme Corp" and x["role"] == "Talent Acquisition Specialist"]) == 1)
         ids = []
         for n in (1, 2):
             s, j = c.api("POST", "letters", {"data": letter(n)}); ids.append(j.get("id"))
         r1 = dl("letter", ids[0])[1]; r2 = dl("letter", ids[1])[1]
         t.check("each cover letter uses 1 cover-letter credit", r1.get("X-CVTara-Credit") == "letter" and r2.get("X-CVTara-Credit") == "letter", (r1, r2))
-        a = [x for x in apps() if x["company"] == "Acme Corp"][0]
-        t.check("the tracker shows 1 resume + 2 letter credits for the job (3 in all)", len([x for x in apps() if x["company"] == "Acme Corp"]) == 1 and a["resume_credits"] == 1 and a["letter_credits"] == 2, a)
+        a = [x for x in apps() if x["company"] == "Acme Corp" and x["role"] == "Talent Acquisition Specialist"][0]
+        t.check("the tracker shows 1 resume + 2 letter credits for the job (3 in all)", len([x for x in apps() if x["company"] == "Acme Corp" and x["role"] == "Talent Acquisition Specialist"]) == 1 and a["resume_credits"] == 1 and a["letter_credits"] == 2, a)
         s, j = c.api("POST", "letters", {"data": letter(3, "Beta Labs", "Data Analyst")}); b3 = dl("letter", j["id"])[1]
         t.check("a different job becomes its own tracker entry", b3.get("X-CVTara-Tracker") == "added" and len([x for x in apps() if x["company"] == "Beta Labs"]) == 1)
         s, h, b = dl("resume", rid)

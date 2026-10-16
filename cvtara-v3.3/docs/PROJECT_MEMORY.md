@@ -34,3 +34,11 @@ Keep this file current. It records what the owner asked for, what was built, the
 - Career Content Library: design only (`docs/CAREER_CONTENT_LIBRARY_DESIGN.md`); the owner chose to skip building it for now.
 - Open audit items: F-29, F-30, F-32, F-38, F-45–F-52, F-54, F-57–F-59, F-62–F-64 (see `docs/risks_and_bugs.md`).
 - A grammar pass over site text, code strings, data and articles was started in v3.9.0; results are listed in the changelog.
+
+## v3.10.0 decisions (resume hub)
+
+- Resume import is text based: the browser reads PDF/DOCX/TXT (and old DOC best-effort), `POST /api/resumes/import` parses headings with `App\Services\ResumeImport` and saves through the normal draft rules. Scanned PDFs and image-only files cannot be read; the customer is told to paste text or start from a template.
+- "ATS-friendly" (`ResumeQuality`) is job-independent and deterministic. It cannot promise a match score for a given job: the match depends on the job. The 70%+ promise applies to the friendliness score of a properly filled resume.
+- Customers cannot delete resumes (owner switch `features.builder.allowDelete`). Letters can be deleted until downloaded.
+- Tracker reminders: 3 maximum per auto-added job (days 3, 7, 14 after adding), `Tracker::remind()`, `notifications` table, email trigger `application_status`.
+- Machine learning is deliberately not built yet. Reasons: shared hosting has no model runtime; there is no outcome data yet to learn from; the current engine is explainable, which customers need ("what am I lacking"). Plan when there is data: (1) log anonymised outcomes (stage reached per job) with the keyword and requirement evidence of the scan, (2) after a few thousand outcomes fit a small logistic model offline and ship only its weights as JSON that `AtsEngine::score()` can use, (3) optional embedding service for synonym matching behind a provider switch like the job reader. Do not send resume content to a third party without consent and a policy update.

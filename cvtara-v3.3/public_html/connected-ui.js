@@ -5,7 +5,7 @@ const notice=(el,e)=>{el.innerHTML=`<p role="alert">${esc(e.message)} ${e.signIn
 const sample='Ananya Sharma\nananya@example.com\nSUMMARY\nRecruitment professional with experience in candidate screening and interview coordination.\nEXPERIENCE\nRecruitment Intern — Example Company\nScreened applications and coordinated interviews. Maintained Excel reports.\nEDUCATION\nBachelor of Business Administration\nSKILLS\nRecruitment, candidate screening, Excel, communication';
 const sampleJob='Recruitment executive with candidate screening, interview coordination, hiring manager communication, Excel reporting and LinkedIn sourcing skills.';
 async function readFile(file){
- if(!file)throw Error('Choose one PDF or DOCX file.');if(file.size>5*1024*1024)throw Error('Choose a file smaller than 5 MB.');
+ if(!file)throw Error('Choose a PDF, Word or text file.');if(file.size>5*1024*1024)throw Error('Choose a file smaller than 5 MB.');
  const bytes=new Uint8Array(await file.arrayBuffer());let text='';
  if(/\.pdf$/i.test(file.name)&&new TextDecoder().decode(bytes.slice(0,5))==='%PDF-'){
  await import('/pdf-compat.mjs');const pdfjs=await import('/assets/vendor/pdf.min.mjs');pdfjs.GlobalWorkerOptions.workerSrc='/pdf-worker-compat.mjs';
@@ -13,7 +13,15 @@ async function readFile(file){
  }else if(/\.docx$/i.test(file.name)&&bytes[0]===80&&bytes[1]===75){
  if(!window.JSZip)await new Promise((resolve,reject)=>{const s=document.createElement('script');s.src='/assets/vendor/jszip.min.js';s.onload=resolve;s.onerror=()=>reject(Error('Could not load the document reader. Retry.'));document.head.append(s);});
  const zip=await JSZip.loadAsync(bytes);if(zip.file('word/vbaProject.bin'))throw Error('Macro-enabled files are not supported.');const part=zip.file('word/document.xml');if(!part)throw Error('This file is not a valid DOCX document.');if(part._data?.uncompressedSize>2000000)throw Error('The document contains too much content.');const xml=await part.async('string');if(xml.length>2000000)throw Error('The document contains too much content.');const parsed=new DOMParser().parseFromString(xml,'application/xml');if(parsed.querySelector('parsererror'))throw Error('This document could not be read.');text=Array.from(parsed.getElementsByTagNameNS('*','p')).map(p=>Array.from(p.getElementsByTagNameNS('*','t')).map(t=>t.textContent).join('')).join('\n');
- }else throw Error('Choose a valid PDF or DOCX file.');
+ }else if(/\.(txt|md|text)$/i.test(file.name)||(file.type||'').startsWith('text/')){
+ text=new TextDecoder('utf-8').decode(bytes);
+ }else if(/\.doc$/i.test(file.name)&&bytes[0]===0xD0&&bytes[1]===0xCF){
+ /* Older Word files: pull out the readable text. Formatting is lost, so the importer asks the customer to review. */
+ const keep=l=>l.length>=3&&!/^(Arial|Times New Roman|Calibri|Normal|Default Paragraph Font|Microsoft|Word\.Document|Root Entry|SummaryInformation|DocumentSummary|Table|Data|WordDocument|Normal\.dotm?|Cambria|Verdana|Tahoma|Courier New|Symbol|Wingdings|Heading \d|Header|Footer|Title|Body Text|List Paragraph|Hyperlink)/i.test(l)&&/[a-z]{2}/i.test(l);
+ const u16=new TextDecoder('utf-16le').decode(bytes.slice(0,bytes.length-(bytes.length%2))),l1=new TextDecoder('latin1').decode(bytes);
+ const runs=str=>(str.match(/[\x20-\x7e\u00a0-\u024f\u2018-\u201d\u2022\u2013\u2014\r\n\t]{4,}/g)||[]).join('\n');
+ const a=runs(u16),b=runs(l1);text=(a.length>b.length*0.6?a:b).split(/[\r\n\x0b\x07]+/).map(x=>x.trim()).filter(keep).join('\n');
+ }else throw Error('Choose a PDF, Word (DOCX or DOC) or text file.');
  text=text.trim();if(text.length<30)throw Error('No readable resume text was found. For a scanned PDF, paste your text below.');if(text.length>120000)throw Error('This document contains too much text.');return text;
 }
 window.CVTaraImport={readFile};

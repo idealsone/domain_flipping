@@ -120,7 +120,7 @@
     if(!data.template){status.textContent='Choose a template before saving.';setStage('template',true);return;}
     if(!data.personal.name.trim()){tab='personal';renderFields();setStage('details',true);status.textContent='Add your name before saving to your profile.';return;}
     savingProfile=true;const editing=data,snapshot=structuredClone(data);const saveButtons=host.querySelectorAll('[data-studio-action=save]');saveButtons.forEach(b=>b.disabled=true);status.textContent='Saving to profile…';
-    try{const result=await window.CVTaraAPI.request('/api/resumes',{method:'POST',body:JSON.stringify({id:snapshot._profileId||null,revision:snapshot._profileRevision||null,data:snapshot})});editing._profileId=result.id;editing._profileRevision=result.revision;if(data===editing){save();status.textContent='Saved to your profile';}else status.textContent='Previous draft saved to profile';document.dispatchEvent(new CustomEvent('cvtara-resume-saved'));}
+    try{const result=await window.CVTaraAPI.request('/api/resumes',{method:'POST',body:JSON.stringify({id:snapshot._profileId||null,revision:snapshot._profileRevision||null,data:snapshot})});editing._profileId=result.id;editing._profileRevision=result.revision;if(data===editing){save();status.textContent='Saved to your profile';}else status.textContent='Previous draft saved to profile';document.dispatchEvent(new CustomEvent('cvtara-resume-saved',{detail:result}));}
     catch(error){status.textContent=error.status===401?'Sign in to save this draft to your profile.':'Profile save failed: '+error.message;}
     finally{savingProfile=false;saveButtons.forEach(b=>b.disabled=false);}
   }

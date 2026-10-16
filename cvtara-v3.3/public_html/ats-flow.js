@@ -33,11 +33,12 @@
   function inputPanel() {
     const box = $('#atsInput');
     if (!st.resumes.length) {
-      box.innerHTML = '<h3>Start with your resume</h3><p class="ats-muted">ATS Match checks one of your saved resumes. Build your primary resume first — it takes a few minutes.</p><button class="button primary" type="button" data-workspace-view="builder">Build my resume →</button>';
+      box.innerHTML = '<h3>Start with your resume</h3><p class="ats-muted">ATS Match checks one of your saved resumes. Build your primary resume first — it takes a few minutes.</p><div class="ats-empty-actions"><button class="button primary" type="button" data-ats-upload>📤 Upload my resume</button><button class="button secondary" type="button" data-workspace-view="builder">Build one from a template →</button></div>';
+      box.querySelector('[data-ats-upload]').onclick = () => window.CVTaraResumeImport?.pick();
       return;
     }
     const tab = (k, label) => `<button type="button" role="tab" aria-selected="${st.source === k}" data-src="${k}">${label}</button>`;
-    box.innerHTML = `<label class="ats-field"><span>1 · Your resume</span><select id="atsResume">${st.resumes.map(r => `<option value="${E(r.id)}" ${r.id === st.resumeId ? 'selected' : ''}>${r.is_primary ? '★ Primary — ' : ''}${E(r.title)}</option>`).join('')}</select></label>
+    box.innerHTML = `<label class="ats-field"><span>1 · Your resume</span><select id="atsResume">${st.resumes.map(r => `<option value="${E(r.id)}" ${r.id === st.resumeId ? 'selected' : ''}>${r.is_primary ? '★ Primary — ' : ''}${E(r.title)}${r.ats_score != null ? ' · ATS-friendly ' + r.ats_score + '%' : ''}</option>`).join('')}</select></label>
 <div class="ats-field"><span>2 · The job</span><div class="ats-tabs" role="tablist">${tab('link', 'Job link')}${tab('file', 'PDF / text file')}${tab('text', 'Paste text')}</div></div>
 <div id="atsSrc"></div>
 <div class="ats-two"><label class="ats-field"><span>Job title <small>(optional)</small></span><input id="atsTitle" maxlength="180" placeholder="Filled in from the job"></label><label class="ats-field"><span>Company <small>(optional)</small></span><input id="atsCompany" maxlength="180" placeholder="Filled in from the job"></label></div>
@@ -168,6 +169,8 @@ ${kw.total ? `<h3>Keywords from the job</h3><div class="ats-kw">${kw.found.map(k
       const list = await api('/api/resumes');
       st.resumes = (list.resumes || []).slice().sort((a, b) => (b.is_primary ? 1 : 0) - (a.is_primary ? 1 : 0));
       st.resumeId = st.resumes[0]?.id || '';
+      let want = ''; try { want = sessionStorage.getItem('cvtara-ats-resume') || ''; sessionStorage.removeItem('cvtara-ats-resume'); } catch { /* ignore */ }
+      if (want && st.resumes.some(r => r.id === want)) st.resumeId = want;
       await refresh();
     } catch (e) { $('#atsInput').innerHTML = `<p role="alert">${E(e.message)}</p>`; return; }
     inputPanel();
@@ -201,6 +204,7 @@ ${kw.total ? `<h3>Keywords from the job</h3><div class="ats-kw">${kw.found.map(k
     const drop = e.target.closest('.ats-drop');
     if (drop && e.target.tagName !== 'INPUT') { $('#atsFile')?.click(); }
   });
+  window.CVTaraAts = { select(id) { if (st.resumes.some(r => r.id === id)) { st.resumeId = id; const el = $('#atsResume'); if (el) el.value = id; } } };
   document.addEventListener('click', e => { if (e.target.closest('[data-workspace-view="match"]') && st.resumes.length) { refresh().catch(() => {}); } });
   load();
 })();

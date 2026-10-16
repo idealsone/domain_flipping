@@ -99,7 +99,7 @@
 
   /* ======================= USER MAILER ======================= */
   const VARS = ['name', 'email', 'plan_name', 'access_until', 'amount', 'payment_reference', 'site_url', 'reset_url'];
-  const TRIG = { profile_created: 'New account', password_reset: 'Password reset', resume_saved: 'Resume saved', purchase_verified: 'Subscription confirmed', abandoned_purchase: 'Checkout abandoned', blog_published: 'New blog post', access_expiring: 'Plan expiring', followup_due: 'Application follow-up', download_locked: 'Download needs a plan', manual: 'Manual' };
+  const TRIG = { profile_created: 'New account', password_reset: 'Password reset', resume_saved: 'Resume saved', purchase_verified: 'Subscription confirmed', abandoned_purchase: 'Checkout abandoned', blog_published: 'New blog post', access_expiring: 'Plan expiring', followup_due: 'Application follow-up', application_status: 'Application status reminder', download_locked: 'Download needs a plan', manual: 'Manual' };
   async function mailer() {
     const h = $('#admin-mailer'); if (!h) return; h.innerHTML = '<div class="ops-skel"></div><div class="ops-skel"></div>';
     try {
