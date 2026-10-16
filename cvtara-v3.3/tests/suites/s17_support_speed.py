@@ -28,8 +28,8 @@ BASE = {"area": "ats-match", "kind": "bug", "message": "The scan button does not
 
 def run(ctx, t):
     if not ctx.preview: return
-    db = ctx.db(); pub = ctx.public; ipub = ctx.inst.public
-    w = open(os.path.join(pub, "support-widget.js"), encoding="utf8").read()
+    db = ctx.db(); pub = ctx.public; ipub = ctx.inst.public; src = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "public_html")  # source text checks read the repository copy
+    w = open(os.path.join(src, "support-widget.js"), encoding="utf8").read()
     t.check("the widget limits files to 5 images of 2 MB", "MAX_FILES = 5" in w and "2 * 1024 * 1024" in w)
     base_all = db.q("select count(*) from support_reports")[0][0]; base_new = db.q("select count(*) from support_reports where status='new'")[0][0]; base_bill = db.q("select count(*) from support_reports where area='billing'")[0][0]
     cust = ctx.client(); cust.register("sup-a@test.local")
@@ -37,7 +37,7 @@ def run(ctx, t):
     t.check("the Feedback button is in the customer portal only (not on public pages)", "support-widget.js" in ws and "support-widget.css" in ws and "support-widget.js" not in home and "support-widget.css" not in home)
     pr = ctx.client(); pr.page("/templates.html"); t.check("public pages stay free of the Feedback button", "support-widget" not in pr.page("/templates.html")[2] and "support-widget" not in pr.page("/customer-guide.html")[2])
     t.check("a visitor cannot send or load feedback options", ctx.client().raw("POST", "/support/report", {}, {"Accept": "application/json"})[0] in (401, 419) and ctx.client().raw("GET", "/support/options", None, {"Accept": "application/json"})[0] in (401, 302))
-    jsw = open(os.path.join(pub, "support-widget.js"), encoding="utf8").read()
+    jsw = open(os.path.join(src, "support-widget.js"), encoding="utf8").read()
     t.check("the widget does nothing for visitors and can sit on either side", "=== 'guest') return" in jsw and "cvtara-feedback-side" in jsw and "data-flip" in jsw)
     o = ctx.client(); o.raw("GET", "/preview/go/admin"); _, _, adm = o.page("/admin.html")
     t.check("the owner console does not show the customer Feedback button", "support-widget.js" not in adm)
@@ -91,7 +91,7 @@ def run(ctx, t):
     t.check("deleting a report removes its screenshots", s == 200 and db.q("select count(*) from support_attachments where report_id=?", rid)[0][0] == 0 and o.raw("GET", f"/api/admin/support/file/{one}")[0] == 404)
     s, _ = send(cust, {**BASE, "message": "<script>alert('x')</script> markup in the message"}); lst = o.api("GET", "admin/support")[1]["rows"]
     t.check("markup in a message is kept as plain text for the inbox to escape", s == 200 and any("<script>" in r["message"] for r in lst))
-    js = open(os.path.join(ctx.app, "resources/console/feedback.js"), encoding="utf8").read()
+    js = open(os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "app", "resources", "console", "feedback.js"), encoding="utf8").read()
     t.check("the inbox page escapes everything it prints", "E(r.message)" in js and "E(r.admin_note" in js and "innerHTML" in js)
 
     # report rate limit (10 an hour per customer)

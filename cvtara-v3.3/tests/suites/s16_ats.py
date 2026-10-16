@@ -39,14 +39,14 @@ class Handler(http.server.BaseHTTPRequestHandler):
 def run(ctx, t):
     # static checks (both modes would be fine; run once)
     if not ctx.preview: return
-    pub = ctx.public
-    flow = open(os.path.join(pub, "ats-flow.js"), encoding="utf8").read()
+    pub = ctx.public; src = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "public_html")  # source text checks read the repository copy so they also pass on a minified package
+    flow = open(os.path.join(src, "ats-flow.js"), encoding="utf8").read()
     t.check("ATS Match has a resume dropdown and no resume upload", "id=\"atsResume\"" in flow and "Choose PDF" not in flow and "type=\"file\"" in flow and flow.count("type=\"file\"") == 1)
     t.check("the job can come from a link, a file or pasted text", all(k in flow for k in ("data-src=\"link\"" if False else "'link'", "'file'", "'text'")))
     t.check("the old upload-your-resume form is gone from the workspace", "matchFile" not in open(os.path.join(ctx.app, "resources/frontend/workspace.html"), encoding="utf8").read())
     t.check("the front page no longer asks for a resume upload", "resumeFile" not in open(os.path.join(ctx.app, "resources/frontend/index.html"), encoding="utf8").read())
     for f in ("premium-products.css", "resume-experience.css", "resume-studio.css"):
-        css = open(os.path.join(pub, f), encoding="utf8").read()
+        css = open(os.path.join(pub, f), encoding="utf8").read()  # CSS is not minified by the build
         t.check(f"{f} does not resize the sidebar or shift the page per view", not re.search(r"\.(product|builder)-active \.(workspace-shell\{grid-template-columns|side-nav button\{font-size|workspace-content\{|workspace-top\{)", css))
     t.check("the page reserves scrollbar space so every view has the same width", "scrollbar-gutter:stable" in open(os.path.join(pub, "cvtara-ds.css"), encoding="utf8").read())
 
