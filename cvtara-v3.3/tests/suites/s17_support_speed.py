@@ -31,6 +31,7 @@ def run(ctx, t):
     db = ctx.db(); pub = ctx.public; ipub = ctx.inst.public
     w = open(os.path.join(pub, "support-widget.js"), encoding="utf8").read()
     t.check("the widget limits files to 5 images of 2 MB", "MAX_FILES = 5" in w and "2 * 1024 * 1024" in w)
+    base_all = db.q("select count(*) from support_reports")[0][0]; base_new = db.q("select count(*) from support_reports where status='new'")[0][0]; base_bill = db.q("select count(*) from support_reports where area='billing'")[0][0]
     cust = ctx.client(); cust.register("sup-a@test.local")
     s, _, home = ctx.client().page("/"); s2, _, ws = cust.page("/workspace.html")
     t.check("the Feedback button is in the customer portal only (not on public pages)", "support-widget.js" in ws and "support-widget.css" in ws and "support-widget.js" not in home and "support-widget.css" not in home)
@@ -61,13 +62,13 @@ def run(ctx, t):
     s, j = send(cust, {**BASE, "area": "nonsense"}); t.check("an unknown area is refused", s == 422)
     s, j = send(cust, {**BASE, "rating": "9"}); t.check("a rating outside 1-5 is refused", s == 422)
     s, j = send(cust, {**BASE, "company_site": "http://spam.example"}); t.check("the hidden spam trap blocks bots", s == 422)
-    t.check("nothing from the refused attempts was stored", db.q("select count(*) from support_reports")[0][0] == 3, db.q("select count(*) from support_reports")[0][0])
+    t.check("nothing from the refused attempts was stored", db.q("select count(*) from support_reports")[0][0] == base_all + 3, db.q("select count(*) from support_reports")[0][0])
 
     # owner inbox
-    s, sm = o.api("GET", "admin/support/summary"); t.check("the owner sees the counts", s == 200 and sm["byStatus"].get("new") == 3 and sm["recent"]["total"] == 3, (s, str(sm)[:200]))
-    s, ls = o.api("GET", "admin/support?status=new"); t.check("the owner can list new reports", s == 200 and ls["total"] == 3 and all(r["status"] == "new" for r in ls["rows"]) and any(r["images"] == 5 for r in ls["rows"]))
+    s, sm = o.api("GET", "admin/support/summary"); t.check("the owner sees the counts", s == 200 and sm["byStatus"].get("new") == base_new + 3 and sm["recent"]["total"] == base_all + 3, (s, str(sm)[:200]))
+    s, ls = o.api("GET", "admin/support?status=new"); t.check("the owner can list new reports", s == 200 and ls["total"] == base_new + 3 and all(r["status"] == "new" for r in ls["rows"]) and any(r["images"] == 5 for r in ls["rows"]))
     s, f = o.api("GET", "admin/support?q=layout+problem"); t.check("the owner can search reports", s == 200 and f["total"] == 1)
-    s, f = o.api("GET", "admin/support?area=billing"); t.check("the owner can filter by area", s == 200 and f["total"] == 0)
+    s, f = o.api("GET", "admin/support?area=billing"); t.check("the owner can filter by area", s == 200 and f["total"] == base_bill)
     s, d = o.api("GET", f"admin/support/{rid}"); t.check("opening a report shows screenshots and marks it seen", s == 200 and len(d["images"]) == 5 and d["report"]["status"] == "seen" and d["report"]["plan"] == "Free")
     st, hd, body = o.raw("GET", f"/api/admin/support/file/{d['images'][0]['id']}")
     t.check("a screenshot is served as a safe WebP image", st == 200 and hd.get("Content-Type") == "image/webp" and body[:4] == b"RIFF" and body[8:12] == b"WEBP" and hd.get("X-Content-Type-Options") == "nosniff", (st, hd.get("Content-Type"), body[:12]))
