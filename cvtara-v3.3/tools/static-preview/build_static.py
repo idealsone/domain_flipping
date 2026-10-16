@@ -9,7 +9,8 @@ n=0
 CON=os.path.join(os.path.dirname(SRC),'resources','console')
 for BASE,PFX in ((SRC,''),(CON,'console')):
   if not os.path.isdir(BASE): continue
-  for root,_,fs in os.walk(BASE):
+  for root,dirs,fs in os.walk(BASE):
+      dirs[:]=[x for x in dirs if not x.startswith('_')]  # ready-made page cache (_pages) is not part of the preview
       for f in fs:
           if f.endswith(('.php','.zip','.map')) or f in ('.htaccess','.install-key-hash'): continue
           rel=os.path.join(PFX,os.path.relpath(os.path.join(root,f),BASE)); d=os.path.join(OUT,rel); os.makedirs(os.path.dirname(d),exist_ok=True)
