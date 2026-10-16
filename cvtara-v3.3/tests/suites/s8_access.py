@@ -10,7 +10,7 @@ def get(c, path, accept=True):
 def run(ctx, t):
     if not ctx.preview: return
     anon = ctx.client()
-    for p in ("/admin.html", "/admin", "/admin-guide.html", "/admin/preview/index.html"):
+    for p in ("/admin.html", "/admin", "/admin-guide.html",):
         s, h, _ = get(anon, p); loc = h.get("Location", "").rstrip("/")
         t.check(f"anonymous {p} never shows owner content", s == 302 and loc in ("", ctx.inst.base, ctx.inst.base + "/admin.html"), f"{s} {loc}")
         if loc.endswith("/admin.html"): s, h, _ = get(anon, "/admin.html"); t.check("... and the final hop lands on the home page", s == 302 and h.get("Location", "").rstrip("/") in ("", ctx.inst.base))

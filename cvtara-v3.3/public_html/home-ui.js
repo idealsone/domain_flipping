@@ -2,6 +2,9 @@
   'use strict';
   const $ = (s, r = document) => r.querySelector(s);
   const E = v => String(v ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  // job-link copy stays hidden until the owner switches job links on
+  if (document.querySelector('[data-needs-link]')) fetch('/api/public-content', { credentials: 'same-origin' }).then(r => r.json()).then(j => { if ((j.content || {}).jobLinks) document.querySelectorAll('[data-needs-link]').forEach(n => { n.hidden = false; }); }).catch(() => {});
+  fetch('/api/public-content', { credentials: 'same-origin' }).then(r => r.json()).then(j => { const e = ((j.content || {}).site || {}).employers, box = $('#employerNames'); if (!e || !e.enabled || !box || !(e.names || []).length) return; $('#employerHead').textContent = e.heading || 'Employers across India'; $('#employerList').innerHTML = e.names.map(n => `<li>${E(n)}</li>`).join(''); box.hidden = false; }).catch(() => {});
   // rotating role in the headline
   const roles = ['Data Analyst', 'Software Engineer', 'HR Manager', 'Marketing Lead', 'Product Designer', 'Finance Analyst'];
   const out = $('#lpRotate');

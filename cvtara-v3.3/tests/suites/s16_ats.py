@@ -72,6 +72,13 @@ def run(ctx, t):
             return c.api("POST", "ats/scan", body)
         s, j = c.api("POST", "resumes", {"data": resume("Primary")}); rid = j["id"]
 
+        # job links are off for customers until the owner switches them on
+        s, j = scan("link", url=base + "/ld")
+        t.check("job-link pasting is refused while the owner switch is off", s == 422 and "not available yet" in str(j) and c.api("GET", "allowance")[1].get("jobLinks") is False, (s, str(j)[:160]))
+        t.check("the public content tells the page links are off", c.api("GET", "public-content")[1]["content"].get("jobLinks") is False)
+        db.q("insert or replace into site_settings(key,value_json,revision,created_at,updated_at) values('speed','{\"jobLinks\":true}',1,datetime('now'),datetime('now'))")
+        t.check("after the owner switches it on, the allowance shows it", c.api("GET", "allowance")[1].get("jobLinks") is True)
+
         # free account: a few checks a day, no scan pool
         t.check("a free account can run a check from pasted text", scan(text=TEXT)[0] == 200)
         t.check("buy Fresher Basic", buy("fresher-basic") == 200)

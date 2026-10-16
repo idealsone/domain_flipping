@@ -12,7 +12,7 @@ from datetime import date
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
-VERSION = "3.11.0"
+VERSION = "3.12.0"
 SKIP_DIRS = {".git", "node_modules", "tests"}
 SKIP_FILES = {".env", ".DS_Store"}
 
@@ -70,6 +70,10 @@ def main():
     shutil.copytree(app, stage, ignore=shutil.ignore_patterns(".env", "*.sqlite", "*.log", "vendor"))
     if a.vendor:
         shutil.copytree(a.vendor, stage / "vendor")
+        # third-party docs and tool-instruction files are not needed to run the site (licence files stay)
+        for f in list((stage / "vendor").rglob("*")):
+            if f.is_file() and (f.name.upper() in ("CLAUDE.MD", "AGENTS.MD", "GEMINI.MD") or (f.suffix.lower() == ".md" and "licen" not in f.name.lower())):
+                f.unlink()
     else:
         subprocess.check_call(["composer", "install", "--no-dev", "--optimize-autoloader", "--no-interaction"], cwd=stage)
     (stage / ".setup-key").write_text(key)

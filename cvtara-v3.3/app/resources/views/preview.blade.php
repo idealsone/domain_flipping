@@ -1,4 +1,4 @@
-<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex"><title>CVTara — Preview</title><link rel="stylesheet" href="/styles.css"><link rel="stylesheet" href="/cvtara-ui.css"><link rel="icon" type="image/svg+xml" href="/assets/brand/cvtara-mark.svg"></head>
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex"><title>CVTara — Preview</title><link rel="stylesheet" href="/styles.css"><link rel="stylesheet" href="/cvtara-ui.css"><link rel="icon" href="/favicon.ico?v=2" sizes="48x48"><link rel="icon" type="image/svg+xml" href="/favicon.svg?v=2"><link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png?v=2"><link rel="apple-touch-icon" href="/apple-touch-icon.png?v=2"><link rel="manifest" href="/site.webmanifest"></head>
 <body class="pv">
 <div class="pv-bar"><b>CVTara</b><small>v3.3 preview</small>
 <button class="pv-tab active" data-pv="home" data-src="/">🌐 Website home</button>

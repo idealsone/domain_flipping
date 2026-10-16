@@ -262,6 +262,13 @@ class AtsEngine
     public static function keywords(string $resumeText, string $jobText, string $title = ''): array
     {
         $stop = array_flip(explode(' ', self::KW_STOP));
+        // two-word tool names count as one keyword ("Power BI", not "Power")
+        $pairs = ['Power BI' => 'PowerBI', 'Google Analytics' => 'GoogleAnalytics', 'Google Ads' => 'GoogleAds', 'SQL Server' => 'SQLServer', 'Microsoft Office' => 'MSOffice', 'MS Office' => 'MSOffice', 'Visual Studio' => 'VisualStudio', 'Adobe Photoshop' => 'Photoshop', 'Tally Prime' => 'TallyPrime', 'Apache Spark' => 'ApacheSpark', 'Spring Boot' => 'SpringBoot'];
+        $show = ['PowerBI' => 'Power BI', 'GoogleAnalytics' => 'Google Analytics', 'GoogleAds' => 'Google Ads', 'SQLServer' => 'SQL Server', 'MSOffice' => 'MS Office', 'VisualStudio' => 'Visual Studio', 'TallyPrime' => 'Tally Prime', 'ApacheSpark' => 'Apache Spark', 'SpringBoot' => 'Spring Boot'];
+        foreach ($pairs as $a => $b) {
+            $resumeText = (string) preg_replace('/\b'.preg_quote($a, '/').'\b/i', $b, $resumeText);
+            $jobText = (string) preg_replace('/\b'.preg_quote($a, '/').'\b/i', $b, $jobText);
+        }
         $re = '/[A-Za-z][A-Za-z0-9+#.]*[A-Za-z0-9+#]|[A-Za-z]/';
         preg_match_all($re, $resumeText, $rm);
         $have = [];
@@ -305,10 +312,11 @@ class AtsEngine
         $found = [];
         $missing = [];
         foreach ($ranked as [$k]) {
+            $label = $show[$shown[$k]] ?? $shown[$k];
             if (isset($have[$k])) {
-                $found[] = $shown[$k];
+                $found[] = $label;
             } else {
-                $missing[] = $shown[$k];
+                $missing[] = $label;
             }
         }
 

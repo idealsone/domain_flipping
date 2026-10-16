@@ -22,6 +22,15 @@ class PromoAdminController extends Controller
         }
         abort_unless($r->isMethod('POST'), 405);
         AccountSecurity::requireRecent($r);
+        if ($path === 'promos/employers') {
+            $v = $r->validate(['enabled' => 'required|boolean', 'heading' => 'required|string|max:120', 'names' => 'array|max:30', 'names.*' => 'string|max:40']);
+            $site = (array) Settings::get('site');
+            $site['employers'] = ['enabled' => (bool) $v['enabled'], 'heading' => $v['heading'], 'names' => array_values(array_filter(array_map('trim', $v['names'] ?? [])))];
+            Settings::put('site', $site);
+            Settings::audit($id, 'employer_names_saved', count($site['employers']['names']).' names');
+
+            return $ok(['employers' => $site['employers']]);
+        }
         $list = Promos::all();
         if ($path === 'promos/save') {
             $v = $r->validate([
@@ -100,6 +109,7 @@ class PromoAdminController extends Controller
 
         return [
             'campaigns' => $campaigns,
+            'employers' => ((array) Settings::get('site'))['employers'] ?? ['enabled' => false, 'heading' => '', 'names' => []],
             'templates' => collect(Promos::TEMPLATES)->map(fn ($t, $k) => ['key' => $k, 'label' => $t[0], 'heading' => $t[1], 'subheading' => $t[2], 'badge' => $t[3], 'theme' => $t[4]])->values()->all(),
             'themes' => collect(Promos::THEMES)->map(fn ($t, $k) => ['key' => $k, 'from' => $t[0], 'to' => $t[1], 'ink' => $t[2], 'accent' => $t[3], 'art' => $t[4]])->values()->all(),
             'coupons' => array_values(BusinessControls::get()['coupons']),

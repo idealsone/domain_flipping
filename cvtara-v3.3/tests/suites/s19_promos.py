@@ -100,3 +100,8 @@ def run(ctx, t):
     s, d = o.api("GET", "admin/content/popup"); data = d["data"]; data["showPurchases"] = False
     sv = o.api("POST", "admin/content/popup", {"data": data, "revision": d["revision"]})[0]
     t.check("the owner can switch the real-purchase notices off", sv == 200 and not [m for m in ctx.client().api("GET", "public-activity")[1]["messages"] if m.get("kind") == "purchase"])
+    s, g = o.api("GET", "admin/promos"); t.check("the owner sees the employer-names card, on by default with plain names", s == 200 and g["employers"]["enabled"] and "Infosys" in g["employers"]["names"], str(g.get("employers"))[:120])
+    s, g = o.api("POST", "admin/promos/employers", {"enabled": True, "heading": "Where our customers apply", "names": ["Acme One", "Beta Two"]})
+    pc = ctx.client().api("GET", "public-content")[1]["content"]["site"]["employers"]
+    t.check("saved employer names reach the public page data", s == 200 and pc["names"] == ["Acme One", "Beta Two"] and pc["heading"] == "Where our customers apply", str(pc)[:120])
+    t.check("the public home page has the disclaimer and the (hidden until filled) section", "not affiliated with, endorsed by or approved by" in ctx.client().page("/")[2])

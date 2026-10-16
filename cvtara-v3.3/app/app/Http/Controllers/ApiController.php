@@ -104,6 +104,7 @@ class ApiController extends Controller
             foreach (['legal', 'features', 'library', 'blog', 'integrations', 'seo', 'site'] as $k) {
                 $content[$k] = Settings::get($k);
             }$content['plans'] = Settings::plans();
+            $content['jobLinks'] = (bool) (((array) Settings::get('speed', []))['jobLinks'] ?? false);
             $content['integrations']['measurementId'] = Settings::providers()['analytics']['measurementId'] ?? '';
             foreach ($content['blog'] as $slug => &$post) {
                 if (! $post['published']) {
@@ -211,7 +212,7 @@ class ApiController extends Controller
             $plans = Settings::plans();
             unset($a['purchase']);
 
-            return $ok([...$a, 'planName' => $plans[$a['plan']]['name'] ?? 'Free', 'daysLeft' => $a['accessUntil'] ? max(0, (int) ceil((strtotime($a['accessUntil']) - time()) / 86400)) : 0, 'credits' => $cs, 'caps' => ['resumes' => (int) $l['savedResumes'] + 1, 'letters' => (int) $l['savedLetters'], 'atsScans' => $cs['scans']['total'], 'exports' => null], 'used' => ['exports' => $exports, 'savedResumes' => DB::table('resume_drafts')->where('owner_id', $id)->count(), 'savedLetters' => DB::table('cover_letter_drafts')->where('owner_id', $id)->count(), 'atsScans' => $scans, 'dailyMatches' => DB::table('ats_scans')->where('owner_id', $id)->where('status', '!=', 'void')->whereDate('created_at', today())->count()]]);
+            return $ok([...$a, 'jobLinks' => (bool) (((array) Settings::get('speed', []))['jobLinks'] ?? false), 'planName' => $plans[$a['plan']]['name'] ?? 'Free', 'daysLeft' => $a['accessUntil'] ? max(0, (int) ceil((strtotime($a['accessUntil']) - time()) / 86400)) : 0, 'credits' => $cs, 'caps' => ['resumes' => (int) $l['savedResumes'] + 1, 'letters' => (int) $l['savedLetters'], 'atsScans' => $cs['scans']['total'], 'exports' => null], 'used' => ['exports' => $exports, 'savedResumes' => DB::table('resume_drafts')->where('owner_id', $id)->count(), 'savedLetters' => DB::table('cover_letter_drafts')->where('owner_id', $id)->count(), 'atsScans' => $scans, 'dailyMatches' => DB::table('ats_scans')->where('owner_id', $id)->where('status', '!=', 'void')->whereDate('created_at', today())->count()]]);
         }
         if ($path === 'resumes/import') {
             abort_unless($r->isMethod('POST'), 405);
@@ -259,6 +260,9 @@ class ApiController extends Controller
         if ($path === 'ats/scan' && $r->isMethod('POST')) {
             $v = $r->validate(['resumeId' => ['required', 'regex:/^[a-f0-9-]{36}$/'], 'source' => 'required|in:link,file,text', 'url' => 'nullable|string|max:1000', 'text' => 'nullable|string|max:60000', 'title' => 'nullable|string|max:180', 'company' => 'nullable|string|max:180']);
             abort_unless(Settings::get('features')['match']['enabled'], 403);
+            if ($v['source'] === 'link' && ! (((array) Settings::get('speed', []))['jobLinks'] ?? false)) {
+                return response()->json(['ok' => false, 'error' => 'Job links are not available yet. Paste the job text or upload a PDF.'], 422);
+            }
             \App\Services\Traffic::guardHeavy();
             $resume = DB::table('resume_drafts')->where('id', $v['resumeId'])->where('owner_id', $id)->first();
             abort_unless($resume, 422, 'Choose one of your saved resumes.');

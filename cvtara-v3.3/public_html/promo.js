@@ -9,7 +9,9 @@
   const guest = (document.querySelector('meta[name=cvtara-user]')?.content || 'guest') === 'guest';
   const store = { get(k) { try { return JSON.parse(localStorage.getItem(k) || 'null'); } catch { return null; } }, set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch { /* storage blocked */ } } };
   const sess = { get(k) { try { return sessionStorage.getItem(k); } catch { return null; } }, set(k, v) { try { sessionStorage.setItem(k, v); } catch { /* storage blocked */ } } };
-  if (!document.querySelector('link[href="/promo.css"]')) document.head.append(Object.assign(document.createElement('link'), { rel: 'stylesheet', href: '/promo.css' }));
+  // The stylesheet sits next to this script, wherever the site is served from.
+  const here = (document.currentScript && document.currentScript.src) || '';
+  if (!document.querySelector('link[data-cvp-css]')) { const l = Object.assign(document.createElement('link'), { rel: 'stylesheet', href: here ? here.replace(/promo\.js(\?.*)?$/, 'promo.css') : '/promo.css' }); l.setAttribute('data-cvp-css', '1'); document.head.append(l); }
 
   const style = v => `--pf:${E(v.theme.from)};--pt:${E(v.theme.to)};--pi:${E(v.theme.ink)};--pa:${E(v.theme.accent)}`;
   const left = ms => { if (ms <= 0) return ''; const s = Math.floor(ms / 1000), d = Math.floor(s / 86400), h = Math.floor(s % 86400 / 3600), m = Math.floor(s % 3600 / 60); return (d ? `<b>${d}</b>d ` : '') + `<b>${String(h).padStart(2, '0')}</b>h <b>${String(m).padStart(2, '0')}</b>m <b>${String(s % 60).padStart(2, '0')}</b>s`; };

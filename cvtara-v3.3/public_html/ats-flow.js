@@ -8,7 +8,7 @@
   const api = (p, o) => window.CVTaraAPI.request(p, o);
   const E = v => String(v ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
   const $ = (s, r = host) => r.querySelector(s);
-  const st = { resumes: [], resumeId: '', source: 'link', fileText: '', fileName: '', allowance: null, scans: [], run: null, busy: false };
+  const st = { resumes: [], resumeId: '', source: 'text', fileText: '', fileName: '', allowance: null, scans: [], run: null, busy: false };
   const tone = n => n >= 75 ? 'good' : n >= 50 ? 'mid' : 'low';
   const verdict = n => n >= 75 ? 'Strong match — polish the details and apply.' : n >= 50 ? 'Partial match — close the gaps below before you apply.' : 'Low match — this resume needs work for this job.';
   const day = d => new Date(String(d).replace(' ', 'T') + 'Z').toLocaleDateString('en-IN', { day: 'numeric', month: 'short' });
@@ -39,7 +39,7 @@
     }
     const tab = (k, label) => `<button type="button" role="tab" aria-selected="${st.source === k}" data-src="${k}">${label}</button>`;
     box.innerHTML = `<label class="ats-field"><span>1 · Your resume</span><select id="atsResume">${st.resumes.map(r => `<option value="${E(r.id)}" ${r.id === st.resumeId ? 'selected' : ''}>${r.is_primary ? '★ Primary — ' : ''}${E(r.title)}${r.ats_score != null ? ' · ATS-friendly ' + r.ats_score + '%' : ''}</option>`).join('')}</select></label>
-<div class="ats-field"><span>2 · The job</span><div class="ats-tabs" role="tablist">${tab('link', 'Job link')}${tab('file', 'PDF / text file')}${tab('text', 'Paste text')}</div></div>
+<div class="ats-field"><span>2 · The job</span><div class="ats-tabs" role="tablist">${st.allowance?.jobLinks ? tab('link', 'Job link') : ''}${tab('file', 'PDF / text file')}${tab('text', 'Paste text')}</div></div>
 <div id="atsSrc"></div>
 <div class="ats-two"><label class="ats-field"><span>Job title <small>(optional)</small></span><input id="atsTitle" maxlength="180" placeholder="Filled in from the job"></label><label class="ats-field"><span>Company <small>(optional)</small></span><input id="atsCompany" maxlength="180" placeholder="Filled in from the job"></label></div>
 <button class="button primary full" id="atsRun" type="button">Run ATS check</button>

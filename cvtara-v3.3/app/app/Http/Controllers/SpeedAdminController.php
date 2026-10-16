@@ -23,6 +23,7 @@ class SpeedAdminController extends Controller
 
             return $ok([
                 'cache' => PageCache::stats(),
+                'jobLinks' => (bool) (((array) Settings::get('speed', []))['jobLinks'] ?? false),
                 'traffic' => Traffic::status(),
                 'reader' => ['enabled' => JobReader::enabled(), 'provider' => $c['provider'] ?? 'scrapingbee', 'usage' => JobReader::usage(), 'configured' => ['scrapingbee' => ! empty($c['scrapingbeeApiKey']), 'zenrows' => ! empty($c['zenrowsApiKey']), 'custom' => ! empty($c['customUrlTemplate'])], 'customUrlTemplate' => $c['customUrlTemplate'] ?? ''],
             ]);
@@ -30,11 +31,11 @@ class SpeedAdminController extends Controller
         abort_unless($r->isMethod('POST'), 405);
         AccountSecurity::requireRecent($r);
         if ($path === 'speed/save') {
-            $v = $r->validate(['busyMode' => 'required|in:off,on,auto', 'autoLoad' => 'required|numeric|min:0.5|max:50', 'pageCache' => 'required|boolean']);
+            $v = $r->validate(['busyMode' => 'required|in:off,on,auto', 'autoLoad' => 'required|numeric|min:0.5|max:50', 'pageCache' => 'required|boolean', 'jobLinks' => 'nullable|boolean']);
             $cur = (array) Settings::get('speed', []);
-            Settings::put('speed', array_merge($cur, ['busyMode' => $v['busyMode'], 'autoLoad' => (float) $v['autoLoad']]));
+            Settings::put('speed', array_merge($cur, ['busyMode' => $v['busyMode'], 'autoLoad' => (float) $v['autoLoad'], 'jobLinks' => (bool) ($v['jobLinks'] ?? ($cur['jobLinks'] ?? false))]));
             PageCache::enable((bool) $v['pageCache']);
-            Settings::audit($id, 'speed_settings_saved', $v['busyMode'].($v['pageCache'] ? ':cache' : ':nocache'));
+            Settings::audit($id, 'speed_settings_saved', $v['busyMode'].($v['pageCache'] ? ':cache' : ':nocache').(($v['jobLinks'] ?? false) ? ':joblinks' : ''));
 
             return $ok(['traffic' => Traffic::status(), 'cache' => PageCache::stats()]);
         }

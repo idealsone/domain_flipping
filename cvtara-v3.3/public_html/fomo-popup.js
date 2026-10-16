@@ -9,7 +9,8 @@
   const save = () => { try { sessionStorage.setItem(KEY, JSON.stringify(st)); } catch { /* ignore */ } };
   if (st.off) return;
   if (!st.start) { st.start = Date.now(); save(); }
-  if (!document.querySelector('link[href="/promo.css"]')) document.head.append(Object.assign(document.createElement('link'), { rel: 'stylesheet', href: '/promo.css' }));
+  const here = (document.currentScript && document.currentScript.src) || '';
+  if (!document.querySelector('link[data-cvp-css]')) { const l = Object.assign(document.createElement('link'), { rel: 'stylesheet', href: here ? here.replace(/fomo-popup\.js(\?.*)?$/, 'promo.css') : '/promo.css' }); l.setAttribute('data-cvp-css', '1'); document.head.append(l); }
   const E = v => String(v ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
   const COLORS = ['#2258d6', '#0f766e', '#c2410c', '#7c3aed', '#be123c', '#0369a1', '#4d7c0f'];
   const ago = (iso, now) => { const s = Math.max(0, (new Date(now).getTime() - new Date(iso).getTime()) / 1000); if (s < 90) return 'just now'; const m = Math.round(s / 60); if (m < 60) return m + ' minutes ago'; const h = Math.round(m / 60); if (h < 24) return h + (h === 1 ? ' hour ago' : ' hours ago'); const d = Math.round(h / 24); return d + (d === 1 ? ' day ago' : ' days ago'); };

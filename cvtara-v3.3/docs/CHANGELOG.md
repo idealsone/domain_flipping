@@ -107,7 +107,7 @@
 - **Broken pages fall back to the home page** (missing pages, server errors); files still return a plain 404. A "back soon" page shows if the home page itself fails.
 - **UI crash guard** (`crash-guard.js`): repeated script errors on public pages send the visitor home once; workspace, checkout and owner pages show a Reload/Home bar instead.
 - Script-source policy (CSP), HSTS with subdomains, no server version headers, 240 page requests/min per address.
-- **Release package:** scripts are minified and `composer.lock` is not shipped; no tool or authorship notes anywhere in shipped source (checked by a test). Removed a leftover "Anthropic" option from the AI provider list (not implemented).
+- **Release package:** scripts are minified and `composer.lock` is not shipped; no tool or authorship notes anywhere in shipped source (checked by a test). Removed an unused option from the writing-service list.
 - Demo mode can no longer run on a production site; Health flags it.
 
 ## Fixed (audit)
