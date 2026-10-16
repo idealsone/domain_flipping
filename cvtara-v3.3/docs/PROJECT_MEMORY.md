@@ -49,3 +49,10 @@ Keep this file current. It records what the owner asked for, what was built, the
 - Recent-activity notice: we deliberately do not show invented names or fake purchases (misleading to customers and risky under Indian consumer-protection rules). Only buyers who opted in at checkout (`profiles.show_in_activity`) are named, first name and city only. Do not add synthetic notices.
 - The 68 ready-made article files in `resources/frontend/guides` and `calculators` are only templates for the shell; the visible text comes from the editorial content and the owner's edits (server-rendered). Their old fixed note and anchor list are replaced by the shared structure.
 - Contact form posts to `/contact/message` (public) and lands in `support_reports` with area `contact`.
+
+## Referral and offer economics (check before changing thresholds or discounts)
+
+Defaults: 5 paying friends unlock one free resume download; 10 unlock 30 days of the Standard plan (Fresher Standard Rs 399 or Professional Standard Rs 499 list price); a friend counts only for a paid purchase of at least Rs 99; creators may also earn a 20% cash commission (separate programme, 7-day hold).
+- 10 friends on the cheapest plan (Rs 299): Rs 2,990 collected (about Rs 2,534 before 18% GST). Reward value at list price Rs 399 to 499 is the worst-case cost, so 13% to 17% of money collected. With the 20% commission on top: about Rs 1,000 to 1,100, or 33% to 37% (40% to 43% of money before GST).
+- The same 10 friends buying with a 25% festival coupon (Rs 224 each): Rs 2,243 collected; commission Rs 449 plus reward Rs 399 to 499 gives 38% to 42% of money collected.
+- The cash cost of the reward itself is close to zero (it is access, not cash); the figures above are the revenue given up. Keep festival coupons at 25% or less and do not stack them with a high commission rate.

@@ -26,10 +26,20 @@ GOOD = {"name": "Asha Rao", "email": "asha@example.com", "topic": "Payment query
 
 def run(ctx, t):
     if not ctx.preview: return
+    src = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "public_html"); rd = lambda f: open(os.path.join(src, f), encoding="utf8").read()
+    cat = json.load(open(os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "app", "resources", "data", "catalog.json"), encoding="utf8"))["templates"]
+    t.check("no template with a side column is labelled ATS-conscious (single column is the safe standard)", not [x["slug"] for x in cat if x.get("ats") and x["layout"] in ("sidebar", "signal")], [x["slug"] for x in cat if x.get("ats") and x["layout"] in ("sidebar", "signal")])
+    t.check("calculators and checklists are mounted on articles that already carry their copy", "insertAdjacentHTML(\"afterbegin\",widget)" in rd("preview.js") and "editorial==='true'" in rd("preview.js"))
+    t.check("the older template invitation steps aside when an offer has its own leaving pop-up", "CVTaraPromoExit" in rd("promo.js") and "CVTaraPromoExit" in rd("preview.js"))
+    t.check("the 'unlock a clean download' help is shown only to accounts without a plan", "if (!a.paid) addUnlock" in rd("reward-paywall.js"))
+    t.check("article covers are drawn cards or a picture with a fallback, never an empty dark box", ".b2-cover" in rd("blog-v2.css") and "is-broken" in rd("blog-v2.css"))
+    t.check("unused stylesheets are gone", not os.path.exists(os.path.join(src, "guide.css")) and not os.path.exists(os.path.join(src, "checkout-options.css")))
     c = ctx.client()
     # home
     s, _, home = c.page("/")
     t.check("the home page explains the problems it solves, who it is for, the automation and the ATS report", all(k in home for k in ('id="why"', "lp-fix", "lp-auto", "lp-report", "lpPersona", "lp-incl")), s)
+    t.check("the home page explains how employer screening reads a resume, without claiming any employer endorses CVTara", 'id="employers"' in home and "not endorsed by or affiliated with" in home and "selectable text" in home)
+    t.check("the home page compares CVTara with the usual alternatives in general terms and names no company", 'id="compare"' in home and "Typical resume builder" in home and "not statements about any named company" in home and "pay once, no auto-renewal" in home)
     t.check("the home page offers upload as well as templates", "Upload" in home and "Already have a resume" in home)
     t.check("customer reviews appear in one section only", home.count("lpReviews") == 1 and "What users say" not in home and "CUSTOMER FEEDBACK" not in home)
     t.check("the FAQ is short and honest about payments and guarantees", home.count("<details") == 8 and "final and non-refundable" in home and "guarantee an interview" in home)
@@ -47,6 +57,7 @@ def run(ctx, t):
     types = {b.get("@type") for b in blocks}
     t.check("an article shows author, reading time and type instead of an internal note", s == 200 and "article-meta" in art and "min read" in art and "Editorial structure reviewed" not in art)
     t.check("the 'On this page' list is built from the real headings and works without JavaScript", 'id="articleToc"' in art and len(re.findall(r'<aside class="toc" id="articleToc">(.*?)</aside>', art, re.S)[0].split("<a ")) > 3 and re.search(r'<h2 id="[a-z0-9-]+"', art))
+    t.check("an article cover is drawn in the topic's colours and carries the title", 'class="b2-cover"' in art and "background:linear-gradient" not in art)
     t.check("an article ends with a next step and related reading", "article-cta" in art and "article-related" in art and art.count('<a href="/guides/') >= 3)
     t.check("an article publishes BlogPosting, breadcrumb and FAQ data", {"BlogPosting", "BreadcrumbList", "FAQPage"} <= types, types)
     t.check("the article's FAQ is shown once", art.count('class="owner-faq"') == 1 and art.count("Frequently asked questions") <= 2)

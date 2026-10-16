@@ -118,6 +118,19 @@ class ContentController extends Controller
         $html = file_get_contents($full);
         if ($post) {
             $title = e($post['title']);
+            // The cover: a drawn card in the topic's colours (cannot go black or break), or the owner's own picture with a safe fallback.
+            $img = (string) ($post['imageUrl'] ?? '');
+            $cat = (string) ($post['category'] ?? 'Career');
+            $pal = [['#1e3a8a', '#3b82f6', '🧮'], ['#065f46', '#10b981', '📘'], ['#6d28d9', '#a78bfa', '💼'], ['#9a3412', '#fb923c', '🎯'], ['#0f766e', '#2dd4bf', '📈'], ['#9f1239', '#fb7185', '✍️'], ['#1d4ed8', '#38bdf8', '🔍']];
+            [$c1, $c2, $emo] = $pal[crc32($cat) % count($pal)];
+            if (($post['type'] ?? '') === 'Calculator') {
+                $emo = '🧮';
+            }
+            $cover = ($img === '' || str_contains($img, 'cvtara-article-cover'))
+                ? '<figure id="articleFeaturedCover" class="b2-cover" role="img" aria-label="'.e($post['title']).'" style="--g1:'.$c1.';--g2:'.$c2.'"><span>'.e(mb_strtoupper($cat)).'</span><strong>'.e($post['title']).'</strong><i aria-hidden="true">'.$emo.'</i></figure>'
+                : '<figure id="articleFeaturedCover" class="owner-article-cover b2-photo" style="--g1:'.$c1.';--g2:'.$c2.'"><img src="'.e($img).'" alt="'.e($post['imageAlt'] ?? $post['title']).'" width="1400" height="788" loading="eager" decoding="async" onerror="this.closest(\'figure\').classList.add(\'is-broken\')"></figure>';
+            $html = preg_replace('#<figure id="articleFeaturedCover".*?</figure>#s', '', $html, 1);
+            $html = preg_replace('#(<h1[^>]*id="articleTitle"[^>]*>.*?</h1>)#s', '$1'.addcslashes($cover, '\\$'), $html, 1);
             // The 68 ready-made article files carry an old internal note and a fixed list of anchors; use the shared structure instead.
             $html = preg_replace('#<p style="font-size:1rem">Editorial structure reviewed[^<]*</p>#', '<p class="article-meta" id="articleMeta"></p>', $html);
             $html = preg_replace('#<aside class="toc">.*?</aside>#s', '<aside class="toc" id="articleToc"><b>On this page</b></aside>', $html, 1);

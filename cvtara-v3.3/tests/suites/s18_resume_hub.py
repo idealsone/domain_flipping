@@ -1,6 +1,6 @@
 """Resume hub: upload an existing resume, ATS-friendly score on every resume, job match on the list, no deleting saved resumes,
 automatic tracker entry with three status reminders (notification + email), then silence."""
-import os
+import json, os
 NAME = "Resume upload, ATS-friendly score, delete lock and reminders"
 
 SAMPLE = """RAHUL VERMA
@@ -61,6 +61,7 @@ def run(ctx, t):
     # ---- import ----
     s, j = c.api("POST", "resumes/import", {"text": SAMPLE, "fileName": "rahul.pdf"})
     rid = j.get("id")
+    ctx_template = c.api("GET", "resumes")[1]["resumes"][0]["template"]
     t.check("an uploaded resume becomes a saved draft", s == 200 and rid and j["found"]["experience"] == 2 and j["found"]["education"] == 1 and j["found"]["skills"] >= 6, (s, str(j)[:200]))
     s, d = c.api("GET", f"resumes/{rid}"); r = d["resume"]["data"] if s == 200 else {}
     t.check("name, role, email, phone, city and links are found", r.get("personal", {}).get("name") == "Rahul Verma" and r["personal"]["role"] == "Senior HR Executive" and r["personal"]["email"] == "rahul.verma@example.com" and "98765" in r["personal"]["phone"] and r["personal"]["city"].startswith("Bengaluru") and "linkedin.com" in r["personal"]["linkedin"], r.get("personal"))
@@ -69,6 +70,8 @@ def run(ctx, t):
     t.check("education, certificate, skills and languages are filled", r["education"][0]["degree"].startswith("MBA") and r["education"][0]["school"].startswith("Symbiosis") and r["certifications"][0]["name"] == "SHRM-CP" and "Onboarding" in r["skills"] and r["languages"] == "English, Hindi, Kannada", (r["education"], r["certifications"]))
     t.check("the first resume becomes the primary resume and is marked as uploaded", bool(c.api("GET", "resumes")[1]["resumes"][0]["is_primary"]) and db.q("select source from resume_drafts where id=?", rid)[0][0] == "import")
     t.check("an empty section-labels object stays an object", '"sectionLabels":{}' in db.q("select content_json from resume_drafts where id=?", rid)[0][0])
+    cat = {x["slug"]: x for x in json.load(open(os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "app", "resources", "data", "catalog.json"), encoding="utf8"))["templates"]}
+    t.check("an uploaded resume starts in a plain ATS-conscious layout, with no photo and no creative design", cat[ctx_template]["ats"] and not cat[ctx_template].get("photo") and not cat[ctx_template].get("creative"), ctx_template)
     t.check("too little text is refused", c.api("POST", "resumes/import", {"text": "hello"})[0] == 422)
     s, j2 = c.api("POST", "resumes/import", {"text": SAMPLE, "fileName": "again.pdf"})
     t.check("a free account still keeps one resume when it uploads another", s == 422 and "free account keeps one" in str(j2), (s, str(j2)[:160]))

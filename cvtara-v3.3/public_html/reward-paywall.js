@@ -54,12 +54,17 @@
     originalExport(type, id);
     const dialog = document.getElementById('exportDialog');
     if (!dialog || type !== 'resume') return;
+    // The "unlock a clean download" help is for accounts without a plan; paid customers do not need it.
+    window.CVTaraAPI.request('/api/allowance').then(a => { if (!a.paid) addUnlock(dialog); }).catch(() => addUnlock(dialog));
+  };
+  function addUnlock(dialog) {
+    if (dialog.querySelector('.launch-panel')) return;
     const section = document.createElement('section'); section.className = 'launch-panel';
     section.innerHTML = '<h3>Choose how to unlock a clean download</h3><p>Your saved work stays in your profile. Pay for immediate access, or earn a referral reward.</p><a class="button primary" href="/workspace.html?view=billing">View plans &amp; upgrade</a><details><summary>Invite paying friends & unlock rewards</summary><div data-rewards></div></details>';
     dialog.querySelector('[data-close]').before(section);
     const details = section.querySelector('details');
     details.addEventListener('toggle', () => { if (details.open) render(section.querySelector('[data-rewards]')); });
-  };
+  }
   document.addEventListener('cvtara-profile-rendered', dashboard);
   document.addEventListener('click', event => { if (event.target.closest('[data-workspace-view="account"]')) dashboard(); });
   if (document.getElementById('profileForm')) dashboard();

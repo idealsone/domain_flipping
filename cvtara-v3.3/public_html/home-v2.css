@@ -60,3 +60,21 @@
 #lpPersona button em{width:100%}
 .lp-primary .lp-ticks li{display:block!important;padding-left:32px}
 .lp-primary .lp-ticks li b{display:inline}
+
+/* Employer screening cards and comparison table */
+.lp-screen{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px}
+.lp-screen article{padding:20px;border:1px solid var(--line);border-radius:18px;background:var(--paper);display:grid;gap:6px;align-content:start}
+.lp-screen i{font-style:normal;font-size:26px;width:48px;height:48px;border-radius:14px;display:grid;place-items:center;background:color-mix(in srgb,var(--success) 14%,var(--paper))}
+.lp-screen h3{margin:6px 0 0;font-size:17px}.lp-screen p{margin:0;color:var(--muted);line-height:1.55;font-size:14.5px}
+.lp-cmp{overflow-x:auto;border:1px solid var(--line);border-radius:18px;background:var(--paper)}
+.lp-cmp table{width:100%;border-collapse:separate;border-spacing:0;min-width:760px;font-size:14.5px}
+.lp-cmp th,.lp-cmp td{padding:13px 16px;text-align:left;border-bottom:1px solid var(--line);vertical-align:top}
+.lp-cmp thead th{font-size:12.5px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);background:var(--soft);position:sticky;top:0}
+.lp-cmp tbody th{font-weight:600;color:var(--ink);background:var(--paper);position:sticky;left:0;min-width:210px}
+.lp-cmp td{color:var(--muted)}
+.lp-cmp .us{background:color-mix(in srgb,var(--blue) 9%,var(--paper));color:var(--ink);font-weight:600;border-left:2px solid var(--blue);border-right:2px solid var(--blue)}
+.lp-cmp thead .us{background:var(--blue);color:#fff;border-radius:0}
+.lp-cmp tbody tr:last-child th,.lp-cmp tbody tr:last-child td{border-bottom:0}
+.lp-cmp tbody tr:last-child .us{border-bottom:2px solid var(--blue)}
+@media (max-width:980px){.lp-screen{grid-template-columns:1fr 1fr}}
+@media (max-width:640px){.lp-screen{grid-template-columns:1fr}}

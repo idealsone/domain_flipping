@@ -122,11 +122,6 @@ class Credits
         return ! self::pools($uid);
     }
 
-    public static function releaseScan(int $uid, string $scanId): void
-    {
-        DB::table('product_usage')->where('owner_id', $uid)->where('action', 'ats_scan')->where('reference', 'like', $scanId.'|%')->delete();
-    }
-
     /** The one-time lifetime primary resume is available once per account, and only to someone who has bought a plan. */
     public static function primaryClaimed(int $uid): bool
     {

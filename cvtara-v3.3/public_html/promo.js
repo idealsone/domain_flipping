@@ -74,6 +74,7 @@
   const offer = new URLSearchParams(location.search).get('offer') || '';
   fetch('/api/promo' + (offer ? '?offer=' + encodeURIComponent(offer) : ''), { headers: { Accept: 'application/json' }, credentials: 'same-origin' }).then(r => r.json()).then(d => {
     const v = d && d.promo; if (!v || !show(v)) return;
+    if (v.triggers.exit) window.CVTaraPromoExit = true; // the offer's own leaving pop-up replaces the older template invitation
     const seen = store.get('cvtara-promo-seen') || {}, fresh = () => !seen[v.id] || Date.now() - seen[v.id] > v.frequencyHours * 3600000 || !!offer;
     // top bar
     if (v.triggers.banner && sess.get('cvtara-promo-bar:' + v.id) !== 'off') {

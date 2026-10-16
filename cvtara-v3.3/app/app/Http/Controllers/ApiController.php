@@ -497,7 +497,8 @@ class ApiController extends Controller
         $catalog = json_decode(file_get_contents(resource_path('data/catalog.json')), true)['templates'] ?? [];
         $lib = Settings::get('library')['templates'] ?? [];
         $ok = fn ($slug) => collect($catalog)->contains('slug', $slug) && ($lib[$slug]['published'] ?? true) !== false;
-        $slug = ! empty($v['template']) && $ok($v['template']) ? $v['template'] : (collect($catalog)->first(fn ($t) => $ok($t['slug']))['slug'] ?? null);
+        // An uploaded resume starts in a plain, ATS-conscious layout (no photo, one column); the customer can change it in the builder.
+        $slug = ! empty($v['template']) && $ok($v['template']) ? $v['template'] : (collect($catalog)->first(fn ($t) => $ok($t['slug']) && ! empty($t['ats']) && empty($t['photo']) && empty($t['creative']))['slug'] ?? collect($catalog)->first(fn ($t) => $ok($t['slug']))['slug'] ?? null);
         abort_unless($slug, 422, 'No resume template is available right now.');
         $parsed = \App\Services\ResumeImport::parse($v['text'], $slug, (string) ($v['fileName'] ?? ''));
         $data = $parsed['data'];
