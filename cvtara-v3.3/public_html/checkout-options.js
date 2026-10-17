@@ -5,9 +5,10 @@
   if (!button) return;
   const inr = n => '₹' + Number(n || 0).toLocaleString('en-IN');
   const guest = (document.querySelector('meta[name=cvtara-user]')?.content || 'guest') === 'guest';
-  let active = new URLSearchParams(location.search).get('plan') || '', plans = {};
+  let active = new URLSearchParams(location.search).get('plan') || '', plans = {}, verifying = false;
   const set = (id, v) => { const e = document.getElementById(id); if (e) e.textContent = v; };
   function state() {
+    if (verifying) return;
     const live = window.CVTaraOwnerContent?.integrations?.payments !== false;
     button.textContent = guest ? 'Sign in to continue' : 'Continue to secure payment';
     button.disabled = !guest && (!consent.checked || !live || !plans[active]);
@@ -82,6 +83,24 @@
       checkout.open();
     } catch (e) { status.textContent = e.message; } finally { button.disabled = false; }
   };
-  state();
+  // Cashfree sends some payments (bank pages, UPI apps on phones) back here instead of closing the modal.
+  async function returned(orderId) {
+    const url = new URL(location.href); url.searchParams.delete('cashfree_order'); history.replaceState(null, '', url);
+    verifying = button.disabled = true;
+    for (let i = 0; i < 4; i++) {
+      status.textContent = 'Verifying your payment…';
+      try {
+        await api('/api/checkout/verify', { method: 'POST', body: { provider: 'cashfree', orderId } });
+        status.textContent = 'Payment verified. Opening your dashboard…';
+        location.href = '/workspace.html?view=billing';
+        return;
+      } catch (e) {
+        if (i === 3) { verifying = false; state(); status.textContent = e.message + ' If money was debited, do not pay again; check Billing shortly.'; return; }
+        await new Promise(r => setTimeout(r, 3000));
+      }
+    }
+  }
+  const cfOrder = new URLSearchParams(location.search).get('cashfree_order');
+  if (cfOrder && !guest && /^cvt_[0-9a-f]{32}$/.test(cfOrder)) returned(cfOrder); else state();
   window.addEventListener('load', () => init().catch(() => { status.textContent = 'Plans could not be loaded. Please refresh.'; }));
 })();
