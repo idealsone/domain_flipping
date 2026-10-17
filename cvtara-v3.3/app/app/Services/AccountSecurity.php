@@ -3,7 +3,6 @@
 namespace App\Services;
 
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Str;
@@ -19,7 +18,7 @@ class AccountSecurity
         RateLimiter::hit($key, 900);
         $code = (string) random_int(100000, 999999);
         $r->session()->put('security_challenge', ['hash' => Hash::make($code), 'until' => now()->timestamp + 600, 'attempts' => 0, 'user' => $r->user()->id]);
-        DB::table('mail_outbox')->insert(['id' => (string) Str::uuid(), 'dedupe' => (string) Str::uuid(), 'owner_id' => $r->user()->id, 'trigger' => 'security_verification', 'recipient' => $r->user()->email, 'subject' => 'Your CVTara security code', 'body' => "Your CVTara verification code is $code. It expires in 10 minutes. Do not share this code or your password. If you did not request it, review your account security.", 'due_at' => now(), 'created_at' => now(), 'updated_at' => now()]);
+        MailAutomation::queue($r->user(), 'security_verification', (string) Str::uuid(), ['code' => $code], true);
         Settings::audit($r->user()->id, 'security_code_requested');
     }
 

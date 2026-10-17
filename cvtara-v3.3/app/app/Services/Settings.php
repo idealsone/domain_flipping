@@ -39,6 +39,15 @@ class Settings
     {
         $r = DB::table('site_settings')->where('key', $key)->first();
         $value = $r ? json_decode($r->value_json, true) : (self::defaults()[$key] ?? $fallback);
+        // Templates added in a release appear for sites that saved their email list before it existed.
+        if ($key === 'emails' && $r && is_array($value)) {
+            $have = array_column($value, 'id');
+            foreach (self::defaults()['emails'] as $t) {
+                if (! in_array($t['id'], $have, true)) {
+                    $value[] = $t;
+                }
+            }
+        }
         if ($key === 'blog') {
             foreach ((self::$editorial ??= json_decode(file_get_contents(resource_path('data/editorial-content.json')), true)) as $slug => $post) {
                 if (empty($value[$slug]['body'])) {
