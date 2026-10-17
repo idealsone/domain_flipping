@@ -76,6 +76,6 @@ class EmailController extends Controller
     {
         $n = (string) $r->input('next', $r->query('next', ''));
 
-        return ($n !== '' && $n[0] === '/' && ! str_starts_with($n, '//') && ! str_contains($n, '\\') && ! str_starts_with($n, '/admin')) ? $n : '/workspace.html?view=resumes';
+        return ($n !== '' && $n[0] === '/' && ! str_starts_with($n, '//') && ! str_contains($n, '\\') && ! str_starts_with($n, '/admin')) ? $n : '/workspace.html';
     }
 }

@@ -1,4 +1,8 @@
-# CVTara v3.14.3 — professional template previews
+# CVTara v3.14.4 — Clear cache button, Dashboard after sign-up
+
+## 3.14.4
+- **Owner console: "Clear cache" button** in the top bar of every owner page and in Speed & traffic ("Clear cache & refresh site"). One click removes the stored pages, clears compiled views and cached settings, rebuilds every public page and reloads the page fresh.
+- **New customers land on the Dashboard** after sign-up and after confirming their email (they used to land on My Resumes). The Dashboard retries once if plan details are slow to load and shows a clear message instead of a blank area.
 
 ## 3.14.3
 - **Sample resume previews:** two-column designs (Prism, Folio and others) no longer squeeze the side column, so "Contact", job titles and e-mail addresses are no longer broken letter by letter; the photo placeholder is a neutral silhouette instead of "Photo optional"; the "fictional sample" note is a clean label that does not collide with coloured headers.

@@ -57,6 +57,7 @@ def run(ctx, t):
         t.check("a wrong code is refused with a clear message", r[0] in (302, 303) and db.q("select email_verified_at from users where id=?", uid)[0][0] is None)
         r = c.form("/verify-email", {"code": code})
         t.check("the right code confirms the address", r[0] in (302, 303) and db.q("select email_verified_at from users where id=?", uid)[0][0] is not None, r[0])
+        t.check("after confirming, the customer lands on the Dashboard", r[1].get("Location", "").rstrip("/").endswith("/workspace.html"), r[1].get("Location"))
         s, a = c.api("GET", "allowance"); t.check("after confirming, the allowance says so and buying works again", a.get("emailVerified") is True and c.api("POST", "checkout/start", {"plan": "fresher-basic"})[0] != 403)
 
         # ---- marketing mail: consent, unsubscribe link, one-click unsubscribe ----

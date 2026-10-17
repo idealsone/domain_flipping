@@ -92,7 +92,14 @@
   }
 
   async function boot() {
-    try { await load(); } catch { return; }
+    try { await load(); } catch {
+      await new Promise(r => setTimeout(r, 1500));
+      try { await load(); } catch {
+        const h = $('#view-dashboard');
+        if (h && !$('#wsDash')) { const d = document.createElement('div'); d.id = 'wsDash'; d.innerHTML = '<div class="ws-hero"><div><h2>Welcome back 👋</h2><p>We could not load your plan details just now. <a href="" style="color:#fff;text-decoration:underline">Refresh the page</a> to try again.</p></div></div>'; h.prepend(d); }
+        return;
+      }
+    }
     sidebar(); dashboard(); billing(); privacy(); referralNotice();
     // other scripts re-render some views; put our blocks back if they were replaced
     new MutationObserver(() => { if ($('#view-dashboard') && !$('#wsDash')) dashboard(); if ($('#view-account') && !$('#privacyTools')) privacy(); }).observe($('.workspace-content') || document.body, { childList: true, subtree: true });

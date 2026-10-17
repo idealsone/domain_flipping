@@ -45,6 +45,24 @@ class SpeedAdminController extends Controller
 
             return $ok(['result' => $res, 'cache' => PageCache::stats()]);
         }
+        if ($path === 'speed/refresh') {
+            // One click: drop the ready-made pages, compiled views and cached settings, then build every page fresh.
+            $removed = PageCache::purge();
+            foreach (['view:clear', 'route:clear', 'config:clear'] as $cmd) {
+                try {
+                    \Illuminate\Support\Facades\Artisan::call($cmd);
+                } catch (\Throwable $e) {
+                    // a missing cache folder is not a problem
+                }
+            }
+            foreach (['public-activity', 'public-config', 'site-settings'] as $k) {
+                \Illuminate\Support\Facades\Cache::forget($k);
+            }
+            $res = PageCache::build();
+            Settings::audit($id, 'cache_refreshed', $removed.':'.$res['built']);
+
+            return $ok(['removed' => $removed, 'result' => $res, 'cache' => PageCache::stats()]);
+        }
         if ($path === 'speed/purge') {
             $n = PageCache::purge();
             Settings::audit($id, 'pages_cache_cleared', (string) $n);
