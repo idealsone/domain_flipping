@@ -7,6 +7,7 @@ class _NoRedirect(urllib.request.HTTPRedirectHandler):
 
 class Client:
     verify_db = None  # path of the running test database: sign-ups are marked email-confirmed unless a test asks otherwise
+    dbs = {}  # base URL -> database of every running test instance, so a sign-up is confirmed in the instance it went to
 
     def __init__(self, base):
         self.base, self.csrf = base, None
@@ -61,9 +62,10 @@ class Client:
         r = self.form("/register", data)
         while r[0] == 429:  # the app allows 5 sign-ups per minute per IP; wait like a real visitor would
             time.sleep(int(r[1].get("Retry-After", "10")) + 1); r = self.form("/register", data)
-        if verify and Client.verify_db:
+        db = Client.dbs.get(self.base) or Client.verify_db
+        if verify and db:
             import sqlite3
-            con = sqlite3.connect(Client.verify_db); con.execute("update users set email_verified_at=datetime('now') where email=?", (email,)); con.commit(); con.close()
+            con = sqlite3.connect(db); con.execute("update users set email_verified_at=datetime('now') where email=?", (email,)); con.commit(); con.close()
         self.page("/workspace.html"); return r
 
     def login(self, email, password, path="/login", **extra):
