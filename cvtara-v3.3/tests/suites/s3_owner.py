@@ -17,7 +17,8 @@ def run(ctx, t):
     s, j = o.api("POST", "admin/referrals/settings", body); t.check("save all referral rules", s == 200, f"{s} {j}")
     r = o.api("GET", "admin/referrals")[1]["rules"]
     t.check("rules persisted", r["rateBps"] == 2500 and r["holdDays"] == 5 and r["premiumDays"] == 45 and r["minimumPaise"] == 150000, r)
-    bad = dict(body, premiumThreshold=2, downloadThreshold=5); s, _ = o.api("POST", "admin/referrals/settings", bad)
-    t.check("premium reward must need more friends than download reward", s == 422, s)
+    low = dict(body, downloadThreshold=3); s, _ = o.api("POST", "admin/referrals/settings", low)
+    t.check("the owner can change how many paying friends earn the reward", s == 200 and o.api("GET", "admin/referrals")[1]["rules"]["downloadThreshold"] == 3, s)
+    o.api("POST", "admin/referrals/settings", body)
     s, j = o.api("GET", "admin/business-controls"); t.check("Business Ops no longer carries referral rules", s == 200 and "referrals" not in str(j.get("data", {}).keys()).lower(), list(j.get("data", {}))[:20])
     t.check("owner cannot be reached without login", ctx.client().api("GET", "admin/referrals")[0] in (401, 403))

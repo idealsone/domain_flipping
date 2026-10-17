@@ -343,8 +343,8 @@
       "trigger": "nurture",
       "enabled": true,
       "delayHours": 0,
-      "subject": "Tailor your resume to one job in two minutes",
-      "body": "# Tailor your resume to one job in two minutes\nHi {{name}},\n\nPaste the job description into the ATS check, see which requirements your resume does not show yet, and make a tailored version in one click. Same facts, the words that job cares about.\n\n[button: Tailor for a job | {{site_url}}/workspace.html?view=match]\nNot for you right now? You can unsubscribe with one click below. We will keep sending only account emails such as receipts and sign-in codes."
+      "subject": "Refer 5 friends, get a free month",
+      "body": "# Refer 5 friends, get a free month\nHi {{name}},\n\nKnow someone job hunting? When 5 friends you refer sign up, confirm their email and buy a plan, you unlock one free resume download and one month of subscription, free. Your link and your progress are in your workspace.\n\n[button: Open my referral page | {{site_url}}/workspace.html?view=referrals]\nNot for you right now? You can unsubscribe with one click below. We will keep sending only account emails such as receipts and sign-in codes."
     },
     {
       "id": "nurture-12",

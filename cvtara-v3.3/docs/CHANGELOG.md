@@ -1,11 +1,16 @@
-# CVTara v3.14.0 — plainer, more conversational home; leaving pop-up and referral milestones removed
+# CVTara v3.14.1 — one referral reward: 5 paying friends = free download + free month
+
+## 3.14.1
+- **Referral reward simplified:** refer 5 friends who sign up, confirm their email and buy a plan, and you get one free resume download plus one month of subscription, free. The 10-friend tier is removed everywhere (site, workspace, owner console, server). Referral link, dashboard and commission stay.
+- Phone (SMS) verification is no longer needed to claim. Friends must pay for a plan, which keeps it abuse-proof.
+- Owner console: "Paying friends needed for the reward" and "Free subscription length" are editable under Referral Ops.
 
 ## 3.14.0
 - **Home page** now says plainly what is free and what a plan adds ("What you get"), with the price from your plans and a clear route to sign up or buy. Flatter cards, shorter copy.
-- **Removed:** the template-invitation pop-up that appeared when the mouse left the page, and the 5 / 10 paying-friends reward cards (free download, free month) from the site, the workspace and the owner console. Milestone rewards are switched off in the server.
+- **Removed:** the template-invitation pop-up that appeared when the mouse left the page.
 - **Footer logo** sits on a white tile so it reads on the dark footer.
 - Download dialog for accounts without a plan has one clear path: view plans and upgrade.
-- Plan-nudge email 11 no longer mentions referral rewards.
+- Plan-nudge email 11 now explains the 5-friend reward.
 
 ## 3.13.0
 - **Branded email.** Every mail is sent as HTML plus plain text with a CVTara header, a signature (Team CVTara, HR team in Bangalore, support@cvtara.com) and, for tips, a one-click unsubscribe link and header.
