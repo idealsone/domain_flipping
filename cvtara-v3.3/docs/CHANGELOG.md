@@ -1,4 +1,11 @@
-# CVTara v3.13.0 — professional email, sign-up code, reminders, plan-needed dialog
+# CVTara v3.14.0 — plainer, more conversational home; leaving pop-up and referral milestones removed
+
+## 3.14.0
+- **Home page** now says plainly what is free and what a plan adds ("What you get"), with the price from your plans and a clear route to sign up or buy. Flatter cards, shorter copy.
+- **Removed:** the template-invitation pop-up that appeared when the mouse left the page, and the 5 / 10 paying-friends reward cards (free download, free month) from the site, the workspace and the owner console. Milestone rewards are switched off in the server.
+- **Footer logo** sits on a white tile so it reads on the dark footer.
+- Download dialog for accounts without a plan has one clear path: view plans and upgrade.
+- Plan-nudge email 11 no longer mentions referral rewards.
 
 ## 3.13.0
 - **Branded email.** Every mail is sent as HTML plus plain text with a CVTara header, a signature (Team CVTara, HR team in Bangalore, support@cvtara.com) and, for tips, a one-click unsubscribe link and header.

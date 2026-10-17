@@ -30,13 +30,13 @@ def run(ctx, t):
     cat = json.load(open(os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "app", "resources", "data", "catalog.json"), encoding="utf8"))["templates"]
     t.check("no template with a side column is labelled ATS-conscious (single column is the safe standard)", not [x["slug"] for x in cat if x.get("ats") and x["layout"] in ("sidebar", "signal")], [x["slug"] for x in cat if x.get("ats") and x["layout"] in ("sidebar", "signal")])
     t.check("calculators and checklists are mounted on articles that already carry their copy", "insertAdjacentHTML(\"afterbegin\",widget)" in rd("preview.js") and "editorial==='true'" in rd("preview.js"))
-    t.check("the older template invitation steps aside when an offer has its own leaving pop-up", "CVTaraPromoExit" in rd("promo.js") and "CVTaraPromoExit" in rd("preview.js"))
     t.check("the 'unlock a clean download' help is shown only to accounts without a plan", "if (!a.paid) addUnlock" in rd("reward-paywall.js"))
     t.check("article covers are drawn cards or a picture with a fallback, never an empty dark box", ".b2-cover" in rd("blog-v2.css") and "is-broken" in rd("blog-v2.css"))
     t.check("unused stylesheets are gone", not os.path.exists(os.path.join(src, "guide.css")) and not os.path.exists(os.path.join(src, "checkout-options.css")))
     c = ctx.client()
     # home
     s, _, home = c.page("/")
+    t.check("the older leaving pop-up (template invitation) is gone from the home page", "exitDialog" not in home and "data-exit-close" not in rd("preview.js") and "exit.showModal" not in rd("preview.js"))
     t.check("the home page shows designs first, then a five-step flow, who it is for and the ATS report", all(k in home for k in ('id="designs"', "heroResume", "heroLetter", "letterSpotlight", 'id="how"', "lp-flow", "lp-report", "lpPersona", "lp-incl")) and home.index('id="designs"') < home.index('id="how"') < home.index('id="diagnose"') < home.index('id="pricing"'), s)
     t.check("the home page has no repeated sections from the old layout", not any(k in home for k in ('id="why"', "lp-auto", "lp-screen", "lp-steps")))
     t.check("the home page explains how employer screening reads a resume, without claiming any employer endorses CVTara", "not endorsed by or affiliated with" in home and "selectable text" in home)
@@ -45,7 +45,8 @@ def run(ctx, t):
     t.check("customer reviews appear in one section only", home.count("lpReviews") == 1 and "What users say" not in home and "CUSTOMER FEEDBACK" not in home)
     t.check("the FAQ is short and honest about payments and guarantees", home.count("<details") == 8 and "final and non-refundable" in home and "guarantee an interview" in home)
     t.check("no placeholder or internal notes are shown to visitors", not re.search(r"replace with your facts|public launch|lorem ipsum", home, re.I))
-    t.check("the referral section offers a free month for referring friends or colleagues", "free month" in home and "colleagues" in home)
+    t.check("the 5 / 10 paying-friends reward cards are gone from the home page", "paying friends" not in home and "YOUR FIRST REWARD" not in home and "referral-offer" not in home)
+    t.check("the home page says plainly what is free and what a plan adds", 'id="get"' in home and "Free, no card" in home and "paid once" in home.lower())
     # blog
     s, _, blog = c.page("/blog.html")
     ld = re.findall(r'<script type="application/ld\+json">(.*?)</script>', blog, re.S)

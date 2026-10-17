@@ -14,9 +14,8 @@ class ReferralRewards
 {
     public static function enabled(): bool
     {
-        $p = Settings::providers()['verification'] ?? [];
-
-        return Referrals::config()['enabled'] && ($p['enabled'] ?? 'false') === 'true' && ! empty($p['twilioAccountSid']) && ! empty($p['twilioAuthToken']) && ! empty($p['twilioVerifyServiceSid']);
+        // Milestone rewards (free download / free month) are retired.
+        return false;
     }
 
     private static function client()

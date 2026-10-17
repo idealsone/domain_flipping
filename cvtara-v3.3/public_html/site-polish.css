@@ -16,3 +16,23 @@ body[data-page] .legal-shell ul{padding-left:22px;display:grid;gap:6px}
 body[data-page] .legal-shell a{color:var(--blue);font-weight:600}
 body[data-page] .template-card,body[data-page] .cover-letter-card,body[data-page] .guide-card,body[data-page] .blog-card{border-radius:18px}
 body[data-page].free-resume-preview{background:var(--bg)}
+
+/* footer logo: the full-colour logo sits on a white tile so it reads on the dark footer */
+body[data-page] .site-footer .cv-brand-logo{background:#fff;padding:9px 16px;border-radius:14px;height:auto;width:auto;max-width:210px;box-shadow:none}
+
+/* ---- flat, transactional home: solid cards, thin borders, no heavy shadows ---- */
+body[data-page=home] .lp-sec{padding-block:clamp(44px,6vw,72px)}
+body[data-page=home] .lp-get-grid{display:grid;gap:18px;grid-template-columns:repeat(3,minmax(0,1fr));align-items:stretch}
+body[data-page=home] .lp-get-grid article{display:flex;flex-direction:column;gap:12px;padding:26px;border:1px solid var(--line,#e2e8f0);border-radius:16px;background:var(--surface,#fff);box-shadow:none}
+body[data-page=home] .lp-get-grid article h3{margin:0;font-size:21px;letter-spacing:-.01em}
+body[data-page=home] .lp-get-grid ul{margin:0;padding:0;list-style:none;display:grid;gap:10px;flex:1}
+body[data-page=home] .lp-get-grid li{position:relative;padding-left:26px;line-height:1.5}
+body[data-page=home] .lp-get-grid li:before{content:"✓";position:absolute;left:0;top:0;color:#15803d;font-weight:800}
+body[data-page=home] .lp-get-grid .button{align-self:flex-start}
+body[data-page=home] .lp-get-main{border:2px solid #1557d2;background:linear-gradient(180deg,#f5f8ff,var(--surface,#fff) 60%)}
+body[data-page=home] .lp-get-tag{align-self:flex-start;padding:4px 10px;border-radius:999px;background:#1557d2;color:#fff;font-size:12px;font-weight:800;letter-spacing:.06em;text-transform:uppercase}
+body[data-page=home] .lp-get-main small{color:var(--muted,#475569);line-height:1.5}
+html.dark body[data-page=home] .lp-get-main{background:linear-gradient(180deg,#14213d,var(--surface,#0f172a) 60%)}
+body[data-page=home] .lp-flow li,body[data-page=home] .lp-letters>*,body[data-page=home] .lp-spot>*{box-shadow:none}
+body[data-page=home] .lp-flow li{border:1px solid var(--line,#e2e8f0);background:var(--surface,#fff)}
+@media(max-width:900px){body[data-page=home] .lp-get-grid{grid-template-columns:1fr}}

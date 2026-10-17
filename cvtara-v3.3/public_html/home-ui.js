@@ -33,7 +33,7 @@
     const prices = Object.values(d.plans || {}).filter(p => p.type === 'plan' && p.price > 0).map(p => p.price);
     if (prices.length) {
       const min = Math.min(...prices), inr = n => '₹' + n.toLocaleString('en-IN');
-      if ($('#stFrom')) $('#stFrom').textContent = inr(min);
+      if ($('#stFrom')) $('#stFrom').textContent = inr(min); if ($('#getFrom')) $('#getFrom').textContent = inr(min);
       const a = $('#lpAnnounce');
       if (a) a.innerHTML = announceHtml(inr(min));
     }
