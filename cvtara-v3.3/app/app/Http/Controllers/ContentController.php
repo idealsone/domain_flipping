@@ -264,7 +264,7 @@ class ContentController extends Controller
         }$html = str_replace('</head>', $head.'</head>', $html);
         $scripts = '<script src="/experience.js" defer></script>';
         if ($path !== '' && $path !== 'index.html') {
-            $scripts .= '<script src="/launch-ui.js" defer></script>';
+            $scripts .= '<script src="/launch-ui.js" defer></script><script src="/upgrade-prompt.js" defer></script>';
         }
         if ($admin || $path === 'workspace.html') {
             $scripts .= '<script src="/referral-center.js" defer></script>';

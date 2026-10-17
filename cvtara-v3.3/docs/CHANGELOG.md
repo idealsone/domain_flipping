@@ -1,4 +1,12 @@
-# CVTara v3.12.1 — step-by-step front page, premium sign-in and sign-up, wider resume library
+# CVTara v3.13.0 — professional email, sign-up code, reminders, plan-needed dialog
+
+## 3.13.0
+- **Branded email.** Every mail is sent as HTML plus plain text with a CVTara header, a signature (Team CVTara, HR team in Bangalore, support@cvtara.com) and, for tips, a one-click unsubscribe link and header.
+- **Sign-up email code.** New customers confirm a 6-digit code before buying or running ATS checks (only once email delivery is switched on). Existing customers are not affected.
+- **Automatic mail:** resume-saved follow-up, abandoned-plan mail, plan ending in 7, 4 and 1 days, twelve plan nudges over a year (until the first purchase, opted-in only), a monthly career guide for paid and free customers, forgot-password, receipt and application follow-ups spread over about a month (day 7, 15, 30).
+- **Sign-up form** shows each mistake (mismatched or weak password, taken email) next to the field.
+- **Plan-needed dialog** explains, step by step, that a plan comes before clean downloads and more ATS checks.
+- **Job field switcher** on My Resumes: move from a non-technical to a technical job and suggestions follow.
 
 ## 3.12.1
 - **Front page restructured step by step:** hero with a real resume and cover-letter preview, design showcase (resumes and matching cover letters), employer-names strip, five-step "how it works", primary-resume explainer, ATS Match, who it is for, comparison, pricing, referral, FAQ. Repeated sections removed.

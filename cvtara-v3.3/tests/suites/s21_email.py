@@ -26,6 +26,17 @@ def run(ctx, t):
     spam = re.compile(r"free!!|100% free|guarantee|act now|limited time|\$\$\$|click here|winner", re.I)
     t.check("no spam-trigger wording in any template", not [f for f in files if spam.search(open(os.path.join(d, f), encoding="utf8").read())])
 
+    # ---- registration mistakes are shown on the form, next to the field ----
+    c = ctx.client(); c.page("/register")
+    r = c.form("/register", {"name": "Bad Pw", "email": "bad-pw@test.local", "password": "TestPassw0rd!!x", "password_confirmation": "different-Passw0rd!!", "experienceLevel": "fresher", "profession": "Analyst", "category": "Technology", "terms": "1"})
+    s, h, b = c.page("/register")
+    t.check("a password that does not match is explained on the sign-up form", r[0] in (302, 303) and "match" in b.lower() and 'class="fe"' in b, (r[0], b[-300:]))
+    r = c.form("/register", {"name": "Bad Pw", "email": "bad-pw@test.local", "password": "short", "password_confirmation": "short", "experienceLevel": "fresher", "profession": "Analyst", "category": "Technology", "terms": "1"})
+    s, h, b = c.page("/register")
+    t.check("a too-short password is explained on the sign-up form", "at least" in b.lower() and 'class="fe"' in b)
+    c = ctx.client(); c.register("ws-up@test.local"); s, h, b = c.page("/workspace.html")
+    t.check("the plan-needed dialog and field switcher load on the workspace", "/upgrade-prompt.js" in b and ctx.client().raw("GET", "/upgrade-prompt.js")[0] == 200)
+
     # ---- switch email delivery on (the code check only applies once it is on) ----
     s, g = o.api("GET", "admin/content/integrations")
     data = g["data"]; before = json.loads(json.dumps(data)); data["email"] = True

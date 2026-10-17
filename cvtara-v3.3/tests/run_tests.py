@@ -42,6 +42,7 @@ def main():
         inst = Instance(app, public, preview=True).start(); Client.verify_db = inst.db
         for m in mods:
             print(f"\n== {m.NAME}")
+            Client.verify_db = inst.db
             try: m.run(Ctx(inst, app, public), t)
             except Exception as e:
                 tb = __import__("traceback").extract_tb(e.__traceback__)[-1]
