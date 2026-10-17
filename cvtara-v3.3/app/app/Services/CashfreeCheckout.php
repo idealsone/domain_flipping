@@ -57,6 +57,8 @@ return Http::baseUrl(self::base($live))->withHeaders(['x-api-version' => $p['cas
             }
         } catch (\Throwable $e) {
             Settings::audit($u->id, 'checkout_needs_reconciliation', $id);
+            $why = $e instanceof \Illuminate\Http\Client\RequestException ? ($e->response->json('message') ?: 'HTTP '.$e->response->status()) : 'unexpected response';
+            ErrorLog::record('error', 'billing', 'Cashfree refused to create an order ('.($live ? 'live' : 'test').' mode): '.$why, null, null, $u->id);
             throw ValidationException::withMessages(['payment' => 'Could not open checkout. No payment has been requested in your browser. Check purchase history before trying again.']);
         }
         Settings::audit($u->id, 'checkout_started', $id);
