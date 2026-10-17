@@ -28,7 +28,7 @@
 #resumeStudio .studio-template-thumb{display:block;position:relative;height:330px;width:100%;background:#e5eaf1;border:0;overflow:hidden;padding:20px 0 0}
 #resumeStudio .studio-template-paper{position:absolute;top:20px;left:50%;width:595px;height:842px;min-height:842px;padding:0;transform:translateX(-50%) scale(.37);transform-origin:top center;box-shadow:0 4px 25px #102b4533;margin:0;background:white;color:#222;overflow:hidden;pointer-events:none}
 #resumeStudio .studio-template-paper .ref-resume{width:595px;min-height:842px;padding:38px 40px;font-size:14px;line-height:1.45;box-shadow:none}
-#resumeStudio .studio-template-paper .ref-header h1{font-size:32px}.studio-template-paper .ref-role{font-size:15px!important}.studio-template-paper .ref-contact{font-size:11px!important;gap:3px 14px}.studio-template-paper .ref-section h2{font-size:16px!important}.studio-template-paper .ref-columns{gap:25px!important}
+#resumeStudio .studio-template-paper .ref-header h1,#resumeStudio .studio-template-paper .ref-header .doc-name{font-size:32px}.studio-template-paper .ref-role{font-size:15px!important}.studio-template-paper .ref-contact{font-size:11px!important;gap:3px 14px}.studio-template-paper .ref-section h2{font-size:16px!important}.studio-template-paper .ref-columns{gap:25px!important}
 #resumeStudio .studio-template-paper .ref-resume .ref-header{padding:0 0 20px;margin:0}
 #resumeStudio .studio-template-thumb>span{position:absolute;bottom:14px;left:50%;transform:translateX(-50%);background:#12243c;color:#fff;border-radius:30px;padding:9px 15px;font-size:13px;font-weight:600;box-shadow:0 2px 8px #16263b20;opacity:0;transition:opacity .15s}
 .studio-template-thumb:hover>span,.studio-template-thumb:focus-visible>span{opacity:1!important}
@@ -56,7 +56,7 @@
 .studio-paper-frame{position:relative;margin:auto;width:595px;min-width:0;min-height:0}
 #resumeStudio #studioPaper{position:absolute;top:0;left:0;width:595px;min-height:842px;padding:0;transform-origin:top left;background:#fff;box-shadow:0 5px 25px #10283e20}
 #resumeStudio .studio-paper>.ref-resume{width:595px;min-height:842px}
-#resumeStudio .studio-paper h1{font-size:32px!important}.studio-page-meta{display:flex;gap:12px;justify-content:space-between;padding:10px 2px;color:var(--muted);font-size:12px;line-height:1.5}
+#resumeStudio .studio-paper h1,#resumeStudio .studio-paper .doc-name{font-size:32px!important}.studio-page-meta{display:flex;gap:12px;justify-content:space-between;padding:10px 2px;color:var(--muted);font-size:12px;line-height:1.5}
 #resumeStudio .studio-preview-status{padding:13px 0}#resumeStudio .studio-preview-status>.studio-progress{height:5px;background:var(--line);border-radius:10px;margin:10px 0;display:block;overflow:hidden}.studio-progress i{height:100%;display:block;background:var(--blue);border-radius:10px;transition:width .2s ease}
 #resumeStudio .studio-export{padding:14px;border-radius:10px}.studio-export .button{white-space:normal}
 .studio-review-panel{padding:28px;border:1px solid var(--line);border-radius:12px;background:var(--paper)}.studio-review-panel h3{font-size:27px;letter-spacing:-.035em;line-height:1.2;margin:10px 0 14px}.studio-review-panel>p{font-size:15px;color:var(--muted);line-height:1.65}.studio-review-panel>.button{margin-top:12px}.studio-review-panel>small{display:block;font-size:13px;line-height:1.6;color:var(--muted);margin-top:20px}

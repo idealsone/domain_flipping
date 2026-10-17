@@ -6,7 +6,7 @@ body[data-page] .page-hero p{font-size:clamp(16px,1.4vw,18.5px);line-height:1.6;
 body[data-page] .page-hero .pill-row{justify-content:flex-start}
 body[data-page] .page-hero .pill-row,.page-hero .hero-actions{display:flex;flex-wrap:wrap;gap:10px;margin-top:6px}
 body[data-page] .page-hero .pill{padding:7px 13px;border-radius:999px;background:color-mix(in srgb,var(--blue) 9%,var(--paper));border:1px solid color-mix(in srgb,var(--blue) 18%,var(--line));font-size:13px;font-weight:600;color:var(--ink)}
-body[data-page] .section h2,body[data-page] .section-heading h2{font-size:clamp(26px,3vw,34px);letter-spacing:-.025em;font-weight:850}
+body[data-page] .section h2:not(.ref-resume h2,.letter-document h2,.studio-paper h2,.template-preview h2,.lp-doc h2,[class*="ref-suite"] h2,[class*="letter-"] h2),body[data-page] .section-heading h2{font-size:clamp(26px,3vw,34px);letter-spacing:-.025em;font-weight:850}
 body[data-page] .legal-shell{width:min(860px,calc(100% - 38px));margin:0 auto;padding:clamp(36px,5vw,64px) 0 72px}
 body[data-page] .legal-shell h1{font-size:clamp(32px,4.2vw,46px);line-height:1.1;font-weight:850;letter-spacing:-.03em;margin:0 0 14px;text-align:left}
 body[data-page] .legal-shell>p:first-of-type{font-size:clamp(16px,1.4vw,18.5px);color:var(--muted);line-height:1.65}
@@ -36,3 +36,6 @@ html.dark body[data-page=home] .lp-get-main{background:linear-gradient(180deg,#1
 body[data-page=home] .lp-flow li,body[data-page=home] .lp-letters>*,body[data-page=home] .lp-spot>*{box-shadow:none}
 body[data-page=home] .lp-flow li{border:1px solid var(--line,#e2e8f0);background:var(--surface,#fff)}
 @media(max-width:900px){body[data-page=home] .lp-get-grid{grid-template-columns:1fr}}
+
+/* contact: the heading is the page H1 and looks like the other section headings */
+body[data-page=contact] .section-heading h1{margin:0 0 10px;font-size:clamp(26px,3vw,34px);letter-spacing:-.025em;font-weight:850;line-height:1.15}

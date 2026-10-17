@@ -45,6 +45,12 @@ def run(ctx, t):
     t.check("customer reviews appear in one section only", home.count("lpReviews") == 1 and "What users say" not in home and "CUSTOMER FEEDBACK" not in home)
     t.check("the FAQ is short and honest about payments and guarantees", home.count("<details") == 8 and "final and non-refundable" in home and "guarantee an interview" in home)
     t.check("no placeholder or internal notes are shown to visitors", not re.search(r"replace with your facts|public launch|lorem ipsum", home, re.I))
+    pv = rd("preview.js"); contact_html = ctx.client().page("/contact.html")[2]
+    t.check("the footer lists Contact & support once", pv.count("Contact & support") == 1)
+    t.check("the contact page has one real H1", contact_html.count("<h1") == 1 and "How can we help?" in contact_html)
+    t.check("sample resumes and letters do not use H1 for the name (one H1 per page)", "<h1>" not in rd("reference-templates.js") and "<h1>" not in rd("premium-collection.js") and 'class="doc-name"' in rd("reference-templates.js"))
+    t.check("page heading sizes are not forced onto the text inside sample documents", ".ref-resume h2" in rd("site-polish.css") and ".letter-document h2" in rd("site-polish.css"))
+    t.check("document-name styles exist wherever the old H1 styles did", rd("launch.css").count(".doc-name") >= 3 and rd("premium-products.css").count(".doc-name") >= 10)
     t.check("the referral section keeps one reward: 5 paying friends = free download + free month, and no 10-friend tier", "referral-offer" in home and "5</em> paying friends" in home and "1 month subscription, free" in home and "10</em> paying friends" not in home and "KEEP SHARING" not in home)
     t.check("the home page says plainly what is free and what a plan adds", 'id="get"' in home and "Free, no card" in home and "paid once" in home.lower())
     # blog

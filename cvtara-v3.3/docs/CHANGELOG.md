@@ -1,4 +1,9 @@
-# CVTara v3.14.1 — one referral reward: 5 paying friends = free download + free month
+# CVTara v3.14.2 — template previews fixed, one page heading per page, footer and contact tidy-up
+
+## 3.14.2
+- **Template and cover-letter previews fixed:** section headings inside the sample documents ("Profile", "Experience", "Contact", "Application for…") had been forced to page-heading size by the shared page styles. They are small and proper again.
+- **One H1 per page:** sample resumes and letters no longer use an H1 for the name (templates page 13 headings, cover-letter page 27, now 1 each). Styles carried over.
+- **Contact page** now has a real H1. **Footer** lists "Contact & support" once.
 
 ## 3.14.1
 - **Referral reward simplified:** refer 5 friends who sign up, confirm their email and buy a plan, and you get one free resume download plus one month of subscription, free. The 10-friend tier is removed everywhere (site, workspace, owner console, server). Referral link, dashboard and commission stay.
