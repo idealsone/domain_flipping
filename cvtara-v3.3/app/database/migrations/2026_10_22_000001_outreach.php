@@ -31,6 +31,11 @@ return new class extends Migration
             $t->uuid('id')->primary();
             $t->string('email', 190)->unique();
             $t->string('name', 120)->default('');
+            // Which sequence the contact gets: students (job seekers) or colleges (placement officers).
+            $t->string('list', 12)->default('students');
+            $t->string('college', 160)->default('');
+            $t->string('designation', 80)->default('');
+            $t->string('city', 80)->default('');
             $t->string('source', 120)->default('');
             // queued → active (between steps) → done; or stopped for good: registered, unsubscribed, bounced, removed
             $t->string('status', 14)->default('queued');
@@ -40,15 +45,20 @@ return new class extends Migration
             $t->timestamp('last_sent_at')->nullable();
             $t->timestamp('clicked_at')->nullable();
             $t->unsignedSmallInteger('clicks')->default(0);
+            $t->unsignedSmallInteger('shares')->default(0);
             $t->foreignId('user_id')->nullable()->constrained('users')->nullOnDelete();
             $t->string('error', 255)->default('');
             $t->timestamps();
             $t->index(['status', 'next_at']);
             $t->index('sender_id');
+            $t->index(['list', 'status']);
         });
         Schema::create('outreach_sends', function (Blueprint $t) {
             $t->uuid('id')->primary();
-            $t->uuid('contact_id')->index();
+            // campaign: a mail to a contact; warmup: a short note to one of the owner's own warm-up addresses.
+            $t->string('kind', 8)->default('campaign');
+            $t->uuid('contact_id')->nullable()->index();
+            $t->string('to_email', 190)->nullable();
             $t->uuid('sender_id');
             $t->unsignedTinyInteger('step');
             $t->string('subject', 200);

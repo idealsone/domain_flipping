@@ -18,6 +18,9 @@ use Illuminate\Support\Str;
  * - A contact keeps the same mailbox for every step, so follow-ups come from the same address.
  * - Right before each send the address is checked again: a CVTara account, an unsubscribe or a bounce stops it for good.
  * - A mailbox pauses itself after repeated failures or too many bounces; the others carry on.
+ * - Two lists, each with its own sequence: students (job seekers) and colleges (placement officers).
+ * - Part of each mailbox's daily amount (40% by default) goes to short warm-up notes to the owner's own addresses,
+ *   so the mailbox keeps a steady, healthy history. With nothing else to send, warm-up may use the whole day.
  */
 class Outreach
 {
@@ -27,6 +30,22 @@ class Outreach
     public const STOPPED = ['registered', 'unsubscribed', 'bounced', 'removed'];
 
     public const MAX_IMPORT = 20000;
+
+    public const LISTS = ['students' => 'Students', 'colleges' => 'Colleges (TPOs)'];
+
+    public const MAX_SEEDS = 50;
+
+    /** Warm-up notes: short, varied, no links, so they read like ordinary mail between people. */
+    private const WARMUP = [
+        ['Quick check-in', "Hi,\n\nJust checking this address works on your side. No action needed.\n\nThanks"],
+        ['Notes from today', "Hello,\n\nSharing a quick note: today's resume reviews went well and the new templates look good.\n\nRegards"],
+        ['Re: schedule for this week', "Hi,\n\nTuesday and Thursday afternoons work for me this week. Let me know what suits you.\n\nThanks"],
+        ['Following up', "Hello,\n\nFollowing up on our last conversation. Happy to talk whenever you're free.\n\nBest"],
+        ['Thanks for yesterday', "Hi,\n\nThanks for your time yesterday. I'll send the summary by the end of the week.\n\nRegards"],
+        ['Placement season dates', "Hello,\n\nMost campus drives seem to start next month. I'll keep you posted as dates come in.\n\nThanks"],
+        ['Small update', "Hi,\n\nA small update: the resume checklist is finished. I'll share it soon.\n\nBest regards"],
+        ['Re: the shortlist', "Hello,\n\nGot it, thanks. I'll go through the shortlist and come back to you tomorrow.\n\nRegards"],
+    ];
 
     private const ROLE_PREFIXES = ['noreply', 'no-reply', 'donotreply', 'do-not-reply', 'mailer-daemon', 'postmaster', 'abuse', 'bounce', 'bounces'];
 
@@ -39,17 +58,38 @@ class Outreach
             'windowStart' => 9,
             'windowEnd' => 19,
             'footer' => '',
-            'steps' => [
-                ['subject' => '{{name}}, a quicker way to a job-ready resume', 'body' => "Hi {{name}},\n\nCVTara builds an ATS-friendly resume and cover letter in minutes, and checks your resume against any job description so you know which keywords are missing.\n\nYou can try it free here: {{site_url}}\n\nIf this isn't useful, just ignore this email.", 'delayDays' => 0],
-                ['subject' => 'Re: a quicker way to a job-ready resume', 'body' => "Hi {{name}},\n\nJust following up on my last note. Many freshers use CVTara's free ATS check to see why their applications get no reply.\n\nTry it here: {{site_url}}", 'delayDays' => 4],
+            'warmup' => ['share' => 40, 'seeds' => []],
+            'lists' => [
+                'students' => ['design' => 'card', 'steps' => [
+                    ['subject' => '{{name}}, will your resume get shortlisted?', 'delayDays' => 0, 'body' => "# Will your resume get shortlisted?\n\nHi {{name}},\n\nMost companies that hire freshers screen resumes with software (an ATS) before anyone reads them. If your resume doesn't use the words the job asks for, it is rejected in seconds.\n\nCVTara checks your resume for free and shows you:\n- your match score for any job description\n- the exact keywords you are missing\n- what to fix before you apply\n\n[button: Check my resume free | {{ats_url}}]\n\nIt takes about a minute, and placement season is the right time to fix it.\n\n{{sender_name}}"],
+                    ['subject' => 'Re: will your resume get shortlisted?', 'delayDays' => 3, 'body' => "Hi {{name}},\n\nA quick placement tip: send a slightly different resume for each role. Same facts, but the words that role asks for.\n\nCVTara does this for you in minutes, with fresher templates recruiters find easy to read and a cover letter to match.\n\n[button: Make my job-ready resume | {{site_url}}]\n\nFriends applying too? Send them the free check on WhatsApp: {{share_url}}"],
+                    ['subject' => 'last note from me, {{name}}', 'delayDays' => 5, 'body' => "# Your resume, ready before the next interview\n\nHi {{name}},\n\nThis is my last mail about it. If you want a resume that gets past the ATS and looks professional, CVTara plans for freshers start at ₹299:\n- ATS-friendly fresher templates, PDF and Word\n- a tailored version for each job\n- 20 ATS checks to test before you apply\n\n[button: See fresher plans | {{plans_url}}]\n\nAll the best for your placements.\n\n{{sender_name}}"],
+                ]],
+                'colleges' => ['design' => 'plain', 'steps' => [
+                    ['subject' => 'Placement support for {{college}} students', 'delayDays' => 0, 'body' => "Hello {{name}},\n\nI'm writing from CVTara, a resume platform built by an HR team in Bengaluru. You will know how many capable students at {{college}} lose out at the resume shortlist stage.\n\nWe would like to give {{college}}'s final-year students free access to our ATS resume check this placement season:\n- each student sees how their resume scores against real job descriptions\n- they get the missing keywords and fixes in minutes\n- you share one link with the batch, with nothing to install\n\nShall I send you the link and a short note you can forward to students? A reply to this email is enough.\n\n{{sender_name}}"],
+                    ['subject' => 'Re: Placement support for {{college}} students', 'delayDays' => 4, 'body' => "Hello {{name}},\n\nFollowing up on my note. Here is the free link your students can use straight away: {{ats_url}}\n\nIf it helps, we can also run a 30-minute online session for the batch on writing a resume that passes ATS screening, at no cost to the college.\n\nWould a date in the next two weeks suit you? A one-line reply is enough.\n\n{{sender_name}}"],
+                    ['subject' => 'Re: Placement support for {{college}} students', 'delayDays' => 7, 'body' => "Hello {{name}},\n\nI don't want to fill your inbox, so this is my last note. If the free ATS check or a resume session would help {{college}}'s students this season, just reply and I'll set it up.\n\nYou can also forward the free check to your students on WhatsApp: {{share_url}}\n\n{{sender_name}}"],
+                ]],
             ],
         ];
     }
 
     public static function config(): array
     {
-        $c = array_merge(self::defaults(), (array) Settings::get('outreach', []));
-        $c['steps'] = array_values(array_slice((array) $c['steps'], 0, 4)) ?: self::defaults()['steps'];
+        $d = self::defaults();
+        $saved = (array) Settings::get('outreach', []);
+        $c = array_merge($d, array_intersect_key($saved, array_flip(['enabled', 'windowStart', 'windowEnd', 'footer'])));
+        $c['warmup'] = array_merge($d['warmup'], (array) ($saved['warmup'] ?? []));
+        $savedLists = (array) ($saved['lists'] ?? []);
+        if (! $savedLists && ! empty($saved['steps'])) {
+            $savedLists = ['students' => ['steps' => $saved['steps'], 'design' => 'plain']]; // saved before there were two lists
+        }
+        foreach ($d['lists'] as $k => $def) {
+            $l = array_merge($def, (array) ($savedLists[$k] ?? []));
+            $l['steps'] = array_values(array_slice((array) $l['steps'], 0, 4)) ?: $def['steps'];
+            $l['design'] = in_array($l['design'], ['card', 'plain'], true) ? $l['design'] : $def['design'];
+            $c['lists'][$k] = $l;
+        }
 
         return $c;
     }
@@ -65,9 +105,54 @@ class Outreach
         return max(1, min((int) $s->daily_cap, (int) $s->warmup_start + (int) $s->warmup_step * $days));
     }
 
-    public static function sentLast24h(string $senderId): int
+    public static function sentLast24h(string $senderId, ?string $kind = null): int
     {
-        return DB::table('outreach_sends')->where('sender_id', $senderId)->whereIn('status', ['sent', 'bounced'])->where('created_at', '>', now()->subDay())->count();
+        return DB::table('outreach_sends')->where('sender_id', $senderId)->whereIn('status', ['sent', 'bounced'])->where('created_at', '>', now()->subDay())->when($kind, fn ($q) => $q->where('kind', $kind))->count();
+    }
+
+    /** The owner's own warm-up addresses, without this mailbox itself. */
+    public static function warmupTargets(object $s, array $c): array
+    {
+        return array_values(array_filter((array) ($c['warmup']['seeds'] ?? []), fn ($e) => $e !== $s->email));
+    }
+
+    /** @return 'sent'|'failed' */
+    private static function sendWarmup(object $s, array $seeds, $now): string
+    {
+        // Rotate through the addresses and the notes so no two mails in a row look alike.
+        $n = DB::table('outreach_sends')->where('sender_id', $s->id)->where('kind', 'warmup')->count();
+        $to = $seeds[$n % count($seeds)];
+        [$subject, $body] = self::WARMUP[($n + crc32($s->id)) % count(self::WARMUP)];
+        $text = $body.($s->from_name ? "\n".$s->from_name : '')."\n";
+        $log = ['id' => (string) Str::uuid(), 'kind' => 'warmup', 'contact_id' => null, 'to_email' => $to, 'sender_id' => $s->id, 'step' => 0, 'subject' => $subject, 'created_at' => now()];
+        try {
+            self::mailer($s)->send([], [], fn ($m) => $m->from($s->email, $s->from_name ?: null)->to($to)->subject($subject)->text($text));
+        } catch (\Throwable $e) {
+            $msg = mb_substr(preg_replace('/\s+/', ' ', $e->getMessage()), 0, 250);
+            DB::table('outreach_sends')->insert($log + ['status' => self::isRecipientBounce($msg) ? 'bounced' : 'failed', 'error' => $msg]);
+            if (! self::isRecipientBounce($msg)) {
+                self::failed($s, $msg);
+            } else {
+                DB::table('outreach_senders')->where('id', $s->id)->update(['last_sent_at' => now(), 'updated_at' => now()]);
+            }
+
+            return 'failed';
+        }
+        DB::table('outreach_sends')->insert($log + ['status' => 'sent', 'error' => '']);
+        DB::table('outreach_senders')->where('id', $s->id)->update(['last_sent_at' => now(), 'failures' => 0, 'started_on' => $s->started_on ?: $now->copy()->timezone('Asia/Kolkata')->toDateString(), 'updated_at' => now()]);
+
+        return 'sent';
+    }
+
+    /** Counts a failed send; three in a row pause the mailbox. */
+    private static function failed(object $s, string $msg): void
+    {
+        $fails = (int) $s->failures + 1;
+        DB::table('outreach_senders')->where('id', $s->id)->update(['failures' => $fails, 'last_sent_at' => now(), 'updated_at' => now()] + ($fails >= 3 ? ['enabled' => false, 'paused_reason' => 'Paused after 3 failed sends in a row: '.mb_substr($msg, 0, 180)] : []));
+        if ($fails >= 3) {
+            // People this mailbox never reached move to the other mailboxes; people mid-sequence wait for it to resume.
+            DB::table('outreach_contacts')->where('sender_id', $s->id)->where('status', 'queued')->update(['sender_id' => null, 'next_at' => null, 'updated_at' => now()]);
+        }
     }
 
     /** Builds an SMTP mailer for one mailbox, separate from the site's own mail settings. */
@@ -81,7 +166,7 @@ class Outreach
     public static function process($now = null): array
     {
         $now ??= now();
-        $out = ['sent' => 0, 'stopped' => 0, 'failed' => 0];
+        $out = ['sent' => 0, 'warmup' => 0, 'stopped' => 0, 'failed' => 0];
         if (! \Illuminate\Support\Facades\Schema::hasTable('outreach_contacts')) {
             return $out + ['paused' => 'not installed'];
         }
@@ -112,12 +197,20 @@ class Outreach
                 if ($s->last_sent_at && $now->getTimestamp() - \Carbon\Carbon::parse($s->last_sent_at)->getTimestamp() < $gap - 5) {
                     continue;
                 }
-                $contact = self::nextContact($s, $now);
-                if (! $contact) {
-                    continue;
+                // Warm-up takes its share of the day, interleaved with the campaign; it may use the whole day when no one is waiting.
+                $seeds = self::warmupTargets($s, $c);
+                $share = $seeds ? max(0, min(60, (int) $c['warmup']['share'])) : 0;
+                $sent = self::sentLast24h($s->id);
+                $warmSent = self::sentLast24h($s->id, 'warmup');
+                $warmQuota = (int) round($limit * $share / 100);
+                $warmDue = $warmSent < $warmQuota && ($sent - $warmSent >= $limit - $warmQuota || $warmSent * 100 < $share * ($sent + 1));
+                $contact = $warmDue ? null : self::nextContact($s, $now);
+                if ($contact) {
+                    $out[self::sendOne($s, $contact, $c, $now)]++;
+                } elseif ($seeds) {
+                    $r = self::sendWarmup($s, $seeds, $now);
+                    $out[$r === 'sent' ? 'warmup' : $r]++;
                 }
-                $r = self::sendOne($s, $contact, $c, $now);
-                $out[$r]++;
             }
         } finally {
             $lock->release();
@@ -162,7 +255,8 @@ class Outreach
 
             return 'stopped';
         }
-        $step = $c['steps'][$ct->step] ?? null;
+        $steps = self::listOf($c, $ct)['steps'];
+        $step = $steps[$ct->step] ?? null;
         if (! $step) {
             DB::table('outreach_contacts')->where('id', $ct->id)->update(['status' => 'done', 'next_at' => null, 'updated_at' => now()]);
 
@@ -184,17 +278,12 @@ class Outreach
             }
             DB::table('outreach_sends')->insert($log + ['status' => 'failed', 'error' => $msg]);
             DB::table('outreach_contacts')->where('id', $ct->id)->update(['error' => $msg, 'next_at' => $now->copy()->addMinutes(30), 'updated_at' => now()]);
-            $fails = (int) $s->failures + 1;
-            DB::table('outreach_senders')->where('id', $s->id)->update(['failures' => $fails, 'last_sent_at' => now(), 'updated_at' => now()] + ($fails >= 3 ? ['enabled' => false, 'paused_reason' => 'Paused after 3 failed sends in a row: '.mb_substr($msg, 0, 180)] : []));
-            if ($fails >= 3) {
-                // People this mailbox never reached move to the other mailboxes; people mid-sequence wait for it to resume.
-                DB::table('outreach_contacts')->where('sender_id', $s->id)->where('status', 'queued')->update(['sender_id' => null, 'next_at' => null, 'updated_at' => now()]);
-            }
+            self::failed($s, $msg);
 
             return 'failed';
         }
         DB::table('outreach_sends')->insert($log + ['status' => 'sent']);
-        $next = $c['steps'][$ct->step + 1] ?? null;
+        $next = $steps[$ct->step + 1] ?? null;
         DB::table('outreach_contacts')->where('id', $ct->id)->update(['status' => $next ? 'active' : 'done', 'step' => $ct->step + 1, 'last_sent_at' => now(), 'next_at' => $next ? $now->copy()->addDays(max(1, (int) ($next['delayDays'] ?? 3))) : null, 'error' => '', 'updated_at' => now()]);
         DB::table('outreach_senders')->where('id', $s->id)->update(['last_sent_at' => now(), 'failures' => 0, 'started_on' => $s->started_on ?: $now->copy()->timezone('Asia/Kolkata')->toDateString(), 'updated_at' => now()]);
 
@@ -226,7 +315,7 @@ class Outreach
     /** Too many bad addresses hurt the domain: pause the mailbox when 10% or more of its last 40 mails bounced. */
     private static function guardBounces(object $s): void
     {
-        $last = DB::table('outreach_sends')->where('sender_id', $s->id)->whereIn('status', ['sent', 'bounced'])->orderByDesc('created_at')->limit(40)->pluck('status');
+        $last = DB::table('outreach_sends')->where('sender_id', $s->id)->where('kind', 'campaign')->whereIn('status', ['sent', 'bounced'])->orderByDesc('created_at')->limit(40)->pluck('status');
         if ($last->count() >= 10 && $last->filter(fn ($x) => $x === 'bounced')->count() / $last->count() >= 0.1) {
             DB::table('outreach_senders')->where('id', $s->id)->update(['enabled' => false, 'paused_reason' => 'Paused: too many addresses bounced. Clean the list before resuming.', 'updated_at' => now()]);
         }
@@ -260,8 +349,8 @@ class Outreach
         return URL::signedRoute('outreach.unsubscribe', ['contact' => $contactId]);
     }
 
-    /** Pages a tracked link may open. */
-    public const LANDINGS = ['home' => '/', 'ats' => '/resume-match', 'plans' => '/#pricing', 'register' => '/register'];
+    /** Pages a tracked link may open. "share" opens WhatsApp with a ready message about the free ATS check. */
+    public const LANDINGS = ['home' => '/', 'ats' => '/resume-match', 'plans' => '/#pricing', 'register' => '/register', 'share' => '/resume-match'];
 
     /** A link that counts the click for this contact, then opens the page with campaign tags. */
     public static function clickUrl(string $contactId, int $step, string $to = 'home'): string
@@ -269,24 +358,99 @@ class Outreach
         return URL::signedRoute('outreach.click', ['contact' => $contactId, 'step' => $step, 'to' => $to]);
     }
 
-    /** @return array{subject:string,text:string,html:string,unsubscribe:string} */
-    public static function render(array $step, object $ct, object $s, array $c): array
+    public static function listOf(array $c, object $ct): array
     {
-        $first = trim(explode(' ', trim((string) $ct->name))[0] ?? '');
+        return $c['lists'][$ct->list ?? 'students'] ?? $c['lists']['students'];
+    }
+
+    /** @return array{subject:string,text:string,html:string,unsubscribe:string} */
+    public static function render(array $step, object $ct, object $s, array $c, ?string $design = null): array
+    {
+        $list = $ct->list ?? 'students';
+        $design ??= self::listOf($c, $ct)['design'];
+        // "Dr. Ramesh Kumar" → "Ramesh": greet by first name without the title.
+        $first = trim(explode(' ', trim(preg_replace('/^((dr|prof|mr|mrs|ms|miss|shri|sri|smt)\.?\s+)+/i', '', trim((string) $ct->name))))[0] ?? '');
         $unsub = self::unsubscribeUrl($ct->id);
         $site = rtrim((string) config('app.url'), '/');
         $step_no = (int) ($ct->step ?? 0) + 1;
-        $vars = ['name' => $first !== '' ? $first : 'there', 'full_name' => trim((string) $ct->name), 'email' => $ct->email, 'site_url' => self::clickUrl($ct->id, $step_no), 'ats_url' => self::clickUrl($ct->id, $step_no, 'ats'), 'plans_url' => self::clickUrl($ct->id, $step_no, 'plans'), 'home_url' => $site, 'sender_name' => $s->from_name ?: '', 'unsubscribe_url' => $unsub];
+        $vars = ['name' => $first !== '' ? $first : ($list === 'colleges' ? 'Sir/Madam' : 'there'), 'full_name' => trim((string) $ct->name), 'email' => $ct->email,
+            'college' => trim((string) ($ct->college ?? '')) ?: 'your college', 'designation' => trim((string) ($ct->designation ?? '')), 'city' => trim((string) ($ct->city ?? '')),
+            'site_url' => self::clickUrl($ct->id, $step_no), 'ats_url' => self::clickUrl($ct->id, $step_no, 'ats'), 'plans_url' => self::clickUrl($ct->id, $step_no, 'plans'), 'share_url' => self::clickUrl($ct->id, $step_no, 'share'),
+            'home_url' => $site, 'sender_name' => $s->from_name ?: '', 'unsubscribe_url' => $unsub];
         $fill = fn ($t) => preg_replace_callback('/\{\{\s*([a-z_]+)\s*\}\}/', fn ($m) => (string) ($vars[$m[1]] ?? ''), (string) $t);
         $subject = trim(preg_replace('/\s+/', ' ', $fill($step['subject'] ?? '')));
         $body = trim(str_replace("\r", '', $fill($step['body'] ?? '')));
         $sign = trim(($s->from_name ?: '')."\n".trim((string) ($c['footer'] ?? '')));
-        $text = $body.($sign !== '' ? "\n\n".$sign : '')."\n\nDon't want these emails? Unsubscribe: ".$unsub."\n";
-        $link = fn ($s) => preg_replace('~(https?://[^\s<]+)~', '<a href="$1">$1</a>', $s);
-        $paras = array_map(fn ($p) => '<p style="margin:0 0 14px">'.nl2br($link(e($p)), false).'</p>', preg_split("/\n{2,}/", $body));
-        $html = '<!doctype html><html><body style="margin:0;padding:16px;font:15px/1.6 Arial,Helvetica,sans-serif;color:#1f2937">'.implode('', $paras)
-            .($sign !== '' ? '<p style="margin:18px 0 0">'.nl2br(e($sign), false).'</p>' : '')
-            .'<p style="margin:24px 0 0;font-size:12px;color:#6b7280">Don\'t want these emails? <a href="'.e($unsub).'" style="color:#6b7280">Unsubscribe</a>.</p></body></html>';
+        // The body is "{{sender_name}}"-signed in most templates; avoid printing the name twice.
+        if ($s->from_name && str_ends_with($body, $s->from_name)) {
+            $sign = trim((string) ($c['footer'] ?? ''));
+        }
+
+        // Light markup: "# Heading" on the first line, "- " bullets, "[button: Label | link]" on its own line.
+        $lines = explode("\n", $body);
+        $head = $lines && str_starts_with($lines[0], '# ') ? trim(substr(array_shift($lines), 2)) : '';
+        $blocks = [];
+        foreach (preg_split("/\n{2,}/", trim(implode("\n", $lines))) as $chunk) {
+            if (preg_match('/^\[button:\s*(.+?)\s*\|\s*(https?:\/\/\S+?)\s*\]$/i', trim($chunk), $m)) {
+                $blocks[] = ['btn', $m[1], $m[2]];
+            } else {
+                $para = [];
+                $items = [];
+                foreach (explode("\n", $chunk) as $l) {
+                    if (str_starts_with($l, '- ')) {
+                        if ($para) {
+                            $blocks[] = ['p', implode("\n", $para)];
+                        }
+                        $para = [];
+                        $items[] = substr($l, 2);
+                    } else {
+                        if ($items) {
+                            $blocks[] = ['ul', $items];
+                        }
+                        $items = [];
+                        $para[] = $l;
+                    }
+                }
+                if ($para) {
+                    $blocks[] = ['p', implode("\n", $para)];
+                }
+                if ($items) {
+                    $blocks[] = ['ul', $items];
+                }
+            }
+        }
+        $text = ($head !== '' ? $head."\n\n" : '');
+        $html = '';
+        $card = $design === 'card';
+        $link = fn ($x) => preg_replace('~(https?://[^\s<]+)~', '<a href="$1" style="color:#1557d2">$1</a>', $x);
+        foreach ($blocks as $b) {
+            if ($b[0] === 'btn') {
+                $text .= $b[1].': '.$b[2]."\n\n";
+                $html .= $card
+                    ? '<table role="presentation" cellpadding="0" cellspacing="0" style="margin:4px 0 20px"><tr><td style="border-radius:8px;background:#1557d2"><a href="'.e($b[2]).'" style="display:inline-block;padding:12px 22px;font-size:15px;font-weight:700;color:#ffffff;text-decoration:none;border-radius:8px">'.e($b[1]).'</a></td></tr></table>'
+                    : '<p style="margin:0 0 14px"><a href="'.e($b[2]).'" style="color:#1557d2;font-weight:700">'.e($b[1]).' →</a></p>';
+            } elseif ($b[0] === 'ul') {
+                $text .= implode("\n", array_map(fn ($i) => '- '.$i, $b[1]))."\n\n";
+                $html .= '<ul style="margin:0 0 14px;padding-left:20px">'.implode('', array_map(fn ($i) => '<li style="margin:0 0 6px">'.$link(e($i)).'</li>', $b[1])).'</ul>';
+            } else {
+                $text .= $b[1]."\n\n";
+                $html .= '<p style="margin:0 0 14px">'.nl2br($link(e($b[1])), false).'</p>';
+            }
+        }
+        $text = rtrim($text).($sign !== '' ? "\n\n".$sign : '')."\n\nDon't want these emails? Unsubscribe: ".$unsub."\n";
+        $foot = '<p style="margin:22px 0 0;font-size:12px;color:#6b7280">Don\'t want these emails? <a href="'.e($unsub).'" style="color:#6b7280">Unsubscribe</a>.</p>';
+        $signHtml = $sign !== '' ? '<p style="margin:18px 0 0">'.nl2br(e($sign), false).'</p>' : '';
+        if ($card) {
+            // One light card with a small wordmark: friendly to look at, but without the heavy images that push mail into Promotions.
+            $html = '<!doctype html><html><body style="margin:0;padding:0;background:#f4f6fb"><table role="presentation" width="100%" cellpadding="0" cellspacing="0"><tr><td align="center" style="padding:20px 12px">'
+                .'<table role="presentation" width="560" cellpadding="0" cellspacing="0" style="width:100%;max-width:560px;background:#ffffff;border:1px solid #e5e7eb;border-radius:12px"><tr><td style="padding:26px 28px;font:15px/1.6 Arial,Helvetica,sans-serif;color:#1f2937">'
+                .'<p style="margin:0 0 16px;font-size:18px;font-weight:800;color:#1e1b4b">CV<span style="color:#4f46e5">Tara</span></p>'
+                .($head !== '' ? '<h1 style="margin:0 0 14px;font-size:22px;line-height:1.3;color:#0f172a">'.e($head).'</h1>' : '')
+                .$html.$signHtml.$foot.'</td></tr></table></td></tr></table></body></html>';
+        } else {
+            $html = '<!doctype html><html><body style="margin:0;padding:16px;font:15px/1.6 Arial,Helvetica,sans-serif;color:#1f2937">'
+                .($head !== '' ? '<p style="margin:0 0 14px;font-weight:700">'.e($head).'</p>' : '').$html.$signHtml.$foot.'</body></html>';
+        }
 
         return ['subject' => $subject, 'text' => $text, 'html' => $html, 'unsubscribe' => $unsub];
     }
@@ -294,23 +458,34 @@ class Outreach
     // ---------------------------------------------------------------- list import and clean-up
 
     /**
-     * Imports "email,name" lines (a header row is optional). Every address is checked before it is added.
+     * Imports "email,name" lines (a header row is optional; with one, college, designation and city columns are read too).
+     * Every address is checked before it is added.
      *
      * @return array{received:int,added:int,invalid:int,role:int,noMail:int,duplicate:int,existing:int,users:int,suppressed:int,samples:array}
      */
-    public static function import(string $raw, string $source, bool $checkDomains = true): array
+    public static function import(string $raw, string $source, bool $checkDomains = true, string $list = 'students'): array
     {
         $lines = preg_split('/\r\n|\r|\n/', trim($raw));
         $res = ['received' => 0, 'added' => 0, 'invalid' => 0, 'role' => 0, 'noMail' => 0, 'duplicate' => 0, 'existing' => 0, 'users' => 0, 'suppressed' => 0, 'samples' => []];
-        $emailCol = 0;
-        $nameCol = 1;
+        $list = isset(self::LISTS[$list]) ? $list : 'students';
+        $col = ['email' => 0, 'name' => 1, 'college' => false, 'designation' => false, 'city' => false];
         $first = str_getcsv((string) ($lines[0] ?? ''), ',', '"', '');
-        $head = array_map(fn ($x) => mb_strtolower(trim((string) $x)), $first);
-        if (in_array('email', $head, true) || in_array('e-mail', $head, true)) {
-            $emailCol = array_search('email', $head, true);
-            $emailCol = $emailCol === false ? array_search('e-mail', $head, true) : $emailCol;
-            $nameCol = array_search('name', $head, true);
-            $nameCol = $nameCol === false ? array_search('first name', $head, true) : $nameCol;
+        $head = array_map(fn ($x) => preg_replace('/[^a-z ]/', '', mb_strtolower(trim((string) $x))), $first);
+        $aliases = ['email' => ['email', 'email id', 'email address', 'mail id', 'mail'], 'name' => ['name', 'first name', 'full name', 'contact name', 'tpo name', 'student name'],
+            'college' => ['college', 'college name', 'institute', 'institution', 'university'], 'designation' => ['designation', 'title', 'role', 'position'], 'city' => ['city', 'location', 'district']];
+        $pick = function ($names) use ($head) {
+            foreach ($names as $n) {
+                if (($i = array_search($n, $head, true)) !== false) {
+                    return $i;
+                }
+            }
+
+            return false;
+        };
+        if ($pick($aliases['email']) !== false) {
+            foreach ($aliases as $k => $names) {
+                $col[$k] = $pick($names);
+            }
             array_shift($lines);
         }
         $seen = [];
@@ -329,8 +504,9 @@ class Outreach
                 break;
             }
             $cells = str_getcsv($line, str_contains($line, ',') || ! str_contains($line, ';') ? ',' : ';', '"', '');
-            $email = mb_strtolower(trim((string) ($cells[$emailCol] ?? ''), " \t<>\"'"));
-            $name = $nameCol === false ? '' : trim(strip_tags((string) ($cells[$nameCol] ?? '')));
+            $email = mb_strtolower(trim((string) ($cells[$col['email']] ?? ''), " \t<>\"'"));
+            $cell = fn ($k, $max) => $col[$k] === false ? '' : mb_substr(trim(preg_replace('/\s+/', ' ', strip_tags((string) ($cells[$col[$k]] ?? '')))), 0, $max);
+            $name = $cell('name', 120);
             if (strlen($email) > 190 || ! filter_var($email, FILTER_VALIDATE_EMAIL) || ! preg_match('/^[^@\s]+@[a-z0-9-]+(\.[a-z0-9-]+)*\.[a-z]{2,}$/', $email)) {
                 $res['invalid']++;
                 $sample('Not a valid address', $email);
@@ -350,7 +526,7 @@ class Outreach
                 continue;
             }
             $seen[$email] = true;
-            $rows[$email] = mb_substr($name, 0, 120);
+            $rows[$email] = ['name' => $name, 'college' => $cell('college', 160), 'designation' => $cell('designation', 80), 'city' => $cell('city', 80)];
         }
         $res['received'] = min($res['received'], self::MAX_IMPORT);
         // Domains that cannot receive mail (no MX or A record). Checked once per domain, within a time budget.
@@ -389,7 +565,7 @@ class Outreach
 
                     continue;
                 }
-                $insert[] = ['id' => (string) Str::uuid(), 'email' => $e, 'name' => $rows[$e], 'source' => mb_substr($source, 0, 120), 'status' => 'queued', 'created_at' => now(), 'updated_at' => now()];
+                $insert[] = ['id' => (string) Str::uuid(), 'email' => $e, 'list' => $list] + $rows[$e] + ['source' => mb_substr($source, 0, 120), 'status' => 'queued', 'created_at' => now(), 'updated_at' => now()];
             }
             if ($insert) {
                 $res['added'] += DB::table('outreach_contacts')->insertOrIgnore($insert);

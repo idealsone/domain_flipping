@@ -48,6 +48,15 @@ class EmailController extends Controller
         $dest = \App\Services\Outreach::LANDINGS[$to];
         [$path, $hash] = explode('#', $dest, 2) + ['', ''];
         $url = $path.(str_contains($path, '?') ? '&' : '?').http_build_query(['utm_source' => 'outreach', 'utm_medium' => 'email', 'utm_campaign' => 'step'.$step]).($hash !== '' ? '#'.$hash : '');
+        if ($to === 'share') {
+            // "Send to a friend": opens WhatsApp with a ready message and the free ATS check link.
+            if ($r->hasValidSignature()) {
+                DB::table('outreach_contacts')->where('id', $contact)->update(['shares' => DB::raw('shares + 1')]);
+            }
+            $link = rtrim((string) config('app.url'), '/').$path.'?'.http_build_query(['utm_source' => 'outreach', 'utm_medium' => 'share', 'utm_campaign' => 'step'.$step]);
+
+            return redirect()->away('https://wa.me/?'.http_build_query(['text' => 'Check how your resume scores against a job description, free, before you apply: '.$link]));
+        }
         if ($r->hasValidSignature()) {
             DB::table('outreach_contacts')->where('id', $contact)->update(['clicks' => DB::raw('clicks + 1'), 'clicked_at' => DB::raw("COALESCE(clicked_at, '".now()->format('Y-m-d H:i:s')."')")]);
         }
