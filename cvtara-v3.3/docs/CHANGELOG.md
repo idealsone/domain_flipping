@@ -1,4 +1,8 @@
-# CVTara v3.14.2 — template previews fixed, one page heading per page, footer and contact tidy-up
+# CVTara v3.14.3 — professional template previews
+
+## 3.14.3
+- **Sample resume previews:** two-column designs (Prism, Folio and others) no longer squeeze the side column, so "Contact", job titles and e-mail addresses are no longer broken letter by letter; the photo placeholder is a neutral silhouette instead of "Photo optional"; the "fictional sample" note is a clean label that does not collide with coloured headers.
+- Template cards and the full-preview window show readable layout names ("Prism layout") and a properly capitalised "Best for" line.
 
 ## 3.14.2
 - **Template and cover-letter previews fixed:** section headings inside the sample documents ("Profile", "Experience", "Contact", "Application for…") had been forced to page-heading size by the shared page styles. They are small and proper again.

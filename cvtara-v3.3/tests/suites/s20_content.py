@@ -51,6 +51,9 @@ def run(ctx, t):
     t.check("sample resumes and letters do not use H1 for the name (one H1 per page)", "<h1>" not in rd("reference-templates.js") and "<h1>" not in rd("premium-collection.js") and 'class="doc-name"' in rd("reference-templates.js"))
     t.check("page heading sizes are not forced onto the text inside sample documents", ".ref-resume h2" in rd("site-polish.css") and ".letter-document h2" in rd("site-polish.css"))
     t.check("document-name styles exist wherever the old H1 styles did", rd("launch.css").count(".doc-name") >= 3 and rd("premium-products.css").count(".doc-name") >= 10)
+    pol = rd("site-polish.css")
+    t.check("sample resume previews: readable sidebars, a neutral photo placeholder and a clear sample label", "minmax(112px,36%)" in pol and "ref-photo-placeholder" in pol and ".ref-sample" in pol and "display:flow-root" in pol)
+    t.check("template names read as 'Prism layout', not internal 'suite-prism design'", "suite-" in rd("preview.js") and "layout</small>" in rd("preview.js") and "} design</small>" not in rd("preview.js"))
     t.check("the referral section keeps one reward: 5 paying friends = free download + free month, and no 10-friend tier", "referral-offer" in home and "5</em> paying friends" in home and "1 month subscription, free" in home and "10</em> paying friends" not in home and "KEEP SHARING" not in home)
     t.check("the home page says plainly what is free and what a plan adds", 'id="get"' in home and "Free, no card" in home and "paid once" in home.lower())
     # blog
