@@ -18,3 +18,8 @@
 .stage-art>.ref-resume{width:595px;zoom:.53;min-height:842px;box-shadow:0 12px 36px #10283e20}
 .invite-document>.ref-resume{width:595px;zoom:.48;min-height:842px}
 @media(max-width:600px){.stage-art>.ref-resume{zoom:.43}.invite-document>.ref-resume{zoom:.28}}
+/* section headings never split mid-word, even in narrow side columns */
+.ref-resume h1,.ref-resume h2,.ref-resume h3{overflow-wrap:normal;word-break:normal;hyphens:none}
+.ref-sidebar .ref-section h2,.ref-signal .ref-section h2{font-size:12px;letter-spacing:.03em}
+/* show the top of a document in a card even when the sheet is taller than the card */
+.template-preview{align-items:start}

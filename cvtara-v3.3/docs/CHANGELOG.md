@@ -1,3 +1,20 @@
+# CVTara v3.12.1 — step-by-step front page, premium sign-in and sign-up, wider resume library
+
+## 3.12.1
+- **Front page restructured step by step:** hero with a real resume and cover-letter preview, design showcase (resumes and matching cover letters), employer-names strip, five-step "how it works", primary-resume explainer, ATS Match, who it is for, comparison, pricing, referral, FAQ. Repeated sections removed.
+- **Public resume library grows** with role-specific single-column designs (nurse, accountant, QA, DevOps, security, data scientist, product manager, customer success, supply chain, academic and more). Narrow side-column layouts were switched to single column for ATS readability.
+- **Sign-in and sign-up redesigned** to match the home page: two-column sign-up that fits one screen, show/hide password, benefits panel, mobile layout.
+- **One look across public pages:** shared page heading, spacing and legal-page styles (`site-polish.css`).
+- Section headings no longer split mid-word in narrow template columns; template previews show the top of the sheet; stat counts match what is published.
+
+## 3.12.0
+- Job-link pasting is off for customers; the owner switches it on under Speed & traffic.
+- "Employer names" strip (plain names, no logos, owner-editable) with a no-affiliation note; flow graphic `assets/brand/why-cvtara.svg`.
+- ATS keywords: two-word tools such as Power BI are matched as one keyword.
+- New favicon set. `.mjs` files are served as JavaScript.
+- Package hygiene: vendor Markdown removed; release check rejects tool names.
+
+---
 # CVTara v3.11.0 — offers & festivals, recent-activity notices, home page, blog, About and Contact
 
 - **Offers & festivals (owner console).** Start from 15 festival and occasion templates (Diwali, Holi, Navratri, Ganesh Chaturthi, Pooja, Eid, Pongal, Onam, Christmas, New Year, Republic/Independence Day, Early-bird, Flash sale, Graduation, Hiring season) or a blank offer. Edit heading, text, year, colours, button, picture (uploaded as WebP) and attach or create a coupon on the spot. **Make live now** switches the whole site promotion in one click (one live offer at a time); **Run by dates** uses start/end times in India time. Visitors see a top bar and three pop-ups with separate wording: after a delay, when about to leave (mouse leaves the page, or a fast scroll up on phones) and when idle. A coupon click goes through sign-up to checkout with the plan and coupon applied. Offer link (`/?offer=CODE`), printable coupon card, duplicate, and per-offer statistics (seen, clicks, codes copied, orders, revenue). Offers whose coupon is off or expired hide themselves. Offers are never shown on checkout or the dashboard.

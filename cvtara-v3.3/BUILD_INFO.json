@@ -1,8 +1,8 @@
 {
   "brand": "CVTara",
-  "version": "3.12.0",
+  "version": "3.12.1",
   "package_date": "2026-10-16",
-  "source": "3.2.0-RC1 audited and extended through 3.12.0: credits and scans per plan, server-side ATS Match with job-link reading, feedback inbox, ready-made pages and busy mode, resume upload, ATS-friendly score per resume and application status reminders; offers & festivals, recent-activity notices, home/blog/article/contact rework",
+  "source": "3.2.0-RC1 audited and extended through 3.12.1: credits and scans per plan, server-side ATS Match with job-link reading, feedback inbox, ready-made pages and busy mode, resume upload, ATS-friendly score per resume and application status reminders; offers & festivals, recent-activity notices, home/blog/article/contact rework",
   "status": "Private Hostinger acceptance package; not approved for public paid launch",
   "runtime": "PHP 8.3+, Laravel 13, MySQL/MariaDB",
   "verification": {

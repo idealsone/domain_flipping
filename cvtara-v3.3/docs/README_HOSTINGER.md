@@ -1,6 +1,6 @@
-# CVTara v3.9 — Hostinger package
+# CVTara v3.12 — Hostinger package
 
-**Private acceptance build.** Live provider acceptance (Cashfree checkout, email, Twilio, Cashfree Payouts), Hostinger staging tests and real-device checks are still pending — see `LAUNCH_READINESS.md`.
+Before announcing: make one real test payment, send a test email, add the cron job and check the site on a real phone. See `LAUNCH_READINESS.md`.
 
 ## Install
 1. Back up any existing site. Do not install over an existing CVTara database.
@@ -35,11 +35,15 @@ Add `CVTARA_PREVIEW=true` to `cvtara_app/.env`, run `php artisan cvtara:demo`, t
 5. **Go live for search:** Blog & SEO → turn on "Let search engines index", save, and submit `https://cvtara.com/sitemap.xml` in Google Search Console.
 6. Check **Setup & health** is green. It re-checks itself every day.
 
-## Speed, traffic and new tools (v3.9.0)
+## Speed, traffic and tools
 1. **Ready-made pages:** the installer builds them. After every later upload of a new version open Owner console → **Speed & traffic → Rebuild all pages now** (or run `php artisan cvtara:prebuild`). If an old version's pages are still served, press **Clear ready-made pages** and rebuild. The `public_html/_pages` folder must be writable by PHP.
 2. **Busy mode:** leave on **Off**; choose **Automatic** to protect the server during a rush (default threshold 2.5 load per CPU core) or **On** to pause ATS reviews, job-link reading and PDF/Word creation manually.
-3. **Job links:** most public postings are read directly. For portals that refuse, open Speed & traffic → *Job link reader*, choose ScrapingBee, ZenRows or a custom service, paste its key, set the daily limit and press **Test the reader**. Until then customers are asked to paste the text or upload a PDF for those links. Check each job site's terms before relying on this.
+3. **Job links:** pasting a job link is OFF for customers by default (they paste the job text or upload a PDF). To offer it, open Speed & traffic → *Job-link pasting for customers* and choose On. For portals that refuse automatic reading, set up the *Job link reader* (ScrapingBee, ZenRows or a custom service) and press **Test the reader**. Check each job site's terms before relying on this.
 4. **Support Inbox:** customers' feedback (with screenshots up to 5 × 2 MB) arrives in Owner console → Support Inbox. Screenshots are stored privately under `cvtara_app/storage/app/support`; include that folder in backups.
 5. **PHP limits:** `upload_max_filesize` and `post_max_size` should be at least 12 MB (five 2 MB screenshots). Hostinger's default is higher.
 6. **Cloudflare (free plan)** in front of the site is still the best defence against floods and bots; do not cache HTML for signed-in users.
 
+
+
+## Updating an existing site
+Upload the update ZIP to the domain folder (the one that contains `public_html` and `cvtara_app`) and extract it over the existing files. It never touches `.env`, `storage` or `vendor`. Then open Owner console → Speed & traffic → **Clear ready-made pages**, then **Rebuild all pages now**.

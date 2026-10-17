@@ -28,7 +28,7 @@
   const rich = t => E(t).replace(/\*\*(.+?)\*\*/g, '<b>$1</b>');
   // stats from real library + plan data
   const D = window.CVTARA_DATA;
-  if (D) { if ($('#stTemplates')) $('#stTemplates').textContent = D.templates.length; if ($('#stLetters')) $('#stLetters').textContent = D.coverLetters.length; }
+  if (D) { const counts = () => { const t = D.templates.filter(x => x.publicPublished !== false && !x.curatedHidden).length, l = D.coverLetters.filter(x => x.publicPublished !== false).length; if ($('#stTemplates')) $('#stTemplates').textContent = t; if ($('#stLetters')) $('#stLetters').textContent = l; }; counts(); addEventListener('load', () => { counts(); setTimeout(counts, 800); }); }
   const apply = d => {
     const prices = Object.values(d.plans || {}).filter(p => p.type === 'plan' && p.price > 0).map(p => p.price);
     if (prices.length) {
