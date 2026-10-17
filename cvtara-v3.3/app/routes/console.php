@@ -28,7 +28,14 @@ Artisan::command('cvtara:cron', function () {
         \App\Services\ErrorLog::exception($e);
     }
     CashfreePayouts::reconcile();
-    $this->info(json_encode(MailAutomation::process()));
+    // Account mail (sign-up codes, receipts) goes first so slow outreach mailboxes can never delay it.
+    $mail = MailAutomation::process();
+    try {
+        \App\Services\Outreach::process();
+    } catch (\Throwable $e) {
+        \App\Services\ErrorLog::exception($e);
+    }
+    $this->info(json_encode($mail));
 })->purpose('Process due mail and record cron health');
 Artisan::command('cvtara:remind', function () {
     $this->info('Status reminders sent: '.\App\Services\Tracker::remind());
