@@ -140,6 +140,15 @@
       "body": "# Confirm your email\nHi {{name}},\n\nUse this code to confirm your email address on CVTara:\n\n[code: {{code}}]\n\nThe code works for 15 minutes. If you did not create a CVTara account, you can ignore this email and nothing will happen.\n\nFor your safety, never share this code with anyone. CVTara will never ask you for it."
     },
     {
+      "id": "security",
+      "name": "Security code",
+      "trigger": "security_verification",
+      "enabled": true,
+      "delayHours": 0,
+      "subject": "Your CVTara security code: {{code}}",
+      "body": "# Confirm it is you\nHi {{name}},\n\nUse this code to unlock account changes on CVTara:\n\n[code: {{code}}]\n\nThe code works for 10 minutes. If you did not ask for it, change your password from your profile.\n\nFor your safety, never share this code or your password with anyone. CVTara will never ask you for it."
+    },
+    {
       "id": "welcome",
       "name": "Welcome",
       "trigger": "profile_created",

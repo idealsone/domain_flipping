@@ -287,6 +287,11 @@ class AdminController extends Controller
         if ($path === 'email/jobs') {
             return $ok(['jobs' => DB::table('mail_outbox')->orderByDesc('created_at')->limit(200)->get(['id', 'recipient', 'trigger', 'subject', 'status', 'error', 'due_at', 'sent_at', 'attempts']), 'delivery' => 'Configured SMTP / Resend', 'scheduler' => 'Hostinger cron processes queued jobs.', 'heartbeat' => Settings::get('cronHeartbeat')]);
         }
+        if ($path === 'email/preview') {
+            $v = $r->validate(['subject' => 'required|string|max:180', 'body' => 'required|string|max:20000', 'trigger' => 'nullable|string|max:60']);
+
+            return $ok(['html' => \App\Services\EmailRenderer::render($v['subject'], $v['body'], \App\Services\EmailRenderer::isMarketing((string) ($v['trigger'] ?? '')), $r->user()->id)['html']]);
+        }
         if ($path === 'email/process') {
             MailAutomation::reminders();
 
@@ -352,7 +357,7 @@ class AdminController extends Controller
         }
         if ($k === 'emails') {
             foreach ($d as $t) {
-                validator($t, ['id' => 'required|string|max:80', 'subject' => 'required|string|max:180', 'body' => 'required|string|max:20000', 'enabled' => 'required|boolean', 'trigger' => 'required|in:profile_created,password_reset,resume_saved,purchase_verified,abandoned_purchase,blog_published,access_expiring,access_expiring_7,access_expiring_4,access_expiring_1,followup_due,application_status,download_locked,email_verification,nurture,monthly_digest,manual', 'delayHours' => 'required|integer|min:0|max:720'])->validate();
+                validator($t, ['id' => 'required|string|max:80', 'subject' => 'required|string|max:180', 'body' => 'required|string|max:20000', 'enabled' => 'required|boolean', 'trigger' => 'required|in:profile_created,password_reset,resume_saved,purchase_verified,abandoned_purchase,blog_published,access_expiring,access_expiring_7,access_expiring_4,access_expiring_1,followup_due,application_status,download_locked,email_verification,security_verification,nurture,monthly_digest,manual', 'delayHours' => 'required|integer|min:0|max:720'])->validate();
             }
         }
         if ($k === 'legal') {
