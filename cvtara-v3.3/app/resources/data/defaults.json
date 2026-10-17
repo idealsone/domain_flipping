@@ -131,22 +131,31 @@
   "blog": {},
   "emails": [
     {
+      "id": "verify",
+      "name": "Email verification code",
+      "trigger": "email_verification",
+      "enabled": true,
+      "delayHours": 0,
+      "subject": "Your CVTara verification code: {{code}}",
+      "body": "# Confirm your email\nHi {{name}},\n\nUse this code to confirm your email address on CVTara:\n\n[code: {{code}}]\n\nThe code works for 15 minutes. If you did not create a CVTara account, you can ignore this email and nothing will happen.\n\nFor your safety, never share this code with anyone. CVTara will never ask you for it."
+    },
+    {
       "id": "welcome",
       "name": "Welcome",
       "trigger": "profile_created",
       "enabled": true,
       "delayHours": 0,
       "subject": "Welcome to CVTara, {{name}}",
-      "body": "Hi {{name}},\nYour profile is ready. Choose a template and save your first resume.\n{{site_url}}/workspace.html?view=builder\n\nTeam CVTara · support@cvtara.com"
+      "body": "# Welcome, {{name}}\nYour CVTara account is ready. Here is the quickest way to a resume that recruiters and applicant tracking systems can read:\n\n- Upload the resume you already have, or pick a design from the library\n- See your ATS-friendly score and what to improve\n- Add a job and see exactly what your resume is missing for it\n\n[button: Open my workspace | {{site_url}}/workspace.html?view=resumes]\nYou can build, preview and run a few ATS checks for free. Clean downloads without a watermark come with a plan, from {{from_price}}, paid once with no auto-renewal."
     },
     {
       "id": "resume",
       "name": "Resume saved",
       "trigger": "resume_saved",
-      "enabled": false,
-      "delayHours": 0,
-      "subject": "Your resume draft is saved",
-      "body": "Hi {{name}},\nYour draft is saved in your profile.\n{{site_url}}/workspace.html?view=account\n\nTeam CVTara · support@cvtara.com"
+      "enabled": true,
+      "delayHours": 1,
+      "subject": "Your resume is saved, {{name}}. Here is what to do next",
+      "body": "# Your resume is saved\nHi {{name}}, your latest changes are safely stored in your account.\n\nThree things that make the biggest difference:\n\n- Run the ATS check against a job you want, and fix the requirements it shows as missing\n- Make a tailored version for that job with one click\n- Write the matching cover letter so both documents tell the same story\n\n[button: Continue in my workspace | {{site_url}}/workspace.html?view=resumes]\nFree accounts can preview everything. Clean PDF and Word downloads, and more ATS checks, come with a plan."
     },
     {
       "id": "purchase",
@@ -154,17 +163,62 @@
       "trigger": "purchase_verified",
       "enabled": true,
       "delayHours": 0,
-      "subject": "Thank you for subscribing to CVTara {{plan_name}}",
-      "body": "Hi {{name}},\n\nThank you for your subscription! Your {{plan_name}} plan is now active.\n\nWhat you get:\n- 1 premium ATS-friendly primary resume\n- {{resumes}} tailored resumes and {{letters}} cover letters\n- Clean PDF and Word downloads\n\nValid until: {{access_until}}\nPayment reference: {{payment_reference}}\n\nOpen your workspace: {{site_url}}/workspace.html?view=resumes\n\nNeed help? Reply to this email or write to support@cvtara.com.\n\nTeam CVTara\nBangalore, India"
+      "subject": "Your CVTara {{plan_name}} plan is active",
+      "body": "# Thank you, {{name}}\nYour {{plan_name}} plan is now active. This email is your receipt.\n\n- Plan: {{plan_name}}\n- Amount paid: {{amount}}\n- Valid until: {{access_until}}\n- Payment reference: {{payment_reference}}\n\nWhat you can do now:\n\n- Download your resumes and cover letters as clean PDF or Word files\n- Make up to {{resumes}} tailored resumes and {{letters}} cover letters\n- Run ATS checks and track every application\n\n[button: Open my workspace | {{site_url}}/workspace.html?view=resumes]\nAll payments are final and non-refundable. If anything looks wrong, write to support@cvtara.com with your payment reference and we will help."
+    },
+    {
+      "id": "reset",
+      "name": "Forgot password",
+      "trigger": "password_reset",
+      "enabled": true,
+      "delayHours": 0,
+      "subject": "Reset your CVTara password",
+      "body": "# Reset your password\nHi {{name}},\n\nWe received a request to reset the password on your CVTara account. This link works once and expires in 60 minutes.\n\n[button: Choose a new password | {{reset_url}}]\n\nIf the button does not work, copy this link into your browser:\n{{reset_url}}\n\nIf you did not ask for this, ignore this email. Your password stays the same."
+    },
+    {
+      "id": "download-locked",
+      "name": "Subscribe to download",
+      "trigger": "download_locked",
+      "enabled": true,
+      "delayHours": 0,
+      "subject": "Your resume is ready. One step to download it",
+      "body": "# Your resume is ready\nHi {{name}}, you asked to download your resume and it is ready.\n\nDownloads without a watermark are part of a CVTara plan. With a plan you can:\n\n- Download your primary resume, every tailored version and your cover letters as PDF or Word\n- Run ATS checks against real jobs and see what each one needs\n- Track every application, with reminders\n\n[button: Choose a plan | {{site_url}}/checkout.html]\nPlans start at {{from_price}}, paid once with no auto-renewal. Need help choosing? Reply to this email."
+    },
+    {
+      "id": "expiry7",
+      "name": "Plan ending in 7 days",
+      "trigger": "access_expiring_7",
+      "enabled": true,
+      "delayHours": 0,
+      "subject": "Your CVTara plan ends in 7 days",
+      "body": "# Your CVTara plan ends in 7 days\nHi {{name}},\n\nYour {{plan_name}} plan runs until {{access_until}}, which is one week away.\n\nAfter that date clean downloads stop. Your saved resumes and letters stay in your account and you can still edit them, but downloads will carry a watermark until you renew.\n\nRenewing early adds days to what you have left, so nothing is wasted.\n\n[button: Renew my plan | {{site_url}}/checkout.html]\nQuestions? Reply to this email or write to support@cvtara.com."
+    },
+    {
+      "id": "expiry4",
+      "name": "Plan ending in 4 days",
+      "trigger": "access_expiring_4",
+      "enabled": true,
+      "delayHours": 0,
+      "subject": "Your CVTara plan ends in 4 days",
+      "body": "# Your CVTara plan ends in 4 days\nHi {{name}},\n\nYour {{plan_name}} plan ends on {{access_until}}, in 4 days.\n\nAfter that date clean downloads stop. Your saved resumes and letters stay in your account and you can still edit them, but downloads will carry a watermark until you renew.\n\nRenewing early adds days to what you have left, so nothing is wasted.\n\n[button: Renew my plan | {{site_url}}/checkout.html]\nQuestions? Reply to this email or write to support@cvtara.com."
+    },
+    {
+      "id": "expiry1",
+      "name": "Plan ending in 1 day",
+      "trigger": "access_expiring_1",
+      "enabled": true,
+      "delayHours": 0,
+      "subject": "Last day: your CVTara plan ends tomorrow",
+      "body": "# your CVTara plan ends tomorrow\nHi {{name}},\n\nYour {{plan_name}} plan ends on {{access_until}}, which is tomorrow.\n\nAfter that date clean downloads stop. Your saved resumes and letters stay in your account and you can still edit them, but downloads will carry a watermark until you renew.\n\nRenewing early adds days to what you have left, so nothing is wasted.\n\n[button: Renew my plan | {{site_url}}/checkout.html]\nQuestions? Reply to this email or write to support@cvtara.com."
     },
     {
       "id": "expiry",
-      "name": "Access reminder",
+      "name": "Access reminder (older, now replaced)",
       "trigger": "access_expiring",
-      "enabled": true,
-      "delayHours": 24,
+      "enabled": false,
+      "delayHours": 0,
       "subject": "Your access is expiring",
-      "body": "Hi {{name}},\nReview your plan and access dates in your profile.\n\nTeam CVTara · support@cvtara.com"
+      "body": "Hi {{name}},\nReview your plan and access dates in your profile."
     },
     {
       "id": "followup",
@@ -172,8 +226,8 @@
       "trigger": "followup_due",
       "enabled": true,
       "delayHours": 0,
-      "subject": "Your application needs a follow-up",
-      "body": "Hi {{name}},\nOpen your tracker to review the next action.\n\nTeam CVTara · support@cvtara.com"
+      "subject": "Time to follow up on your application",
+      "body": "# Follow up today\nHi {{name}}, you planned to follow up on an application today.\n\nA short, polite message to the recruiter or hiring manager often gets a reply. Mention the role, add one line on why you fit, and ask about the next step.\n\n[button: Open my tracker | {{site_url}}/workspace.html?view=tracker]"
     },
     {
       "id": "appstatus",
@@ -182,43 +236,142 @@
       "enabled": true,
       "delayHours": 0,
       "subject": "{{company}} · {{role}}: what is the status now? ({{n}} of 3)",
-      "body": "Hi {{name}},\nYou prepared your resume for {{role}} at {{company}}. It is marked \"{{status}}\" in your tracker.\n{{question}}\nUpdate it here: {{tracker_url}}\n\nThis is reminder {{n}} of 3. After the third we will not remind you again about this job.\n\nTeam CVTara · support@cvtara.com"
-    },
-    {
-      "id": "reset",
-      "name": "Forgot password",
-      "trigger": "password_reset",
-      "enabled": true,
-      "delayHours": 0,
-      "subject": "Reset your password",
-      "body": "Hi {{name}},\nReset your password using this single-use link: {{reset_url}}\nThis link expires after 60 minutes. If you did not request it, ignore this email.\n\nTeam CVTara · support@cvtara.com"
+      "body": "# Where does this application stand?\nHi {{name}}, you prepared your resume for {{role}} at {{company}}. It is marked \"{{status}}\" in your tracker.\n\n{{question}}\n\n[button: Update my tracker | {{site_url}}/workspace.html?view=tracker]\nThis is reminder {{n}} of 3 over about a month. After the third we will not remind you about this job again. You can also switch these reminders off in the tracker."
     },
     {
       "id": "abandoned",
       "name": "Abandoned purchase",
       "trigger": "abandoned_purchase",
-      "enabled": false,
+      "enabled": true,
       "delayHours": 24,
-      "subject": "Continue your CVTara checkout",
-      "body": "Hi {{name}},\nReview your plan at {{site_url}}/checkout.html. You receive this reminder because you opted in to updates.\n\nTeam CVTara · support@cvtara.com"
+      "subject": "Your CVTara plan is waiting, {{name}}",
+      "body": "# You were one step away\nHi {{name}}, you started choosing a CVTara plan but did not finish.\n\nYour resumes and letters are saved. A plan adds clean PDF and Word downloads, more ATS checks and the application tracker, paid once with no auto-renewal.\n\n[button: Finish choosing my plan | {{site_url}}/checkout.html]\nIf you had a question, reply to this email and a real person will answer."
+    },
+    {
+      "id": "nurture-1",
+      "name": "Plan nudge 1 of 12",
+      "trigger": "nurture",
+      "enabled": true,
+      "delayHours": 0,
+      "subject": "Three minutes to a stronger resume",
+      "body": "# Three minutes to a stronger resume\nHi {{name}},\n\nAlready have a resume? Upload it. CVTara reads it, fills the builder and shows an ATS-friendly score, so you start from what you have instead of a blank page.\n\n[button: Upload my resume | {{site_url}}/workspace.html?view=resumes]\nNot for you right now? You can unsubscribe with one click below. We will keep sending only account emails such as receipts and sign-in codes."
+    },
+    {
+      "id": "nurture-2",
+      "name": "Plan nudge 2 of 12",
+      "trigger": "nurture",
+      "enabled": true,
+      "delayHours": 0,
+      "subject": "Is your resume speaking the job's language?",
+      "body": "# Is your resume speaking the job's language?\nHi {{name}},\n\nRecruiters and applicant tracking systems look for the words a job uses. The ATS check compares your resume with a job and lists the requirements it does not yet show.\n\n[button: Try the ATS check | {{site_url}}/workspace.html?view=match]\nNot for you right now? You can unsubscribe with one click below. We will keep sending only account emails such as receipts and sign-in codes."
+    },
+    {
+      "id": "nurture-3",
+      "name": "Plan nudge 3 of 12",
+      "trigger": "nurture",
+      "enabled": true,
+      "delayHours": 0,
+      "subject": "One resume per job beats one for all",
+      "body": "# One resume per job beats one for all\nHi {{name}},\n\nKeep one strong primary resume, then make a tailored version for each job in a click. Same facts, the words that job cares about.\n\n[button: Build my primary resume | {{site_url}}/workspace.html?view=resumes]\nNot for you right now? You can unsubscribe with one click below. We will keep sending only account emails such as receipts and sign-in codes."
+    },
+    {
+      "id": "nurture-4",
+      "name": "Plan nudge 4 of 12",
+      "trigger": "nurture",
+      "enabled": true,
+      "delayHours": 0,
+      "subject": "Give your resume a cover letter that matches",
+      "body": "# Give your resume a cover letter that matches\nHi {{name}},\n\nA letter that tells the same story as your resume is easier for a recruiter to trust. Pick a design and write it from the details you already added.\n\n[button: Write a cover letter | {{site_url}}/workspace.html?view=letter]\nNot for you right now? You can unsubscribe with one click below. We will keep sending only account emails such as receipts and sign-in codes."
+    },
+    {
+      "id": "nurture-5",
+      "name": "Plan nudge 5 of 12",
+      "trigger": "nurture",
+      "enabled": true,
+      "delayHours": 0,
+      "subject": "Make the first ten seconds count",
+      "body": "# Make the first ten seconds count\nHi {{name}},\n\nRecruiters scan quickly. Short bullets that start with a verb and carry a number are read first. Open your resume and check each bullet answers: what did you do, and what changed?\n\n[button: Review my resume | {{site_url}}/workspace.html?view=resumes]\nNot for you right now? You can unsubscribe with one click below. We will keep sending only account emails such as receipts and sign-in codes."
+    },
+    {
+      "id": "nurture-6",
+      "name": "Plan nudge 6 of 12",
+      "trigger": "nurture",
+      "enabled": true,
+      "delayHours": 0,
+      "subject": "Keep track of every application",
+      "body": "# Keep track of every application\nHi {{name}},\n\nEach resume you prepare for a job goes into your tracker automatically, with gentle reminders to update its status. No spreadsheet needed.\n\n[button: Open my tracker | {{site_url}}/workspace.html?view=tracker]\nNot for you right now? You can unsubscribe with one click below. We will keep sending only account emails such as receipts and sign-in codes."
+    },
+    {
+      "id": "nurture-7",
+      "name": "Plan nudge 7 of 12",
+      "trigger": "nurture",
+      "enabled": true,
+      "delayHours": 0,
+      "subject": "Changing roles? Show transferable skills",
+      "body": "# Changing roles? Show transferable skills\nHi {{name}},\n\nMoving to a new role or industry? Put the skills the new job asks for near the top, backed by real examples from your past work. The ATS check shows which are missing.\n\n[button: Tailor for a new role | {{site_url}}/workspace.html?view=match]\nNot for you right now? You can unsubscribe with one click below. We will keep sending only account emails such as receipts and sign-in codes."
+    },
+    {
+      "id": "nurture-8",
+      "name": "Plan nudge 8 of 12",
+      "trigger": "nurture",
+      "enabled": true,
+      "delayHours": 0,
+      "subject": "Fresher? Lead with projects and skills",
+      "body": "# Fresher? Lead with projects and skills\nHi {{name}},\n\nNo work history yet is fine. Put projects, internships and skills first, with one clear result for each. The fresher designs are built for exactly this.\n\n[button: See fresher designs | {{site_url}}/templates.html]\nNot for you right now? You can unsubscribe with one click below. We will keep sending only account emails such as receipts and sign-in codes."
+    },
+    {
+      "id": "nurture-9",
+      "name": "Plan nudge 9 of 12",
+      "trigger": "nurture",
+      "enabled": true,
+      "delayHours": 0,
+      "subject": "Six months on: time for a resume refresh",
+      "body": "# Six months on: time for a resume refresh\nHi {{name}},\n\nNew project, new skill, new certificate? A resume that is a few months old often hides your best recent work. Update your primary resume once and every version benefits.\n\n[button: Update my resume | {{site_url}}/workspace.html?view=resumes]\nNot for you right now? You can unsubscribe with one click below. We will keep sending only account emails such as receipts and sign-in codes."
+    },
+    {
+      "id": "nurture-10",
+      "name": "Plan nudge 10 of 12",
+      "trigger": "nurture",
+      "enabled": true,
+      "delayHours": 0,
+      "subject": "What a plan adds, in plain words",
+      "body": "# What a plan adds, in plain words\nHi {{name}},\n\nFree accounts can build, preview and run a few ATS checks. A plan adds clean PDF and Word downloads, more ATS checks, tailored resumes, cover letters and the tracker. Plans start at {{from_price}}, paid once, no auto-renewal.\n\n[button: See the plans | {{site_url}}/checkout.html]\nNot for you right now? You can unsubscribe with one click below. We will keep sending only account emails such as receipts and sign-in codes."
+    },
+    {
+      "id": "nurture-11",
+      "name": "Plan nudge 11 of 12",
+      "trigger": "nurture",
+      "enabled": true,
+      "delayHours": 0,
+      "subject": "Share CVTara, earn rewards",
+      "body": "# Share CVTara, earn rewards\nHi {{name}},\n\nKnow someone job hunting? When friends you refer sign up and buy a plan, you unlock free downloads and later a free month. Your link is in your workspace.\n\n[button: Open my referral page | {{site_url}}/workspace.html?view=referrals]\nNot for you right now? You can unsubscribe with one click below. We will keep sending only account emails such as receipts and sign-in codes."
+    },
+    {
+      "id": "nurture-12",
+      "name": "Plan nudge 12 of 12",
+      "trigger": "nurture",
+      "enabled": true,
+      "delayHours": 0,
+      "subject": "A year on: pick up where you left off",
+      "body": "# A year on: pick up where you left off\nHi {{name}},\n\nYour resumes and letters are still saved in your account. If you are job hunting again, a plan gives you clean downloads and ATS checks from {{from_price}}, paid once.\n\n[button: Open my workspace | {{site_url}}/workspace.html?view=resumes]\nNot for you right now? You can unsubscribe with one click below. We will keep sending only account emails such as receipts and sign-in codes."
+    },
+    {
+      "id": "digest",
+      "name": "Monthly career guide",
+      "trigger": "monthly_digest",
+      "enabled": true,
+      "delayHours": 0,
+      "subject": "Career guide of the month: {{blog_title}}",
+      "body": "# This month's guide\nHi {{name}}, here is one guide we think is worth your time this month:\n\n## {{blog_title}}\n{{blog_summary}}\n\n[button: Read the guide | {{blog_url}}]\n\nWe send one guide a month, different for different readers. Unsubscribe any time with one click below."
     },
     {
       "id": "blog",
-      "name": "New blog post",
+      "name": "New blog post (off, replaced by the monthly guide)",
       "trigger": "blog_published",
       "enabled": false,
       "delayHours": 0,
       "subject": "New guide: {{blog_title}}",
-      "body": "Hi {{name}},\nRead our latest guide: {{blog_url}}\nManage update preferences in your profile.\n\nTeam CVTara · support@cvtara.com"
-    },
-    {
-      "id": "download-locked",
-      "name": "Subscribe to download",
-      "trigger": "download_locked",
-      "enabled": true,
-      "delayHours": 0,
-      "subject": "Your updated resume is ready — subscribe to download it",
-      "body": "Hi {{name}},\n\nYou asked to download your resume, and it is ready. Downloads without a watermark are part of a CVTara plan.\n\nChoose a plan here: {{site_url}}/checkout.html\n\nOnce your plan is active you can download your primary resume, every tailored version and your cover letters as PDF or Word.\n\nNeed help choosing? Write to support@cvtara.com.\n\nTeam CVTara\nBangalore, India"
+      "body": "Hi {{name}},\nRead our latest guide: {{blog_url}}"
     }
   ],
   "popup": {
@@ -231,7 +384,28 @@
     "custom": []
   },
   "site": {
-    "employers": {"enabled": true, "heading": "Resumes for roles at India's leading employers", "names": ["Tata Consultancy Services", "Infosys", "Wipro", "HCLTech", "Tech Mahindra", "Reliance", "Flipkart", "Zomato", "Swiggy", "Paytm", "HDFC Bank", "ICICI Bank", "Accenture India", "Amazon India", "Cognizant", "Capgemini India"]},
+    "employers": {
+      "enabled": true,
+      "heading": "Resumes for roles at India's leading employers",
+      "names": [
+        "Tata Consultancy Services",
+        "Infosys",
+        "Wipro",
+        "HCLTech",
+        "Tech Mahindra",
+        "Reliance",
+        "Flipkart",
+        "Zomato",
+        "Swiggy",
+        "Paytm",
+        "HDFC Bank",
+        "ICICI Bank",
+        "Accenture India",
+        "Amazon India",
+        "Cognizant",
+        "Capgemini India"
+      ]
+    },
     "announce": "Create your account, build and preview · Plans from {{from}} · Pay once, no auto-renewal",
     "announceLink": "See plans",
     "heroPill": "ATS-friendly resumes for Indian job seekers",

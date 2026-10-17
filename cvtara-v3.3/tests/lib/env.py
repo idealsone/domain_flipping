@@ -48,7 +48,9 @@ class Instance:
         self.proc = subprocess.Popen(["php", "-S", f"127.0.0.1:{self.port}", "-t", self.public, router], cwd=self.app, env=self.env,
                                      stdout=subprocess.DEVNULL, stderr=open(os.path.join(self.tmp, "server.log"), "w"))
         for _ in range(60):
-            try: urllib.request.urlopen(self.base + "/login", timeout=2); return self
+            try:
+                urllib.request.urlopen(self.base + "/login", timeout=2)
+                from lib.http import Client; Client.dbs[self.base] = self.db; return self
             except Exception: time.sleep(0.25)
         log = open(os.path.join(self.tmp, "server.log")).read()[-600:]
         raise Setup("Server did not start (does --public belong to the same install as --app?).\n" + log)

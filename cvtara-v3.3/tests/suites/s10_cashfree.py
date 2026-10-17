@@ -23,7 +23,7 @@ def run(ctx, t):
         s, j = o.api("POST", "admin/providers", {"service": "payments", "values": {"provider": "cashfree"}}); t.check("Cashfree needs both keys", s == 422, f"{s} {j}")
         s, j = o.api("POST", "admin/providers", {"service": "payments", "values": {"provider": "cashfree", "mode": "test", "cashfreeClientId": "TEST123", "cashfreeClientSecret": SECRET}}); t.check("save Cashfree keys", s == 200, f"{s} {j}")
 
-        u = Client(inst.base); u.register("cf-a@test.local"); uid = db.q("select id from users where email='cf-a@test.local'")[0][0]
+        Client.verify_db = inst.db; u = Client(inst.base); u.register("cf-a@test.local"); uid = db.q("select id from users where email='cf-a@test.local'")[0][0]
         s, j = u.api("POST", "checkout/start", {"plan": "fresher-basic"}); t.check("a mobile number is required", s == 422 and "mobile" in str(j).lower(), f"{s} {j}")
         s, j = u.api("POST", "checkout/start", {"plan": "fresher-basic", "phone": "9876543210"})
         t.check("checkout opens through Cashfree", s == 200 and j.get("provider") == "cashfree" and j.get("paymentSessionId"), f"{s} {j}")

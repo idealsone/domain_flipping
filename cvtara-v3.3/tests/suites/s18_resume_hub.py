@@ -135,12 +135,12 @@ def run(ctx, t):
         out = ctx.inst.artisan("cvtara:remind").stdout.strip(); sent.append(out)
         row = db.q("select reminders_sent,next_reminder_at from applications where id=?", aid)[0]
         t.check(f"reminder {n} is sent and counted", f"sent: 1" in out and row[0] == n, (out, row))
-    t.check("the gaps are 3, 4 and 7 days and nothing is scheduled after the third", db.q("select next_reminder_at is null from applications where id=?", aid)[0][0] == 1)
+    t.check("the three reminders are spread over about a month and nothing is scheduled after the third", db.q("select next_reminder_at is null from applications where id=?", aid)[0][0] == 1)
     ns = notes()
     t.check("three in-app reminders were created and the last says 3 of 3", len(ns) == 3 and any("Reminder 3 of 3" in x["body"] for x in ns) and all(x["link"] == "/workspace.html?view=tracker" for x in ns), ns)
     t.check("an email reminder was queued each time", db.q("select count(*) from mail_outbox where trigger='application_status'")[0][0] - mail0 == 3)
     body = db.q("select subject,body from mail_outbox where trigger='application_status' and subject like '%3 of 3%'")[0]
-    t.check("the email names the job, its status and the count", "Nimbus" in body[0] and "Recruiter" in body[0] and "3 of 3" in body[0] and "Saved" in body[1] and "will not remind you again" in body[1], body)
+    t.check("the email names the job, its status and the count", "Nimbus" in body[0] and "Recruiter" in body[0] and "3 of 3" in body[0] and "Saved" in body[1] and "will not remind you about this job again" in body[1], body)
     db.q("update applications set next_reminder_at=datetime('now','-1 minute') where id=?", aid)
     t.check("after the third reminder no more are sent", "sent: 0" in ctx.inst.artisan("cvtara:remind").stdout and db.q("select reminders_sent from applications where id=?", aid)[0][0] == 3)
     t.check("another person sees none of these reminders", not notes(other))

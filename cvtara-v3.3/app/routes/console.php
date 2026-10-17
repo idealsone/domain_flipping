@@ -33,6 +33,16 @@ Artisan::command('cvtara:cron', function () {
 Artisan::command('cvtara:remind', function () {
     $this->info('Status reminders sent: '.\App\Services\Tracker::remind());
 })->purpose('Send the due application status reminders (up to 3 per job)');
+Artisan::command('cvtara:mail-preview {dir}', function (string $dir) {
+    @mkdir($dir, 0775, true);
+    foreach (\App\Services\Settings::defaults()['emails'] as $t) {
+        if ($m = MailAutomation::preview($t['id'])) {
+            file_put_contents($dir.'/'.$t['id'].'.html', $m['html']);
+            file_put_contents($dir.'/'.$t['id'].'.txt', $m['subject']."\n\n".$m['text']);
+        }
+    }
+    $this->info('Wrote '.count(glob($dir.'/*.html')).' email previews to '.$dir);
+})->purpose('Write every email template, filled with sample values, as HTML and text files');
 Artisan::command('cvtara:backup', function () {
     $this->info('Backup written to '.\App\Services\Backup::run());
 })->purpose('Write a compressed database backup to storage/app/backups');
