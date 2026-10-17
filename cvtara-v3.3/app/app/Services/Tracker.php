@@ -51,8 +51,8 @@ class Tracker
         return 'added';
     }
 
-    /** Days after an application is added until reminder 1, 2 and 3. After the third there are no more. */
-    public const GAPS = [3, 4, 7];
+    /** Days until reminder 1, then between reminders 1 and 2, and 2 and 3: about day 7, 15 and 30. After the third there are no more. */
+    public const GAPS = [7, 8, 15];
 
     public const MAX = 3;
 

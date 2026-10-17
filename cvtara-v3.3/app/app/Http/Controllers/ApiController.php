@@ -212,7 +212,7 @@ class ApiController extends Controller
             $plans = Settings::plans();
             unset($a['purchase']);
 
-            return $ok([...$a, 'jobLinks' => (bool) (((array) Settings::get('speed', []))['jobLinks'] ?? false), 'planName' => $plans[$a['plan']]['name'] ?? 'Free', 'daysLeft' => $a['accessUntil'] ? max(0, (int) ceil((strtotime($a['accessUntil']) - time()) / 86400)) : 0, 'credits' => $cs, 'caps' => ['resumes' => (int) $l['savedResumes'] + 1, 'letters' => (int) $l['savedLetters'], 'atsScans' => $cs['scans']['total'], 'exports' => null], 'used' => ['exports' => $exports, 'savedResumes' => DB::table('resume_drafts')->where('owner_id', $id)->count(), 'savedLetters' => DB::table('cover_letter_drafts')->where('owner_id', $id)->count(), 'atsScans' => $scans, 'dailyMatches' => DB::table('ats_scans')->where('owner_id', $id)->where('status', '!=', 'void')->whereDate('created_at', today())->count()]]);
+            return $ok([...$a, 'emailVerified' => ! \App\Services\EmailVerification::required($r->user()), 'jobLinks' => (bool) (((array) Settings::get('speed', []))['jobLinks'] ?? false), 'planName' => $plans[$a['plan']]['name'] ?? 'Free', 'daysLeft' => $a['accessUntil'] ? max(0, (int) ceil((strtotime($a['accessUntil']) - time()) / 86400)) : 0, 'credits' => $cs, 'caps' => ['resumes' => (int) $l['savedResumes'] + 1, 'letters' => (int) $l['savedLetters'], 'atsScans' => $cs['scans']['total'], 'exports' => null], 'used' => ['exports' => $exports, 'savedResumes' => DB::table('resume_drafts')->where('owner_id', $id)->count(), 'savedLetters' => DB::table('cover_letter_drafts')->where('owner_id', $id)->count(), 'atsScans' => $scans, 'dailyMatches' => DB::table('ats_scans')->where('owner_id', $id)->where('status', '!=', 'void')->whereDate('created_at', today())->count()]]);
         }
         if ($path === 'resumes/import') {
             abort_unless($r->isMethod('POST'), 405);
@@ -260,6 +260,7 @@ class ApiController extends Controller
         if ($path === 'ats/scan' && $r->isMethod('POST')) {
             $v = $r->validate(['resumeId' => ['required', 'regex:/^[a-f0-9-]{36}$/'], 'source' => 'required|in:link,file,text', 'url' => 'nullable|string|max:1000', 'text' => 'nullable|string|max:60000', 'title' => 'nullable|string|max:180', 'company' => 'nullable|string|max:180']);
             abort_unless(Settings::get('features')['match']['enabled'], 403);
+            \App\Services\EmailVerification::guard($r->user());
             if ($v['source'] === 'link' && ! (((array) Settings::get('speed', []))['jobLinks'] ?? false)) {
                 return response()->json(['ok' => false, 'error' => 'Job links are not available yet. Paste the job text or upload a PDF.'], 422);
             }
@@ -376,6 +377,7 @@ class ApiController extends Controller
             return $ok(BusinessControls::quote($v['plan'], $v['coupon'] ?? '', $u->id));
         }
         if ($path === 'checkout/start') {
+            \App\Services\EmailVerification::guard($r->user());
             $r->validate(['plan' => 'required|in:'.implode(',', Settings::paidPlanKeys()), 'showInActivity' => 'nullable|boolean']);
             if ($r->has('showInActivity')) {
                 DB::table('profiles')->where('owner_id', $id)->update(['show_in_activity' => $r->boolean('showInActivity')]);
@@ -668,7 +670,7 @@ class ApiController extends Controller
             return ['id' => $did, 'revision' => $rev, ...($type === 'resumes' ? ['ats' => ['score' => $record['ats_score'], 'tips' => array_slice(\App\Services\ResumeQuality::score($data)['tips'], 0, 3)]] : [])];
         });
         if ($type === 'resumes') {
-            MailAutomation::queue($u, 'resume_saved', $result['id'].':'.$result['revision']);
+            MailAutomation::queue($u, 'resume_saved', 'w'.(int) floor(time() / (14 * 86400)));
         }
 
         return response()->json(['ok' => true, ...$result]);

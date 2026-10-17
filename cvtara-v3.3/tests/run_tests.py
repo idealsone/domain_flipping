@@ -39,14 +39,14 @@ def main():
     if a.only: mods = [m for m in mods if a.only in m.__name__ or a.only.lower() in m.NAME.lower()]
     t, started = T(), time.time(); inst = None
     try:
-        inst = Instance(app, public, preview=True).start()
+        inst = Instance(app, public, preview=True).start(); Client.verify_db = inst.db
         for m in mods:
             print(f"\n== {m.NAME}")
             try: m.run(Ctx(inst, app, public), t)
             except Exception as e:
                 tb = __import__("traceback").extract_tb(e.__traceback__)[-1]
                 t.check(f"{m.NAME} ran without crashing", False, f"{type(e).__name__}: {e} ({os.path.basename(tb.filename)}:{tb.lineno})")
-        inst.stop(); inst = Instance(app, public, preview=False).start(); c = Ctx(inst, app, public).client()
+        inst.stop(); inst = Instance(app, public, preview=False).start(); Client.verify_db = inst.db; c = Ctx(inst, app, public).client()
         print("\n== Production mode (preview off)")
         t.check("preview sign-in is closed", c.raw("GET", "/preview/go/admin")[0] in (403, 404), "open!")
         t.check("owner API needs login", c.api("GET", "admin/users")[0] in (401, 403))
