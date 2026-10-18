@@ -25,6 +25,45 @@ class EmailController extends Controller
         return response($this->shell('Unsubscribe from CVTara tips?', 'This stops career tips and plan reminders to '.e($this->mask($u->email)).'. Account emails such as receipts and sign-in codes will continue.', $r->fullUrl()), 200, ['X-Robots-Tag' => 'noindex']);
     }
 
+    /** Signed link in every outreach mail. Same two steps as above; the address is never mailed again by Outreach. */
+    public function outreachUnsubscribe(Request $r, string $contact)
+    {
+        abort_unless($r->hasValidSignature(), 403);
+        $c = DB::table('outreach_contacts')->where('id', $contact)->first();
+        abort_unless($c, 404);
+        if ($r->isMethod('POST')) {
+            if (! in_array($c->status, ['unsubscribed', 'registered'], true)) {
+                DB::table('outreach_contacts')->where('id', $c->id)->update(['status' => 'unsubscribed', 'next_at' => null, 'updated_at' => now()]);
+            }
+
+            return response($this->shell('You are unsubscribed', 'We will not email '.e($this->mask($c->email)).' again.', null), 200, ['X-Robots-Tag' => 'noindex']);
+        }
+
+        return response($this->shell('Stop these emails?', 'We will not email '.e($this->mask($c->email)).' again.', $r->fullUrl()), 200, ['X-Robots-Tag' => 'noindex']);
+    }
+
+    /** Tracked link in outreach mail: counts the click, then opens the page with campaign tags. */
+    public function outreachClick(Request $r, string $contact, int $step, string $to)
+    {
+        $dest = \App\Services\Outreach::LANDINGS[$to];
+        [$path, $hash] = explode('#', $dest, 2) + ['', ''];
+        $url = $path.(str_contains($path, '?') ? '&' : '?').http_build_query(['utm_source' => 'outreach', 'utm_medium' => 'email', 'utm_campaign' => 'step'.$step]).($hash !== '' ? '#'.$hash : '');
+        if ($to === 'share') {
+            // "Send to a friend": opens WhatsApp with a ready message and the free ATS check link.
+            if ($r->hasValidSignature()) {
+                DB::table('outreach_contacts')->where('id', $contact)->update(['shares' => DB::raw('shares + 1')]);
+            }
+            $link = rtrim((string) config('app.url'), '/').$path.'?'.http_build_query(['utm_source' => 'outreach', 'utm_medium' => 'share', 'utm_campaign' => 'step'.$step]);
+
+            return redirect()->away('https://wa.me/?'.http_build_query(['text' => 'Check how your resume scores against a job description, free, before you apply: '.$link]));
+        }
+        if ($r->hasValidSignature()) {
+            DB::table('outreach_contacts')->where('id', $contact)->update(['clicks' => DB::raw('clicks + 1'), 'clicked_at' => DB::raw("COALESCE(clicked_at, '".now()->format('Y-m-d H:i:s')."')")]);
+        }
+
+        return redirect($url);
+    }
+
     private function mask(string $e): string
     {
         [$a, $b] = explode('@', $e, 2) + ['', ''];

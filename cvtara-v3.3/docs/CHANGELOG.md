@@ -1,5 +1,17 @@
 # CVTara v3.14.4 — Clear cache button, Dashboard after sign-up
 
+## Unreleased: Outreach
+- **Owner console → Outreach.** Mail opted-in contacts from separate sending mailboxes on another domain (for example 5 Hostinger mailboxes on cvtara.in), so CVTara's own account mail keeps its reputation.
+- **Contacts:** paste or upload a CSV (email, name). Each import is checked: bad formats, system addresses (no-reply, postmaster), domains that cannot receive mail, duplicates, existing CVTara users and anyone who unsubscribed or bounced before are left out, with a count for each. The owner confirms the list is opted in.
+- **Warm-up per mailbox:** first-day amount, daily step and cap (default 10 → +2/day → 50). Mail goes out one at a time, spread across the send window (India time, default 9:00–19:00), within a rolling 24-hour limit.
+- **Sequence:** up to 4 mails (first mail + follow-ups after N days), always from the same mailbox. Four ready-made sequences (freshers, experienced, free ATS check, festival offer). Tracked links show clicks.
+- **Automatic stops:** signing up on CVTara stops mail to that address at once (and is checked again right before every send); one-click unsubscribe (List-Unsubscribe header and link); addresses the server rejects are marked bounced. A mailbox pauses itself after 3 failures in a row or when 10% of its recent mail bounces; the others carry on.
+- **Numbers:** reached, clicked, signed up, paid and revenue from outreach; per-mailbox sends, bounces and warm-up progress; CSV export.
+- **Two lists:** Students and Colleges (TPOs), each with its own sequence and look. Imports read college, designation and city columns (common header names such as "Email Address", "TPO Name" and "College Name" are recognised), and mails can use {{college}}, {{designation}} and {{city}}. Titles such as "Dr." are left out of the greeting.
+- **Designed or plain mail:** a light card with a heading, bullets and a button (students), or a plain personal note (placement officers). Recommended 3-mail sequences for both lists, plus a free resume session sequence for colleges.
+- **Warm-up share:** part of each mailbox's daily amount (40% by default, 0–60%) goes to short, link-free notes to the owner's own addresses, mixed through the day; with no one waiting, warm-up uses the whole day.
+- **Send to a friend:** {{share_url}} opens WhatsApp with a ready message and the free ATS check link; shares are counted per contact and per list.
+
 ## 3.14.4
 - **Owner console: "Clear cache" button** in the top bar of every owner page and in Speed & traffic ("Clear cache & refresh site"). One click removes the stored pages, clears compiled views and cached settings, rebuilds every public page and reloads the page fresh.
 - **New customers land on the Dashboard** after sign-up and after confirming their email (they used to land on My Resumes). The Dashboard retries once if plan details are slow to load and shows a clear message instead of a blank area.
