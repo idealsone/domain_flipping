@@ -39,6 +39,11 @@ def run(ctx, t):
         s, rq = o.api("GET", "admin/refunds"); rid = [x for x in rq["requests"] if x["purchase_id"] == purchase][0]["id"]
         s, j = o.api("POST", f"admin/refunds/{rid}/approve", {})
         t.check("approving sends the full refund to Razorpay", s == 200 and rz.refunds and rz.refunds[-1]["payment_id"] == pid and rz.refunds[-1]["amount"] == 29900, (s, str(j)[:200], rz.refunds))
+        t.check("access ends as soon as Razorpay accepts the refund, without waiting for the webhook", db.q("select status, refunded_paise from purchases where id=?", purchase) == [("refunded", 29900)] and db.q("select status from refund_requests where id=?", rid) == [("processed",)])
+        db.q("update purchases set provider='cashfree', status='paid', refunded_paise=0, purchased_at=datetime('now') where id=?", purchase)
+        s, j = u.api("POST", "refunds", {"purchaseId": purchase})
+        t.check("an order paid through Cashfree before the switch asks the customer to write to support", s == 422 and "support" in str(j), (s, str(j)[:200]))
+        db.q("update purchases set provider='razorpay', status='refunded', refunded_paise=29900 where id=?", purchase)
         t.check("the Cashfree webhook address is gone", Client(inst.base)._post_raw("/webhooks/cashfree", b"{}", {"Content-Type": "application/json", "Accept": "application/json"})[0] in (404, 405))
         s, j = o.api("GET", "admin/setup/status"); t.check("setup status sees payments configured and lists only the Razorpay webhook", s == 200 and list(j.get("webhooks", {}).keys()) == ["razorpay"], j.get("webhooks"))
     finally:

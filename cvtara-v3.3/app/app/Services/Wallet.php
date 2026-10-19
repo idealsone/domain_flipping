@@ -87,9 +87,9 @@ class Wallet
     {
         $min = (int) Referrals::config()['minQualifyingPaise'];
 
-        return DB::table('purchases')->where('owner_id', $friendId)->where('status', 'paid')->where('is_live', true)->whereIn('provider', ['razorpay'])
+        return DB::table('purchases')->where('owner_id', $friendId)->where('status', 'paid')->where('is_live', true)->whereIn('provider', ['razorpay', 'cashfree'])
             ->where('refunded_paise', 0)->whereNotNull('payment_reference')->whereNotNull('purchased_at')->where('plan', '!=', 'free')
-            ->whereRaw('amount_paise + referral_discount_paise + wallet_paise + upgrade_credit_paise >= ?', [$min])
+            ->whereRaw('amount_paise + discount_paise + addon_discount_paise + referral_discount_paise + wallet_paise + upgrade_credit_paise >= ?', [$min])
             ->whereNotIn('id', DB::table('refund_requests')->whereIn('status', ['requested', 'approved', 'processed'])->select('purchase_id'))
             ->orderBy('purchased_at')->first();
     }

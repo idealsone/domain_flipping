@@ -33,6 +33,8 @@ def run(ctx, t):
     s, j = o.api("GET", "admin/business-controls"); bc = j["data"]
     bc["coupons"] = [{"code": "ONE", "type": "percent", "value": 10, "enabled": True, "plans": ["job-hunt", "pro"], "expiresAt": "", "maxUses": 1, "perUser": 1}]
     t.check("save coupon", o.api("POST", "admin/business-controls", bc)[0] == 200)
+    stale = dict(bc, coupons=[dict(bc["coupons"][0], plans=["job-hunt", "pro", "complete-kit"])])
+    t.check("a coupon that still lists an off-sale package saves, without that package", o.api("POST", "admin/business-controls", stale)[0] == 200 and o.api("GET", "admin/business-controls")[1]["data"]["coupons"][0]["plans"] == ["job-hunt", "pro"])
     b = ctx.client(); b.register("bill-b@test.local"); c2 = ctx.client(); c2.register("bill-c@test.local")
     s, j1 = b.api("POST", "checkout/start", {"plan": "job-hunt", "coupon": "ONE"}); t.check("first order with coupon starts", s == 200, j1)
     s, j = c2.api("POST", "checkout/quote", {"plan": "job-hunt", "coupon": "ONE"})

@@ -425,7 +425,7 @@ class ApiController extends Controller
 
             $referredUsers = User::where('referred_by', $id)
                 ->select('id', 'created_at', 'email_verified_at', 'blocked')
-                ->selectSub(DB::table('purchases')->selectRaw('COUNT(*)')->whereColumn('owner_id', 'users.id')->where('status', 'paid')->where('is_live', true)->whereIn('provider', ['razorpay'])->where('amount_paise', '>=', Referrals::config()['minQualifyingPaise'])->where('refunded_paise', 0)->whereNotNull('payment_reference')->where('plan', '!=', 'free'), 'qualifying_payments')
+                ->selectSub(DB::table('purchases')->selectRaw('COUNT(*)')->whereColumn('owner_id', 'users.id')->where('status', 'paid')->where('is_live', true)->whereIn('provider', ['razorpay', 'cashfree'])->where('amount_paise', '>=', Referrals::config()['minQualifyingPaise'])->where('refunded_paise', 0)->whereNotNull('payment_reference')->where('plan', '!=', 'free'), 'qualifying_payments')
                 ->selectSub(DB::table('referral_identities')->selectRaw('COUNT(*)')->whereColumn('owner_id', 'users.id')->where('status', 'verified'), 'verified_phone')
                 ->orderByDesc('created_at')->limit(200)->get()->map(fn ($friend) => [
                     'label' => 'Friend '.substr(hash_hmac('sha256', (string) $friend->id, config('app.key')), 0, 6),
