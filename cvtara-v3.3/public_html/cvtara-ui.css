@@ -303,3 +303,26 @@ body.dark .ws-notice{background:#3a2412;border-color:#7a4a1c;color:#fdba74}
 .ad-dialog::backdrop{background:rgba(15,23,42,.5)}
 .lp h1,.lp h2,.lp h3,.co h1,.co-box h2,.pl-card h3{line-height:1.15}
 .lp-head h2,.lp-primary h2,.lp-final h2{line-height:1.12}
+
+/* Check my writing */
+.wc-dialog{max-width:680px;width:calc(100vw - 32px);max-height:88vh;overflow:auto;background:var(--paper,#fff);color:var(--ink);border:1px solid var(--line);border-radius:16px;padding:22px;box-shadow:0 24px 60px rgba(15,23,42,.25)}
+.wc-dialog::backdrop{background:rgba(15,23,42,.45)}
+.wc-dialog h2{margin:0 0 6px}
+.wc-lead{color:var(--muted);margin:0 0 12px}
+.wc-counts{display:flex;flex-wrap:wrap;gap:8px;margin:0 0 14px}
+.wc-counts span{display:inline-flex;gap:8px;align-items:center;border:1px solid var(--line);border-radius:999px;padding:4px 12px;font-size:13px;background:var(--soft)}
+.wc-counts span b{font-size:14px}
+.wc-counts span.ok b{color:var(--ok)}
+.wc-group h3{font-size:15px;margin:14px 0 6px;display:flex;gap:8px;align-items:center}
+.wc-group h3 span{background:var(--soft);border-radius:999px;padding:0 8px;font-size:12px}
+.wc-group ol{list-style:none;margin:0;padding:0;display:grid;gap:8px}
+.wc-group li{border:1px solid var(--line);border-radius:10px;padding:10px 12px;background:var(--soft)}
+.wc-group li small{display:block;color:var(--muted);font-size:12px;margin-bottom:4px}
+.wc-group li q{display:block;quotes:none;font-size:14px;line-height:1.5;color:var(--ink);overflow-wrap:anywhere}
+.wc-group li q mark{background:#fde68a;color:#1f2937;border-radius:3px;padding:0 2px}
+.wc-group li p{margin:6px 0 0;font-size:13.5px}
+.wc-try b{font-weight:600;color:var(--blue)}
+.wc-full{margin-top:14px;padding:10px 12px;border:1px dashed var(--line);border-radius:10px;font-size:13.5px}
+.wc-full p{margin:0 0 8px}
+.wc-note{font-size:12.5px;color:var(--muted);margin:14px 0 10px}
+.wc-actions{display:flex;gap:8px;flex-wrap:wrap}

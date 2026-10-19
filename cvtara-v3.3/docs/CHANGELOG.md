@@ -1,4 +1,13 @@
-# CVTara v3.14.4 — Clear cache button, Dashboard after sign-up
+# CVTara v3.17.0 — Check my writing
+
+## 3.17.0
+- **Check my writing** in the resume and cover-letter builders. One click lists suggestions in three groups, each with the line it is about and words to try:
+  - **Stronger writing:** weak openings such as "responsible for", "helped" and "worked on"; buzzwords such as "hard-working" and "team player"; bullets with no number or result; long bullets and sentences; "I" and "my" in a resume; three or more bullets starting with the same verb; Indian-English phrases that read oddly to many recruiters ("revert back", "do the needful", "Myself Asha").
+  - **Tone:** unsure or negative wording ("tried to", "unfortunately", "just") and, in cover letters, casual or pushy lines ("Hey", "hire me", "ASAP").
+  - **Grammar & spelling:** common misspellings, repeated words, double spaces, a lowercase "i", sentences that start in lowercase, spaces around punctuation and "!!".
+- The check runs on CVTara's own server from a word list (`resources/data/writing-rules.json`), costs nothing and sends text nowhere. It never changes the document.
+- **Optional full grammar check (LanguageTool):** a new GRAMMAR switch under Integrations, off by default. When on, customers see a "Full grammar check" button that sends that document's text to LanguageTool (the free public service, a Premium key or your own server). Limit 20 a day per customer; a failed check is not counted.
+- Privacy Policy text names LanguageTool and says the basic check sends nothing.
 
 ## 3.14.4
 - **Owner console: "Clear cache" button** in the top bar of every owner page and in Speed & traffic ("Clear cache & refresh site"). One click removes the stored pages, clears compiled views and cached settings, rebuilds every public page and reloads the page fresh.

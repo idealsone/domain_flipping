@@ -14,6 +14,7 @@ Keep this file current. It records what the owner asked for, what was built, the
 
 ## Customer features
 - Resume Builder (primary resume + job-tailored versions), Cover Letters (saved letters listed under the section), **ATS Match** (choose a saved resume from a dropdown — no upload; job by link / PDF-DOCX-text file / pasted text; server-side report with match estimate, keywords, gaps, job details; then choose tailored resume / cover letter / both), Applications tracker, Billing & Plans, Referral programme, My wallet, Account, Share feedback (testimonials), customer guide, **Feedback button** (signed-in customers only; right or left side; up to 5 screenshots of 2 MB; limit 10 reports an hour).
+- **Check my writing** (3.17.0) in both builders: rule-based weak words, tone and basic grammar from `resources/data/writing-rules.json`, on the server, free. Optional LanguageTool full check behind the GRAMMAR integration switch (off by default, 20 a day per customer, privacy policy names it).
 - Sidebar and page layout are identical on every view (no zoom/shift), including scrollbar space.
 
 ## Owner console

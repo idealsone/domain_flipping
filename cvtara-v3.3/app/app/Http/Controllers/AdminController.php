@@ -49,7 +49,7 @@ class AdminController extends Controller
         if (preg_match('#^content/(legal|features|library|blog|integrations|emails|seo|popup|site)$#', $path, $m)) {
             $key = $m[1];
             if ($get) {
-                return $ok(['data' => Settings::get($key), 'revision' => Settings::revision($key), 'connections' => ['payments' => ! empty(Settings::providers()['payments']), 'email' => ! empty(Settings::providers()['email']), 'ai' => ! empty(Settings::providers()['ai'])]]);
+                return $ok(['data' => Settings::get($key), 'revision' => Settings::revision($key), 'connections' => ['payments' => ! empty(Settings::providers()['payments']), 'email' => ! empty(Settings::providers()['email']), 'ai' => ! empty(Settings::providers()['ai']), 'grammar' => ! empty(Settings::providers()['grammar'])]]);
             }if (in_array($key, ['integrations', 'emails', 'legal', 'site'], true)) {
                 AccountSecurity::requireRecent($r);
             }$r->validate(['data' => 'present|array', 'revision' => 'required|integer']);
@@ -88,7 +88,7 @@ class AdminController extends Controller
         }
         if ($path === 'providers') {
             $p = Settings::providers();
-            $fields = ['verification' => ['enabled', 'twilioAccountSid', 'twilioAuthToken', 'twilioVerifyServiceSid'], 'payouts' => ['enabled', 'mode', 'cashfreeClientId', 'cashfreeClientSecret', 'cashfreePublicKey', 'maxTransferRupees', 'acceptanceConfirmed'], 'jobreader' => ['enabled', 'provider', 'scrapingbeeApiKey', 'zenrowsApiKey', 'customUrlTemplate', 'customApiKey', 'dailyLimit'], 'payments' => ['provider', 'mode', 'razorpayKeyId', 'razorpayKeySecret', 'razorpayWebhookSecret', 'cashfreeClientId', 'cashfreeClientSecret'], 'email' => ['provider', 'resendApiKey', 'smtpHost', 'smtpPort', 'smtpUser', 'smtpPassword', 'fromEmail', 'fromName', 'replyTo'], 'ai' => ['provider', 'writerApiKey', 'model'], 'analytics' => ['measurementId', 'searchConsoleProperty', 'searchConsoleServiceAccount'], 'push' => ['oneSignalAppId', 'oneSignalRestApiKey']];
+            $fields = ['verification' => ['enabled', 'twilioAccountSid', 'twilioAuthToken', 'twilioVerifyServiceSid'], 'payouts' => ['enabled', 'mode', 'cashfreeClientId', 'cashfreeClientSecret', 'cashfreePublicKey', 'maxTransferRupees', 'acceptanceConfirmed'], 'jobreader' => ['enabled', 'provider', 'scrapingbeeApiKey', 'zenrowsApiKey', 'customUrlTemplate', 'customApiKey', 'dailyLimit'], 'payments' => ['provider', 'mode', 'razorpayKeyId', 'razorpayKeySecret', 'razorpayWebhookSecret', 'cashfreeClientId', 'cashfreeClientSecret'], 'email' => ['provider', 'resendApiKey', 'smtpHost', 'smtpPort', 'smtpUser', 'smtpPassword', 'fromEmail', 'fromName', 'replyTo'], 'ai' => ['provider', 'writerApiKey', 'model'], 'analytics' => ['measurementId', 'searchConsoleProperty', 'searchConsoleServiceAccount'], 'push' => ['oneSignalAppId', 'oneSignalRestApiKey'], 'grammar' => ['url', 'username', 'premiumApiKey']];
             $secret = fn ($k) => preg_match('/Secret|ApiKey|Password|ServiceAccount|AuthToken/', $k);
             if ($get) {
                 foreach ($p as &$service) {
@@ -111,6 +111,9 @@ class AdminController extends Controller
                 if (($r->values['customUrlTemplate'] ?? '') !== '' && ! str_contains($r->values['customUrlTemplate'], '{url}')) {
                     abort(422, 'The custom address must contain {url} where the job link goes.');
                 }
+            }
+            if ($r->service === 'grammar') {
+                validator($r->values, ['url' => 'nullable|url:http,https|max:300', 'username' => 'nullable|string|max:190'])->validate();
             }
             if ($r->service === 'payouts') {
                 AccountSecurity::requireRecent($r);
@@ -338,7 +341,7 @@ class AdminController extends Controller
             }validator($d, ['watermarkText' => 'required|string|max:100'])->validate();
         }
         if ($k === 'integrations') {
-            validator($d, array_fill_keys(['payments', 'email', 'ai', 'analytics', 'push'], 'required|boolean'))->validate();
+            validator($d, array_fill_keys(['payments', 'email', 'ai', 'analytics', 'push'], 'required|boolean') + ['grammar' => 'sometimes|boolean'])->validate();
         }
         if ($k === 'popup') {
             validator($d, ['enabled' => 'required|boolean', 'delaySeconds' => 'required|integer|min:0|max:600', 'showSeconds' => 'required|integer|min:3|max:30', 'gapSeconds' => 'required|integer|min:3|max:120', 'useLiveActivity' => 'required|boolean', 'custom' => 'present|array|max:20', 'custom.*.title' => 'nullable|string|max:60', 'custom.*.text' => 'required|string|max:200', 'custom.*.icon' => 'nullable|string|max:8', 'custom.*.enabled' => 'required|boolean'])->validate();
