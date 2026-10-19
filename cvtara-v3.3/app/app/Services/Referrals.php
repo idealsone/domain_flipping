@@ -12,7 +12,7 @@ class Referrals
 {
     public static function config(): array
     {
-        return array_merge(['enabled' => true, 'rateBps' => 2000, 'minimumPaise' => 100000, 'payoutHours' => 24, 'holdDays' => 7, 'tierThreshold' => 100, 'tierRateBps' => 3000, 'requirePan' => false, 'downloadThreshold' => 5, 'premiumThreshold' => 10, 'premiumDays' => 30, 'minQualifyingPaise' => 9900, 'proOnly' => true], Settings::get('referrals', []));
+        return array_merge(['enabled' => true, 'rateBps' => 2000, 'minimumPaise' => 100000, 'payoutHours' => 24, 'holdDays' => 7, 'tierThreshold' => 100, 'tierRateBps' => 3000, 'requirePan' => false, 'downloadThreshold' => 5, 'premiumThreshold' => 10, 'premiumDays' => 30, 'minQualifyingPaise' => 9900, 'proOnly' => true, 'mode' => 'wallet', 'friendDiscountPaise' => 5000, 'rewardPaise' => 5000, 'qualifyDays' => 7, 'walletDays' => 90, 'monthlyCapPaise' => 100000], Settings::get('referrals', []));
     }
 
     public static function successfulBuyers(int $id): int
@@ -44,7 +44,8 @@ class Referrals
     // Called only from verified payment processing, in its database transaction.
     public static function credit(object $p): void
     {
-        if (! $p->is_live || $p->status !== 'paid' || ! in_array($p->provider, ['razorpay', 'cashfree'], true) || ! self::config()['enabled']) {
+        // Cash commission is the older programme; the "Give ₹50, get ₹50" wallet replaced it. Balances already earned stay withdrawable.
+        if (self::config()['mode'] !== 'commission' || ! $p->is_live || $p->status !== 'paid' || ! in_array($p->provider, ['razorpay', 'cashfree'], true) || ! self::config()['enabled']) {
             return;
         }$buyer = User::find($p->owner_id);
         if (! $buyer?->referred_by || $buyer->referred_by === $buyer->id) {

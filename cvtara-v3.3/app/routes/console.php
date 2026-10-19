@@ -84,7 +84,7 @@ Artisan::command('cvtara:demo', function () {
     \App\Services\Settings::put('integrations', array_merge(\App\Services\Settings::get('integrations'), ['payments' => true]));
     $owner = $mk('owner@cvtara.test', 'Demo Owner', true);
     $demo = $mk('demo@cvtara.test', 'Demo Customer');
-    $buy($demo, 'fresher-pro', 4);
+    $buy($demo, 'pro', 4);
     if (! DB::table('resume_drafts')->where('owner_id', $demo->id)->exists()) {
         $pid = (string) Str::uuid();
         $ins = fn ($id, $title, $co, $role, $primary, $parent) => DB::table('resume_drafts')->insert(['id' => $id, 'owner_id' => $demo->id, 'title' => $title, 'template' => 'suite-prism', 'company' => $co, 'role' => $role, 'content_json' => json_encode($doc($title, $role)), 'revision' => 1, 'is_primary' => $primary, 'parent_id' => $parent, 'job_description' => $primary ? null : 'Sample job description for '.$role, 'created_at' => now()->subDays(3), 'updated_at' => now()->subDays(1)]);
@@ -96,7 +96,7 @@ Artisan::command('cvtara:demo', function () {
             DB::table('ats_scans')->insert(['id' => (string) Str::uuid(), 'owner_id' => $demo->id, 'resume_id' => $pid, 'source' => 'text', 'job_url' => '', 'job_title' => $jt, 'company' => $jc, 'job_text' => $jx, 'score' => $rep['score'], 'result_json' => json_encode($rep + ['details' => []]), 'status' => 'done', 'created_at' => now()->subHours($hrs), 'updated_at' => now()->subHours($hrs)]);
         }
         foreach ([['ats-match', 'bug', 'The keyword list shows a skill as missing even though it is in my resume summary.', 3, 'new', 2], ['downloads', 'question', 'If I edit my resume after downloading, does the next download use another credit?', null, 'seen', 20], ['website', 'idea', 'Please add a Hindi version of the site. Many friends would use it.', 4, 'working', 40], ['billing', 'praise', 'Checkout was quick and the plan details were clear. Thank you!', 5, 'resolved', 90]] as [$ar, $kd, $msg, $rt, $stt, $hrs]) {
-            DB::table('support_reports')->insert(['id' => (string) Str::uuid(), 'owner_id' => $demo->id, 'name' => $demo->name, 'email' => $demo->email, 'area' => $ar, 'kind' => $kd, 'page' => '/workspace.html', 'message' => $msg, 'rating' => $rt, 'status' => $stt, 'plan' => 'Fresher Pro', 'viewport' => '1366x768', 'user_agent' => 'Demo browser', 'resolved_at' => $stt === 'resolved' ? now()->subHours($hrs - 5) : null, 'created_at' => now()->subHours($hrs), 'updated_at' => now()->subHours($hrs)]);
+            DB::table('support_reports')->insert(['id' => (string) Str::uuid(), 'owner_id' => $demo->id, 'name' => $demo->name, 'email' => $demo->email, 'area' => $ar, 'kind' => $kd, 'page' => '/workspace.html', 'message' => $msg, 'rating' => $rt, 'status' => $stt, 'plan' => 'Pro', 'viewport' => '1366x768', 'user_agent' => 'Demo browser', 'resolved_at' => $stt === 'resolved' ? now()->subHours($hrs - 5) : null, 'created_at' => now()->subHours($hrs), 'updated_at' => now()->subHours($hrs)]);
         }
         $ins((string) Str::uuid(), 'Business Analyst · Acme', 'Acme', 'Business Analyst', false, $pid);
         $ins((string) Str::uuid(), 'Data Analyst · Globex', 'Globex', 'Data Analyst', false, $pid);
@@ -120,7 +120,7 @@ Artisan::command('cvtara:demo', function () {
         ]);
     }
     $names = ['Aarav Mehta', 'Diya Nair', 'Kabir Shah', 'Ishita Rao', 'Rohan Das', 'Meera Iyer', 'Vihaan Gupta', 'Anaya Singh', 'Arjun Verma', 'Saanvi Reddy', 'Kiran Patel', 'Neha Joshi'];
-    $plans = ['fresher-basic', 'fresher-standard', 'pro-basic', 'pro-standard', 'pro-pro', 'fresher-pro'];
+    $plans = ['quick', 'job-hunt', 'pro', 'job-hunt', 'quick', 'pro'];
     foreach ($names as $i => $n) {
         $u = $mk(strtolower(str_replace(' ', '.', $n)).'@demo.cvtara.test', $n, false, $i % 3 === 0 ? 'experienced' : 'fresher');
         DB::table('users')->where('id', $u->id)->update(['created_at' => now()->subDays($i + 1)]);
@@ -145,8 +145,8 @@ Artisan::command('cvtara:demo', function () {
     }
     $someone = User::where('email', 'saanvi.reddy@demo.cvtara.test')->first();
     if ($someone && ! DB::table('purchases')->where('owner_id', $someone->id)->exists()) {
-        $p = \App\Services\Settings::plans()['fresher-basic'];
-        DB::table('purchases')->insert(['id' => (string) Str::uuid(), 'owner_id' => $someone->id, 'plan' => 'fresher-basic', 'amount_paise' => $p['price'] * 100, 'refunded_paise' => $p['price'] * 100, 'provider' => 'demo', 'status' => 'refunded', 'is_live' => false, 'payment_reference' => 'demo_refunded', 'limits_json' => json_encode($p), 'access_days' => $p['accessDays'], 'purchased_at' => now()->subDays(9), 'access_until' => now()->subDays(1), 'created_at' => now()->subDays(9), 'updated_at' => now()->subDays(6)]);
+        $p = \App\Services\Settings::plans()['job-hunt'];
+        DB::table('purchases')->insert(['id' => (string) Str::uuid(), 'owner_id' => $someone->id, 'plan' => 'job-hunt', 'amount_paise' => $p['price'] * 100, 'refunded_paise' => $p['price'] * 100, 'provider' => 'demo', 'status' => 'refunded', 'is_live' => false, 'payment_reference' => 'demo_refunded', 'limits_json' => json_encode($p), 'access_days' => $p['accessDays'], 'purchased_at' => now()->subDays(9), 'access_until' => now()->subDays(1), 'created_at' => now()->subDays(9), 'updated_at' => now()->subDays(6)]);
     }
     if (! DB::table('error_logs')->exists()) {
         \App\Services\ErrorLog::record('error', 'browser', '[sample] TypeError: Cannot read properties of undefined (reading \'name\')', 'workspace-ui.js:88', '/workspace.html');

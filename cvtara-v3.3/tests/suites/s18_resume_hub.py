@@ -97,7 +97,7 @@ def run(ctx, t):
 
     # ---- ATS match shows on the list ----
     JOB = "We are hiring a recruiter. Responsibilities: source candidates, screen candidates, schedule interviews, maintain the applicant tracking system. Required: 2+ years of recruitment experience and strong communication skills."
-    t.check("buy Fresher Basic", buy("fresher-basic") == 200)
+    t.check("buy Job Hunt", buy("job-hunt") == 200)
     s, sc = c.api("POST", "ats/scan", {"resumeId": rid, "source": "text", "text": JOB, "title": "Recruiter", "company": "Zeta"})
     m = c.api("GET", "resumes")[1]["resumes"][0]["match"]
     t.check("the resume list shows the latest job match next to the ATS-friendly score", s == 200 and m and m["score"] == sc["report"]["score"] and m["company"] == "Zeta" and m["count"] == 1, (s, m))

@@ -10,7 +10,7 @@ use Illuminate\Validation\ValidationException;
 
 class Payments
 {
-    public static function start(User $u, string $plan, string $phone = '', string $coupon = ''): array
+    public static function start(User $u, string $plan, string $phone = '', string $coupon = '', bool $useWallet = true): array
     {
         $plans = Settings::plans();
         abort_unless(isset($plans[$plan]) && $plan !== 'free', 422);
@@ -19,22 +19,22 @@ class Payments
         $provider = $p['provider'] ?? 'cashfree';
         $keys = $provider === 'cashfree' ? (! empty($p['cashfreeClientId']) && ! empty($p['cashfreeClientSecret'])) : (! empty($p['razorpayKeyId']) && ! empty($p['razorpayKeySecret']));
         if (config('app.preview') && ! $keys) {
-            return self::demoStart($u, $plan, $coupon);
+            return self::demoStart($u, $plan, $coupon, $useWallet);
         }
         if (! ($i['payments'] ?? false) || ! in_array($provider, ['cashfree', 'razorpay'], true) || ! $keys) {
             throw ValidationException::withMessages(['payments' => 'Checkout is not configured. The owner must enable the payment gateway and save its keys.']);
         }
         if ($provider === 'cashfree') {
-            return CashfreeCheckout::start($u, $plan, $phone, $coupon);
+            return CashfreeCheckout::start($u, $plan, $phone, $coupon, $useWallet);
         }$id = (string) Str::uuid();
         $lock = $coupon !== '' ? \Illuminate\Support\Facades\Cache::lock('coupon:'.strtoupper(trim($coupon)), 25) : null;
         $lock?->block(15);
         try {
-        $quote = BusinessControls::quote($plan, $coupon, $u->id);
+        $quote = BusinessControls::quote($plan, $coupon, $u->id, $useWallet);
         $price = $quote['totalPaise'];
         abort_unless($price > 0 && $price < 100000000, 422);
         $result = Http::withBasicAuth($p['razorpayKeyId'], $p['razorpayKeySecret'])->timeout(20)->post('https://api.razorpay.com/v1/orders', ['amount' => $price, 'currency' => 'INR', 'receipt' => $id])->throw()->json();
-        DB::table('purchases')->insert(['id' => $id, 'owner_id' => $u->id, 'plan' => $plan, 'amount_paise' => $price, 'coupon_code' => $quote['code'] ?: null, 'discount_paise' => $quote['discountPaise'], 'provider_order_id' => $result['id'], 'is_live' => str_starts_with($p['razorpayKeyId'], 'rzp_live_'), 'limits_json' => json_encode($plans[$plan]), 'access_days' => $plans[$plan]['accessDays'], 'created_at' => now(), 'updated_at' => now()]);
+        DB::table('purchases')->insert(['id' => $id, 'owner_id' => $u->id, 'plan' => $plan, 'amount_paise' => $price, ...BusinessControls::quoteColumns($quote), 'provider_order_id' => $result['id'], 'is_live' => str_starts_with($p['razorpayKeyId'], 'rzp_live_'), 'limits_json' => json_encode($plans[$plan]), 'access_days' => $plans[$plan]['accessDays'], 'created_at' => now(), 'updated_at' => now()]);
         Settings::audit($u->id, 'checkout_started', $id);
         } finally {
             $lock?->release();
@@ -44,13 +44,13 @@ class Payments
     }
 
     // Preview environments only (CVTARA_PREVIEW=true, no Razorpay keys): a clearly-labelled demo payment, never live money.
-    private static function demoStart(User $u, string $plan, string $coupon): array
+    private static function demoStart(User $u, string $plan, string $coupon, bool $useWallet = true): array
     {
         $plans = Settings::plans();
-        $quote = BusinessControls::quote($plan, $coupon, $u->id);
+        $quote = BusinessControls::quote($plan, $coupon, $u->id, $useWallet);
         $id = (string) Str::uuid();
         $order = 'demo_'.str_replace('-', '', $id);
-        DB::table('purchases')->insert(['id' => $id, 'owner_id' => $u->id, 'plan' => $plan, 'amount_paise' => $quote['totalPaise'], 'coupon_code' => $quote['code'] ?: null, 'discount_paise' => $quote['discountPaise'], 'provider' => 'demo', 'provider_order_id' => $order, 'is_live' => false, 'limits_json' => json_encode($plans[$plan]), 'access_days' => $plans[$plan]['accessDays'], 'created_at' => now(), 'updated_at' => now()]);
+        DB::table('purchases')->insert(['id' => $id, 'owner_id' => $u->id, 'plan' => $plan, 'amount_paise' => $quote['totalPaise'], ...BusinessControls::quoteColumns($quote), 'provider' => 'demo', 'provider_order_id' => $order, 'is_live' => false, 'limits_json' => json_encode($plans[$plan]), 'access_days' => $plans[$plan]['accessDays'], 'created_at' => now(), 'updated_at' => now()]);
         Settings::audit($u->id, 'checkout_started', $id);
 
         return ['id' => $id, 'provider' => 'demo', 'orderId' => $order, 'amount' => $quote['totalPaise'], 'currency' => 'INR', 'test' => true];
@@ -69,7 +69,7 @@ class Payments
         if (str_starts_with($plan, 'addon-') && ! Settings::access($u->id)['paid']) {
             abort(422, 'Add-on packs need an active plan. Choose a plan first.');
         }
-        if (! str_starts_with($plan, 'addon-')) {
+        if (! str_starts_with($plan, 'addon-') && (Settings::plans()[$plan]['type'] ?? 'plan') === 'plan') {
             $now = Settings::access($u->id);
             $mine = (int) (Settings::plans()[$plan]['rank'] ?? 0);
             if (! empty($now['paid']) && $mine < (int) ($now['limits']['rank'] ?? 0)) {
@@ -115,6 +115,8 @@ class Payments
                 }
             }
             Referrals::credit($p);
+            Wallet::spend($p);
+            Services::open($p);
             Settings::audit($p->owner_id, 'purchase_verified', $p->id);
             $pl = json_decode((string) $p->limits_json, true) ?: [];
             MailAutomation::queue(User::findOrFail($p->owner_id), 'purchase_verified', $entity['id'], ['plan_name' => $pl['name'] ?? $p->plan, 'access_until' => $p->access_until ? \Illuminate\Support\Carbon::parse($p->access_until)->format('j F Y') : '', 'amount' => '₹'.number_format($p->amount_paise / 100, 2), 'resumes' => (string) ($pl['savedResumes'] ?? ''), 'letters' => (string) ($pl['savedLetters'] ?? '')]);
@@ -173,6 +175,7 @@ class Payments
                 }$total = min($p->amount_paise, $p->refunded_paise + (int) ($refund['amount'] ?? 0));
                 DB::table('purchases')->where('id', $p->id)->update(['refunded_paise' => $total, 'status' => $total === $p->amount_paise ? 'refunded' : 'partially_refunded', 'updated_at' => now()]);
                 Referrals::reverse($p, $total);
+                Refunds::settled($p->id);
                 Settings::audit($p->owner_id, 'payment_refunded', $p->id);
             }if (str_starts_with($type, 'payment.dispute.')) {
                 $dispute = $d['payload']['dispute']['entity'] ?? [];

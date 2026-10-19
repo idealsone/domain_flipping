@@ -274,7 +274,7 @@ class ApiController extends Controller
                 throw ValidationException::withMessages(['limit' => $access['paid'] ? 'Daily ATS check limit reached. Try again tomorrow.' : 'Your free ATS checks for today are used. Try again tomorrow or choose a plan for more scans.']);
             }
             if (! Credits::scanAvailable($id)) {
-                throw ValidationException::withMessages(['limit' => 'All your ATS scans are used. Buy an add-on pack for more scans (valid until your plan ends), or renew your plan.']);
+                throw ValidationException::withMessages(['limit' => Credits::outOf('ATS scans')]);
             }
             $title = trim((string) ($v['title'] ?? ''));
             $company = trim((string) ($v['company'] ?? ''));
@@ -362,11 +362,23 @@ class ApiController extends Controller
             return $ok();
         }
         if ($path === 'purchases') {
-            return $ok(['purchases' => DB::table('purchases')->where('owner_id', $id)->orderByDesc('created_at')->limit(200)->get()]);
+            return $ok(['purchases' => \App\Services\Refunds::forUser($id), 'services' => \App\Services\Services::forUser($id), 'refundDays' => \App\Services\Refunds::DAYS]);
+        }
+        if ($path === 'refunds') {
+            abort_unless($r->isMethod('POST'), 405);
+            $v = $r->validate(['purchaseId' => 'required|uuid', 'reason' => 'nullable|string|max:1000']);
+            $key = 'refund-try:'.$id;
+            abort_if(\Illuminate\Support\Facades\RateLimiter::tooManyAttempts($key, 5), 429, 'Too many attempts. Wait a few minutes.');
+            \Illuminate\Support\Facades\RateLimiter::hit($key, 600);
+
+            return $ok(['refund' => \App\Services\Refunds::request($u, $v['purchaseId'], (string) ($v['reason'] ?? ''))]);
+        }
+        if ($path === 'wallet' && $get) {
+            return $ok(\App\Services\Wallet::summary($id));
         }
         if ($path === 'checkout/quote') {
             abort_unless($r->isMethod('POST'), 405);
-            $v = $r->validate(['plan' => 'required|in:'.implode(',', Settings::paidPlanKeys()), 'coupon' => 'nullable|string|max:30']);
+            $v = $r->validate(['plan' => 'required|in:'.implode(',', Settings::paidPlanKeys()), 'coupon' => 'nullable|string|max:30', 'useWallet' => 'nullable|boolean']);
             Payments::guardAddon($u, $v['plan']);
             if (! empty($v['coupon'])) {
                 $rk = 'coupon-try:'.$u->id;
@@ -374,17 +386,17 @@ class ApiController extends Controller
                 \Illuminate\Support\Facades\RateLimiter::hit($rk, 60);
             }
 
-            return $ok(BusinessControls::quote($v['plan'], $v['coupon'] ?? '', $u->id));
+            return $ok(BusinessControls::quote($v['plan'], $v['coupon'] ?? '', $u->id, $r->boolean('useWallet', true)));
         }
         if ($path === 'checkout/start') {
             \App\Services\EmailVerification::guard($r->user());
-            $r->validate(['plan' => 'required|in:'.implode(',', Settings::paidPlanKeys()), 'showInActivity' => 'nullable|boolean']);
+            $r->validate(['plan' => 'required|in:'.implode(',', Settings::paidPlanKeys()), 'showInActivity' => 'nullable|boolean', 'useWallet' => 'nullable|boolean']);
             if ($r->has('showInActivity')) {
                 DB::table('profiles')->where('owner_id', $id)->update(['show_in_activity' => $r->boolean('showInActivity')]);
             }
             Payments::guardAddon($u, $r->plan);
 
-            return $ok(Payments::start($u, $r->plan, (string) $r->input('phone', ''), (string) $r->input('coupon', '')));
+            return $ok(Payments::start($u, $r->plan, (string) $r->input('phone', ''), (string) $r->input('coupon', ''), $r->boolean('useWallet', true)));
         }
         if ($path === 'checkout/verify' && config('app.preview') && $r->input('provider') === 'demo') {
             $r->validate(['orderId' => 'required|string|max:80']);
@@ -419,7 +431,7 @@ class ApiController extends Controller
                     'status' => $friend->blocked ? 'Under review' : (! $friend->email_verified_at || ! $friend->verified_phone ? 'Verification pending' : ($friend->qualifying_payments ? 'Qualifying paid referral' : 'Payment pending')),
                 ]);
 
-            return $ok(['connected' => true, 'commissionEligible' => ! Referrals::config()['proOnly'] || (bool) (Settings::access($id)['limits']['referral'] ?? false), 'referredUsers' => $referredUsers, 'rules' => Referrals::config(), 'effectiveRateBps' => Referrals::rate($id), 'successfulBuyers' => Referrals::successfulBuyers($id), 'creator' => DB::table('creator_applications')->where('owner_id', $id)->first(), 'payoutProfile' => AffiliateProfiles::publicProfile($id), 'emailVerified' => (bool) $u->email_verified_at, 'code' => $u->referral_code, 'url' => url('/r/'.$u->referral_code), 'balance' => Referrals::balance($id), 'clicks' => DB::table('referral_clicks')->where('referrer_id', $id)->count(), 'signups' => User::where('referred_by', $id)->count(), 'commissions' => DB::table('referral_commissions')->where('referrer_id', $id)->orderByDesc('created_at')->limit(200)->get(['id', 'purchase_id', 'amount_paise', 'reversed_paise', 'rate_bps', 'available_at', 'created_at']), 'withdrawals' => DB::table('withdrawals')->where('owner_id', $id)->orderByDesc('created_at')->limit(100)->get(['id', 'amount_paise', 'method', 'destination_masked', 'status', 'reference', 'note', 'due_at', 'paid_at', 'created_at'])]);
+            return $ok(['connected' => true, 'mode' => Referrals::config()['mode'], 'wallet' => \App\Services\Wallet::summary($id), 'commissionEligible' => ! Referrals::config()['proOnly'] || (bool) (Settings::access($id)['limits']['referral'] ?? false), 'referredUsers' => $referredUsers, 'rules' => Referrals::config(), 'effectiveRateBps' => Referrals::rate($id), 'successfulBuyers' => Referrals::successfulBuyers($id), 'creator' => DB::table('creator_applications')->where('owner_id', $id)->first(), 'payoutProfile' => AffiliateProfiles::publicProfile($id), 'emailVerified' => (bool) $u->email_verified_at, 'code' => $u->referral_code, 'url' => url('/r/'.$u->referral_code), 'balance' => Referrals::balance($id), 'clicks' => DB::table('referral_clicks')->where('referrer_id', $id)->count(), 'signups' => User::where('referred_by', $id)->count(), 'commissions' => DB::table('referral_commissions')->where('referrer_id', $id)->orderByDesc('created_at')->limit(200)->get(['id', 'purchase_id', 'amount_paise', 'reversed_paise', 'rate_bps', 'available_at', 'created_at']), 'withdrawals' => DB::table('withdrawals')->where('owner_id', $id)->orderByDesc('created_at')->limit(100)->get(['id', 'amount_paise', 'method', 'destination_masked', 'status', 'reference', 'note', 'due_at', 'paid_at', 'created_at'])]);
         }
         if ($path === 'referrals/withdraw' && $r->isMethod('POST')) {
             AccountSecurity::requireRecent($r);
@@ -472,8 +484,12 @@ class ApiController extends Controller
         $new = DB::transaction(function () use ($id, $row, $v) {
             User::whereKey($id)->lockForUpdate()->first();
             abort_unless(Settings::get('features')['builder']['enabled'], 403);
-            if (! Settings::access($id)['paid']) {
+            $acc = Settings::access($id);
+            if (! $acc['paid']) {
                 throw ValidationException::withMessages(['limit' => 'A free account keeps one resume. Choose a plan to create job-tailored versions and download.']);
+            }
+            if (! empty($acc['limits']['oneResume'])) {
+                throw ValidationException::withMessages(['limit' => 'Quick Download covers one resume. Job Hunt adds 5 tailored resumes and 5 cover letters, one for each job.']);
             }
             if (DB::table('resume_drafts')->where('owner_id', $id)->count() >= Settings::get('features')['builder']['limit']) {
                 throw ValidationException::withMessages(['limit' => 'You have reached the saved resume limit for your plan. Edit an existing resume, or choose a plan with more room.']);
@@ -530,7 +546,7 @@ class ApiController extends Controller
             return $x;
         }, $list);
 
-        return ['generatedAt' => now()->toIso8601String(), 'account' => ['name' => $u->name, 'email' => $u->email, 'createdAt' => $u->created_at, 'referralCode' => $u->referral_code], 'profile' => (array) DB::table('profiles')->where('owner_id', $id)->first(), 'resumes' => $decode($rows('resume_drafts')), 'coverLetters' => $decode($rows('cover_letter_drafts')), 'applications' => $rows('applications'), 'purchases' => $rows('purchases', ['id', 'plan', 'amount_paise', 'refunded_paise', 'currency', 'status', 'coupon_code', 'purchased_at', 'access_until']), 'reviews' => $rows('feedback', ['display_name', 'rating', 'content', 'status', 'created_at']), 'referralCommissions' => DB::table('referral_commissions')->where('referrer_id', $id)->get(['amount_paise', 'rate_bps', 'created_at'])->map(fn ($x) => (array) $x)->all(), 'withdrawals' => $rows('withdrawals', ['amount_paise', 'destination_masked', 'status', 'reference', 'created_at']), 'payoutProfile' => (array) DB::table('payout_profiles')->where('owner_id', $id)->first(['status', 'destination_masked']), 'creatorApplication' => (array) DB::table('creator_applications')->where('owner_id', $id)->first(['status', 'audience', 'rate_bps', 'created_at']), 'atsChecks' => $rows('ats_scans', ['id', 'source', 'job_url', 'job_title', 'company', 'score', 'result_json', 'status', 'created_at']), 'activity' => DB::table('activity_events')->where('owner_id', $id)->orderByDesc('created_at')->limit(500)->get(['event', 'reference', 'created_at'])->map(fn ($x) => (array) $x)->all()];
+        return ['generatedAt' => now()->toIso8601String(), 'account' => ['name' => $u->name, 'email' => $u->email, 'createdAt' => $u->created_at, 'referralCode' => $u->referral_code], 'profile' => (array) DB::table('profiles')->where('owner_id', $id)->first(), 'resumes' => $decode($rows('resume_drafts')), 'coverLetters' => $decode($rows('cover_letter_drafts')), 'applications' => $rows('applications'), 'purchases' => $rows('purchases', ['id', 'plan', 'amount_paise', 'refunded_paise', 'currency', 'status', 'coupon_code', 'purchased_at', 'access_until']), 'reviews' => $rows('feedback', ['display_name', 'rating', 'content', 'status', 'created_at']), 'referralCommissions' => DB::table('referral_commissions')->where('referrer_id', $id)->get(['amount_paise', 'rate_bps', 'created_at'])->map(fn ($x) => (array) $x)->all(), 'withdrawals' => $rows('withdrawals', ['amount_paise', 'destination_masked', 'status', 'reference', 'created_at']), 'payoutProfile' => (array) DB::table('payout_profiles')->where('owner_id', $id)->first(['status', 'destination_masked']), 'creatorApplication' => (array) DB::table('creator_applications')->where('owner_id', $id)->first(['status', 'audience', 'rate_bps', 'created_at']), 'refundRequests' => $rows('refund_requests', ['purchase_id', 'status', 'amount_paise', 'reason', 'note', 'created_at']), 'walletTransactions' => $rows('wallet_transactions', ['kind', 'amount_paise', 'note', 'earned_at', 'expires_at', 'created_at']), 'serviceOrders' => $rows('service_orders', ['service', 'status', 'note', 'created_at', 'delivered_at']), 'atsChecks' => $rows('ats_scans', ['id', 'source', 'job_url', 'job_title', 'company', 'score', 'result_json', 'status', 'created_at']), 'activity' => DB::table('activity_events')->where('owner_id', $id)->orderByDesc('created_at')->limit(500)->get(['event', 'reference', 'created_at'])->map(fn ($x) => (array) $x)->all()];
     }
 
     // Personal data is erased. Purchase and payout records stay (legal/financial) but are detached from the person.
@@ -550,7 +566,8 @@ class ApiController extends Controller
             DB::table('activity_events')->where('owner_id', $id)->delete();
             DB::table('sessions')->where('user_id', $id)->delete();
             DB::table('password_reset_tokens')->where('email', $u->email)->delete();
-            DB::table('users')->where('id', $id)->update(['name' => 'Deleted user', 'email' => 'deleted-'.$id.'@deleted.invalid', 'password' => \Illuminate\Support\Facades\Hash::make(Str::random(40)), 'remember_token' => null, 'referral_code' => null, 'blocked' => true, 'email_verified_at' => null, 'updated_at' => now()]);
+            DB::table('users')->where('id', $id)->update(['name' => 'Deleted user', 'email' => 'deleted-'.$id.'@deleted.invalid', 'password' => \Illuminate\Support\Facades\Hash::make(Str::random(40)), 'remember_token' => null, 'referral_code' => null, 'blocked' => true, 'email_verified_at' => null, 'device_hash' => null, 'last_device_hash' => null, 'updated_at' => now()]);
+            DB::table('refund_requests')->where('owner_id', $id)->update(['reason' => null, 'updated_at' => now()]);
             Settings::audit(null, 'account_deleted', (string) $id);
         });
     }

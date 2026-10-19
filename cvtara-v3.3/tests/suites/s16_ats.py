@@ -63,6 +63,7 @@ def run(ctx, t):
     threading.Thread(target=srv.serve_forever, daemon=True).start(); base = f"http://127.0.0.1:{port}"
     try:
         db = ctx.db(); c = ctx.client(); c.register("ats-a@test.local")
+        db.q("insert or replace into site_settings(key,value_json,revision,created_at,updated_at) values('plans',?,1,datetime('now'),datetime('now'))", __import__('json').dumps({"addon-10": {"sale": True}}))  # credit packs are off sale by default
         def buy(plan):
             s, j = c.api("POST", "checkout/start", {"plan": plan})
             return c.api("POST", "checkout/verify", {"provider": "demo", "orderId": j["orderId"]})[0] if s == 200 else s
@@ -81,8 +82,8 @@ def run(ctx, t):
 
         # free account: a few checks a day, no scan pool
         t.check("a free account can run a check from pasted text", scan(text=TEXT)[0] == 200)
-        t.check("buy Fresher Basic", buy("fresher-basic") == 200)
-        k = scans(); t.check("Fresher Basic includes 20 ATS scans", k["total"] == 20 and k["remaining"] == 20, k)
+        t.check("buy Job Hunt", buy("job-hunt") == 200)
+        k = scans(); t.check("Job Hunt includes 20 ATS scans", k["total"] == 20 and k["remaining"] == 20, k)
 
         s, j = scan(text=TEXT); sid = j.get("scanId"); rep = j.get("report", {})
         t.check("a scan reserves 1 scan and the server returns the full report", s == 200 and sid and scans()["used"] == 1 and {"score", "keywords", "gaps", "result"} <= set(rep), (s, str(j)[:200]))
@@ -140,7 +141,7 @@ def run(ctx, t):
         for _ in range(left):
             if scan(text=TEXT)[0] == 200: ok += 1
         t.check("the scans in the plan can all be used", ok == left and scans()["remaining"] == 0, (ok, left, scans()))
-        s, j = scan(text=TEXT); t.check("the next check is blocked with an add-on message", s == 422 and "ATS scans are used" in str(j), (s, str(j)[:160]))
+        s, j = scan(text=TEXT); t.check("the next check is blocked with an add-on message", s == 422 and "ATS scans on this plan are used" in str(j) and "add-on" in str(j), (s, str(j)[:160]))
         t.check("buy the +10 resumes & +10 cover letters add-on", buy("addon-10") == 200)
         k = scans(); t.check("the add-on adds 20 scans (2 per resume credit)", k["total"] == 40 and k["remaining"] == 20, k)
         t.check("scans work again after the add-on", scan(text=TEXT)[0] == 200 and scans()["remaining"] == 19)
@@ -186,3 +187,4 @@ def run(ctx, t):
         s, j = o.api("GET", "admin/report?dataset=scans&per=10&status=done"); t.check("the ATS report filters by status", s == 200 and all(r["status"] == "done" for r in j["rows"]))
     finally:
         srv.shutdown()
+        ctx.db().q("delete from site_settings where key='plans'")

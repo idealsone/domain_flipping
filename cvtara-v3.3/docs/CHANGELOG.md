@@ -1,4 +1,14 @@
-# CVTara v3.14.4 — Clear cache button, Dashboard after sign-up
+# CVTara v3.16.0 — New packages, 7-day refund, Give ₹50 get ₹50
+
+## 3.16.0
+- **New packages:** Free, Quick Download ₹99 for 7 days (one resume, edit and re-download it as often as you like), Job Hunt ₹299 for 30 days (5 resumes, 5 cover letters, 20 ATS scans) and Pro ₹599 for 90 days (20/20/60). Plan cards show the price per day, "Most popular" and "Best value". Old plans keep working for customers who bought them; old plan links and coupons map to the new plans.
+- **Upgrade credit:** a Quick Download bought in the last 7 days and not refunded counts toward Job Hunt or Pro.
+- **Services:** Tara Expert Review ₹499 (₹399 with Job Hunt or Pro), Profile Boost ₹699 (₹599 with a plan) and the Complete Job Kit ₹1,299 (worth ₹1,797). They are off sale until the owner switches them on in Pricing; orders show up in a new reviewer queue.
+- **7-day refund if unused**, once per customer: "Request refund" in Billing, an owner queue to approve or decline (with optional auto-approve), gateway refunds for Cashfree and Razorpay, and three new emails. Refund Policy, Terms and About text updated; saved copies that still said "non-refundable" are replaced automatically.
+- **Give ₹50, get ₹50:** the friend gets ₹50 off their first purchase; the referrer gets ₹50 wallet credit once the friend's purchase is 7 days old. Credit lasts 90 days, at most ₹1,000 a month, and can be used at checkout. 5 qualified friends unlock a free Job Hunt month. Same inbox, browser, phone or payment counts as self-referral. Earlier cash commission stays withdrawable.
+- **Paywall:** the download dialog offers two choices, Quick Download or Job Hunt.
+- Checkout shows each discount line and "You pay".
+- Add-on packs are off sale by default (switch on in Pricing).
 
 ## 3.14.4
 - **Owner console: "Clear cache" button** in the top bar of every owner page and in Speed & traffic ("Clear cache & refresh site"). One click removes the stored pages, clears compiled views and cached settings, rebuilds every public page and reloads the page fresh.

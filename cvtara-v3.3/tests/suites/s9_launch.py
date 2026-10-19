@@ -16,6 +16,7 @@ def run(ctx, t):
         inst.stop()
     if not ctx.preview: return
     db = ctx.db(); o = ctx.client(); o.raw("GET", "/preview/go/admin"); o.page("/admin.html")
+    db.q("insert or replace into site_settings(key,value_json,revision,created_at,updated_at) values('plans',?,1,datetime('now'),datetime('now'))", __import__('json').dumps({"addon-10": {"sale": True}}))  # credit packs are off sale by default
     uid = lambda e: db.q("select id from users where email=?", e)[0][0]
 
     # F-05: gateway events that match no order
@@ -31,9 +32,9 @@ def run(ctx, t):
     # F-04: a lower plan is refused while a higher one is active
     a = ctx.client(); a.register("launch-a@test.local")
     # demo checkout is disabled once payment keys are saved, so grant instead
-    o.api("POST", "admin/users/grant", {"userId": uid("launch-a@test.local"), "plan": "fresher-pro", "note": "launch test", "sendEmail": False})
-    s, j = a.api("POST", "checkout/quote", {"plan": "fresher-basic"}); t.check("lower plan is refused with a clear message", s == 422 and "higher plan" in str(j), f"{s} {j}")
-    s, j = a.api("POST", "checkout/quote", {"plan": "fresher-pro"}); t.check("renewing the same plan is allowed", s == 200, j)
+    o.api("POST", "admin/users/grant", {"userId": uid("launch-a@test.local"), "plan": "pro", "note": "launch test", "sendEmail": False})
+    s, j = a.api("POST", "checkout/quote", {"plan": "job-hunt"}); t.check("lower plan is refused with a clear message", s == 422 and "higher plan" in str(j), f"{s} {j}")
+    s, j = a.api("POST", "checkout/quote", {"plan": "pro"}); t.check("renewing the same plan is allowed", s == 200, j)
     s, j = a.api("POST", "checkout/quote", {"plan": "addon-10"}); t.check("add-ons are allowed", s == 200, j)
 
     # F-10: hiding a template must not break drafts already using it
@@ -49,6 +50,8 @@ def run(ctx, t):
     # F-16: withdrawal minimum comes from the setting
     s, j = a.api("POST", "referrals/withdraw", {"amountPaise": 100})
     t.check("withdrawal below the configured minimum is rejected without a stale amount", s == 422 and "1,000" not in str(j) or s == 422, f"{s} {j}")
+
+    db.q("delete from site_settings where key='plans'")
 
 
 def _post(ctx, raw, sig, eid):

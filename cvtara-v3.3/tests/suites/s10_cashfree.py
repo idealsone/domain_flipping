@@ -24,14 +24,14 @@ def run(ctx, t):
         s, j = o.api("POST", "admin/providers", {"service": "payments", "values": {"provider": "cashfree", "mode": "test", "cashfreeClientId": "TEST123", "cashfreeClientSecret": SECRET}}); t.check("save Cashfree keys", s == 200, f"{s} {j}")
 
         Client.verify_db = inst.db; u = Client(inst.base); u.register("cf-a@test.local"); uid = db.q("select id from users where email='cf-a@test.local'")[0][0]
-        s, j = u.api("POST", "checkout/start", {"plan": "fresher-basic"}); t.check("a mobile number is required", s == 422 and "mobile" in str(j).lower(), f"{s} {j}")
-        s, j = u.api("POST", "checkout/start", {"plan": "fresher-basic", "phone": "9876543210"})
+        s, j = u.api("POST", "checkout/start", {"plan": "job-hunt"}); t.check("a mobile number is required", s == 422 and "mobile" in str(j).lower(), f"{s} {j}")
+        s, j = u.api("POST", "checkout/start", {"plan": "job-hunt", "phone": "9876543210"})
         t.check("checkout opens through Cashfree", s == 200 and j.get("provider") == "cashfree" and j.get("paymentSessionId"), f"{s} {j}")
         oid = j["orderId"]
         t.check("the order amount sent to Cashfree is the plan price", cf.orders[oid]["order_amount"] == 299, cf.orders.get(oid))
         s, j2 = u.api("POST", "checkout/verify", {"provider": "cashfree", "orderId": oid}); t.check("verify before payment does not grant access", s == 422 and u.api("GET", "allowance")[1].get("plan") == "free", f"{s} {j2}")
         cf.pay(oid)
-        s, j2 = u.api("POST", "checkout/verify", {"provider": "cashfree", "orderId": oid}); t.check("verify after payment grants the plan", s == 200 and u.api("GET", "allowance")[1].get("plan") == "fresher-basic", f"{s} {j2}")
+        s, j2 = u.api("POST", "checkout/verify", {"provider": "cashfree", "orderId": oid}); t.check("verify after payment grants the plan", s == 200 and u.api("GET", "allowance")[1].get("plan") == "job-hunt", f"{s} {j2}")
         s, j2 = u.api("POST", "checkout/verify", {"provider": "cashfree", "orderId": oid}); t.check("verifying twice is harmless", s == 200 and db.q("select count(*) from purchases where owner_id=? and status='paid'", uid)[0][0] == 1)
 
         def hook(order_id, tsig=None):

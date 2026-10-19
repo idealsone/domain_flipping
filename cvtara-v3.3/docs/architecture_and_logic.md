@@ -184,15 +184,22 @@ Relationships are by `owner_id` / `*_id` columns; there are no Eloquent relation
 * `get($key)` reads `site_settings.value_json` or falls back to `resources/data/defaults.json`; every call is one DB query (no memoisation) and reads/decodes the defaults file when the row is missing (`:16-29`). For `blog` it additionally merges `resources/data/editorial-content.json` (314 KB, 68 posts): any post whose stored `body` is empty is replaced by the editorial one (`:20-26`).
 * `put($key,$data)` upserts JSON and sets `revision = previous + 1` (`:36-39`).
 * `providers()` decrypts the `providers` row with `Crypt` (`:41-46`).
-* **Plans**: defaults in code: `free` ("Normal user", price 0, 1 saved resume, 2 letters, 3 matches/day, 0 exports), six paid plans and three add-ons (`:48-68`). `plans()` deep-merges saved overrides over the defaults, restricted to known keys (`:75-88`).
+* **Plans**: defaults in code (`planDefaults()`): `free` ("Free", price 0, 1 saved resume, 2 letters, 3 matches/day, 0 exports), four packages, two services (`serviceDefaults()`) and three add-on packs (`addonDefaults()`). `plans()` deep-merges saved overrides over the defaults, restricted to known keys. Old keys (`fresher-*`, `pro-basic/standard/pro`) resolve through `planAlias()` so coupons and links keep working; old purchases keep their `limits_json` snapshot.
 
 | Key | Name | Price | MRP | Days | Resumes / letters | ATS scans | Rank | Flags |
 |---|---|---|---|---|---|---|---|---|
-| fresher-basic | Fresher Basic | 299 | 399 | 60 | 10 / 10 | 10 | 1 | |
-| fresher-standard | Fresher Standard | 399 | 549 | 60 | 20 / 20 | unlimited | 2 | popular |
-| fresher-pro | Fresher Pro | 499 | 699 | 90 | 30 / 30 | unlimited | 3 | referral |
-| pro-basic / pro-standard / pro-pro | Professional ... | 399 / 499 / 599 | 549 / 699 / 849 | 60 / 60 / 90 | 10 / 20 / 30 | 10 / unl. / unl. | 1 / 2 / 3 | popular on standard, referral on pro-pro |
-| addon-10 / 20 / 30 | Add-on packs | 149 / 249 / 399 | 0 | 0 | +10 / +20 / +30 each | n/a | 0 | type `addon` |
+| quick | Quick Download | 99 | | 7 | 1 resume (any revision), no letters | daily free checks | 1 | `oneResume`; price counts as upgrade credit within 7 days |
+| job-hunt | Job Hunt | 299 | | 30 | 5 / 5 | 20 | 2 | popular |
+| pro | Pro | 599 | | 90 | 20 / 20 | 60 | 3 | bestValue |
+| complete-kit | Complete Job Kit | 1,299 | 1,797 | 90 | 20 / 20 | 60 | 3 | includes expert-review + profile-boost; off sale by default |
+| expert-review / profile-boost | Services | 499 / 699 (399 / 599 with Job Hunt or Pro) | | | | | | type `service`, off sale by default, tracked in `service_orders` |
+| addon-10 / 20 / 30 | Add-on packs | 149 / 249 / 399 | 0 | 0 | +10 / +20 / +30 each | n/a | 0 | type `addon`, off sale by default |
+
+**Checkout order (`BusinessControls::quote`)**: list price, service discount with a plan, coupon, upgrade credit from an unused Quick Download, the friend's ₹50 first-purchase discount (never with the upgrade credit), then wallet credit; at least ₹1 is always paid.
+
+**Refunds (`Refunds.php`)**: one refund per customer, within 7 days, only while the purchase is unused (no clean download, ATS scan, tailored draft, started service or upgrade). Approve calls the gateway refund API (demo/manual are marked directly), then `settled()` returns spent wallet credit and cancels services not started.
+
+**Wallet referral (`Wallet.php`, mode `wallet`)**: friend gets ₹50 off the first purchase; the referrer gets ₹50 wallet credit once the friend's purchase is 7 days old and not refunded; credit expires after 90 days; ₹1,000 a month cap; 5 qualified friends unlock one free Job Hunt month. Same email inbox, browser, phone or payment reference counts as self-referral.
 
 `exports` = 4 x the resume count (add-ons: 4 x n). `dailyMatches` 100 for paid plans.
 

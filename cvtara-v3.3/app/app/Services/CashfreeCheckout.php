@@ -31,7 +31,7 @@ class CashfreeCheckout
 return Http::baseUrl(self::base($live))->withHeaders(['x-api-version' => $p['cashfreeApiVersion'] ?? '2025-01-01', 'x-client-id' => $p['cashfreeClientId'], 'x-client-secret' => $p['cashfreeClientSecret']])->acceptJson()->connectTimeout(5)->timeout(20);
     }
 
-    public static function start(User $u, string $plan, string $phone, string $coupon = ''): array
+    public static function start(User $u, string $plan, string $phone, string $coupon = '', bool $useWallet = true): array
     {
         $plans = Settings::plans();
         abort_unless(isset($plans[$plan]) && $plan !== 'free', 422);
@@ -46,10 +46,10 @@ return Http::baseUrl(self::base($live))->withHeaders(['x-api-version' => $p['cas
         $lock = $coupon !== '' ? \Illuminate\Support\Facades\Cache::lock('coupon:'.strtoupper(trim($coupon)), 25) : null;
         $lock?->block(15);
         try {
-        $quote = BusinessControls::quote($plan, $coupon, $u->id);
+        $quote = BusinessControls::quote($plan, $coupon, $u->id, $useWallet);
         $amount = $quote['totalPaise'];
         abort_unless($amount >= 100 && $amount < 100000000, 422);
-        DB::table('purchases')->insert(['id' => $id, 'owner_id' => $u->id, 'plan' => $plan, 'amount_paise' => $amount, 'coupon_code' => $quote['code'] ?: null, 'discount_paise' => $quote['discountPaise'], 'provider' => 'cashfree', 'provider_order_id' => $orderId, 'is_live' => $live, 'limits_json' => json_encode($plans[$plan]), 'access_days' => $plans[$plan]['accessDays'], 'created_at' => now(), 'updated_at' => now()]);
+        DB::table('purchases')->insert(['id' => $id, 'owner_id' => $u->id, 'plan' => $plan, 'amount_paise' => $amount, ...BusinessControls::quoteColumns($quote), 'provider' => 'cashfree', 'provider_order_id' => $orderId, 'is_live' => $live, 'limits_json' => json_encode($plans[$plan]), 'access_days' => $plans[$plan]['accessDays'], 'created_at' => now(), 'updated_at' => now()]);
         try {
             $res = self::client($live)->withHeaders(['x-idempotency-key' => $id])->post('/orders', ['order_id' => $orderId, 'order_amount' => $amount / 100, 'order_currency' => 'INR', 'customer_details' => ['customer_id' => 'cvtara_'.$u->id, 'customer_name' => $u->name, 'customer_email' => $u->email, 'customer_phone' => $phone], 'order_meta' => ['return_url' => url('/checkout.html').'?cashfree_order='.$orderId, 'notify_url' => url('/webhooks/cashfree')]])->throw()->json();
             if (($res['order_id'] ?? '') !== $orderId || empty($res['payment_session_id'])) {
@@ -109,7 +109,14 @@ return Http::baseUrl(self::base($live))->withHeaders(['x-api-version' => $p['cas
                 DB::table('purchases')->where('id', $p->id)->update(['refunded_paise' => $sum, 'status' => $sum === $fresh->amount_paise ? 'refunded' : 'partially_refunded', 'updated_at' => now()]);
                 Referrals::reverse($fresh, $sum);
             });
+            Refunds::settled($p->id);
         }
+    }
+
+    /** Asks Cashfree to return the full amount to the original payment method. The refund webhook then ends access. */
+    public static function refund(object $p, string $refundId): void
+    {
+        self::client((bool) $p->is_live)->withHeaders(['x-idempotency-key' => $refundId])->post('/orders/'.rawurlencode($p->provider_order_id).'/refunds', ['refund_amount' => $p->amount_paise / 100, 'refund_id' => $refundId, 'refund_note' => 'CVTara 7-day refund'])->throw();
     }
 
     public static function webhook(string $raw, string $timestamp, string $signature): void

@@ -44,9 +44,9 @@ class MailAutomation
 
     private static function fromPrice(): string
     {
-        $min = collect(Settings::plans())->filter(fn ($p, $k) => ! str_starts_with((string) $k, 'addon') && ($p['price'] ?? 0) > 0 && ($p['enabled'] ?? true))->min('price');
+        $min = collect(Settings::plans())->filter(fn ($p) => ($p['type'] ?? '') === 'plan' && ($p['price'] ?? 0) > 0 && ! empty($p['sale']))->min('price');
 
-        return '₹'.number_format((float) ($min ?: 299));
+        return '₹'.number_format((float) ($min ?: 99));
     }
 
     private static function configureTransport(array $p): void

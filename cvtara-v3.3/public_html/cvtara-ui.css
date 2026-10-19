@@ -303,3 +303,14 @@ body.dark .ws-notice{background:#3a2412;border-color:#7a4a1c;color:#fdba74}
 .ad-dialog::backdrop{background:rgba(15,23,42,.5)}
 .lp h1,.lp h2,.lp h3,.co h1,.co-box h2,.pl-card h3{line-height:1.15}
 .lp-head h2,.lp-primary h2,.lp-final h2{line-height:1.12}
+/* 3.16 checkout price breakdown and wallet toggle */
+.co-breakdown:empty{display:none}.co-breakdown{margin:6px 0 0;padding:10px 0 0;border-top:1px dashed var(--line,#e2e8f0);display:grid;gap:6px;font-size:14px}
+.co-breakdown div{display:flex;justify-content:space-between;gap:12px}.co-breakdown dt{color:var(--muted,#475569)}.co-breakdown dd{margin:0;font-weight:600}
+.co-wallet{display:flex;gap:8px;align-items:center;margin-top:4px;font-size:14px;font-weight:600}
+.cv-refund-btn{margin-top:6px}.cv-refund-note{font-size:13px;color:var(--muted,#475569)}
+.cv-wallet-hero{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px;margin:12px 0}
+.cv-wallet-hero article{padding:14px 16px;border:1px solid var(--line,#e2e8f0);border-radius:12px;background:var(--surface,#fff)}
+.cv-wallet-hero b{display:block;font-size:22px;color:#2B3A8C}html.dark .cv-wallet-hero b{color:#8EA0F2}
+.cv-up-choices{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:0 0 14px}.cv-up-choices a{display:grid;gap:4px;padding:14px;border:1.5px solid var(--line,#e2e8f0);border-radius:14px;text-decoration:none;color:inherit}
+.cv-up-choices a.pop{border-color:#F59E0B;background:rgba(245,158,11,.08)}.cv-up-choices b{font-size:20px}.cv-up-choices em{font-style:normal;font-size:12px;font-weight:800;color:#B45309;letter-spacing:.06em;text-transform:uppercase}
+.cv-up-choices span{font-size:13px;color:var(--muted,#475569)}@media(max-width:520px){.cv-up-choices{grid-template-columns:1fr}}

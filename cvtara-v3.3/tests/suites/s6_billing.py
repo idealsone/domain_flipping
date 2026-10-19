@@ -13,31 +13,32 @@ def buy(c, plan, coupon=""):
 def run(ctx, t):
     if not ctx.preview: return
     db = ctx.db(); o = ctx.client(); o.raw("GET", "/preview/go/admin"); o.page("/admin.html")
+    db.q("insert or replace into site_settings(key,value_json,revision,created_at,updated_at) values('plans',?,1,datetime('now'),datetime('now'))", __import__('json').dumps({"addon-10": {"sale": True}}))  # credit packs are off sale by default
     uid = lambda e: db.q("select id from users where email=?", e)[0][0]
 
     # add-on credits last as long as the subscription and follow it into a renewal
     a = ctx.client(); a.register("bill-a@test.local")
-    t.check("buy plan", buy(a, "fresher-basic")[0] == 200)
+    t.check("buy plan", buy(a, "job-hunt")[0] == 200)
     t.check("buy add-on", buy(a, "addon-10")[0] == 200)
     q1 = "select access_until from purchases where owner_id=? and status='paid' and plan=? order by access_until desc"
-    plan_end = db.q(q1, uid("bill-a@test.local"), "fresher-basic")[0][0]; add_end = db.q(q1, uid("bill-a@test.local"), "addon-10")[0][0]
+    plan_end = db.q(q1, uid("bill-a@test.local"), "job-hunt")[0][0]; add_end = db.q(q1, uid("bill-a@test.local"), "addon-10")[0][0]
     t.check("an add-on ends exactly when the subscription ends", plan_end == add_end, (plan_end, add_end))
-    t.check("renew plan", buy(a, "fresher-basic")[0] == 200)
-    plan_end2 = db.q(q1, uid("bill-a@test.local"), "fresher-basic")[0][0]; add_end2 = db.q(q1, uid("bill-a@test.local"), "addon-10")[0][0]
+    t.check("renew plan", buy(a, "job-hunt")[0] == 200)
+    plan_end2 = db.q(q1, uid("bill-a@test.local"), "job-hunt")[0][0]; add_end2 = db.q(q1, uid("bill-a@test.local"), "addon-10")[0][0]
     t.check("after an early renewal the add-on moves to the end of the renewed plan", plan_end2 > plan_end and add_end2 == plan_end2, (plan_end2, add_end2))
     k = a.api("GET", "allowance")[1]["credits"]
-    t.check("after plan + add-on + renewal the add-on credits are still there", k["resumes"]["total"] == 20 and k["letters"]["total"] == 20 and k["addOns"]["resumes"] == 10, k)
+    t.check("after plan + add-on + renewal the add-on credits are still there", k["resumes"]["total"] == 15 and k["letters"]["total"] == 15 and k["addOns"]["resumes"] == 10, k)
 
     # F-03: coupon limits
     s, j = o.api("GET", "admin/business-controls"); bc = j["data"]
-    bc["coupons"] = [{"code": "ONE", "type": "percent", "value": 10, "enabled": True, "plans": ["fresher-basic", "fresher-standard"], "expiresAt": "", "maxUses": 1, "perUser": 1}]
+    bc["coupons"] = [{"code": "ONE", "type": "percent", "value": 10, "enabled": True, "plans": ["job-hunt", "pro"], "expiresAt": "", "maxUses": 1, "perUser": 1}]
     t.check("save coupon", o.api("POST", "admin/business-controls", bc)[0] == 200)
     b = ctx.client(); b.register("bill-b@test.local"); c2 = ctx.client(); c2.register("bill-c@test.local")
-    s, j1 = b.api("POST", "checkout/start", {"plan": "fresher-basic", "coupon": "ONE"}); t.check("first order with coupon starts", s == 200, j1)
-    s, j = c2.api("POST", "checkout/quote", {"plan": "fresher-basic", "coupon": "ONE"})
+    s, j1 = b.api("POST", "checkout/start", {"plan": "job-hunt", "coupon": "ONE"}); t.check("first order with coupon starts", s == 200, j1)
+    s, j = c2.api("POST", "checkout/quote", {"plan": "job-hunt", "coupon": "ONE"})
     t.check("an open order of someone else reserves a single-use coupon", s == 422 and "limit" in str(j), f"{s} {j}")
-    s, j = b.api("POST", "checkout/quote", {"plan": "fresher-basic", "coupon": "ONE"}); t.check("the same customer can retry their own order", s == 200, j)
-    s, j2 = b.api("POST", "checkout/start", {"plan": "fresher-basic", "coupon": "ONE"})
+    s, j = b.api("POST", "checkout/quote", {"plan": "job-hunt", "coupon": "ONE"}); t.check("the same customer can retry their own order", s == 200, j)
+    s, j2 = b.api("POST", "checkout/start", {"plan": "job-hunt", "coupon": "ONE"})
     ok1 = b.api("POST", "checkout/verify", {"provider": "demo", "orderId": j1["orderId"]})[0]; ok2 = b.api("POST", "checkout/verify", {"provider": "demo", "orderId": j2["orderId"]})[0]
     t.check("both paid tabs are granted (money was received)", ok1 == 200 and ok2 == 200, (ok1, ok2))
     n = db.q("select count(*) from error_logs where message like '%beyond its limit%'")[0][0]
@@ -45,11 +46,11 @@ def run(ctx, t):
 
     # F-06 / F-07: manual grant and revoke
     d = ctx.client(); d.register("bill-d@test.local"); did = uid("bill-d@test.local")
-    s, j = o.api("POST", "admin/users/grant", {"userId": did, "plan": "fresher-pro", "note": "complimentary", "sendEmail": False})
+    s, j = o.api("POST", "admin/users/grant", {"userId": did, "plan": "pro", "note": "complimentary", "sendEmail": False})
     t.check("grant without an amount succeeds", s == 200, j)
     r = db.q("select amount_paise, is_live from purchases where owner_id=? and provider='manual'", did)[0]
     t.check("a grant without an amount records zero revenue", r[0] == 0 and not r[1], r)
-    t.check("user has access after grant", d.api("GET", "allowance")[1].get("plan") == "fresher-pro")
+    t.check("user has access after grant", d.api("GET", "allowance")[1].get("plan") == "pro")
     s, j = o.api("POST", "admin/users/revoke", {"userId": did, "note": "test revoke"}); t.check("revoke works", s == 200, j)
     r = db.q("select status, refunded_paise from purchases where owner_id=? and provider='manual'", did)[0]
     t.check("revoke does not invent a refund", r[1] == 0 and r[0] == "paid", r)
@@ -63,3 +64,4 @@ def run(ctx, t):
     t.check("delete account", e.api("POST", "account/delete", {"password": "TestPassw0rd!!x", "confirm": "DELETE"})[0] == 200)
     enc = db.q("select destination_encrypted, destination_masked from withdrawals where owner_id=?", eid)[0]
     t.check("payout details are erased, masked destination kept", "SECRET" not in enc[0] and enc[1] == "xxx@upi", enc)
+    db.q("delete from site_settings where key='plans'")

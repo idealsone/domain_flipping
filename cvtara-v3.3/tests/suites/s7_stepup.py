@@ -15,7 +15,7 @@ def run(ctx, t):
         t.check("owner can read plans", o.api("GET", "admin/plans")[0] == 200)
         plans = o.api("GET", "admin/plans")[1].get("plans", {})
         bc = o.api("GET", "admin/business-controls")[1].get("data", {})
-        writes = {"plans": ("admin/plans", {"plans": {"fresher-basic": plans.get("fresher-basic", {})}}),
+        writes = {"plans": ("admin/plans", {"plans": {"job-hunt": plans.get("job-hunt", {})}}),
                   "business controls/coupons": ("admin/business-controls", bc),
                   "payment provider keys": ("admin/providers", {"service": "payments", "values": {"provider": "razorpay", "razorpayKeyId": "rzp_live_x"}}),
                   "email provider": ("admin/providers", {"service": "email", "values": {"provider": "resend", "resendApiKey": "re_x"}}),

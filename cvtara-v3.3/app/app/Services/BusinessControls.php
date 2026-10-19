@@ -11,6 +11,10 @@ class BusinessControls
     {
         $value = array_replace_recursive(['maintenance' => ['enabled' => false, 'title' => 'We’re making CVTara better.', 'message' => 'Scheduled maintenance is in progress. Your saved work is safe. Please check back soon.'], 'brand' => ['about' => 'Built by an HR professional working in the edtech industry, helping job seekers prepare clear resumes and more focused applications.'], 'growth' => Referrals::config(), 'coupons' => []], Settings::get('business_controls', []));
         $value['growth'] = Referrals::config();
+        foreach ($value['coupons'] as &$c) {
+            $c['plans'] = array_values(array_unique(array_map([Settings::class, 'planAlias'], (array) ($c['plans'] ?? []))));
+        }
+        unset($c);
 
         return $value;
     }
@@ -34,11 +38,29 @@ class BusinessControls
         return $v;
     }
 
-    public static function quote(string $plan, string $code = '', ?int $userId = null): array
+    /** The active Quick Download that can still be credited towards Job Hunt or Pro (within 7 days, used once). */
+    public static function upgradeSource(int $userId): ?object
+    {
+        return DB::table('purchases')->where('owner_id', $userId)->where('plan', 'quick')->where('status', 'paid')->where('refunded_paise', 0)
+            ->where('purchased_at', '>=', now()->subDays(7))
+            ->whereNotIn('id', DB::table('purchases')->whereNotNull('upgrade_from')->whereIn('status', ['paid', 'partially_refunded'])->select('upgrade_from'))
+            ->orderByDesc('purchased_at')->first();
+    }
+
+    /**
+     * The price the server will charge, step by step: list price (lower for an add-on while Job Hunt or Pro is active), coupon,
+     * Quick Download upgrade credit or the referred-friend discount (never both), then wallet credit. At least ₹1 is always paid.
+     */
+    public static function quote(string $plan, string $code = '', ?int $userId = null, bool $useWallet = true): array
     {
         $p = Settings::plans()[$plan] ?? null;
         abort_unless($p && $plan !== 'free', 422, 'Choose a paid plan.');
-        $subtotal = (int) round($p['price'] * 100);
+        $list = (int) round($p['price'] * 100);
+        $addon = 0;
+        if (($p['type'] ?? '') === 'service' && $userId && ! empty($p['planPrice']) && (int) (Settings::access($userId)['limits']['rank'] ?? 0) >= 2) {
+            $addon = max(0, $list - (int) round($p['planPrice'] * 100));
+        }
+        $subtotal = $list - $addon;
         $discount = 0;
         $code = strtoupper(trim($code));
         if ($code) {
@@ -56,7 +78,25 @@ class BusinessControls
             $discount = min($subtotal - 100, $c['type'] === 'percent' ? intdiv($subtotal * $c['value'], 100) : $c['value'] * 100);
             abort_if($discount < 0, 422);
         }
+        $left = $subtotal - $discount;
+        $upgrade = 0;
+        $from = null;
+        if ($userId && ($p['type'] ?? '') === 'plan' && (int) ($p['rank'] ?? 0) >= 2 && ($src = self::upgradeSource($userId))) {
+            $upgrade = max(0, min($left - 100, (int) $src->amount_paise + (int) $src->wallet_paise));
+            $from = $upgrade ? $src->id : null;
+        }
+        $left -= $upgrade;
+        $friend = $userId && ! $upgrade ? max(0, min($left - 100, Wallet::friendDiscount($userId))) : 0;
+        $left -= $friend;
+        $wallet = $userId && $useWallet && Wallet::enabled() ? max(0, min($left - 100, Wallet::balance($userId))) : 0;
+        $left -= $wallet;
 
-        return ['plan' => $plan, 'code' => $code, 'subtotalPaise' => $subtotal, 'discountPaise' => $discount, 'totalPaise' => $subtotal - $discount, 'accessDays' => $p['accessDays'], 'bonusDays' => $p['bonusDays'] ?? 0];
+        return ['plan' => $plan, 'code' => $code, 'listPaise' => $list, 'addonDiscountPaise' => $addon, 'subtotalPaise' => $subtotal, 'discountPaise' => $discount, 'upgradeCreditPaise' => $upgrade, 'upgradeFrom' => $from, 'referralDiscountPaise' => $friend, 'walletPaise' => $wallet, 'walletBalancePaise' => $userId && Wallet::enabled() ? Wallet::balance($userId) : 0, 'totalPaise' => $left, 'accessDays' => $p['accessDays'], 'bonusDays' => $p['bonusDays'] ?? 0];
+    }
+
+    /** The purchase-row columns that record how the price was reached. */
+    public static function quoteColumns(array $q): array
+    {
+        return ['coupon_code' => $q['code'] ?: null, 'discount_paise' => $q['discountPaise'], 'wallet_paise' => $q['walletPaise'], 'referral_discount_paise' => $q['referralDiscountPaise'], 'upgrade_credit_paise' => $q['upgradeCreditPaise'], 'addon_discount_paise' => $q['addonDiscountPaise'], 'upgrade_from' => $q['upgradeFrom']];
     }
 }

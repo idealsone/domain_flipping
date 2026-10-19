@@ -76,7 +76,7 @@ def run(ctx, t):
     t.check("a calculator page is built the same way", s == 200 and "article-meta" in calc and "Calculator" in calc)
     # about, contact, hours
     s, _, about = c.page("/about.html")
-    t.check("About says who is behind CVTara, what it does and how it works", s == 200 and all(k in about for k in ("Who is behind it", "What you can do here", "How we work", "non-refundable", "support@cvtara.com")))
+    t.check("About says who is behind CVTara, what it does and how it works", s == 200 and all(k in about for k in ("Who is behind it", "What you can do here", "How we work", "within 7 days", "support@cvtara.com")))
     s, _, cont = c.page("/contact.html")
     t.check("Contact shows email, hours and address with a working form", s == 200 and "c2-card" in cont and "Monday–Saturday" in cont and 'id="contactForm"' in cont and 'name="attachment"' in cont)
     t.check("support hours read the same on every page", "Monday–Friday" not in cont + about + home)

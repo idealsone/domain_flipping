@@ -74,31 +74,52 @@ return $value;
         return $p ? json_decode(Crypt::decryptString($p), true) : [];
     }
 
+    /**
+     * Packages are paid once, with no auto-renewal. Quick Download covers one resume for 7 days; Job Hunt and Pro add tailored
+     * resumes, cover letters and ATS Match scans. Services are done by a person and stay off until the owner switches them on.
+     */
     public static function planDefaults(): array
     {
-        $mk = fn ($name, $aud, $tag, $price, $mrp, $days, $docs, $ats, $rank, $perks, $extra = []) => array_merge(['type' => 'plan', 'name' => $name, 'audience' => $aud, 'tagline' => $tag, 'price' => $price, 'mrp' => $mrp, 'accessDays' => $days, 'savedResumes' => $docs, 'savedLetters' => $docs, 'atsScans' => $ats, 'dailyMatches' => 100, 'exports' => 0, 'rank' => $rank, 'perks' => $perks, 'popular' => false, 'referral' => false], $extra);
+        $mk = fn ($name, $tag, $price, $days, $resumes, $letters, $ats, $rank, $perks, $extra = []) => array_merge(['type' => 'plan', 'name' => $name, 'audience' => 'all', 'tagline' => $tag, 'price' => $price, 'mrp' => 0, 'accessDays' => $days, 'savedResumes' => $resumes, 'savedLetters' => $letters, 'atsScans' => $ats, 'dailyMatches' => 100, 'exports' => 0, 'rank' => $rank, 'perks' => $perks, 'popular' => false, 'bestValue' => false, 'referral' => false, 'sale' => true], $extra);
 
         return [
-            'free' => ['type' => 'plan', 'name' => 'Normal user', 'audience' => 'all', 'tagline' => 'Create an account, build 1 resume and 1 cover letter, preview with a watermark — subscribe to download', 'price' => 0, 'mrp' => 0, 'accessDays' => 0, 'savedResumes' => 1, 'savedLetters' => 1, 'atsScans' => null, 'dailyMatches' => 3, 'exports' => 0, 'rank' => 0, 'perks' => [], 'popular' => false, 'referral' => false],
-            'fresher-basic' => $mk('Fresher Basic', 'fresher', 'Perfect for your first job application', 299, 399, 30, 10, 20, 1, ['PDF & Word downloads', '20 ATS scans', 'Email support']),
-            'fresher-standard' => $mk('Fresher Standard', 'fresher', 'Apply to more jobs with more variations', 399, 549, 60, 20, 40, 2, ['40 ATS scans', 'Priority support'], ['popular' => true]),
-            'fresher-pro' => $mk('Fresher Pro', 'fresher', 'Maximum applications, maximum chances', 499, 699, 90, 30, 60, 3, ['60 ATS scans', 'Priority support', 'Referral Programme Access'], ['referral' => true]),
-            'pro-basic' => $mk('Professional Basic', 'experienced', 'For professionals targeting new opportunities', 399, 549, 30, 10, 20, 1, ['PDF & Word downloads', '20 ATS scans', 'Email support']),
-            'pro-standard' => $mk('Professional Standard', 'experienced', 'Most chosen by mid-level professionals', 499, 699, 60, 20, 40, 2, ['40 ATS scans', 'Priority support'], ['popular' => true]),
-            'pro-pro' => $mk('Professional Pro', 'experienced', 'For senior professionals & career changers', 599, 849, 90, 30, 60, 3, ['60 ATS scans', '1-on-1 Resume Review Call', 'Referral Programme Access'], ['referral' => true]),
-        ] + self::addonDefaults();
+            'free' => ['type' => 'plan', 'name' => 'Free', 'audience' => 'all', 'tagline' => 'Build, edit and preview with a light watermark. Pay only when you download.', 'price' => 0, 'mrp' => 0, 'accessDays' => 0, 'savedResumes' => 1, 'savedLetters' => 1, 'atsScans' => null, 'dailyMatches' => 3, 'exports' => 0, 'rank' => 0, 'perks' => [], 'popular' => false, 'bestValue' => false, 'referral' => false, 'sale' => false],
+            'quick' => $mk('Quick Download', 'Download one finished resume without the watermark', 99, 7, 1, 0, 0, 1, ['1 resume as clean PDF and Word', 'Edit and re-download that resume as often as you like for 7 days', '3 free ATS checks a day'], ['oneResume' => true, 'dailyMatches' => 3]),
+            'job-hunt' => $mk('Job Hunt', 'Tailor your resume and a cover letter for each job you apply to', 299, 30, 5, 5, 20, 2, ['5 tailored resumes and 5 cover letters', '20 ATS Match scans with a gap report', 'Application tracker with reminders'], ['popular' => true]),
+            'pro' => $mk('Pro', 'For a longer search across many jobs', 599, 90, 20, 20, 60, 3, ['20 tailored resumes and 20 cover letters', '60 ATS Match scans with a gap report', 'Application tracker with reminders'], ['bestValue' => true]),
+            'complete-kit' => $mk('Complete Job Kit', 'Pro, plus a recruiter review and a LinkedIn and Naukri profile rewrite', 1299, 90, 20, 20, 60, 3, ['Everything in Pro', 'Tara Expert Review by a working recruiter', 'Profile Boost for LinkedIn and Naukri'], ['mrp' => 1797, 'includes' => ['expert-review', 'profile-boost'], 'sale' => false]),
+        ] + self::serviceDefaults() + self::addonDefaults();
     }
 
+    /** Done by a person, not by software. Cheaper while Job Hunt or Pro is active (planPrice). */
+    public static function serviceDefaults(): array
+    {
+        $s = fn ($name, $tag, $price, $planPrice, $perks) => ['type' => 'service', 'name' => $name, 'audience' => 'all', 'tagline' => $tag, 'price' => $price, 'planPrice' => $planPrice, 'mrp' => 0, 'accessDays' => 0, 'savedResumes' => 0, 'savedLetters' => 0, 'atsScans' => 0, 'dailyMatches' => 0, 'exports' => 0, 'rank' => 0, 'perks' => $perks, 'popular' => false, 'bestValue' => false, 'referral' => false, 'sale' => false];
+
+        return [
+            'expert-review' => $s('Tara Expert Review', 'A working recruiter reviews your resume within 48 working hours', 499, 399, ['Comments on every section', 'A short summary and your top fixes', 'One follow-up question']),
+            'profile-boost' => $s('Profile Boost', 'Your LinkedIn and Naukri headline, summary, skills and experience rewritten', 699, 599, ['Headline and About or profile summary', 'Key skills in the right order for your target job', 'One free revision within 7 days']),
+        ];
+    }
+
+    /** Extra credit packs for an active plan. Off by default; the owner can put them on sale in Pricing. */
     public static function addonDefaults(): array
     {
-        $a = fn ($n, $price) => ['type' => 'addon', 'name' => "Add-on · $n resumes + $n cover letters", 'audience' => 'all', 'tagline' => "Extra $n resume downloads, $n cover-letter downloads and ".($n * 2)." ATS scans", 'price' => $price, 'mrp' => 0, 'accessDays' => 0, 'savedResumes' => $n, 'savedLetters' => $n, 'atsScans' => $n * 2, 'dailyMatches' => 0, 'exports' => 0, 'rank' => 0, 'perks' => [], 'popular' => false, 'referral' => false];
+        $a = fn ($n, $price) => ['type' => 'addon', 'name' => "Add-on · $n resumes + $n cover letters", 'audience' => 'all', 'tagline' => "Extra $n resume downloads, $n cover-letter downloads and ".($n * 2)." ATS scans", 'price' => $price, 'mrp' => 0, 'accessDays' => 0, 'savedResumes' => $n, 'savedLetters' => $n, 'atsScans' => $n * 2, 'dailyMatches' => 0, 'exports' => 0, 'rank' => 0, 'perks' => [], 'popular' => false, 'bestValue' => false, 'referral' => false, 'sale' => false];
 
         return ['addon-10' => $a(10, 149), 'addon-20' => $a(20, 249), 'addon-30' => $a(30, 399)];
     }
 
+    /** Plan keys sold before the 3.16 packages, mapped to the package that replaced them (old links, coupons and offers). */
+    public static function planAlias(string $key): string
+    {
+        return ['fresher-basic' => 'job-hunt', 'fresher-standard' => 'job-hunt', 'pro-basic' => 'job-hunt', 'pro-standard' => 'job-hunt', 'fresher-pro' => 'pro', 'pro-pro' => 'pro'][$key] ?? $key;
+    }
+
+    /** Everything a customer can buy right now. */
     public static function paidPlanKeys(): array
     {
-        return array_values(array_diff(array_keys(self::planDefaults()), ['free']));
+        return array_keys(array_filter(self::plans(), fn ($p, $k) => $k !== 'free' && ! empty($p['sale']), ARRAY_FILTER_USE_BOTH));
     }
 
     public static function plans(): array
@@ -120,10 +141,10 @@ return $value;
     {
         $best = null;
         foreach ($rows as $r) {
-            if (str_starts_with($r->plan, 'addon-')) {
+            $l = json_decode($r->limits_json, true) ?: [];
+            if (str_starts_with($r->plan, 'addon-') || ($l['type'] ?? 'plan') === 'service') {
                 continue;
             }
-            $l = json_decode($r->limits_json, true) ?: [];
             $key = [(int) ($l['rank'] ?? 0), strtotime($r->access_until)];
             if (! $best || $key > $best[0]) {
                 $best = [$key, $r, $l];

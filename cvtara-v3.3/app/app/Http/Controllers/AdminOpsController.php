@@ -8,6 +8,8 @@ use App\Services\Health;
 use App\Services\MailAutomation;
 use App\Services\Payments;
 use App\Services\Referrals;
+use App\Services\Refunds;
+use App\Services\Services;
 use App\Services\Settings;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -16,7 +18,7 @@ use Illuminate\Support\Str;
 /** Owner-only operations: user management, order detail, error log, site URLs and daily health. */
 class AdminOpsController extends Controller
 {
-    public const ROUTES = '#^(users/(grant|update|revoke|delete)|orders/[0-9a-f-]{36}|errors(/clear|/download)?|site-urls|legal/generate|health/(history|run))$#';
+    public const ROUTES = '#^(refunds(/settings|/[0-9a-f-]{36}/(approve|reject))?|services(/[0-9a-f-]{36})?|users/(grant|update|revoke|delete)|orders/[0-9a-f-]{36}|errors(/clear|/download)?|site-urls|legal/generate|health/(history|run))$#';
 
     public function run(Request $r, string $path)
     {
@@ -24,6 +26,39 @@ class AdminOpsController extends Controller
         $admin = $r->user()->id;
         $get = $r->isMethod('GET');
 
+        if ($path === 'refunds' && $get) {
+            return $ok(['requests' => Refunds::queue(), 'settings' => Refunds::settings(), 'days' => Refunds::DAYS]);
+        }
+        if ($path === 'refunds/settings') {
+            abort_unless($r->isMethod('POST'), 405);
+            AccountSecurity::requireRecent($r);
+            $v = $r->validate(['autoApprove' => 'required|boolean']);
+            Settings::put('refunds', ['autoApprove' => (bool) $v['autoApprove']]);
+            Settings::audit($admin, 'refund_settings_saved');
+
+            return $ok(['settings' => Refunds::settings()]);
+        }
+        if (preg_match('#^refunds/([0-9a-f-]{36})/(approve|reject)$#', $path, $m)) {
+            abort_unless($r->isMethod('POST'), 405);
+            AccountSecurity::requireRecent($r);
+            if ($m[2] === 'approve') {
+                Refunds::approve($r->user(), $m[1]);
+            } else {
+                Refunds::reject($r->user(), $m[1], (string) $r->input('note', ''));
+            }
+
+            return $ok(['requests' => Refunds::queue()]);
+        }
+        if ($path === 'services' && $get) {
+            return $ok(['orders' => Services::queue()]);
+        }
+        if (preg_match('#^services/([0-9a-f-]{36})$#', $path, $m)) {
+            abort_unless($r->isMethod('POST'), 405);
+            $v = $r->validate(['status' => 'required|in:'.implode(',', Services::STATUSES), 'note' => 'nullable|string|max:2000']);
+            Services::update($r->user(), $m[1], $v['status'], (string) ($v['note'] ?? ''));
+
+            return $ok(['orders' => Services::queue()]);
+        }
         if (preg_match('#^orders/([0-9a-f-]{36})$#', $path, $m)) {
             abort_unless($get, 405);
 

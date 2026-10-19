@@ -142,7 +142,7 @@ def run(ctx, t):
     s, j = c.api("POST", "ats/scan", {"resumeId": rid2, "source": "text", "text": job}); t.check("busy mode pauses ATS reviews with a polite message", s == 503 and "very busy" in str(j) and "try again" in str(j), (s, str(j)[:160]))
     s, h, b = c.raw("POST", f"/export/resume/{rid2}/pdf", {"clean": False}, {"Accept": "application/json", "X-CSRF-TOKEN": c.csrf or ""}); t.check("busy mode pauses PDF and Word creation", s == 503 and h.get("Retry-After") == "60", (s, h.get("Retry-After")))
     s, h, b = c.raw("POST", f"/export/resume/{rid2}/print", {"clean": False}, {"Accept": "application/json", "X-CSRF-TOKEN": c.csrf or ""}); t.check("the lightweight print layout keeps working", s == 200)
-    t.check("pages, sign-in and payments keep working in busy mode", ctx.client().raw("GET", "/")[0] == 200 and c.api("GET", "allowance")[0] == 200 and c.api("POST", "checkout/start", {"plan": "fresher-basic"})[0] == 200)
+    t.check("pages, sign-in and payments keep working in busy mode", ctx.client().raw("GET", "/")[0] == 200 and c.api("GET", "allowance")[0] == 200 and c.api("POST", "checkout/start", {"plan": "job-hunt"})[0] == 200)
     s, st = o.api("GET", "admin/speed/status"); t.check("the owner sees busy mode is on", st["traffic"]["mode"] == "on" and st["traffic"]["busyNow"] is True)
     o.api("POST", "admin/speed/save", {"pageCache": True, "busyMode": "auto", "autoLoad": 50})
     s, j = c.api("POST", "ats/scan", {"resumeId": rid2, "source": "text", "text": job}); t.check("automatic mode lets work through while the server is quiet", s in (200, 422) and s != 503, (s, str(j)[:120]))

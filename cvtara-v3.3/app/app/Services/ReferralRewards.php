@@ -73,15 +73,10 @@ class ReferralRewards
         Settings::audit($r->user()->id, 'referral_phone_verified');
     }
 
+    /** Friends whose purchase has passed the refund window without a refund (see Wallet). */
     public static function count(int $id): int
     {
-        return User::where('referred_by', $id)->where('id', '!=', $id)
-            ->where('blocked', false)->whereNotNull('email_verified_at')
-            ->whereIn('id', DB::table('purchases')->where('status', 'paid')->where('is_live', true)
-                ->whereIn('provider', ['razorpay', 'cashfree'])->where('amount_paise', '>=', Referrals::config()['minQualifyingPaise'])
-                ->where('refunded_paise', 0)->whereNotNull('payment_reference')
-                ->where('plan', '!=', 'free')->select('owner_id'))
-            ->count();
+        return Wallet::qualifiedCount($id);
     }
 
     public static function status(User $u): array
@@ -89,17 +84,17 @@ class ReferralRewards
         return ['enabled' => self::enabled(), 'qualification' => 'verified_signup_and_paid_purchase', 'rules' => Referrals::config(), 'count' => self::count($u->id), 'identity' => DB::table('referral_identities')->where('owner_id', $u->id)->first(['phone_masked', 'status', 'review_note']), 'claimed' => DB::table('referral_rewards')->where('owner_id', $u->id)->pluck('milestone'), 'exports' => (int) DB::table('referral_rewards')->where('owner_id', $u->id)->sum('exports_remaining')];
     }
 
-    /** One reward: when enough referred friends have paid, the customer gets one clean resume download and one month of subscription. */
+    /** One reward: when 5 referred friends qualify, the customer gets one free Job Hunt month (plus one clean resume download). */
     public static function claim(User $u, int $milestone): void
     {
         abort_unless($milestone === 5 && self::enabled(), 422);
         DB::transaction(function () use ($u) {
             User::whereKey($u->id)->lockForUpdate()->first();
             abort_unless($u->email_verified_at || ! EmailVerification::enabled(), 422, 'Confirm your email address first.');
-            abort_unless(self::count($u->id) >= (int) Referrals::config()['downloadThreshold'], 422, 'Not enough paying friends yet.');
+            abort_unless(self::count($u->id) >= (int) Referrals::config()['downloadThreshold'], 422, 'Not enough qualified friends yet. A friend counts 7 days after their purchase, if it was not refunded.');
             abort_if(DB::table('referral_rewards')->where('owner_id', $u->id)->where('milestone', 5)->exists(), 409, 'You have already claimed this reward.');
             abort_if(Settings::access($u->id)['paid'], 422, 'Claim your free month after your current plan ends. Your reward is kept for you.');
-            $key = DB::table('profiles')->where('owner_id', $u->id)->value('experience_level') === 'fresher' ? 'fresher-standard' : 'pro-standard';
+            $key = 'job-hunt';
             $plan = Settings::plans()[$key];
             DB::table('purchases')->insert(['id' => (string) Str::uuid(), 'owner_id' => $u->id, 'plan' => $key, 'amount_paise' => 0, 'provider' => 'referral_reward', 'status' => 'paid', 'is_live' => false, 'limits_json' => json_encode($plan), 'access_days' => (int) Referrals::config()['premiumDays'], 'purchased_at' => now(), 'access_until' => now()->addDays((int) Referrals::config()['premiumDays']), 'created_at' => now(), 'updated_at' => now()]);
             DB::table('referral_rewards')->insert(['owner_id' => $u->id, 'milestone' => 5, 'exports_remaining' => 1, 'created_at' => now(), 'updated_at' => now()]);

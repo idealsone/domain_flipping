@@ -3,17 +3,17 @@
 Keep this file current. It records what the owner asked for, what was built, the rules behind it and what is still open, so any later session (or developer) can continue without asking again.
 
 ## Business
-- Product: CVTara resume + cover-letter builder with ATS Match, by an HR team in Bangalore. Domain cvtara.com, support@cvtara.com. English only. All payments final and non-refundable. No AI-authorship mentions anywhere. Hosting: Hostinger shared (Apache, PHP 8.3, MySQL/MariaDB).
+- Product: CVTara resume + cover-letter builder with ATS Match, by an HR team in Bangalore. Domain cvtara.com, support@cvtara.com. English only. Refund within 7 days if unused, once per customer. No AI-authorship mentions anywhere. Hosting: Hostinger shared (Apache, PHP 8.3, MySQL/MariaDB).
 - Private URLs: installer `/setup/afsar`; owner login `/afsar` and `/sanaulla`; owner console hidden from everyone else (redirects to home); site not indexed until the owner switches indexing on.
 - Payments: Cashfree primary (Razorpay optional). Payments are never paused by busy mode.
 
 ## Plans and limits (single formula for every plan)
-- Fresher Basic/Standard/Pro ₹299/399/499 and Professional Basic/Standard/Pro ₹399/499/599. Validity **30 / 60 / 90 days**. Plan downloads **10 / 20 / 30 resume + 10 / 20 / 30 cover-letter** (separate pools). ATS scans **20 / 40 / 60**. Add-ons ₹149/249/399 = +10/+20/+30 resume + cover-letter downloads and +20/+40/+60 scans; **valid until the subscription ends** and move to the end of the plan on an early renewal; used after plan credits.
+- Packages (3.16.0): Free; **Quick Download ₹99 / 7 days** (one resume, re-download free, price counts toward an upgrade); **Job Hunt ₹299 / 30 days** (5 resumes, 5 letters, 20 scans); **Pro ₹599 / 90 days** (20/20/60). Services Tara Expert Review ₹499 (₹399 with a plan) and Profile Boost ₹699 (₹599), Complete Job Kit ₹1,299 (worth ₹1,797): off sale until the owner switches them on. Add-on packs ₹149/249/399 also off sale by default; valid until the subscription ends.
 - Credits are used when a **clean download** happens (drafts and saving are free; same version in another format is free; an edited version needs a new credit). One primary resume download is free **once for life**, only after a first purchase. Credit notice popup after every download; downloaded jobs are added to Applications automatically (stage Saved, with credits used).
 - Free accounts: 1 resume + 1 cover letter, watermarked previews with copy/print protection, a few ATS checks a day, no clean downloads. Paid previews and downloads are clean. Screenshots cannot be fully blocked by any website (stated honestly in the guide).
 
 ## Customer features
-- Resume Builder (primary resume + job-tailored versions), Cover Letters (saved letters listed under the section), **ATS Match** (choose a saved resume from a dropdown — no upload; job by link / PDF-DOCX-text file / pasted text; server-side report with match estimate, keywords, gaps, job details; then choose tailored resume / cover letter / both), Applications tracker, Billing & Plans, Referral programme, My wallet, Account, Share feedback (testimonials), customer guide, **Feedback button** (signed-in customers only; right or left side; up to 5 screenshots of 2 MB; limit 10 reports an hour).
+- Resume Builder (primary resume + job-tailored versions), Cover Letters (saved letters listed under the section), **ATS Match** (choose a saved resume from a dropdown — no upload; job by link / PDF-DOCX-text file / pasted text; server-side report with match estimate, keywords, gaps, job details; then choose tailored resume / cover letter / both), Applications tracker, Billing & Plans, Referral programme ("Give ₹50, get ₹50" wallet: 7-day qualification, 90-day expiry, ₹1,000/month cap, 5 friends = free Job Hunt month), My wallet, Request refund (Billing), Account, Share feedback (testimonials), customer guide, **Feedback button** (signed-in customers only; right or left side; up to 5 screenshots of 2 MB; limit 10 reports an hour).
 - Sidebar and page layout are identical on every view (no zoom/shift), including scrollbar space.
 
 ## Owner console

@@ -51,14 +51,14 @@ def run(ctx, t):
         t.check("a verification code mail is queued with a 6-digit code", len(row) == 1 and re.search(r"\b\d{6}\b", row[0][0]), row)
         code = re.search(r"\b(\d{6})\b", row[0][0]).group(1)
         s, h, b = c.page("/verify-email"); t.check("the confirm page asks for the code and offers a new one", s == 200 and "6-digit code" in b and "Send me a new code" in b)
-        s, j = c.api("POST", "checkout/start", {"plan": "fresher-basic"}); t.check("buying is blocked until the email is confirmed", s == 403 and j.get("verify") == "/verify-email", (s, str(j)[:160]))
+        s, j = c.api("POST", "checkout/start", {"plan": "job-hunt"}); t.check("buying is blocked until the email is confirmed", s == 403 and j.get("verify") == "/verify-email", (s, str(j)[:160]))
         s, a = c.api("GET", "allowance"); t.check("the allowance says the email is not confirmed yet", a.get("emailVerified") is False)
         r = c.form("/verify-email", {"code": "000000" if code != "000000" else "111111"})
         t.check("a wrong code is refused with a clear message", r[0] in (302, 303) and db.q("select email_verified_at from users where id=?", uid)[0][0] is None)
         r = c.form("/verify-email", {"code": code})
         t.check("the right code confirms the address", r[0] in (302, 303) and db.q("select email_verified_at from users where id=?", uid)[0][0] is not None, r[0])
         t.check("after confirming, the customer lands on the Dashboard", r[1].get("Location", "").rstrip("/").endswith("/workspace.html"), r[1].get("Location"))
-        s, a = c.api("GET", "allowance"); t.check("after confirming, the allowance says so and buying works again", a.get("emailVerified") is True and c.api("POST", "checkout/start", {"plan": "fresher-basic"})[0] != 403)
+        s, a = c.api("GET", "allowance"); t.check("after confirming, the allowance says so and buying works again", a.get("emailVerified") is True and c.api("POST", "checkout/start", {"plan": "job-hunt"})[0] != 403)
 
         # ---- marketing mail: consent, unsubscribe link, one-click unsubscribe ----
         db.q("update profiles set marketing_consent=1 where owner_id=?", uid)
@@ -84,7 +84,7 @@ def run(ctx, t):
         t.check("someone who did not opt in gets no marketing mail", db.q("select count(*) from mail_outbox where owner_id=? and trigger in ('nurture','monthly_digest')", uid3)[0][0] == 0)
         # a paid customer gets the monthly guide too, but no plan nudges
         db.q("update profiles set marketing_consent=1 where owner_id=?", uid3)
-        db.q("insert into purchases(id,owner_id,plan,status,amount_paise,provider,limits_json,access_days,purchased_at,access_until,created_at,updated_at) values('pp-1',?,?,'paid',29900,'demo','{}',60,datetime('now','-30 days'),datetime('now','+30 days'),datetime('now'),datetime('now'))", uid3, "fresher-basic")
+        db.q("insert into purchases(id,owner_id,plan,status,amount_paise,provider,limits_json,access_days,purchased_at,access_until,created_at,updated_at) values('pp-1',?,?,'paid',29900,'demo','{}',60,datetime('now','-30 days'),datetime('now','+30 days'),datetime('now'),datetime('now'))", uid3, "job-hunt")
         ctx.inst.artisan("cache:clear"); ctx.inst.artisan("cvtara:cron")
         t.check("a customer who already bought gets no plan nudge", db.q("select count(*) from mail_outbox where owner_id=? and trigger='nurture'", uid3)[0][0] == 0)
 
@@ -99,7 +99,7 @@ def run(ctx, t):
         db.q("update users set email_verified_at=datetime('now') where id=?", uid4)
         cols = [r[1] for r in db.q("pragma table_info(purchases)")]
         def purchase(days):
-            vals = {"id": "exp-" + str(days), "owner_id": uid4, "plan": "fresher-basic", "status": "paid", "amount_paise": 29900, "provider": "demo", "limits_json": "{}", "access_days": 30, "purchased_at": "2026-01-01 00:00:00", "created_at": "2026-01-01 00:00:00", "updated_at": "2026-01-01 00:00:00"}
+            vals = {"id": "exp-" + str(days), "owner_id": uid4, "plan": "job-hunt", "status": "paid", "amount_paise": 29900, "provider": "demo", "limits_json": "{}", "access_days": 30, "purchased_at": "2026-01-01 00:00:00", "created_at": "2026-01-01 00:00:00", "updated_at": "2026-01-01 00:00:00"}
             vals = {k: v for k, v in vals.items() if k in cols}
             ins = ",".join(vals); q = ",".join("?" for _ in vals)
             db.q(f"delete from purchases where owner_id={uid4}")

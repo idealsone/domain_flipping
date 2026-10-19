@@ -162,13 +162,14 @@ class AdminController extends Controller
             if ($get) {
                 return $ok(['plans' => Settings::plans()]);
             }AccountSecurity::requireRecent($r);
-            $v = $r->validate(['plans' => 'required|array', 'plans.*.name' => 'required|string|max:120', 'plans.*.tagline' => 'nullable|string|max:200', 'plans.*.price' => 'required|integer|min:0|max:99999', 'plans.*.mrp' => 'nullable|integer|min:0|max:99999', 'plans.*.accessDays' => 'required|integer|min:0|max:3660', 'plans.*.savedResumes' => 'required|integer|min:0|max:500', 'plans.*.savedLetters' => 'required|integer|min:0|max:500', 'plans.*.atsScans' => 'nullable|integer|min:0|max:100000', 'plans.*.dailyMatches' => 'nullable|integer|min:0|max:1000', 'plans.*.exports' => 'nullable|integer|min:0|max:100000', 'plans.*.popular' => 'sometimes|boolean', 'plans.*.referral' => 'sometimes|boolean', 'plans.*.perks' => 'sometimes|array|max:12', 'plans.*.perks.*' => 'string|max:120', 'plans.*.audience' => 'sometimes|in:fresher,experienced,all']);
+            $v = $r->validate(['plans' => 'required|array', 'plans.*.name' => 'required|string|max:120', 'plans.*.tagline' => 'nullable|string|max:200', 'plans.*.price' => 'required|integer|min:0|max:99999', 'plans.*.mrp' => 'nullable|integer|min:0|max:99999', 'plans.*.accessDays' => 'required|integer|min:0|max:3660', 'plans.*.savedResumes' => 'required|integer|min:0|max:500', 'plans.*.savedLetters' => 'required|integer|min:0|max:500', 'plans.*.atsScans' => 'nullable|integer|min:0|max:100000', 'plans.*.dailyMatches' => 'nullable|integer|min:0|max:1000', 'plans.*.exports' => 'nullable|integer|min:0|max:100000', 'plans.*.popular' => 'sometimes|boolean', 'plans.*.referral' => 'sometimes|boolean', 'plans.*.bestValue' => 'sometimes|boolean', 'plans.*.sale' => 'sometimes|boolean', 'plans.*.planPrice' => 'nullable|integer|min:1|max:99999', 'plans.*.perks' => 'sometimes|array|max:12', 'plans.*.perks.*' => 'string|max:120', 'plans.*.audience' => 'sometimes|in:fresher,experienced,all']);
             $out = Settings::plans();
             foreach ($v['plans'] as $k => $in) {
                 abort_unless(isset($out[$k]), 422, 'Unknown plan.');
                 abort_if($out[$k]['type'] === 'plan' && $k !== 'free' && ($in['accessDays'] ?? 0) < 1, 422, 'Plans need at least 1 day of access.');
                 $in['atsScans'] = empty($in['atsScans']) ? null : (int) $in['atsScans'];
                 $in['mrp'] = (int) ($in['mrp'] ?? 0);
+                abort_if($k === 'free' && ! empty($in['sale']), 422, 'The free plan is not sold.');
                 $in['perks'] = array_values(array_filter(array_map('trim', $in['perks'] ?? $out[$k]['perks'])));
                 $out[$k] = array_merge($out[$k], array_intersect_key($in, $out[$k]));
             }Settings::put('plans', $out);
@@ -352,7 +353,7 @@ class AdminController extends Controller
         }
         if ($k === 'emails') {
             foreach ($d as $t) {
-                validator($t, ['id' => 'required|string|max:80', 'subject' => 'required|string|max:180', 'body' => 'required|string|max:20000', 'enabled' => 'required|boolean', 'trigger' => 'required|in:profile_created,password_reset,resume_saved,purchase_verified,abandoned_purchase,blog_published,access_expiring,access_expiring_7,access_expiring_4,access_expiring_1,followup_due,application_status,download_locked,email_verification,nurture,monthly_digest,manual', 'delayHours' => 'required|integer|min:0|max:720'])->validate();
+                validator($t, ['id' => 'required|string|max:80', 'subject' => 'required|string|max:180', 'body' => 'required|string|max:20000', 'enabled' => 'required|boolean', 'trigger' => 'required|in:profile_created,password_reset,resume_saved,purchase_verified,abandoned_purchase,blog_published,access_expiring,access_expiring_7,access_expiring_4,access_expiring_1,followup_due,application_status,download_locked,email_verification,refund_requested,refund_processed,refund_rejected,nurture,monthly_digest,manual', 'delayHours' => 'required|integer|min:0|max:720'])->validate();
             }
         }
         if ($k === 'legal') {

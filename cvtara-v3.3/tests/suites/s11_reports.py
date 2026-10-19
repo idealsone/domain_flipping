@@ -42,7 +42,7 @@ def run(ctx, t):
     body = {"name": "Priya", "content": "Great product, helped me a lot.", "rating": 5, "source": "verified", "consent": True, "consentReference": "email on 2026-10-01", "customerEmail": "rep-a@test.local"}
     s, j = o.api("POST", "admin/feedback/add", body); t.check("verified review for a non-paying account is refused", s == 422, f"{s} {j}")
     s, j = o.api("POST", "admin/feedback/add", dict(body, customerEmail="nobody@test.local")); t.check("verified review for an unknown email is refused", s == 422)
-    o.api("POST", "admin/users/grant", {"userId": db.q("select id from users where email='rep-a@test.local'")[0][0], "plan": "fresher-basic", "note": "test", "amount": 299, "sendEmail": False})
+    o.api("POST", "admin/users/grant", {"userId": db.q("select id from users where email='rep-a@test.local'")[0][0], "plan": "job-hunt", "note": "test", "amount": 299, "sendEmail": False})
     s, j = o.api("POST", "admin/feedback/add", body); t.check("verified review for a paying customer is accepted", s == 200, f"{s} {j}")
 
     # retention

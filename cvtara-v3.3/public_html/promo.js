@@ -44,7 +44,7 @@
         ${v.code ? `<div class="cvp-code"><span>Use code</span><code>${E(v.code)}</code><button type="button" data-copy>Copy</button></div>` : ''}
         ${v.countdown ? '<p class="cvp-count" data-count></p>' : ''}
         <button type="button" class="cvp-cta" data-claim>${E(v.cta)} →</button><button type="button" class="cvp-no" data-close>No thanks, maybe later</button>
-        <small class="cvp-fine">${v.code ? 'Your code is applied for you at checkout. ' : ''}All payments are final and non-refundable.</small></div></div>`;
+        <small class="cvp-fine">${v.code ? 'Your code is applied for you at checkout. ' : ''}7-day refund if unused.</small></div></div>`;
   }
   let openRoot = null;
   function modal(v, variant, how) {

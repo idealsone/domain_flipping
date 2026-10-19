@@ -2,7 +2,7 @@
   'use strict';
   const request = (path, body) => window.CVTaraAPI.request('/api/' + path, body === undefined ? undefined : {method: 'POST', body});
   const escape = value => String(value ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-  const rule = 'Only distinct referred friends who verify their email and successfully pay for any plan count. Signups alone, test payments and refunded purchases do not count. Each friend counts once.';
+  const rule = 'Your friend gets ₹50 off their first purchase. You get ₹50 wallet credit once their purchase passes the 7-day refund window without a refund. Each friend counts once.';
   async function render(host) {
     if (!window.CVTaraAPI || host.dataset.loading === 'true') return;
     host.dataset.loading = 'true';
@@ -11,10 +11,10 @@
       if (!host.isConnected) return;
       
       const claimed = new Set(rewards.claimed.map(Number));const g={downloadThreshold:5,premiumThreshold:10,premiumDays:30,...rewards.rules};
-      host.innerHTML = `<span class="eyebrow">REFER & UNLOCK</span><h2>Refer ${g.downloadThreshold} friends. Get a free download and a free month.</h2><p>${rule}</p><div class="parameter-grid"><article><h3>1 free resume download + ${g.premiumDays == 30 ? '1 month' : g.premiumDays + ' days'} subscription, free</h3><label>${Math.min(rewards.count,g.downloadThreshold)} / ${g.downloadThreshold} paying friends<progress value="${Math.min(rewards.count,g.downloadThreshold)}" max="${g.downloadThreshold}" style="display:block;width:100%"></progress></label><button class="button secondary" data-claim="5" ${!rewards.enabled || rewards.count < g.downloadThreshold || claimed.has(5) ? 'disabled' : ''}>${claimed.has(5) ? 'Already claimed' : 'Claim reward'}</button></article></div><p>The reward can be claimed once. If you have a plan running, claim after it ends and your reward waits for you.</p><p>${rewards.exports} free resume download${Number(rewards.exports) === 1 ? '' : 's'} remaining.</p><a class="button primary" data-share target="_blank" rel="noopener noreferrer">Share on WhatsApp</a><button class="button secondary" data-refresh>Refresh progress</button><p data-result role="status" aria-live="polite"></p><a href="/customer-guide.html#referrals">Read the referral guide</a>`;
+      host.innerHTML = `<span class="eyebrow">GIVE ₹50, GET ₹50</span><h2>Share CVTara. ${g.downloadThreshold} friends also unlock a free Job Hunt month.</h2><p>${rule}</p><div class="parameter-grid"><article><h3>1 Job Hunt month free (plus one clean resume download)</h3><label>${Math.min(rewards.count,g.downloadThreshold)} / ${g.downloadThreshold} qualified friends<progress value="${Math.min(rewards.count,g.downloadThreshold)}" max="${g.downloadThreshold}" style="display:block;width:100%"></progress></label><button class="button secondary" data-claim="5" ${!rewards.enabled || rewards.count < g.downloadThreshold || claimed.has(5) ? 'disabled' : ''}>${claimed.has(5) ? 'Already claimed' : 'Claim reward'}</button></article></div><p>The reward can be claimed once. If you have a plan running, claim after it ends and your reward waits for you.</p><p>${rewards.exports} free resume download${Number(rewards.exports) === 1 ? '' : 's'} remaining.</p><a class="button primary" data-share target="_blank" rel="noopener noreferrer">Share on WhatsApp</a><button class="button secondary" data-refresh>Refresh progress</button><p data-result role="status" aria-live="polite"></p><a href="/workspace.html?view=referrals">Open my referral dashboard</a>`;
       const result = host.querySelector('[data-result]');
       const share = host.querySelector('[data-share]');
-      if (share) share.href = 'https://wa.me/?text=' + encodeURIComponent('Create your resume with CVTara. If you sign up through my link and buy any plan, I can earn commission and referral rewards. Building and saving a draft is free; clean downloads require a plan or an earned reward. ' + referrals.url);
+      if (share) share.href = 'https://wa.me/?text=' + encodeURIComponent('I build my resume on CVTara. Use my link and get ₹50 off your first purchase. Building and previewing are free. ' + referrals.url);
       host.querySelector('[data-refresh]').onclick = () => render(host);
       host.querySelectorAll('[data-claim]').forEach(button => button.onclick = async () => {
         button.disabled = true;
@@ -60,7 +60,7 @@
   function addUnlock(dialog) {
     if (dialog.querySelector('.launch-panel')) return;
     const section = document.createElement('section'); section.className = 'launch-panel';
-    section.innerHTML = '<h3>Choose how to unlock a clean download</h3><p>Your saved work stays in your profile. Pay for immediate access, or earn a referral reward.</p><a class="button primary" href="/workspace.html?view=billing">View plans &amp; upgrade</a><details><summary>Invite paying friends & unlock rewards</summary><div data-rewards></div></details>';
+    section.innerHTML = '<h3>Choose how to unlock a clean download</h3><p>Your saved work stays in your profile. Download this resume for ₹99, or tailor one for every job with Job Hunt.</p><a class="button primary" href="/checkout.html?plan=quick">Download for ₹99</a> <a class="button secondary" href="/checkout.html?plan=job-hunt">See Job Hunt</a><details><summary>Give ₹50, get ₹50 with friends</summary><div data-rewards></div></details>';
     dialog.querySelector('[data-close]').before(section);
     const details = section.querySelector('details');
     details.addEventListener('toggle', () => { if (details.open) render(section.querySelector('[data-rewards]')); });
