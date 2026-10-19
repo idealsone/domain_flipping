@@ -192,6 +192,21 @@ class ApiController extends Controller
 
             return $ok();
         }
+        if ($path === 'writing/check' && $r->isMethod('POST')) {
+            $v = $r->validate(['type' => 'required|in:resume,letter', 'id' => 'nullable|uuid', 'data' => 'required_without:id|array', 'full' => 'sometimes|boolean']);
+            $rk = 'writing:'.$id;
+            abort_if(\Illuminate\Support\Facades\RateLimiter::tooManyAttempts($rk, 30), 429, 'Too many checks in a minute. Wait a moment and try again.');
+            \Illuminate\Support\Facades\RateLimiter::hit($rk, 60);
+            $data = $v['data'] ?? null;
+            if (! empty($v['id'])) {
+                $row = DB::table($v['type'] === 'resume' ? 'resume_drafts' : 'cover_letter_drafts')->where('owner_id', $id)->where('id', $v['id'])->first(['content_json']);
+                abort_unless($row, 404);
+                $data = json_decode((string) $row->content_json, true) ?: [];
+            }
+            abort_if(strlen((string) json_encode($data)) > 400000, 413);
+
+            return $ok(['check' => \App\Services\WritingCheck::run($v['type'], (array) $data, $id, (bool) ($v['full'] ?? false))]);
+        }
         if ($path === 'ai/status' && $get) {
             return $ok(['ai' => \App\Services\TaraAI::status($u)]);
         }

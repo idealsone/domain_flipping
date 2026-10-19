@@ -14,14 +14,14 @@
 - **Privacy policy:** names Razorpay as the payment processor and drops phone verification.
 - **Removed unused code:** the old phone verification for referral rewards (Twilio settings, send/check endpoints, held-review panel and launch-check line), the unused 10-friend reward setting, the unlinked guide.js script and an audit script for the removed feature.
 
-## 3.15.0
-- **508 new server-rendered SEO pages** built from `resources/data/seo-pages.json` (source and generator in `tools/seo/`): resume examples by field and role (`/resume-examples/{field}/{role}/`), template styles (`/resume-templates/{style}/`), cover-letter examples by field, interview questions by role, India / state / city resume guides (`/resume-builder/...`), city × role pages (`/resume/{city}/{role}/`), state government-jobs pages, resume word swaps (`/resume-words/{word}/`) and an ATS checker landing page.
-- Every page has a title under 60 characters ending "| CVTara", a meta description under 155, one H1, visible breadcrumbs, an "On this page" list, an illustration with alt text, a filled sample, 4–5 FAQs, BreadcrumbList + FAQPage + WebPage JSON-LD (no LocalBusiness), one amber "Build my resume free" button and links to the ATS checker and pricing.
-- **Interlinking:** India → state → city → city × role; city × role → role example, interview page and the same role in two other cities; role → field, interview, cover letter and city pages; every page → existing guides on the topic.
-- **Keyword targeting:** pages follow the patterns that drive competitor traffic (role resume examples, templates, cover letters, interview questions, resume words) with all brand terms removed. Full keyword list in the project files (`seo-keywords/`).
-- **The 68 existing guides and calculators:** visible breadcrumbs, an "Explore next" box into the new hubs, and up to 3 contextual links on first mention of key phrases. The browser no longer adds a second, generic FAQPage block on top of the server's own.
-- Ready-made page cache and Apache rules cover the new paths; the sitemap lists them. Place facts to check before indexing are in `docs/SEO_VERIFY.md`. No salary figures are published.
-- Tests: `tests/suites/s23_seo_pages.py` crawls every new page and every internal link.
+## 3.17.0
+- **Check my writing** in the resume and cover-letter builders. One click lists suggestions in three groups, each with the line it is about and words to try:
+  - **Stronger writing:** weak openings such as "responsible for", "helped" and "worked on"; buzzwords such as "hard-working" and "team player"; bullets with no number or result; long bullets and sentences; "I" and "my" in a resume; three or more bullets starting with the same verb; Indian-English phrases that read oddly to many recruiters ("revert back", "do the needful", "Myself Asha").
+  - **Tone:** unsure or negative wording ("tried to", "unfortunately", "just") and, in cover letters, casual or pushy lines ("Hey", "hire me", "ASAP").
+  - **Grammar & spelling:** common misspellings, repeated words, double spaces, a lowercase "i", sentences that start in lowercase, spaces around punctuation and "!!".
+- The check runs on CVTara's own server from a word list (`resources/data/writing-rules.json`), costs nothing and sends text nowhere. It never changes the document.
+- **Optional full grammar check (LanguageTool):** a new GRAMMAR switch under Integrations, off by default. When on, customers see a "Full grammar check" button that sends that document's text to LanguageTool (the free public service, a Premium key or your own server). Limit 20 a day per customer; a failed check is not counted.
+- Privacy Policy text names LanguageTool and says the basic check sends nothing.
 
 ## 3.16.0
 - **New packages:** Free, Quick Download ₹99 for 7 days (one resume, edit and re-download it as often as you like), Job Hunt ₹299 for 30 days (5 resumes, 5 cover letters, 20 ATS scans) and Pro ₹599 for 90 days (20/20/60). Plan cards show the price per day, "Most popular" and "Best value". Old plans keep working for customers who bought them; old plan links and coupons map to the new plans.
@@ -33,6 +33,15 @@
 - Checkout shows each discount line and "You pay".
 - **Offers:** the countdown timer is gone. The offer pop-up opens 20 seconds into a visit instead; saved offers are switched to this automatically.
 - Add-on packs are off sale by default (switch on in Pricing).
+
+## 3.15.0
+- **508 new server-rendered SEO pages** built from `resources/data/seo-pages.json` (source and generator in `tools/seo/`): resume examples by field and role (`/resume-examples/{field}/{role}/`), template styles (`/resume-templates/{style}/`), cover-letter examples by field, interview questions by role, India / state / city resume guides (`/resume-builder/...`), city × role pages (`/resume/{city}/{role}/`), state government-jobs pages, resume word swaps (`/resume-words/{word}/`) and an ATS checker landing page.
+- Every page has a title under 60 characters ending "| CVTara", a meta description under 155, one H1, visible breadcrumbs, an "On this page" list, an illustration with alt text, a filled sample, 4–5 FAQs, BreadcrumbList + FAQPage + WebPage JSON-LD (no LocalBusiness), one amber "Build my resume free" button and links to the ATS checker and pricing.
+- **Interlinking:** India → state → city → city × role; city × role → role example, interview page and the same role in two other cities; role → field, interview, cover letter and city pages; every page → existing guides on the topic.
+- **Keyword targeting:** pages follow the patterns that drive competitor traffic (role resume examples, templates, cover letters, interview questions, resume words) with all brand terms removed. Full keyword list in the project files (`seo-keywords/`).
+- **The 68 existing guides and calculators:** visible breadcrumbs, an "Explore next" box into the new hubs, and up to 3 contextual links on first mention of key phrases. The browser no longer adds a second, generic FAQPage block on top of the server's own.
+- Ready-made page cache and Apache rules cover the new paths; the sitemap lists them. Place facts to check before indexing are in `docs/SEO_VERIFY.md`. No salary figures are published.
+- Tests: `tests/suites/s23_seo_pages.py` crawls every new page and every internal link.
 
 ## 3.14.4
 - **Owner console: "Clear cache" button** in the top bar of every owner page and in Speed & traffic ("Clear cache & refresh site"). One click removes the stored pages, clears compiled views and cached settings, rebuilds every public page and reloads the page fresh.
