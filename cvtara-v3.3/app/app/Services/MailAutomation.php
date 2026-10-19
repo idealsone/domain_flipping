@@ -63,10 +63,18 @@ class MailAutomation
     /** Sends one outbox row as a branded HTML + plain-text message. */
     private static function deliver(object $j, array $p): void
     {
-        $marketing = EmailRenderer::isMarketing($j->trigger);
-        $mail = EmailRenderer::render($j->subject, $j->body, $marketing, (int) $j->owner_id, preg_match('/^(.{20,140}?[.!?])(\s|$)/u', preg_replace('/\s+/', ' ', strip_tags(str_replace('#', '', $j->body))), $m) ? $m[1] : '');
+        // A campaign test looks exactly like the real campaign mail, footer and unsubscribe link included.
+        $marketing = EmailRenderer::isMarketing($j->trigger) || $j->trigger === 'campaign_test';
+        $contact = $j->contact_id ?? null;
+        $unsub = null;
+        if ($marketing && $contact) {
+            $tok = DB::table('email_contacts')->where('id', $contact)->value('token');
+            $unsub = $tok ? EmailRenderer::contactUnsubscribeUrl($tok, $j->campaign_id ?? null) : null;
+        } elseif ($marketing && $j->owner_id) {
+            $unsub = EmailRenderer::unsubscribeUrl((int) $j->owner_id, $j->campaign_id ?? null);
+        }
+        $mail = EmailRenderer::render($j->subject, $j->body, $marketing, $contact ? null : ((int) $j->owner_id ?: null), preg_match('/^(.{20,140}?[.!?])(\s|$)/u', preg_replace('/\s+/', ' ', strip_tags(str_replace('#', '', $j->body))), $m) ? $m[1] : '', $unsub);
         $fromEmail = $p['fromEmail'] ?? config('mail.from.address');
-        $unsub = $marketing && $j->owner_id ? EmailRenderer::unsubscribeUrl((int) $j->owner_id) : null;
         if (($p['provider'] ?? 'smtp') === 'resend') {
             $payload = ['from' => ($p['fromName'] ?? 'CVTara').' <'.$fromEmail.'>', 'to' => [$j->recipient], 'subject' => $j->subject, 'html' => $mail['html'], 'text' => $mail['text'], 'reply_to' => 'support@cvtara.com'];
             if ($unsub) {
@@ -100,14 +108,14 @@ class MailAutomation
             self::configureTransport($p);
             DB::table('mail_outbox')->where('status', 'sending')->where('updated_at', '<', now()->subMinutes(10))->update(['status' => 'failed', 'due_at' => now()]);
             DB::table('mail_outbox')->whereIn('trigger', self::CODE_TRIGGERS)->where('created_at', '<', now()->subMinutes(15))->whereIn('status', ['queued', 'failed'])->update(['status' => 'cancelled', 'body' => 'Expired security code removed']);
-            $jobs = DB::table('mail_outbox')->whereIn('status', ['queued', 'failed'])->where('attempts', '<', 5)->where('due_at', '<=', now())->orderByRaw("CASE WHEN `trigger` IN ('security_verification','email_verification') THEN 0 WHEN `trigger` IN ('purchase_verified','password_reset','profile_created') THEN 1 ELSE 2 END")->orderBy('due_at')->limit(40)->get();
+            $jobs = DB::table('mail_outbox')->whereIn('status', ['queued', 'failed'])->where('attempts', '<', 5)->where('due_at', '<=', now())->orderByRaw("CASE WHEN `trigger` IN ('security_verification','email_verification') THEN 0 WHEN `trigger` IN ('purchase_verified','password_reset','profile_created') THEN 1 WHEN `trigger` = 'campaign' THEN 3 ELSE 2 END")->orderBy('due_at')->limit(40)->get();
             $sent = 0;
             foreach ($jobs as $j) {
                 if (in_array($j->trigger, self::CODE_TRIGGERS, true) && strtotime($j->created_at) < now()->subMinutes(15)->timestamp) {
                     DB::table('mail_outbox')->where('id', $j->id)->update(['status' => 'cancelled', 'body' => 'Expired security code removed']);
 
                     continue;
-                }if (EmailRenderer::isMarketing($j->trigger) && ! DB::table('profiles')->where('owner_id', $j->owner_id)->value('marketing_consent')) {
+                }if (EmailRenderer::isMarketing($j->trigger) && ! self::marketingAllowed($j)) {
                     DB::table('mail_outbox')->where('id', $j->id)->update(['status' => 'cancelled']);
 
                     continue;
@@ -126,6 +134,21 @@ class MailAutomation
         } finally {
             $lock->release();
         }
+    }
+
+    /** Checked again just before sending: consent can be withdrawn while a mail waits in the queue. */
+    private static function marketingAllowed(object $j): bool
+    {
+        if ($j->trigger === 'campaign') {
+            if (DB::table('email_suppressions')->where('email', mb_strtolower($j->recipient))->exists()) {
+                return false;
+            }
+            if (! empty($j->contact_id)) {
+                return DB::table('email_contacts')->where('id', $j->contact_id)->whereNull('unsubscribed_at')->exists();
+            }
+        }
+
+        return (bool) DB::table('profiles')->where('owner_id', $j->owner_id)->value('marketing_consent');
     }
 
     /** Renders a template with sample values (for the owner's "send me a test" and for design checks). @return array{subject:string,html:string,text:string} */

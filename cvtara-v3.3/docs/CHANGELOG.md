@@ -1,3 +1,11 @@
+# CVTara v3.19.0 — Razorpay only, Tara AI and email campaigns
+
+## 3.19.0
+- **Razorpay is the only payment gateway.** Cashfree checkout, its webhook and Cashfree Payouts are removed. Checkout no longer asks for a mobile number. Referral cash withdrawals are paid by the owner by hand and marked paid with the bank or UPI reference. Signup stays email-only with a 6-digit email code.
+- **Tara AI writing help, powered by Claude.** A "Tara AI" button in the workspace offers seven tasks: improve clarity, turn duties into achievement bullets, write a profile summary, tailor to a job, draft a cover letter, check against a job and practise interview questions. Off until the owner saves a Claude API key (Settings → Integrations → AI) and switches AI on. Free accounts get 3 suggestions a day, plans 20, with a site-wide daily cap (default 300) to keep the Claude bill in check. Only the text the customer picks is sent, after they tick consent; a failed or declined request does not use up a suggestion; a wrong key is logged for the owner. The privacy policy names Anthropic.
+- **Email campaigns (Owner console → Email campaigns).** Send newsletters and offers to customers who agreed to marketing email (all, never bought, plan active, plan ended) or to imported contacts (CSV with a permission tick, repeats merged). Branded preview, test send to yourself, live recipient count, send now or schedule in India time, pause, resume and cancel, and a report of sent, failed and unsubscribed. Sends through the existing mailer and cron, 20 a minute and 300 a day by default. Every campaign email has a one-click unsubscribe; unsubscribed contacts go on a do-not-mail list. Run `php artisan migrate` after uploading.
+- **Application status reminders now actually go out.** They were only sent by a command the host cron never ran; the regular cron now sends them every hour.
+
 # CVTara v3.18.0 — Clearer, more trustworthy pages and less unused code
 
 ## 3.18.0

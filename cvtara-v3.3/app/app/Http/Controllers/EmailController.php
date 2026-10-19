@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\User;
+use App\Services\Campaigns;
 use App\Services\EmailVerification;
 use App\Services\Settings;
 use Illuminate\Http\Request;
@@ -17,12 +18,31 @@ class EmailController extends Controller
         $u = User::findOrFail($user);
         if ($r->isMethod('POST')) {
             DB::table('profiles')->where('owner_id', $u->id)->update(['marketing_consent' => false, 'updated_at' => now()]);
+            Campaigns::noteUserUnsubscribe($u->id, $r->query('c'));
             Settings::audit($u->id, 'unsubscribed');
 
             return response($this->shell('You are unsubscribed', 'We will not send you tips or plan reminders any more. You will still get account emails such as receipts, sign-in codes and reminders you asked for. You can turn tips back on any time in Account settings.', null), 200, ['X-Robots-Tag' => 'noindex']);
         }
 
         return response($this->shell('Unsubscribe from CVTara tips?', 'This stops career tips and plan reminders to '.e($this->mask($u->email)).'. Account emails such as receipts and sign-in codes will continue.', $r->fullUrl()), 200, ['X-Robots-Tag' => 'noindex']);
+    }
+
+    /** Link in campaign mail to an imported contact (no account): the random token is the key, no sign-in needed. */
+    public function unsubscribeContact(Request $r, string $token)
+    {
+        $c = DB::table('email_contacts')->where('token', $token)->first();
+        abort_unless($c, 404);
+        if ($r->isMethod('POST')) {
+            Campaigns::unsubscribeContact($c, $r->query('c'));
+            Settings::audit(null, 'contact_unsubscribed', (string) $c->id);
+
+            return response($this->shell('You are unsubscribed', 'We will not send you any more emails from CVTara. If this was a mistake, write to support@cvtara.com.', null), 200, ['X-Robots-Tag' => 'noindex']);
+        }
+        if ($c->unsubscribed_at) {
+            return response($this->shell('You are already unsubscribed', 'We do not send emails to '.e($this->mask($c->email)).' any more.', null), 200, ['X-Robots-Tag' => 'noindex']);
+        }
+
+        return response($this->shell('Unsubscribe from CVTara emails?', 'This stops all emails from CVTara to '.e($this->mask($c->email)).'.', $r->fullUrl()), 200, ['X-Robots-Tag' => 'noindex']);
     }
 
     private function mask(string $e): string

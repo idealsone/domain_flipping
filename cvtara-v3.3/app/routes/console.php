@@ -34,6 +34,11 @@ Artisan::command('cvtara:cron', function () {
     } catch (\Throwable $e) {
         \App\Services\ErrorLog::exception($e);
     }
+    try {
+        \App\Services\Campaigns::run();
+    } catch (\Throwable $e) {
+        \App\Services\ErrorLog::exception($e);
+    }
     $this->info(json_encode(MailAutomation::process()));
 })->purpose('Process due mail and record cron health');
 Artisan::command('cvtara:remind', function () {
