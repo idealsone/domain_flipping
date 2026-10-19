@@ -43,7 +43,7 @@ def run(ctx, t):
     t.check("the home page compares CVTara with the usual alternatives in general terms and names no company", 'id="compare"' in home and "Typical resume builder" in home and "not statements about any named company" in home and "pay once, no auto-renewal" in home)
     t.check("the home page offers upload as well as templates", "Upload" in home and "Upload or start fresh" in home)
     t.check("customer reviews appear in one section only", home.count("lpReviews") == 1 and "What users say" not in home and "CUSTOMER FEEDBACK" not in home)
-    t.check("the FAQ is short and honest about payments and guarantees", home.count("<details") == 8 and "final and non-refundable" in home and "guarantee an interview" in home)
+    t.check("the FAQ is short and honest about payments and guarantees", home.count("<details") == 8 and "within 7 days of buying" in home and "guarantee an interview" in home)
     t.check("no placeholder or internal notes are shown to visitors", not re.search(r"replace with your facts|public launch|lorem ipsum", home, re.I))
     pv = rd("preview.js"); contact_html = ctx.client().page("/contact.html")[2]
     t.check("the footer lists Contact & support once", pv.count("Contact & support") == 1)
@@ -54,7 +54,7 @@ def run(ctx, t):
     pol = rd("site-polish.css")
     t.check("sample resume previews: readable sidebars, a neutral photo placeholder and a clear sample label", "minmax(112px,36%)" in pol and "ref-photo-placeholder" in pol and ".ref-sample" in pol and "display:flow-root" in pol)
     t.check("template names read as 'Prism layout', not internal 'suite-prism design'", "suite-" in rd("preview.js") and "layout</small>" in rd("preview.js") and "} design</small>" not in rd("preview.js"))
-    t.check("the referral section keeps one reward: 5 paying friends = free download + free month, and no 10-friend tier", "referral-offer" in home and "5</em> paying friends" in home and "1 month subscription, free" in home and "10</em> paying friends" not in home and "KEEP SHARING" not in home)
+    t.check("the referral section reads Give ₹50, get ₹50 with the 5-friend Job Hunt month and no 10-friend tier", "referral-offer" in home and "Give ₹50, get ₹50" in home and "1 Job Hunt month free" in home and "10</em> paying friends" not in home and "KEEP SHARING" not in home)
     t.check("the home page says plainly what is free and what a plan adds", 'id="get"' in home and "Free, no card" in home and "paid once" in home.lower())
     # blog
     s, _, blog = c.page("/blog.html")

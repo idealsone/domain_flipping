@@ -11,7 +11,7 @@ def run(ctx, t):
         js, css, fomo = rd("promo.js"), rd("promo.css"), rd("fomo-popup.js")
         t.check("the offer script shows a top bar and timed, exit-intent and idle pop-ups", all(k in js for k in ("mouseout", "'idle'", "triggers.popup", "cvp-bar", "visibilityState")))
         t.check("the coupon travels with the visitor into sign-up and checkout", "cvtara-promo-intent" in js and "/register?next=" in js and "coupon=" in js and "cvtara-promo-intent" in rd("business-ui.js"))
-        t.check("the offer shows a copy button, countdown and the no-refund note", "data-copy" in js and "data-count" in js and "non-refundable" in js)
+        t.check("the offer shows a copy button, countdown and the refund note", "data-copy" in js and "data-count" in js and "7-day refund if unused" in js)
         t.check("pop-ups respect reduced motion and fit phones", "prefers-reduced-motion" in css and "max-width:640px" in css)
         t.check("the activity notice shows a name only for real buyers and never invents any", "Verified purchase" in fomo and "kind === 'purchase'" in fomo and "Math.random" not in fomo)
         t.check("checkout offers an optional, unticked-by-default naming choice", 'id="coActivity"' in open(os.path.join(ctx.app, "resources/frontend/checkout.html"), encoding="utf8").read() and "showInActivity" in rd("checkout-options.js"))

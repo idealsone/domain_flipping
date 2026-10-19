@@ -19,7 +19,7 @@ def run(ctx, t):
     s, _, g = ctx.client().page("/customer-guide.html")
     low = g.lower()
     t.check("customer guide loads", s == 200 and "customer guide" in low)
-    for needle in ("cvtara.com", "support@cvtara.com", "non-refundable", "primary resume", "cover letters", "downloads", "refer"):
+    for needle in ("cvtara.com", "support@cvtara.com", "within 7 days", "primary resume", "cover letters", "downloads", "refer"):
         t.check(f"guide covers: {needle}", needle in low, needle)
     t.check("guide has a dark-mode theme and mobile layout", "html.dark" in g and "@media(max-width:900px)" in g)
     t.check("guide has no placeholder addresses", "example.com" not in low and "yourdomain" not in low)

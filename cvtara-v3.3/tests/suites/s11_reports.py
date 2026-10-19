@@ -34,9 +34,9 @@ def run(ctx, t):
     c = ctx.client()
     for p in ("/refund.html",):
         s, _, html = c.page(p); low = html.lower()
-        t.check(f"{p} states that payments are final and non-refundable", "final" in low and "non-refundable" in low and "duplicate" not in low, s)
-    s, _, html = c.page("/checkout.html"); t.check("checkout tells customers payments are final", "non-refundable" in html.lower())
-    s, _, html = c.page("/terms.html"); t.check("terms point to the no-refund policy", "non-refundable" in html.lower())
+        t.check(f"{p} states the 7-day refund if unused, once per customer", "within 7 days" in low and "once per customer" in low and "non-refundable" not in low, s)
+    s, _, html = c.page("/checkout.html"); t.check("checkout tells customers about the 7-day refund", "within 7 days" in html.lower())
+    s, _, html = c.page("/terms.html"); t.check("terms point to the refund policy", "within 7 days" in html.lower() and "non-refundable" not in html.lower())
 
     # F-25 verified review needs a real paying customer
     body = {"name": "Priya", "content": "Great product, helped me a lot.", "rating": 5, "source": "verified", "consent": True, "consentReference": "email on 2026-10-01", "customerEmail": "rep-a@test.local"}
