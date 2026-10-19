@@ -28,6 +28,7 @@ Artisan::command('cvtara:cron', function () {
         \App\Services\ErrorLog::exception($e);
     }
     CashfreePayouts::reconcile();
+    \App\Services\Campaigns::run();
     $this->info(json_encode(MailAutomation::process()));
 })->purpose('Process due mail and record cron health');
 Artisan::command('cvtara:remind', function () {

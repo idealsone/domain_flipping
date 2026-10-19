@@ -552,7 +552,7 @@ class ApiController extends Controller
         abort_if(DB::table('withdrawals')->where('owner_id', $u->id)->whereIn('status', ['requested', 'processing'])->exists(), 422, 'Finish or cancel your open withdrawal first.');
         DB::transaction(function () use ($u) {
             $id = $u->id;
-            foreach (['resume_drafts', 'cover_letter_drafts', 'applications', 'feedback', 'profiles', 'payout_profiles', 'creator_applications', 'referral_identities', 'referral_rewards', 'product_usage', 'mail_outbox'] as $t) {
+            foreach (['resume_drafts', 'cover_letter_drafts', 'applications', 'feedback', 'profiles', 'payout_profiles', 'creator_applications', 'referral_identities', 'referral_rewards', 'product_usage', 'mail_outbox', 'campaign_recipients'] as $t) {
                 DB::table($t)->where($t === 'profiles' || $t === 'payout_profiles' || $t === 'referral_identities' ? 'owner_id' : 'owner_id', $id)->delete();
             }
             // Payout records stay for finance, but the bank/UPI/PAN details inside them are erased; only the masked destination remains.

@@ -28,6 +28,9 @@ class AdminController extends Controller
         if (preg_match(SpeedAdminController::ROUTES, $path)) {
             return app(SpeedAdminController::class)->run($r, $path);
         }
+        if (preg_match(CampaignAdminController::ROUTES, $path)) {
+            return app(CampaignAdminController::class)->run($r, $path);
+        }
         if (preg_match(PromoAdminController::ROUTES, $path)) {
             return app(PromoAdminController::class)->run($r, $path);
         }
@@ -286,6 +289,7 @@ class AdminController extends Controller
         }
         if ($path === 'email/process') {
             MailAutomation::reminders();
+            \App\Services\Campaigns::run();
 
             return $ok(MailAutomation::process());
         }

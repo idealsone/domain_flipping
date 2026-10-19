@@ -17,16 +17,23 @@ use Illuminate\Support\Facades\URL;
 class EmailRenderer
 {
     /** Triggers that are marketing: they need the person's consent and always carry an unsubscribe link. */
-    public const MARKETING = ['nurture', 'blog_published', 'abandoned_purchase', 'monthly_digest'];
+    public const MARKETING = ['nurture', 'blog_published', 'abandoned_purchase', 'monthly_digest', 'campaign'];
 
     public static function isMarketing(string $trigger): bool
     {
         return in_array($trigger, self::MARKETING, true);
     }
 
-    public static function unsubscribeUrl(int $userId): string
+    /** A campaign id is carried in the signed link so the campaign report can count who unsubscribed from it. */
+    public static function unsubscribeUrl(int $userId, ?string $campaignId = null): string
     {
-        return URL::signedRoute('email.unsubscribe', ['user' => $userId]);
+        return URL::signedRoute('email.unsubscribe', ['user' => $userId] + ($campaignId ? ['c' => $campaignId] : []));
+    }
+
+    /** Imported contacts have no account: their link carries their own random token instead of a signature. */
+    public static function contactUnsubscribeUrl(string $token, ?string $campaignId = null): string
+    {
+        return rtrim((string) config('app.url'), '/').'/email/unsubscribe/c/'.$token.($campaignId ? '?c='.$campaignId : '');
     }
 
     private static function e(string $s): string
@@ -35,7 +42,7 @@ class EmailRenderer
     }
 
     /** @return array{html:string,text:string} */
-    public static function render(string $subject, string $body, bool $marketing = false, ?int $userId = null, string $preheader = ''): array
+    public static function render(string $subject, string $body, bool $marketing = false, ?int $userId = null, string $preheader = '', ?string $unsubUrl = null): array
     {
         $site = rtrim((string) config('app.url'), '/');
         $support = 'support@cvtara.com';
@@ -109,12 +116,12 @@ class EmailRenderer
         }
 
         $footerReason = $marketing
-            ? 'You are receiving this because you have a CVTara account and chose to get tips and plan updates.'
+            ? ($userId || ! $unsubUrl ? 'You are receiving this because you have a CVTara account and chose to get tips and plan updates.' : 'You are receiving this because you agreed to hear from CVTara.')
             : 'You are receiving this because of activity on your CVTara account.';
         $unsub = '';
         $unsubText = '';
-        if ($marketing && $userId) {
-            $u = self::unsubscribeUrl($userId);
+        if ($marketing && ($unsubUrl || $userId)) {
+            $u = $unsubUrl ?: self::unsubscribeUrl($userId);
             $unsub = '<br><a href="'.self::e($u).'" style="color:#64748b;text-decoration:underline">Unsubscribe</a> from these emails any time.';
             $unsubText = "\nUnsubscribe from these emails any time: ".$u."\n";
         }
