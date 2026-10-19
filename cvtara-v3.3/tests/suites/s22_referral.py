@@ -17,7 +17,7 @@ def run(ctx, t):
         fid = db.q("select id from users where email=?", em)[0][0]
         if pay:
             db.q("insert into purchases(id,owner_id,plan,amount_paise,status,provider,payment_reference,is_live,limits_json,access_days,purchased_at,access_until,created_at,updated_at) values(?,?,?,?,?,?,?,?,?,?,datetime('now','-8 days'),datetime('now','+22 days'),datetime('now','-8 days'),datetime('now','-8 days'))",
-                 str(uuid.uuid4()), fid, "job-hunt", 29900, "paid", "cashfree", "ref-pay-" + str(n), 1, "{}", 30)
+                 str(uuid.uuid4()), fid, "job-hunt", 29900, "paid", "razorpay", "ref-pay-" + str(n), 1, "{}", 30)
         return fid
     for n in range(4): friend(n)
     friend(90, pay=False)  # signed up but never paid: does not count

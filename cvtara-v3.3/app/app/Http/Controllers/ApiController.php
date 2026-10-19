@@ -6,7 +6,6 @@ use App\Models\User;
 use App\Services\AccountSecurity;
 use App\Services\AffiliateProfiles;
 use App\Services\BusinessControls;
-use App\Services\CashfreeCheckout;
 use App\Services\Credits;
 use App\Services\JobPage;
 use App\Services\MailAutomation;
@@ -392,7 +391,7 @@ class ApiController extends Controller
             }
             Payments::guardAddon($u, $r->plan);
 
-            return $ok(Payments::start($u, $r->plan, (string) $r->input('phone', ''), (string) $r->input('coupon', ''), $r->boolean('useWallet', true)));
+            return $ok(Payments::start($u, $r->plan, (string) $r->input('coupon', ''), $r->boolean('useWallet', true)));
         }
         if ($path === 'checkout/verify' && config('app.preview') && $r->input('provider') === 'demo') {
             $r->validate(['orderId' => 'required|string|max:80']);
@@ -401,12 +400,6 @@ class ApiController extends Controller
             return $ok();
         }
         if ($path === 'checkout/verify') {
-            if ($r->input('provider') === 'cashfree') {
-                $r->validate(['orderId' => 'required|string|max:45']);
-                CashfreeCheckout::verify($u, $r->orderId);
-
-                return $ok();
-            }
             $v = $r->validate(['razorpay_order_id' => 'required|string|max:100', 'razorpay_payment_id' => 'required|string|max:100', 'razorpay_signature' => 'required|string|size:64']);
             Payments::verify($u, $v);
 
@@ -419,7 +412,7 @@ class ApiController extends Controller
 
             $referredUsers = User::where('referred_by', $id)
                 ->select('id', 'created_at', 'email_verified_at', 'blocked')
-                ->selectSub(DB::table('purchases')->selectRaw('COUNT(*)')->whereColumn('owner_id', 'users.id')->where('status', 'paid')->where('is_live', true)->whereIn('provider', ['razorpay', 'cashfree'])->where('amount_paise', '>=', Referrals::config()['minQualifyingPaise'])->where('refunded_paise', 0)->whereNotNull('payment_reference')->where('plan', '!=', 'free'), 'qualifying_payments')
+                ->selectSub(DB::table('purchases')->selectRaw('COUNT(*)')->whereColumn('owner_id', 'users.id')->where('status', 'paid')->where('is_live', true)->whereIn('provider', ['razorpay'])->where('amount_paise', '>=', Referrals::config()['minQualifyingPaise'])->where('refunded_paise', 0)->whereNotNull('payment_reference')->where('plan', '!=', 'free'), 'qualifying_payments')
                 ->selectSub(DB::table('referral_identities')->selectRaw('COUNT(*)')->whereColumn('owner_id', 'users.id')->where('status', 'verified'), 'verified_phone')
                 ->orderByDesc('created_at')->limit(200)->get()->map(fn ($friend) => [
                     'label' => 'Friend '.substr(hash_hmac('sha256', (string) $friend->id, config('app.key')), 0, 6),

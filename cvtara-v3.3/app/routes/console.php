@@ -1,7 +1,6 @@
 <?php
 
 use App\Models\User;
-use App\Services\CashfreePayouts;
 use App\Services\MailAutomation;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\DB;
@@ -27,7 +26,6 @@ Artisan::command('cvtara:cron', function () {
     } catch (\Throwable $e) {
         \App\Services\ErrorLog::exception($e);
     }
-    CashfreePayouts::reconcile();
     $this->info(json_encode(MailAutomation::process()));
 })->purpose('Process due mail and record cron health');
 Artisan::command('cvtara:remind', function () {

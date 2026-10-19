@@ -99,7 +99,7 @@ def main():
         except ValueError: routes = []
         uris = {x["uri"] for x in routes}
         check("routes load", r.returncode == 0 and len(routes) > 20, (r.stderr or r.stdout)[-300:])
-        check("key routes exist", all(any(u.startswith(k) for u in uris) for k in ("api/", "export/", "support/report", "console/", "webhooks/cashfree", "login", "register")), sorted(uris)[:10])
+        check("key routes exist", all(any(u.startswith(k) for u in uris) for k in ("api/", "export/", "support/report", "console/", "webhooks/razorpay", "login", "register")), sorted(uris)[:10])
         r = subprocess.run(["php", "artisan", "migrate", "--force"], cwd=site, env=env, capture_output=True, text=True)
         check("migrations run on an empty SQLite database", r.returncode == 0, (r.stdout + r.stderr)[-400:])
         r = subprocess.run(["php", "artisan", "cvtara:prebuild"], cwd=site, env=env, capture_output=True, text=True)

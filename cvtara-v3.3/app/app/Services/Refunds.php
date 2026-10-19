@@ -119,11 +119,9 @@ class Refunds
         try {
             if (in_array($p->provider, ['demo', 'manual'], true)) {
                 DB::table('purchases')->where('id', $p->id)->update(['refunded_paise' => $p->amount_paise, 'status' => 'refunded', 'updated_at' => now()]);
-            } elseif ($p->provider === 'cashfree') {
-                CashfreeCheckout::refund($p, $refundId);
             } elseif ($p->provider === 'razorpay') {
                 $k = Settings::providers()['payments'] ?? [];
-                Http::withBasicAuth($k['razorpayKeyId'] ?? '', $k['razorpayKeySecret'] ?? '')->timeout(20)->post('https://api.razorpay.com/v1/payments/'.rawurlencode((string) $p->payment_reference).'/refund', ['amount' => $p->amount_paise, 'receipt' => $refundId])->throw();
+                Http::withBasicAuth($k['razorpayKeyId'] ?? '', $k['razorpayKeySecret'] ?? '')->timeout(20)->post(Payments::api().'/payments/'.rawurlencode((string) $p->payment_reference).'/refund', ['amount' => $p->amount_paise, 'receipt' => $refundId])->throw();
             } else {
                 throw ValidationException::withMessages(['refund' => 'This order was not paid through a gateway. Refund it by hand and record it.']);
             }

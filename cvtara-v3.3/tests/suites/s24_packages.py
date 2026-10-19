@@ -115,9 +115,9 @@ def run(ctx, t):
         if n: c.register(em, ref=code)
         fid = uid(em)
         db.q("insert into purchases(id,owner_id,plan,amount_paise,referral_discount_paise,status,provider,payment_reference,is_live,limits_json,access_days,purchased_at,access_until,created_at,updated_at) values(?,?,?,?,?,?,?,?,?,?,?,datetime('now',?),datetime('now','+30 days'),datetime('now'),datetime('now'))",
-             str(uuid.uuid4()), fid, "job-hunt", 24900, 5000, "paid", "cashfree", "pk-pay-" + str(n), 1, "{}", 30, f"-{days_ago} days")
+             str(uuid.uuid4()), fid, "job-hunt", 24900, 5000, "paid", "razorpay", "pk-pay-" + str(n), 1, "{}", 30, f"-{days_ago} days")
     q = ctx.client(); q.register("pk-friendq@test.local", ref=code)
-    db.q("insert into purchases(id,owner_id,plan,amount_paise,status,provider,payment_reference,is_live,limits_json,access_days,purchased_at,access_until,created_at,updated_at) values(?,?,'quick',9900,'paid','cashfree','pk-pay-q',1,'{}',7,datetime('now','-10 days'),datetime('now','-3 days'),datetime('now'),datetime('now'))", str(uuid.uuid4()), uid("pk-friendq@test.local"))
+    db.q("insert into purchases(id,owner_id,plan,amount_paise,status,provider,payment_reference,is_live,limits_json,access_days,purchased_at,access_until,created_at,updated_at) values(?,?,'quick',9900,'paid','razorpay','pk-pay-q',1,'{}',7,datetime('now','-10 days'),datetime('now','-3 days'),datetime('now'),datetime('now'))", str(uuid.uuid4()), uid("pk-friendq@test.local"))
     t.check("a friend who only bought Quick Download does not earn the referrer credit", boss.api("GET", "wallet")[1]["balancePaise"] == 0)
     s, j = q.api("POST", "checkout/quote", {"plan": "pro"})
     t.check("that friend still gets Rs 50 off their first Rs 299+ order", s == 200 and j["referralDiscountPaise"] == 5000, j)

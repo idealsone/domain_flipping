@@ -540,7 +540,6 @@
 <select class="form-control">
 <option>All providers</option>
 <option>Razorpay</option>
-<option>Cashfree</option>
 <option>Paytm</option>
 </select>
 </div>
@@ -578,7 +577,7 @@
 <td>#RD-1081</td>
 <td>rohan@example.com</td>
 <td>Single</td>
-<td>Cashfree</td>
+<td>Razorpay</td>
 <td>₹99</td>
 <td>
 <span class="template-badge">Paid</span>
@@ -958,7 +957,6 @@
 <h3>Payment gateways</h3>
 <div class="gateway-tabs">
 <button type="button" class="active" data-gateway="razorpay">Razorpay</button>
-<button type="button" data-gateway="cashfree">Cashfree</button>
 <button type="button" data-gateway="paytm">Paytm</button>
 </div>
 <section data-gateway-panel="razorpay">
@@ -973,18 +971,6 @@
 <option>Live</option>
 </select>
 </label>
-</section>
-<section data-gateway-panel="cashfree" hidden>
-<label>App ID<input>
-</label>
-<label>Secret key<input type="password">
-</label>
-<label>Environment<select>
-<option>Sandbox</option>
-<option>Production</option>
-</select>
-</label>
-<div class="admin-note">Cashfree uses the secret key to verify webhook signatures; no separate webhook secret is required.</div>
 </section>
 <section data-gateway-panel="paytm" hidden>
 <label>Merchant ID<input>

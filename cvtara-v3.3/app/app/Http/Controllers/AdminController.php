@@ -88,7 +88,7 @@ class AdminController extends Controller
         }
         if ($path === 'providers') {
             $p = Settings::providers();
-            $fields = ['payouts' => ['enabled', 'mode', 'cashfreeClientId', 'cashfreeClientSecret', 'cashfreePublicKey', 'maxTransferRupees', 'acceptanceConfirmed'], 'jobreader' => ['enabled', 'provider', 'scrapingbeeApiKey', 'zenrowsApiKey', 'customUrlTemplate', 'customApiKey', 'dailyLimit'], 'payments' => ['provider', 'mode', 'razorpayKeyId', 'razorpayKeySecret', 'razorpayWebhookSecret', 'cashfreeClientId', 'cashfreeClientSecret'], 'email' => ['provider', 'resendApiKey', 'smtpHost', 'smtpPort', 'smtpUser', 'smtpPassword', 'fromEmail', 'fromName', 'replyTo'], 'ai' => ['provider', 'writerApiKey', 'model'], 'analytics' => ['measurementId', 'searchConsoleProperty', 'searchConsoleServiceAccount'], 'push' => ['oneSignalAppId', 'oneSignalRestApiKey']];
+            $fields = ['jobreader' => ['enabled', 'provider', 'scrapingbeeApiKey', 'zenrowsApiKey', 'customUrlTemplate', 'customApiKey', 'dailyLimit'], 'payments' => ['provider', 'mode', 'razorpayKeyId', 'razorpayKeySecret', 'razorpayWebhookSecret'], 'email' => ['provider', 'resendApiKey', 'smtpHost', 'smtpPort', 'smtpUser', 'smtpPassword', 'fromEmail', 'fromName', 'replyTo'], 'ai' => ['provider', 'writerApiKey', 'model'], 'analytics' => ['measurementId', 'searchConsoleProperty', 'searchConsoleServiceAccount'], 'push' => ['oneSignalAppId', 'oneSignalRestApiKey']];
             $secret = fn ($k) => preg_match('/Secret|ApiKey|Password|ServiceAccount|AuthToken/', $k);
             if ($get) {
                 foreach ($p as &$service) {
@@ -108,18 +108,7 @@ class AdminController extends Controller
                     abort(422, 'The custom address must contain {url} where the job link goes.');
                 }
             }
-            if ($r->service === 'payouts') {
-                AccountSecurity::requireRecent($r);
-                if (DB::table('withdrawals')->where('provider', 'cashfree')->where(function ($q) {
-                    $q->where('status', 'processing')->orWhere('paid_at', '>', now()->subDays(30));
-                })->exists()) {
-                    foreach (['cashfreeClientId', 'cashfreeClientSecret', 'cashfreePublicKey', 'mode'] as $key) {
-                        $incoming = $r->values[$key] ?? '';
-                        abort_if($incoming !== '' && $incoming !== ($p['payouts'][$key] ?? ''), 422, 'Reconcile outstanding Cashfree transfers before changing credentials or mode.');
-                    }
-                }validator($r->values, ['enabled' => 'required|in:true,false', 'mode' => 'required|in:sandbox,production', 'maxTransferRupees' => 'required|integer|min:1000|max:100000', 'acceptanceConfirmed' => 'required|in:true,false'])->validate();
-                abort_if(($r->values['enabled'] ?? 'false') === 'true' && ($r->values['acceptanceConfirmed'] ?? 'false') !== 'true', 422, 'Complete Cashfree activation and sandbox acceptance first.');
-            }foreach ($r->values as $k => $v) {
+            foreach ($r->values as $k => $v) {
                 abort_unless(in_array($k, $fields[$r->service]) && is_string($v) && strlen($v) <= 12000, 422);
                 if (trim($v) !== '') {
                     $p[$r->service][$k] = trim($v);
@@ -134,10 +123,6 @@ class AdminController extends Controller
                 };
                 abort_unless($ready, 422, 'Enter the key (or address) for the selected reading service first.');
             }if ($r->service === 'payments') {
-                abort_unless(in_array($p['payments']['provider'] ?? 'razorpay', ['razorpay', 'cashfree']), 422);
-            }if ($r->service === 'payments' && ($p['payments']['provider'] ?? '') === 'cashfree') {
-                abort_unless(! empty($p['payments']['cashfreeClientId']) && ! empty($p['payments']['cashfreeClientSecret']), 422, 'Enter the Cashfree App ID and Secret key.');
-            }if ($r->service === 'payments' && ($p['payments']['provider'] ?? '') === 'razorpay') {
                 abort_unless(! empty($p['payments']['razorpayKeyId']) && ! empty($p['payments']['razorpayKeySecret']), 422, 'Enter the Razorpay Key ID and Key secret.');
             }if (! empty($p['email']['fromEmail'])) {
                 abort_unless(filter_var($p['email']['fromEmail'], FILTER_VALIDATE_EMAIL), 422);

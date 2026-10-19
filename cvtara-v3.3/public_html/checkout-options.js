@@ -65,35 +65,19 @@
   consent.onchange = state;
   window.addEventListener('cvtara-owner-content', state);
   window.addEventListener('cvtara-coupon', breakdown);
-  const phoneBox = document.createElement('label');
-  phoneBox.style.cssText = 'display:grid;gap:4px;margin:10px 0;font-weight:600;font-size:13px';
-  phoneBox.innerHTML = 'Mobile number (needed by the payment gateway)<input id="coPhone" type="tel" inputmode="numeric" maxlength="10" autocomplete="tel-national" placeholder="10-digit mobile number" style="padding:10px;border:1px solid var(--line,#cbd5e1);border-radius:10px;font:inherit">';
   const finalNote = document.createElement('p');
   finalNote.style.cssText = 'margin:6px 0;font-size:13px;font-weight:700;color:var(--ink,#0f172a)';
   finalNote.textContent = '7-day refund if unused · Pay once, no auto-renewal · UPI, cards and net banking.';
-  button.parentNode.insertBefore(phoneBox, button); button.parentNode.insertBefore(finalNote, button);
-  try { phoneBox.querySelector('input').value = localStorage.getItem('cvtara-phone') || ''; } catch { /* storage blocked */ }
+  button.parentNode.insertBefore(finalNote, button);
   button.onclick = async () => {
     if (guest) { location.href = '/login?next=' + encodeURIComponent('/checkout.html?plan=' + active); return; }
     button.disabled = true; status.textContent = 'Creating your secure order…';
     try {
-      const order = await api('/api/checkout/start', { method: 'POST', body: { plan: active, phone: document.getElementById('coPhone').value.replace(/\D/g, ''), coupon: window.CVTaraCoupon?.plan === active ? window.CVTaraCoupon.code : '', useWallet: document.getElementById('coWallet')?.checked !== false, showInActivity: !!document.getElementById('coActivity')?.checked } });
-      try { localStorage.setItem('cvtara-phone', document.getElementById('coPhone').value); } catch { /* storage blocked */ }
+      const order = await api('/api/checkout/start', { method: 'POST', body: { plan: active, coupon: window.CVTaraCoupon?.plan === active ? window.CVTaraCoupon.code : '', useWallet: document.getElementById('coWallet')?.checked !== false, showInActivity: !!document.getElementById('coActivity')?.checked } });
       if (order.provider === 'demo') {
         status.textContent = 'Demo payment (preview only) — activating your plan…';
         await api('/api/checkout/verify', { method: 'POST', body: { provider: 'demo', orderId: order.orderId } });
         status.textContent = 'Demo payment complete. Opening your dashboard…';
-        location.href = '/workspace.html?view=billing';
-        return;
-      }
-      if (order.provider === 'cashfree') {
-        if (!window.Cashfree) await new Promise((resolve, reject) => { const s = document.createElement('script'); s.src = 'https://sdk.cashfree.com/js/v3/cashfree.js'; s.onload = resolve; s.onerror = () => reject(Error('Payment checkout could not load. Retry without paying again.')); document.head.append(s); });
-        status.textContent = 'Opening secure payment…';
-        const result = await Cashfree({ mode: order.mode }).checkout({ paymentSessionId: order.paymentSessionId, redirectTarget: '_modal' });
-        if (result && result.error) { status.textContent = (result.error.message || 'Payment was not completed.') + ' If money was debited, do not pay again; check Billing shortly.'; state(); return; }
-        status.textContent = 'Verifying payment…';
-        await api('/api/checkout/verify', { method: 'POST', body: { provider: 'cashfree', orderId: order.orderId } });
-        status.textContent = 'Payment verified. Opening your dashboard…';
         location.href = '/workspace.html?view=billing';
         return;
       }

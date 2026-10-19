@@ -111,7 +111,7 @@
   async function orders() {
     const h = $('#admin-orders'); if (!h) return; h.innerHTML = '<div class="ops-skel"></div>';
     try {
-      const pl = await plans(), planOpts = Object.keys(pl).filter(k => k !== 'free').map(k => [k, planLabel(pl, k)]), provOpts = [['cashfree', 'Cashfree'], ['razorpay', 'Razorpay'], ['manual', 'Recorded by owner'], ['referral_reward', 'Referral reward'], ['demo', 'Demo']];
+      const pl = await plans(), planOpts = Object.keys(pl).filter(k => k !== 'free').map(k => [k, planLabel(pl, k)]), provOpts = [['razorpay', 'Razorpay'], ['manual', 'Recorded by owner'], ['referral_reward', 'Referral reward'], ['demo', 'Demo']];
       const sel = (id, label, opts, val) => `<label class="ops-f">${label}<select id="${id}"><option value="all">All</option>${opts.map(o => `<option value="${E(o[0])}" ${val === o[0] ? 'selected' : ''}>${E(o[1])}</option>`).join('')}</select></label>`;
       O.page = O.page || 1;
       h.innerHTML = `<div class="pg-head"><h2>All Orders</h2><p>Complete transaction history — every filter runs on the server, so nothing is cut off. Click any order for every detail.</p></div>

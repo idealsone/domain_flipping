@@ -28,4 +28,3 @@ Route::match(['GET','POST'],'/email/unsubscribe/{user}',[\App\Http\Controllers\E
 Route::middleware('auth')->group(function(){Route::get('/verify-email',[\App\Http\Controllers\EmailController::class,'verifyPage']);Route::post('/verify-email',[\App\Http\Controllers\EmailController::class,'verifySubmit'])->middleware('throttle:10,1,verify-email');Route::post('/verify-email/resend',[\App\Http\Controllers\EmailController::class,'verifyResend'])->middleware('throttle:5,1,verify-resend');});
 Route::get('/{path?}',[ContentController::class,'show'])->where('path','.*');
 
-Route::post('/webhooks/cashfree',function(Request $r){abort_if(strlen($r->getContent())>1000000,413);\App\Services\CashfreeCheckout::webhook($r->getContent(),$r->header('x-webhook-timestamp',''),$r->header('x-webhook-signature',''));return response()->json(['ok'=>true]);})->middleware('throttle:120,1,api');

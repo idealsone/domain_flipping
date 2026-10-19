@@ -5,7 +5,6 @@ namespace App\Http\Controllers;
 use App\Models\User;
 use App\Services\AccountSecurity;
 use App\Services\AffiliateProfiles;
-use App\Services\CashfreePayouts;
 use App\Services\Referrals;
 use App\Services\Settings;
 use Illuminate\Http\Request;
@@ -82,18 +81,6 @@ class AffiliateAdminController extends Controller
                     DB::table('withdrawals')->where('id', $w->id)->update(['approved_by' => $admin->id, 'approved_at' => now(), 'review_checklist_json' => json_encode($d), 'note' => $d['note'], 'updated_at' => now()]);
                     Settings::audit($admin->id, 'withdrawal_reviewed', $w->id);
                 });
-
-                return $ok();
-            }
-            if ($action === 'send') {
-                $r->validate(['confirmAmountPaise' => 'required|integer', 'confirmSend' => 'accepted']);
-                abort_unless($r->integer('confirmAmountPaise') === $w->amount_paise, 422);
-                CashfreePayouts::send($admin, $w->id);
-
-                return $ok();
-            }
-            if ($action === 'sync') {
-                CashfreePayouts::sync($w->id);
 
                 return $ok();
             }

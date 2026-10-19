@@ -10,31 +10,36 @@ use Illuminate\Validation\ValidationException;
 
 class Payments
 {
-    public static function start(User $u, string $plan, string $phone = '', string $coupon = '', bool $useWallet = true): array
+    // Razorpay's address. Tests may point it at a local stand-in, but never on a production site.
+    public static function api(): string
+    {
+        $o = env('RAZORPAY_API_BASE');
+
+        return $o && config('app.env') !== 'production' ? rtrim($o, '/') : 'https://api.razorpay.com/v1';
+    }
+
+    public static function start(User $u, string $plan, string $coupon = '', bool $useWallet = true): array
     {
         $plans = Settings::plans();
         abort_unless(isset($plans[$plan]) && $plan !== 'free', 422);
         $i = Settings::get('integrations');
         $p = Settings::providers()['payments'] ?? [];
-        $provider = $p['provider'] ?? 'cashfree';
-        $keys = $provider === 'cashfree' ? (! empty($p['cashfreeClientId']) && ! empty($p['cashfreeClientSecret'])) : (! empty($p['razorpayKeyId']) && ! empty($p['razorpayKeySecret']));
+        $keys = ! empty($p['razorpayKeyId']) && ! empty($p['razorpayKeySecret']);
         if (config('app.preview') && ! $keys) {
             return self::demoStart($u, $plan, $coupon, $useWallet);
         }
-        if (! ($i['payments'] ?? false) || ! in_array($provider, ['cashfree', 'razorpay'], true) || ! $keys) {
+        if (! ($i['payments'] ?? false) || ! $keys) {
             throw ValidationException::withMessages(['payments' => 'Checkout is not configured. The owner must enable the payment gateway and save its keys.']);
         }
-        if ($provider === 'cashfree') {
-            return CashfreeCheckout::start($u, $plan, $phone, $coupon, $useWallet);
-        }$id = (string) Str::uuid();
+        $id = (string) Str::uuid();
         $lock = $coupon !== '' ? \Illuminate\Support\Facades\Cache::lock('coupon:'.strtoupper(trim($coupon)), 25) : null;
         $lock?->block(15);
         try {
         $quote = BusinessControls::quote($plan, $coupon, $u->id, $useWallet);
         $price = $quote['totalPaise'];
         abort_unless($price > 0 && $price < 100000000, 422);
-        $result = Http::withBasicAuth($p['razorpayKeyId'], $p['razorpayKeySecret'])->timeout(20)->post('https://api.razorpay.com/v1/orders', ['amount' => $price, 'currency' => 'INR', 'receipt' => $id])->throw()->json();
-        DB::table('purchases')->insert(['id' => $id, 'owner_id' => $u->id, 'plan' => $plan, 'amount_paise' => $price, ...BusinessControls::quoteColumns($quote), 'provider_order_id' => $result['id'], 'is_live' => str_starts_with($p['razorpayKeyId'], 'rzp_live_'), 'limits_json' => json_encode($plans[$plan]), 'access_days' => $plans[$plan]['accessDays'], 'created_at' => now(), 'updated_at' => now()]);
+        $result = Http::withBasicAuth($p['razorpayKeyId'], $p['razorpayKeySecret'])->timeout(20)->post(self::api().'/orders', ['amount' => $price, 'currency' => 'INR', 'receipt' => $id])->throw()->json();
+        DB::table('purchases')->insert(['id' => $id, 'owner_id' => $u->id, 'plan' => $plan, 'amount_paise' => $price, ...BusinessControls::quoteColumns($quote), 'provider' => 'razorpay', 'provider_order_id' => $result['id'], 'is_live' => str_starts_with($p['razorpayKeyId'], 'rzp_live_'), 'limits_json' => json_encode($plans[$plan]), 'access_days' => $plans[$plan]['accessDays'], 'created_at' => now(), 'updated_at' => now()]);
         Settings::audit($u->id, 'checkout_started', $id);
         } finally {
             $lock?->release();
@@ -130,7 +135,7 @@ class Payments
         abort_unless($order, 404);
         $sig = hash_hmac('sha256', $order->provider_order_id.'|'.$d['razorpay_payment_id'], $p['razorpayKeySecret'] ?? '');
         abort_unless(! empty($p['razorpayKeySecret']) && hash_equals($sig, $d['razorpay_signature']), 403);
-        $entity = Http::withBasicAuth($p['razorpayKeyId'], $p['razorpayKeySecret'])->timeout(20)->get('https://api.razorpay.com/v1/payments/'.rawurlencode($d['razorpay_payment_id']))->throw()->json();
+        $entity = Http::withBasicAuth($p['razorpayKeyId'], $p['razorpayKeySecret'])->timeout(20)->get(self::api().'/payments/'.rawurlencode($d['razorpay_payment_id']))->throw()->json();
         abort_unless(($entity['order_id'] ?? '') === $order->provider_order_id && ($entity['id'] ?? '') === $d['razorpay_payment_id'], 422);
         self::capture($entity);
     }
