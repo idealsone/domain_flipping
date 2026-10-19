@@ -45,7 +45,7 @@ class Referrals
     public static function credit(object $p): void
     {
         // Cash commission is the older programme; the "Give ₹50, get ₹50" wallet replaced it. Balances already earned stay withdrawable.
-        if (self::config()['mode'] !== 'commission' || ! $p->is_live || $p->status !== 'paid' || ! in_array($p->provider, ['razorpay'], true) || ! self::config()['enabled']) {
+        if (self::config()['mode'] !== 'commission' || ! $p->is_live || $p->status !== 'paid' || ! in_array($p->provider, ['razorpay', 'cashfree'], true) || ! self::config()['enabled']) {
             return;
         }$buyer = User::find($p->owner_id);
         if (! $buyer?->referred_by || $buyer->referred_by === $buyer->id) {
@@ -121,7 +121,12 @@ class Referrals
             $allowed = ['requested' => ['processing', 'rejected'], 'processing' => ['paid', 'rejected']];
             if (! in_array($status, $allowed[$w->status] ?? [])) {
                 throw ValidationException::withMessages(['status' => 'This withdrawal has already changed. Refresh before continuing.']);
-            }if ($status === 'processing' && ! $w->approved_at) {
+            }
+            // A transfer started through the old payout service may have reached the bank; it can only be marked paid with its reference.
+            if ($status === 'rejected' && ! empty($w->provider_transfer_id) && trim($note) !== 'confirmed-not-sent') {
+                throw ValidationException::withMessages(['status' => 'This payout was sent through Cashfree. Check the Cashfree dashboard: if it went through, mark it paid with the UTR. If it failed, type confirmed-not-sent in the note to reject it.']);
+            }
+            if ($status === 'processing' && ! $w->approved_at) {
                 throw ValidationException::withMessages(['review' => 'Complete the identity, destination and fraud review first.']);
             }if ($status === 'paid') {
                 if ($reference !== '' && DB::table('withdrawals')->where('reference', $reference)->where('id', '!=', $id)->exists()) {

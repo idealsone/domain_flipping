@@ -60,7 +60,7 @@ class AffiliateAdminController extends Controller
 
             return $ok();
         }
-        if (preg_match('#^referrals/withdrawals/([a-f0-9-]{36})(?:/(review|send|sync))?$#', $path, $m)) {
+        if (preg_match('#^referrals/withdrawals/([a-f0-9-]{36})(?:/(review))?$#', $path, $m)) {
             $w = DB::table('withdrawals')->where('id', $m[1])->first();
             abort_unless($w, 404);
             $action = $m[2] ?? '';

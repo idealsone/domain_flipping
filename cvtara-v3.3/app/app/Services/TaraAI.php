@@ -68,7 +68,7 @@ class TaraAI
     {
         $o = env('CLAUDE_API_BASE');
 
-        return new Client(apiKey: $key, baseUrl: $o && config('app.env') !== 'production' ? rtrim($o, '/') : 'https://api.anthropic.com', requestOptions: ['timeout' => 90, 'maxRetries' => 1]);
+        return new Client(apiKey: $key, baseUrl: $o && config('app.env') !== 'production' ? rtrim($o, '/') : 'https://api.anthropic.com', requestOptions: ['timeout' => 50, 'maxRetries' => 0]);
     }
 
     public static function suggest(User $u, array $d): string
@@ -89,11 +89,12 @@ class TaraAI
             }
             DB::table('product_usage')->insert(['id' => $usage, 'owner_id' => $u->id, 'action' => 'ai', 'reference' => 'tara', 'created_at' => now(), 'updated_at' => now()]);
         });
+        @set_time_limit(120); // shared hosting often stops PHP at 30-60 seconds; a suggestion can take longer
         $prompt = $task[1]."\n\n<text>\n".$d['text']."\n</text>".(trim((string) ($d['context'] ?? '')) !== '' ? "\n\n<job>\n".$d['context']."\n</job>" : '');
         try {
             $m = self::client($p['claudeApiKey'])->beta->messages->create(
                 model: $p['model'] ?? '' ?: self::MODEL,
-                maxTokens: 16000,
+                maxTokens: 4000 + $task[2] * 2,
                 system: self::SYSTEM,
                 messages: [['role' => 'user', 'content' => $prompt]],
                 outputConfig: ['effort' => 'medium'],

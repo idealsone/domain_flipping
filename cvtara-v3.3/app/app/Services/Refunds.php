@@ -30,6 +30,9 @@ class Refunds
         if ((int) $p->amount_paise <= 0 || in_array($p->provider, ['referral_reward'], true)) {
             return 'Free and reward plans have nothing to refund.';
         }
+        if ($p->provider === 'cashfree') {
+            return 'This order was paid through our earlier payment provider. Write to support and we will refund it by hand.';
+        }
         if (! $p->purchased_at || strtotime($p->purchased_at) < now()->subDays(self::DAYS)->timestamp) {
             return 'The 7-day refund window for this order has ended.';
         }
@@ -122,6 +125,8 @@ class Refunds
             } elseif ($p->provider === 'razorpay') {
                 $k = Settings::providers()['payments'] ?? [];
                 Http::withBasicAuth($k['razorpayKeyId'] ?? '', $k['razorpayKeySecret'] ?? '')->timeout(20)->post(Payments::api().'/payments/'.rawurlencode((string) $p->payment_reference).'/refund', ['amount' => $p->amount_paise, 'receipt' => $refundId])->throw();
+                // Razorpay has accepted the full refund: end access now rather than waiting for the refund.processed webhook (which then changes nothing).
+                DB::table('purchases')->where('id', $p->id)->update(['refunded_paise' => $p->amount_paise, 'status' => 'refunded', 'updated_at' => now()]);
             } else {
                 throw ValidationException::withMessages(['refund' => 'This order was not paid through a gateway. Refund it by hand and record it.']);
             }

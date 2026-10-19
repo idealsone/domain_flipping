@@ -53,7 +53,7 @@ class Campaigns
             return DB::table('email_contacts as c')->whereNull('c.unsubscribed_at')->whereNotIn('c.email', self::suppressed())->whereNotIn('c.email', DB::table('users')->select('email'))
                 ->select('c.email', 'c.name', DB::raw('NULL as owner_id'), 'c.id as contact_id');
         }
-        $q = DB::table('users as u')->join('profiles as p', 'p.owner_id', '=', 'u.id')->where('p.marketing_consent', true)->where('u.is_admin', false)->where('u.blocked', false)->whereNotIn('u.email', self::suppressed());
+        $q = DB::table('users as u')->join('profiles as p', 'p.owner_id', '=', 'u.id')->where('p.marketing_consent', true)->whereNotNull('u.email_verified_at')->where('u.is_admin', false)->where('u.blocked', false)->whereNotIn('u.email', self::suppressed());
         if ($aud === 'customers_free') {
             $q->whereNotIn('u.id', DB::table('purchases')->whereNotNull('purchased_at')->where('provider', '!=', 'referral_reward')->select('owner_id'));
         } elseif ($aud === 'customers_paid') {

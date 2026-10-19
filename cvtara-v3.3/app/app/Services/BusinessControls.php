@@ -21,6 +21,15 @@ class BusinessControls
 
     public static function save(Request $r): array
     {
+        // Coupons saved before a plan went off sale may still list it; drop those keys instead of refusing the whole page.
+        $sale = Settings::paidPlanKeys();
+        $r->merge(['coupons' => array_map(function ($c) use ($sale) {
+            if (is_array($c) && is_array($c['plans'] ?? null)) {
+                $c['plans'] = array_values(array_intersect(array_map([Settings::class, 'planAlias'], $c['plans']), $sale));
+            }
+
+            return $c;
+        }, (array) $r->input('coupons', []))]);
         $v = $r->validate(['maintenance.enabled' => 'required|boolean', 'maintenance.title' => 'required|string|max:120', 'maintenance.message' => 'required|string|max:800', 'brand.about' => 'required|string|min:20|max:600', 'growth.enabled' => 'sometimes|boolean', 'growth.rateBps' => 'sometimes|integer|min:0|max:5000', 'growth.tierRateBps' => 'sometimes|integer|min:0|max:5000', 'growth.tierThreshold' => 'sometimes|integer|min:1|max:100000', 'growth.minimumPaise' => 'sometimes|integer|min:100|max:100000000', 'growth.holdDays' => 'sometimes|integer|min:1|max:60', 'growth.downloadThreshold' => 'sometimes|integer|min:1|max:10000', 'growth.premiumDays' => 'sometimes|integer|min:1|max:365', 'growth.minQualifyingPaise' => 'sometimes|integer|min:0|max:1000000', 'growth.proOnly' => 'sometimes|boolean', 'coupons' => 'present|array|max:100', 'coupons.*.code' => 'required|distinct|regex:/^[A-Z0-9_-]{3,30}$/', 'coupons.*.type' => 'required|in:percent,fixed', 'coupons.*.value' => 'required|integer|min:1|max:99999', 'coupons.*.enabled' => 'required|boolean', 'coupons.*.plans' => 'required|array|min:1', 'coupons.*.plans.*' => 'required|in:'.implode(',', Settings::paidPlanKeys()), 'coupons.*.expiresAt' => 'nullable|date_format:Y-m-d', 'coupons.*.maxUses' => 'nullable|integer|min:0|max:1000000', 'coupons.*.perUser' => 'nullable|integer|min:0|max:100']);
         foreach ($v['coupons'] as &$c) {
             abort_if($c['type'] === 'percent' && $c['value'] > 90, 422, 'Percentage discounts cannot exceed 90%.');
