@@ -1,9 +1,9 @@
 # CVTara v3.18.0 — Clearer, more trustworthy pages and less unused code
 
 ## 3.18.0
-- **Plainer trust points:** the footer now says "Secure payment by Cashfree · 7-day refund if unused · No auto-renewal" instead of technical badges. Checkout explains that card and UPI details are entered only in Cashfree's window.
+- **Plainer trust points:** the footer now says "Secure payment by Razorpay · 7-day refund if unused · No auto-renewal" instead of technical badges. Checkout explains that card and UPI details are entered only in Razorpay's window.
 - **Home page:** removed the leftover "all payments final" line (the 7-day refund applies), the "under 15 minutes" claim and the vague "70%+" stat (replaced with the 7-day refund). The ATS note names the current scan counts (Job Hunt 20, Pro 60). The employer list no longer claims what customers do.
-- **Privacy policy:** names Cashfree as the payment processor and drops phone verification.
+- **Privacy policy:** names Razorpay as the payment processor and drops phone verification.
 - **Removed unused code:** the old phone verification for referral rewards (Twilio settings, send/check endpoints, held-review panel and launch-check line), the unused 10-friend reward setting, the unlinked guide.js script and an audit script for the removed feature.
 
 ## 3.16.0

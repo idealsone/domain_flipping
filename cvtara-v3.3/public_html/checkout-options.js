@@ -13,7 +13,7 @@
     button.disabled = !guest && (!consent.checked || !live || !plans[active]);
     status.innerHTML = guest ? 'Please <a href="/login?next=' + encodeURIComponent('/checkout.html?plan=' + active) + '">sign in</a> or <a href="/register?next=' + encodeURIComponent('/checkout.html?plan=' + active) + '">create a free account</a> to buy a plan.'
       : !live ? 'Payments are not enabled yet. Please check back soon.'
-      : consent.checked ? 'Your payment is handled securely by Cashfree. Access activates after verification.' : 'Accept the policies to continue.';
+      : consent.checked ? 'Your payment is handled securely by Razorpay. Access activates after verification.' : 'Accept the policies to continue.';
   }
   let quoteSeq = 0;
   async function breakdown() {
