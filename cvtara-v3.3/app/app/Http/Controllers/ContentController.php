@@ -31,6 +31,10 @@ class ContentController extends Controller
                 $rows[] = ['path' => '/guides/'.$slug.'/', 'title' => $p['title'], 'description' => $p['description'], 'included' => true];
             }
         }
+        foreach (\App\Services\SeoPages::paths() as $path) {
+            $page = \App\Services\SeoPages::find($path);
+            $rows[] = ['path' => '/'.$path, 'title' => $seo['pages']['/'.$path]['title'] ?? $page['title'], 'description' => $seo['pages']['/'.$path]['description'] ?? $page['description'], 'included' => $seo['pages']['/'.$path]['includeInSitemap'] ?? true];
+        }
 
         return $rows;
     }
@@ -47,6 +51,45 @@ class ContentController extends Controller
 
             return [...$p, 'primary' => $primary, 'titleHits' => $n($p['title']), 'descriptionHits' => $n($p['description']), 'headingHits' => $n(implode(' ', preg_grep('/^#+ /', explode("\n", $body)))), 'bodyHits' => $n($body), 'altHits' => $n($post['imageAlt'] ?? ''), 'wordCount' => $words, 'score' => (int) (($p['title'] ? 20 : 0) + ($p['description'] ? 20 : 0) + ($words > 250 ? 20 : 0) + (! empty($post['imageAlt']) ? 20 : 0) + (! empty($post['faq']) ? 20 : 0))];
         }, $this->pages());
+    }
+
+    /**
+     * Ties a guide into the programmatic pages: links the first mention of a few key phrases (at most 3, only inside
+     * paragraphs that have no link yet) and adds an "Explore" box chosen by the guide's topic.
+     */
+    private function articleLinks(string $slug, string $copy): array
+    {
+        $phrases = ['resume examples' => '/resume-examples/', 'cover letter' => '/cover-letter-examples/', 'interview questions' => '/interview-questions/', 'action verbs' => '/resume-words/', 'ATS' => '/ats-checker/', 'resume template' => '/resume-templates/ats-friendly/'];
+        $added = 0;
+        foreach ($phrases as $phrase => $url) {
+            if ($added >= 3) {
+                break;
+            }
+            $done = false;
+            $copy = preg_replace_callback('#<p>((?:(?!</p>).)*)</p>#s', function ($m) use ($phrase, $url, &$done) {
+                if ($done || str_contains($m[1], '<a ')) {
+                    return $m[0];
+                }
+                $out = preg_replace('/\b('.preg_quote($phrase, '/').')\b/i', '<a href="'.$url.'">$1</a>', $m[1], 1, $n);
+                if ($n) {
+                    $done = true;
+                }
+
+                return '<p>'.$out.'</p>';
+            }, $copy);
+            $added += $done ? 1 : 0;
+        }
+        $topic = explode('/', $slug)[0];
+        $sets = [
+            'resume' => [['/resume-examples/', 'Resume examples by field'], ['/resume-words/', 'Better words for your resume'], ['/resume-templates/ats-friendly/', 'ATS-friendly templates'], ['/resume-examples/student/freshers/', 'Freshers resume example'], ['/ats-checker/', 'Free ATS check']],
+            'cover-letter' => [['/cover-letter-examples/', 'Cover letter examples by industry'], ['/resume-examples/', 'Resume examples'], ['/ats-checker/', 'Free ATS check']],
+            'interview' => [['/interview-questions/', 'Interview questions by role'], ['/interview-questions/freshers/', 'Interview questions for freshers'], ['/resume-examples/', 'Resume examples']],
+            'jobs' => [['/resume-builder/india/', 'Resume tips by city'], ['/resume-examples/', 'Resume examples'], ['/interview-questions/', 'Interview questions'], ['/ats-checker/', 'Free ATS check']],
+        ];
+        $links = $sets[$topic] ?? [['/resume-builder/india/', 'Resume tips by city'], ['/resume-examples/', 'Resume examples by field'], ['/interview-questions/', 'Interview questions by role']];
+        $explore = '<nav class="article-explore" aria-label="Explore"><h2>Explore next</h2><ul>'.implode('', array_map(fn ($l) => '<li><a href="'.$l[0].'">'.e($l[1]).'</a></li>', $links)).'</ul></nav>';
+
+        return [$copy, $explore];
     }
 
     public function show(Request $r, string $path = '')
@@ -69,6 +112,11 @@ class ContentController extends Controller
         $aliases = ['resume-builder' => 'workspace.html?view=builder', 'resume-templates' => 'templates.html', 'cover-letter' => 'workspace.html?view=letter', 'resume-match' => 'workspace.html?view=match', 'admin' => 'admin.html', 'privacy-policy' => 'privacy.html', 'terms-and-conditions' => 'terms.html', 'about-us' => 'about.html', 'contact-us' => 'contact.html'];
         if (isset($aliases[$path])) {
             return redirect('/'.$aliases[$path]);
+        }
+        // Programmatic SEO pages (resume examples, city guides, interview questions...). Always served at a trailing-slash address.
+        $seoPage = \App\Services\SeoPages::owns($path) ? \App\Services\SeoPages::find($path) : null;
+        if ($seoPage) {
+            $path = ltrim($seoPage['path'], '/');
         }
         if ($path === 'article' || $path === 'article.html') {
             abort_unless(preg_match('#^[a-z0-9][a-z0-9/-]{0,160}$#', $r->query('slug', '')), 404);
@@ -111,11 +159,15 @@ class ContentController extends Controller
             abort_if($post && (! $post['published']), 404);
             abort_unless(Settings::get('features')['blog']['enabled'], 404);
         }
-        $full = realpath(resource_path('frontend/'.$file));
-        if (! $full && $post) {
-            $full = resource_path('frontend/article.html');
-        }abort_unless($full && str_starts_with($full, resource_path('frontend/')) && str_ends_with($full, '.html'), 404);
-        $html = file_get_contents($full);
+        if ($seoPage) {
+            $html = \App\Services\SeoPages::render($seoPage);
+        } else {
+            $full = realpath(resource_path('frontend/'.$file));
+            if (! $full && $post) {
+                $full = resource_path('frontend/article.html');
+            }abort_unless($full && str_starts_with($full, resource_path('frontend/')) && str_ends_with($full, '.html'), 404);
+            $html = file_get_contents($full);
+        }
         if ($post) {
             $title = e($post['title']);
             // The cover: a drawn card in the topic's colours (cannot go black or break), or the owner's own picture with a safe fallback.
@@ -183,7 +235,10 @@ class ContentController extends Controller
             if ($related->isNotEmpty()) {
                 $after .= '<section class="article-related" aria-label="Related reading"><h2>Keep reading</h2><div>'.$related->map(fn ($p, $k) => '<a href="'.(($p['type'] ?? '') === 'Calculator' ? '/calculators/' : '/guides/').e($k).'/"><span>'.e($p['category'] ?? '').'</span><b>'.e($p['title']).'</b><small>'.e(Str::limit((string) ($p['description'] ?? ''), 110)).'</small></a>')->implode('').'</div></section>';
             }
-            $copy .= ($faq ? '<section class="owner-faq" id="faq"><h2>Frequently asked questions</h2>'.$faq.'</section>' : '').$after;
+            [$copy, $explore] = $this->articleLinks($slug, $copy);
+            $copy .= ($faq ? '<section class="owner-faq" id="faq"><h2>Frequently asked questions</h2>'.$faq.'</section>' : '').$explore.$after;
+            $crumbs = '<nav class="article-crumbs" aria-label="Breadcrumb"><ol><li><a href="/">Home</a></li><li><a href="/blog.html">Career guides</a></li><li><span aria-current="page">'.$title.'</span></li></ol></nav>';
+            $html = preg_replace('#(<article class="article">)#', '$1'.addcslashes($crumbs, '\\$'), $html, 1);
             $postFaq = $faqPairs;
             $html = preg_replace_callback('#<div id="articleContent"[^>]*>.*?</div></article>#s', fn () => '<div id="articleContent" data-editorial="true">'.$copy.'</div></article>', $html);
             $html = str_replace('data-page="article"', 'data-page="article" data-article-slug="'.e($slug).'"', $html);
@@ -201,8 +256,8 @@ class ContentController extends Controller
         $abs = fn ($u) => preg_match('#^https?://#', $u) ? $u : $siteBase.$u;
         $uri = '/'.$path;
         $custom = $seo['pages'][$uri] ?? [];
-        $title = $custom['title'] ?? $post['title'] ?? null;
-        $description = $custom['description'] ?? $post['description'] ?? null;
+        $title = $custom['title'] ?? $post['title'] ?? $seoPage['title'] ?? null;
+        $description = $custom['description'] ?? $post['description'] ?? $seoPage['description'] ?? null;
         if ($title) {
             $html = preg_replace('#<title>.*?</title>#s', '<title>'.e($title).' | CVTara</title>', $html);
         }if ($description) {
@@ -220,6 +275,9 @@ class ContentController extends Controller
         if ($post || in_array($path, ['blog.html', 'contact.html'])) {
             $head .= '<link rel="stylesheet" href="/blog-v2.css">';
         }
+        if ($post) {
+            $head .= '<link rel="stylesheet" href="/seo-pages.css">';
+        }
         if ($path === 'workspace.html') {
             $head .= '<link rel="stylesheet" href="/support-widget.css">'; // the feedback button belongs to signed-in customers only
         }
@@ -233,6 +291,11 @@ class ContentController extends Controller
         $pageTitle = html_entity_decode($titleMatch[1] ?? 'CVTara — Resume and cover-letter builder', ENT_QUOTES, 'UTF-8');
         $pageDescription = html_entity_decode($descriptionMatch[1] ?? 'Create your resume, write a matching cover letter and prepare your next application with CVTara.', ENT_QUOTES, 'UTF-8');
         $shareImage = ! empty($post['imageUrl']) ? $post['imageUrl'] : '/assets/brand/cvtara-social.png';
+        if ($seoPage) {
+            foreach (\App\Services\SeoPages::schema($seoPage, $siteBase) as $block) {
+                $head .= '<script type="application/ld+json">'.json_encode($block, JSON_HEX_TAG | JSON_HEX_AMP | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE).'</script>';
+            }
+        }
         $head .= '<meta property="og:site_name" content="CVTara"><meta property="og:title" content="'.e($pageTitle).'"><meta property="og:description" content="'.e($pageDescription).'"><meta property="og:url" content="'.e($siteBase.$uri).'"><meta property="og:type" content="'.($post ? 'article' : 'website').'"><meta property="og:image" content="'.e($abs($shareImage)).'"><meta property="og:image:alt" content="CVTara — Your next move starts here."><meta name="twitter:card" content="summary_large_image"><meta name="twitter:image" content="'.e($abs($shareImage)).'">';
         if ($path === '') {
             $head .= '<script type="application/ld+json">'.json_encode(['@context' => 'https://schema.org', '@type' => 'WebSite', 'name' => 'CVTara', 'url' => $siteBase.'/', 'publisher' => ['@type' => 'Organization', 'name' => 'CVTara', 'logo' => $siteBase.'/assets/brand/cvtara-mark.svg', 'email' => 'support@cvtara.com', 'address' => ['@type' => 'PostalAddress', 'addressLocality' => 'Bangalore', 'addressCountry' => 'IN']]], JSON_HEX_TAG | JSON_HEX_AMP | JSON_UNESCAPED_SLASHES).'</script>';

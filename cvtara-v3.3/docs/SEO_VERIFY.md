@@ -1,0 +1,140 @@
+# SEO pages: facts to verify before switching on search indexing
+
+The programmatic pages (see `tools/seo/`) use broad, well-known descriptions of each place. Before indexing, the owner should confirm each item below, edit `tools/seo/*.py` if anything is wrong, run `python3 tools/seo/build_seo_data.py` and rebuild the ready-made pages.
+
+## Rules the content follows
+- No salary figures, user counts, rankings or guarantees are published. Add a salary range only with a named, current source.
+- No template counts are stated.
+- Sample resume lines are labelled as samples; numbers in them are illustrative and readers are told to use their own.
+- Job sources are generic (company career pages, placement cells, referrals, the National Career Service portal, job portals with a location filter). No job site is named.
+
+## Site-wide
+- [ ] Hero trust line on every SEO page: "Free to build and preview · Pay once, no auto-renewal · Secure UPI and cards · Built by working recruiters". Update when the 7-day refund launches.
+- [ ] The National Career Service portal is still the Government of India job portal (ncs.gov.in).
+- [ ] Character limits and policies quoted for job sites (none quoted today).
+
+## States (public service commission names and main industries)
+- [ ] Uttar Pradesh: Uttar Pradesh Public Service Commission (UPPSC); industries: IT and electronics around Noida and Greater Noida, Education and coaching, Manufacturing, Government services
+- [ ] Maharashtra: Maharashtra Public Service Commission (MPSC); industries: Banking and finance in Mumbai, IT and automotive in Pune, Manufacturing, Media and entertainment
+- [ ] Tamil Nadu: Tamil Nadu Public Service Commission (TNPSC); industries: Automotive and manufacturing, IT services, Textiles, Healthcare
+- [ ] Karnataka: Karnataka Public Service Commission (KPSC); industries: IT and start-ups in Bangalore, Electronics and aerospace, Manufacturing, Education
+- [ ] Telangana: Telangana State Public Service Commission (TSPSC); industries: IT and global capability centres, Pharma and life sciences, Business services
+- [ ] Andhra Pradesh: Andhra Pradesh Public Service Commission (APPSC); industries: Ports and logistics, Pharma, Agriculture and food processing, IT
+- [ ] West Bengal: West Bengal Public Service Commission (WBPSC); industries: IT services, Banking and finance, Education, Trade and logistics
+- [ ] Bihar: Bihar Public Service Commission (BPSC); industries: Government services, Education, Retail and trade, Healthcare
+- [ ] Rajasthan: Rajasthan Public Service Commission (RPSC); industries: Tourism and hospitality, Handicrafts and textiles, Education, Government services
+- [ ] Kerala: Kerala Public Service Commission (Kerala PSC); industries: Healthcare and nursing, Tourism and hospitality, IT, Overseas employment
+
+## Cities (employer types, local tips, Tier 2 specialty role)
+- [ ] Bangalore (Tier 1, karnataka): IT services and product companies, Start-ups, Global capability centres, Electronics and aerospace
+- [ ] Hyderabad (Tier 1, telangana): IT and global capability centres, Pharma and life sciences, BPO and business services
+- [ ] Pune (Tier 1, maharashtra): IT services, Automotive and engineering, Manufacturing, Education
+- [ ] Chennai (Tier 1, tamil-nadu): Automotive and manufacturing, IT services, Banking operations, Healthcare
+- [ ] Mumbai (Tier 1, maharashtra): Banking and financial services, Media and advertising, Trade and logistics, Corporate headquarters
+- [ ] Delhi (Tier 1, Delhi): Government and public sector, Education and coaching, Retail and trade, Media and consulting
+- [ ] Noida (Tier 1, uttar-pradesh): IT and electronics, BPO and customer service, Media, Manufacturing
+- [ ] Gurgaon (Tier 1, Haryana): Corporate headquarters, BPO and business services, Consulting and finance, Hospitality
+- [ ] Kolkata (Tier 1, west-bengal): IT services, Banking and finance, Education, Trade and logistics
+- [ ] Ahmedabad (Tier 1, Gujarat): Chemicals and pharma, Textiles, Manufacturing, Trade and finance
+- [ ] Kochi (Tier 1, kerala): Healthcare and nursing, Ports, logistics and shipping, IT parks, Tourism and hospitality
+- [ ] Coimbatore (Tier 1, tamil-nadu): Textiles, Pumps, motors and engineering, IT services, Education
+- [ ] Jaipur (Tier 1, rajasthan): Tourism and hospitality, Handicrafts and gems, Education, IT and BPO
+- [ ] Chandigarh (Tier 1, Chandigarh): Government and public services, Banking, IT and BPO, Healthcare
+- [ ] Indore (Tier 1, Madhya Pradesh): Trade and FMCG distribution, IT services, Education, Logistics
+- [ ] Lucknow (Tier 2, uttar-pradesh): Government services, Education, Healthcare, Retail; specialty: government-jobs (Lucknow is the state capital, so administrative and government roles are common.)
+- [ ] Bhubaneswar (Tier 2, Odisha): IT services, Education, Metals and mining support, Government; specialty: software-engineer (The city has a growing IT services presence.)
+- [ ] Nagpur (Tier 2, maharashtra): Logistics and warehousing, Education, Healthcare, Trade; specialty: logistics-executive (Its central location makes logistics and warehousing a common field.)
+- [ ] Visakhapatnam (Tier 2, andhra-pradesh): Ports and shipping, Steel and heavy industry, Pharma, IT; specialty: logistics-executive (Port and shipping activity creates logistics roles.)
+- [ ] Mysore (Tier 2, karnataka): IT and BPO, Tourism, Education, Manufacturing; specialty: customer-support (BPO and support centres are a common employer type.)
+- [ ] Vadodara (Tier 2, Gujarat): Chemicals and petrochemicals, Engineering, Education, Pharma; specialty: chemical-engineer (Chemical and process industries are a major employer type.)
+- [ ] Surat (Tier 2, Gujarat): Textiles, Diamond processing, Trade, Manufacturing; specialty: textile-production (Textiles are one of the main industries.)
+- [ ] Thiruvananthapuram (Tier 2, kerala): IT parks, Government services, Healthcare, Education; specialty: staff-nurse (Healthcare employs many nurses.)
+- [ ] Mangalore (Tier 2, karnataka): Ports and logistics, Banking, Healthcare and education, Petrochemicals; specialty: staff-nurse (Hospitals and medical colleges are major employers.)
+- [ ] Patna (Tier 2, bihar): Government services, Education and coaching, Healthcare, Retail; specialty: government-jobs (Government jobs are a major goal for many job seekers here.)
+- [ ] Bhopal (Tier 2, Madhya Pradesh): Government services, Education, Healthcare, Manufacturing; specialty: government-jobs (As the state capital, government and administrative work is common.)
+- [ ] Ranchi (Tier 2, Jharkhand): Mining and metals support, Government services, Education, Healthcare; specialty: maintenance-technician (Industrial and maintenance work is common in the region.)
+- [ ] Guwahati (Tier 2, Assam): Government services, Trade and logistics, Healthcare, Education; specialty: logistics-executive (It is a trade and logistics hub for the North East.)
+- [ ] Dehradun (Tier 2, Uttarakhand): Education, Government services, Tourism, Healthcare; specialty: hospitality (Tourism creates hotel and hospitality roles.)
+- [ ] Nashik (Tier 2, maharashtra): Manufacturing and engineering, Agriculture and wine, Education; specialty: production-engineer (Industrial estates create production roles.)
+- [ ] Madurai (Tier 2, tamil-nadu): Textiles, Education, Healthcare, Trade; specialty: staff-nurse (Hospitals are a significant employer type.)
+- [ ] Vijayawada (Tier 2, andhra-pradesh): Trade and logistics, Education, Healthcare, Agriculture; specialty: logistics-executive (It is a trade and transport centre.)
+- [ ] Ludhiana (Tier 2, Punjab): Hosiery and textiles, Cycle and auto parts, Manufacturing, Trade; specialty: production-supervisor (Small and medium manufacturing units are common.)
+- [ ] Raipur (Tier 2, Chhattisgarh): Steel and power, Government services, Trade, Education; specialty: maintenance-technician (Steel and power plants need maintenance staff.)
+- [ ] Tiruchirappalli (Tier 2, tamil-nadu): Engineering and fabrication, Education, Healthcare; specialty: mechanical-engineer (Engineering and fabrication units are common.)
+
+## City × role notes (Tier 1)
+- [ ] /resume/bangalore/software-engineer/: Bangalore has a dense mix of product companies, IT services firms and start-ups, so recruiters often filter by exact stack and the scale of what you built.
+- [ ] /resume/bangalore/data-analyst/: Analytics teams at product and services companies here often test SQL and dashboard skills early in the process.
+- [ ] /resume/bangalore/product-manager/: Start-ups and product companies here look for PMs who can show shipped features and the metrics they moved.
+- [ ] /resume/bangalore/ui-ux-designer/: Design hiring in Bangalore is portfolio-led. Put your case study link in the header.
+- [ ] /resume/bangalore/customer-support/: Support teams at SaaS and e-commerce companies here hire for chat and email skills as well as voice.
+- [ ] /resume/hyderabad/software-engineer/: Global capability centres in Hyderabad often hire for cloud, data and enterprise application skills.
+- [ ] /resume/hyderabad/data-scientist/: Analytics and data teams here value model deployment experience, not only notebooks.
+- [ ] /resume/hyderabad/pharma-qa-qc/: Hyderabad’s pharma and life sciences industry hires QA and QC staff who can show instrument, GMP and audit exposure.
+- [ ] /resume/hyderabad/business-analyst/: Capability centres and IT firms here hire analysts with domain knowledge such as banking or insurance.
+- [ ] /resume/hyderabad/bpo-executive/: Business services centres here hire for voice and non-voice processes, often in rotational shifts.
+- [ ] /resume/pune/software-engineer/: Pune’s IT services and product companies often look for client-facing project experience.
+- [ ] /resume/pune/mechanical-engineer/: The automotive and engineering cluster around Pune values plant processes, CAD skills and quality tools.
+- [ ] /resume/pune/automotive-design-engineer/: Automotive OEMs and design service firms here look for CATIA, DFMEA and component experience.
+- [ ] /resume/pune/hr-executive/: Plants and IT firms here both need HR staff. Mention whether you have handled factory or office HR, or both.
+- [ ] /resume/pune/data-analyst/: Analytics roles here appear in IT, manufacturing and finance teams. Name your domain.
+- [ ] /resume/chennai/software-engineer/: Chennai has large IT services campuses that check certifications and client domains.
+- [ ] /resume/chennai/mechanical-engineer/: Chennai’s automotive and manufacturing belt hires engineers with shop-floor and quality experience.
+- [ ] /resume/chennai/production-engineer/: Plants here value OEE, Kaizen and safety records.
+- [ ] /resume/chennai/accountant/: Manufacturers and service firms here look for GST, TDS and ERP experience.
+- [ ] /resume/chennai/customer-support/: Support centres here often hire for English and Tamil, and sometimes other South Indian languages.
+- [ ] /resume/mumbai/financial-analyst/: Mumbai’s banks, NBFCs and corporate headquarters hire analysts with modelling and reporting skills.
+- [ ] /resume/mumbai/chartered-accountant/: CA firms and finance teams here look for audit, tax and Ind AS exposure.
+- [ ] /resume/mumbai/digital-marketing-executive/: Agencies and brands here want campaign results with numbers.
+- [ ] /resume/mumbai/content-writer/: Media, agencies and brands here value a varied portfolio.
+- [ ] /resume/mumbai/sales-executive/: B2B and financial products sales roles here are target-driven. Lead with your achievement percentage.
+- [ ] /resume/delhi/sales-executive/: Retail, trade and services firms in Delhi hire field sales staff who know local markets.
+- [ ] /resume/delhi/teacher/: Schools here check board experience, subject expertise and eligibility tests.
+- [ ] /resume/delhi/content-writer/: Media and consulting firms here hire writers with research skills.
+- [ ] /resume/delhi/administrative-assistant/: Government offices, consultancies and corporates here need reliable admin staff.
+- [ ] /resume/delhi/government-jobs/: Delhi is home to many central government offices and public sector bodies.
+- [ ] /resume/noida/software-engineer/: IT and electronics companies in Noida hire across stacks. Name yours in every project line.
+- [ ] /resume/noida/bpo-customer-service/: BPO and customer service centres in Noida hire for voice and non-voice roles, often with night shifts.
+- [ ] /resume/noida/digital-marketing-executive/: Media and digital agencies here look for hands-on campaign work.
+- [ ] /resume/noida/hr-recruiter/: High-volume hiring for IT and BPO creates many recruiter roles here.
+- [ ] /resume/noida/sales-executive/: Inside and field sales roles here are common across EdTech, real estate and services.
+- [ ] /resume/gurgaon/business-analyst/: Consulting firms and corporate offices in Gurgaon hire analysts with strong Excel, SQL and presentation skills.
+- [ ] /resume/gurgaon/bpo-executive/: Business services centres here often serve global clients. Mention international process experience.
+- [ ] /resume/gurgaon/sales-manager/: Corporate headquarters here hire sales managers who can lead teams across regions.
+- [ ] /resume/gurgaon/hospitality/: Hotels and corporate hospitality here look for polished guest-facing skills.
+- [ ] /resume/gurgaon/financial-analyst/: Finance teams at corporate headquarters here value FP&A and reporting skills.
+- [ ] /resume/kolkata/accountant/: Trading firms and companies in Kolkata look for Tally, GST and audit support.
+- [ ] /resume/kolkata/teacher/: Schools here check board experience and subject expertise.
+- [ ] /resume/kolkata/sales-executive/: FMCG and trade distribution create many field sales roles.
+- [ ] /resume/kolkata/software-engineer/: IT services firms here check certifications and project experience.
+- [ ] /resume/kolkata/bank-jobs/: Bank branches and operations centres here hire for customer service and operations.
+- [ ] /resume/ahmedabad/chemical-engineer/: Chemical and pharma units around Ahmedabad value process safety and plant operations experience.
+- [ ] /resume/ahmedabad/accountant/: Businesses here look for GST, Tally and trade accounting skills.
+- [ ] /resume/ahmedabad/sales-executive/: Trade and manufacturing firms hire field sales staff with local market knowledge.
+- [ ] /resume/ahmedabad/pharma-production/: Pharma plants here hire production officers with GMP and BMR experience.
+- [ ] /resume/ahmedabad/textile-production/: Textile units here hire supervisors with production and quality experience.
+- [ ] /resume/kochi/staff-nurse/: Kochi’s hospitals hire nurses with registration, BLS and clear department experience.
+- [ ] /resume/kochi/gulf-jobs/: Many job seekers in Kerala apply for roles in the Gulf. Recruiters ask for exact dates, certificates and passport details.
+- [ ] /resume/kochi/hospitality/: Tourism and hotels here look for guest-facing and language skills.
+- [ ] /resume/kochi/software-engineer/: IT parks here hire across stacks. Name yours clearly.
+- [ ] /resume/kochi/logistics-executive/: Port and shipping activity creates logistics and documentation roles.
+- [ ] /resume/coimbatore/mechanical-engineer/: Coimbatore’s pump, motor and engineering units value design and production experience.
+- [ ] /resume/coimbatore/textile-production/: Spinning and textile mills here hire supervisors with machine and quality knowledge.
+- [ ] /resume/coimbatore/software-engineer/: IT companies here look for stack and project results.
+- [ ] /resume/coimbatore/maintenance-technician/: Factories here hire ITI technicians for preventive and breakdown maintenance.
+- [ ] /resume/coimbatore/sales-executive/: Industrial products sales roles here value technical understanding.
+- [ ] /resume/jaipur/hospitality/: Jaipur’s tourism industry hires front office and guest relations staff.
+- [ ] /resume/jaipur/teacher/: Schools here check board and subject experience.
+- [ ] /resume/jaipur/sales-executive/: Retail, handicrafts and services firms hire field sales staff.
+- [ ] /resume/jaipur/accountant/: Traders and companies here look for GST and Tally skills.
+- [ ] /resume/jaipur/government-jobs/: As the state capital, Jaipur has many state government offices.
+- [ ] /resume/chandigarh/bank-jobs/: Banks in the Chandigarh region hire for branch customer service and operations.
+- [ ] /resume/chandigarh/teacher/: Schools here check subject, board and eligibility.
+- [ ] /resume/chandigarh/customer-support/: Support centres in the region hire for chat, email and voice roles.
+- [ ] /resume/chandigarh/software-engineer/: IT companies in the tri-city area hire across stacks.
+- [ ] /resume/chandigarh/medical-representative/: Pharma companies hire field representatives for Punjab, Haryana and Himachal territories.
+- [ ] /resume/indore/sales-executive/: Indore is a trade and distribution centre, so FMCG and B2B sales roles are common.
+- [ ] /resume/indore/software-engineer/: IT companies here look for project and stack experience.
+- [ ] /resume/indore/accountant/: Traders and companies here look for GST and Tally skills.
+- [ ] /resume/indore/teacher/: Schools and coaching institutes here check subject expertise.
+- [ ] /resume/indore/logistics-executive/: Its central location supports warehousing and distribution roles.

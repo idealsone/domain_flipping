@@ -14,6 +14,15 @@
 - **Privacy policy:** names Razorpay as the payment processor and drops phone verification.
 - **Removed unused code:** the old phone verification for referral rewards (Twilio settings, send/check endpoints, held-review panel and launch-check line), the unused 10-friend reward setting, the unlinked guide.js script and an audit script for the removed feature.
 
+## 3.15.0
+- **508 new server-rendered SEO pages** built from `resources/data/seo-pages.json` (source and generator in `tools/seo/`): resume examples by field and role (`/resume-examples/{field}/{role}/`), template styles (`/resume-templates/{style}/`), cover-letter examples by field, interview questions by role, India / state / city resume guides (`/resume-builder/...`), city × role pages (`/resume/{city}/{role}/`), state government-jobs pages, resume word swaps (`/resume-words/{word}/`) and an ATS checker landing page.
+- Every page has a title under 60 characters ending "| CVTara", a meta description under 155, one H1, visible breadcrumbs, an "On this page" list, an illustration with alt text, a filled sample, 4–5 FAQs, BreadcrumbList + FAQPage + WebPage JSON-LD (no LocalBusiness), one amber "Build my resume free" button and links to the ATS checker and pricing.
+- **Interlinking:** India → state → city → city × role; city × role → role example, interview page and the same role in two other cities; role → field, interview, cover letter and city pages; every page → existing guides on the topic.
+- **Keyword targeting:** pages follow the patterns that drive competitor traffic (role resume examples, templates, cover letters, interview questions, resume words) with all brand terms removed. Full keyword list in the project files (`seo-keywords/`).
+- **The 68 existing guides and calculators:** visible breadcrumbs, an "Explore next" box into the new hubs, and up to 3 contextual links on first mention of key phrases. The browser no longer adds a second, generic FAQPage block on top of the server's own.
+- Ready-made page cache and Apache rules cover the new paths; the sitemap lists them. Place facts to check before indexing are in `docs/SEO_VERIFY.md`. No salary figures are published.
+- Tests: `tests/suites/s23_seo_pages.py` crawls every new page and every internal link.
+
 ## 3.16.0
 - **New packages:** Free, Quick Download ₹99 for 7 days (one resume, edit and re-download it as often as you like), Job Hunt ₹299 for 30 days (5 resumes, 5 cover letters, 20 ATS scans) and Pro ₹599 for 90 days (20/20/60). Plan cards show the price per day, "Most popular" and "Best value". Old plans keep working for customers who bought them; old plan links and coupons map to the new plans.
 - **Upgrade credit:** a Quick Download bought in the last 7 days and not refunded counts toward Job Hunt or Pro.
