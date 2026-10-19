@@ -199,7 +199,7 @@ Relationships are by `owner_id` / `*_id` columns; there are no Eloquent relation
 
 **Refunds (`Refunds.php`)**: one refund per customer, within 7 days, only while the purchase is unused (no clean download, ATS scan, tailored draft, started service or upgrade). Approve calls the gateway refund API (demo/manual are marked directly), then `settled()` returns spent wallet credit and cancels services not started.
 
-**Wallet referral (`Wallet.php`, mode `wallet`)**: friend gets ₹50 off the first purchase; the referrer gets ₹50 wallet credit once the friend's purchase is 7 days old and not refunded; credit expires after 90 days; ₹1,000 a month cap; 5 qualified friends unlock one free Job Hunt month. Same email inbox, browser, phone or payment reference counts as self-referral.
+**Wallet referral (`Wallet.php`, mode `wallet`)**: only orders of `minQualifyingPaise` (₹299) or more count; the friend gets ₹50 off their first such order; the referrer gets ₹50 wallet credit once the friend's purchase is 7 days old and not refunded; credit expires after 90 days; ₹1,000 a month cap; 5 qualified friends unlock one free Job Hunt month. Same email inbox, browser, phone or payment reference counts as self-referral.
 
 `exports` = 4 x the resume count (add-ons: 4 x n). `dailyMatches` 100 for paid plans.
 

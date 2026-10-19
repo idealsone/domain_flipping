@@ -2,7 +2,7 @@
   'use strict';
   const request = (path, body) => window.CVTaraAPI.request('/api/' + path, body === undefined ? undefined : {method: 'POST', body});
   const escape = value => String(value ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-  const rule = 'Your friend gets ₹50 off their first purchase. You get ₹50 wallet credit once their purchase passes the 7-day refund window without a refund. Each friend counts once.';
+  const rule = 'Your friend gets ₹50 off their first order of ₹299 or more (Job Hunt, Pro or bigger). You get ₹50 wallet credit once their purchase passes the 7-day refund window without a refund. Each friend counts once.';
   async function render(host) {
     if (!window.CVTaraAPI || host.dataset.loading === 'true') return;
     host.dataset.loading = 'true';
@@ -14,7 +14,7 @@
       host.innerHTML = `<span class="eyebrow">GIVE ₹50, GET ₹50</span><h2>Share CVTara. ${g.downloadThreshold} friends also unlock a free Job Hunt month.</h2><p>${rule}</p><div class="parameter-grid"><article><h3>1 Job Hunt month free (plus one clean resume download)</h3><label>${Math.min(rewards.count,g.downloadThreshold)} / ${g.downloadThreshold} qualified friends<progress value="${Math.min(rewards.count,g.downloadThreshold)}" max="${g.downloadThreshold}" style="display:block;width:100%"></progress></label><button class="button secondary" data-claim="5" ${!rewards.enabled || rewards.count < g.downloadThreshold || claimed.has(5) ? 'disabled' : ''}>${claimed.has(5) ? 'Already claimed' : 'Claim reward'}</button></article></div><p>The reward can be claimed once. If you have a plan running, claim after it ends and your reward waits for you.</p><p>${rewards.exports} free resume download${Number(rewards.exports) === 1 ? '' : 's'} remaining.</p><a class="button primary" data-share target="_blank" rel="noopener noreferrer">Share on WhatsApp</a><button class="button secondary" data-refresh>Refresh progress</button><p data-result role="status" aria-live="polite"></p><a href="/workspace.html?view=referrals">Open my referral dashboard</a>`;
       const result = host.querySelector('[data-result]');
       const share = host.querySelector('[data-share]');
-      if (share) share.href = 'https://wa.me/?text=' + encodeURIComponent('I build my resume on CVTara. Use my link and get ₹50 off your first purchase. Building and previewing are free. ' + referrals.url);
+      if (share) share.href = 'https://wa.me/?text=' + encodeURIComponent('I build my resume on CVTara. Use my link and get ₹50 off Job Hunt or Pro. Building and previewing are free. ' + referrals.url);
       host.querySelector('[data-refresh]').onclick = () => render(host);
       host.querySelectorAll('[data-claim]').forEach(button => button.onclick = async () => {
         button.disabled = true;

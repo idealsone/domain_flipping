@@ -12,7 +12,7 @@ class Referrals
 {
     public static function config(): array
     {
-        return array_merge(['enabled' => true, 'rateBps' => 2000, 'minimumPaise' => 100000, 'payoutHours' => 24, 'holdDays' => 7, 'tierThreshold' => 100, 'tierRateBps' => 3000, 'requirePan' => false, 'downloadThreshold' => 5, 'premiumThreshold' => 10, 'premiumDays' => 30, 'minQualifyingPaise' => 9900, 'proOnly' => true, 'mode' => 'wallet', 'friendDiscountPaise' => 5000, 'rewardPaise' => 5000, 'qualifyDays' => 7, 'walletDays' => 90, 'monthlyCapPaise' => 100000], Settings::get('referrals', []));
+        return array_merge(['enabled' => true, 'rateBps' => 2000, 'minimumPaise' => 100000, 'payoutHours' => 24, 'holdDays' => 7, 'tierThreshold' => 100, 'tierRateBps' => 3000, 'requirePan' => false, 'downloadThreshold' => 5, 'premiumThreshold' => 10, 'premiumDays' => 30, 'minQualifyingPaise' => 29900, 'proOnly' => true, 'mode' => 'wallet', 'friendDiscountPaise' => 5000, 'rewardPaise' => 5000, 'qualifyDays' => 7, 'walletDays' => 90, 'monthlyCapPaise' => 100000], Settings::get('referrals', []));
     }
 
     public static function successfulBuyers(int $id): int

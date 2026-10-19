@@ -11,7 +11,7 @@ def run(ctx, t):
         js, css, fomo = rd("promo.js"), rd("promo.css"), rd("fomo-popup.js")
         t.check("the offer script shows a top bar and timed, exit-intent and idle pop-ups", all(k in js for k in ("mouseout", "'idle'", "triggers.popup", "cvp-bar", "visibilityState")))
         t.check("the coupon travels with the visitor into sign-up and checkout", "cvtara-promo-intent" in js and "/register?next=" in js and "coupon=" in js and "cvtara-promo-intent" in rd("business-ui.js"))
-        t.check("the offer shows a copy button, countdown and the refund note", "data-copy" in js and "data-count" in js and "7-day refund if unused" in js)
+        t.check("the offer shows a copy button and the refund note, and no countdown timer", "data-copy" in js and "data-count" not in js and "Ends in" not in js and "7-day refund if unused" in js)
         t.check("pop-ups respect reduced motion and fit phones", "prefers-reduced-motion" in css and "max-width:640px" in css)
         t.check("the activity notice shows a name only for real buyers and never invents any", "Verified purchase" in fomo and "kind === 'purchase'" in fomo and "Math.random" not in fomo)
         t.check("checkout offers an optional, unticked-by-default naming choice", 'id="coActivity"' in open(os.path.join(ctx.app, "resources/frontend/checkout.html"), encoding="utf8").read() and "showInActivity" in rd("checkout-options.js"))
@@ -33,7 +33,7 @@ def run(ctx, t):
 
     def save(**kw):
         body = {"name": "Diwali 2026", "template": "diwali", "theme": "diwali", "heading": "Diwali Dhamaka {{year}}", "subheading": "Save {{discount}} with {{code}}", "badge": "FESTIVE OFFER", "cta": "Claim this offer", "couponCode": "DIWALI25", "planKey": plan,
-                "countdown": True, "banner": True, "popup": True, "popupDelay": 5, "exit": True, "idle": True, "idleSeconds": 20, "exitHeading": "Wait", "exitText": "Your offer is waiting", "idleHeading": "Still there?", "idleText": "Your code is ready", "pages": "all", "frequencyHours": 6, "priority": 0}
+                "banner": True, "popup": True, "popupDelay": 5, "exit": True, "idle": True, "idleSeconds": 20, "exitHeading": "Wait", "exitText": "Your offer is waiting", "idleHeading": "Still there?", "idleText": "Your code is ready", "pages": "all", "frequencyHours": 6, "priority": 0}
         body.update(kw); return o.api("POST", "admin/promos/save", body)
     pub = lambda q="": ctx.client().api("GET", "promo" + q)[1].get("promo")
     s, r1 = save(); a_id = r1.get("id")
@@ -59,7 +59,7 @@ def run(ctx, t):
     sts = {x["name"]: x["status"] for x in o.api("GET", "admin/promos")[1]["campaigns"]}
     t.check("a scheduled offer is upcoming before its start, running inside its window and ended after", sts["Future"] == "upcoming" and sts["Window"] == "scheduled" and sts["Past"] == "off", sts)
     v = pub(); t.check("visitors see the one running inside its window", v and v["heading"] == "Window offer")
-    t.check("an offer with a running window shows a countdown end time", v["endsAt"] and v["countdown"])
+    t.check("an offer keeps its end time but sends no countdown", v["endsAt"] and "countdown" not in v)
     o.api("POST", "admin/promos/live", {"id": a_id}); t.check("a live offer wins over a scheduled one", pub()["heading"].startswith("Diwali"))
     o.api("POST", "admin/promos/off", {"id": a_id}); o.api("POST", "admin/promos/off", {"id": run_now})
     t.check("a schedule needs a date", o.api("POST", "admin/promos/schedule", {"id": b_id})[0] == 422)

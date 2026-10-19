@@ -61,6 +61,23 @@ return new class extends Migration
             $t->unique(['purchase_id', 'service']);
             $t->index(['status', 'created_at']);
         });
+        // The referral now starts at ₹299 (Job Hunt and up): ₹50 off plus ₹50 credit on a ₹99 order would earn nothing.
+        $row = DB::table('site_settings')->where('key', 'referrals')->first();
+        if ($row && is_array($ref = json_decode((string) $row->value_json, true)) && (int) ($ref['minQualifyingPaise'] ?? 0) < 29900) {
+            $ref['minQualifyingPaise'] = 29900;
+            DB::table('site_settings')->where('key', 'referrals')->update(['value_json' => json_encode($ref), 'revision' => DB::raw('revision + 1'), 'updated_at' => now()]);
+        }
+        // Offers no longer show a countdown; instead the offer pop-up opens 20 seconds into a visit.
+        $row = DB::table('site_settings')->where('key', 'promos')->first();
+        if ($row && is_array($promos = json_decode((string) $row->value_json, true)) && is_array($promos['campaigns'] ?? null)) {
+            foreach ($promos['campaigns'] as &$c) {
+                unset($c['countdown']);
+                $c['popup'] = true;
+                $c['popupDelay'] = 20;
+            }
+            unset($c);
+            DB::table('site_settings')->where('key', 'promos')->update(['value_json' => json_encode($promos), 'revision' => DB::raw('revision + 1'), 'updated_at' => now()]);
+        }
         // Saved copies of the old "final and non-refundable" policy text are replaced by the new 7-day refund wording.
         $defaults = json_decode(file_get_contents(resource_path('data/defaults.json')), true);
         $row = DB::table('site_settings')->where('key', 'legal')->first();

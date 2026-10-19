@@ -139,7 +139,7 @@ class Promos
             'id' => $c['id'], 'badge' => $fill($c['badge'] ?? ''), 'heading' => $fill($c['heading'] ?? ''), 'subheading' => $fill($c['subheading'] ?? ''), 'body' => $fill($c['body'] ?? ''),
             'cta' => $c['cta'] ?: 'Claim this offer', 'code' => strtoupper((string) ($c['couponCode'] ?? '')), 'discount' => self::discountLabel($coupon), 'plan' => Settings::planAlias((string) ($c['planKey'] ?? '')),
             'image' => $c['imageUrl'] ?? '', 'theme' => ['from' => $theme[0], 'to' => $theme[1], 'ink' => $theme[2], 'accent' => $theme[3], 'art' => $theme[4]],
-            'endsAt' => $to ? gmdate('c', $to) : null, 'countdown' => ! empty($c['countdown']) && $to,
+            'endsAt' => $to ? gmdate('c', $to) : null,
             'triggers' => ['banner' => ! empty($c['banner']), 'popup' => ['enabled' => ! empty($c['popup']), 'delay' => (int) ($c['popupDelay'] ?? 20)], 'exit' => ! empty($c['exit']), 'idle' => ['enabled' => ! empty($c['idle']), 'seconds' => (int) ($c['idleSeconds'] ?? 45)]],
             'variants' => ['exit' => ['heading' => $fill($c['exitHeading'] ?? ''), 'text' => $fill($c['exitText'] ?? '')], 'idle' => ['heading' => $fill($c['idleHeading'] ?? ''), 'text' => $fill($c['idleText'] ?? '')]],
             'pages' => $c['pages'] ?? 'all', 'frequencyHours' => max(1, (int) ($c['frequencyHours'] ?? 12)),

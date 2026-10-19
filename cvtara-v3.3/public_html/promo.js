@@ -14,12 +14,6 @@
   if (!document.querySelector('link[data-cvp-css]')) { const l = Object.assign(document.createElement('link'), { rel: 'stylesheet', href: here ? here.replace(/promo\.js(\?.*)?$/, 'promo.css') : '/promo.css' }); l.setAttribute('data-cvp-css', '1'); document.head.append(l); }
 
   const style = v => `--pf:${E(v.theme.from)};--pt:${E(v.theme.to)};--pi:${E(v.theme.ink)};--pa:${E(v.theme.accent)}`;
-  const left = ms => { if (ms <= 0) return ''; const s = Math.floor(ms / 1000), d = Math.floor(s / 86400), h = Math.floor(s % 86400 / 3600), m = Math.floor(s % 3600 / 60); return (d ? `<b>${d}</b>d ` : '') + `<b>${String(h).padStart(2, '0')}</b>h <b>${String(m).padStart(2, '0')}</b>m <b>${String(s % 60).padStart(2, '0')}</b>s`; };
-  function tick(root, v) {
-    const el = root.querySelector('[data-count]'); if (!el || !v.endsAt) return;
-    const end = new Date(v.endsAt).getTime(), run = () => { const t = left(end - Date.now()); el.innerHTML = t ? 'Ends in ' + t : 'Offer ended'; };
-    run(); const i = setInterval(() => { if (!root.isConnected) return clearInterval(i); run(); }, 1000);
-  }
   const dest = v => { const q = []; if (v.plan) q.push('plan=' + encodeURIComponent(v.plan)); if (v.code) q.push('coupon=' + encodeURIComponent(v.code)); return '/checkout.html' + (q.length ? '?' + q.join('&') : ''); };
   const send = (id, kind) => { if (admin) return; try { (window.CVTaraCSRF ? window.CVTaraCSRF() : Promise.resolve('')).then(t => fetch('/api/promo/event', { method: 'POST', credentials: 'same-origin', keepalive: true, headers: { 'Content-Type': 'application/json', Accept: 'application/json', 'X-CSRF-TOKEN': t || '' }, body: JSON.stringify({ id, kind }) })).catch(() => {}); } catch { /* tracking is optional */ } };
 
@@ -42,7 +36,6 @@
         ${v.badge ? `<span class="cvp-badge">${E(v.badge)}</span>` : ''}<h2>${E(head)}</h2>${sub ? `<p class="cvp-sub">${E(sub)}</p>` : ''}${v.body ? `<p class="cvp-text">${E(v.body)}</p>` : ''}
         ${v.discount ? `<div class="cvp-off"><b>${E(v.discount)}</b><span>on ${v.plan ? 'your plan' : 'any plan'}</span></div>` : ''}
         ${v.code ? `<div class="cvp-code"><span>Use code</span><code>${E(v.code)}</code><button type="button" data-copy>Copy</button></div>` : ''}
-        ${v.countdown ? '<p class="cvp-count" data-count></p>' : ''}
         <button type="button" class="cvp-cta" data-claim>${E(v.cta)} →</button><button type="button" class="cvp-no" data-close>No thanks, maybe later</button>
         <small class="cvp-fine">${v.code ? 'Your code is applied for you at checkout. ' : ''}7-day refund if unused.</small></div></div>`;
   }
@@ -58,7 +51,7 @@
       if (e.target.closest('[data-copy]')) copyCode(v, e.target.closest('[data-copy]'));
       if (e.target.closest('[data-claim]')) { if (how === 'preview') { close(); return; } claim(v); }
     });
-    tick(root, v); requestAnimationFrame(() => { root.classList.add('in'); root.querySelector('.cvp-cta')?.focus({ preventScroll: true }); });
+    requestAnimationFrame(() => { root.classList.add('in'); root.querySelector('.cvp-cta')?.focus({ preventScroll: true }); });
     if (how !== 'preview') send(v.id, 'shown');
     return true;
   }
@@ -68,7 +61,7 @@
     return `<div class="cvp-bar" style="${style(v)}" role="region" aria-label="Offer"><span class="cvp-bar-art" aria-hidden="true">${E(v.theme.art)}</span>
       <span class="cvp-bar-text">${v.badge ? `<em>${E(v.badge)}</em>` : ''}<b>${E(v.heading)}</b>${v.discount ? ` <strong>${E(v.discount)}</strong>` : ''}</span>
       ${v.code ? `<button type="button" class="cvp-bar-code" data-copy title="Copy the code"><code>${E(v.code)}</code><span>Copy</span></button>` : ''}
-      ${v.countdown ? '<span class="cvp-bar-count" data-count></span>' : ''}<button type="button" class="cvp-bar-cta" data-claim>${E(v.cta)} →</button><button type="button" class="cvp-bar-x" data-close aria-label="Hide offer bar">×</button></div>`;
+      <button type="button" class="cvp-bar-cta" data-claim>${E(v.cta)} →</button><button type="button" class="cvp-bar-x" data-close aria-label="Hide offer bar">×</button></div>`;
   }
 
   if (admin || !body || ['workspace', 'checkout', 'setup', 'auth'].includes(page) || /[?&]nopromo\b/.test(location.search)) return;
@@ -82,7 +75,7 @@
     if (v.triggers.banner && sess.get('cvtara-promo-bar:' + v.id) !== 'off') {
       const wrap = document.createElement('div'); wrap.className = 'cvp-bar-wrap'; wrap.innerHTML = barHtml(v);
       const a = document.getElementById('lpAnnounce'); if (a) a.hidden = true;
-      document.body.prepend(wrap); tick(wrap, v);
+      document.body.prepend(wrap);
       wrap.addEventListener('click', e => {
         if (e.target.closest('[data-close]')) { sess.set('cvtara-promo-bar:' + v.id, 'off'); wrap.remove(); send(v.id, 'close'); if (a) a.hidden = false; }
         else if (e.target.closest('[data-copy]')) copyCode(v, e.target.closest('[data-copy]').querySelector('span'));

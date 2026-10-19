@@ -31,7 +31,7 @@ def run(ctx, t):
     # Quick Download: one resume, edits and re-downloads of it are free, a second resume or a cover letter is refused
     q = ctx.client(); q.register("pk-quick@test.local")
     q.api("POST", "resumes", {"data": resume("Primary")})
-    t.check("buy Quick Download for Rs 99", buy(q, "quick")[0] == 200)
+    _b = buy(q, "quick"); t.check("buy Quick Download for Rs 99", _b[0] == 200, _b)
     s, b = q.api("POST", "resumes", {"data": resume("Second")}); rid = b.get("id")
     t.check("the first clean download of a resume uses the one credit", download(q, "resume", rid)[0] == 200 and q.api("GET", "allowance")[1]["credits"]["resumes"]["used"] == 1)
     s, g = q.api("GET", f"resumes/{rid}"); d = g["resume"]["data"]; d["summary"] = "edited"
@@ -101,11 +101,13 @@ def run(ctx, t):
     code = db.q("select referral_code from users where id=?", bid)[0][0]
     f = ctx.client(); f.register("pk-friend0@test.local", ref=code)
     s, j = f.api("POST", "checkout/quote", {"plan": "quick"})
-    t.check("a referred friend gets Rs 50 off the first purchase", s == 200 and j["referralDiscountPaise"] == 5000 and j["totalPaise"] == 4900, j)
-    s, j = boss.api("POST", "checkout/quote", {"plan": "quick"})
+    t.check("a Rs 99 Quick Download gets no referral discount (the referral starts at Rs 299)", s == 200 and j["referralDiscountPaise"] == 0 and j["totalPaise"] == 9900, j)
+    s, j = f.api("POST", "checkout/quote", {"plan": "job-hunt"})
+    t.check("a referred friend gets Rs 50 off a first Job Hunt", s == 200 and j["referralDiscountPaise"] == 5000 and j["totalPaise"] == 24900, j)
+    s, j = boss.api("POST", "checkout/quote", {"plan": "job-hunt"})
     t.check("someone who was not referred pays full price", s == 200 and j["referralDiscountPaise"] == 0, j)
     selfc = ctx.client(); selfc.register("pk-boss+2@test.local", ref=code)
-    s, j = selfc.api("POST", "checkout/quote", {"plan": "quick"})
+    s, j = selfc.api("POST", "checkout/quote", {"plan": "job-hunt"})
     t.check("an account with the referrer's own email (plus-address) gets no discount", j.get("referralDiscountPaise") == 0, j)
 
     def friend_paid(n, days_ago):
@@ -114,6 +116,11 @@ def run(ctx, t):
         fid = uid(em)
         db.q("insert into purchases(id,owner_id,plan,amount_paise,referral_discount_paise,status,provider,payment_reference,is_live,limits_json,access_days,purchased_at,access_until,created_at,updated_at) values(?,?,?,?,?,?,?,?,?,?,?,datetime('now',?),datetime('now','+30 days'),datetime('now'),datetime('now'))",
              str(uuid.uuid4()), fid, "job-hunt", 24900, 5000, "paid", "cashfree", "pk-pay-" + str(n), 1, "{}", 30, f"-{days_ago} days")
+    q = ctx.client(); q.register("pk-friendq@test.local", ref=code)
+    db.q("insert into purchases(id,owner_id,plan,amount_paise,status,provider,payment_reference,is_live,limits_json,access_days,purchased_at,access_until,created_at,updated_at) values(?,?,'quick',9900,'paid','cashfree','pk-pay-q',1,'{}',7,datetime('now','-10 days'),datetime('now','-3 days'),datetime('now'),datetime('now'))", str(uuid.uuid4()), uid("pk-friendq@test.local"))
+    t.check("a friend who only bought Quick Download does not earn the referrer credit", boss.api("GET", "wallet")[1]["balancePaise"] == 0)
+    s, j = q.api("POST", "checkout/quote", {"plan": "pro"})
+    t.check("that friend still gets Rs 50 off their first Rs 299+ order", s == 200 and j["referralDiscountPaise"] == 5000, j)
     friend_paid(0, 2)
     s, w = boss.api("GET", "wallet")
     t.check("a friend's purchase inside the 7-day window is pending, with an unlock date", s == 200 and w["balancePaise"] == 0 and len(w["pending"]) == 1 and w["pending"][0]["unlockAt"], w)

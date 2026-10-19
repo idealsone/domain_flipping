@@ -10,7 +10,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 
 /**
- * "Give ₹50, get ₹50". A referred friend gets ₹50 off their first purchase. The referrer earns ₹50 wallet credit once that purchase
+ * "Give ₹50, get ₹50". A referred friend gets ₹50 off their first purchase of ₹299 or more (smaller orders, such as Quick Download, earn nothing). The referrer earns ₹50 wallet credit once that purchase
  * has passed the 7-day refund window without a refund. Credit is spent at checkout, is never paid out as cash, expires 90 days after
  * it is earned, and at most ₹1,000 can be earned per calendar month. Five qualified friends also unlock one free Job Hunt month.
  *
@@ -23,7 +23,7 @@ class Wallet
     {
         $c = Referrals::config();
 
-        return ['friendDiscountPaise' => (int) $c['friendDiscountPaise'], 'rewardPaise' => (int) $c['rewardPaise'], 'qualifyDays' => (int) $c['qualifyDays'], 'walletDays' => (int) $c['walletDays'], 'monthlyCapPaise' => (int) $c['monthlyCapPaise'], 'milestone' => (int) $c['downloadThreshold'], 'enabled' => (bool) $c['enabled'] && $c['mode'] === 'wallet'];
+        return ['minQualifyingPaise' => (int) $c['minQualifyingPaise'], 'friendDiscountPaise' => (int) $c['friendDiscountPaise'], 'rewardPaise' => (int) $c['rewardPaise'], 'qualifyDays' => (int) $c['qualifyDays'], 'walletDays' => (int) $c['walletDays'], 'monthlyCapPaise' => (int) $c['monthlyCapPaise'], 'milestone' => (int) $c['downloadThreshold'], 'enabled' => (bool) $c['enabled'] && $c['mode'] === 'wallet'];
     }
 
     public static function enabled(): bool
@@ -89,7 +89,7 @@ class Wallet
 
         return DB::table('purchases')->where('owner_id', $friendId)->where('status', 'paid')->where('is_live', true)->whereIn('provider', ['razorpay', 'cashfree'])
             ->where('refunded_paise', 0)->whereNotNull('payment_reference')->whereNotNull('purchased_at')->where('plan', '!=', 'free')
-            ->whereRaw('amount_paise + referral_discount_paise >= ?', [$min])
+            ->whereRaw('amount_paise + referral_discount_paise + wallet_paise + upgrade_credit_paise >= ?', [$min])
             ->whereNotIn('id', DB::table('refund_requests')->whereIn('status', ['requested', 'approved', 'processed'])->select('purchase_id'))
             ->orderBy('purchased_at')->first();
     }
@@ -174,10 +174,14 @@ class Wallet
         return self::ledger($uid)['balancePaise'];
     }
 
-    /** Is this the buyer's first purchase through a referral link? Then the friend discount applies. */
-    public static function friendDiscount(int $uid): int
+    /** Is this the buyer's first purchase of the qualifying size (₹299 by default) through a referral link? Then the friend discount applies. */
+    public static function friendDiscount(int $uid, int $listPaise = PHP_INT_MAX): int
     {
         $r = self::rules();
+        $min = (int) Referrals::config()['minQualifyingPaise'];
+        if ($listPaise < $min) {
+            return 0;
+        }
         $u = User::find($uid);
         if (! $r['enabled'] || ! $u?->referred_by) {
             return 0;
@@ -186,7 +190,7 @@ class Wallet
         if (! $ref || $ref->blocked || self::selfReferral($ref, $u)) {
             return 0;
         }
-        $bought = DB::table('purchases')->where('owner_id', $uid)->whereNotNull('purchased_at')->whereIn('status', ['paid', 'partially_refunded', 'refunded', 'disputed'])->where('provider', '!=', 'referral_reward')->where('amount_paise', '>', 0)->exists();
+        $bought = DB::table('purchases')->where('owner_id', $uid)->whereNotNull('purchased_at')->whereIn('status', ['paid', 'partially_refunded', 'refunded', 'disputed'])->where('provider', '!=', 'referral_reward')->whereRaw('amount_paise + referral_discount_paise + wallet_paise + upgrade_credit_paise >= ?', [max(1, $min)])->exists();
 
         return $bought ? 0 : $r['friendDiscountPaise'];
     }

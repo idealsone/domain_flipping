@@ -14,7 +14,7 @@
     const disc = coupon ? (coupon.type === 'percent' ? coupon.value + '% OFF' : '₹' + Number(coupon.value).toLocaleString('en-IN') + ' OFF') : '';
     const fill = s => String(s || '').replace(/\{\{discount\}\}/g, disc).replace(/\{\{code\}\}/g, (f.couponCode || '').toUpperCase()).replace(/\{\{year\}\}/g, year);
     return { id: f.id || 'preview', badge: fill(f.badge), heading: fill(f.heading), subheading: fill(f.subheading), body: fill(f.body), cta: f.cta || 'Claim this offer', code: (f.couponCode || '').toUpperCase(), discount: disc, plan: f.planKey || '', image: f.imageUrl || '',
-      theme: { from: th.from, to: th.to, ink: th.ink, accent: th.accent, art: th.art }, endsAt: f.endsAt ? new Date(f.endsAt + '+05:30').toISOString() : null, countdown: !!f.countdown && !!f.endsAt,
+      theme: { from: th.from, to: th.to, ink: th.ink, accent: th.accent, art: th.art }, endsAt: f.endsAt ? new Date(f.endsAt + '+05:30').toISOString() : null,
       triggers: {}, variants: { exit: { heading: fill(f.exitHeading), text: fill(f.exitText) }, idle: { heading: fill(f.idleHeading), text: fill(f.idleText) } }, pages: f.pages, frequencyHours: f.frequencyHours };
   };
   const swatch = t => `linear-gradient(135deg,${t.from},${t.to})`;
@@ -74,7 +74,7 @@
 
   function edit(c, tplKey) {
     const t = tplKey ? S.templates.find(x => x.key === tplKey) : null, year = String(new Date().getFullYear());
-    const f = c ? { ...c } : { id: '', name: (t ? t.label : 'Offer') + ' ' + year, template: tplKey, theme: t.theme, heading: t.heading.replace('{{year}}', year), subheading: t.subheading, body: '', badge: t.badge, cta: 'Claim this offer', couponCode: '', planKey: '', imageUrl: '', startsAt: '', endsAt: '', countdown: true, banner: true, popup: true, popupDelay: 20, exit: true, idle: true, idleSeconds: 45, exitHeading: 'Wait — your offer is still here', exitText: 'Claim it before you go. It applies automatically at checkout.', idleHeading: 'Still thinking? This offer is waiting', idleText: 'Take a minute: your coupon is ready.', pages: 'all', frequencyHours: 12, priority: 0 };
+    const f = c ? { ...c } : { id: '', name: (t ? t.label : 'Offer') + ' ' + year, template: tplKey, theme: t.theme, heading: t.heading.replace('{{year}}', year), subheading: t.subheading, body: '', badge: t.badge, cta: 'Claim this offer', couponCode: '', planKey: '', imageUrl: '', startsAt: '', endsAt: '', banner: true, popup: true, popupDelay: 20, exit: true, idle: true, idleSeconds: 45, exitHeading: 'Wait — your offer is still here', exitText: 'Claim it before you go. It applies automatically at checkout.', idleHeading: 'Still thinking? This offer is waiting', idleText: 'Take a minute: your coupon is ready.', pages: 'all', frequencyHours: 12, priority: 0 };
     const opt = (v, l, cur) => `<option value="${E(v)}" ${String(cur) === String(v) ? 'selected' : ''}>${E(l)}</option>`;
     const m = modal(c ? 'Edit offer' : 'New offer: ' + (t ? t.label : ''), `<form id="pmForm" class="ops-form pm-form">
       <label class="wide">Offer name (only you see this)<input name="name" maxlength="80" required value="${E(f.name)}"></label>
@@ -94,7 +94,7 @@
       <label>Open this plan when clicked<select name="planKey">${opt('', 'Let the visitor choose', f.planKey)}${S.plans.map(p => opt(p.key, p.name + ' · ₹' + p.price, f.planKey)).join('')}</select></label>
       <label>Show on<select name="pages">${opt('all', 'Every public page', f.pages)}${opt('home-pricing', 'Home, templates and cover-letter pages', f.pages)}${opt('home', 'Home page only', f.pages)}</select></label>
       <fieldset class="wide"><legend>When it runs (India time)</legend><div class="pm-two"><label>Starts<input type="datetime-local" name="startsAt" value="${E(f.startsAt || '')}"></label><label>Ends<input type="datetime-local" name="endsAt" value="${E(f.endsAt || '')}"></label></div>
-        <label class="pm-check"><input type="checkbox" name="countdown" ${f.countdown ? 'checked' : ''}> Show a countdown to the end time</label><p class="muted" style="margin:4px 0 0;font-size:12px">“Make live now” runs it immediately until you switch it off. “Run by dates” uses the start and end times.</p></fieldset>
+        <p class="muted" style="margin:4px 0 0;font-size:12px">“Make live now” runs it immediately until you switch it off. “Run by dates” uses the start and end times.</p></fieldset>
       <fieldset class="wide"><legend>Where visitors see it</legend>
         <label class="pm-check"><input type="checkbox" name="banner" ${f.banner ? 'checked' : ''}> Top bar on every page</label>
         <div class="pm-trg"><label class="pm-check"><input type="checkbox" name="popup" ${f.popup ? 'checked' : ''}> Pop-up after <input type="number" name="popupDelay" min="3" max="600" value="${E(f.popupDelay)}" style="width:70px"> seconds</label></div>
@@ -104,7 +104,7 @@
       <div class="wide" style="display:flex;gap:8px;flex-wrap:wrap"><button class="button primary" type="submit">Save</button><button class="button secondary" type="button" data-savelive>Save and make live now</button><button class="button secondary" type="button" data-prev>Preview</button></div><p role="status" id="pmFormMsg" class="wide"></p></form>`, { wide: true });
     const form = $('#pmForm', m.el), msg = $('#pmFormMsg', m.el), val = () => {
       const g = n => form.elements[n]; const o = { id: f.id || '', template: f.template || '', name: g('name').value.trim(), theme: form.querySelector('[name=theme]:checked')?.value || f.theme, heading: g('heading').value.trim(), subheading: g('subheading').value.trim(), body: g('body').value.trim(), badge: g('badge').value.trim(), cta: g('cta').value.trim(), imageUrl: g('imageUrl').value.trim(), couponCode: g('couponCode').value, planKey: g('planKey').value, pages: g('pages').value,
-        startsAt: g('startsAt').value, endsAt: g('endsAt').value, countdown: g('countdown').checked, banner: g('banner').checked, popup: g('popup').checked, popupDelay: +g('popupDelay').value || 20, exit: g('exit').checked, idle: g('idle').checked, idleSeconds: +g('idleSeconds').value || 45, exitHeading: g('exitHeading').value.trim(), exitText: g('exitText').value.trim(), idleHeading: g('idleHeading').value.trim(), idleText: g('idleText').value.trim(), frequencyHours: +g('frequencyHours').value || 12, priority: +g('priority').value || 0 };
+        startsAt: g('startsAt').value, endsAt: g('endsAt').value, banner: g('banner').checked, popup: g('popup').checked, popupDelay: +g('popupDelay').value || 20, exit: g('exit').checked, idle: g('idle').checked, idleSeconds: +g('idleSeconds').value || 45, exitHeading: g('exitHeading').value.trim(), exitText: g('exitText').value.trim(), idleHeading: g('idleHeading').value.trim(), idleText: g('idleText').value.trim(), frequencyHours: +g('frequencyHours').value || 12, priority: +g('priority').value || 0 };
       return o;
     };
     $('[data-newcoupon]', m.el).onclick = () => { $('.pm-newcp', m.el).hidden = !$('.pm-newcp', m.el).hidden; };
