@@ -143,12 +143,8 @@ class ApiController extends Controller
         }
         if (str_starts_with($path, 'referral-rewards/')) {
             abort_unless($r->isMethod('POST'), 405);
-            if ($path === 'referral-rewards/send') {
-                ReferralRewards::send($r);
-            } elseif ($path === 'referral-rewards/check') {
-                ReferralRewards::check($r);
-            } elseif ($path === 'referral-rewards/claim') {
-                $r->validate(['milestone' => 'required|integer|in:5,10']);
+            if ($path === 'referral-rewards/claim') {
+                $r->validate(['milestone' => 'required|integer|in:5']);
                 ReferralRewards::claim($u, $r->integer('milestone'));
             } else {
                 abort(404);

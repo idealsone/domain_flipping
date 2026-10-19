@@ -69,7 +69,7 @@ Guards at the top: GET is rejected (405) for `checkout/*`, `features/use`, `traf
 | `traffic` | POST | public | page-view record (needs `consent` true and analytics integration on; path regex; 1/min per visitor+path) | 91 |
 | `admin/*` | GET/POST | admin | delegates to `AdminController` | 107 |
 | `referral-rewards` | GET | user | milestone status | 112 |
-| `referral-rewards/send` / `check` / `claim` | POST | user | Twilio Verify SMS send / check / claim milestone 5 or 10 | 115-129 |
+| `referral-rewards/claim` | POST | user | Claim the 5-friend reward (one free Job Hunt month) | 115-129 |
 | `security/status` | any | user | `{verified, recent}` | 130 |
 | `security/send-code` / `verify-code` | POST | user | step-up code flow | 133-142 |
 | `referrals/creator` | POST | user | creator application (1-5 https links) | 143 |
@@ -234,7 +234,7 @@ Relationships are by `owner_id` / `*_id` columns; there are no Eloquent relation
 * `request($user,$data)` (`:79-105`): transaction under the user lock; requires programme on, verified email, an approved payout profile past its 48-hour `eligible_at`, no open withdrawal, `amount >= config.minimumPaise` and `<= available`; stores the decrypted destination re-encrypted on the withdrawal (`:93-100`), status `requested`, `due_at = now + 24h`.
 * `transition()` (`:107-125`): allowed `requested -> processing|rejected`, `processing -> paid|rejected`; Cashfree-provider rows cannot be changed manually; `processing` needs the review (`approved_at`); `paid` needs a reference of 6+ chars and non-negative balance; `rejected` needs a note; cannot act on own withdrawal; blocked beneficiaries only to `rejected`.
 
-`ReferralRewards` (Twilio Verify, milestone rewards, `ReferralRewards.php`): `enabled()` needs referrals on and Twilio verification configured (`:15-20`). `send` limits 3 per user per day, 10 per IP-hash per hour, 100 per day globally and rejects a phone hash already in `referral_identities` (`:35-45`); `check` allows 5 attempts per 10 min, records the identity (`verified`, or `held` for owner review when the same device cookie hash exists) (`:51-74`). `count($id)` = referred users that are unblocked, email-verified, phone-verified and have a live, unrefunded, non-free Razorpay/Cashfree purchase >= `minQualifyingPaise` (`:76-86`). `claim(5)` gives one clean resume export (`exports_remaining=1`); `claim(10)` inserts a zero-price `referral_reward` purchase of Standard (fresher-standard or pro-standard by profile) for `premiumDays`, only when the user has no active paid plan (`:93-114`).
+`ReferralRewards` (`ReferralRewards.php`): `enabled()` follows the referral switch. `count` is the number of friends whose purchase passed the 7-day refund window (see `Wallet`). `claim` gives one free Job Hunt month and one clean resume download when 5 friends qualify, once per customer, after any running plan ends. Phone verification (Twilio) was removed in 3.18.0; `referral_identities` is kept because `Wallet::selfReferral` still reads it.
 
 `AffiliateProfiles` stores payout details encrypted, HMAC hashes of the destination and PAN for duplicate flags, a 48-hour `eligible_at`, and resets status to `pending` on every change; blocks edits while a withdrawal is open (`AffiliateProfiles.php:25-53`). `approve` locks and sets the status with the reviewer's note (`:55-65`).
 

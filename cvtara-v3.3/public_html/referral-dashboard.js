@@ -17,7 +17,7 @@
         const d = await window.CVTaraAPI.request('/api/referrals');
         if (d.mode === 'wallet' && d.wallet) { wallet(hosts, d); return; }
         const connected = d.connected !== false;
-        const b = d.balance || {}; const rules={downloadThreshold:5,premiumThreshold:10,premiumDays:30,tierThreshold:100,tierRateBps:3000,...d.rules};
+        const b = d.balance || {}; const rules={downloadThreshold:5,premiumDays:30,tierThreshold:100,tierRateBps:3000,...d.rules};
         const rate = Number(d.effectiveRateBps ?? 2000) / 100;
         const note = connected ? 'Only verified live payments can earn commission. Refunds reverse earnings; review periods apply.' : 'Live referral tracking, earnings and withdrawals are not connected in this private preview. No demo money or invented referrals are shown.';
         const metrics = [[b.availablePaise,'Available to withdraw'],[b.pendingPaise,'In review'],[b.reservedPaise,'Withdrawal requested'],[b.paidPaise,'Paid to you']];

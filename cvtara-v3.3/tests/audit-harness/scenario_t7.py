@@ -1,6 +1,5 @@
 import sys,json,sqlite3; sys.path.insert(0,sys.argv[1]); from client import *
 bo=C(); bo.login('bob@test.local','TestPassw0rd!!x'); bo.refresh('/workspace.html')
-print('reward send (not configured)',bo.api('POST','referral-rewards/send',{'phone':'9876543210'}))
 print('reward claim',bo.api('POST','referral-rewards/claim',{'milestone':5}))
 o=C(); o.login('owner@test.local','OwnerPassw0rd!!'); o.refresh('/admin.html')
 print('admin payouts msg',o.api('POST','admin/providers',{'service':'payouts','values':{'enabled':'true','mode':'sandbox','maxTransferRupees':'5000','acceptanceConfirmed':'false'}}))

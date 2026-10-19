@@ -33,4 +33,4 @@ def run(ctx, t):
     t.check("one month of subscription is added", len(p) == 1 and p[0][1] == 30 and p[0][2] == "paid", p)
     s, a = r.api("GET", "allowance"); t.check("the customer now has plan access", a.get("paid") is True, str(a)[:120])
     s, j = r.api("POST", "referral-rewards/claim", {"milestone": 5}); t.check("the reward can only be claimed once", s == 409, s)
-    t.check("phone verification is no longer needed", r.api("POST", "referral-rewards/send", {"phone": "9876543210"})[0] in (404, 405))
+    t.check("phone verification is no longer needed", all(r.api("POST", "referral-rewards/" + p, {"phone": "9876543210", "code": "123456"})[0] == 404 for p in ("send", "check")))

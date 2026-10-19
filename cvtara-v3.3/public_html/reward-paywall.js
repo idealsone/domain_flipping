@@ -10,7 +10,7 @@
       const [rewards, referrals] = await Promise.all([request('referral-rewards'), request('referrals')]);
       if (!host.isConnected) return;
       
-      const claimed = new Set(rewards.claimed.map(Number));const g={downloadThreshold:5,premiumThreshold:10,premiumDays:30,...rewards.rules};
+      const claimed = new Set(rewards.claimed.map(Number));const g={downloadThreshold:5,premiumDays:30,...rewards.rules};
       host.innerHTML = `<span class="eyebrow">GIVE ₹50, GET ₹50</span><h2>Share CVTara. ${g.downloadThreshold} friends also unlock a free Job Hunt month.</h2><p>${rule}</p><div class="parameter-grid"><article><h3>1 Job Hunt month free (plus one clean resume download)</h3><label>${Math.min(rewards.count,g.downloadThreshold)} / ${g.downloadThreshold} qualified friends<progress value="${Math.min(rewards.count,g.downloadThreshold)}" max="${g.downloadThreshold}" style="display:block;width:100%"></progress></label><button class="button secondary" data-claim="5" ${!rewards.enabled || rewards.count < g.downloadThreshold || claimed.has(5) ? 'disabled' : ''}>${claimed.has(5) ? 'Already claimed' : 'Claim reward'}</button></article></div><p>The reward can be claimed once. If you have a plan running, claim after it ends and your reward waits for you.</p><p>${rewards.exports} free resume download${Number(rewards.exports) === 1 ? '' : 's'} remaining.</p><a class="button primary" data-share target="_blank" rel="noopener noreferrer">Share on WhatsApp</a><button class="button secondary" data-refresh>Refresh progress</button><p data-result role="status" aria-live="polite"></p><a href="/workspace.html?view=referrals">Open my referral dashboard</a>`;
       const result = host.querySelector('[data-result]');
       const share = host.querySelector('[data-share]');
@@ -21,24 +21,6 @@
         try { await request('referral-rewards/claim', {milestone: Number(button.dataset.claim)}); host.dataset.loading = 'false'; await render(host); }
         catch (error) { result.textContent = error.message; button.disabled = false; }
       });
-      for (const [selector, path] of [['[data-phone]','send'],['[data-code]','check']]) {
-        const form = host.querySelector(selector);
-        if (!form) continue;
-        form.onsubmit = async event => {
-          event.preventDefault(); const button = form.querySelector('button'); button.disabled = true;
-          try {
-            await request('referral-rewards/' + path, Object.fromEntries(new FormData(form)));
-            if (path === 'check') {
-              host.dataset.loading = 'false';
-              await render(host);
-            } else {
-              host.querySelector('[data-code]').hidden = false;
-              result.textContent = 'Code sent. Enter it within 10 minutes.';
-            }
-          } catch (error) { result.textContent = error.message; }
-          finally { button.disabled = false; }
-        };
-      }
     } catch (error) { host.textContent = error.message || 'Referral progress could not load. Refresh to try again.'; }
     finally { host.dataset.loading = 'false'; }
   }

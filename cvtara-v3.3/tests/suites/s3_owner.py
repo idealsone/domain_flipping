@@ -12,8 +12,8 @@ def run(ctx, t):
     for e in ENDPOINTS:
         s, j = o.api("GET", e); t.check(f"GET /api/{e}", s == 200, f"{s} {str(j)[:120]}")
     s, j = o.api("GET", "admin/referrals"); r = j.get("rules", {})
-    t.check("referral rules include every field", all(k in r for k in ("enabled", "rateBps", "tierThreshold", "tierRateBps", "minimumPaise", "holdDays", "payoutHours", "downloadThreshold", "premiumThreshold", "premiumDays", "minQualifyingPaise", "requirePan", "proOnly")), list(r))
-    body = {"enabled": True, "requirePan": False, "proOnly": True, "holdDays": 5, "rateBps": 2500, "tierRateBps": 3500, "tierThreshold": 50, "minimumPaise": 150000, "payoutHours": 48, "minQualifyingPaise": 19900, "downloadThreshold": 3, "premiumThreshold": 8, "premiumDays": 45}
+    t.check("referral rules include every field", all(k in r for k in ("enabled", "rateBps", "tierThreshold", "tierRateBps", "minimumPaise", "holdDays", "payoutHours", "downloadThreshold", "premiumDays", "minQualifyingPaise", "requirePan", "proOnly")), list(r))
+    body = {"enabled": True, "requirePan": False, "proOnly": True, "holdDays": 5, "rateBps": 2500, "tierRateBps": 3500, "tierThreshold": 50, "minimumPaise": 150000, "payoutHours": 48, "minQualifyingPaise": 19900, "downloadThreshold": 3, "premiumDays": 45}
     s, j = o.api("POST", "admin/referrals/settings", body); t.check("save all referral rules", s == 200, f"{s} {j}")
     r = o.api("GET", "admin/referrals")[1]["rules"]
     t.check("rules persisted", r["rateBps"] == 2500 and r["holdDays"] == 5 and r["premiumDays"] == 45 and r["minimumPaise"] == 150000, r)
