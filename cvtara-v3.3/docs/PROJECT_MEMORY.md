@@ -56,3 +56,10 @@ Defaults: 5 paying friends unlock one free resume download; 10 unlock 30 days of
 - 10 friends on the cheapest plan (Rs 299): Rs 2,990 collected (about Rs 2,534 before 18% GST). Reward value at list price Rs 399 to 499 is the worst-case cost, so 13% to 17% of money collected. With the 20% commission on top: about Rs 1,000 to 1,100, or 33% to 37% (40% to 43% of money before GST).
 - The same 10 friends buying with a 25% festival coupon (Rs 224 each): Rs 2,243 collected; commission Rs 449 plus reward Rs 399 to 499 gives 38% to 42% of money collected.
 - The cash cost of the reward itself is close to zero (it is access, not cash); the figures above are the revenue given up. Keep festival coupons at 25% or less and do not stack them with a high commission rate.
+
+## v3.15.0 decisions (programmatic SEO)
+
+- Programmatic pages live in `App\Services\SeoPages` + `resources/views/seo/page.blade.php` + `public_html/seo-pages.css`. Content is authored in `tools/seo/*.py` and compiled to `resources/data/seo-pages.json` by `tools/seo/build_seo_data.py` (it refuses unknown categories/roles and exclamation marks). Illustrations: `tools/seo/build_images.py` → `public_html/assets/seo/`.
+- URL patterns follow the owner's master prompt section 6.3; paths always end with "/" so `PageCache` and `.htaccess` can serve them. Brand keywords (competitors, Word, Google Docs, company names) are deliberately not targeted, so `/resume-templates/word/` and `/resume-templates/google-docs/` do not exist.
+- No salary figures until a sourced range exists. Place facts to check: `docs/SEO_VERIFY.md`.
+- Existing guides get breadcrumbs, an "Explore next" box and up to 3 contextual links (`ContentController::articleLinks`).

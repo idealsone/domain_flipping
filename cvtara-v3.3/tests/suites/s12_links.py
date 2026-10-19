@@ -3,6 +3,7 @@ import json, os, re
 from urllib.parse import urljoin, urlparse
 NAME = "Link crawl"
 PRIVATE = re.compile(r"^/(admin|console|api|preview(/|$)|install|setup|webhooks)")
+SEO = re.compile(r"^/(resume-examples|resume-templates|cover-letter-examples|interview-questions|resume-builder|resume|resume-words|ats-checker)/")  # crawled by s23_seo_pages
 
 
 def run(ctx, t):
@@ -35,7 +36,7 @@ def run(ctx, t):
                 if p not in seen:
                     seen.add(p); sa, _, _ = c.raw("GET", p)
                     if sa != 200: broken.append((path + " -> " + p, sa))
-            elif p not in seen and len(seen) < 400: queue.append(p)
+            elif p not in seen and len(seen) < 400 and not SEO.match(p): queue.append(p)
     t.check(f"crawled {pages} public pages", pages >= 20, pages)
     t.check("no broken internal links or missing assets", not broken, broken[:8])
     t.check("the home page does not link to owner areas", not private, private[:3])
