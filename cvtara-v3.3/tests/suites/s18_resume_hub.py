@@ -163,6 +163,9 @@ def run(ctx, t):
     c.api("POST", "applications", {"company": "Quartz", "role": "Buyer", "stage": "interview", "id": qid["id"], "revision": qid["revision"]})
     db.q("update applications set next_reminder_at=datetime('now','-1 minute') where id=?", qid["id"]); ctx.inst.artisan("cvtara:remind")
     t.check("the reminder asks the right question for the current stage", any("interview" in x["body"].lower() and "Interview" in x["body"] for x in notes()), notes())
+    s, j = c.api("POST", f"resumes/{rid}/variant", {"company": "Onyx", "role": "Clerk"}); oid = [x for x in apps() if x["company"] == "Onyx"][0]["id"]
+    db.q("update applications set next_reminder_at=datetime('now','-1 minute') where id=?", oid); ctx.inst.artisan("cache:clear"); ctx.inst.artisan("cvtara:cron")
+    t.check("the regular minute cron sends due status reminders too", db.q("select reminders_sent from applications where id=?", oid)[0][0] == 1 and any("Onyx" in x["title"] for x in notes()))
 
     # ---- unsuitable text ----
     s, j = c.api("POST", "resumes/import", {"text": NO_HEADINGS * 2})

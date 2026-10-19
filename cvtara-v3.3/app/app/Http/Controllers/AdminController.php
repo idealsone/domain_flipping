@@ -88,7 +88,7 @@ class AdminController extends Controller
         }
         if ($path === 'providers') {
             $p = Settings::providers();
-            $fields = ['jobreader' => ['enabled', 'provider', 'scrapingbeeApiKey', 'zenrowsApiKey', 'customUrlTemplate', 'customApiKey', 'dailyLimit'], 'payments' => ['provider', 'mode', 'razorpayKeyId', 'razorpayKeySecret', 'razorpayWebhookSecret'], 'email' => ['provider', 'resendApiKey', 'smtpHost', 'smtpPort', 'smtpUser', 'smtpPassword', 'fromEmail', 'fromName', 'replyTo'], 'ai' => ['provider', 'writerApiKey', 'model'], 'analytics' => ['measurementId', 'searchConsoleProperty', 'searchConsoleServiceAccount'], 'push' => ['oneSignalAppId', 'oneSignalRestApiKey']];
+            $fields = ['jobreader' => ['enabled', 'provider', 'scrapingbeeApiKey', 'zenrowsApiKey', 'customUrlTemplate', 'customApiKey', 'dailyLimit'], 'payments' => ['provider', 'mode', 'razorpayKeyId', 'razorpayKeySecret', 'razorpayWebhookSecret'], 'email' => ['provider', 'resendApiKey', 'smtpHost', 'smtpPort', 'smtpUser', 'smtpPassword', 'fromEmail', 'fromName', 'replyTo'], 'ai' => ['provider', 'claudeApiKey', 'model', 'dailyLimit', 'writerApiKey'], 'analytics' => ['measurementId', 'searchConsoleProperty', 'searchConsoleServiceAccount'], 'push' => ['oneSignalAppId', 'oneSignalRestApiKey']];
             $secret = fn ($k) => preg_match('/Secret|ApiKey|Password|ServiceAccount|AuthToken/', $k);
             if ($get) {
                 foreach ($p as &$service) {
@@ -102,6 +102,9 @@ class AdminController extends Controller
                 return $ok(['providers' => $p, 'secureStorage' => true]);
             }AccountSecurity::requireRecent($r);
             $r->validate(['service' => 'required|in:'.implode(',', array_keys($fields)), 'values' => 'required|array']);
+            if ($r->service === 'ai') {
+                validator($r->values, ['provider' => 'sometimes|in:claude,standard', 'model' => 'nullable|string|max:80|regex:/^[a-z0-9.\-]*$/', 'dailyLimit' => 'nullable|integer|min:0|max:100000'])->validate();
+            }
             if ($r->service === 'jobreader') {
                 validator($r->values, ['enabled' => 'required|in:true,false', 'provider' => 'required|in:'.implode(',', \App\Services\JobReader::PROVIDERS), 'dailyLimit' => 'nullable|integer|min:1|max:100000', 'customUrlTemplate' => 'nullable|string|max:600'])->validate();
                 if (($r->values['customUrlTemplate'] ?? '') !== '' && ! str_contains($r->values['customUrlTemplate'], '{url}')) {
@@ -109,8 +112,8 @@ class AdminController extends Controller
                 }
             }
             foreach ($r->values as $k => $v) {
-                abort_unless(in_array($k, $fields[$r->service]) && is_string($v) && strlen($v) <= 12000, 422);
-                if (trim($v) !== '') {
+                abort_unless(in_array($k, $fields[$r->service]) && ($v === null || (is_string($v) && strlen($v) <= 12000)), 422);
+                if (trim((string) $v) !== '') {
                     $p[$r->service][$k] = trim($v);
                 }
             }if ($r->service === 'jobreader' && ($p['jobreader']['enabled'] ?? 'false') === 'true') {

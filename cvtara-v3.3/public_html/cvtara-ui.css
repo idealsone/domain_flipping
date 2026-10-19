@@ -314,3 +314,14 @@ body.dark .ws-notice{background:#3a2412;border-color:#7a4a1c;color:#fdba74}
 .cv-up-choices{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:0 0 14px}.cv-up-choices a{display:grid;gap:4px;padding:14px;border:1.5px solid var(--line,#e2e8f0);border-radius:14px;text-decoration:none;color:inherit}
 .cv-up-choices a.pop{border-color:#F59E0B;background:rgba(245,158,11,.08)}.cv-up-choices b{font-size:20px}.cv-up-choices em{font-style:normal;font-size:12px;font-weight:800;color:#B45309;letter-spacing:.06em;text-transform:uppercase}
 .cv-up-choices span{font-size:13px;color:var(--muted,#475569)}@media(max-width:520px){.cv-up-choices{grid-template-columns:1fr}}
+/* Tara AI dialog */
+.tara-dialog{width:min(680px,95vw);background:var(--paper,#fff);color:var(--ink,#0f172a)}.tara-dialog::backdrop{background:rgba(8,18,38,.55)}
+.tara-dialog h2{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}.tara-left{font-size:13px;font-weight:600;color:var(--muted,#64748b)}
+.tara-lead{color:var(--muted,#64748b);margin:4px 0 14px}.tara-form{display:grid;gap:12px}.tara-form label{display:grid;gap:6px;font-weight:600;font-size:14px}
+.tara-form textarea{width:100%;padding:10px 12px;border:1px solid var(--line,#cbd5e1);border-radius:12px;font:inherit;background:var(--soft,#f8fafc);color:inherit}
+.tara-tasks{display:flex;flex-wrap:wrap;gap:8px}.tara-chip{display:inline-flex!important;cursor:pointer}.tara-chip input{position:absolute;opacity:0;pointer-events:none}
+.tara-chip span{padding:7px 12px;border:1px solid var(--line,#cbd5e1);border-radius:999px;font-size:13px;font-weight:600;background:var(--soft,#f8fafc)}
+.tara-chip input:checked+span{background:#1557d2;border-color:#1557d2;color:#fff}.tara-chip input:focus-visible+span{outline:2px solid #1557d2;outline-offset:2px}
+.tara-link{justify-self:start;border:0;background:none;color:#1557d2;font:inherit;font-size:13px;cursor:pointer;padding:0;text-decoration:underline}
+.tara-consent{display:flex!important;align-items:flex-start;gap:8px;font-weight:500!important;color:var(--muted,#64748b)}.tara-actions{display:flex;gap:10px;flex-wrap:wrap}
+.tara-result{display:grid;gap:8px}.tara-result h3{margin:0;font-size:15px}.tara-result small{color:var(--muted,#64748b);font-weight:500}.tara-result .button{justify-self:start}

@@ -192,7 +192,20 @@ class ApiController extends Controller
 
             return $ok();
         }
+        if ($path === 'ai/status' && $get) {
+            return $ok(['ai' => \App\Services\TaraAI::status($u)]);
+        }
         if ($path === 'ai/suggest' && $r->isMethod('POST')) {
+            if (\App\Services\TaraAI::enabled()) {
+                $v = $r->validate(['task' => 'required|in:'.implode(',', array_keys(\App\Services\TaraAI::TASKS)), 'text' => 'required|string|min:20|max:12000', 'context' => 'nullable|string|max:8000', 'consent' => 'accepted']);
+                $key = 'tara-ai:'.$id;
+                if (\Illuminate\Support\Facades\RateLimiter::tooManyAttempts($key, 6)) {
+                    throw \Illuminate\Validation\ValidationException::withMessages(['ai' => 'Please wait a moment before asking Tara again.']);
+                }
+                \Illuminate\Support\Facades\RateLimiter::hit($key, 60);
+
+                return $ok(['suggestion' => \App\Services\TaraAI::suggest($u, $v), 'left' => \App\Services\TaraAI::left($u)]);
+            }
             $v = $r->validate(['task' => 'required|in:rewrite,translate,review_requirements', 'language' => 'required|in:English', 'text' => 'required|string|min:30|max:12000', 'context' => 'nullable|string|max:8000', 'consent' => 'accepted']);
 
             return $ok(['suggestion' => WritingAssistant::suggest($u, $v)]);

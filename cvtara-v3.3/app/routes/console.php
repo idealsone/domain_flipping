@@ -21,6 +21,14 @@ Artisan::command('cvtara:cron', function () {
             \App\Services\ErrorLog::exception($e);
         }
     }
+    // Application status reminders were only sent by cvtara:remind, which the host cron never runs. Check hourly here instead.
+    if (\Illuminate\Support\Facades\Cache::add('remind-run', 1, 3600)) {
+        try {
+            \App\Services\Tracker::remind();
+        } catch (\Throwable $e) {
+            \App\Services\ErrorLog::exception($e);
+        }
+    }
     try {
         \App\Services\Health::run();
     } catch (\Throwable $e) {
