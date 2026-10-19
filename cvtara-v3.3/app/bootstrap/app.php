@@ -12,7 +12,7 @@ use Symfony\Component\HttpKernel\Exception\HttpExceptionInterface;
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(web: __DIR__.'/../routes/web.php', commands: __DIR__.'/../routes/console.php', health: '/up')
     ->withMiddleware(function (Middleware $m): void {
-        $m->validateCsrfTokens(except: ['webhooks/razorpay', 'webhooks/cashfree', 'email/unsubscribe/*']);
+        $m->validateCsrfTokens(except: ['webhooks/razorpay', 'email/unsubscribe/*']);
         if ($proxies = env('TRUSTED_PROXIES')) {
             $m->trustProxies(at: $proxies === '*' ? '*' : array_map('trim', explode(',', $proxies)));
         }

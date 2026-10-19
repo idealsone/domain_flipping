@@ -10,7 +10,7 @@ Hiding code does not protect a site; **server-side checks do**. Every secret and
 | Sign-in | Passwords ≥ 12 characters, hashed; 5 failed attempts lock the address for 15 minutes; sessions are reset on password change; blocked accounts lose their session. |
 | Redirects | Unsafe `next` values are ignored; password-reset links are built from `APP_URL`, not the request's Host header. |
 | Broken pages | Any missing or failing page (not API, not a file) redirects to the home page; if the home page itself fails a plain "back soon" page is shown. A page that keeps throwing script errors sends visitors home; working pages (workspace, checkout, owner) show a calm Reload/Home bar instead, so no work or payment is interrupted. |
-| Headers | CSP (scripts only from this site, Cashfree, Razorpay, OneSignal, Google Analytics), frame-ancestors, nosniff, HSTS on HTTPS, no server/PHP version header. |
+| Headers | CSP (scripts only from this site, Razorpay, OneSignal, Google Analytics), frame-ancestors, nosniff, HSTS on HTTPS, no server/PHP version header. |
 | Abuse limits | API 400 requests/min per address, pages 240/min, sign-in 20/min, sign-up 5/min, password mail 3/min, exports 10/min. |
 | Demo mode | Cannot switch on in production: it needs a development `APP_ENV` and a local address. The Health page flags it if the variable is present. |
 | Data | Payout details are encrypted; account deletion erases them; Error Log never stores passwords or card data. |
@@ -40,7 +40,7 @@ Hostinger shared hosting is one server, so a true load balancer is not possible 
 - [ ] `.env`: `APP_ENV=production`, `APP_DEBUG=false`, `APP_URL=https://cvtara.com`, **no** `CVTARA_PREVIEW`.
 - [ ] HTTPS forced in hPanel; the owner Health page shows no red items (HTTPS, domain, scheduler, e-mail, payments, demo mode off).
 - [ ] Cron job `* * * * *` for `cvtara:cron` is running (Health shows a recent heartbeat).
-- [ ] Cashfree live App ID + Secret key saved (mode Live); webhook URL `https://cvtara.com/webhooks/cashfree` added in the Cashfree dashboard; one small real payment tested end to end.
+- [ ] Razorpay live Key ID, Key secret and Webhook secret saved (mode Live); webhook URL `https://cvtara.com/webhooks/razorpay` added in the Razorpay dashboard; one small real payment and one refund tested end to end.
 - [ ] `TRUSTED_PROXIES=*` in `.env` once Cloudflare is in front (so rate limits see the visitor's real address).
 - [ ] E-mail provider saved; a test mail from support@cvtara.com received.
 - [ ] Cloudflare in front, SSL mode "Full (strict)".

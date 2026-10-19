@@ -28,7 +28,7 @@ Scope: package `cvtara-v3.3` (BUILD_INFO.json says version 3.4.0, packaged 2026-
 
 ## 2. Route inventory
 
-Global notes: all routes sit in the `web` group (session + CSRF) except the Razorpay/Cashfree webhooks, which are CSRF-exempt and authenticated by HMAC signature. `GET /{path?}` is the last GET route and renders pages. The Cashfree webhook is registered after it (`app/routes/web.php:23,25`) but only GET is caught by the catch-all, so it still works.
+Global notes: all routes sit in the `web` group (session + CSRF) except the Razorpay webhook, which is CSRF-exempt and authenticated by HMAC signature. `GET /{path?}` is the last GET route and renders pages. Razorpay is the only payment gateway (3.19.0 removed Cashfree checkout and payouts).
 
 ### 2.1 `routes/web.php`
 
@@ -43,7 +43,6 @@ Global notes: all routes sit in the `web` group (session + CSRF) except the Razo
 | GET `/signin-with-chatgpt` | none | none | Redirect to `/login` (legacy) | `web.php:14` |
 | GET `/r/{code}` | none | `60/min` | Referral landing: 404 unless code belongs to an unblocked user; stores `session.referral` and a 30-day `cvtara_ref` cookie, records one `referral_clicks` row per session per day, redirects to `/register` | `web.php:15` |
 | POST `/webhooks/razorpay` | HMAC `X-Razorpay-Signature` | `120/min` | `Payments::webhook` (body limit 1 MB) | `web.php:16` |
-| POST `/webhooks/cashfree` | HMAC (timestamp + body, client secret) | `120/min` | Legacy `CashfreeCheckout::webhook` | `web.php:25` |
 | GET/POST/DELETE `/api/{path?}` | per path, see 2.2 | `API_RATE_LIMIT` (default 400)/min per user or IP | The JSON API | `web.php:17` |
 | POST `/export/{type}/{id}/{format}` | `auth` | `10/min` | PDF / DOCX / print-HTML export | `web.php:18` |
 | GET `/media/{file}` | public | none | Serves `media/<uuid>.webp` from the private `local` disk, `Cache-Control: public,max-age=86400` | `web.php:19` |
@@ -85,7 +84,7 @@ Guards at the top: GET is rejected (405) for `checkout/*`, `features/use`, `traf
 | `applications`, `applications/{id}` | GET/POST/DELETE | user | tracker CRUD | 230-259 |
 | `purchases` | any | user | own purchases (200 latest) | 260 |
 | `checkout/quote` / `start` | POST | user | price quote / create order | 263-275 |
-| `checkout/verify` | POST | user | demo (preview only), Cashfree (legacy) or Razorpay signature verify | 276-293 |
+| `checkout/verify` | POST | user | demo (preview only) or Razorpay signature verify | 276-293 |
 | `referrals` | GET | user | dashboard payload; **creates `referral_code` on first read** | 294-310 |
 | `referrals/withdraw` | POST | user + step-up | request withdrawal | 311 |
 | `feedback` | GET / POST, `feedback/{id}/withdraw` POST | user | own reviews | 317-331 |
@@ -232,15 +231,15 @@ Relationships are by `owner_id` / `*_id` columns; there are no Eloquent relation
 * `balance($id)` (`:33-42`): earned = sum(amount - reversed); pending = same for rows with `available_at` in the future; paid and reserved from `withdrawals`; **available = earned - pending - paid - reserved**.
 * `reverse($purchase,$refunded)` sets `reversed = min(amount, floor(refunded x rate / 10000))` (monotonic) (`:61-69`); `restore` recomputes after a dispute is won (`:71-77`). A reversal after payout makes `available` negative; later commissions offset it.
 * `request($user,$data)` (`:79-105`): transaction under the user lock; requires programme on, verified email, an approved payout profile past its 48-hour `eligible_at`, no open withdrawal, `amount >= config.minimumPaise` and `<= available`; stores the decrypted destination re-encrypted on the withdrawal (`:93-100`), status `requested`, `due_at = now + 24h`.
-* `transition()` (`:107-125`): allowed `requested -> processing|rejected`, `processing -> paid|rejected`; Cashfree-provider rows cannot be changed manually; `processing` needs the review (`approved_at`); `paid` needs a reference of 6+ chars and non-negative balance; `rejected` needs a note; cannot act on own withdrawal; blocked beneficiaries only to `rejected`.
+* `transition()` (`:107-125`): allowed `requested -> processing|rejected`, `processing -> paid|rejected`; `processing` needs the review (`approved_at`); `paid` needs a reference of 6+ chars and non-negative balance; `rejected` needs a note; cannot act on own withdrawal; blocked beneficiaries only to `rejected`.
 
 `ReferralRewards` (`ReferralRewards.php`): `enabled()` follows the referral switch. `count` is the number of friends whose purchase passed the 7-day refund window (see `Wallet`). `claim` gives one free Job Hunt month and one clean resume download when 5 friends qualify, once per customer, after any running plan ends. Phone verification (Twilio) was removed in 3.18.0; `referral_identities` is kept because `Wallet::selfReferral` still reads it.
 
 `AffiliateProfiles` stores payout details encrypted, HMAC hashes of the destination and PAN for duplicate flags, a 48-hour `eligible_at`, and resets status to `pending` on every change; blocks edits while a withdrawal is open (`AffiliateProfiles.php:25-53`). `approve` locks and sets the status with the reviewer's note (`:55-65`).
 
-`CashfreePayouts` (`CashfreePayouts.php`): production mode only; `send()` requires the payout policy record, reserves the provider transfer id **inside the transaction before** calling Cashfree, then calls `/transfers`; any failure leaves `UNKNOWN_VERIFY_BEFORE_RETRY` and the funds reserved (`:50-70`). `sync()` verifies transfer id and amount before marking `paid` (needs `SUCCESS/COMPLETED` + UTR) or `rejected` (`FAILED/REJECTED/REVERSED`) (`:72-100`); `reconcile()` (every cron run) syncs up to 10 withdrawals that are `processing` or paid in the last 30 days (`:102-120`).
+Withdrawals are paid by the owner outside the site (bank transfer or UPI) and recorded with `transition()`; there is no payout API.
 
-`CashfreeCheckout` is the legacy checkout; nothing calls its `start()`. It stays reachable through `checkout/verify` with `provider=cashfree`, the webhook route and admin provider fields (see risks file).
+`TaraAI` (`TaraAI.php`): writing help through the Claude API (`anthropic-ai/sdk`, default model `claude-opus-5-5`, server-side fallback on). Off unless `integrations.ai` is on and `providers.ai.claudeApiKey` is set. Seven tasks; 3 suggestions a day free, 20 on a paid plan, plus the owner's site-wide `dailyLimit` (default 300). A usage row is reserved in `product_usage` (action `ai`) before the call and removed if the call fails or is declined. Routes: GET `ai/status`, POST `ai/suggest` (consent required, 6 a minute per user). UI: `public_html/tara-ai.js`.
 
 ### 5.5 `MailAutomation` (`MailAutomation.php`)
 
@@ -356,7 +355,7 @@ Account view -> "Your data" panel (`workspace-ui.js privacy()`): JSON download v
 | Blog editor and SEO files | bloghub | `admin-publish.js` | `content/blog`, `content/seo`, `media` |
 | Policies and URLs | policies | `admin-publish.js` | `content/legal`, `legal/generate`, `site-urls` |
 | Setup and health | health, setup | `admin-publish.js`, `admin-extras.js` | `health/history`, `health/run`, `setup/status|business|cache|email-test|payout-policy|reward-review` |
-| Referral ops (affiliates, creators, identity, withdrawals, Cashfree) | referral, commerce | `referral-center.js owner()` (the older `admin-ops.js referral()` is a read-only summary) | `referrals*` |
+| Referral ops (affiliates, creators, identity, withdrawals) | referral, commerce | `referral-center.js owner()` (the older `admin-ops.js referral()` is a read-only summary) | `referrals*` |
 | Reviews | desk / reviews | `admin-ops.js desk()` | `reviews`, `feedback/add` |
 | Pricing and add-ons | pricing | `admin-extras.js pricingPanel()` | `plans` |
 | Business controls (maintenance, referral rules, coupons) | business | `business-ui.js` | `business-controls` |

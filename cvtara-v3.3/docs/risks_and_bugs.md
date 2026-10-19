@@ -32,7 +32,7 @@ No Critical finding was verified. There is no unauthenticated code execution, SQ
 | F-20 reminder scans, F-21 settings reads, F-22 retention | **Fixed** |
 | F-25 verified reviews | **Fixed** |
 | Low: F-26, F-27, F-28, F-31, F-33, F-34, F-35, F-36, F-39, F-40, F-41, F-42, F-43, F-44, F-53, F-55, F-56, F-60, F-61, F-65 | **Fixed** |
-| Low: F-37 | **Superseded** (Cashfree checkout is now the primary gateway) |
+| Low: F-37 | **Fixed in 3.19.0** (Cashfree checkout, webhook and payouts removed; Razorpay only) |
 | Low, deliberately left for later (UI refactors or product decisions): F-29, F-30, F-32, F-38, F-45–F-52, F-54, F-57–F-59, F-62–F-64 | Open |
 
 ## Summary

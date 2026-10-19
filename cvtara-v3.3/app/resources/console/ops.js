@@ -61,7 +61,7 @@
     try {
       const [st, jobs, hl] = await Promise.all([api('/api/admin/setup/status').catch(() => null), api('/api/admin/email/jobs').catch(() => null), api('/api/health').catch(() => null)]);
       const labels = { backupFresh: 'No database backup in the last 36 hours', previewOff: 'Demo/preview mode is ON — remove CVTARA_PREVIEW from .env', https: 'HTTPS is not forced on this domain', emailConfigured: 'Email provider not configured (SMTP / Resend)', scheduler: 'Cron scheduler has not reported in', payoutPolicy: 'Referral payout policy not confirmed', privateFolder: 'Private folder is not protected' };
-      if (st && st.checks) Object.entries(st.checks).forEach(([k, v]) => { if (!v && !/cashfree/i.test(k)) lines.push(['warn', `setup.${k}: ${labels[k] || k}`]); else if (v) lines.push(['info', `setup.${k}: ok`]); });
+      if (st && st.checks) Object.entries(st.checks).forEach(([k, v]) => { if (!v) lines.push(['warn', `setup.${k}: ${labels[k] || k}`]); else if (v) lines.push(['info', `setup.${k}: ok`]); });
       ((jobs && jobs.jobs) || []).filter(j => /fail|error/i.test(j.status || '')).forEach(j => lines.push(['err', `mail.${E(j.template || 'job')} to ${E(j.to_email || '?')}: ${E(j.last_error || j.status)}`]));
       if (hl) lines.push(['info', `storage: ${hl.storage || 'unknown'}`]);
     } catch (e) { lines.push(['err', E(e.message)]); }

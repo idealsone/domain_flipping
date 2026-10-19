@@ -11,7 +11,7 @@
     "hostinger_acceptance": false
   },
   "known_launch_blockers": [
-    "Live Razorpay, email, Twilio and Cashfree payout acceptance remains pending.",
+    "Live Razorpay payment, refund and webhook acceptance and live email delivery remain pending.",
     "Hostinger staging install and real-device validation remain pending.",
     "Some plan perks (Naukri/LinkedIn export, 1-on-1 call, priority support, lifetime updates) are listed text, not built features.",
     "Identity, tax, fraud-review and payout operating policies require owner approval.",
