@@ -14,7 +14,7 @@
     const disc = coupon ? (coupon.type === 'percent' ? coupon.value + '% OFF' : '₹' + Number(coupon.value).toLocaleString('en-IN') + ' OFF') : '';
     const fill = s => String(s || '').replace(/\{\{discount\}\}/g, disc).replace(/\{\{code\}\}/g, (f.couponCode || '').toUpperCase()).replace(/\{\{year\}\}/g, year);
     return { id: f.id || 'preview', badge: fill(f.badge), heading: fill(f.heading), subheading: fill(f.subheading), body: fill(f.body), cta: f.cta || 'Claim this offer', code: (f.couponCode || '').toUpperCase(), discount: disc, plan: f.planKey || '', image: f.imageUrl || '',
-      theme: { from: th.from, to: th.to, ink: th.ink, accent: th.accent, art: th.art }, endsAt: f.endsAt ? new Date(f.endsAt + '+05:30').toISOString() : null,
+      theme: { key: th.key, from: th.from, to: th.to, ink: th.ink, accent: th.accent, art: th.art }, endsAt: f.endsAt ? new Date(f.endsAt + '+05:30').toISOString() : null,
       triggers: {}, variants: { exit: { heading: fill(f.exitHeading), text: fill(f.exitText) }, idle: { heading: fill(f.idleHeading), text: fill(f.idleText) } }, pages: f.pages, frequencyHours: f.frequencyHours };
   };
   const swatch = t => `linear-gradient(135deg,${t.from},${t.to})`;

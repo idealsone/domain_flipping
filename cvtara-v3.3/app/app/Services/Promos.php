@@ -29,7 +29,7 @@ class Promos
         'flash' => ['#111827', '#dc2626', '#ffffff', '#fde047', '⚡'],
         'graduate' => ['#2258d6', '#0891b2', '#ffffff', '#bfdbfe', '🎓'],
         'appraisal' => ['#0f766e', '#2258d6', '#ffffff', '#99f6e4', '💼'],
-        'brand' => ['#1557d2', '#4f46e5', '#ffffff', '#fde047', '🚀'],
+        'brand' => ['#1557d2', '#2b3a8c', '#ffffff', '#fde047', '🚀'],
     ];
 
     /** Ready-made starting points. {{year}} is filled in when a campaign is created from a template. */
@@ -138,7 +138,7 @@ class Promos
         return [
             'id' => $c['id'], 'badge' => $fill($c['badge'] ?? ''), 'heading' => $fill($c['heading'] ?? ''), 'subheading' => $fill($c['subheading'] ?? ''), 'body' => $fill($c['body'] ?? ''),
             'cta' => $c['cta'] ?: 'Claim this offer', 'code' => strtoupper((string) ($c['couponCode'] ?? '')), 'discount' => self::discountLabel($coupon), 'plan' => Settings::planAlias((string) ($c['planKey'] ?? '')),
-            'image' => $c['imageUrl'] ?? '', 'theme' => ['from' => $theme[0], 'to' => $theme[1], 'ink' => $theme[2], 'accent' => $theme[3], 'art' => $theme[4]],
+            'image' => $c['imageUrl'] ?? '', 'theme' => ['key' => isset(self::THEMES[$c['theme'] ?? '']) ? $c['theme'] : 'brand', 'from' => $theme[0], 'to' => $theme[1], 'ink' => $theme[2], 'accent' => $theme[3], 'art' => $theme[4]],
             'endsAt' => $to ? gmdate('c', $to) : null,
             'triggers' => ['banner' => ! empty($c['banner']), 'popup' => ['enabled' => ! empty($c['popup']), 'delay' => (int) ($c['popupDelay'] ?? 20)], 'exit' => ! empty($c['exit']), 'idle' => ['enabled' => ! empty($c['idle']), 'seconds' => (int) ($c['idleSeconds'] ?? 45)]],
             'variants' => ['exit' => ['heading' => $fill($c['exitHeading'] ?? ''), 'text' => $fill($c['exitText'] ?? '')], 'idle' => ['heading' => $fill($c['idleHeading'] ?? ''), 'text' => $fill($c['idleText'] ?? '')]],
