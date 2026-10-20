@@ -23,7 +23,8 @@ class Campaigns
         'contacts' => 'Your imported contacts',
     ];
 
-    public const DEFAULTS = ['batchSize' => 20, 'dailyCap' => 300];
+    /** mailboxCap: the sending mailbox's own limit for 24 hours (Hostinger Business Starter allows 1,000). */
+    public const DEFAULTS = ['batchSize' => 20, 'dailyCap' => 300, 'mailboxCap' => 1000];
 
     public const STATUSES = ['draft', 'scheduled', 'sending', 'paused', 'done', 'cancelled'];
 
@@ -31,7 +32,7 @@ class Campaigns
     {
         $s = (array) Settings::get('campaignSettings', []);
 
-        return ['batchSize' => (int) ($s['batchSize'] ?? self::DEFAULTS['batchSize']), 'dailyCap' => (int) ($s['dailyCap'] ?? self::DEFAULTS['dailyCap'])];
+        return ['batchSize' => (int) ($s['batchSize'] ?? self::DEFAULTS['batchSize']), 'dailyCap' => (int) ($s['dailyCap'] ?? self::DEFAULTS['dailyCap']), 'mailboxCap' => (int) ($s['mailboxCap'] ?? self::DEFAULTS['mailboxCap'])];
     }
 
     private static function suppressed()
@@ -82,9 +83,10 @@ class Campaigns
 
     public static function fill(string $text, string $name, string $email): string
     {
-        $vars = ['name' => self::firstName($name), 'email' => $email, 'site_url' => rtrim((string) config('app.url'), '/')];
+        $vars = ['name' => self::firstName($name), 'email' => $email] + MailAutomation::sharedVars();
 
-        return preg_replace_callback('/\{\{\s*([a-z_]+)\s*\}\}/', fn ($m) => (string) ($vars[$m[1]] ?? ''), $text);
+        // {{checkout_url}} and {{offer_line}} stay as they are here and are filled with the live offer when the mail is sent.
+        return preg_replace_callback('/\{\{\s*([a-z_]+)\s*\}\}/', fn ($m) => array_key_exists($m[1], $vars) ? (string) $vars[$m[1]] : (in_array($m[1], ['checkout_url', 'offer_line'], true) ? $m[0] : ''), $text);
     }
 
     /** India time "2026-11-01T10:00" in and out; stored as UTC. */

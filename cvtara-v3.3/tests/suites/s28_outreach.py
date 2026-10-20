@@ -209,7 +209,7 @@ def _run(ctx, t, db, smtp):
     t.check("the colleges list keeps its plain, personal look", tm and "<table" not in html)
     sm = [m for m in camp if m["to"][0].startswith("s")]
     msg, text, html = _mail(sm[0])
-    t.check("students get the designed mail: heading, bullet list and a button", "<h1" in html and "<li" in html and "background:#1557d2" in html and "Check my resume free: http" in text, html[:200])
+    t.check("students get the designed mail: heading, bullet list and a button", "<h1" in html and "&#10003;" in html and "background:#1557d2" in html and "Check my resume: http" in text and 'name="color-scheme"' in html, html[:200])
     s, d = o.api("GET", "admin/outreach")
     t.check("the overview counts each list and the warm-up mix", d["byList"]["colleges"]["reached"] == 1 and d["byList"]["students"]["reached"] >= 5 and d["mix30"]["warmup"] == 4, (d.get("byList"), d.get("mix30")))
 
@@ -218,4 +218,4 @@ def _run(ctx, t, db, smtp):
     share = ctx.inst.artisan("tinker", f"--execute=echo App\\Services\\Outreach::clickUrl('{sid1}', 2, 'share');").stdout.strip().splitlines()[-1]
     s, h, b = ctx.client().raw("GET", share.split("127.0.0.1:" + str(ctx.inst.port))[-1])
     loc = urllib.parse.unquote(h.get("Location", ""))
-    t.check("the share link opens WhatsApp with the free ATS check and counts the share", s in (301, 302) and loc.startswith("https://wa.me/?text=") and "/resume-match?utm_source=outreach&utm_medium=share" in loc and db.q("select shares, clicks from outreach_contacts where id=?", sid1)[0] == (1, 0), (s, loc))
+    t.check("the share link opens WhatsApp with the free ATS check and counts the share", s in (301, 302) and loc.startswith("https://wa.me/?text=") and "/ats-checker/?utm_source=outreach&utm_medium=share" in loc and db.q("select shares, clicks from outreach_contacts where id=?", sid1)[0] == (1, 0), (s, loc))

@@ -61,14 +61,14 @@ class Outreach
             'warmup' => ['share' => 40, 'seeds' => []],
             'lists' => [
                 'students' => ['design' => 'card', 'steps' => [
-                    ['subject' => '{{name}}, will your resume get shortlisted?', 'delayDays' => 0, 'body' => "# Will your resume get shortlisted?\n\nHi {{name}},\n\nMost companies that hire freshers screen resumes with software (an ATS) before anyone reads them. If your resume doesn't use the words the job asks for, it is rejected in seconds.\n\nCVTara checks your resume for free and shows you:\n- your match score for any job description\n- the exact keywords you are missing\n- what to fix before you apply\n\n[button: Check my resume free | {{ats_url}}]\n\nIt takes about a minute, and placement season is the right time to fix it.\n\n{{sender_name}}"],
-                    ['subject' => 'Re: will your resume get shortlisted?', 'delayDays' => 3, 'body' => "Hi {{name}},\n\nA quick placement tip: send a slightly different resume for each role. Same facts, but the words that role asks for.\n\nCVTara does this for you in minutes, with fresher templates recruiters find easy to read and a cover letter to match.\n\n[button: Make my job-ready resume | {{site_url}}]\n\nFriends applying too? Send them the free check on WhatsApp: {{share_url}}"],
-                    ['subject' => 'last note from me, {{name}}', 'delayDays' => 5, 'body' => "# Your resume, ready before the next interview\n\nHi {{name}},\n\nThis is my last mail about it. If you want a resume that gets past the ATS and looks professional, CVTara plans for freshers start at ₹299:\n- ATS-friendly fresher templates, PDF and Word\n- a tailored version for each job\n- 20 ATS checks to test before you apply\n\n[button: See fresher plans | {{plans_url}}]\n\nAll the best for your placements.\n\n{{sender_name}}"],
+                    ['subject' => '{{name}}, will your resume get shortlisted?', 'delayDays' => 0, 'body' => "# Will your resume get shortlisted?\n[preheader: A one-minute check shows the keywords your resume is missing for any job.]\nHi {{name}},\n\nMany companies that hire freshers screen resumes with software (an ATS) before anyone reads them. If your resume does not use the words the job asks for, it can be passed over in seconds.\n\nCVTara checks your resume against any job description, at no cost, and shows you:\n- your match score for that job\n- the keywords you are missing\n- what to fix before you apply\n\n[button: Check my resume | {{ats_url}}]\n\nIt takes about a minute, and placement season is a good time to fix it.\n\n{{sender_name}}"],
+                    ['subject' => 'Re: will your resume get shortlisted?', 'delayDays' => 3, 'body' => "Hi {{name}},\n\nA quick placement tip: send a slightly different resume for each role. Same facts, but the words that role asks for.\n\nCVTara keeps one primary resume and makes a tailored version for each job in a click, with fresher designs from the guided template library and a matching cover letter.\n\n{{tara_line}}\n\n[button: Make my job-ready resume | {{site_url}}]\n\nFriends applying too? Send them the check on WhatsApp: {{share_url}}"],
+                    ['subject' => 'last note from me, {{name}}', 'delayDays' => 5, 'body' => "# Your resume, ready before the next interview\nHi {{name}},\n\nThis is my last mail about it. Building, editing and checking your resume on CVTara costs nothing. You pay only when you download a clean copy, from {{from_price}}, paid once with no auto-renewal and a full refund within 7 days if you have not used it.\n\n{{offer_line}}\n\n[button: See the packages | {{plans_url}}]\n\nAll the best for your placements.\n\n{{sender_name}}"],
                 ]],
                 'colleges' => ['design' => 'plain', 'steps' => [
-                    ['subject' => 'Placement support for {{college}} students', 'delayDays' => 0, 'body' => "Hello {{name}},\n\nI'm writing from CVTara, a resume platform built by an HR team in Bengaluru. You will know how many capable students at {{college}} lose out at the resume shortlist stage.\n\nWe would like to give {{college}}'s final-year students free access to our ATS resume check this placement season:\n- each student sees how their resume scores against real job descriptions\n- they get the missing keywords and fixes in minutes\n- you share one link with the batch, with nothing to install\n\nShall I send you the link and a short note you can forward to students? A reply to this email is enough.\n\n{{sender_name}}"],
-                    ['subject' => 'Re: Placement support for {{college}} students', 'delayDays' => 4, 'body' => "Hello {{name}},\n\nFollowing up on my note. Here is the free link your students can use straight away: {{ats_url}}\n\nIf it helps, we can also run a 30-minute online session for the batch on writing a resume that passes ATS screening, at no cost to the college.\n\nWould a date in the next two weeks suit you? A one-line reply is enough.\n\n{{sender_name}}"],
-                    ['subject' => 'Re: Placement support for {{college}} students', 'delayDays' => 7, 'body' => "Hello {{name}},\n\nI don't want to fill your inbox, so this is my last note. If the free ATS check or a resume session would help {{college}}'s students this season, just reply and I'll set it up.\n\nYou can also forward the free check to your students on WhatsApp: {{share_url}}\n\n{{sender_name}}"],
+                    ['subject' => 'Placement support for {{college}} students', 'delayDays' => 0, 'body' => "Hello {{name}},\n\nI'm writing from CVTara, a resume platform built by an HR team in Bengaluru. You will know how many capable students at {{college}} lose out at the resume shortlist stage.\n\nWe would like to give {{college}}'s final-year students our ATS resume check this placement season, at no cost:\n- each student sees how their resume scores against real job descriptions\n- they get the missing keywords and fixes in minutes\n- you share one link with the batch, with nothing to install\n\nShall I send you the link and a short note you can forward to students? A reply to this email is enough.\n\n{{sender_name}}"],
+                    ['subject' => 'Re: Placement support for {{college}} students', 'delayDays' => 4, 'body' => "Hello {{name}},\n\nFollowing up on my note. Here is the link your students can use straight away: {{ats_url}}\n\nIf it helps, we can also run a 30-minute online session for the batch on writing a resume that passes ATS screening, at no cost to the college.\n\nWould a date in the next two weeks suit you? A one-line reply is enough.\n\n{{sender_name}}"],
+                    ['subject' => 'Re: Placement support for {{college}} students', 'delayDays' => 7, 'body' => "Hello {{name}},\n\nI don't want to fill your inbox, so this is my last note. If the ATS check or a resume session would help {{college}}'s students this season, just reply and I'll set it up.\n\nYou can also forward the check to your students on WhatsApp: {{share_url}}\n\n{{sender_name}}"],
                 ]],
             ],
         ];
@@ -193,7 +193,8 @@ class Outreach
                     continue;
                 }
                 // Spread the day's mail evenly across the window instead of sending it in a burst.
-                $gap = max(60, intdiv($windowSeconds, $limit));
+                // Each gap is 70–100% of the even spacing, varied per send, so mail never leaves at a fixed beat.
+                $gap = max(60, (int) round(intdiv($windowSeconds, $limit) * (70 + crc32($s->id.'|'.$s->last_sent_at) % 31) / 100));
                 if ($s->last_sent_at && $now->getTimestamp() - \Carbon\Carbon::parse($s->last_sent_at)->getTimestamp() < $gap - 5) {
                     continue;
                 }
@@ -350,7 +351,7 @@ class Outreach
     }
 
     /** Pages a tracked link may open. "share" opens WhatsApp with a ready message about the free ATS check. */
-    public const LANDINGS = ['home' => '/', 'ats' => '/resume-match', 'plans' => '/#pricing', 'register' => '/register', 'share' => '/resume-match'];
+    public const LANDINGS = ['home' => '/', 'ats' => '/ats-checker/', 'plans' => '/#pricing', 'register' => '/register', 'share' => '/ats-checker/'];
 
     /** A link that counts the click for this contact, then opens the page with campaign tags. */
     public static function clickUrl(string $contactId, int $step, string $to = 'home'): string
@@ -376,7 +377,7 @@ class Outreach
         $vars = ['name' => $first !== '' ? $first : ($list === 'colleges' ? 'Sir/Madam' : 'there'), 'full_name' => trim((string) $ct->name), 'email' => $ct->email,
             'college' => trim((string) ($ct->college ?? '')) ?: 'your college', 'designation' => trim((string) ($ct->designation ?? '')), 'city' => trim((string) ($ct->city ?? '')),
             'site_url' => self::clickUrl($ct->id, $step_no), 'ats_url' => self::clickUrl($ct->id, $step_no, 'ats'), 'plans_url' => self::clickUrl($ct->id, $step_no, 'plans'), 'share_url' => self::clickUrl($ct->id, $step_no, 'share'),
-            'home_url' => $site, 'sender_name' => $s->from_name ?: '', 'unsubscribe_url' => $unsub];
+            'home_url' => $site, 'sender_name' => $s->from_name ?: '', 'unsubscribe_url' => $unsub] + array_intersect_key(MailAutomation::sharedVars() + MailAutomation::liveVars(), array_flip(['from_price', 'tara_line', 'expert_line', 'offer_line', 'referral_reward', 'referral_discount', 'referral_min']));
         $fill = fn ($t) => preg_replace_callback('/\{\{\s*([a-z_]+)\s*\}\}/', fn ($m) => (string) ($vars[$m[1]] ?? ''), (string) $t);
         $subject = trim(preg_replace('/\s+/', ' ', $fill($step['subject'] ?? '')));
         $body = trim(str_replace("\r", '', $fill($step['body'] ?? '')));
@@ -386,70 +387,48 @@ class Outreach
             $sign = trim((string) ($c['footer'] ?? ''));
         }
 
-        // Light markup: "# Heading" on the first line, "- " bullets, "[button: Label | link]" on its own line.
-        $lines = explode("\n", $body);
-        $head = $lines && str_starts_with($lines[0], '# ') ? trim(substr(array_shift($lines), 2)) : '';
-        $blocks = [];
-        foreach (preg_split("/\n{2,}/", trim(implode("\n", $lines))) as $chunk) {
-            if (preg_match('/^\[button:\s*(.+?)\s*\|\s*(https?:\/\/\S+?)\s*\]$/i', trim($chunk), $m)) {
-                $blocks[] = ['btn', $m[1], $m[2]];
-            } else {
-                $para = [];
-                $items = [];
-                foreach (explode("\n", $chunk) as $l) {
-                    if (str_starts_with($l, '- ')) {
-                        if ($para) {
-                            $blocks[] = ['p', implode("\n", $para)];
-                        }
-                        $para = [];
-                        $items[] = substr($l, 2);
-                    } else {
-                        if ($items) {
-                            $blocks[] = ['ul', $items];
-                        }
-                        $items = [];
-                        $para[] = $l;
-                    }
-                }
-                if ($para) {
-                    $blocks[] = ['p', implode("\n", $para)];
-                }
-                if ($items) {
-                    $blocks[] = ['ul', $items];
-                }
-            }
-        }
-        $text = ($head !== '' ? $head."\n\n" : '');
-        $html = '';
+        // Same template text as account mail ("# Heading", "- " bullets, "[button: Label | link]", "[offer]" ...).
+        // Lines that are empty once filled (for example {{offer_line}} while no offer runs) are left out.
+        $parsed = MailLayout::blocks($body);
+        $head = $parsed['headline'];
         $card = $design === 'card';
-        $link = fn ($x) => preg_replace('~(https?://[^\s<]+)~', '<a href="$1" style="color:#1557d2">$1</a>', $x);
-        foreach ($blocks as $b) {
-            if ($b[0] === 'btn') {
-                $text .= $b[1].': '.$b[2]."\n\n";
-                $html .= $card
-                    ? '<table role="presentation" cellpadding="0" cellspacing="0" style="margin:4px 0 20px"><tr><td style="border-radius:8px;background:#1557d2"><a href="'.e($b[2]).'" style="display:inline-block;padding:12px 22px;font-size:15px;font-weight:700;color:#ffffff;text-decoration:none;border-radius:8px">'.e($b[1]).'</a></td></tr></table>'
-                    : '<p style="margin:0 0 14px"><a href="'.e($b[2]).'" style="color:#1557d2;font-weight:700">'.e($b[1]).' →</a></p>';
-            } elseif ($b[0] === 'ul') {
-                $text .= implode("\n", array_map(fn ($i) => '- '.$i, $b[1]))."\n\n";
-                $html .= '<ul style="margin:0 0 14px;padding-left:20px">'.implode('', array_map(fn ($i) => '<li style="margin:0 0 6px">'.$link(e($i)).'</li>', $b[1])).'</ul>';
-            } else {
-                $text .= $b[1]."\n\n";
-                $html .= '<p style="margin:0 0 14px">'.nl2br($link(e($b[1])), false).'</p>';
+        $c = MailLayout::C;
+        if ($card) {
+            $content = MailLayout::content($parsed, 'light');
+            $html = $content['html'];
+            $text = ($head !== '' ? $head."\n\n" : '').$content['text'];
+        } else {
+            // Plain: looks like a personal note (no frame, no button), which suits placement officers and the Primary tab.
+            $text = ($head !== '' ? $head."\n\n" : '');
+            $html = $head !== '' ? '<p style="margin:0 0 14px;font-weight:700">'.e($head).'</p>' : '';
+            $link = fn ($x) => preg_replace('~(https?://[^\s<]+[^\s<.,;:!?)\]])~', '<a href="$1" style="color:'.$c['accent'].'">$1</a>', $x);
+            foreach ($parsed['blocks'] as [$k, $v]) {
+                if ($k === 'btn') {
+                    $text .= $v[0].': '.$v[1]."\n\n";
+                    $html .= '<p style="margin:0 0 14px"><a href="'.e($v[1]).'" style="color:'.$c['accent'].';font-weight:700">'.e($v[0]).' &rarr;</a></p>';
+                } elseif ($k === 'ul') {
+                    $text .= implode("\n", array_map(fn ($i) => '- '.$i, $v))."\n\n";
+                    $html .= '<ul style="margin:0 0 14px;padding-left:20px">'.implode('', array_map(fn ($i) => '<li style="margin:0 0 6px">'.$link(e($i)).'</li>', $v)).'</ul>';
+                } elseif (in_array($k, ['p', 'h2', 'note'], true)) {
+                    $text .= $v."\n\n";
+                    $html .= '<p style="margin:0 0 14px">'.nl2br($link(e($v)), false).'</p>';
+                } elseif (in_array($k, ['offer', 'plans'], true)) {
+                    $part = MailLayout::content(['blocks' => [[$k, null]]] + $parsed);
+                    $text .= $part['text'];
+                    $html .= $k === 'offer' && ($line = MailLayout::offerLine()) !== '' ? '<p style="margin:0 0 14px">'.e($line).'</p>' : ($k === 'plans' ? '<p style="margin:0 0 14px">'.nl2br(e(trim($part['text'])), false).'</p>' : '');
+                }
             }
         }
         $text = rtrim($text).($sign !== '' ? "\n\n".$sign : '')."\n\nDon't want these emails? Unsubscribe: ".$unsub."\n";
-        $foot = '<p style="margin:22px 0 0;font-size:12px;color:#6b7280">Don\'t want these emails? <a href="'.e($unsub).'" style="color:#6b7280">Unsubscribe</a>.</p>';
-        $signHtml = $sign !== '' ? '<p style="margin:18px 0 0">'.nl2br(e($sign), false).'</p>' : '';
+        $f = MailLayout::FONT;
+        $foot = '<p class="cv-mut" style="margin:22px 0 0;font-family:'.$f.';font-size:12px;line-height:1.6;color:'.$c['muted'].'">Don\'t want these emails? <a href="'.e($unsub).'" class="cv-mut" style="color:'.$c['muted'].'">Unsubscribe</a>.</p>';
+        $signHtml = $sign !== '' ? '<p class="cv-txt" style="margin:18px 0 0;font-family:'.$f.';font-size:15px;line-height:1.6;color:'.$c['text'].'">'.nl2br(e($sign), false).'</p>' : '';
         if ($card) {
-            // One light card with a small wordmark: friendly to look at, but without the heavy images that push mail into Promotions.
-            $html = '<!doctype html><html><body style="margin:0;padding:0;background:#f4f6fb"><table role="presentation" width="100%" cellpadding="0" cellspacing="0"><tr><td align="center" style="padding:20px 12px">'
-                .'<table role="presentation" width="560" cellpadding="0" cellspacing="0" style="width:100%;max-width:560px;background:#ffffff;border:1px solid #e5e7eb;border-radius:12px"><tr><td style="padding:26px 28px;font:15px/1.6 Arial,Helvetica,sans-serif;color:#1f2937">'
-                .'<p style="margin:0 0 16px;font-size:18px;font-weight:800;color:#1e1b4b">CV<span style="color:#4f46e5">Tara</span></p>'
-                .($head !== '' ? '<h1 style="margin:0 0 14px;font-size:22px;line-height:1.3;color:#0f172a">'.e($head).'</h1>' : '')
-                .$html.$signHtml.$foot.'</td></tr></table></td></tr></table></body></html>';
+            // The light card: small wordmark, no colour band or images, so it reads like a note rather than a newsletter.
+            $html = MailLayout::page(['subject' => $subject, 'preheader' => $parsed['preheader'], 'headline' => $head, 'content' => $html, 'signature' => $signHtml.$foot, 'footer' => '', 'variant' => 'light']);
         } else {
-            $html = '<!doctype html><html><body style="margin:0;padding:16px;font:15px/1.6 Arial,Helvetica,sans-serif;color:#1f2937">'
-                .($head !== '' ? '<p style="margin:0 0 14px;font-weight:700">'.e($head).'</p>' : '').$html.$signHtml.$foot.'</body></html>';
+            $html = '<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>'.e($subject).'</title></head><body style="margin:0;padding:16px;font:15px/1.6 Arial,Helvetica,sans-serif;color:#1f2937">'
+                .$html.$signHtml.$foot.'</body></html>';
         }
 
         return ['subject' => $subject, 'text' => $text, 'html' => $html, 'unsubscribe' => $unsub];

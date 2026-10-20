@@ -55,7 +55,7 @@ class AdminController extends Controller
         if (preg_match('#^content/(legal|features|library|blog|integrations|emails|seo|popup|site)$#', $path, $m)) {
             $key = $m[1];
             if ($get) {
-                return $ok(['data' => Settings::get($key), 'revision' => Settings::revision($key), 'connections' => ['payments' => ! empty(Settings::providers()['payments']), 'email' => ! empty(Settings::providers()['email']), 'ai' => ! empty(Settings::providers()['ai']), 'grammar' => ! empty(Settings::providers()['grammar'])]]);
+                return $ok(['data' => $key === 'emails' ? \App\Services\MailAutomation::upgradeTemplates((array) Settings::get($key)) : Settings::get($key), 'revision' => Settings::revision($key), 'connections' => ['payments' => ! empty(Settings::providers()['payments']), 'email' => ! empty(Settings::providers()['email']), 'ai' => ! empty(Settings::providers()['ai']), 'grammar' => ! empty(Settings::providers()['grammar'])]]);
             }if (in_array($key, ['integrations', 'emails', 'legal', 'site'], true)) {
                 AccountSecurity::requireRecent($r);
             }$r->validate(['data' => 'present|array', 'revision' => 'required|integer']);
@@ -94,7 +94,7 @@ class AdminController extends Controller
         }
         if ($path === 'providers') {
             $p = Settings::providers();
-            $fields = ['jobreader' => ['enabled', 'provider', 'scrapingbeeApiKey', 'zenrowsApiKey', 'customUrlTemplate', 'customApiKey', 'dailyLimit'], 'payments' => ['provider', 'mode', 'razorpayKeyId', 'razorpayKeySecret', 'razorpayWebhookSecret'], 'email' => ['provider', 'resendApiKey', 'smtpHost', 'smtpPort', 'smtpUser', 'smtpPassword', 'fromEmail', 'fromName', 'replyTo'], 'ai' => ['provider', 'claudeApiKey', 'model', 'dailyLimit', 'writerApiKey'], 'grammar' => ['url', 'username', 'premiumApiKey'], 'analytics' => ['measurementId', 'searchConsoleProperty', 'searchConsoleServiceAccount'], 'push' => ['oneSignalAppId', 'oneSignalRestApiKey']];
+            $fields = ['jobreader' => ['enabled', 'provider', 'scrapingbeeApiKey', 'zenrowsApiKey', 'customUrlTemplate', 'customApiKey', 'dailyLimit'], 'payments' => ['provider', 'mode', 'razorpayKeyId', 'razorpayKeySecret', 'razorpayWebhookSecret'], 'email' => ['provider', 'resendApiKey', 'smtpHost', 'smtpPort', 'smtpUser', 'smtpPassword', 'fromEmail', 'fromName', 'replyTo', 'postalAddress'], 'ai' => ['provider', 'claudeApiKey', 'model', 'dailyLimit', 'writerApiKey'], 'grammar' => ['url', 'username', 'premiumApiKey'], 'analytics' => ['measurementId', 'searchConsoleProperty', 'searchConsoleServiceAccount'], 'push' => ['oneSignalAppId', 'oneSignalRestApiKey']];
             $secret = fn ($k) => preg_match('/Secret|ApiKey|Password|ServiceAccount|AuthToken/', $k);
             if ($get) {
                 foreach ($p as &$service) {
@@ -138,6 +138,10 @@ class AdminController extends Controller
                 abort_unless(! empty($p['payments']['razorpayKeyId']) && ! empty($p['payments']['razorpayKeySecret']), 422, 'Enter the Razorpay Key ID and Key secret.');
             }if (! empty($p['email']['fromEmail'])) {
                 abort_unless(filter_var($p['email']['fromEmail'], FILTER_VALIDATE_EMAIL), 422);
+            }if (! empty($p['email']['replyTo'])) {
+                abort_unless(filter_var($p['email']['replyTo'], FILTER_VALIDATE_EMAIL), 422, 'Enter a valid reply-to address.');
+            }if (isset($p['email']['postalAddress'])) {
+                abort_if(mb_strlen($p['email']['postalAddress']) > 200, 422, 'Keep the postal address under 200 characters.');
             }Settings::put('providers', Crypt::encryptString(json_encode($p)));
             Settings::audit($id, 'provider_settings_saved', $r->service);
 

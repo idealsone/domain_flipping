@@ -14,7 +14,7 @@ def run(ctx, t):
     files = [f for f in os.listdir(d) if f.endswith(".html")]
     t.check("every template renders as HTML and text", r.returncode == 0 and len(files) >= 25, (r.returncode, len(files), (r.stdout + r.stderr)[-200:]))
     bad = []
-    for f in files:
+    for f in [f for f in files if not f.startswith("outreach-")]:  # outreach mail is signed by its mailbox (suite s28)
         h = open(os.path.join(d, f), encoding="utf8").read(); x = open(os.path.join(d, f[:-5] + ".txt"), encoding="utf8").read()
         if "Team CVTara" not in h or "support@cvtara.com" not in h or "Bangalore" not in h or "{{" in h or "{{" in x or "Team CVTara" not in x: bad.append(f)
     t.check("each mail has the CVTara header, a signature, the support address and no placeholder left behind", not bad, bad[:4])

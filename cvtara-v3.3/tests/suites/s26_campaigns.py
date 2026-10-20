@@ -24,7 +24,7 @@ def run(ctx, t):
 
     # ---- audiences: only people who said yes; free, paid and ended plans ----
     s, g = o.api("GET", "admin/campaigns")
-    t.check("the owner sees the campaign page with audiences, limits and real counts", s == 200 and {a["key"] for a in g["audiences"]} == {"customers_all", "customers_free", "customers_paid", "customers_expired", "contacts"} and g["settings"] == {"batchSize": 20, "dailyCap": 300}, (s, str(g)[:200]))
+    t.check("the owner sees the campaign page with audiences, limits and real counts", s == 200 and {a["key"] for a in g["audiences"]} == {"customers_all", "customers_free", "customers_paid", "customers_expired", "contacts"} and g["settings"] == {"batchSize": 20, "dailyCap": 300, "mailboxCap": 1000}, (s, str(g)[:200]))
     before = g["counts"]
     for e in ("cm-yes@test.local", "cm-yes2@test.local", "cm-ended@test.local", "cm-no@test.local"): ctx.client().register(e)
     db.q("update profiles set marketing_consent=1 where owner_id in (?,?,?)", uid("cm-yes@test.local"), uid("cm-yes2@test.local"), uid("cm-ended@test.local"))
@@ -62,7 +62,7 @@ def run(ctx, t):
 
     # ---- batches: per-run cap and daily cap ----
     s, _ = o.api("POST", "admin/campaigns/settings", {"batchSize": 2, "dailyCap": 3})
-    t.check("the owner sets the sending limits", s == 200 and o.api("GET", "admin/campaigns")[1]["settings"] == {"batchSize": 2, "dailyCap": 3})
+    t.check("the owner sets the sending limits", s == 200 and o.api("GET", "admin/campaigns")[1]["settings"] == {"batchSize": 2, "dailyCap": 3, "mailboxCap": 1000})
     t.check("limits outside the safe range are refused", o.api("POST", "admin/campaigns/settings", {"batchSize": 0, "dailyCap": 3})[0] == 422)
     s, j = o.api("POST", "admin/campaigns/save", {"name": "Contacts hello", "audience": "contacts", "subject": "Hello {{name}}", "body": body}); cid = j.get("id"); made.append(cid)
     t.check("a new campaign starts as a draft", s == 200 and next(c for c in j["campaigns"] if c["id"] == cid)["status"] == "draft", (s, str(j)[:160]))
@@ -150,4 +150,4 @@ def run(ctx, t):
     db.q("delete from mail_outbox where trigger in ('campaign','campaign_test')")
     db.q("delete from campaign_recipients"); db.q("delete from email_campaigns"); db.q("delete from email_contacts"); db.q("delete from email_suppressions")
     db.q("delete from site_settings where key='campaignSettings'")
-    t.check("the sending limits are back to their defaults", o.api("GET", "admin/campaigns")[1]["settings"] == {"batchSize": 20, "dailyCap": 300})
+    t.check("the sending limits are back to their defaults", o.api("GET", "admin/campaigns")[1]["settings"] == {"batchSize": 20, "dailyCap": 300, "mailboxCap": 1000})
