@@ -11,6 +11,7 @@
 <link rel="stylesheet" href="/owner-console.css">
 <link rel="stylesheet" href="/resume-experience.css">
 <link rel="stylesheet" href="/premium-products.css">
+<link rel="stylesheet" href="/template-picker.css">
 <meta name="theme-color" content="#214ed3"><link rel="stylesheet" href="/brand-polish.css"><link rel="icon" href="/favicon.ico?v=2" sizes="48x48"><link rel="icon" type="image/svg+xml" href="/favicon.svg?v=2"><link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png?v=2"><link rel="apple-touch-icon" href="/apple-touch-icon.png?v=2"><link rel="manifest" href="/site.webmanifest"></head>
 <body data-page="templates">
 <div data-header>
@@ -24,8 +25,11 @@
 <span class="pill">Full document previews</span>
 <span class="pill">Free editing & profile saves</span>
 <span class="pill">Technology to healthcare</span>
-<span class="pill">Fresher + experienced</span>
+<span class="pill">Fresher to senior, freelance and interns</span>
 </div>
+</section>
+<section class="section" id="picker" style="padding-top:20px;padding-bottom:0">
+<div data-template-picker="resume"></div>
 </section>
 <section class="section" style="padding-top:20px">
 <div class="panel panel-pad" style="margin-bottom:22px">
@@ -39,6 +43,15 @@
 <p style="margin:4px 0;color:var(--muted);font-size:14px">Click any resume to open the complete readable document.</p>
 </div>
 </div>
+</div>
+<div class="category-tabs" role="group" aria-label="Candidate type">
+<button class="active" data-template-audience="all">All candidates</button>
+<button data-template-audience="fresher">Freshers</button>
+<button data-template-audience="experienced">Experienced</button>
+<button data-template-audience="freelance">Freelance</button>
+<button data-template-audience="career-change">Career change</button>
+<button data-template-audience="senior">Senior / Manager</button>
+<button data-template-audience="internship">Internship</button>
 </div>
 <div class="category-tabs">
 <button class="active" data-template-filter="All">All templates</button>
@@ -83,7 +96,7 @@
 </script>
 <script src="/reference-templates.js"></script>
 <script src="/premium-collection.js"></script>
-<script src="/template-curation.js" defer></script><script src="preview.js">
+<script src="/template-curation.js" defer></script><script src="/template-picker.js" defer></script><script src="preview.js">
 </script>
 <script src="/profile-api.js"></script>
 <script src="/onesignal-push.js"></script>

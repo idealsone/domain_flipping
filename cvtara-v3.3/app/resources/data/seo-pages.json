@@ -4361,6 +4361,61 @@
    ],
    "a": "Add a short objective that names the role you want.",
    "f": "fresher"
+  },
+  "experienced": {
+   "n": "Experienced",
+   "w": "Professionals with a few years of work and results they can show.",
+   "u": [
+    "A short summary that names your field and years",
+    "Experience first, with one result in most bullets",
+    "Skills that match the job post"
+   ],
+   "a": "Keep job titles, company names and dates in plain text so the software can read your history in order.",
+   "f": "experienced"
+  },
+  "freelance": {
+   "n": "Freelance",
+   "w": "Freelancers, consultants and independent professionals who work for clients.",
+   "u": [
+    "A clear line on what you do and for whom",
+    "Client projects with the problem, your work and the result",
+    "Links to a portfolio or work samples"
+   ],
+   "a": "List freelance work as one role, such as Freelance Designer, Self-employed, with dates. Name clients only if you have their permission.",
+   "f": "freelance"
+  },
+  "career-change": {
+   "n": "Career Change",
+   "w": "People moving into a new field who want transferable skills to come first.",
+   "u": [
+    "A summary that explains the move in one or two lines",
+    "Skills and new training near the top",
+    "Past roles described in terms the new field understands"
+   ],
+   "a": "Use the new field’s standard words where they truly describe your work, so a search for those skills finds your resume.",
+   "f": "career-change"
+  },
+  "senior": {
+   "n": "Senior and Manager",
+   "w": "Managers, heads of department and senior leaders.",
+   "u": [
+    "Scope in the first lines: team size, budget, sites or regions",
+    "Two or three results per role that show business impact",
+    "Earlier roles kept short"
+   ],
+   "a": "Two pages are fine at this level. Keep the layout simple so the scope of each role is read in the right order.",
+   "f": "senior"
+  },
+  "internship": {
+   "n": "Internship",
+   "w": "Students applying for a summer, winter or semester internship.",
+   "u": [
+    "Course, year and expected graduation at the top",
+    "Projects, clubs and volunteering with what you did",
+    "Skills you can show in a short task or interview"
+   ],
+   "a": "Keep it to one page and use standard headings such as Education, Projects and Skills.",
+   "f": "internship"
   }
  },
  "states": {

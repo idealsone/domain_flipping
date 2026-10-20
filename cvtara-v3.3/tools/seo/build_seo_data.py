@@ -42,3 +42,5 @@ out = dict(version=1, roles=roles, categories=CATEGORIES, templates=TEMPLATES, s
 dest = HERE.parent.parent / 'app' / 'resources' / 'data' / 'seo-pages.json'
 dest.write_text(json.dumps(out, ensure_ascii=False, indent=1) + '\n', encoding='utf8')
 print(f'wrote {dest.relative_to(HERE.parent.parent)}: {len(roles)} roles, {len(CATEGORIES)} categories, {len(TEMPLATES)} templates, {len(STATES)} states, {len(CITIES)} cities, {len(WORDS)} words')
+from build_role_library import build as build_role_library
+build_role_library()

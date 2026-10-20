@@ -10,6 +10,7 @@
 <link rel="stylesheet" href="/template-designs.css">
 <link rel="stylesheet" href="/owner-console.css">
 <link rel="stylesheet" href="/premium-products.css">
+<link rel="stylesheet" href="/template-picker.css">
 <meta name="theme-color" content="#214ed3"><link rel="stylesheet" href="/brand-polish.css"><link rel="icon" href="/favicon.ico?v=2" sizes="48x48"><link rel="icon" type="image/svg+xml" href="/favicon.svg?v=2"><link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png?v=2"><link rel="apple-touch-icon" href="/apple-touch-icon.png?v=2"><link rel="manifest" href="/site.webmanifest"></head>
 <body data-page="coverletters">
   <div data-header></div>
@@ -20,8 +21,10 @@
       <p>Choose a market and purpose, open a readable full-page sample, then replace the fictional evidence with your verified experience. No empty template and no one-paragraph shortcut.</p>
       <div class="pill-row"><span class="pill">India + international formats</span><span class="pill">Fresher + experienced</span><span class="pill">Role-specific evidence</span><span class="pill">Editable before export</span></div>
     </section>
+    <section class="section" id="picker" style="padding-top:18px;padding-bottom:0"><div data-template-picker="letter"></div></section>
     <section class="section" style="padding-top:18px">
       <div class="panel panel-pad" style="margin-bottom:22px"><div class="form-row"><label><b>Search cover-letter previews</b><input class="form-control" id="coverLetterSearch" placeholder="India, fresher, data analyst, referral..."></label><div><b id="coverLetterCount">Coordinated letter previews</b><p style="margin:4px 0;color:var(--muted)">Click a preview to read the complete letter and choose it in the builder.</p></div></div></div>
+      <div class="category-tabs" role="group" aria-label="Candidate type"><button class="active" data-letter-audience="all">All candidates</button><button data-letter-audience="fresher">Freshers</button><button data-letter-audience="experienced">Experienced</button><button data-letter-audience="freelance">Freelance</button><button data-letter-audience="career-change">Career change</button><button data-letter-audience="senior">Senior / Manager</button><button data-letter-audience="internship">Internship</button></div>
       <div class="category-tabs"><button class="active" data-letter-filter="All">All formats</button><button data-letter-filter="India">India</button><button data-letter-filter="United States">United States</button><button data-letter-filter="United Kingdom">United Kingdom</button><button data-letter-filter="Canada">Canada</button><button data-letter-filter="Australia">Australia</button><button data-letter-filter="Middle East / GCC">GCC</button><button data-letter-filter="European Union">EU</button><button data-letter-filter="Global">Global</button></div>
       <div class="cover-letter-grid" id="coverLetterGrid"></div>
     </section>
@@ -30,7 +33,7 @@
   <div data-footer></div>
   <script src="data.js"></script><script src="/reference-templates.js"></script>
 <script src="/premium-collection.js"></script>
-<script src="/template-curation.js" defer></script><script src="preview.js"></script>
+<script src="/template-curation.js" defer></script><script src="/template-picker.js" defer></script><script src="preview.js"></script>
 <script src="/profile-api.js"></script>
 <script src="/onesignal-push.js"></script>
 <script src="/connected-ui.js"></script>

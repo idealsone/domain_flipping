@@ -105,7 +105,7 @@
     "letter": {
       "enabled": true,
       "position": 3,
-      "limit": 26,
+      "limit": 56,
       "draftLimit": 500
     },
     "tracker": {
@@ -116,7 +116,7 @@
     "templates": {
       "enabled": true,
       "position": 5,
-      "limit": 91
+      "limit": 121
     },
     "blog": {
       "enabled": true,

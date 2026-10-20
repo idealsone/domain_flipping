@@ -9,7 +9,7 @@
 <link rel="stylesheet" href="/connected-ui.css">
 <link rel="stylesheet" href="/template-designs.css">
 <link rel="stylesheet" href="/premium-products.css">
-<meta name="theme-color" content="#2B3A8C"><link rel="stylesheet" href="/brand-polish.css"><link rel="stylesheet" href="/blog-v2.css"><link rel="stylesheet" href="/seo-pages.css"><link rel="icon" href="/favicon.ico?v=2" sizes="48x48"><link rel="icon" type="image/svg+xml" href="/favicon.svg?v=2"><link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png?v=2"><link rel="apple-touch-icon" href="/apple-touch-icon.png?v=2"><link rel="manifest" href="/site.webmanifest"></head>
+<meta name="theme-color" content="#2B3A8C"><link rel="stylesheet" href="/brand-polish.css"><link rel="stylesheet" href="/blog-v2.css"><link rel="stylesheet" href="/seo-pages.css"><link rel="stylesheet" href="/template-picker.css"><link rel="icon" href="/favicon.ico?v=2" sizes="48x48"><link rel="icon" type="image/svg+xml" href="/favicon.svg?v=2"><link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png?v=2"><link rel="apple-touch-icon" href="/apple-touch-icon.png?v=2"><link rel="manifest" href="/site.webmanifest"></head>
 <body data-page="seo" class="sp-body">
 <div data-header></div>
 <main class="sp-shell">
@@ -19,7 +19,7 @@
 <span class="sp-eyebrow">{{ $p['eyebrow'] }}</span>
 <h1>{{ $p['h1'] }}</h1>
 <p class="sp-lead">{{ $p['lead'] }}</p>
-<div class="sp-actions"><a class="sp-cta" href="/register">Build my resume free</a><a class="sp-secondary" href="/ats-checker/">Check my resume for ATS</a></div>
+<div class="sp-actions">@if(!empty($p['picker']))<a class="sp-cta" href="{{ $p['picker'] }}">Use this template</a>@endif<a class="{{ !empty($p['picker']) ? 'sp-secondary' : 'sp-cta' }}" href="/register">Build my resume free</a><a class="sp-secondary" href="/ats-checker/">Check my resume for ATS</a></div>
 <p class="sp-trust">Free to build and preview · Pay once, no auto-renewal · Secure UPI and cards · Built by working recruiters</p>
 </div>
 <img class="sp-hero-img" src="{{ $p['image'][0] }}" alt="{{ $p['image'][1] }}" width="520" height="390" loading="eager" decoding="async" fetchpriority="high">
@@ -39,7 +39,7 @@
 <div data-footer></div>
 <script src="/data.js"></script><script src="/reference-templates.js"></script>
 <script src="/premium-collection.js"></script>
-<script src="/template-curation.js" defer></script><script src="/preview.js"></script>
+<script src="/template-curation.js" defer></script><script src="/template-picker.js" defer></script><script src="/preview.js"></script>
 <script src="/profile-api.js"></script>
 <script src="/onesignal-push.js"></script>
 <script src="/connected-ui.js"></script>

@@ -117,12 +117,31 @@ class SeoPages
             $page['title'] = self::fit($page['title'], 50);
             $page['description'] = self::fit($page['description'], 155);
             $page['related'][] = ['Tools', [['/ats-checker/', 'Free ATS resume check'], ['/#pricing', 'Plans and pricing'], ['/templates.html', 'All resume templates'], ['/register', 'Build my resume free']]];
+            $page['picker'] = self::pickerLink($s);
         }
 
         return $page;
     }
 
     // ---------------------------------------------------------------- data helpers
+    /** "Use this template" target: the guided picker on the gallery, pre-selected for the page's role, field or style. */
+    private static function pickerLink(array $s): string
+    {
+        $d = self::data();
+        $q = match (true) {
+            $s[0] === 'resume-examples' && count($s) === 3, $s[0] === 'interview-questions' && count($s) === 2 => ['role' => end($s)],
+            $s[0] === 'resume-examples' && count($s) === 2 => ['industry' => $s[1]],
+            $s[0] === 'resume-templates' && count($s) === 2 => ['style' => $s[1]],
+            $s[0] === 'cover-letter-examples' && count($s) === 2 => ['industry' => $s[1]],
+            $s[0] === 'resume' && count($s) === 3 && $s[2] === 'government-jobs' => ['role' => 'government-jobs'],
+            $s[0] === 'resume' && count($s) === 3 => ($s[2] === 'freshers' ? ['type' => 'fresher', 'role' => 'freshers'] : ['role' => self::cityRoles($s[1])[$s[2]]['role'] ?? $s[2]]),
+            default => [],
+        };
+        $page = $s[0] === 'cover-letter-examples' ? '/cover-letters.html' : '/templates.html';
+
+        return $page.($q ? '?'.http_build_query($q) : '').'#picker';
+    }
+
 
     private static function rolesIn(string $cat): array
     {
@@ -328,7 +347,9 @@ class SeoPages
         $d = self::data();
         $tp = $d['templates'][$k];
         $others = array_filter($d['templates'], fn ($_, $key) => $key !== $k, ARRAY_FILTER_USE_BOTH);
-        $pick = $k === 'fresher' ? 'freshers' : ($k === 'creative' ? 'graphic-designer' : ($k === 'with-photo' ? 'hospitality' : 'software-engineer'));
+        $pick = ['fresher' => 'freshers', 'internship' => 'internship', 'creative' => 'graphic-designer', 'with-photo' => 'hospitality', 'freelance' => 'graphic-designer', 'senior' => 'sales-manager', 'career-change' => 'business-analyst'][$k] ?? 'software-engineer';
+        $audience = in_array($k, ['fresher', 'experienced', 'freelance', 'career-change', 'senior', 'internship'], true) ? $k : null;
+        $names = $audience ? array_values(array_map(fn ($t) => $t['name'], array_filter(json_decode((string) file_get_contents(resource_path('data/catalog.json')), true)['templates'] ?? [], fn ($t) => ($t['audience'] ?? null) === $audience))) : [];
 
         return ['kind' => 'template', 'eyebrow' => 'RESUME TEMPLATES', 'title' => $tp['n'].' Resume Templates', 'description' => $tp['n'].' resume templates: who they suit, how to use them and how to keep them ATS-friendly. Edit online with a live preview.',
             'h1' => $tp['n'].' resume templates', 'lead' => 'Best for: '.$tp['w'],
@@ -336,6 +357,7 @@ class SeoPages
             'sections' => [['who', 'Who this template suits', '<p>'.self::e($tp['w']).'</p>'],
                 ['features', 'What makes it work', self::ul($tp['u'], 'sp-check')],
                 ['ats', 'Keeping it ATS-friendly', '<p>An '.self::ATS_DEF.' reads your resume before a person does. '.self::e($tp['a']).'</p>'],
+                ['designs', 'Designs to start from', '<p>Open the guided picker to see these designs with sample content for your own job. Choose your experience level and type any job title.</p>'.($names ? self::ul($names) : '').'<div class="sp-picks" data-picker-style="'.self::e($k).'" data-picker-role="'.self::e($pick).'"></div><p><a class="sp-text-link" href="/templates.html?style='.rawurlencode($k).'#picker">Open the '.self::e(self::lc($tp['n'])).' designs in the guided picker</a></p>'],
                 ['how', 'How to use it', self::ul(['Open the templates gallery and filter by layout.', 'Start from the design, or upload your old resume to fill it in.', 'Check your ATS-friendly score as you edit.', 'Preview free. Download a clean PDF or Word file when you are ready.']).'<p><a class="sp-text-link" href="/templates.html">Open the templates gallery</a></p>']],
             'sample' => self::sample($d['roles'][$pick]),
             'faq' => [['Is a '.self::lc($tp['n']).' resume template free?', 'You can build, edit and preview for free. A clean, watermark-free download needs a paid option.'], ['Will this template pass ATS?', 'No template can promise that every employer system reads it perfectly. Simple layouts with standard headings are the safest.'], ['Can I change the template later?', 'Yes. Your content stays when you switch designs.'], ['PDF or Word?', 'Send PDF unless the job post asks for Word. You can download both.']],
@@ -355,7 +377,8 @@ class SeoPages
             'h1' => 'Cover letter examples by industry', 'lead' => 'A good cover letter is short: why this job, what you bring, and a polite close. Pick your field for a sample.',
             'crumbs' => self::crumbs(['Cover letter examples', '/cover-letter-examples/']), 'image' => self::image('cover-letter', 'Cover letter example with greeting, three paragraphs and sign-off'),
             'sections' => [['structure', 'A simple cover letter structure', self::ul(['Paragraph 1: the role you are applying for and one line on why you fit.', 'Paragraph 2: two or three results from your experience that match the job.', 'Paragraph 3: a polite close and when you can join or talk.'], 'sp-check').'<p>Many employers read the letter after an '.self::ATS_DEF.' has shortlisted your resume, so check your resume first.</p>'],
-                ['fields', 'Browse by field', self::cards($cards)]],
+                ['fields', 'Browse by field', self::cards($cards)],
+                ['levels', 'Cover letters by experience level', self::cards(array_map(fn ($x) => ['/cover-letters.html?type='.$x[0].'#picker', $x[1], $x[2]], [['fresher', 'Freshers', 'Eager, learning-focused first-job letters'], ['experienced', 'Experienced', 'Results-led letters for your next step'], ['freelance', 'Freelance', 'Proposal-style letters to clients'], ['career-change', 'Career change', 'Letters that explain the switch'], ['senior', 'Senior and manager', 'Leadership letters with scope and results'], ['internship', 'Internship', 'Short letters for student applications']]))]],
             'faq' => [['How long should a cover letter be?', 'About 200 to 300 words, in 3 short paragraphs.'], ['Do Indian employers read cover letters?', 'Many read them for email applications and some portal roles. A short, specific letter can help you stand out.'], ['Should I write a new letter for every job?', 'Yes. Change the first and second paragraphs to match each job post.'], ['Can I send the cover letter in the email body?', 'Yes. For email applications, a short letter in the body plus your resume attached works well.']],
             'related' => [['Guides', self::guides('coverEmail', 'followup')]]];
     }
