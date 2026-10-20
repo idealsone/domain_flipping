@@ -39,6 +39,12 @@ Artisan::command('cvtara:cron', function () {
     } catch (\Throwable $e) {
         \App\Services\ErrorLog::exception($e);
     }
+    // Tara Expert Review orders waiting for Tara AI: a few per run, so the run stays inside the host's time limit.
+    try {
+        \App\Services\ExpertReview::run();
+    } catch (\Throwable $e) {
+        \App\Services\ErrorLog::exception($e);
+    }
     $this->info(json_encode(MailAutomation::process()));
 })->purpose('Process due mail and record cron health');
 Artisan::command('cvtara:remind', function () {

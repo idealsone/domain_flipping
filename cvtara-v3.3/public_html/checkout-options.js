@@ -43,7 +43,7 @@
     const url = new URL(location.href); url.searchParams.set('plan', active); history.replaceState(null, '', url);
     const addon = p.type === 'addon', service = p.type === 'service';
     set('checkoutPlanName', p.name); set('checkoutPlanDescription', p.tagline);
-    set('checkoutAccess', service ? 'Done by our team within 48 working hours' : addon ? 'Valid as long as your current plan' : p.accessDays + ' days, no auto-renewal');
+    set('checkoutAccess', active === 'expert-review' ? 'Written by Tara AI from your saved resume, then emailed and kept in your account' : service ? 'Done by our team within 48 working hours' : addon ? 'Valid as long as your current plan' : p.accessDays + ' days, no auto-renewal');
     set('checkoutResumes', service ? '—' : p.oneResume ? '1 resume, edit and re-download for 7 days' : (addon ? '+' : '') + p.savedResumes + ' tailored resumes');
     set('checkoutLetters', service ? '—' : (addon ? '+' : '') + p.savedLetters + ' cover letters');
     set('checkoutScans', service ? '—' : p.oneResume ? '3 free checks a day' : addon ? (p.atsScans ? '+' + p.atsScans + ' scans' : 'Unchanged') : p.atsScans == null ? 'Unlimited' : p.atsScans + ' scans');
