@@ -1,3 +1,10 @@
+# Unreleased
+
+- **Tara Expert Review is now written automatically by Tara AI.** When an order opens (right after payment) and on every minute cron, up to 3 waiting orders are picked up, marked In review, written by Tara AI from the customer's primary resume (or the one edited last), stored on the order, marked Delivered and emailed (new "Tara Expert Review delivered" template). The review has a fixed structure: overall verdict, section-by-section feedback, ATS issues, a rewritten summary, 3 to 5 rewritten bullets and a fix list in priority order. The customer reads it under Account → Purchase history. It never uses the customer's daily Tara AI suggestions or the site-wide suggestion cap.
+- **Owner control.** Refunds & services has a new "Automatic expert reviews" switch (on by default; it only works while Tara AI is set up and switched on, otherwise orders wait as before). In the reviewer queue the owner can view, edit and resend any review, write one by hand (it is emailed when marked delivered) and ask Tara AI to try again.
+- **Failures are retried, then handed to the owner.** A failed or declined attempt goes back to Not started (so the order stays refundable) and is retried after 10, then 20 minutes; after 3 attempts it stays in the queue flagged "Needs you" with the reason, and a warning goes to the error log. A per-order lock and a conditional claim mean two cron runs never write the same review; an attempt cut off half-way is put back after 15 minutes.
+- **Honest copy.** Tara Expert Review no longer promises "a working recruiter within 48 working hours": the plan text, checkout line, dashboard, refund policy and privacy policy now say Tara AI writes it from the saved resume. Saved plan text that still had the old default wording is updated by the migration. Run `php artisan migrate` after uploading.
+
 # CVTara v3.19.0 — Razorpay only, Tara AI and email campaigns
 
 ## 3.19.0

@@ -64,11 +64,59 @@ class TaraAI
     }
 
     /** The address of the Claude API. Tests may point it at a local stand-in, but never on a production site. */
-    private static function client(string $key): Client
+    private static function client(string $key, int $timeout = 50): Client
     {
         $o = env('CLAUDE_API_BASE');
 
-        return new Client(apiKey: $key, baseUrl: $o && config('app.env') !== 'production' ? rtrim($o, '/') : 'https://api.anthropic.com', requestOptions: ['timeout' => 50, 'maxRetries' => 0]);
+        return new Client(apiKey: $key, baseUrl: $o && config('app.env') !== 'production' ? rtrim($o, '/') : 'https://api.anthropic.com', requestOptions: ['timeout' => $timeout, 'maxRetries' => 0]);
+    }
+
+    /** One request to Claude with the owner's key and model. Returns the text, or throws (refusal, empty answer, API error). */
+    public static function ask(string $system, string $prompt, int $maxTokens, int $timeout = 50): string
+    {
+        $p = self::config();
+        $m = self::client((string) ($p['claudeApiKey'] ?? ''), $timeout)->beta->messages->create(
+            model: $p['model'] ?? '' ?: self::MODEL,
+            maxTokens: $maxTokens,
+            system: $system,
+            messages: [['role' => 'user', 'content' => $prompt]],
+            outputConfig: ['effort' => 'medium'],
+            fallbacks: 'default',
+            betas: ['server-side-fallback-2026-07-01'],
+        );
+        if ($m->stopReason === 'refusal') {
+            throw new \RuntimeException('refusal');
+        }
+        $text = '';
+        foreach ($m->content as $block) {
+            if ($block->type === 'text') {
+                $text .= $block->text;
+            }
+        }
+        if (trim($text) === '') {
+            throw new \RuntimeException('empty');
+        }
+
+        return trim($text);
+    }
+
+    /** Why a request failed, in words the owner can act on (for logs and the reviewer queue). Logs a refused key once. */
+    public static function failure(\Throwable $e): string
+    {
+        if ($e instanceof APIStatusException && in_array($e->status ?? 0, [401, 403], true)) {
+            ErrorLog::record('error', 'ai', 'The Claude API key was refused. Check it in Owner console → Settings → Integrations → AI.');
+
+            return 'The Claude API key was refused. Check it in Settings → Integrations → AI.';
+        }
+
+        return match (true) {
+            $e instanceof RateLimitException => 'Claude was busy (rate limit).',
+            $e instanceof APIConnectionException => 'Claude could not be reached (connection or timeout).',
+            $e instanceof APIStatusException => 'Claude returned an error (HTTP '.($e->status ?? '?').').',
+            $e->getMessage() === 'refusal' => 'Claude declined to write this review.',
+            $e->getMessage() === 'empty' => 'Claude returned an empty answer.',
+            default => 'Unexpected error: '.mb_strimwidth($e->getMessage(), 0, 160, '…'),
+        };
     }
 
     public static function suggest(User $u, array $d): string
@@ -92,30 +140,10 @@ class TaraAI
         @set_time_limit(120); // shared hosting often stops PHP at 30-60 seconds; a suggestion can take longer
         $prompt = $task[1]."\n\n<text>\n".$d['text']."\n</text>".(trim((string) ($d['context'] ?? '')) !== '' ? "\n\n<job>\n".$d['context']."\n</job>" : '');
         try {
-            $m = self::client($p['claudeApiKey'])->beta->messages->create(
-                model: $p['model'] ?? '' ?: self::MODEL,
-                maxTokens: 4000 + $task[2] * 2,
-                system: self::SYSTEM,
-                messages: [['role' => 'user', 'content' => $prompt]],
-                outputConfig: ['effort' => 'medium'],
-                fallbacks: 'default',
-                betas: ['server-side-fallback-2026-07-01'],
-            );
-            if ($m->stopReason === 'refusal') {
-                throw new \RuntimeException('refusal');
-            }
-            $text = '';
-            foreach ($m->content as $block) {
-                if ($block->type === 'text') {
-                    $text .= $block->text;
-                }
-            }
-            if (trim($text) === '') {
-                throw new \RuntimeException('empty');
-            }
+            $text = self::ask(self::SYSTEM, $prompt, 4000 + $task[2] * 2);
             Settings::audit($u->id, 'tara_ai_suggestion', $d['task']);
 
-            return trim($text);
+            return $text;
         } catch (\Throwable $e) {
             DB::table('product_usage')->where('id', $usage)->delete();
             $msg = match (true) {
@@ -125,9 +153,7 @@ class TaraAI
                 $e->getMessage() === 'refusal' => 'Tara AI could not help with this text. Try rewording it.',
                 default => 'Tara AI did not return a suggestion. Try again. Your text has not changed.',
             };
-            if ($e instanceof APIStatusException && in_array($e->status ?? 0, [401, 403], true)) {
-                ErrorLog::record('error', 'ai', 'The Claude API key was refused. Check it in Owner console → Settings → Integrations → AI.');
-            }
+            self::failure($e); // logs a refused key for the owner
             throw ValidationException::withMessages(['ai' => $msg]);
         }
     }

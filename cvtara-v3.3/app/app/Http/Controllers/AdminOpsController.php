@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\User;
 use App\Services\AccountSecurity;
+use App\Services\ExpertReview;
 use App\Services\Health;
 use App\Services\MailAutomation;
 use App\Services\Payments;
@@ -18,7 +19,7 @@ use Illuminate\Support\Str;
 /** Owner-only operations: user management, order detail, error log, site URLs and daily health. */
 class AdminOpsController extends Controller
 {
-    public const ROUTES = '#^(refunds(/settings|/[0-9a-f-]{36}/(approve|reject))?|services(/[0-9a-f-]{36})?|users/(grant|update|revoke|delete)|orders/[0-9a-f-]{36}|errors(/clear|/download)?|site-urls|legal/generate|health/(history|run))$#';
+    public const ROUTES = '#^(refunds(/settings|/[0-9a-f-]{36}/(approve|reject))?|services(/settings|/[0-9a-f-]{36}(/(review|resend|retry))?)?|users/(grant|update|revoke|delete)|orders/[0-9a-f-]{36}|errors(/clear|/download)?|site-urls|legal/generate|health/(history|run))$#';
 
     public function run(Request $r, string $path)
     {
@@ -50,14 +51,33 @@ class AdminOpsController extends Controller
             return $ok(['requests' => Refunds::queue()]);
         }
         if ($path === 'services' && $get) {
-            return $ok(['orders' => Services::queue()]);
+            return $ok(['orders' => Services::queue(), 'settings' => ExpertReview::settings()]);
+        }
+        if ($path === 'services/settings') {
+            abort_unless($r->isMethod('POST'), 405);
+            AccountSecurity::requireRecent($r);
+            $v = $r->validate(['autoReview' => 'required|boolean']);
+            Settings::put('serviceSettings', ['autoReview' => (bool) $v['autoReview']]);
+            Settings::audit($admin, 'service_settings_saved', $v['autoReview'] ? 'auto_on' : 'auto_off');
+
+            return $ok(['orders' => Services::queue(), 'settings' => ExpertReview::settings()]);
+        }
+        if (preg_match('#^services/([0-9a-f-]{36})/(review|resend|retry)$#', $path, $m)) {
+            abort_unless($r->isMethod('POST'), 405);
+            match ($m[2]) {
+                'review' => ExpertReview::edit($r->user(), $m[1], (string) $r->validate(['review' => 'present|nullable|string|max:60000'])['review']),
+                'resend' => ExpertReview::resend($r->user(), $m[1]),
+                'retry' => ExpertReview::retry($r->user(), $m[1]),
+            };
+
+            return $ok(['orders' => Services::queue(), 'settings' => ExpertReview::settings()]);
         }
         if (preg_match('#^services/([0-9a-f-]{36})$#', $path, $m)) {
             abort_unless($r->isMethod('POST'), 405);
-            $v = $r->validate(['status' => 'required|in:'.implode(',', Services::STATUSES), 'note' => 'nullable|string|max:2000']);
-            Services::update($r->user(), $m[1], $v['status'], (string) ($v['note'] ?? ''));
+            $v = $r->validate(['status' => 'required|in:'.implode(',', Services::STATUSES), 'note' => 'nullable|string|max:2000', 'review' => 'nullable|string|max:60000']);
+            Services::update($r->user(), $m[1], $v['status'], (string) ($v['note'] ?? ''), $v['review'] ?? null);
 
-            return $ok(['orders' => Services::queue()]);
+            return $ok(['orders' => Services::queue(), 'settings' => ExpertReview::settings()]);
         }
         if (preg_match('#^orders/([0-9a-f-]{36})$#', $path, $m)) {
             abort_unless($get, 405);

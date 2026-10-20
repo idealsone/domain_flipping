@@ -58,7 +58,7 @@ return $value;
     public static function put(string $key, $data): void
     {
         self::$memo = [];
-        if (! in_array($key, ['providers', 'operator', 'integrations', 'speed', 'promos', 'campaignSettings'], true)) {
+        if (! in_array($key, ['providers', 'operator', 'integrations', 'speed', 'promos', 'campaignSettings', 'serviceSettings'], true)) {
             PageCache::purge();
         }
         $json = json_encode($data);
@@ -76,7 +76,7 @@ return $value;
 
     /**
      * Packages are paid once, with no auto-renewal. Quick Download covers one resume for 7 days; Job Hunt and Pro add tailored
-     * resumes, cover letters and ATS Match scans. Services are done by a person and stay off until the owner switches them on.
+     * resumes, cover letters and ATS Match scans. Services (Tara Expert Review by Tara AI, Profile Boost by a person) stay off until the owner switches them on.
      */
     public static function planDefaults(): array
     {
@@ -87,17 +87,17 @@ return $value;
             'quick' => $mk('Quick Download', 'Download one finished resume without the watermark', 99, 7, 1, 0, 0, 1, ['1 resume as clean PDF and Word', 'Edit and re-download that resume as often as you like for 7 days', '3 free ATS checks a day'], ['oneResume' => true, 'dailyMatches' => 3]),
             'job-hunt' => $mk('Job Hunt', 'Tailor your resume and a cover letter for each job you apply to', 299, 30, 5, 5, 20, 2, ['5 tailored resumes and 5 cover letters', '20 ATS Match scans with a gap report', 'Application tracker with reminders'], ['popular' => true]),
             'pro' => $mk('Pro', 'For a longer search across many jobs', 599, 90, 20, 20, 60, 3, ['20 tailored resumes and 20 cover letters', '60 ATS Match scans with a gap report', 'Application tracker with reminders'], ['bestValue' => true]),
-            'complete-kit' => $mk('Complete Job Kit', 'Pro, plus a recruiter review and a LinkedIn and Naukri profile rewrite', 1299, 90, 20, 20, 60, 3, ['Everything in Pro', 'Tara Expert Review by a working recruiter', 'Profile Boost for LinkedIn and Naukri'], ['mrp' => 1797, 'includes' => ['expert-review', 'profile-boost'], 'sale' => false]),
+            'complete-kit' => $mk('Complete Job Kit', 'Pro, plus a Tara Expert Review and a LinkedIn and Naukri profile rewrite', 1299, 90, 20, 20, 60, 3, ['Everything in Pro', 'Tara Expert Review of your resume', 'Profile Boost for LinkedIn and Naukri'], ['mrp' => 1797, 'includes' => ['expert-review', 'profile-boost'], 'sale' => false]),
         ] + self::serviceDefaults() + self::addonDefaults();
     }
 
-    /** Done by a person, not by software. Cheaper while Job Hunt or Pro is active (planPrice). */
+    /** Tara Expert Review is written by Tara AI (see ExpertReview); Profile Boost is done by a person. Cheaper while Job Hunt or Pro is active (planPrice). */
     public static function serviceDefaults(): array
     {
         $s = fn ($name, $tag, $price, $planPrice, $perks) => ['type' => 'service', 'name' => $name, 'audience' => 'all', 'tagline' => $tag, 'price' => $price, 'planPrice' => $planPrice, 'mrp' => 0, 'accessDays' => 0, 'savedResumes' => 0, 'savedLetters' => 0, 'atsScans' => 0, 'dailyMatches' => 0, 'exports' => 0, 'rank' => 0, 'perks' => $perks, 'popular' => false, 'bestValue' => false, 'referral' => false, 'sale' => false];
 
         return [
-            'expert-review' => $s('Tara Expert Review', 'A working recruiter reviews your resume within 48 working hours', 499, 399, ['Comments on every section', 'A short summary and your top fixes', 'One follow-up question']),
+            'expert-review' => $s('Tara Expert Review', 'Tara AI reviews your whole resume and sends you a written report', 499, 399, ['Comments on every section', 'ATS issues, a rewritten summary and bullets, and your top fixes', 'Delivered to your account and by email']),
             'profile-boost' => $s('Profile Boost', 'Your LinkedIn and Naukri headline, summary, skills and experience rewritten', 699, 599, ['Headline and About or profile summary', 'Key skills in the right order for your target job', 'One free revision within 7 days']),
         ];
     }
