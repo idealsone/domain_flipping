@@ -46,7 +46,7 @@ class Promos
         'newyear' => ['New Year', 'New year, new job. Start {{year}} with a strong resume', 'New-year price on every plan.', 'NEW YEAR OFFER', 'newyear'],
         'republic' => ['Republic / Independence Day', 'Freedom to choose your next job', 'A national-day price on every plan.', 'NATIONAL DAY OFFER', 'republic'],
         'earlybird' => ['Early-bird', 'Early-bird price for early starters', 'Get the lowest price of the season, then keep it.', 'EARLY BIRD', 'earlybird'],
-        'flash' => ['Flash sale', '24-hour flash sale', 'This price disappears when the timer ends.', 'FLASH SALE', 'flash'],
+        'flash' => ['Flash sale', 'Flash sale', 'A short-run discount on every plan.', 'FLASH SALE', 'flash'],
         'graduate' => ['Graduation season', 'Just graduated? Your first resume, ready today', 'A student-friendly price for your first job search.', 'FRESHER OFFER', 'graduate'],
         'appraisal' => ['Appraisal / hiring season', 'Hiring season is here. Be ready first', 'A special price while companies are hiring.', 'HIRING SEASON', 'appraisal'],
         'custom' => ['Blank offer', 'Special offer', 'A limited-time price on every plan.', 'OFFER', 'brand'],

@@ -127,7 +127,7 @@ Artisan::command('cvtara:demo', function () {
         \App\Services\Promos::put([
             $mk('Diwali '.date('Y'), 'diwali', 'diwali', 'Diwali Dhamaka {{year}}', 'Light up your career. Festive prices on every plan.', 'FESTIVE OFFER', 'DIWALI25', 'live', ['endsAt' => date('Y-m-d', strtotime('+5 days')).'T23:59']),
             $mk('Early-bird', 'earlybird', 'earlybird', 'Early-bird price for early starters', 'Get the lowest price of the season, then keep it.', 'EARLY BIRD', 'EARLY100', 'off'),
-            $mk('Flash sale', 'flash', 'flash', '24-hour flash sale', 'This price disappears when the timer ends.', 'FLASH SALE', 'DIWALI25', 'off'),
+            $mk('Flash sale', 'flash', 'flash', 'Flash sale', 'A short-run discount on every plan.', 'FLASH SALE', 'DIWALI25', 'off'),
         ]);
     }
     $names = ['Aarav Mehta', 'Diya Nair', 'Kabir Shah', 'Ishita Rao', 'Rohan Das', 'Meera Iyer', 'Vihaan Gupta', 'Anaya Singh', 'Arjun Verma', 'Saanvi Reddy', 'Kiran Patel', 'Neha Joshi'];
