@@ -19,7 +19,9 @@
 <span class="sp-eyebrow">{{ $p['eyebrow'] }}</span>
 <h1>{{ $p['h1'] }}</h1>
 <p class="sp-lead">{{ $p['lead'] }}</p>
-<div class="sp-actions">@if(!empty($p['picker']))<a class="sp-cta" href="{{ $p['picker'] }}">Use this template</a>@endif<a class="{{ !empty($p['picker']) ? 'sp-secondary' : 'sp-cta' }}" href="/register">Build my resume free</a><a class="sp-secondary" href="/ats-checker/">Check my resume for ATS</a></div>
+{{-- SEO-CTA:hero start. Product actions for this page come from $p['cta'] (SeoPages::cta); add new buttons here. --}}
+<div class="sp-actions" data-seo-cta="hero">@if(!empty($p['picker']))<a class="sp-cta" href="{{ $p['picker'] }}">Use this template</a>@endif<a class="{{ !empty($p['picker']) ? 'sp-secondary' : 'sp-cta' }}" href="{{ $p['cta']['primary'][0] }}">{{ $p['cta']['primary'][1] }}</a><a class="sp-secondary" href="{{ $p['cta']['secondary'][0] }}">{{ $p['cta']['secondary'][1] }}</a></div>
+{{-- SEO-CTA:hero end --}}
 <p class="sp-trust">Free to build and preview · Pay once, no auto-renewal · Secure UPI and cards · Built by working recruiters</p>
 </div>
 <img class="sp-hero-img" src="{{ $p['image'][0] }}" alt="{{ $p['image'][1] }}" width="520" height="390" loading="eager" decoding="async" fetchpriority="high">
@@ -31,7 +33,9 @@
 @if(!empty($p['sample']))<section id="sample" class="sp-section"><h2>Sample</h2>{!! $p['sample'] !!}</section>@endif
 @foreach($p['sections'] as $s)<section id="{{ $s[0] }}" class="sp-section"><h2>{{ $s[1] }}</h2>{!! $s[2] !!}</section>@endforeach
 @if(!empty($p['faq']))<section id="faq" class="sp-section sp-faq"><h2>Frequently asked questions</h2>@foreach($p['faq'] as $q)<details><summary>{{ $q[0] }}</summary><p>{{ $q[1] }}</p></details>@endforeach</section>@endif
-<aside class="sp-final"><div><b>Ready to write yours?</b><p>Start from a template or upload your old resume. Building and previewing is free.@if(!str_contains(json_encode($p['sections']), 'ATS (applicant tracking system')) Then check it with an ATS (applicant tracking system, the software many employers use to store, search and filter resumes) scan.@endif</p></div><a class="sp-cta" href="/register">Build my resume free</a></aside>
+{{-- SEO-CTA:final start --}}
+<aside class="sp-final" data-seo-cta="final"><div><b>Ready to write yours?</b><p>{{ $p['cta']['note'] }}@if(!str_contains($p['lead'].json_encode($p['sections']), 'ATS (applicant tracking system')) Then check it with an ATS (applicant tracking system, the software many employers use to store, search and filter resumes) scan.@endif</p></div><div class="sp-final-actions"><a class="sp-cta" href="{{ $p['cta']['primary'][0] }}">{{ $p['cta']['primary'][1] }}</a><a class="sp-final-link" href="{{ $p['cta']['pricing'][0] }}">{{ $p['cta']['pricing'][1] }}</a></div></aside>
+{{-- SEO-CTA:final end --}}
 @foreach($p['related'] as $g)@if(!empty($g[1]))<nav class="sp-related" aria-label="{{ $g[0] }}"><h2>{{ $g[0] }}</h2><ul>@foreach($g[1] as $l)<li><a href="{{ $l[0] }}">{{ $l[1] }}</a></li>@endforeach</ul></nav>@endif @endforeach
 </article>
 </div>

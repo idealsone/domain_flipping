@@ -4431,7 +4431,8 @@
    "cities": [
     "noida",
     "lucknow"
-   ]
+   ],
+   "lang": "Hindi"
   },
   "maharashtra": {
    "n": "Maharashtra",
@@ -4447,7 +4448,8 @@
     "pune",
     "nagpur",
     "nashik"
-   ]
+   ],
+   "lang": "Marathi"
   },
   "tamil-nadu": {
    "n": "Tamil Nadu",
@@ -4463,7 +4465,8 @@
     "coimbatore",
     "madurai",
     "tiruchirappalli"
-   ]
+   ],
+   "lang": "Tamil"
   },
   "karnataka": {
    "n": "Karnataka",
@@ -4478,7 +4481,8 @@
     "bangalore",
     "mysore",
     "mangalore"
-   ]
+   ],
+   "lang": "Kannada"
   },
   "telangana": {
    "n": "Telangana",
@@ -4490,7 +4494,8 @@
    ],
    "cities": [
     "hyderabad"
-   ]
+   ],
+   "lang": "Telugu"
   },
   "andhra-pradesh": {
    "n": "Andhra Pradesh",
@@ -4504,7 +4509,8 @@
    "cities": [
     "visakhapatnam",
     "vijayawada"
-   ]
+   ],
+   "lang": "Telugu"
   },
   "west-bengal": {
    "n": "West Bengal",
@@ -4517,7 +4523,8 @@
    ],
    "cities": [
     "kolkata"
-   ]
+   ],
+   "lang": "Bengali"
   },
   "bihar": {
    "n": "Bihar",
@@ -4530,7 +4537,8 @@
    ],
    "cities": [
     "patna"
-   ]
+   ],
+   "lang": "Hindi"
   },
   "rajasthan": {
    "n": "Rajasthan",
@@ -4543,7 +4551,8 @@
    ],
    "cities": [
     "jaipur"
-   ]
+   ],
+   "lang": "Hindi"
   },
   "kerala": {
    "n": "Kerala",
@@ -4557,7 +4566,8 @@
    "cities": [
     "kochi",
     "thiruvananthapuram"
-   ]
+   ],
+   "lang": "Malayalam"
   }
  },
  "cities": {
@@ -4575,7 +4585,8 @@
     "Lead with your tech stack and project results. Many recruiters here screen for exact skills.",
     "Add a GitHub or portfolio link for tech and design roles.",
     "Mention notice period clearly. Start-ups often prefer early joiners."
-   ]
+   ],
+   "fn": "Most fresher hiring in Bangalore runs through campus and off-campus drives at IT services firms, internships at start-ups and trainee roles at capability centres. Projects with a live link or repository help you stand out."
   },
   "hyderabad": {
    "n": "Hyderabad",
@@ -4590,7 +4601,8 @@
     "For pharma roles, name instruments, GMP and audit exposure.",
     "For IT roles, list the cloud and data tools you use.",
     "Telugu, Hindi or Urdu can help in customer-facing roles. List languages you speak."
-   ]
+   ],
+   "fn": "Freshers in Hyderabad usually enter through IT and capability-centre trainee programmes, pharma and life sciences labs, or voice and non-voice roles in business services centres."
   },
   "pune": {
    "n": "Pune",
@@ -4606,7 +4618,8 @@
     "For engineering roles, name the plant processes and CAD tools you know.",
     "IT recruiters look for clear project and client exposure.",
     "Marathi is useful for plant and customer roles."
-   ]
+   ],
+   "fn": "Pune freshers often choose between IT services trainee roles and graduate engineer trainee posts in the automotive and engineering belt. Name the plant, lab or software projects you worked on."
   },
   "chennai": {
    "n": "Chennai",
@@ -4622,7 +4635,8 @@
     "Manufacturing employers value shop-floor exposure and safety training.",
     "IT services firms check certifications and client domains.",
     "Tamil is valued in customer and plant roles."
-   ]
+   ],
+   "fn": "Entry roles in Chennai come from IT services campuses, banking operations centres and the automotive and manufacturing belt, where graduate engineer trainee and apprentice posts are common."
   },
   "mumbai": {
    "n": "Mumbai",
@@ -4638,7 +4652,8 @@
     "Finance employers look for qualifications such as CA, CFA or NISM and exact compliance work.",
     "Agencies want a portfolio of campaigns.",
     "Keep a concise summary. Recruiters here move fast."
-   ]
+   ],
+   "fn": "Freshers in Mumbai often start in banking and financial services operations, media and advertising agencies, or as management trainees at corporate headquarters. A short, sharp summary works well here."
   },
   "delhi": {
    "n": "Delhi",
@@ -4654,7 +4669,8 @@
     "For government and PSU roles, follow the notification format exactly.",
     "Education employers check subject, board and eligibility.",
     "Hindi and English both help."
-   ]
+   ],
+   "fn": "Delhi freshers often prepare for government exams alongside private jobs in education, coaching, retail and consulting. Keep a separate, formal resume for public sector applications."
   },
   "noida": {
    "n": "Noida",
@@ -4670,7 +4686,8 @@
     "BPO employers check communication, typing speed and shift flexibility.",
     "IT employers look for stack and project results.",
     "State your preferred shift and commute if relevant."
-   ]
+   ],
+   "fn": "BPO and customer service centres and IT and electronics companies in Noida hire freshers in large batches. Show your communication skills, typing speed and shift flexibility."
   },
   "gurgaon": {
    "n": "Gurgaon",
@@ -4686,7 +4703,8 @@
     "Corporate recruiters expect a polished professional summary.",
     "Sales and BPO employers look for numbers and targets.",
     "Mention any client-facing experience with global customers."
-   ]
+   ],
+   "fn": "Gurgaon freshers often join business services centres, consulting and finance teams, or hospitality as trainees. Internships with global clients or corporate offices carry weight."
   },
   "kolkata": {
    "n": "Kolkata",
@@ -4702,7 +4720,8 @@
     "Bank and finance roles check exact qualifications and dates.",
     "Schools look for subjects and board experience.",
     "Bengali, Hindi and English help in customer roles."
-   ]
+   ],
+   "fn": "Freshers in Kolkata often start in IT services, banking and finance operations, education, or trade and logistics firms. Exact qualifications and percentages are often checked."
   },
   "ahmedabad": {
    "n": "Ahmedabad",
@@ -4718,7 +4737,8 @@
     "Plant roles value safety, process and GMP knowledge.",
     "Accounting roles look for GST and Tally skills.",
     "Gujarati is useful for local sales and trade roles."
-   ]
+   ],
+   "fn": "Entry roles in Ahmedabad come from chemical and pharma units, textile firms and trade and finance businesses. Plant trainees should list lab work and safety training; commerce graduates should list Tally and GST."
   },
   "kochi": {
    "n": "Kochi",
@@ -4734,7 +4754,8 @@
     "Nursing employers check registration, departments and BLS.",
     "Overseas recruiters ask for passport details and exact dates.",
     "Malayalam and English both help."
-   ]
+   ],
+   "fn": "Kochi freshers often look at hospitals, IT parks, ports and logistics, and tourism. Many also plan overseas roles, so keep certificates and exact dates ready."
   },
   "coimbatore": {
    "n": "Coimbatore",
@@ -4750,7 +4771,8 @@
     "Engineering employers value machine and process experience.",
     "Textile mills look for spinning or weaving knowledge.",
     "Tamil helps on the shop floor."
-   ]
+   ],
+   "fn": "Engineering graduates in Coimbatore often start as trainees in pump, motor and textile units, while IT services companies hire through campus drives. Show machine, lab or coding projects."
   },
   "jaipur": {
    "n": "Jaipur",
@@ -4766,7 +4788,8 @@
     "Hospitality employers look for guest-facing experience and languages.",
     "Schools look for subject and board experience.",
     "Government roles follow official notifications."
-   ]
+   ],
+   "fn": "Freshers in Jaipur often begin in tourism and hospitality, education, handicrafts and gems trade, or IT and BPO centres. Guest-facing internships and language skills help."
   },
   "chandigarh": {
    "n": "Chandigarh",
@@ -4782,7 +4805,8 @@
     "Bank roles check exact qualifications.",
     "Pharma sales roles value a science degree and field experience.",
     "Punjabi and Hindi help in customer roles."
-   ]
+   ],
+   "fn": "The Chandigarh tri-city area hires freshers in banking, IT and BPO, healthcare and public services. Bank and government roles check exact qualifications and dates."
   },
   "indore": {
    "n": "Indore",
@@ -4798,7 +4822,8 @@
     "Sales employers want territory and target numbers.",
     "Logistics roles look for dispatch and warehouse experience.",
     "Hindi is widely used at work."
-   ]
+   ],
+   "fn": "Indore freshers often start in FMCG distribution and trade, IT services, logistics or education. Field sales trainee roles value a two-wheeler and local market knowledge if you have them."
   },
   "lucknow": {
    "n": "Lucknow",
@@ -4817,7 +4842,8 @@
    "sp": [
     "government-jobs",
     "Lucknow is the state capital, so administrative and government roles are common."
-   ]
+   ],
+   "fn": "Many freshers in Lucknow prepare for state government posts while applying to schools, hospitals and retail employers. Keep a formal resume with exact marks and dates."
   },
   "bhubaneswar": {
    "n": "Bhubaneswar",
@@ -4836,7 +4862,8 @@
    "sp": [
     "software-engineer",
     "The city has a growing IT services presence."
-   ]
+   ],
+   "fn": "Freshers in Bhubaneswar often join IT services companies through campus drives, or look at education and government roles. Coding projects and internships carry weight."
   },
   "nagpur": {
    "n": "Nagpur",
@@ -4855,7 +4882,8 @@
    "sp": [
     "logistics-executive",
     "Its central location makes logistics and warehousing a common field."
-   ]
+   ],
+   "fn": "Entry roles in Nagpur often come from logistics and warehousing, healthcare, education and trade. Internships in dispatch, stores or accounts are worth listing."
   },
   "visakhapatnam": {
    "n": "Visakhapatnam",
@@ -4874,7 +4902,8 @@
    "sp": [
     "logistics-executive",
     "Port and shipping activity creates logistics roles."
-   ]
+   ],
+   "fn": "Freshers in Visakhapatnam often look at ports and shipping, steel and heavy industry, pharma and IT. Apprenticeships and safety training help for plant and port roles."
   },
   "mysore": {
    "n": "Mysore",
@@ -4893,7 +4922,8 @@
    "sp": [
     "customer-support",
     "BPO and support centres are a common employer type."
-   ]
+   ],
+   "fn": "Mysore freshers often start in IT and BPO support centres, tourism, education or manufacturing. Clear spoken English and Kannada help in support roles."
   },
   "vadodara": {
    "n": "Vadodara",
@@ -4912,7 +4942,8 @@
    "sp": [
     "chemical-engineer",
     "Chemical and process industries are a major employer type."
-   ]
+   ],
+   "fn": "Freshers in Vadodara often apply to chemical and petrochemical plants, engineering firms and pharma units as trainees. List lab work, process knowledge and safety training."
   },
   "surat": {
    "n": "Surat",
@@ -4931,7 +4962,8 @@
    "sp": [
     "textile-production",
     "Textiles are one of the main industries."
-   ]
+   ],
+   "fn": "Surat freshers often begin in textile units, diamond processing, trade and manufacturing. Commerce graduates should list Tally and stock records; technical trainees should list machine skills."
   },
   "thiruvananthapuram": {
    "n": "Thiruvananthapuram",
@@ -4950,7 +4982,8 @@
    "sp": [
     "staff-nurse",
     "Healthcare employs many nurses."
-   ]
+   ],
+   "fn": "Freshers in Thiruvananthapuram often look at IT parks, government services, hospitals and education. Keep a formal version for public sector applications."
   },
   "mangalore": {
    "n": "Mangalore",
@@ -4969,7 +5002,8 @@
    "sp": [
     "staff-nurse",
     "Hospitals and medical colleges are major employers."
-   ]
+   ],
+   "fn": "Mangalore freshers often start in banking, hospitals and medical colleges, ports and logistics, or petrochemical plants. Exact qualifications are checked for bank and healthcare roles."
   },
   "patna": {
    "n": "Patna",
@@ -4988,7 +5022,8 @@
    "sp": [
     "government-jobs",
     "Government jobs are a major goal for many job seekers here."
-   ]
+   ],
+   "fn": "Many freshers in Patna prepare for government exams while applying to coaching institutes, healthcare and retail employers. Keep marks, board names and dates exact."
   },
   "bhopal": {
    "n": "Bhopal",
@@ -5007,7 +5042,8 @@
    "sp": [
     "government-jobs",
     "As the state capital, government and administrative work is common."
-   ]
+   ],
+   "fn": "Freshers in Bhopal often look at government services, education, healthcare and manufacturing. A formal, one-page resume with exact qualifications suits most local employers."
   },
   "ranchi": {
    "n": "Ranchi",
@@ -5026,7 +5062,8 @@
    "sp": [
     "maintenance-technician",
     "Industrial and maintenance work is common in the region."
-   ]
+   ],
+   "fn": "Entry roles in Ranchi often come from mining and metals support companies, government services, education and healthcare. ITI and diploma holders should list trade and safety training."
   },
   "guwahati": {
    "n": "Guwahati",
@@ -5045,7 +5082,8 @@
    "sp": [
     "logistics-executive",
     "It is a trade and logistics hub for the North East."
-   ]
+   ],
+   "fn": "Freshers in Guwahati often look at government services, trade and logistics firms, healthcare and education across the North East. Languages you speak are worth listing."
   },
   "dehradun": {
    "n": "Dehradun",
@@ -5064,7 +5102,8 @@
    "sp": [
     "hospitality",
     "Tourism creates hotel and hospitality roles."
-   ]
+   ],
+   "fn": "Dehradun freshers often start in schools and institutes, tourism and hotels, healthcare or government services. Hospitality internships and subject expertise help."
   },
   "nashik": {
    "n": "Nashik",
@@ -5082,7 +5121,8 @@
    "sp": [
     "production-engineer",
     "Industrial estates create production roles."
-   ]
+   ],
+   "fn": "Engineering freshers in Nashik often apply as trainees in manufacturing units and industrial estates, while agriculture and food businesses hire for sales and operations."
   },
   "madurai": {
    "n": "Madurai",
@@ -5101,7 +5141,8 @@
    "sp": [
     "staff-nurse",
     "Hospitals are a significant employer type."
-   ]
+   ],
+   "fn": "Freshers in Madurai often look at hospitals, textile units, education and trade. Nursing and allied health graduates should list registration and clinical postings."
   },
   "vijayawada": {
    "n": "Vijayawada",
@@ -5120,7 +5161,8 @@
    "sp": [
     "logistics-executive",
     "It is a trade and transport centre."
-   ]
+   ],
+   "fn": "Entry roles in Vijayawada often come from trade and logistics firms, education, healthcare and agriculture businesses. Field sales and accounts trainee roles are common."
   },
   "ludhiana": {
    "n": "Ludhiana",
@@ -5139,7 +5181,8 @@
    "sp": [
     "production-supervisor",
     "Small and medium manufacturing units are common."
-   ]
+   ],
+   "fn": "Freshers in Ludhiana often start in hosiery and textile units, cycle and auto parts makers and trading firms. Production, quality and accounts trainee roles are common."
   },
   "raipur": {
    "n": "Raipur",
@@ -5158,7 +5201,8 @@
    "sp": [
     "maintenance-technician",
     "Steel and power plants need maintenance staff."
-   ]
+   ],
+   "fn": "Raipur freshers often look at steel and power plants, government services, trade and education. ITI and diploma holders should list trade, apprenticeship and safety training."
   },
   "tiruchirappalli": {
    "n": "Tiruchirappalli",
@@ -5176,7 +5220,8 @@
    "sp": [
     "mechanical-engineer",
     "Engineering and fabrication units are common."
-   ]
+   ],
+   "fn": "Engineering graduates in Tiruchirappalli often apply to fabrication and engineering units, while education and healthcare hire graduates in other fields. List workshop and project work."
   }
  },
  "cityRoles": {
@@ -5517,6 +5562,7 @@
   "accountant",
   "teacher"
  ],
+ "tier2Notes": {},
  "words": {
   "learn": {
    "w": "Learn",

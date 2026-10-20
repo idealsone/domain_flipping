@@ -12,7 +12,7 @@ from roles_a import ROLES as A
 from roles_b import ROLES as B
 from roles_c import ROLES as C
 from categories import CATEGORIES
-from templates_places import TEMPLATES, STATES, CITIES, CITY_ROLES, TIER2_ROLES
+from templates_places import TEMPLATES, STATES, CITIES, CITY_ROLES, TIER2_ROLES, FRESHER_NOTES, TIER2_NOTES, STATE_LANG
 from words import WORDS
 
 roles = {**A, **B, **C}
@@ -30,15 +30,22 @@ for slug, c in CITIES.items():
 for slug, s in STATES.items():
     for c in s['cities']:
         if c not in CITIES: errors.append(f'state {slug}: unknown city {c}')
+for c in CITIES:
+    if c not in FRESHER_NOTES: errors.append(f'{c}: needs a freshers note')
+for c, rs in TIER2_NOTES.items():
+    for r in rs:
+        if c not in CITIES or r not in TIER2_ROLES: errors.append(f'tier 2 note {c}/{r} unknown')
+for s_ in STATES:
+    if s_ not in STATE_LANG: errors.append(f'{s_}: needs a language')
 for r in TIER2_ROLES:
     if r not in roles: errors.append(f'tier 2 role {r} unknown')
-text = json.dumps([roles, CATEGORIES, TEMPLATES, STATES, CITIES, CITY_ROLES, WORDS], ensure_ascii=False)
+text = json.dumps([roles, CATEGORIES, TEMPLATES, STATES, CITIES, CITY_ROLES, WORDS, FRESHER_NOTES, TIER2_NOTES], ensure_ascii=False)
 if '!' in text: errors.append('copy rule: no exclamation marks')
 if errors:
     print('\n'.join(errors)); sys.exit(1)
-out = dict(version=1, roles=roles, categories=CATEGORIES, templates=TEMPLATES, states=STATES, cities=CITIES,
+out = dict(version=1, roles=roles, categories=CATEGORIES, templates=TEMPLATES, states={k: {**v, 'lang': STATE_LANG[k]} for k, v in STATES.items()}, cities={k: {**v, 'fn': FRESHER_NOTES[k]} for k, v in CITIES.items()},
            cityRoles={c: {s: {'role': k, 'note': n} for s, (k, n) in rs.items()} for c, rs in CITY_ROLES.items()},
-           tier2Roles=TIER2_ROLES, words=WORDS)
+           tier2Roles=TIER2_ROLES, tier2Notes=TIER2_NOTES, words=WORDS)
 dest = HERE.parent.parent / 'app' / 'resources' / 'data' / 'seo-pages.json'
 dest.write_text(json.dumps(out, ensure_ascii=False, indent=1) + '\n', encoding='utf8')
 print(f'wrote {dest.relative_to(HERE.parent.parent)}: {len(roles)} roles, {len(CATEGORIES)} categories, {len(TEMPLATES)} templates, {len(STATES)} states, {len(CITIES)} cities, {len(WORDS)} words')

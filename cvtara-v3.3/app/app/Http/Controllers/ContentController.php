@@ -33,7 +33,7 @@ class ContentController extends Controller
         }
         foreach (\App\Services\SeoPages::paths() as $path) {
             $page = \App\Services\SeoPages::find($path);
-            $rows[] = ['path' => '/'.$path, 'title' => $seo['pages']['/'.$path]['title'] ?? $page['title'], 'description' => $seo['pages']['/'.$path]['description'] ?? $page['description'], 'included' => $seo['pages']['/'.$path]['includeInSitemap'] ?? true];
+            $rows[] = ['path' => '/'.$path, 'title' => $seo['pages']['/'.$path]['title'] ?? $page['title'], 'description' => $seo['pages']['/'.$path]['description'] ?? $page['description'], 'included' => $seo['pages']['/'.$path]['includeInSitemap'] ?? $page['index']];
         }
 
         return $rows;
@@ -92,6 +92,35 @@ class ContentController extends Controller
         return [$copy, $explore];
     }
 
+    /**
+     * Links search engines can follow without running JavaScript. The footer placeholder gets the same hub links the
+     * scripted footer shows (the script replaces it), and the guide lists on the blog and guides pages are filled with
+     * every published guide and calculator, which the script then redraws with filters.
+     */
+    private function serverLinks(string $path, string $html): string
+    {
+        $hubs = array_merge(\App\Services\SeoPages::HUBS, [['/templates.html', 'Template gallery'], ['/cover-letters.html', 'Cover letter designs'], ['/blog.html', 'Career blog'], ['/guides.html', 'Guides and calculators'], ['/#pricing', 'Pricing'], ['/about.html', 'About us'], ['/contact.html', 'Contact'], ['/privacy.html', 'Privacy policy'], ['/terms.html', 'Terms'], ['/refund.html', 'Refund policy']]);
+        $nav = '<nav class="footer-links" aria-label="Site links"><ul>'.implode('', array_map(fn ($l) => '<li><a href="'.e($l[0]).'">'.e($l[1]).'</a></li>', $hubs)).'</ul></nav>';
+        $html = preg_replace('#<div data-footer></div>#', '<div data-footer>'.addcslashes($nav, '\\$').'</div>', $html, 1);
+        if (in_array($path, ['blog.html', 'guides.html'], true)) {
+            $catalog = json_decode(file_get_contents(resource_path('data/catalog.json')), true);
+            $custom = Settings::get('blog');
+            $calc = $guide = [];
+            foreach ($catalog['blog'] as $p) {
+                $p = array_merge($p, $custom[$p['slug']] ?? []);
+                if (($p['published'] ?? true) === false) {
+                    continue;
+                }
+                $isCalc = $p['type'] === 'Calculator';
+                ${$isCalc ? 'calc' : 'guide'}[] = '<a class="blog-card" href="/'.($isCalc ? 'calculators' : 'guides').'/'.e($p['slug']).'/"><b>'.e($p['title']).'</b></a>';
+            }
+            $fill = fn (string $id, array $items) => fn ($h) => preg_replace('#(<div class="blog-grid" id="'.$id.'">)(</div>)#', '$1'.addcslashes(implode('', $items), '\\$').'$2', $h, 1);
+            $html = $path === 'blog.html' ? $fill('blogGrid', array_merge($calc, $guide))($html) : $fill('guidesGuideGrid', $guide)($fill('guidesCalcGrid', $calc)($html));
+        }
+
+        return $html;
+    }
+
     public function show(Request $r, string $path = '')
     {
         if ($path === 'sitemap.xml') {
@@ -107,16 +136,22 @@ class ContentController extends Controller
             return response($xml.'</urlset>', 200, ['Content-Type' => 'application/xml']);
         }
         if ($path === 'robots.txt') {
-            return response("User-agent: *\n".(Settings::get('seo')['searchIndexing'] ? "Disallow: /admin\nDisallow: /workspace\nDisallow: /api/\nDisallow: /login\nDisallow: /register\nDisallow: /forgot-password\nDisallow: /reset-password\nDisallow: /checkout.html\nDisallow: /install.php\nDisallow: /preview\nDisallow: /console/\nDisallow: /r/\nDisallow: /export/\nDisallow: /setup\nDisallow: /client-error\n" : "Disallow: /\n").'Sitemap: '.rtrim(Settings::get('seo')['siteUrl'] ?: config('app.url'), '/')."/sitemap.xml\n", 200, ['Content-Type' => 'text/plain']);
+            return response("User-agent: *\n".(Settings::get('seo')['searchIndexing'] ? "Disallow: /admin\nDisallow: /workspace\nDisallow: /api/\nDisallow: /login\nDisallow: /register\nDisallow: /forgot-password\nDisallow: /reset-password\nDisallow: /checkout.html\nDisallow: /install.php\nDisallow: /preview$\nDisallow: /preview/\nDisallow: /console/\nDisallow: /r/\nDisallow: /export/\nDisallow: /setup\nDisallow: /client-error\n" : "Disallow: /\n").'Sitemap: '.rtrim(Settings::get('seo')['siteUrl'] ?: config('app.url'), '/')."/sitemap.xml\n", 200, ['Content-Type' => 'text/plain']);
         }
-        $aliases = ['resume-builder' => 'workspace.html?view=builder', 'resume-templates' => 'templates.html', 'cover-letter' => 'workspace.html?view=letter', 'resume-match' => 'workspace.html?view=match', 'admin' => 'admin.html', 'privacy-policy' => 'privacy.html', 'terms-and-conditions' => 'terms.html', 'about-us' => 'about.html', 'contact-us' => 'contact.html'];
+        $aliases = ['resume-builder' => 'workspace.html?view=builder', 'cover-letter' => 'workspace.html?view=letter', 'resume-match' => 'workspace.html?view=match', 'admin' => 'admin.html', 'privacy-policy' => 'privacy.html', 'terms-and-conditions' => 'terms.html', 'about-us' => 'about.html', 'contact-us' => 'contact.html'];
         if (isset($aliases[$path])) {
-            return redirect('/'.$aliases[$path]);
+            return redirect(! $r->user() && str_starts_with($aliases[$path], 'workspace.html') ? '/register' : '/'.$aliases[$path]);
         }
         // Programmatic SEO pages (resume examples, city guides, interview questions...). Always served at a trailing-slash address.
         $seoPage = \App\Services\SeoPages::owns($path) ? \App\Services\SeoPages::find($path) : null;
+        $query = $r->getQueryString() ? '?'.$r->getQueryString() : '';
         if ($seoPage) {
+            if (! str_ends_with($r->getPathInfo(), '/')) {
+                return response('', 301, ['Location' => $seoPage['path'].$query]); // a relative Location keeps the trailing slash
+            }
             $path = ltrim($seoPage['path'], '/');
+        } elseif (\App\Services\SeoPages::owns($path) && ($to = \App\Services\SeoPages::redirect($path))) {
+            return response('', 301, ['Location' => $to]);
         }
         if ($path === 'article' || $path === 'article.html') {
             abort_unless(preg_match('#^[a-z0-9][a-z0-9/-]{0,160}$#', $r->query('slug', '')), 404);
@@ -141,6 +176,9 @@ class ContentController extends Controller
         if ($path === 'index.html') {
             return redirect('/', 301);
         }if (preg_match('#^(guides|calculators)/[a-z0-9/-]+$#', $path)) {
+            if (! str_ends_with($r->getPathInfo(), '/')) {
+                return response('', 301, ['Location' => '/'.rtrim($path, '/').'/'.$query]);
+            }
             $path = rtrim($path, '/').'/';
         }
         $cacheable = \App\Services\PageCache::cacheable($r, $path);
@@ -265,7 +303,9 @@ class ContentController extends Controller
         }
         $html = preg_replace('#<link[^>]*rel="canonical"[^>]*>|<meta[^>]*name="robots"[^>]*>#', '', $html);
         $index = $seo['searchIndexing'] && ! $admin && ! in_array($path, ['workspace.html', 'checkout.html']);
-        $head = '<script>(function(){try{var t=localStorage.getItem("cvtara-theme");if(t==="dark"||(!t&&window.matchMedia&&matchMedia("(prefers-color-scheme: dark)").matches)){var r=document.documentElement;r.classList.add("dark");r.setAttribute("data-theme","dark");r.style.colorScheme="dark"}}catch(e){}})()</script><link rel="canonical" href="'.e($siteBase.$uri).'"><meta name="robots" content="'.($index ? 'index,follow' : 'noindex,nofollow').'"><meta name="csrf-token" content="'.e(csrf_token()).'"><meta name="cvtara-user" content="'.e((string) ($r->user()?->id ?? 'guest')).'"><link rel="stylesheet" href="/launch.css"><link rel="stylesheet" href="/experience.css"><link rel="stylesheet" href="/cvtara-ui.css"><link rel="stylesheet" href="/cvtara-ds.css"><link rel="stylesheet" href="/site-polish.css"><script src="/error-report.js" defer></script><script src="/crash-guard.js" defer></script>';
+        $follow = $index; // a programmatic page held back from search results still passes its links on
+        $index = $index && ($seoPage['index'] ?? true);
+        $head = '<script>(function(){try{var t=localStorage.getItem("cvtara-theme");if(t==="dark"||(!t&&window.matchMedia&&matchMedia("(prefers-color-scheme: dark)").matches)){var r=document.documentElement;r.classList.add("dark");r.setAttribute("data-theme","dark");r.style.colorScheme="dark"}}catch(e){}})()</script><link rel="canonical" href="'.e($siteBase.$uri).'"><meta name="robots" content="'.($index ? 'index,follow' : ($follow ? 'noindex,follow' : 'noindex,nofollow')).'"><meta name="csrf-token" content="'.e(csrf_token()).'"><meta name="cvtara-user" content="'.e((string) ($r->user()?->id ?? 'guest')).'"><link rel="stylesheet" href="/launch.css"><link rel="stylesheet" href="/experience.css"><link rel="stylesheet" href="/cvtara-ui.css"><link rel="stylesheet" href="/cvtara-ds.css"><link rel="stylesheet" href="/site-polish.css"><script src="/error-report.js" defer></script><script src="/crash-guard.js" defer></script>';
         if ($path === 'workspace.html') {
             $head .= '<script src="/preview-guard.js" defer></script>';
         }
@@ -319,6 +359,9 @@ class ContentController extends Controller
         if ($path === 'blog.html') {
             $items = collect(Settings::get('blog'))->filter(fn ($p) => $p['published'] ?? false)->map(fn ($p, $k) => ['@type' => 'ListItem', 'position' => 0, 'url' => $siteBase.(($p['type'] ?? '') === 'Calculator' ? '/calculators/' : '/guides/').$k.'/', 'name' => $p['title']])->values()->take(60)->map(fn ($x, $i) => ['position' => $i + 1] + $x)->all();
             $head .= '<script type="application/ld+json">'.json_encode(['@context' => 'https://schema.org', '@type' => 'CollectionPage', 'name' => 'CVTara career blog, guides and calculators', 'url' => $siteBase.'/blog.html', 'mainEntity' => ['@type' => 'ItemList', 'itemListElement' => $items]], JSON_HEX_TAG | JSON_HEX_AMP | JSON_UNESCAPED_SLASHES).'</script>';
+        }
+        if (! $admin && $path !== 'workspace.html') {
+            $html = $this->serverLinks($path, $html);
         }
         if (! $admin) {
             $html = preg_replace('#<script[^>]*src="/owner-(console|advanced)\.js"[^>]*></script>#', '', $html);

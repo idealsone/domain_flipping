@@ -64,3 +64,13 @@ Defaults: 5 paying friends unlock one free resume download; 10 unlock 30 days of
 - URL patterns follow the owner's master prompt section 6.3; paths always end with "/" so `PageCache` and `.htaccess` can serve them. Brand keywords (competitors, Word, Google Docs, company names) are deliberately not targeted, so `/resume-templates/word/` and `/resume-templates/google-docs/` do not exist.
 - No salary figures until a sourced range exists. Place facts to check: `docs/SEO_VERIFY.md`.
 - Existing guides get breadcrumbs, an "Explore next" box and up to 3 contextual links (`ContentController::articleLinks`).
+
+## v3.20 SEO audit decisions
+
+- One address per page: programmatic pages and guides without the trailing slash 301 to the slash form (controller, page-cache middleware and `.htaccess`); `/resume/` and `/resume/{place}/` 301 to the matching `/resume-builder/` hub; `/resume-builder` sends guests straight to `/register`.
+- New hub `/resume-templates/` (was a redirect to the gallery). Hubs are linked from the scripted header/footer and from a server-rendered footer list (`ContentController::serverLinks`), so every page is reachable without JavaScript; the blog and guides pages are server-filled with every published guide.
+- Indexing rule: a city × role page is indexable only when it has a local note (curated Tier 1 roles, Tier 2 specialty, freshers notes). Others are `noindex,follow`, out of the sitemap and still linked. State government pages are held back the same way. `SeoPages::find()['index']` drives both the robots meta and the sitemap.
+- Writing rules: the main phrase sits in title, H1, lead and one heading; link lists use short names; titles never get cut (`pick()` chooses a wording that fits); descriptions are whole sentences.
+- `robots.txt` blocks `/preview$` and `/preview/` only (the old `/preview` rule also blocked `/preview.js`, which draws the header and footer).
+- The CTA area in `seo/page.blade.php` is two marked blocks (`SEO-CTA:hero`, `SEO-CTA:final`) fed by `$p['cta']`.
+- `tests/lib/seo_audit.py` crawls the site like a search engine without JavaScript; `s23` fails on non-200 links, redirects, orphans, density over 3%, near-duplicates over 60% and missing CTA/links. Run by hand: `cd tests && python3 -m lib.seo_audit http://127.0.0.1:PORT`.
