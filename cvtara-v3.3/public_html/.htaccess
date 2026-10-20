@@ -31,7 +31,7 @@ RewriteCond %{DOCUMENT_ROOT}/_pages/$1 -f
 RewriteRule ^([a-z0-9][a-z0-9_.-]*\.html)$ _pages/$1 [L]
 RewriteCond %{ENV:CVT_PAGES} 1
 RewriteCond %{DOCUMENT_ROOT}/_pages/$1/index.html -f
-RewriteRule ^((?:guides|calculators|resume-examples|resume-templates|cover-letter-examples|interview-questions|resume-builder|resume|resume-words|ats-checker)(?:/[a-z0-9/-]*[a-z0-9])?)/?$ _pages/$1/index.html [L]
+RewriteRule ^((?:guides|calculators|resume-examples|resume-templates|cover-letter-examples|interview-questions|resume-builder|resume|resume-words|ats-checker)(?:/[a-z0-9/-]*[a-z0-9])?)/$ _pages/$1/index.html [L]
 RewriteCond %{HTTP:Authorization} .
 RewriteRule .* - [E=HTTP_AUTHORIZATION:%{HTTP:Authorization}]
 RewriteCond %{REQUEST_FILENAME} !-d

@@ -20,6 +20,10 @@ class ServeCachedPage
             if (preg_match('#^(guides|calculators)/#', $path)) {
                 $path = rtrim($path, '/').'/';
             }
+            // An address without its trailing slash is answered by the controller with a permanent redirect.
+            if (str_ends_with($path, '/') && ! str_ends_with($r->getPathInfo(), '/')) {
+                return $next($r);
+            }
             if (PageCache::enabledFast() && PageCache::pathAllowed($path) && ($html = PageCache::read($path)) !== null) {
                 $res = response($html)->header('Cache-Control', 'no-cache')->setEtag(md5($html));
                 $res->isNotModified($r);

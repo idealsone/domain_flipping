@@ -138,3 +138,44 @@ The programmatic pages (see `tools/seo/`) use broad, well-known descriptions of 
 - [ ] /resume/indore/accountant/: Traders and companies here look for GST and Tally skills.
 - [ ] /resume/indore/teacher/: Schools and coaching institutes here check subject expertise.
 - [ ] /resume/indore/logistics-executive/: Its central location supports warehousing and distribution roles.
+
+## Freshers notes (v3.20; each makes /resume/{city}/freshers/ indexable)
+- [ ] Bangalore: Most fresher hiring in Bangalore runs through campus and off-campus drives at IT services firms, internships at start-ups and trainee roles at capability centres. Projects with a live link or repository help you stand out.
+- [ ] Hyderabad: Freshers in Hyderabad usually enter through IT and capability-centre trainee programmes, pharma and life sciences labs, or voice and non-voice roles in business services centres.
+- [ ] Pune: Pune freshers often choose between IT services trainee roles and graduate engineer trainee posts in the automotive and engineering belt. Name the plant, lab or software projects you worked on.
+- [ ] Chennai: Entry roles in Chennai come from IT services campuses, banking operations centres and the automotive and manufacturing belt, where graduate engineer trainee and apprentice posts are common.
+- [ ] Mumbai: Freshers in Mumbai often start in banking and financial services operations, media and advertising agencies, or as management trainees at corporate headquarters. A short, sharp summary works well here.
+- [ ] Delhi: Delhi freshers often prepare for government exams alongside private jobs in education, coaching, retail and consulting. Keep a separate, formal resume for public sector applications.
+- [ ] Noida: BPO and customer service centres and IT and electronics companies in Noida hire freshers in large batches. Show your communication skills, typing speed and shift flexibility.
+- [ ] Gurgaon: Gurgaon freshers often join business services centres, consulting and finance teams, or hospitality as trainees. Internships with global clients or corporate offices carry weight.
+- [ ] Kolkata: Freshers in Kolkata often start in IT services, banking and finance operations, education, or trade and logistics firms. Exact qualifications and percentages are often checked.
+- [ ] Ahmedabad: Entry roles in Ahmedabad come from chemical and pharma units, textile firms and trade and finance businesses. Plant trainees should list lab work and safety training; commerce graduates should list Tally and GST.
+- [ ] Kochi: Kochi freshers often look at hospitals, IT parks, ports and logistics, and tourism. Many also plan overseas roles, so keep certificates and exact dates ready.
+- [ ] Coimbatore: Engineering graduates in Coimbatore often start as trainees in pump, motor and textile units, while IT services companies hire through campus drives. Show machine, lab or coding projects.
+- [ ] Jaipur: Freshers in Jaipur often begin in tourism and hospitality, education, handicrafts and gems trade, or IT and BPO centres. Guest-facing internships and language skills help.
+- [ ] Chandigarh: The Chandigarh tri-city area hires freshers in banking, IT and BPO, healthcare and public services. Bank and government roles check exact qualifications and dates.
+- [ ] Indore: Indore freshers often start in FMCG distribution and trade, IT services, logistics or education. Field sales trainee roles value a two-wheeler and local market knowledge if you have them.
+- [ ] Lucknow: Many freshers in Lucknow prepare for state government posts while applying to schools, hospitals and retail employers. Keep a formal resume with exact marks and dates.
+- [ ] Bhubaneswar: Freshers in Bhubaneswar often join IT services companies through campus drives, or look at education and government roles. Coding projects and internships carry weight.
+- [ ] Nagpur: Entry roles in Nagpur often come from logistics and warehousing, healthcare, education and trade. Internships in dispatch, stores or accounts are worth listing.
+- [ ] Visakhapatnam: Freshers in Visakhapatnam often look at ports and shipping, steel and heavy industry, pharma and IT. Apprenticeships and safety training help for plant and port roles.
+- [ ] Mysore: Mysore freshers often start in IT and BPO support centres, tourism, education or manufacturing. Clear spoken English and Kannada help in support roles.
+- [ ] Vadodara: Freshers in Vadodara often apply to chemical and petrochemical plants, engineering firms and pharma units as trainees. List lab work, process knowledge and safety training.
+- [ ] Surat: Surat freshers often begin in textile units, diamond processing, trade and manufacturing. Commerce graduates should list Tally and stock records; technical trainees should list machine skills.
+- [ ] Thiruvananthapuram: Freshers in Thiruvananthapuram often look at IT parks, government services, hospitals and education. Keep a formal version for public sector applications.
+- [ ] Mangalore: Mangalore freshers often start in banking, hospitals and medical colleges, ports and logistics, or petrochemical plants. Exact qualifications are checked for bank and healthcare roles.
+- [ ] Patna: Many freshers in Patna prepare for government exams while applying to coaching institutes, healthcare and retail employers. Keep marks, board names and dates exact.
+- [ ] Bhopal: Freshers in Bhopal often look at government services, education, healthcare and manufacturing. A formal, one-page resume with exact qualifications suits most local employers.
+- [ ] Ranchi: Entry roles in Ranchi often come from mining and metals support companies, government services, education and healthcare. ITI and diploma holders should list trade and safety training.
+- [ ] Guwahati: Freshers in Guwahati often look at government services, trade and logistics firms, healthcare and education across the North East. Languages you speak are worth listing.
+- [ ] Dehradun: Dehradun freshers often start in schools and institutes, tourism and hotels, healthcare or government services. Hospitality internships and subject expertise help.
+- [ ] Nashik: Engineering freshers in Nashik often apply as trainees in manufacturing units and industrial estates, while agriculture and food businesses hire for sales and operations.
+- [ ] Madurai: Freshers in Madurai often look at hospitals, textile units, education and trade. Nursing and allied health graduates should list registration and clinical postings.
+- [ ] Vijayawada: Entry roles in Vijayawada often come from trade and logistics firms, education, healthcare and agriculture businesses. Field sales and accounts trainee roles are common.
+- [ ] Ludhiana: Freshers in Ludhiana often start in hosiery and textile units, cycle and auto parts makers and trading firms. Production, quality and accounts trainee roles are common.
+- [ ] Raipur: Raipur freshers often look at steel and power plants, government services, trade and education. ITI and diploma holders should list trade, apprenticeship and safety training.
+- [ ] Tiruchirappalli: Engineering graduates in Tiruchirappalli often apply to fabrication and engineering units, while education and healthcare hire graduates in other fields. List workshop and project work.
+
+## Held back from search (noindex,follow, not in the sitemap, still linked)
+- Tier 2 sales, accounts and teaching pages (`/resume/{tier-2 city}/{sales-executive|accountant|teacher}/`): no local note yet. Add one to `TIER2_NOTES` in `tools/seo/templates_places.py`, rebuild the data, and the page becomes indexable.
+- State government pages (`/resume/{state}/government-jobs/`): the ten pages differ only in the commission, language and cities; the state hub `/resume-builder/{state}/` carries the same facts and is the page offered to search engines.

@@ -5,14 +5,14 @@
     "siteUrl": "https://cvtara.com",
     "pages": {
       "/": {
-        "title": "Resume Builder India — primary resume + job-tailored versions",
+        "title": "Resume Builder India: Primary + Tailored Resumes",
         "description": "Build one premium ATS-friendly primary resume, then create a tailored version and cover letter for every job description. Plans from ₹299, pay once.",
         "keywords": "resume builder india, ats friendly resume builder, resume for freshers india, job description tailored resume, cover letter builder india",
         "includeInSitemap": true
       },
       "/templates.html": {
         "title": "ATS-Friendly Resume Templates for India",
-        "description": "Browse professional, ATS-friendly resume templates by profession and layout. Preview the full design, adjust colours and fonts, and build your resume with editable sections.",
+        "description": "Browse professional, ATS-friendly resume templates by profession and layout. Preview the full design, adjust colours and fonts, then edit every section.",
         "keywords": "ats friendly resume templates, resume templates india, resume format for freshers, professional resume templates download",
         "includeInSitemap": true
       },
@@ -36,7 +36,7 @@
       },
       "/about.html": {
         "title": "About CVTara — an experienced HR team in Bangalore",
-        "description": "CVTara is a resume and cover-letter service by an experienced HR team in Bangalore, helping Indian job seekers build a primary resume and tailor it to every job.",
+        "description": "CVTara is a resume and cover-letter service by an experienced HR team in Bangalore that helps job seekers build one primary resume and tailor it to each job.",
         "keywords": "about cvtara, hr team bangalore resume service, resume writing service india",
         "includeInSitemap": true
       },
