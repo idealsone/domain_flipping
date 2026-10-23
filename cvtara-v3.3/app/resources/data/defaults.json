@@ -5,7 +5,7 @@
     "siteUrl": "https://cvtara.com",
     "pages": {
       "/": {
-        "title": "Free Resume Builder India | ATS-Friendly Resume Maker",
+        "title": "Free Resume Builder India | ATS Resume Maker",
         "description": "Build an ATS-friendly resume free in minutes. Pick a template, tailor it to each job and download a clean PDF or Word file. Plans from ₹99, pay once.",
         "keywords": "free resume builder, resume builder india, resume maker, online resume builder, ats friendly resume, ai resume builder, create resume free, resume for freshers india, resume format",
         "includeInSitemap": true
@@ -23,7 +23,7 @@
         "includeInSitemap": true
       },
       "/blog.html": {
-        "title": "Career Blog India: Resume, Interview & Job Search Tips",
+        "title": "Career Blog India: Resume & Interview Tips",
         "description": "Practical resume, cover letter, interview and job search guides for India, plus free salary and CTC calculators. Clear steps you can use today.",
         "keywords": "resume tips, how to write a resume, resume format, interview tips india, job search tips, cv vs resume, career advice india, salary calculator india",
         "includeInSitemap": true
