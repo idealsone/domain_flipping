@@ -5,63 +5,63 @@
     "siteUrl": "https://cvtara.com",
     "pages": {
       "/": {
-        "title": "Resume Builder India: Primary + Tailored Resumes",
-        "description": "Build one premium ATS-friendly primary resume, then create a tailored version and cover letter for every job description. Plans from ₹299, pay once.",
-        "keywords": "resume builder india, ats friendly resume builder, resume for freshers india, job description tailored resume, cover letter builder india",
+        "title": "Free Resume Builder India | ATS Resume Maker",
+        "description": "Build an ATS-friendly resume free in minutes. Pick a template, tailor it to each job and download a clean PDF or Word file. Plans from ₹99, pay once.",
+        "keywords": "free resume builder, resume builder india, resume maker, online resume builder, ats friendly resume, ai resume builder, create resume free, resume for freshers india, resume format",
         "includeInSitemap": true
       },
       "/templates.html": {
-        "title": "ATS-Friendly Resume Templates for India",
-        "description": "Browse professional, ATS-friendly resume templates by profession and layout. Preview the full design, adjust colours and fonts, then edit every section.",
-        "keywords": "ats friendly resume templates, resume templates india, resume format for freshers, professional resume templates download",
+        "title": "Resume Templates India | Free ATS-Friendly Formats",
+        "description": "Choose from 120+ ATS-friendly resume templates for freshers and professionals in India. Preview the full design, change colours and fonts, then edit online.",
+        "keywords": "resume templates, resume template, free resume templates, ats friendly resume template, professional resume template, resume format for freshers, cv template, best resume templates",
         "includeInSitemap": true
       },
       "/cover-letters.html": {
-        "title": "Cover Letter Examples & Templates for India",
-        "description": "Explore coordinated cover-letter designs and complete examples, then write a tailored application letter with editable sections and your saved profile.",
-        "keywords": "cover letter examples india, cover letter format for freshers, job application cover letter template, cover letter for experienced professionals",
+        "title": "Cover Letter Examples & Templates | Write One Fast",
+        "description": "See complete cover letter examples and matching templates for freshers and professionals in India. Write a tailored job application letter in minutes.",
+        "keywords": "cover letter examples, cover letter template, how to write a cover letter, simple cover letter, job application letter, cover letter for freshers, cover letter format",
         "includeInSitemap": true
       },
       "/blog.html": {
-        "title": "Career Guides & Salary Calculators",
-        "description": "Practical guides and calculators for resumes, cover letters, interviews, salary and job search in India, written by an experienced HR team.",
-        "keywords": "career guides india, resume tips, interview questions india, salary calculator india, job search guide",
+        "title": "Career Blog India: Resume & Interview Tips",
+        "description": "Practical resume, cover letter, interview and job search guides for India, plus free salary and CTC calculators. Clear steps you can use today.",
+        "keywords": "resume tips, how to write a resume, resume format, interview tips india, job search tips, cv vs resume, career advice india, salary calculator india",
         "includeInSitemap": true
       },
       "/guides.html": {
-        "title": "Career Guides & Calculators",
-        "description": "CVTara guides and calculators for resumes, salaries, benefits, interviews and job-search decisions in India.",
-        "keywords": "career guides, resume guides, salary calculators, interview preparation guides india",
+        "title": "Career Guides & Free Salary Calculators India",
+        "description": "Free guides on resume writing, interviews and job offers, plus CTC, in-hand salary, gratuity and notice period calculators built for Indian job seekers.",
+        "keywords": "career guides, resume guides, ctc to in hand salary calculator, salary calculator india, gratuity calculator, notice period calculator, interview preparation guide",
         "includeInSitemap": true
       },
       "/about.html": {
-        "title": "About CVTara — an experienced HR team in Bangalore",
-        "description": "CVTara is a resume and cover-letter service by an experienced HR team in Bangalore that helps job seekers build one primary resume and tailor it to each job.",
-        "keywords": "about cvtara, hr team bangalore resume service, resume writing service india",
+        "title": "About CVTara | Resume Builder Made in Bangalore",
+        "description": "CVTara is an India-first resume and cover letter builder made by an HR team in Bangalore. One primary resume, tailored for every job you apply to.",
+        "keywords": "about cvtara, resume builder made in india, hr team bangalore, indian resume builder, resume help for freshers",
         "includeInSitemap": true
       },
       "/contact.html": {
-        "title": "Contact & Support",
-        "description": "Contact CVTara at support@cvtara.com for account, payment, privacy and product support. Based in Bangalore, India.",
-        "keywords": "cvtara support, contact cvtara, resume service support",
+        "title": "Contact CVTara Support | Help With Your Resume",
+        "description": "Questions about your account, plan, payment or refund? Email support@cvtara.com. A real person on our Bangalore team reads and replies on working days.",
+        "keywords": "cvtara support, contact cvtara, resume builder help, refund help, payment help",
         "includeInSitemap": true
       },
       "/privacy.html": {
-        "title": "Privacy Policy",
-        "description": "How CVTara collects, uses and protects your personal data, your rights under Indian law and how to reach our grievance contact.",
-        "keywords": "cvtara privacy policy",
+        "title": "Privacy Policy | How CVTara Protects Your Data",
+        "description": "How CVTara collects, uses and protects your resume and personal data, which services process it, how long we keep it and your rights under Indian law.",
+        "keywords": "cvtara privacy policy, resume data privacy, personal data protection india, dpdp act",
         "includeInSitemap": true
       },
       "/terms.html": {
-        "title": "Terms & Conditions",
-        "description": "The terms that apply to using CVTara plans, add-on packs, resume tools and referral programme.",
-        "keywords": "cvtara terms and conditions",
+        "title": "Terms & Conditions | CVTara Resume Builder",
+        "description": "The terms for using CVTara: accounts, one-time plans, downloads, fair use, refunds and the rules that keep the resume builder safe for everyone.",
+        "keywords": "cvtara terms, resume builder terms and conditions, terms of service",
         "includeInSitemap": true
       },
       "/refund.html": {
-        "title": "Refund Policy",
-        "description": "Full refund within 7 days if you have not used your CVTara package, once per customer. How to ask and when the money arrives.",
-        "keywords": "cvtara refund policy",
+        "title": "Refund Policy | 7-Day Refund If Unused | CVTara",
+        "description": "Changed your mind? Get a full refund within 7 days if you have not used your plan. See what counts as use, how to ask and when the money arrives.",
+        "keywords": "cvtara refund policy, 7 day refund, resume builder refund, money back",
         "includeInSitemap": true
       }
     }

@@ -31,7 +31,12 @@
       try {
         if (!window.CVTaraImport) throw Error('The document reader did not load. Refresh the page and try again.');
         const text = await window.CVTaraImport.readFile(file);
-        const r = await api('/api/resumes/import', { method: 'POST', body: { text: text.slice(0, 120000), fileName: file.name } });
+        await this.send(text, file.name);
+      } catch (e) { this.failed(e); }
+    },
+    async send(text, fileName, replaceId) {
+      try {
+        const r = await api('/api/resumes/import', { method: 'POST', body: { text: text.slice(0, 120000), fileName, ...(replaceId ? { replaceId } : {}) } });
         const f = r.found || {}, q = r.quality || { score: 0, tips: [] };
         const rows = [['Jobs', f.experience], ['Education', f.education], ['Projects', f.projects], ['Skills', f.skills], ['Certificates', f.certifications]].filter(x => x[1]);
         this.dialog(`<div class="rh-dlg"><h3>Your resume is ready to review</h3>
@@ -43,9 +48,21 @@
         $('[data-rh-edit]', $('#rhDialog')).onclick = () => open(r.id);
         document.dispatchEvent(new CustomEvent('cvtara-resume-saved'));
       } catch (e) {
-        this.dialog(`<div class="rh-dlg"><h3>We could not import that file</h3><p role="alert">${E(e.message)}</p><p class="rh-note">You can also start from a template and type your details.</p><div class="rh-actions"><button class="button primary" data-rh-again>Try another file</button><button class="button secondary" data-rh-close>Close</button></div></div>`);
-        $('[data-rh-again]', $('#rhDialog')).onclick = () => { $('#rhDialog').close(); this.pick(); };
+        if (e.data && e.data.needsReplace) return this.replace(e.data, text, fileName);
+        this.failed(e);
       }
+    },
+    // The file was read, but the plan has no room for another resume: let the customer put it into one they already have.
+    replace(d, text, fileName) {
+      const list = d.resumes || [];
+      const pick = list.length > 1 ? `<label class="rh-field">Resume to replace<select id="rhReplace">${list.map(x => `<option value="${E(x.id)}">${E(x.title)} · ${E(when(x.updatedAt))}</option>`).join('')}</select></label>` : list.length ? `<p class="rh-note">This replaces <b>${E(list[0].title)}</b>. Its old text cannot be brought back.</p>` : '';
+      this.dialog(`<div class="rh-dlg"><h3>We read your file. Where should it go?</h3><p>${E(d.error)}</p>${pick}
+        <div class="rh-actions"><button class="button primary" data-rh-replace>Use this file instead</button>${d.paid ? '' : '<a class="button secondary" href="/workspace.html?view=billing">See plans</a>'}<button class="button secondary" data-rh-close>Cancel</button></div></div>`);
+      $('[data-rh-replace]', $('#rhDialog')).onclick = () => { const id = ($('#rhReplace') || {}).value || (list[0] && list[0].id); this.dialog('<div class="rh-dlg"><h3>Updating your resume…</h3><div class="rh-spin" aria-hidden="true"></div></div>'); this.send(text, fileName, id); };
+    },
+    failed(e) {
+      this.dialog(`<div class="rh-dlg"><h3>We could not import that file</h3><p role="alert">${E(e.message)}</p><p class="rh-note">You can also start from a template and type your details.</p><div class="rh-actions"><button class="button primary" data-rh-again>Try another file</button><button class="button secondary" data-rh-close>Close</button></div></div>`);
+      $('[data-rh-again]', $('#rhDialog')).onclick = () => { $('#rhDialog').close(); this.pick(); };
     },
   };
   window.CVTaraResumeImport = importer;

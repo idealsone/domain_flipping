@@ -12,7 +12,7 @@ from datetime import date
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
-VERSION = "3.20.0"
+VERSION = "3.21.0"
 SKIP_DIRS = {".git", "node_modules", "tests"}
 SKIP_FILES = {".env", ".DS_Store"}
 
@@ -80,7 +80,7 @@ def main():
     minify_tree(stage / "resources" / "console")
     (stage / "composer.lock").unlink(missing_ok=True)
     pub = work / "public_html"
-    shutil.copytree(ROOT / "public_html", pub, ignore=shutil.ignore_patterns(".install-key-hash", "*.zip", "__pycache__", "_pages"))
+    shutil.copytree(ROOT / "public_html", pub, ignore=shutil.ignore_patterns(".install-key-hash", "*.zip", "__pycache__", "_pages", "bundle"))
     minify_tree(pub)
     payload = work / "payload.zip"
     with zipfile.ZipFile(payload, "w", zipfile.ZIP_DEFLATED) as z:

@@ -64,6 +64,19 @@ def run(ctx, t):
     ex = e.api("GET", "account/export")[1]["export"]
     t.check("export includes payout records", "withdrawals" in ex and "referralCommissions" in ex)
     t.check("delete account", e.api("POST", "account/delete", {"password": "TestPassw0rd!!x", "confirm": "DELETE"})[0] == 200)
-    enc = db.q("select destination_encrypted, destination_masked from withdrawals where owner_id=?", eid)[0]
+    enc = db.q("select destination_encrypted, destination_masked, owner_id from withdrawals where id='11111111-1111-1111-1111-111111111111'")[0]
     t.check("payout details are erased, masked destination kept", "SECRET" not in enc[0] and enc[1] == "xxx@upi", enc)
+    keep = db.q("select id from users where email='deleted-customers@deleted.invalid'")
+    t.check("the account row is gone; the payout record moves to the Deleted customers placeholder", not db.q("select id from users where id=?", eid) and keep and enc[2] == keep[0][0], (enc[2], keep))
+
+    # The owner deletes a customer: the account and its content leave the server, money records stay with no name.
+    f = ctx.client(); f.register("bill-f@test.local"); fid = uid("bill-f@test.local")
+    f.api("POST", "resumes", {"title": "Mine", "data": {"version": "1", "title": "Mine", "personal": {"name": "Bill F"}}})
+    db.q("insert into purchases(id,owner_id,plan,amount_paise,status,provider,payment_reference,is_live,limits_json,access_days,purchased_at,access_until,created_at,updated_at) values('22222222-2222-2222-2222-222222222222',?,'job-hunt',29900,'paid','razorpay','pay_del_1',1,'{}',30,datetime('now'),datetime('now','+30 days'),datetime('now'),datetime('now'))", fid)
+    db.q("insert into support_reports(id,owner_id,name,email,area,kind,page,message,status,created_at,updated_at) values('33333333-3333-3333-3333-333333333333',?,'Bill F','bill-f@test.local','builder','bug','/','help me','new',datetime('now'),datetime('now'))", fid)
+    s, j = o.api("POST", "admin/users/delete", {"userId": fid, "confirm": "DELETE"}); t.check("the owner deletes a customer", s == 200, (s, j))
+    t.check("the customer's account, resumes and support messages are gone", not db.q("select id from users where id=?", fid) and not db.q("select id from resume_drafts where owner_id=?", fid) and not db.q("select id from support_reports where id='33333333-3333-3333-3333-333333333333'"))
+    t.check("the payment record stays for accounting under the placeholder", db.q("select owner_id from purchases where id='22222222-2222-2222-2222-222222222222'")[0][0] == keep[0][0])
+    t.check("no row anywhere still carries the deleted email", not db.q("select id from users where email='bill-f@test.local'") and not db.q("select id from support_reports where email='bill-f@test.local'"))
+    t.check("the placeholder is not listed among users", "deleted-customers@" not in str(o.api("GET", "admin/users?page=1")[1]))
     db.q("delete from site_settings where key='plans'")

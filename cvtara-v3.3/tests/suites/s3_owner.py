@@ -22,3 +22,15 @@ def run(ctx, t):
     o.api("POST", "admin/referrals/settings", body)
     s, j = o.api("GET", "admin/business-controls"); t.check("Business Ops no longer carries referral rules", s == 200 and "referrals" not in str(j.get("data", {}).keys()).lower(), list(j.get("data", {}))[:20])
     t.check("owner cannot be reached without login", ctx.client().api("GET", "admin/referrals")[0] in (401, 403))
+    # "Give ₹50, get ₹50" wallet rules are saved from the same form.
+    w = {"mode": "wallet", "friendDiscountPaise": 6000, "rewardPaise": 4000, "qualifyDays": 7, "walletDays": 120, "monthlyCapPaise": 80000}
+    s, j = o.api("POST", "admin/referrals/settings", dict(body, **w)); r = o.api("GET", "admin/referrals")[1]["rules"]
+    t.check("the give-and-get wallet rules are saved", s == 200 and all(r[k] == v for k, v in w.items()), (s, {k: r.get(k) for k in w}))
+    s, _ = o.api("POST", "admin/referrals/settings", dict(body, mode="cash")); t.check("an unknown reward type is refused", s == 422, s)
+    ctx.db().q("delete from site_settings where key='referrals'")
+    # Main-page search text: a saved row with blank fields still shows the prefilled text.
+    db = ctx.db(); db.q("insert or replace into site_settings(key,value_json,revision,created_at,updated_at) values('seo',?,1,datetime('now'),datetime('now'))", __import__("json").dumps({"sitemapEnabled": True, "searchIndexing": False, "siteUrl": "https://cvtara.com", "pages": {"/": {"title": "", "description": "", "keywords": "", "includeInSitemap": True}, "/about.html": {"title": "Owner title"}}}))
+    p = o.api("GET", "admin/content/seo")[1]["data"]["pages"]
+    t.check("blank search titles fall back to the prefilled ones", p["/"]["title"] and p["/"]["description"] and p["/"]["keywords"] and p["/templates.html"]["title"], p.get("/"))
+    t.check("an owner's own title is kept", p["/about.html"]["title"] == "Owner title" and p["/about.html"]["description"], p.get("/about.html"))
+    db.q("delete from site_settings where key='seo'")

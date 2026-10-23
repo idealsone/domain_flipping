@@ -46,8 +46,20 @@ class Settings
                 }
             }
         }
+        if ($key === 'seo' && is_array($value)) {
+            // A saved row can predate the prefilled page text, or hold blanks. Empty fields fall back to the defaults,
+            // so the owner console and the live pages always show a title, description and keywords.
+            foreach (self::defaults()['seo']['pages'] as $path => $page) {
+                foreach (['title', 'description', 'keywords'] as $f) {
+                    if (trim((string) ($value['pages'][$path][$f] ?? '')) === '') {
+                        $value['pages'][$path][$f] = $page[$f];
+                    }
+                }
+                $value['pages'][$path]['includeInSitemap'] ??= $page['includeInSitemap'] ?? true;
+            }
+        }
 
-return $value;
+        return $value;
     }
 
     public static function revision(string $key): int

@@ -1,3 +1,22 @@
+# CVTara v3.21.0 — Resume upload, readable referral links, new landing page, owner console fixes
+
+## 3.21.0 (workspace)
+- **Resume upload (My Resumes):** the file is read first; if a free account already has its one resume, the customer can put the upload into that resume ("Use this file instead") or see plans. Paid accounts at their limit pick which resume to replace.
+- **Readable referral links:** first name plus digits (e.g. `/r/priya-4821`). Old codes are kept in `old_referral_code`, so links already shared keep working.
+- **Dashboard plan card** ("Your plan: Free" with Upgrade) replaces the empty ring; template thumbnails no longer split long names; the workspace menu button sits beside the page title on phones and tablets.
+
+## 3.21.0 (landing page and speed)
+- **Fixed header** that stays on screen while scrolling, and a back-to-top button. Menu: "Examples" is now "Resume by Role"; new "By City" link.
+- **Faster public pages:** head stylesheets are joined into one cached file (`assets/bundle/`), public data is fetched once per page instead of five times, Google Fonts load from a head link. Home page: 51 → 33 requests, about 1.15 MB → 0.64 MB.
+- **New home page design** (`home-v3.css`): new hero with a fading role word, proof cards, a "what you get" grid and rounded referral and closing cards. Owner platform guide restyled like the customer guide, with search.
+
+## 3.21.0 (owner console)
+- **Search text:** blank saved page titles, descriptions and keywords fall back to the defaults; the 10 main page defaults are rewritten around the non-branded keyword plan.
+- **Blog & SEO** lists the ~508 built-in job, city and state pages next to the posts, with a type filter and search.
+- **Referral Ops** edits the live wallet rules (give ₹50, get ₹50); the unused cash-commission fields fold away.
+- **Pricing** tabs follow the packages (Packages, Services, Add-ons, Free) and show whether Tara Expert Review is on sale.
+- **Delete user is now permanent:** the account and its content are removed; purchases, refunds and wallet records move to one "Deleted customers" placeholder with personal details erased. Accounts that earlier deletes only anonymised are removed by the migration. Run `php artisan migrate --force` after uploading.
+
 # CVTara v3.20.0 — Guided template library, automatic Tara Expert Review, SEO audit, new email design
 
 ## 3.20.0 (mail)

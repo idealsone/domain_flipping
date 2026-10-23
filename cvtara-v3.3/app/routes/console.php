@@ -117,7 +117,7 @@ Artisan::command('cvtara:demo', function () {
     $pw = config('app.demo_password');
     $mk = function ($email, $name, $admin = false, $level = 'fresher') use ($pw) {
         $u = User::firstOrCreate(['email' => $email], ['name' => $name, 'password' => Hash::make($pw)]);
-        $u->forceFill(['is_admin' => $admin, 'email_verified_at' => now(), 'referral_code' => $u->referral_code ?: Str::random(16)])->save();
+        $u->forceFill(['is_admin' => $admin, 'email_verified_at' => now(), 'referral_code' => $u->referral_code ?: \App\Services\Referrals::makeCode((string) $u->name)])->save();
         DB::table('profiles')->updateOrInsert(['owner_id' => $u->id], ['name' => $name, 'experience_level' => $level, 'profession' => $admin ? 'Owner' : 'Data Analyst', 'category' => 'Technology', 'onboarding_done' => true, 'marketing_consent' => true, 'created_at' => now(), 'updated_at' => now()]);
 
         return $u;

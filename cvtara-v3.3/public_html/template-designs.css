@@ -26,3 +26,7 @@
 .template-preview{align-items:start}
 
 .doc-name{display:block;font-size:2em;font-weight:700;margin:.67em 0}
+
+/* Thumbnails: a full-size photo leaves the name and contact lines a sliver of room, so keep it small. */
+.template-preview .ref-resume .ref-header>.ref-photo,.template-preview .ref-resume .ref-header>.ref-photo-placeholder{width:52px;height:52px;margin:0 0 8px 10px}
+.template-preview .ref-contact span{overflow-wrap:normal;word-break:normal}

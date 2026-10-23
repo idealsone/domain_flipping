@@ -204,7 +204,8 @@ body[data-page=admin] .side-nav button,body[data-page=admin] .side-nav a{color:#
 .ws-hero p{margin:0;opacity:.85}
 .ws-ring{width:84px;height:84px;border-radius:50%;display:grid;place-items:center;text-align:center;background:conic-gradient(#86efac var(--p,0%),rgba(255,255,255,.2) 0);position:relative;flex:none}
 .ws-ring:before{content:"";position:absolute;inset:8px;border-radius:50%;background:#3730a3}
-.ws-ring b,.ws-ring small{position:relative;display:block;line-height:1.1}
+.ws-ring{align-content:center;gap:2px}.ws-ring b,.ws-ring small{position:relative;display:block;line-height:1.1}
+.ws-plan-chip{flex:none;display:grid;gap:2px;justify-items:start;min-width:170px;padding:14px 16px;border-radius:16px;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.22)}.ws-plan-chip small{font-size:11px;letter-spacing:.06em;text-transform:uppercase;opacity:.75}.ws-plan-chip b{font-size:22px;line-height:1.2}.ws-plan-chip span{font-size:12.5px;opacity:.8;margin-bottom:8px}.ws-plan-chip .button{min-height:38px;padding:8px 16px}
 .ws-ring b{font-size:22px}
 .ws-ring small{font-size:10px;opacity:.8}
 .ws-usage{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:18px}
@@ -287,6 +288,7 @@ body.pv{margin:0;height:100vh;display:flex;flex-direction:column;background:#0f1
 @media (max-width:640px){
   .co-grid,.ws-usage,.ad-fields{grid-template-columns:1fr}
   .ws-hero{flex-direction:column;align-items:flex-start}
+  .ws-plan-chip{width:100%;grid-template-columns:1fr auto;align-items:center;column-gap:12px}.ws-plan-chip small,.ws-plan-chip b,.ws-plan-chip span{grid-column:1}.ws-plan-chip span{margin:0}.ws-plan-chip .button{grid-column:2;grid-row:1/4}
   .fomo{left:10px;right:10px;bottom:70px;max-width:none}
   .lp-hero{padding-top:36px}
   .bl-current{flex-direction:column;align-items:flex-start}
@@ -348,3 +350,6 @@ body.dark .ws-notice{background:#3a2412;border-color:#7a4a1c;color:#fdba74}
 .wc-full p{margin:0 0 8px}
 .wc-note{font-size:12.5px;color:var(--muted);margin:14px 0 10px}
 .wc-actions{display:flex;gap:8px;flex-wrap:wrap}
+
+.workspace-top>div:first-child{display:flex;align-items:center;gap:10px;min-width:0}.workspace-top>div:first-child h1{margin:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.workspace-top .mobile-menu{margin-left:0;flex:none}
+@media(min-width:761px){.workspace-top .mobile-menu{display:none!important}}

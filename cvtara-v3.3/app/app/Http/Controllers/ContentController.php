@@ -121,6 +121,57 @@ class ContentController extends Controller
         return $html;
     }
 
+    /**
+     * The site's own stylesheets in the page head, joined into one file in the same order, so a visitor's browser makes one
+     * request instead of a dozen before it can draw the page. The file is named after the versions it holds, so it is
+     * written once per release and cached for a year. If the folder cannot be written, the page keeps its separate links.
+     */
+    private function bundleStyles(string $html): string
+    {
+        $end = strpos($html, '</head>');
+        if ($end === false || ! preg_match_all('#<link rel="stylesheet" href="(/[a-z0-9_-]+\.css)\?v=([a-f0-9]{12})">#', substr($html, 0, $end), $m, PREG_SET_ORDER) || count($m) < 2) {
+            return $html;
+        }
+        $from = strpos($html, $m[0][0]);
+        if (stripos(substr($html, $from, $end - $from), '<style') !== false) {
+            return $html; // an inline style between the links depends on their order around it
+        }
+        // A sheet linked twice only counts where it last appears, so keeping that one copy gives the same result.
+        $last = [];
+        foreach ($m as $i => $x) {
+            $last[$x[1]] = $i;
+        }
+        $m = array_values(array_filter($m, fn ($x, $i) => $last[$x[1]] === $i, ARRAY_FILTER_USE_BOTH));
+        $name = substr(hash('sha256', implode('|', array_map(fn ($x) => $x[1].$x[2], $m))), 0, 16);
+        $dir = public_path('assets/bundle');
+        $file = $dir.'/'.$name.'.css';
+        if (! is_file($file)) {
+            $css = '';
+            foreach ($m as $x) {
+                $src = public_path(ltrim($x[1], '/'));
+                if (! is_file($src)) {
+                    return $html;
+                }
+                $css .= '/* '.$x[1]." */\n".file_get_contents($src)."\n";
+            }
+            if ((! is_dir($dir) && ! @mkdir($dir, 0755, true)) || @file_put_contents($file.'.tmp', $css) === false || ! @rename($file.'.tmp', $file)) {
+                return $html;
+            }
+        }
+        $head = substr($html, 0, $end);
+        $first = true;
+        $head = preg_replace_callback('#<link rel="stylesheet" href="/[a-z0-9_-]+\.css\?v=[a-f0-9]{12}">#', function () use (&$first, $name) {
+            if (! $first) {
+                return '';
+            }
+            $first = false;
+
+            return '<link rel="stylesheet" href="/assets/bundle/'.$name.'.css?v='.substr($name, 0, 12).'">';
+        }, $head);
+
+        return $head.substr($html, $end);
+    }
+
     public function show(Request $r, string $path = '')
     {
         if ($path === 'sitemap.xml') {
@@ -305,7 +356,9 @@ class ContentController extends Controller
         $index = $seo['searchIndexing'] && ! $admin && ! in_array($path, ['workspace.html', 'checkout.html']);
         $follow = $index; // a programmatic page held back from search results still passes its links on
         $index = $index && ($seoPage['index'] ?? true);
-        $head = '<script>(function(){try{var t=localStorage.getItem("cvtara-theme");if(t==="dark"||(!t&&window.matchMedia&&matchMedia("(prefers-color-scheme: dark)").matches)){var r=document.documentElement;r.classList.add("dark");r.setAttribute("data-theme","dark");r.style.colorScheme="dark"}}catch(e){}})()</script><link rel="canonical" href="'.e($siteBase.$uri).'"><meta name="robots" content="'.($index ? 'index,follow' : ($follow ? 'noindex,follow' : 'noindex,nofollow')).'"><meta name="csrf-token" content="'.e(csrf_token()).'"><meta name="cvtara-user" content="'.e((string) ($r->user()?->id ?? 'guest')).'"><link rel="stylesheet" href="/launch.css"><link rel="stylesheet" href="/experience.css"><link rel="stylesheet" href="/cvtara-ui.css"><link rel="stylesheet" href="/cvtara-ds.css"><link rel="stylesheet" href="/site-polish.css"><script src="/error-report.js" defer></script><script src="/crash-guard.js" defer></script>';
+        // Fonts load in parallel with the page's own styles (not chained behind them); the code font only where code is shown.
+        $fonts = '<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800'.($admin || in_array($path, ['workspace.html', 'admin-guide.html', 'customer-guide.html'], true) ? '&family=JetBrains+Mono:wght@400;600' : '').'&display=swap">';
+        $head = '<script>(function(){try{var t=localStorage.getItem("cvtara-theme");if(t==="dark"||(!t&&window.matchMedia&&matchMedia("(prefers-color-scheme: dark)").matches)){var r=document.documentElement;r.classList.add("dark");r.setAttribute("data-theme","dark");r.style.colorScheme="dark"}}catch(e){}})()</script><link rel="canonical" href="'.e($siteBase.$uri).'"><meta name="robots" content="'.($index ? 'index,follow' : ($follow ? 'noindex,follow' : 'noindex,nofollow')).'"><meta name="csrf-token" content="'.e(csrf_token()).'"><meta name="cvtara-user" content="'.e((string) ($r->user()?->id ?? 'guest')).'">'.$fonts.'<link rel="stylesheet" href="/launch.css"><link rel="stylesheet" href="/experience.css"><link rel="stylesheet" href="/cvtara-ui.css"><link rel="stylesheet" href="/cvtara-ds.css"><link rel="stylesheet" href="/site-polish.css"><script src="/error-report.js" defer></script><script src="/crash-guard.js" defer></script>';
         if ($path === 'workspace.html') {
             $head .= '<script src="/preview-guard.js" defer></script>';
         }
@@ -317,6 +370,9 @@ class ContentController extends Controller
         }
         if ($post) {
             $head .= '<link rel="stylesheet" href="/seo-pages.css">';
+        }
+        if ($path === '') {
+            $head .= '<link rel="stylesheet" href="/home-v3.css">'; // the landing page's own look, after the shared layers
         }
         if ($path === 'workspace.html') {
             $head .= '<link rel="stylesheet" href="/support-widget.css">'; // the feedback button belongs to signed-in customers only
@@ -400,6 +456,10 @@ class ContentController extends Controller
 
             return $m[1].'="'.$m[2].($version ? '?v='.$version : '').'"';
         }, $html);
+
+        if (! $admin && $path !== 'workspace.html') {
+            $html = $this->bundleStyles($html);
+        }
 
         if ($cacheable) {
             \App\Services\PageCache::write($path, $html);

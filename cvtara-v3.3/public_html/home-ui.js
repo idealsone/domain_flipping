@@ -11,16 +11,14 @@
   if (out) {
     if (matchMedia('(prefers-reduced-motion: reduce)').matches) out.textContent = roles[0];
     else {
-      let r = 0, c = 0, del = false;
-      (function tick() {
-        const w = roles[r];
-        c += del ? -1 : 1;
-        out.textContent = w.slice(0, c);
-        let t = del ? 40 : 85;
-        if (!del && c === w.length) { del = true; t = 1500; }
-        else if (del && c === 0) { del = false; r = (r + 1) % roles.length; t = 350; }
-        setTimeout(tick, t);
-      })();
+      // swap the whole word every few seconds (a soft fade, not a letter-by-letter typing loop), only while it can be seen
+      let r = 0, seen = true;
+      if (window.IntersectionObserver) new IntersectionObserver(es => { seen = es[0].isIntersecting; }).observe(out);
+      setInterval(() => {
+        if (!seen || document.hidden || roles.length < 2) return;
+        out.classList.add('is-out');
+        setTimeout(() => { r = (r + 1) % roles.length; out.textContent = roles[r]; out.classList.remove('is-out'); }, 260);
+      }, 2600);
     }
   }
   let site = null;
@@ -58,7 +56,7 @@
   // owner-editable homepage copy (Owner console → Templates & site design)
   fetch('/api/public-content', { headers: { Accept: 'application/json' } }).then(r => r.json()).then(d => {
     const s = d.content && d.content.site; if (!s) return; site = s;
-    if (Array.isArray(s.heroRoles) && s.heroRoles.length) { roles.length = 0; roles.push(...s.heroRoles); }
+    if (Array.isArray(s.heroRoles) && s.heroRoles.length) { roles.length = 0; roles.push(...s.heroRoles); if (out) out.textContent = roles[0]; }
     const h1 = $('.lp-hero h1'); if (h1 && h1.firstChild && s.heroTitle) h1.firstChild.nodeValue = s.heroTitle + ' ';
     const pill = $('.lp-pill'); if (pill && pill.lastChild && s.heroPill) pill.lastChild.nodeValue = s.heroPill;
     if ($('.lp-lead') && s.heroLead) $('.lp-lead').innerHTML = rich(s.heroLead);
