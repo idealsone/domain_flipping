@@ -45,3 +45,4 @@
 
 .rh-live{font-size:12px;font-weight:600;padding:5px 11px;border-radius:99px;border:1px solid var(--line);background:var(--soft);color:var(--ink);white-space:nowrap}
 .rh-live.good{background:color-mix(in srgb,var(--success) 14%,var(--paper));border-color:color-mix(in srgb,var(--success) 40%,var(--line))}.rh-live.mid{background:color-mix(in srgb,var(--warn) 16%,var(--paper));border-color:color-mix(in srgb,var(--warn) 45%,var(--line))}.rh-live.low{background:color-mix(in srgb,var(--danger) 12%,var(--paper));border-color:color-mix(in srgb,var(--danger) 40%,var(--line))}
+.rh-dlg .rh-field{display:grid;gap:6px;font-weight:600;margin:4px 0 12px}.rh-dlg .rh-field select{min-height:44px;padding:8px 10px;border:1px solid var(--line);border-radius:10px;font:inherit;font-weight:400;max-width:100%;background:var(--panel,#fff);color:inherit}

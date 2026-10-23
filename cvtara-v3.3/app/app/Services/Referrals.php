@@ -15,6 +15,35 @@ class Referrals
         return array_merge(['enabled' => true, 'rateBps' => 2000, 'minimumPaise' => 100000, 'payoutHours' => 24, 'holdDays' => 7, 'tierThreshold' => 100, 'tierRateBps' => 3000, 'requirePan' => false, 'downloadThreshold' => 5, 'premiumDays' => 30, 'minQualifyingPaise' => 29900, 'proOnly' => true, 'mode' => 'wallet', 'friendDiscountPaise' => 5000, 'rewardPaise' => 5000, 'qualifyDays' => 7, 'walletDays' => 90, 'monthlyCapPaise' => 100000], Settings::get('referrals', []));
     }
 
+    /**
+     * A readable, unique referral code made from the customer's first name and four digits, such as "priya-4821".
+     * Old random codes keep working through users.old_referral_code.
+     */
+    public static function makeCode(string $name): string
+    {
+        $first = Str::of(Str::ascii($name))->lower()->replaceMatches('/[^a-z0-9 ]+/', '')->trim()->explode(' ')->first(fn ($w) => preg_match('/[a-z]{2}/', $w)) ?? '';
+        $base = substr($first, 0, 14) ?: 'cvtara';
+        for ($i = 0; $i < 40; $i++) {
+            $code = $base.'-'.($i < 30 ? random_int(1000, 9999) : random_int(10000, 999999));
+            if (! self::owner($code)) {
+                return $code;
+            }
+        }
+
+        return $base.'-'.Str::lower(Str::random(8));
+    }
+
+    /** The account a referral link belongs to, by its current code or the random code it replaced. */
+    public static function owner(string $code): ?User
+    {
+        $code = trim($code);
+        if ($code === '' || strlen($code) > 24) {
+            return null;
+        }
+
+        return User::where('referral_code', strtolower($code))->first() ?? User::where('referral_code', $code)->first() ?? User::where('old_referral_code', $code)->first();
+    }
+
     public static function successfulBuyers(int $id): int
     {
         return DB::table('referral_commissions as c')->join('purchases as p', 'p.id', '=', 'c.purchase_id')->where('c.referrer_id', $id)->where('p.is_live', true)->where('p.status', 'paid')->where('p.refunded_paise', 0)->where(function ($q) {

@@ -8,6 +8,12 @@ def run(ctx, t):
     r = ctx.client(); r.register("ref-boss@test.local")
     uid = db.q("select id from users where email='ref-boss@test.local'")[0][0]
     code = db.q("select referral_code from users where id=?", uid)[0][0]
+    import re
+    t.check("the referral link is the first name plus numbers, not a random string", bool(re.fullmatch(r"test-\d{4,6}", code or "")), code)
+    t.check("the readable link opens sign-up", r.raw("GET", "/r/" + code)[0] == 302 and ctx.client().raw("GET", "/r/" + code)[1].get("Location", "").endswith("/register"))
+    t.check("two people with the same first name get different links", code != db.q("select referral_code from users where email='ref-boss2@test.local'")[0][0] if ctx.client().register("ref-boss2@test.local") else False)
+    db.q("update users set old_referral_code='OldRandomCode1234' where id=?", uid)
+    t.check("a random link shared before the change still works", ctx.client().raw("GET", "/r/OldRandomCode1234")[0] == 302 and ctx.client().raw("GET", "/r/NoSuchCode000000")[0] == 404)
     s, st = r.api("GET", "referral-rewards")
     t.check("the reward is on and needs 5 paying friends", s == 200 and st.get("enabled") is True and st["rules"]["downloadThreshold"] == 5, (s, str(st)[:200]))
     t.check("there is no second 10-friend tier in the rules the page uses", "10" not in str(st["rules"].get("downloadThreshold")) and st["rules"].get("downloadThreshold") == 5)

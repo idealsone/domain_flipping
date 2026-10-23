@@ -74,7 +74,12 @@ def run(ctx, t):
     t.check("an uploaded resume starts in a plain ATS-conscious layout, with no photo and no creative design", cat[ctx_template]["ats"] and not cat[ctx_template].get("photo") and not cat[ctx_template].get("creative"), ctx_template)
     t.check("too little text is refused", c.api("POST", "resumes/import", {"text": "hello"})[0] == 422)
     s, j2 = c.api("POST", "resumes/import", {"text": SAMPLE, "fileName": "again.pdf"})
-    t.check("a free account still keeps one resume when it uploads another", s == 422 and "free account keeps one" in str(j2), (s, str(j2)[:160]))
+    t.check("a free account still keeps one resume: a second upload offers to replace it instead of failing", s == 409 and j2.get("needsReplace") and [x["id"] for x in j2.get("resumes", [])] == [rid] and "free account keeps one" in j2.get("error", ""), (s, str(j2)[:160]))
+    t.check("nothing new was saved by the refused upload", db.q("select count(*) from resume_drafts where owner_id=(select owner_id from resume_drafts where id=?)", rid)[0][0] == 1)
+    other = SAMPLE.replace("Infosys", "Wipro")
+    s, j3 = c.api("POST", "resumes/import", {"text": other, "fileName": "again.pdf", "replaceId": rid})
+    t.check("the upload can replace the free resume, keeping it primary", s == 200 and j3.get("id") == rid and db.q("select is_primary, source from resume_drafts where id=?", rid)[0] == (1, "import") and "Wipro" in db.q("select content_json from resume_drafts where id=?", rid)[0][0], (s, str(j3)[:160]))
+    t.check("another customer's resume cannot be replaced", ctx.client().api("POST", "resumes/import", {"text": SAMPLE, "replaceId": rid})[0] in (401, 403, 404, 419))
 
     # ---- ATS-friendly score ----
     lst = c.api("GET", "resumes")[1]; row = lst["resumes"][0]
