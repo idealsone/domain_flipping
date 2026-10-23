@@ -71,6 +71,7 @@ def _run(ctx, t, db, smtp):
     t.check("owner saves the mail sender with a postal address", s == 200, s)
 
     # a big campaign waiting in the queue must not hold up a sign-up code
+    db.q("update mail_outbox set status='cancelled' where status in ('queued','failed')")  # start from a quiet queue (earlier suites leave mail)
     db.q("insert into email_contacts(email,name,source,token,confirmed_at,created_at,updated_at) " + " union all ".join(
         f"select 'c{i}@example.com','C','test','{'t' * 40}{i:08d}',datetime('now'),datetime('now'),datetime('now')" for i in range(120)))
     db.q("insert into mail_outbox(id,dedupe,owner_id,contact_id,trigger,recipient,subject,body,status,attempts,due_at,created_at,updated_at) select 'camp-'||id,'camp-'||id,null,id,'campaign',email,'Hello','# Hello\nHi there, a short note from CVTara with one useful tip for your job search this week.','queued',0,datetime('now','-1 minute'),datetime('now'),datetime('now') from email_contacts where source='test'")
@@ -97,7 +98,7 @@ def _run(ctx, t, db, smtp):
     n0 = len(smtp.messages); ctx.inst.artisan("cvtara:cron"); batch = smtp.messages[n0:]
     t.check("one cron run sends at most a bounded batch (40 per pass)", 0 < len(batch) <= 80, len(batch))
     t.check("account mail goes before campaign mail in the same run", batch and batch[0]["to"] == ["otp-now@test.local"], [m["to"] for m in batch[:2]])
-    camp = next((m for m in batch if m["to"][0].startswith("c")), None)
+    camp = next((m for m in batch if re.match(r"c\d+@example\.com$", m["to"][0])), None)
     cm = _parts(camp)[0] if camp else {}
     t.check("campaign (marketing) mail carries one-click List-Unsubscribe and Feedback-ID headers", camp and "<http" in (cm["List-Unsubscribe"] or "") and cm["List-Unsubscribe-Post"] == "List-Unsubscribe=One-Click" and cm["Feedback-ID"])
 
