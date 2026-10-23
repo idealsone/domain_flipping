@@ -10,6 +10,17 @@ use Illuminate\Support\Str;
 
 Artisan::command('cvtara:cron', function () {
     \App\Services\Settings::put('cronHeartbeat', ['at' => now()->toIso8601String()]);
+    // Mail that is already due goes first, so the daily backup or a slow scan never delays it.
+    $send = function () {
+        try {
+            return MailAutomation::process();
+        } catch (\Throwable $e) {
+            \App\Services\ErrorLog::exception($e);
+
+            return ['sent' => 0, 'processed' => 0, 'error' => 'mail run failed; see Error Log'];
+        }
+    };
+    $mail = $send();
     MailAutomation::reminders();
     if (\Illuminate\Support\Facades\Cache::add('retention-run', 1, 86400)) {
         \App\Services\Retention::run();
@@ -45,7 +56,16 @@ Artisan::command('cvtara:cron', function () {
     } catch (\Throwable $e) {
         \App\Services\ErrorLog::exception($e);
     }
-    $this->info(json_encode(MailAutomation::process()));
+    // Then what this run queued (reminders, a campaign batch). Account mail goes before outreach, so slow outreach
+    // mailboxes can never delay it.
+    $again = $send();
+    $mail = ['sent' => ($mail['sent'] ?? 0) + ($again['sent'] ?? 0), 'processed' => ($mail['processed'] ?? 0) + ($again['processed'] ?? 0)] + $again + $mail;
+    try {
+        \App\Services\Outreach::process();
+    } catch (\Throwable $e) {
+        \App\Services\ErrorLog::exception($e);
+    }
+    $this->info(json_encode($mail));
 })->purpose('Process due mail and record cron health');
 Artisan::command('cvtara:remind', function () {
     $this->info('Status reminders sent: '.\App\Services\Tracker::remind());
@@ -56,6 +76,18 @@ Artisan::command('cvtara:mail-preview {dir}', function (string $dir) {
         if ($m = MailAutomation::preview($t['id'])) {
             file_put_contents($dir.'/'.$t['id'].'.html', $m['html']);
             file_put_contents($dir.'/'.$t['id'].'.txt', $m['subject']."\n\n".$m['text']);
+        }
+    }
+    // Outreach (separate mailboxes): every mail of both lists, with a sample contact and mailbox.
+    $c = \App\Services\Outreach::config();
+    $sender = (object) ['id' => '00000000-0000-4000-8000-000000000000', 'email' => 'priya@cvtara.in', 'from_name' => 'Priya from CVTara'];
+    foreach ($c['lists'] as $list => $l) {
+        $ct = (object) ['id' => '00000000-0000-4000-8000-000000000001', 'email' => 'sample@example.com', 'name' => $list === 'colleges' ? 'Dr. Ramesh Kumar' : 'Asha Rao', 'list' => $list, 'college' => 'ABC College of Engineering', 'designation' => 'Training and Placement Officer', 'city' => 'Mysuru', 'step' => 0];
+        foreach ($l['steps'] as $i => $step) {
+            $ct->step = $i;
+            $m = \App\Services\Outreach::render($step, $ct, $sender, $c);
+            file_put_contents($dir.'/outreach-'.$list.'-'.($i + 1).'.html', $m['html']);
+            file_put_contents($dir.'/outreach-'.$list.'-'.($i + 1).'.txt', $m['subject']."\n\n".$m['text']);
         }
     }
     $this->info('Wrote '.count(glob($dir.'/*.html')).' email previews to '.$dir);

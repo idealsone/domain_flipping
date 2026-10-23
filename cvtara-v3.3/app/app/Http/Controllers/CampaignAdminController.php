@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Services\AccountSecurity;
 use App\Services\Campaigns;
 use App\Services\EmailRenderer;
+use App\Services\MailAutomation;
 use App\Services\Settings;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -92,8 +93,9 @@ class CampaignAdminController extends Controller
         }
         if ($path === 'campaigns/settings') {
             AccountSecurity::requireRecent($r);
-            $v = $r->validate(['batchSize' => 'required|integer|min:1|max:200', 'dailyCap' => 'required|integer|min:1|max:10000']);
-            Settings::put('campaignSettings', ['batchSize' => (int) $v['batchSize'], 'dailyCap' => (int) $v['dailyCap']]);
+            $v = $r->validate(['batchSize' => 'required|integer|min:1|max:100', 'dailyCap' => 'required|integer|min:1|max:10000', 'mailboxCap' => 'sometimes|integer|min:'.(MailAutomation::RESERVE + 50).'|max:100000']);
+            $box = (int) ($v['mailboxCap'] ?? Campaigns::settings()['mailboxCap']);
+            Settings::put('campaignSettings', ['batchSize' => (int) $v['batchSize'], 'dailyCap' => (int) $v['dailyCap'], 'mailboxCap' => $box]);
             Settings::audit($id, 'campaign_settings_saved', $v['batchSize'].'/'.$v['dailyCap']);
 
             return $ok($this->snapshot());

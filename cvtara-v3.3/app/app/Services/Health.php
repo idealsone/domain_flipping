@@ -32,6 +32,11 @@ class Health
             'privateFolder' => ! str_starts_with(base_path(), public_path().DIRECTORY_SEPARATOR),
             'scheduler' => isset($hb['at']) && strtotime($hb['at']) > now()->subMinutes(10)->timestamp,
             'emailConfigured' => ! empty($providers['email']['fromEmail']),
+            // SPF, DKIM and DMARC only line up when the From address is on the site's own domain (or a subdomain of it).
+            'emailSenderAligned' => empty($providers['email']['fromEmail']) || (fn ($d, $site) => $site !== '' && ($d === $site || str_ends_with($d, '.'.$site)))(mb_strtolower(substr(strrchr((string) $providers['email']['fromEmail'], '@') ?: '', 1)), preg_replace('/^www\./', '', mb_strtolower((string) parse_url((string) config('app.url'), PHP_URL_HOST)))),
+            'emailPostalAddress' => empty($providers['email']['fromEmail']) || trim((string) ($providers['email']['postalAddress'] ?? '')) !== '',
+            // Nothing due has waited more than 10 minutes (the cron sends every minute).
+            'mailQueueMoving' => ! (Settings::get('integrations')['email'] ?? false) || ! DB::table('mail_outbox')->whereIn('status', ['queued', 'failed'])->where('attempts', '<', 5)->where('due_at', '<', now()->subMinutes(10))->whereNotIn('trigger', EmailRenderer::MARKETING)->exists(),
             'paymentsConfigured' => ! empty($providers['payments']['razorpayKeyId']) && ! empty($providers['payments']['razorpayKeySecret']),
             'debugOff' => ! config('app.debug'),
         ];
