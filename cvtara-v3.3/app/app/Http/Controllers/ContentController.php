@@ -457,7 +457,7 @@ class ContentController extends Controller
             return $m[1].'="'.$m[2].($version ? '?v='.$version : '').'"';
         }, $html);
 
-        if (! $admin) {
+        if (! $admin && $path !== 'workspace.html') {
             $html = $this->bundleStyles($html);
         }
 
