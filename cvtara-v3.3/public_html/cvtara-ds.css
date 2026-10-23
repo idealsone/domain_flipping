@@ -1,5 +1,4 @@
 /* CVTara Design System layer — loaded after cvtara-ui.css. Source of truth: CVTara_Design_System.html */
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap');
 :root{--bg:#f8fafc;--paper:#fff;--ink:#0f172a;--ink2:#1e293b;--muted:#475569;--line:#e2e8f0;--soft:#f1f5f9;--blue:#1557d2;--indigo:#6366f1;--success:#22c55e;--warn:#f59e0b;--danger:#ef4444;--shadow:0 4px 24px rgba(15,23,42,.10);
   /* aliases used by the existing app */
   --canvas:var(--bg);--ink-2:var(--ink2);--blue-2:var(--indigo);--ok:#22c55e;--radius:10px;--font:'Inter',sans-serif}

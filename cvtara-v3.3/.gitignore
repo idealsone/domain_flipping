@@ -2,3 +2,5 @@ dist/
 __pycache__/
 *.pyc
 app/vendor
+public_html/_pages/
+public_html/assets/bundle/
