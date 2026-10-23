@@ -44,7 +44,7 @@ class ApiController extends Controller
             return $ok(['brand' => $d['brand'], 'growth' => $d['growth'], 'plans' => Settings::plans()]);
         }
         if ($path === 'public-config') {
-            return $ok(['settings' => array_merge(['heroTitle' => 'Your next resume starts with your real experience.', 'heroDescription' => 'Choose a design. Tell your story. Prepare a focused application.', 'primaryCTA' => 'Build my resume', 'secondaryCTA' => 'Check my resume', 'accent' => '#1557d2', 'pushEnabled' => false], Settings::get('public', []), ['oneSignalAppId' => Settings::providers()['push']['oneSignalAppId'] ?? Settings::get('public', [])['oneSignalAppId'] ?? '', 'pushEnabled' => (Settings::get('integrations')['push'] ?? false) && (Settings::get('public', [])['pushEnabled'] ?? false)])]);
+            return $ok(['settings' => array_merge(['heroTitle' => 'Your next resume starts with your real experience.', 'heroDescription' => 'Choose a design. Tell your story. Prepare a focused application.', 'primaryCTA' => 'Build my resume', 'secondaryCTA' => 'Check my resume', 'accent' => '#1557d2', 'pushEnabled' => false, 'pushDelay' => 8, 'pushMessage' => 'Get useful resume tips and career guides.'], Settings::get('public', []), ['oneSignalAppId' => (Settings::get('public', [])['oneSignalAppId'] ?? '') ?: (Settings::providers()['push']['oneSignalAppId'] ?? ''), 'pushEnabled' => (Settings::get('integrations')['push'] ?? false) && (Settings::get('public', [])['pushEnabled'] ?? false)])]);
         }
         if ($path === 'promo' && $get) {
             $offer = strtoupper(preg_replace('/[^A-Za-z0-9_-]/', '', (string) $r->query('offer', '')));
