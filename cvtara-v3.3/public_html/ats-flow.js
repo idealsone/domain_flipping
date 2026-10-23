@@ -173,20 +173,10 @@ ${kw.total ? `<h3>Keywords from the job</h3><div class="ats-kw">${kw.found.map(k
     location.href = fixUrl(id, r.scanId);
   }
 
-  // One click: a complete first letter from the resume and this job, opened in the cover-letter studio.
-  async function letterForJob(role, company, statusEl) {
+  // One click: the cover-letter studio writes a complete first letter from this resume and this job, then opens it.
+  function letterForJob() {
     const r = st.run;
-    statusEl.classList.remove('bad'); statusEl.textContent = 'Writing your first draft from your resume…';
-    try {
-      const { letter, jobUrl } = await api('/api/letters/draft', { method: 'POST', body: { resumeId: r.resumeId, scanId: r.scanId, role: role || r.title || '', company: company || r.company || '' } });
-      const uid = document.querySelector('meta[name=cvtara-user]')?.content || 'guest', key = 'cvtara-cover-letter-v1-' + uid;
-      let prev = {}; try { prev = JSON.parse(localStorage.getItem(key)) || {}; } catch { /* ignore */ }
-      const t = (window.CVTARA_DATA?.coverLetters || []).find(x => x.publicPublished !== false);
-      const look = prev.template ? { template: prev.template, design: prev.design, accent: prev.accent, font: prev.font } : {};
-      const draft = { version: 1, title: [letter.role, letter.company].filter(Boolean).join(' — ').slice(0, 180) || 'Cover letter', ...look, ...letter, recipient: 'Hiring Manager', date: new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' }), jobUrl: jobUrl || r.url || '', example: false, id: null, revision: null };
-      try { localStorage.setItem(key, JSON.stringify(draft)); } catch { statusEl.textContent = 'Your browser blocked saving the draft. Turn off private mode and try again.'; statusEl.classList.add('bad'); return; }
-      location.href = '/workspace.html?view=letter' + (!look.template && t ? '&letter=' + encodeURIComponent(t.slug) : '');
-    } catch (e) { statusEl.textContent = e.message || 'The cover letter could not be drafted.'; statusEl.classList.add('bad'); }
+    location.href = `/workspace.html?view=letter&write=1&resume=${encodeURIComponent(r.resumeId)}&scan=${encodeURIComponent(r.scanId)}`;
   }
 
   async function build() {
@@ -206,7 +196,7 @@ ${kw.total ? `<h3>Keywords from the job</h3><div class="ats-kw">${kw.found.map(k
       if (resumeId) steps.push(`<li><b>Tailor your resume</b><span>Opens with this job's missing keywords and gaps beside it. Add what you really have, then re-check and download.</span><a class="button primary small" href="${fixUrl(resumeId, r.scanId)}">Open tailored resume →</a></li>`);
       if (wantLetter) steps.push(`<li><b>Your cover letter</b><span>A full first draft for ${E(role)} at ${E(company)}, written from your resume. Need a second letter? Make another from the cover-letter page.</span><button class="button ${resumeId ? 'secondary' : 'primary'} small" type="button" id="nxLetterGo">Open cover letter →</button></li>`);
       ready.innerHTML = `<h4>Your drafts are ready</h4><ol class="ats-ready">${steps.join('')}</ol><p class="ats-muted">Downloading a clean resume or letter uses 1 credit of its own kind and adds the job to your Applications automatically.</p>`;
-      $('#nxLetterGo')?.addEventListener('click', () => letterForJob(role, company, s));
+      $('#nxLetterGo')?.addEventListener('click', letterForJob);
     } catch (e) { s.textContent = e.message || 'Could not create the drafts.'; s.classList.add('bad'); } finally { go.disabled = false; }
   }
 
@@ -263,7 +253,7 @@ ${kw.total ? `<h3>Keywords from the job</h3><div class="ats-kw">${kw.found.map(k
       return;
     }
     if (e.target.closest('[data-ats-fix]')) { fixForJob(); return; }
-    if (e.target.closest('[data-ats-letter]')) { letterForJob($('#nxRole')?.value.trim(), $('#nxCompany')?.value.trim(), $('#atsFixStatus')); return; }
+    if (e.target.closest('[data-ats-letter]')) { letterForJob(); return; }
     if (e.target.closest('#atsPaste')) {
       try { const clip = await navigator.clipboard.readText(); if (clip) { $('#atsText').value = clip.slice(0, 40000); say('Pasted from your clipboard.'); } else say('Your clipboard is empty.', true); } catch { say('Your browser did not allow clipboard access — press Ctrl+V in the box instead.', true); }
       return;

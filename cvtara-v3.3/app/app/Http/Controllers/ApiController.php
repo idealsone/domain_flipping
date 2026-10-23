@@ -355,17 +355,6 @@ class ApiController extends Controller
 
             return $ok(['scan' => ['id' => $x->id, 'resumeId' => $x->resume_id, 'resumeTitle' => DB::table('resume_drafts')->where('id', $x->resume_id)->where('owner_id', $id)->value('title'), 'source' => $x->source, 'jobUrl' => $x->job_url, 'jobText' => $x->job_text, 'title' => $x->job_title, 'company' => $x->company, 'score' => $x->score, 'report' => json_decode((string) $x->result_json, true), 'createdAt' => $x->created_at]]);
         }
-        if ($path === 'letters/draft' && $r->isMethod('POST')) {
-            // a complete first letter from the person's own resume (and the job's ATS report): free, nothing is saved until they save it
-            $v = $r->validate(['resumeId' => ['required', 'regex:/^[a-f0-9-]{36}$/'], 'scanId' => ['nullable', 'regex:/^[a-f0-9-]{36}$/'], 'role' => 'nullable|string|max:160', 'company' => 'nullable|string|max:160']);
-            abort_unless(Settings::get('features')['letter']['enabled'] ?? true, 403);
-            $resume = DB::table('resume_drafts')->where('id', $v['resumeId'])->where('owner_id', $id)->first();
-            abort_unless($resume, 422, 'Choose one of your saved resumes.');
-            $scan = empty($v['scanId']) ? null : DB::table('ats_scans')->where('id', $v['scanId'])->where('owner_id', $id)->where('status', 'done')->first();
-            $letter = \App\Services\LetterDraft::build(json_decode((string) $resume->content_json, true) ?: [], (string) ($v['role'] ?? '') ?: (string) ($scan->job_title ?? ''), (string) ($v['company'] ?? '') ?: (string) ($scan->company ?? ''), $scan ? json_decode((string) $scan->result_json, true) : null);
-
-            return $ok(['letter' => $letter, 'jobUrl' => (string) ($scan->job_url ?? '')]);
-        }
         if ($path === 'applications' && $get) {
             return $ok(['applications' => DB::table('applications')->where('owner_id', $id)->orderByDesc('updated_at')->get()]);
         }
