@@ -36,7 +36,7 @@
     },
     async send(text, fileName, replaceId) {
       try {
-        const r = await api('/api/resumes/import', { method: 'POST', body: { text: text.slice(0, 120000), fileName, ...(replaceId ? { replaceId } : {}) } });
+        const r = await api('/api/resumes/import', { method: 'POST', body: { text: text.slice(0, 120000), fileName, paragraphs: window.CVTaraImport?.layout === 'rows', ...(replaceId ? { replaceId } : {}) } });
         const f = r.found || {}, q = r.quality || { score: 0, tips: [] };
         const rows = [['Jobs', f.experience], ['Education', f.education], ['Projects', f.projects], ['Skills', f.skills], ['Certificates', f.certifications]].filter(x => x[1]);
         this.dialog(`<div class="rh-dlg"><h3>Your resume is ready to review</h3>
