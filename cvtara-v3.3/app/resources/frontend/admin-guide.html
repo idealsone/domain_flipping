@@ -1,29 +1,64 @@
 <!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Platform guide | CVTara owner console</title><meta name="description" content="Private owner handbook for the CVTara platform."><meta name="robots" content="noindex,nofollow"><link rel="stylesheet" href="/cvtara-ds.css">
 <style>
-body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.7 'Inter',sans-serif}
-.pg-top{position:sticky;top:0;z-index:20;background:var(--paper);border-bottom:1px solid var(--line);display:flex;align-items:center;gap:14px;padding:10px 24px}
-.pg-top img{height:34px}.pg-top .sp{flex:1}.pg-top .lock{font-size:12px;font-weight:700;color:#b45309;background:#fef3c7;border-radius:20px;padding:4px 12px}
-.pg-wrap{max-width:1180px;margin:0 auto;padding:28px 24px 80px;display:grid;grid-template-columns:250px minmax(0,1fr);gap:36px}
-.pg-hero{grid-column:1/-1;background:linear-gradient(135deg,#1e1b4b,#3730a3);color:#fff;border-radius:16px;padding:32px 34px}
-.pg-hero h1{margin:0 0 6px;font-size:32px;letter-spacing:-.03em;color:#fff}.pg-hero p{margin:0;opacity:.8;max-width:680px}
-.pg-search{margin-top:18px;max-width:420px}.pg-search input{width:100%;padding:11px 14px;border-radius:10px;border:0;font:inherit;background:rgba(255,255,255,.14);color:#fff}.pg-search input::placeholder{color:#c7d2fe}
-.toc{position:sticky;top:76px;align-self:start;display:grid;gap:2px;max-height:calc(100vh - 100px);overflow:auto}
-.toc a{padding:7px 12px;border-radius:8px;color:var(--muted);text-decoration:none;font-size:14px;font-weight:500;border-left:3px solid transparent}.toc a:hover{background:var(--soft);color:var(--ink)}.toc a.on{background:var(--soft);color:var(--blue);border-left-color:var(--blue);font-weight:700}
-article section{background:var(--paper);border:1px solid var(--line);border-radius:14px;padding:24px 28px;margin-bottom:18px;scroll-margin-top:84px}
-article h2{margin:0 0 4px;font-size:22px;letter-spacing:-.02em;display:flex;gap:10px;align-items:center}.ic{width:34px;height:34px;border-radius:10px;background:linear-gradient(135deg,#e0e7ff,#dbeafe);display:grid;place-items:center;font-size:18px}
-article h3{font-size:16px;margin:18px 0 6px}article p{margin:6px 0;color:var(--ink2)}article ol,article ul{margin:8px 0;padding-left:22px;color:var(--ink2)}article li{margin:4px 0}
-.tip,.warn{border-left:3px solid var(--blue);background:var(--soft);padding:10px 14px;border-radius:0 8px 8px 0;margin:12px 0;font-size:14px}.warn{border-color:#f59e0b;background:#fffbeb;color:#92400e}
-body.dark .warn{background:#2a2210;color:#fcd34d}
-code{background:var(--soft);padding:2px 6px;border-radius:5px;font-size:13px}
-kbd{border:1px solid var(--line);border-bottom-width:2px;border-radius:5px;padding:1px 6px;font:12px 'JetBrains Mono',monospace;background:var(--paper)}
-.grid2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}.card{border:1px solid var(--line);border-radius:10px;padding:12px 14px;background:var(--bg)}.card b{display:block}
-.hide{display:none!important}.none{display:none;text-align:center;color:var(--muted);padding:40px}
-@media(max-width:900px){.pg-wrap{grid-template-columns:1fr}.toc{position:static;display:flex;flex-wrap:wrap;max-height:none}.grid2{grid-template-columns:1fr}.pg-hero{padding:22px}}
-@media print{.pg-top,.toc,.pg-search{display:none}.pg-wrap{display:block}article section{break-inside:avoid;border:0;padding:0}}
+/* Owner handbook: same look as the customer guide and the dashboards (cards, chips, gradient accents), readable in day and night mode */
+:root{--g-grad:linear-gradient(120deg,#1557d2,#4f46e5 55%,#9333ea);--g-card:0 1px 2px rgba(15,23,42,.04),0 12px 32px rgba(15,23,42,.06)}
+html{scroll-behavior:smooth;scroll-padding-top:84px}
+body{margin:0;background:var(--bg);color:var(--ink);font:15.5px/1.7 'Inter',system-ui,sans-serif}
+.pg-top{position:sticky;top:0;z-index:20;display:flex;align-items:center;gap:12px;padding:10px max(16px,calc((100vw - 1180px)/2));background:var(--paper);border-bottom:1px solid var(--line)}
+.pg-top img{height:34px;width:auto}body.dark .pg-top img,html.dark .pg-top img{filter:brightness(0) invert(1)}
+.pg-top .sp{flex:1}.pg-top .lock{font-size:12px;font-weight:700;color:#92400e;background:#fef3c7;border:1px solid #fde68a;border-radius:999px;padding:5px 12px}
+body.dark .pg-top .lock,html.dark .pg-top .lock{background:#2a2210;border-color:#4a3b12;color:#fcd34d}
+.pg-top .button{display:inline-flex;align-items:center;gap:6px;padding:8px 14px;border-radius:11px;border:1px solid var(--line);background:var(--paper);color:var(--ink);font:600 13.5px/1.2 inherit;text-decoration:none;cursor:pointer;white-space:nowrap}
+.pg-top .button:hover{border-color:#4f46e5;color:#4338ca}
+.pg-wrap{max-width:1180px;margin:0 auto;padding:26px 20px 90px;display:grid;grid-template-columns:260px minmax(0,1fr);gap:32px}
+.pg-hero{grid-column:1/-1;position:relative;overflow:hidden;border-radius:24px;padding:38px 38px 32px;color:#fff;background:radial-gradient(520px 300px at 100% 0%,rgba(147,51,234,.5),transparent 70%),radial-gradient(520px 300px at 0% 100%,rgba(21,87,210,.5),transparent 70%),#0b1020}
+.pg-hero .kicker{display:inline-flex;align-items:center;gap:8px;padding:5px 12px;border-radius:999px;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.18);font-size:11.5px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:#c7d2fe}
+.pg-hero h1{margin:14px 0 8px;font-size:clamp(30px,4vw,44px);line-height:1.08;letter-spacing:-.035em;color:#fff}
+.pg-hero p{margin:0;color:#cbd5e1;max-width:700px;font-size:16.5px}
+.pg-search{position:relative;margin-top:22px;max-width:520px}
+.pg-search input#gq{width:100%;box-sizing:border-box;padding:14px 16px 14px 44px;border-radius:14px;border:1px solid rgba(255,255,255,.2);font:inherit;font-size:15px;background:rgba(255,255,255,.1);color:#fff;outline:0}
+.pg-search input#gq:focus{border-color:#a5b4fc;background:rgba(255,255,255,.14)}
+.pg-search input#gq::placeholder{color:#c7d2fe}
+.pg-search:before{content:"⌕";position:absolute;left:16px;top:50%;transform:translateY(-52%);font-size:20px;color:#c7d2fe}
+.pg-search kbd{position:absolute;right:12px;top:50%;transform:translateY(-50%);background:rgba(255,255,255,.12);border-color:rgba(255,255,255,.25);color:#e0e7ff}
+.pg-quick{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin-top:26px}
+.pg-quick a{display:flex;gap:12px;align-items:center;padding:14px;border-radius:16px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.14);color:#fff;text-decoration:none;line-height:1.3}
+.pg-quick a:hover{background:rgba(255,255,255,.14)}
+.pg-quick i{font-style:normal;width:38px;height:38px;flex:none;border-radius:12px;display:grid;place-items:center;background:rgba(255,255,255,.12);font-size:18px}
+.pg-quick b{display:block;font-size:14.5px}.pg-quick small{color:#c7d2fe;font-size:12.5px}
+.toc{position:sticky;top:84px;align-self:start;display:grid;gap:2px;max-height:calc(100vh - 104px);overflow:auto;padding:14px;border:1px solid var(--line);border-radius:20px;background:var(--paper);box-shadow:var(--g-card)}
+.toc:before{content:"Chapters";display:block;margin:2px 10px 8px;font-size:11.5px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+.toc a{padding:8px 12px;border-radius:10px;color:var(--ink2,var(--ink));text-decoration:none;font-size:14px;font-weight:600}
+.toc a:hover{background:var(--soft)}.toc a.on{background:color-mix(in srgb,#4f46e5 10%,var(--paper));color:#4338ca}
+body.dark .toc a.on,html.dark .toc a.on{color:#c7d2fe}
+article{min-width:0}
+article section{background:var(--paper);border:1px solid var(--line);border-radius:22px;padding:28px 30px;margin-bottom:18px;scroll-margin-top:84px;box-shadow:var(--g-card)}
+article h2{margin:0 0 10px;font-size:23px;line-height:1.25;letter-spacing:-.025em;display:flex;gap:12px;align-items:center}
+.ic{width:42px;height:42px;flex:none;border-radius:13px;background:color-mix(in srgb,#4f46e5 10%,var(--paper));display:grid;place-items:center;font-size:20px}
+article h3{font-size:16.5px;margin:22px 0 8px;letter-spacing:-.01em}
+article p{margin:8px 0;color:var(--ink2,var(--ink))}
+article ul{margin:10px 0;padding-left:22px;color:var(--ink2,var(--ink))}article li{margin:6px 0}
+article ol{list-style:none;counter-reset:g;margin:12px 0;padding:0;display:grid;gap:10px}
+article ol>li{counter-increment:g;position:relative;margin:0;padding:12px 14px 12px 54px;border:1px solid var(--line);border-radius:14px;background:color-mix(in srgb,var(--soft) 55%,var(--paper));color:var(--ink2,var(--ink))}
+article ol>li:before{content:counter(g);position:absolute;left:14px;top:12px;width:28px;height:28px;border-radius:9px;display:grid;place-items:center;background:var(--g-grad);color:#fff;font-size:13px;font-weight:800}
+.tip,.warn{border:1px solid color-mix(in srgb,#1557d2 25%,var(--line));background:color-mix(in srgb,#1557d2 6%,var(--paper));padding:12px 16px 12px 44px;border-radius:14px;margin:14px 0;font-size:14.5px;position:relative}
+.tip:before,.warn:before{position:absolute;left:15px;top:11px;font-size:16px}.tip:before{content:"💡"}.warn:before{content:"⚠️"}
+.warn{border-color:#fde68a;background:#fffbeb;color:#92400e}
+body.dark .warn,html.dark .warn{background:#2a2210;border-color:#4a3b12;color:#fcd34d}
+code{background:var(--soft);padding:2px 7px;border-radius:6px;font:13px 'JetBrains Mono',ui-monospace,monospace}
+kbd{border:1px solid var(--line);border-bottom-width:2px;border-radius:6px;padding:1px 7px;font:12px 'JetBrains Mono',ui-monospace,monospace;background:var(--paper)}
+.grid2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin:12px 0}
+.card{border:1px solid var(--line);border-radius:16px;padding:14px 16px;background:color-mix(in srgb,var(--soft) 55%,var(--paper))}.card>b:first-child{display:block;margin-bottom:2px}
+.hide{display:none!important}.none{display:none;text-align:center;color:var(--muted);padding:48px 20px;border:1.5px dashed var(--line);border-radius:22px}
+.pg-count{margin:10px 0 0;color:#c7d2fe;font-size:13px;min-height:1.2em}
+@media(max-width:980px){.pg-quick{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:900px){.pg-wrap{grid-template-columns:1fr;padding:16px 16px 70px}.toc{position:static;display:flex;flex-wrap:wrap;max-height:none}.toc:before{width:100%}.grid2{grid-template-columns:1fr}.pg-hero{padding:24px 20px;border-radius:20px}article section{padding:22px 18px}.pg-top .lock,.pg-top button.button{display:none}.pg-quick{display:none}}
+@media(max-width:520px){.pg-quick{grid-template-columns:1fr}.pg-search kbd{display:none}}
+@media print{.pg-top,.toc,.pg-search,.pg-quick{display:none}.pg-wrap{display:block}.pg-hero{color:#000;background:none;padding:0}.pg-hero h1{color:#000}article section{break-inside:avoid;border:0;padding:0;box-shadow:none}}
 </style><link rel="icon" href="/favicon.ico?v=2" sizes="48x48"><link rel="icon" type="image/svg+xml" href="/favicon.svg?v=2"><link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png?v=2"><link rel="apple-touch-icon" href="/apple-touch-icon.png?v=2"><link rel="manifest" href="/site.webmanifest"></head><body>
 <header class="pg-top"><a href="/admin.html" aria-label="Owner dashboard"><img src="/assets/brand/cvtara-logo.svg" alt="CVTara"></a><span class="sp"></span><span class="lock">🔒 Private — owner only, never shared publicly</span><a class="button secondary small" href="/admin.html">← Back to dashboard</a><button class="button secondary small" onclick="window.print()">Print</button></header>
 <div class="pg-wrap">
-<div class="pg-hero"><h1>Platform guide</h1><p>Everything you need to run CVTara every day — in plain language. This page is only visible after you sign in as the owner and is hidden from search engines.</p><div class="pg-search"><input id="gq" type="search" placeholder="Search the guide (e.g. refund, email, sitemap)" aria-label="Search the guide"></div></div>
+<div class="pg-hero"><span class="kicker">Owner handbook</span><h1>Platform guide</h1><p>Everything you need to run CVTara every day, in plain language. This page is only visible after you sign in as the owner and is hidden from search engines.</p><div class="pg-search"><input id="gq" type="search" placeholder="Search the guide (e.g. refund, email, sitemap)" aria-label="Search the guide"><kbd>/</kbd></div><p class="pg-count" id="gcount" aria-live="polite"></p><nav class="pg-quick" aria-label="Most used chapters"><a href="#daily"><i>📅</i><span><b>Daily routine</b><small>10 minutes a day</small></span></a><a href="#orders"><i>🛒</i><span><b>Orders & refunds</b><small>Payments and the 7-day rule</small></span></a><a href="#pricing"><i>💰</i><span><b>Pricing plans</b><small>Plans, credits, add-ons</small></span></a><a href="#errors"><i>🩺</i><span><b>Error log & health</b><small>Keep the site healthy</small></span></a></nav></div>
 <nav class="toc" id="toc" aria-label="Guide chapters"><a href="#start">Start here</a><a href="#daily">Your daily routine</a><a href="#users">Users & subscriptions</a><a href="#orders">Orders</a><a href="#pricing">Pricing plans</a><a href="#library">Resume & letter libraries</a><a href="#site">Website content</a><a href="#blog">Blog & SEO</a><a href="#legal">Policies & URLs</a><a href="#mailer">User mailer</a><a href="#errors">Error log & health</a><a href="#referral">Referrals & reviews</a><a href="#offers">Offers &amp; festivals</a><a href="#campaigns">Email campaigns</a><a href="#support-inbox">Support Inbox</a><a href="#speed">Speed &amp; traffic</a><a href="#hostinger">Moving to Hostinger</a><a href="#security">Security</a><a href="#help">Troubleshooting</a></nav>
 <article id="doc">
 <section id="start"><h2><span class="ic">🚀</span>Start here</h2><p>CVTara works on one idea: every customer builds <b>one premium, ATS-friendly primary resume</b>, then creates job-description-friendly versions of it. Everyone who signs up is a <b>normal user</b>; a plan unlocks clean downloads, tailored versions and cover letters.</p><div class="grid2"><div class="card"><b>Left menu</b>Overview, Users and Orders are always visible. Everything else lives under <b>Operations</b>.</div><div class="card"><b>Live stats</b>The floating card shows today’s activity. Collapse it with ⤢.</div><div class="card"><b>Day / night</b>Switch the theme from the top bar; the menu stays readable in both.</div><div class="card"><b>Support mailbox</b>All customer emails come from and reply to <code>support@cvtara.com</code>.</div></div></section>
@@ -53,7 +88,8 @@ kbd{border:1px solid var(--line);border-bottom-width:2px;border-radius:5px;paddi
 </div>
 <script>
 (function(){var secs=[].slice.call(document.querySelectorAll('article section')),links=[].slice.call(document.querySelectorAll('#toc a')),q=document.getElementById('gq');
-q.addEventListener('input',function(){var t=q.value.trim().toLowerCase(),n=0;secs.forEach(function(s){var hit=!t||s.textContent.toLowerCase().indexOf(t)>-1;s.classList.toggle('hide',!hit);if(hit)n++;});document.getElementById('gnone').style.display=n?'none':'block';});
+q.addEventListener('input',function(){var t=q.value.trim().toLowerCase(),n=0;secs.forEach(function(s){var hit=!t||s.textContent.toLowerCase().indexOf(t)>-1;s.classList.toggle('hide',!hit);if(hit)n++;});document.getElementById('gnone').style.display=n?'none':'block';document.getElementById('gcount').textContent=t?(n+(n===1?' chapter matches':' chapters match')):'';});
+document.addEventListener('keydown',function(e){if(e.key==='/'&&document.activeElement!==q&&!/input|textarea|select/i.test((document.activeElement||{}).tagName||'')){e.preventDefault();q.focus();}});
 var io=window.IntersectionObserver&&new IntersectionObserver(function(es){es.forEach(function(e){if(e.isIntersecting){links.forEach(function(a){a.classList.toggle('on',a.getAttribute('href')==='#'+e.target.id);});}});},{rootMargin:'-20% 0px -70% 0px'});
 if(io)secs.forEach(function(s){io.observe(s);});})();
 </script></body></html>
