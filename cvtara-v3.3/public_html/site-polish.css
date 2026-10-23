@@ -65,3 +65,4 @@ body.has-topbar [data-header]{top:44px}
 .to-top:focus-visible{outline:3px solid var(--blue,#1557d2);outline-offset:3px}
 @media (max-width:760px){.to-top{right:14px;bottom:calc(78px + env(safe-area-inset-bottom))}}
 @media print{.to-top{display:none}}
+[data-header] .site-header{background:var(--paper)}

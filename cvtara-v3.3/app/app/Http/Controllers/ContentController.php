@@ -371,6 +371,9 @@ class ContentController extends Controller
         if ($post) {
             $head .= '<link rel="stylesheet" href="/seo-pages.css">';
         }
+        if ($path === '') {
+            $head .= '<link rel="stylesheet" href="/home-v3.css">'; // the landing page's own look, after the shared layers
+        }
         if ($path === 'workspace.html') {
             $head .= '<link rel="stylesheet" href="/support-widget.css">'; // the feedback button belongs to signed-in customers only
         }
