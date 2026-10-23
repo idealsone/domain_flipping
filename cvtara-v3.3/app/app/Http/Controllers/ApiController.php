@@ -566,27 +566,12 @@ class ApiController extends Controller
         return ['generatedAt' => now()->toIso8601String(), 'account' => ['name' => $u->name, 'email' => $u->email, 'createdAt' => $u->created_at, 'referralCode' => $u->referral_code], 'profile' => (array) DB::table('profiles')->where('owner_id', $id)->first(), 'resumes' => $decode($rows('resume_drafts')), 'coverLetters' => $decode($rows('cover_letter_drafts')), 'applications' => $rows('applications'), 'purchases' => $rows('purchases', ['id', 'plan', 'amount_paise', 'refunded_paise', 'currency', 'status', 'coupon_code', 'purchased_at', 'access_until']), 'reviews' => $rows('feedback', ['display_name', 'rating', 'content', 'status', 'created_at']), 'referralCommissions' => DB::table('referral_commissions')->where('referrer_id', $id)->get(['amount_paise', 'rate_bps', 'created_at'])->map(fn ($x) => (array) $x)->all(), 'withdrawals' => $rows('withdrawals', ['amount_paise', 'destination_masked', 'status', 'reference', 'created_at']), 'payoutProfile' => (array) DB::table('payout_profiles')->where('owner_id', $id)->first(['status', 'destination_masked']), 'creatorApplication' => (array) DB::table('creator_applications')->where('owner_id', $id)->first(['status', 'audience', 'rate_bps', 'created_at']), 'refundRequests' => $rows('refund_requests', ['purchase_id', 'status', 'amount_paise', 'reason', 'note', 'created_at']), 'walletTransactions' => $rows('wallet_transactions', ['kind', 'amount_paise', 'note', 'earned_at', 'expires_at', 'created_at']), 'serviceOrders' => $rows('service_orders', ['service', 'status', 'note', 'created_at', 'delivered_at']), 'atsChecks' => $rows('ats_scans', ['id', 'source', 'job_url', 'job_title', 'company', 'score', 'result_json', 'status', 'created_at']), 'activity' => DB::table('activity_events')->where('owner_id', $id)->orderByDesc('created_at')->limit(500)->get(['event', 'reference', 'created_at'])->map(fn ($x) => (array) $x)->all()];
     }
 
-    // Personal data is erased. Purchase and payout records stay (legal/financial) but are detached from the person.
+    // The account and everything in it is removed for good. Money records stay for accounting, detached from the person (AccountEraser).
     public function deleteAccount(User $u): void
     {
         abort_if($u->is_admin, 422, 'The owner account cannot be deleted here.');
         abort_if(DB::table('withdrawals')->where('owner_id', $u->id)->whereIn('status', ['requested', 'processing'])->exists(), 422, 'Finish or cancel your open withdrawal first.');
-        DB::transaction(function () use ($u) {
-            $id = $u->id;
-            foreach (['resume_drafts', 'cover_letter_drafts', 'applications', 'feedback', 'profiles', 'payout_profiles', 'creator_applications', 'referral_identities', 'referral_rewards', 'product_usage', 'mail_outbox', 'campaign_recipients'] as $t) {
-                DB::table($t)->where($t === 'profiles' || $t === 'payout_profiles' || $t === 'referral_identities' ? 'owner_id' : 'owner_id', $id)->delete();
-            }
-            // Payout records stay for finance, but the bank/UPI/PAN details inside them are erased; only the masked destination remains.
-            DB::table('withdrawals')->where('owner_id', $id)->update(['destination_encrypted' => \Illuminate\Support\Facades\Crypt::encryptString('{}'), 'updated_at' => now()]);
-            DB::table('error_logs')->where('user_id', $id)->update(['user_id' => null]);
-            DB::table('referral_clicks')->where('referrer_id', $id)->delete();
-            DB::table('activity_events')->where('owner_id', $id)->delete();
-            DB::table('sessions')->where('user_id', $id)->delete();
-            DB::table('password_reset_tokens')->where('email', $u->email)->delete();
-            DB::table('users')->where('id', $id)->update(['name' => 'Deleted user', 'email' => 'deleted-'.$id.'@deleted.invalid', 'password' => \Illuminate\Support\Facades\Hash::make(Str::random(40)), 'remember_token' => null, 'referral_code' => null, 'blocked' => true, 'email_verified_at' => null, 'device_hash' => null, 'last_device_hash' => null, 'updated_at' => now()]);
-            DB::table('refund_requests')->where('owner_id', $id)->update(['reason' => null, 'updated_at' => now()]);
-            Settings::audit(null, 'account_deleted', (string) $id);
-        });
+        \App\Services\AccountEraser::erase($u->id);
     }
 
     private function documents(Request $r, string $type, ?string $doc)
