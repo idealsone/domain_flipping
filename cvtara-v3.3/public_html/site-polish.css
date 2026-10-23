@@ -54,3 +54,14 @@ body[data-page] #dialogResume .ref-suite-prism .ref-columns,body[data-page] #dia
 /* Footer: brand column plus four link columns (Product, Resources, Resume help, Legal); server fallback list before scripts run */
 @media(min-width:1001px){.footer-main{grid-template-columns:1.4fr repeat(4,1fr)}}
 .footer-links ul{list-style:none;display:flex;flex-wrap:wrap;gap:8px 18px;width:min(1180px,calc(100% - 38px));margin:24px auto;padding:0}.footer-links a{color:inherit}
+/* Fixed header: the menu stays at the top while the page scrolls (the wrapper sticks, so the header inside it does too) */
+[data-header]{position:sticky;top:0;z-index:60;display:block;min-height:68px}
+body.has-topbar [data-header]{top:44px}
+[data-header]>.site-header{position:relative;top:auto}
+/* One-click back to top */
+.to-top{position:fixed;right:20px;bottom:24px;z-index:70;width:46px;height:46px;border-radius:50%;border:1px solid color-mix(in srgb,var(--line) 70%,transparent);background:var(--ink,#0b1020);color:var(--paper,#fff);display:grid;place-items:center;cursor:pointer;box-shadow:0 10px 28px rgba(10,25,54,.22);transition:transform .18s ease,opacity .18s ease}
+.to-top[hidden]{display:none}
+.to-top:hover{transform:translateY(-2px)}
+.to-top:focus-visible{outline:3px solid var(--blue,#1557d2);outline-offset:3px}
+@media (max-width:760px){.to-top{right:14px;bottom:calc(78px + env(safe-area-inset-bottom))}}
+@media print{.to-top{display:none}}
