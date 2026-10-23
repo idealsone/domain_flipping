@@ -99,8 +99,8 @@
         <div class="rh-top"><span class="rh-label">${r.is_primary ? '👑 ' : ''}${E(labelOf(r))}</span>${tagOf(r)}${r.downloaded_at ? '<span class="rh-tag lock" title="Downloaded resumes stay in your account">🔒 Downloaded</span>' : ''}</div>
         <h3>${E(r.title)}</h3>
         <small>${E(r.template)} · updated ${when(r.updated_at)}${r.company ? ' · ' + E(r.company) : ''}${r.role ? ' · ' + E(r.role) : ''}</small>
-        <div class="rh-chips"><span class="rh-chip ${cls}">${word} for ATS · ${n}%</span>${m ? `<span class="rh-chip ${level(m.score)[0]}" title="Latest ATS Match">Job match ${m.score}%${m.company || m.role ? ' · ' + E(m.company || m.role) : ''}</span>${m.count > 1 ? `<span class="rh-chip">Best ${m.best}% over ${m.count} checks</span>` : ''}` : '<span class="rh-chip">Not matched to a job yet</span>'}</div>
-        <details class="rh-more"><summary>What affects this score?</summary><div class="rh-detail" data-detail>Loading…</div></details>
+        <div class="rh-chips"><span class="rh-chip ${cls}">${word} for ATS · ${n}%</span>${m ? `<span class="rh-chip ${level(m.score)[0]}" title="How well this resume fits the last job you checked. It changes with every job; the ATS-friendly score does not.">Last job match ${m.score}%${m.company || m.role ? ' · ' + E(m.company || m.role) : ''}</span>${m.count > 1 ? `<span class="rh-chip">Best ${m.best}% over ${m.count} checks</span>` : ''}` : '<span class="rh-chip">Not matched to a job yet</span>'}</div>
+        <p class="rh-explain">ATS-friendly (${n}%) is about how the resume is built and is the same for every job. Job match is how much of one job’s requirements it shows, so it changes per job — use <b>ATS check</b> then <b>Fix my resume for this job</b> to raise it.</p><details class="rh-more"><summary>What affects this score?</summary><div class="rh-detail" data-detail>Loading…</div></details>
         <div class="rh-actions">
           <button class="button primary small" data-open="${E(r.id)}">Edit</button>
           <button class="button secondary small" data-export="${E(r.id)}">Download</button>

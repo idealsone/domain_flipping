@@ -321,12 +321,19 @@ class ApiController extends Controller
                     throw ValidationException::withMessages(['text' => 'The job description is too short to review. Include the responsibilities and requirements.']);
                 }
             }
+            if ($title === '' || $company === '') {
+                [$guessTitle, $guessCompany] = \App\Services\AtsEngine::headline($text);
+                $title = $title ?: $guessTitle;
+                $company = $company ?: $guessCompany;
+            }
             try {
                 $report = \App\Services\AtsEngine::report(json_decode((string) $resume->content_json, true) ?: [], $text, $title);
             } catch (\InvalidArgumentException $e) {
                 throw ValidationException::withMessages(['text' => $e->getMessage()]);
             }
             $report['details'] = $details;
+            $resumeData = json_decode((string) $resume->content_json, true) ?: [];
+            $report['resumeHash'] = \App\Services\AtsEngine::fingerprint($resumeData);
             $scanId = (string) Str::uuid();
             DB::transaction(function () use ($id, $scanId, $v, $text, $title, $company, $report) {
                 User::whereKey($id)->lockForUpdate()->first();
@@ -335,18 +342,29 @@ class ApiController extends Controller
             });
             Settings::audit($id, 'resume_compared');
 
-            return $ok(['scanId' => $scanId, 'title' => $title, 'company' => $company, 'jobUrl' => $v['source'] === 'link' ? JobPage::canonical((string) $v['url']) : '', 'report' => $report, 'credits' => Credits::status($id)]);
+            return $ok(['scanId' => $scanId, 'title' => $title, 'company' => $company, 'jobUrl' => $v['source'] === 'link' ? JobPage::canonical((string) $v['url']) : '', 'report' => $report, 'resumeTitle' => $resume->title, 'sameContent' => $this->sameContent($id, $resume, $report['resumeHash'], $text, $scanId), 'credits' => Credits::status($id)]);
         }
         if ($path === 'ats/scans' && $get) {
-            $rows = DB::table('ats_scans')->where('owner_id', $id)->where('status', 'done')->orderByDesc('created_at')->limit(30)->get(['id', 'resume_id', 'source', 'job_url', 'job_title', 'company', 'score', 'created_at']);
+            $rows = DB::table('ats_scans')->where('ats_scans.owner_id', $id)->where('ats_scans.status', 'done')->leftJoin('resume_drafts', 'resume_drafts.id', '=', 'ats_scans.resume_id')->orderByDesc('ats_scans.created_at')->limit(30)->get(['ats_scans.id', 'ats_scans.resume_id', 'ats_scans.source', 'ats_scans.job_url', 'ats_scans.job_title', 'ats_scans.company', 'ats_scans.score', 'ats_scans.created_at', 'resume_drafts.title as resume_title']);
 
-            return $ok(['scans' => $rows->map(fn ($x) => ['id' => $x->id, 'resumeId' => $x->resume_id, 'source' => $x->source, 'jobUrl' => $x->job_url, 'title' => $x->job_title, 'company' => $x->company, 'score' => $x->score, 'createdAt' => $x->created_at]), 'credits' => Credits::status($id)]);
+            return $ok(['scans' => $rows->map(fn ($x) => ['id' => $x->id, 'resumeId' => $x->resume_id, 'resumeTitle' => $x->resume_title, 'source' => $x->source, 'jobUrl' => $x->job_url, 'title' => $x->job_title, 'company' => $x->company, 'score' => $x->score, 'createdAt' => $x->created_at]), 'credits' => Credits::status($id)]);
         }
         if (preg_match('#^ats/scans/([a-f0-9-]{36})$#', $path, $m) && $get) {
             $x = DB::table('ats_scans')->where('id', $m[1])->where('owner_id', $id)->where('status', 'done')->first();
             abort_unless($x, 404);
 
-            return $ok(['scan' => ['id' => $x->id, 'resumeId' => $x->resume_id, 'source' => $x->source, 'jobUrl' => $x->job_url, 'title' => $x->job_title, 'company' => $x->company, 'score' => $x->score, 'report' => json_decode((string) $x->result_json, true), 'createdAt' => $x->created_at]]);
+            return $ok(['scan' => ['id' => $x->id, 'resumeId' => $x->resume_id, 'resumeTitle' => DB::table('resume_drafts')->where('id', $x->resume_id)->where('owner_id', $id)->value('title'), 'source' => $x->source, 'jobUrl' => $x->job_url, 'jobText' => $x->job_text, 'title' => $x->job_title, 'company' => $x->company, 'score' => $x->score, 'report' => json_decode((string) $x->result_json, true), 'createdAt' => $x->created_at]]);
+        }
+        if ($path === 'letters/draft' && $r->isMethod('POST')) {
+            // a complete first letter from the person's own resume (and the job's ATS report): free, nothing is saved until they save it
+            $v = $r->validate(['resumeId' => ['required', 'regex:/^[a-f0-9-]{36}$/'], 'scanId' => ['nullable', 'regex:/^[a-f0-9-]{36}$/'], 'role' => 'nullable|string|max:160', 'company' => 'nullable|string|max:160']);
+            abort_unless(Settings::get('features')['letter']['enabled'] ?? true, 403);
+            $resume = DB::table('resume_drafts')->where('id', $v['resumeId'])->where('owner_id', $id)->first();
+            abort_unless($resume, 422, 'Choose one of your saved resumes.');
+            $scan = empty($v['scanId']) ? null : DB::table('ats_scans')->where('id', $v['scanId'])->where('owner_id', $id)->where('status', 'done')->first();
+            $letter = \App\Services\LetterDraft::build(json_decode((string) $resume->content_json, true) ?: [], (string) ($v['role'] ?? '') ?: (string) ($scan->job_title ?? ''), (string) ($v['company'] ?? '') ?: (string) ($scan->company ?? ''), $scan ? json_decode((string) $scan->result_json, true) : null);
+
+            return $ok(['letter' => $letter, 'jobUrl' => (string) ($scan->job_url ?? '')]);
         }
         if ($path === 'applications' && $get) {
             return $ok(['applications' => DB::table('applications')->where('owner_id', $id)->orderByDesc('updated_at')->get()]);
@@ -583,6 +601,29 @@ class ApiController extends Controller
         abort_if($u->is_admin, 422, 'The owner account cannot be deleted here.');
         abort_if(DB::table('withdrawals')->where('owner_id', $u->id)->whereIn('status', ['requested', 'processing'])->exists(), 422, 'Finish or cancel your open withdrawal first.');
         \App\Services\AccountEraser::erase($u->id);
+    }
+
+    /**
+     * Why two checks can give the same score: this resume has exactly the same text as another resume already checked
+     * against this job, or it is a tailored copy that has not been changed since it was copied.
+     */
+    private function sameContent(string $owner, object $resume, string $hash, string $jobText, string $scanId): ?array
+    {
+        if (! empty($resume->parent_id)) {
+            $parent = DB::table('resume_drafts')->where('id', $resume->parent_id)->where('owner_id', $owner)->first(['title', 'content_json']);
+            if ($parent && \App\Services\AtsEngine::fingerprint(json_decode((string) $parent->content_json, true) ?: []) === $hash) {
+                return ['kind' => 'unchanged_copy', 'title' => $parent->title];
+            }
+        }
+        $earlier = DB::table('ats_scans')->where('ats_scans.owner_id', $owner)->where('ats_scans.status', 'done')->where('ats_scans.id', '!=', $scanId)->where('ats_scans.resume_id', '!=', $resume->id)
+            ->where('ats_scans.job_text', $jobText)->join('resume_drafts', 'resume_drafts.id', '=', 'ats_scans.resume_id')->orderByDesc('ats_scans.created_at')->limit(10)->get(['ats_scans.result_json', 'resume_drafts.title', 'resume_drafts.content_json']);
+        foreach ($earlier as $e) {
+            if (\App\Services\AtsEngine::fingerprint(json_decode((string) $e->content_json, true) ?: []) === $hash) {
+                return ['kind' => 'same_text', 'title' => $e->title];
+            }
+        }
+
+        return null;
     }
 
     private function documents(Request $r, string $type, ?string $doc)
