@@ -64,8 +64,8 @@ def run(ctx, t):
         s, j = ask(v); t.check("the site-wide daily limit protects the owner's Claude bill", s == 422 and "busy today" in str(j), (s, str(j)[:200]))
         t.check("a visitor who is not signed in cannot use Tara AI", Client(inst.base).api("POST", "ai/suggest", {"task": "bullets", "text": "x" * 30, "consent": True})[0] == 401)
         ws = u.page("/workspace.html")[2]
-        t.check("the workspace loads Tara AI", "/tara-ai.js" in ws)
+        t.check("the workspace loads Tara AI", "/tara-help.js" in ws)
         s, _, priv = Client(inst.base).page("/privacy.html")
-        t.check("the privacy policy names Claude and Anthropic", "Anthropic" in priv and "Tara AI" in priv)
+        t.check("the privacy policy names Anthropic as the provider for Tara team writing help", "Anthropic" in priv and "Tara team writing help" in priv)
     finally:
         inst.stop(); srv.shutdown()

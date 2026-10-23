@@ -68,7 +68,7 @@
     let data;
     try { data = await load(); } catch { el.innerHTML = '<p class="pl-loading" role="alert">Plans could not be loaded. Please refresh.</p>'; return; }
     const plans = data.plans || {};
-    const onSale = k => k !== 'free' && plans[k].sale !== false;
+    const onSale = k => k !== 'free' && plans[k].sale !== false && !plans[k].limitReached;
     const auds = [...new Set(Object.keys(plans).filter(k => onSale(k) && plans[k].type === 'plan').map(k => plans[k].audience))].filter(a => AUD[a]);
     const state = { aud: auds.length > 1 ? (opts.audience || await audienceFor(plans)) : 'all', selected: opts.selected || null };
     const draw = () => {
@@ -78,7 +78,7 @@
       const tabs = auds.length > 1 ? `<div class="pl-tabs" role="tablist" aria-label="Choose your career stage">${auds.map(k => `<button type="button" role="tab" aria-selected="${state.aud === k}" class="${state.aud === k ? 'active' : ''}" data-pl-aud="${k}">${AUD[k]} plans</button>`).join('')}</div>` : '';
       el.innerHTML = `${tabs}<div class="pl-grid">${keys.map(k => cardHTML(k, plans[k], o)).join('')}</div>
         <p class="pl-plus">Build, edit and preview free. 7-day refund if unused · Pay once, no auto-renewal · UPI, cards and net banking</p>
-        ${opts.addons === false || !addons.length ? '' : `<div class="pl-addons"><div class="pl-addons-head"><h3>Add-ons</h3><p>Optional extras. Add-ons done by a person are cheaper while Job Hunt or Pro is active.</p></div><div class="pl-addon-grid">${addons.map(k => addonHTML(k, plans[k], o)).join('')}</div></div>`}`;
+        ${opts.addons === false || !addons.length ? '' : `<div class="pl-addons"><div class="pl-addons-head"><h3>Add-ons</h3><p>Optional extras from the Tara team, cheaper while Job Hunt or Pro is active.</p></div><div class="pl-addon-grid">${addons.map(k => addonHTML(k, plans[k], o)).join('')}</div></div>`}`;
       el.querySelectorAll('[data-pl-aud]').forEach(b => b.onclick = () => { state.aud = b.dataset.plAud; try { localStorage.setItem('cvtara-audience', state.aud); } catch {} draw(); el.dispatchEvent(new CustomEvent('cvtara-audience', { detail: state.aud, bubbles: true })); });
       el.querySelectorAll('[data-pl-select]').forEach(b => b.onclick = () => { state.selected = b.dataset.plSelect; draw(); el.dispatchEvent(new CustomEvent('cvtara-plan-select', { detail: state.selected, bubbles: true })); });
     };

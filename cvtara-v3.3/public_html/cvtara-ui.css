@@ -316,7 +316,7 @@ body.dark .ws-notice{background:#3a2412;border-color:#7a4a1c;color:#fdba74}
 .cv-up-choices{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:0 0 14px}.cv-up-choices a{display:grid;gap:4px;padding:14px;border:1.5px solid var(--line,#e2e8f0);border-radius:14px;text-decoration:none;color:inherit}
 .cv-up-choices a.pop{border-color:#F59E0B;background:rgba(245,158,11,.08)}.cv-up-choices b{font-size:20px}.cv-up-choices em{font-style:normal;font-size:12px;font-weight:800;color:#B45309;letter-spacing:.06em;text-transform:uppercase}
 .cv-up-choices span{font-size:13px;color:var(--muted,#475569)}@media(max-width:520px){.cv-up-choices{grid-template-columns:1fr}}
-/* Tara AI dialog */
+/* Tara team writing help dialog */
 .tara-dialog{width:min(680px,95vw);background:var(--paper,#fff);color:var(--ink,#0f172a)}.tara-dialog::backdrop{background:rgba(8,18,38,.55)}
 .tara-dialog h2{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}.tara-left{font-size:13px;font-weight:600;color:var(--muted,#64748b)}
 .tara-lead{color:var(--muted,#64748b);margin:4px 0 14px}.tara-form{display:grid;gap:12px}.tara-form label{display:grid;gap:6px;font-weight:600;font-size:14px}
