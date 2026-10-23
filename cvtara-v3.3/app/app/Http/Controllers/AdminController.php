@@ -184,7 +184,7 @@ class AdminController extends Controller
             $page = max(1, (int) $r->query('page', 1));
             if ($path !== 'overview') {
                 $term = trim((string) $r->query('q', ''));
-                $uq = User::query();
+                $uq = User::query()->where('email', '!=', \App\Services\AccountEraser::PLACEHOLDER);
                 if ($term !== '') {
                     $like = '%'.addcslashes($term, '%_\\').'%';
                     $uq->where(fn ($w) => $w->where('email', 'like', $like)->orWhere('name', 'like', $like));

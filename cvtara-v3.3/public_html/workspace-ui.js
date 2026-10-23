@@ -82,7 +82,7 @@
     if (!host || $('#proOnlyNotice')) return;
     try {
       const r = await api('/api/referrals');
-      if (r.commissionEligible === false) {
+      if (r.mode === 'commission' && r.commissionEligible === false) {
         const n = document.createElement('div');
         n.id = 'proOnlyNotice'; n.className = 'ws-notice';
         n.innerHTML = '<b>Cash commission is a Pro-plan benefit.</b> You can still share your link and unlock reward milestones. <a href="#" data-workspace-view="billing" style="color:inherit;font-weight:800">See Pro plans →</a>';
