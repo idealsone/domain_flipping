@@ -26,4 +26,10 @@ function render(t,d,{sample:fictional=false}={}){fictional=fictional||!!d.exampl
  return `<article class="ref-resume ref-${e(t.layout)} ref-spacing-${e(d.spacing||'comfortable')}" style="--ref-accent:${e(d.accent||t.accent)};font-family:${['Arial','Georgia','Verdana'].includes(d.font)?d.font:(t.defaultFont||'Arial')}">${fictional?'<div class="ref-sample">FICTIONAL SAMPLE · REPLACE WITH YOUR FACTS</div>':''}${content}</article>`;
 }
 window.CVTaraReferenceTemplates={templates:reference,render,sample};
+// Small previews squeeze a big name into a narrow column ("KULKA RNI"). Never split a word there: shrink the name until each word fits.
+const fitCtx=document.createElement('canvas').getContext('2d');
+const fitNames=()=>{for(const n of document.querySelectorAll('.template-preview .doc-name,.template-preview .ref-header h1')){if(n.dataset.fitW&&n.dataset.fitW==n.parentElement.clientWidth)continue;n.style.fontSize=n.style.overflowWrap=n.style.wordBreak='';let W=n.clientWidth;if(!W)continue;const ph=n.parentElement.querySelector(':scope>.ref-photo,:scope>.ref-photo-placeholder');if(ph&&getComputedStyle(ph).float!=='none'){const ps=getComputedStyle(ph);W-=ph.offsetWidth+parseFloat(ps.marginLeft)+parseFloat(ps.marginRight);}if(W<40)continue;const cs=getComputedStyle(n),f=parseFloat(cs.fontSize);fitCtx.font=`${cs.fontStyle} ${cs.fontWeight} ${f}px ${cs.fontFamily}`;const t=cs.textTransform==='uppercase'?n.textContent.toUpperCase():n.textContent,widest=Math.max(0,...t.split(/\s+/).map(w=>fitCtx.measureText(w).width));if(widest>W)n.style.fontSize=Math.max(9,Math.floor(f*W/widest))+'px';n.style.overflowWrap='normal';n.style.wordBreak='keep-all';n.dataset.fitW=n.parentElement.clientWidth;}};
+let fitQueued=0;const queueFit=()=>{if(!fitQueued)fitQueued=requestAnimationFrame(()=>{fitQueued=0;fitNames();});};
+if(window.MutationObserver)new MutationObserver(queueFit).observe(document.documentElement,{childList:true,subtree:true});
+addEventListener('resize',queueFit);addEventListener('load',queueFit);
 })();

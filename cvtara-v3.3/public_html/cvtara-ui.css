@@ -350,3 +350,6 @@ body.dark .ws-notice{background:#3a2412;border-color:#7a4a1c;color:#fdba74}
 .wc-full p{margin:0 0 8px}
 .wc-note{font-size:12.5px;color:var(--muted);margin:14px 0 10px}
 .wc-actions{display:flex;gap:8px;flex-wrap:wrap}
+
+.workspace-top>div:first-child{display:flex;align-items:center;gap:10px;min-width:0}.workspace-top>div:first-child h1{margin:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.workspace-top .mobile-menu{margin-left:0;flex:none}
+@media(min-width:761px){.workspace-top .mobile-menu{display:none!important}}
