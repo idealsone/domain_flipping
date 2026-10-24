@@ -545,7 +545,7 @@ class ApiController extends Controller
     /** Builds a resume from an uploaded file's text (already extracted in the browser) and saves it as a normal draft. */
     private function importResume(Request $r)
     {
-        $v = $r->validate(['text' => 'required|string|min:60|max:120000', 'fileName' => 'nullable|string|max:200', 'template' => 'nullable|string|max:120', 'replaceId' => ['nullable', 'regex:/^[a-f0-9-]{36}$/']]);
+        $v = $r->validate(['text' => 'required|string|min:60|max:120000', 'fileName' => 'nullable|string|max:200', 'template' => 'nullable|string|max:120', 'paragraphs' => 'nullable|boolean', 'replaceId' => ['nullable', 'regex:/^[a-f0-9-]{36}$/']]);
         $uid = $r->user()->id;
         $replace = ! empty($v['replaceId']) ? DB::table('resume_drafts')->where('id', $v['replaceId'])->where('owner_id', $uid)->first(['id', 'revision']) : null;
         abort_if(! empty($v['replaceId']) && ! $replace, 404);
@@ -563,7 +563,7 @@ class ApiController extends Controller
         // An uploaded resume starts in a plain, ATS-conscious layout (no photo, one column); the customer can change it in the builder.
         $slug = ! empty($v['template']) && $ok($v['template']) ? $v['template'] : (collect($catalog)->first(fn ($t) => $ok($t['slug']) && ! empty($t['ats']) && empty($t['photo']) && empty($t['creative']))['slug'] ?? collect($catalog)->first(fn ($t) => $ok($t['slug']))['slug'] ?? null);
         abort_unless($slug, 422, 'No resume template is available right now.');
-        $parsed = \App\Services\ResumeImport::parse($v['text'], $slug, (string) ($v['fileName'] ?? ''));
+        $parsed = \App\Services\ResumeImport::parse($v['text'], $slug, (string) ($v['fileName'] ?? ''), (bool) ($v['paragraphs'] ?? false));
         $data = $parsed['data'];
         if (trim($data['personal']['name']) === '') {
             $data['personal']['name'] = 'Your name';
