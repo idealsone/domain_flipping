@@ -34,6 +34,88 @@ SHRM-CP - SHRM 2022
 LANGUAGES
 English, Hindi, Kannada
 """
+# What the PDF reader returns for a Naukri-style two-column resume: letter-spaced headings, the main column first with
+# blank lines between paragraphs, dates at the right of the company row, and the side column (contact, skills) last.
+TWO_COLUMN = """MEERA K NAIR
+
+Operations Manager, PMP Certified
+
+P R O F I L E
+
+Operations leader with 9+ years in customer experience, project delivery and
+vendor management across e-commerce and education.
+
+W O R K E X P E R I E N C E
+
+BRIGHTPATH SCHOOL, Program Manager   SEP 2025 - Till Date
+
+Managing certification programmes with partner universities,
+overseeing the delivery of 12 courses across technology domains.
+
+Supervise a team of 7 associates, conducting regular reviews and
+coaching sessions.
+
+NOVAHIRE TECH PRIVATE LIMITED   JAN 2025 - AUG 2025
+MANAGER - OPERATIONS
+
+Led a team supporting recruiters in posting accurate job listings on
+the platform, ensuring content quality.
+
+Example Retail Pvt Limited   AUG 2016 - JAN 2025
+Assistant Manager – Operations (Progressed from Associate →
+Team Lead → Assistant Manager)
+
+Managed KPI tracking and delivered targeted coaching to team leads
+and associates.
+
+E D U C A T I O N   JULY 2011 - MAY 2014
+Diploma - Electronics & Communication
+City Polytechnic
+GPA: 76%
+
+C E R T I F I C A T I O N S   JULY 2024
+Project Management Professional (PMP)
+
+C O N T A C T
+9876501234
+meera.nair@example.com
+Kochi, India
+
+S K I L L S
+Project Management
+Strategic Planning &
+Execution
+Stakeholder Management
+
+T O O L S
+Freshdesk   Slack
+Metabase
+"""
+# One employer with several job titles under it, bullets drawn as "●", and one-line education entries.
+MULTI_ROLE = """Arjun Menon
+
+Growth | Partnerships | Operations
+Mumbai, India | +91 90000 11122 | arjun.menon@example.com
+
+PROFESSIONAL EXPERIENCE
+
+Example Learning (Sample Edutech Pvt Ltd) Sep 2022 - Present
+
+Director - Operations Current
+●   Own the online certification business end to end, running 40+ programs for 10,000+
+students every month.
+●   Reduced ticket resolution time from 30 hours to 18 hours.
+Director - Strategic Partnerships
+●   Led the B2B revenue vertical with full P&L ownership.
+
+Example Foods Sep 2018 - Aug 2022
+Key Account Manager
+●   Managed key accounts through the full lifecycle, from onboarding to scaling.
+
+EDUCATION
+●   MBA, Innovation & Entrepreneurship, Example Business School Pune, 2018 (7.60/10 CGPA).
+●   B.Com, Example College of Commerce, 2015 (5.57/6 CGPA).
+"""
 NO_HEADINGS = "Priya works in logistics and has handled warehouse operations for many years across several cities in India, coordinating drivers and vendors every day of the week."
 
 
@@ -50,6 +132,7 @@ def run(ctx, t):
         t.check("My Resumes offers Edit, Download, ATS check and Make primary", all(k in hub for k in ("data-open", "data-export", "data-ats", "data-primary")))
         t.check("My Resumes offers upload and template choices and shows the ATS-friendly percentage", "data-upload" in hub and "data-new" in hub and "ATS-friendly" in hub and "rh-ring" in hub)
         t.check("the page reader accepts PDF, DOCX, DOC and text files", all(k in ui for k in ("txt|md", "\\.doc$", "docx")))
+        t.check("the PDF reader rebuilds reading order (rows and two columns) and tells the importer about paragraphs", "function pdfLayout" in ui and "pdfLayout(pages)" in ui and "paragraphs: window.CVTaraImport?.layout === 'rows'" in hub)
         t.check("the tracker shows the reminder count and a stop switch", "Reminders" in wa and "remindersOff" in wa)
         t.check("the workspace loads the new styles and reminder cards", "resume-hub.css" in open(os.path.join(ctx.app, "resources/frontend/workspace.html"), encoding="utf8").read() and "notify-ui.js" in open(os.path.join(ctx.app, "resources/frontend/workspace.html"), encoding="utf8").read())
 
@@ -79,6 +162,19 @@ def run(ctx, t):
     other = SAMPLE.replace("Infosys", "Wipro")
     s, j3 = c.api("POST", "resumes/import", {"text": other, "fileName": "again.pdf", "replaceId": rid})
     t.check("the upload can replace the free resume, keeping it primary", s == 200 and j3.get("id") == rid and db.q("select is_primary, source from resume_drafts where id=?", rid)[0] == (1, "import") and "Wipro" in db.q("select content_json from resume_drafts where id=?", rid)[0][0], (s, str(j3)[:160]))
+    c2 = ctx.client(); c2.register("hub-cols@test.local")
+    s, j = c2.api("POST", "resumes/import", {"text": TWO_COLUMN, "fileName": "Naukri_Meera.pdf", "paragraphs": True})
+    r2 = c2.api("GET", f"resumes/{j.get('id')}")[1]["resume"]["data"] if s == 200 else {}
+    ex2 = r2.get("experience", [])
+    t.check("a two-column Naukri PDF keeps the real name, title and contact details, not a side-column heading", r2.get("personal", {}).get("name") == "Meera K Nair" and r2["personal"]["role"] == "Operations Manager, PMP Certified" and r2["personal"]["email"] == "meera.nair@example.com" and r2["personal"]["phone"] == "9876501234" and r2["personal"]["city"] == "Kochi, India" and r2.get("title") == "Meera K Nair · Imported", (s, r2.get("personal"), r2.get("title")))
+    t.check("company and job title are told apart whichever order they come in, with dates from the right-hand column", [(x["company"], x["role"], x["start"], x["end"], x["current"]) for x in ex2] == [("Brightpath School", "Program Manager", "Sep 2025", "", True), ("Novahire Tech Private Limited", "Manager - Operations", "Jan 2025", "Aug 2025", False), ("Example Retail Pvt Limited", "Assistant Manager – Operations", "Aug 2016", "Jan 2025", False)], [(x["company"], x["role"], x["start"], x["end"]) for x in ex2])
+    t.check("wrapped lines become one bullet each", ex2 and ex2[0]["bullets"].count("\n") == 1 and ex2[0]["bullets"].startswith("Managing certification programmes with partner universities, overseeing"), ex2[:1])
+    t.check("education, certificate date and wrapped skills are read from the two-column layout", r2["education"][0]["degree"].startswith("Diploma") and r2["education"][0]["school"] == "City Polytechnic" and r2["education"][0]["start"] == "July 2011" and r2["education"][0]["grade"] == "76%" and r2["certifications"][0]["date"] == "July 2024" and "Strategic Planning & Execution" in r2["skills"] and "Freshdesk" in r2["skills"] and "Slack" in r2["skills"], (r2.get("education"), r2.get("certifications"), r2.get("skills")))
+    c3 = ctx.client(); c3.register("hub-roles@test.local")
+    s, j = c3.api("POST", "resumes/import", {"text": MULTI_ROLE, "fileName": "arjun.pdf", "paragraphs": True})
+    r3 = c3.api("GET", f"resumes/{j.get('id')}")[1]["resume"]["data"] if s == 200 else {}
+    t.check("several job titles under one employer become separate jobs with the full company name", [(x["company"], x["role"], x["start"]) for x in r3.get("experience", [])] == [("Example Learning (Sample Edutech Pvt Ltd)", "Director - Operations", "Sep 2022"), ("Example Learning (Sample Edutech Pvt Ltd)", "Director - Strategic Partnerships", ""), ("Example Foods", "Key Account Manager", "Sep 2018")] and r3["experience"][0]["bullets"].count("\n") == 1, [(x["company"], x["role"], x["start"], x["bullets"]) for x in r3.get("experience", [])])
+    t.check("one-line education entries give degree, school, year and grade", [(e["degree"], e["school"], e["end"], e["grade"]) for e in r3.get("education", [])] == [("MBA, Innovation & Entrepreneurship", "Example Business School Pune", "2018", "7.60/10 CGPA"), ("B.Com", "Example College of Commerce", "2015", "5.57/6 CGPA")], r3.get("education"))
     t.check("another customer's resume cannot be replaced", ctx.client().api("POST", "resumes/import", {"text": SAMPLE, "replaceId": rid})[0] in (401, 403, 404, 419))
 
     # ---- ATS-friendly score ----

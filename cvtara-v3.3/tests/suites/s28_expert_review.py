@@ -1,4 +1,4 @@
-"""Automatic Tara Expert Review: an order is written by Tara AI, stored on the order, shown in the dashboard and emailed.
+"""Automatic Tara Expert Review: an order is written by Tara (shown to customers as the CVTara team), stored on the order, shown in the dashboard and emailed.
 The owner setting switches it off (orders then wait for the owner), failures are retried at most 3 times and then flagged
 for the owner, two cron runs never write the same review twice, and reviews never use the daily suggestion allowance."""
 import http.server, json, subprocess, threading, time
@@ -162,8 +162,24 @@ def run(ctx, t):
         t.check("two cron runs at once deliver the review once", order("er-d@test.local")[0] == "delivered" and len(hits_for("Asha Four")) == 1 and len(mails("er-d@test.local")) == 1, (order("er-d@test.local")[0], len(hits_for("Asha Four")), len(mails("er-d@test.local"))))
         cron(); t.check("a delivered review is never written again", len(hits_for("Asha Four")) == 1 and len(hits_for("Asha One")) == 1)
 
+        # each service can be ordered 3 times a day per customer, then it is hidden until tomorrow
+        o.api("POST", "admin/services/settings", {"autoReview": False})
+        lim = customer("er-lim@test.local", "Asha Limit")
+        t.check("a customer can order the same service 3 times in a day", [buy(lim) for _ in range(3)] == [200, 200, 200])
+        s, j = lim.api("POST", "checkout/start", {"plan": "expert-review"})
+        t.check("a 4th order the same day is refused until tomorrow", s == 422 and "3 times a day" in str(j) and "tomorrow" in str(j), (s, str(j)[:200]))
+        t.check("the service is marked hidden for that customer", lim.api("GET", "business-public")[1]["plans"]["expert-review"].get("limitReached") is True)
+        t.check("other visitors still see the service", "limitReached" not in Client(inst.base).api("GET", "business-public")[1]["plans"]["expert-review"])
+        db.q("update service_orders set created_at=datetime('now','-2 days') where owner_id=?", uid("er-lim@test.local"))
+        t.check("the next day the service can be ordered again", lim.api("POST", "checkout/start", {"plan": "expert-review"})[0] == 200)
+        o.api("POST", "admin/services/settings", {"autoReview": True})
+
         s, _, priv = Client(inst.base).page("/privacy.html")
-        t.check("the privacy policy covers Tara Expert Review", "Tara Expert Review" in priv and "Anthropic" in priv)
+        t.check("the privacy policy covers Tara Expert Review", "Tara Expert Review" in priv and "text-processing provider" in priv)
+        t.check("the privacy policy says CVTara team, not Tara AI", "CVTara team" in priv and "Tara AI" not in priv and "Anthropic" not in priv, priv[:300])
+        for path in ["/tara-help.js", "/plans-ui.js", "/checkout-options.js", "/workspace-activity.js", "/refund.html"]:
+            body = Client(inst.base).raw("GET", path)[2].decode("utf8", "ignore")
+            t.check(f"{path} speaks of the CVTara team and never names AI or Claude", "Tara AI" not in body and "Claude" not in body, path)
         s, _, chk = Client(inst.base).page("/checkout.html")
         t.check("the checkout no longer promises a recruiter", "working recruiter" not in chk)
     finally:
