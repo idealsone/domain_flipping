@@ -258,6 +258,20 @@ class ApiController extends Controller
 
             return $ok(['notifications' => DB::table('notifications')->where('owner_id', $id)->whereNull('read_at')->orderByDesc('created_at')->limit(10)->get(['id', 'kind', 'title', 'body', 'link', 'created_at'])]);
         }
+        if (preg_match('#^resumes/([a-f0-9-]{36})/tailor$#', $path, $m) && $r->isMethod('POST')) {
+            // the Tara team rewrites this resume for one checked job; the builder shows it for review, nothing is saved here
+            $v = $r->validate(['scanId' => ['required', 'regex:/^[a-f0-9-]{36}$/'], 'consent' => 'accepted']);
+            $row = DB::table('resume_drafts')->where('id', $m[1])->where('owner_id', $id)->first();
+            abort_unless($row, 404);
+            $sc = DB::table('ats_scans')->where('id', $v['scanId'])->where('owner_id', $id)->where('status', 'done')->first();
+            abort_unless($sc, 422, 'That ATS check was not found.');
+            if (\Illuminate\Support\Facades\RateLimiter::tooManyAttempts('tara-ai:'.$id, 6)) {
+                throw ValidationException::withMessages(['ai' => 'Please wait a moment before asking the Tara team again.']);
+            }
+            \Illuminate\Support\Facades\RateLimiter::hit('tara-ai:'.$id, 60);
+
+            return $ok(['tailored' => \App\Services\ResumeTailor::run($u, json_decode((string) $row->content_json, true) ?: [], (string) $sc->job_text, json_decode((string) $sc->result_json, true) ?: [])]);
+        }
         if (preg_match('#^resumes/([a-f0-9-]{36})/(primary|variant)$#', $path, $m)) {
             abort_unless($r->isMethod('POST'), 405);
 
