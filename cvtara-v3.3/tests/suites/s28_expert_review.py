@@ -1,4 +1,4 @@
-"""Automatic Tara Expert Review: an order is written by Tara (shown to customers as the Tara team), stored on the order, shown in the dashboard and emailed.
+"""Automatic Tara Expert Review: an order is written by Tara (shown to customers as the CVTara team), stored on the order, shown in the dashboard and emailed.
 The owner setting switches it off (orders then wait for the owner), failures are retried at most 3 times and then flagged
 for the owner, two cron runs never write the same review twice, and reviews never use the daily suggestion allowance."""
 import http.server, json, subprocess, threading, time
@@ -175,11 +175,11 @@ def run(ctx, t):
         o.api("POST", "admin/services/settings", {"autoReview": True})
 
         s, _, priv = Client(inst.base).page("/privacy.html")
-        t.check("the privacy policy covers Tara Expert Review", "Tara Expert Review" in priv and "Anthropic" in priv)
-        t.check("the privacy policy says Tara team, not Tara AI", "Tara team" in priv and "Tara AI" not in priv, priv[:300])
+        t.check("the privacy policy covers Tara Expert Review", "Tara Expert Review" in priv and "text-processing provider" in priv)
+        t.check("the privacy policy says CVTara team, not Tara AI", "CVTara team" in priv and "Tara AI" not in priv and "Anthropic" not in priv, priv[:300])
         for path in ["/tara-help.js", "/plans-ui.js", "/checkout-options.js", "/workspace-activity.js", "/refund.html"]:
             body = Client(inst.base).raw("GET", path)[2].decode("utf8", "ignore")
-            t.check(f"{path} speaks of the Tara team and never names AI or Claude", "Tara AI" not in body and "Claude" not in body, path)
+            t.check(f"{path} speaks of the CVTara team and never names AI or Claude", "Tara AI" not in body and "Claude" not in body, path)
         s, _, chk = Client(inst.base).page("/checkout.html")
         t.check("the checkout no longer promises a recruiter", "working recruiter" not in chk)
     finally:

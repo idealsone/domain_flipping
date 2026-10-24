@@ -42,7 +42,7 @@ class ApiController extends Controller
             $d = BusinessControls::get();
 
             $plans = Settings::plans();
-            // A Tara team add-on this customer has already ordered the most times allowed today is hidden until tomorrow.
+            // A CVTara team add-on this customer has already ordered the most times allowed today is hidden until tomorrow.
             foreach ($id ? \App\Services\Services::hiddenToday($id) : [] as $k) {
                 $plans[$k]['limitReached'] = true;
             }

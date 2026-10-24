@@ -75,7 +75,7 @@ class MailAutomation
 
         // Optional lines: empty (and so left out of the mail) while the feature is switched off.
         try {
-            $vars['tara_line'] = TaraAI::enabled() ? 'Stuck on wording? Tara team writing help in the builder turns duties into clear achievement bullets and drafts a profile summary from your own facts.' : '';
+            $vars['tara_line'] = TaraAI::enabled() ? 'Stuck on wording? CVTara team writing help in the builder turns duties into clear achievement bullets and drafts a profile summary from your own facts.' : '';
         } catch (\Throwable $e) {
             $vars['tara_line'] = '';
         }

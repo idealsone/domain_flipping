@@ -5,7 +5,7 @@ use Illuminate\Support\Facades\DB;
 
 return new class extends Migration
 {
-    /** Customers now see Tara Expert Review, Profile Boost and the writing help as work by the Tara team. Saved copies of the old default text are updated; text the owner rewrote is left alone. */
+    /** Customers now see Tara Expert Review, Profile Boost and the writing help as work by the CVTara team. Saved copies of the old default text are updated; text the owner rewrote is left alone. */
     public function up(): void
     {
         $defaults = json_decode(file_get_contents(resource_path('data/defaults.json')), true);
@@ -13,7 +13,7 @@ return new class extends Migration
         if ($row && is_array($plans = json_decode((string) $row->value_json, true))) {
             array_walk_recursive($plans, function (&$v) {
                 if ($v === 'Tara AI reviews your whole resume and sends you a written report') {
-                    $v = 'The Tara team reviews your whole resume and sends you a written report';
+                    $v = 'The CVTara team reviews your whole resume and sends you a written report';
                 }
             });
             DB::table('site_settings')->where('key', 'plans')->update(['value_json' => json_encode($plans), 'revision' => DB::raw('revision + 1'), 'updated_at' => now()]);
@@ -21,7 +21,7 @@ return new class extends Migration
         $row = DB::table('site_settings')->where('key', 'legal')->first();
         if ($row && is_array($legal = json_decode((string) $row->value_json, true))) {
             foreach (['privacy', 'refund'] as $k) {
-                if (isset($legal[$k]) && is_string($legal[$k]) && str_contains($legal[$k], 'Tara AI')) {
+                if (isset($legal[$k]) && is_string($legal[$k]) && (str_contains($legal[$k], 'Tara AI') || str_contains($legal[$k], 'Anthropic'))) {
                     $legal[$k] = $defaults['legal'][$k];
                 }
             }

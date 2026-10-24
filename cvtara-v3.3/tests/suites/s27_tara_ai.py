@@ -66,6 +66,6 @@ def run(ctx, t):
         ws = u.page("/workspace.html")[2]
         t.check("the workspace loads Tara AI", "/tara-help.js" in ws)
         s, _, priv = Client(inst.base).page("/privacy.html")
-        t.check("the privacy policy names Anthropic as the provider for Tara team writing help", "Anthropic" in priv and "Tara team writing help" in priv)
+        t.check("the privacy policy covers CVTara team writing help without naming AI or its provider", "CVTara team writing help" in priv and "text-processing provider" in priv and "Anthropic" not in priv and "Claude" not in priv)
     finally:
         inst.stop(); srv.shutdown()
