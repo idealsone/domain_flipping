@@ -30,7 +30,7 @@ def run(ctx, t):
     # nothing shipped may carry authorship notes of any tool
     bad = re.compile(r"claude|anthropic|chatgpt|sonnet|co-authored|generated (by|with)|ai[- ]generated", re.I)
     PROVIDER_NAMED = re.compile(r"chatgpt|sonnet|co-authored|generated (by|with)|ai[- ]generated|written by (claude|ai)", re.I)
-    TARA_FILES = {"app/Services/TaraAI.php", "app/Http/Controllers/AdminController.php", "resources/data/defaults.json", "../public_html/owner-advanced.js", "../public_html/tara-ai.js", "../public_html/owner-console.js"}
+    TARA_FILES = {"app/Services/TaraAI.php", "app/Http/Controllers/AdminController.php", "resources/data/defaults.json", "../public_html/owner-advanced.js", "../public_html/owner-console.js"}
     hits = []
     for base in (os.path.join(ctx.app, "app"), os.path.join(ctx.app, "routes"), os.path.join(ctx.app, "resources"), os.path.join(ctx.app, "database"), pub):
         for r, _, fs in os.walk(base):
