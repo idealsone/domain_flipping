@@ -65,6 +65,6 @@
     if ($('.lp-final h2') && s.ctaFinalTitle) $('.lp-final h2').textContent = s.ctaFinalTitle;
     if ($('.lp-final p') && s.ctaFinalText) $('.lp-final p').textContent = s.ctaFinalText;
     if ($('.lp-final .button') && s.ctaFinalButton) $('.lp-final .button').textContent = s.ctaFinalButton;
-    const a = $('#lpAnnounce'), from = $('#stFrom') ? $('#stFrom').textContent : '₹299'; if (a) a.innerHTML = announceHtml(from);
+    const a = $('#lpAnnounce'), from = $('#stFrom') ? $('#stFrom').textContent : '₹99'; if (a) a.innerHTML = announceHtml(from);
   }).catch(() => {});
 })();
