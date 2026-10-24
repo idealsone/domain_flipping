@@ -21,7 +21,7 @@ return new class extends Migration
         $row = DB::table('site_settings')->where('key', 'legal')->first();
         if ($row && is_array($legal = json_decode((string) $row->value_json, true))) {
             foreach (['privacy', 'refund'] as $k) {
-                if (isset($legal[$k]) && is_string($legal[$k]) && (str_contains($legal[$k], 'Tara AI') || str_contains($legal[$k], 'Anthropic'))) {
+                if (isset($legal[$k]) && is_string($legal[$k]) && str_contains($legal[$k], 'Tara AI')) {
                     $legal[$k] = $defaults['legal'][$k];
                 }
             }
