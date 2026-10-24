@@ -1,3 +1,11 @@
+# CVTara v3.22.0 — CVTara team wording, daily limit on services
+
+## 3.22.0
+- **CVTara team:** customers see Tara Expert Review, Profile Boost, the writing help, ATS "Fix my resume" and the cover-letter writer as work by the CVTara team. No page, email, policy or message names AI or the provider. The owner console keeps its internal wording.
+- **Daily limit:** each paid service can be ordered 3 times per customer per day, then it is hidden for that customer until tomorrow.
+- The workspace script `tara-ai.js` is now `tara-help.js`.
+- Includes the live fixes from PRs #18 (indexing), #20 (ATS match), #21 (resume import) and #22 (cover letters). Run `php artisan migrate --force` and rebuild all pages after uploading.
+
 # CVTara v3.21.0 — Resume upload, readable referral links, new landing page, owner console fixes
 
 ## 3.21.0 (workspace)
