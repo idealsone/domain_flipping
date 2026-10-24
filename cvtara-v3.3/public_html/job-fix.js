@@ -1,6 +1,6 @@
 /* "Fix my resume for this job": the Resume Builder opened from an ATS Match report (?draft=…&fix=<scan id>).
    Shows the job's missing keywords and gaps beside the resume, adds the keywords the person ticks to Skills in one click,
-   can have the Tara team tailor the whole resume for the job (when the owner has switched writing help on; shown for review first),
+   can have the CVTara team tailor the whole resume for the job (when the owner has switched writing help on; shown for review first),
    then saves and re-checks against the same job.
    Nothing is added that the person did not choose. */
 (() => {
@@ -37,7 +37,7 @@
 <section><h4>2 · What this job asks for</h4>${gaps.length ? `<ol class="jf-gaps">${gaps.map(g => `<li>${E(g)}</li>`).join('')}</ol>` : '<p class="ats-muted">No open requirements were found.</p>'}
 </section>
 <section><h4>3 · Save and check again</h4><p class="ats-muted">Saves this resume to your profile and checks it against the same job. Uses 1 ATS scan.</p><button class="button primary small" type="button" data-jf-recheck>Save and re-check</button></section></div>
-${ai?.enabled ? `<div class="jf-ai"><h4>Or let the Tara team do it</h4><p class="ats-muted">One click rewrites your summary, skills and job bullets for this role. Employers, titles, dates and numbers stay as they are, and nothing you have not done is added. You review every change before it goes in.</p><label class="jf-consent"><input type="checkbox" data-jf-consent> Share this resume and job with the Tara team (see our privacy policy).</label><button class="button primary small" type="button" data-jf-tailor ${ai.left ? '' : 'disabled'}>Tailor my whole resume for this job (${ai.left} left today)</button><div data-jf-out></div></div>` : ''}
+${ai?.enabled ? `<div class="jf-ai"><h4>Or let the CVTara team do it</h4><p class="ats-muted">One click rewrites your summary, skills and job bullets for this role. Employers, titles, dates and numbers stay as they are, and nothing you have not done is added. You review every change before it goes in.</p><label class="jf-consent"><input type="checkbox" data-jf-consent> Share this resume and job with the CVTara team (see our privacy policy).</label><button class="button primary small" type="button" data-jf-tailor ${ai.left ? '' : 'disabled'}>Tailor my whole resume for this job (${ai.left} left today)</button><div data-jf-out></div></div>` : ''}
 <p role="status" class="ats-status" data-jf-status></p>`;
   }
 
@@ -65,12 +65,12 @@ ${ai?.enabled ? `<div class="jf-ai"><h4>Or let the Tara team do it</h4><p class=
       return;
     }
     if (e.target.closest('[data-jf-tailor]')) {
-      if (!box.querySelector('[data-jf-consent]').checked) { say('Tick the box to share this resume with the Tara team.', true); return; }
+      if (!box.querySelector('[data-jf-consent]').checked) { say('Tick the box to share this resume with the CVTara team.', true); return; }
       const b = e.target.closest('[data-jf-tailor]'); b.disabled = true;
       try {
         say('Saving your resume first…');
         if (!await window.CVTaraStudio.saveToProfile()) { say('Your resume could not be saved. Check the message next to Save to profile, then try again.', true); return; }
-        say('The Tara team is tailoring your resume for this job — this takes up to a minute…');
+        say('The CVTara team is tailoring your resume for this job — this takes up to a minute…');
         const t = (await api('/api/resumes/' + encodeURIComponent(draftId) + '/tailor', { method: 'POST', body: { scanId, consent: true } })).tailored;
         ai.left = t.left; proposal = t;
         const d = draft(), row = (label, before, after) => after && after !== before ? `<details class="jf-change" open><summary>${E(label)}</summary><div class="jf-ba"><div><small>Now</small><p>${E(before || '—').replace(/\n/g, '<br>')}</p></div><div><small>Tailored</small><p>${E(after).replace(/\n/g, '<br>')}</p></div></div></details>` : '';
