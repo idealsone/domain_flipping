@@ -95,7 +95,7 @@ class BusinessControls
             $from = $upgrade ? $src->id : null;
         }
         $left -= $upgrade;
-        $friend = $userId && ! $upgrade ? max(0, min($left - 100, Wallet::friendDiscount($userId, $list))) : 0;
+        $friend = $userId && ! $upgrade ? max(0, min($left - 100, Wallet::friendDiscount($userId, $list, $plan))) : 0;
         $left -= $friend;
         $wallet = $userId && $useWallet && Wallet::enabled() ? max(0, min($left - 100, Wallet::balance($userId))) : 0;
         $left -= $wallet;

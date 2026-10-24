@@ -285,6 +285,12 @@ class AdminController extends Controller
         if ($path === 'email/jobs') {
             return $ok(['jobs' => DB::table('mail_outbox')->orderByDesc('created_at')->limit(200)->get(['id', 'recipient', 'trigger', 'subject', 'status', 'error', 'due_at', 'sent_at', 'attempts']), 'delivery' => 'Configured SMTP / Resend', 'scheduler' => 'Hostinger cron processes queued jobs.', 'heartbeat' => Settings::get('cronHeartbeat')]);
         }
+        if ($path === 'email/preview') {
+            abort_unless($r->isMethod('POST'), 405);
+            $v = $r->validate(['subject' => 'required|string|max:180', 'body' => 'required|string|max:20000', 'trigger' => 'nullable|string|max:60']);
+
+            return $ok(['html' => \App\Services\EmailRenderer::render($v['subject'], $v['body'], \App\Services\EmailRenderer::isMarketing((string) ($v['trigger'] ?? '')), $r->user()->id)['html']]);
+        }
         if ($path === 'email/process') {
             MailAutomation::reminders();
             \App\Services\Campaigns::run();

@@ -11,6 +11,18 @@ class Services
 {
     public const STATUSES = ['not_started', 'in_review', 'delivered', 'cancelled'];
 
+    /** Each service can be ordered this many times per customer per day, which keeps the owner's text-processing costs in check. */
+    public const DAILY_LIMIT = 3;
+
+    /** Plan keys this customer cannot order again today: a service already ordered DAILY_LIMIT times, and any kit that includes one. */
+    public static function hiddenToday(int $uid): array
+    {
+        $full = DB::table('service_orders')->where('owner_id', $uid)->where('status', '!=', 'cancelled')->where('created_at', '>=', today())
+            ->groupBy('service')->havingRaw('count(*) >= ?', [self::DAILY_LIMIT])->pluck('service')->all();
+
+        return $full ? array_keys(array_filter(Settings::plans(), fn ($p, $k) => in_array($k, $full, true) || array_intersect($full, (array) ($p['includes'] ?? [])), ARRAY_FILTER_USE_BOTH)) : [];
+    }
+
     /** Called from verified payment processing: one order per service the purchase includes. */
     public static function open(object $p): void
     {

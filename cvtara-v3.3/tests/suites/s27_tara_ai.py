@@ -17,6 +17,8 @@ class Fake(http.server.BaseHTTPRequestHandler):
         else:
             stop = "refusal" if MODE["v"] == "refusal" else "end_turn"
             text = "" if stop == "refusal" else "Led hiring for 14 retail stores.\nCheck before using: the store count."
+            if MODE["v"] == "tailor": text = json.dumps({"summary": "Recruiter who hires for retail stores across Pune.", "skills": "Recruitment, Excel", "experience": [{"i": 0, "bullets": ["Hired staff for 14 stores", "Cut hiring time by 99%"]}, {"i": 7, "bullets": "ghost"}], "notShown": ["Workday"], "check": ["store count"]})
+            if MODE["v"] == "junk": text = "Sorry, here is some prose instead of JSON"
             out, code = {"id": "msg_1", "type": "message", "role": "assistant", "model": body.get("model"), "content": ([{"type": "text", "text": text}] if text else []),
                          "stop_reason": stop, "stop_sequence": None, "usage": {"input_tokens": 10, "output_tokens": 10}}, 200
         b = json.dumps(out).encode()
@@ -63,9 +65,28 @@ def run(ctx, t):
         v = Client(inst.base); v.register("tara-b@test.local"); v.page("/workspace.html")
         s, j = ask(v); t.check("the site-wide daily limit protects the owner's Claude bill", s == 422 and "busy today" in str(j), (s, str(j)[:200]))
         t.check("a visitor who is not signed in cannot use Tara AI", Client(inst.base).api("POST", "ai/suggest", {"task": "bullets", "text": "x" * 30, "consent": True})[0] == 401)
+        # the whole resume tailored for one checked job: a proposal only, numbers not in the resume are pointed out
+        o.api("POST", "admin/providers", {"service": "ai", "values": {"dailyLimit": "0"}})
+        w = Client(inst.base); w.register("tara-c@test.local"); w.page("/workspace.html")
+        doc = {"version": "1", "title": "Mine", "template": "suite-prism", "accent": "#1557d2", "font": "Arial", "personal": {"name": "Ann", "email": "ann@example.com"}, "summary": "Recruiter for retail stores in Pune.", "skills": "Excel", "order": ["summary", "experience"],
+               "experience": [{"role": "Recruiter", "company": "Acme", "start": "2021", "current": True, "bullets": "Hired staff for 14 stores.\nKept weekly reports in Excel."}], "education": [], "projects": [], "certifications": []}
+        s, j = w.api("POST", "resumes", {"data": doc}); rid = j["id"]
+        s, j = w.api("POST", "ats/scan", {"resumeId": rid, "source": "text", "text": "We are hiring a recruiter. Responsibilities: source candidates, screen candidates, schedule interviews, use Workday. Required: 2+ years of recruitment experience."}); sid = j.get("scanId")
+        t.check("a check to tailor against", s == 200, (s, str(j)[:200]))
+        t.check("tailoring needs the customer's agreement", w.api("POST", f"resumes/{rid}/tailor", {"scanId": sid})[0] == 422)
+        MODE["v"] = "tailor"; n = len(HITS); s, j = w.api("POST", f"resumes/{rid}/tailor", {"scanId": sid, "consent": True}); tl = j.get("tailored", {})
+        t.check("the whole resume comes back tailored for the job", s == 200 and tl.get("summary", "").startswith("Recruiter who hires") and tl.get("skills") == "Recruitment, Excel" and tl.get("experience") == [{"i": 0, "bullets": "Hired staff for 14 stores\nCut hiring time by 99%"}] and tl.get("notShown") == ["Workday"], (s, str(j)[:300]))
+        t.check("a number that is not in the resume is flagged for the customer", any("99" in c for c in tl.get("check", [])), tl.get("check"))
+        h = HITS[-1] if len(HITS) > n else {"body": {"messages": [{"content": ""}], "system": ""}}
+        t.check("the resume, the job and the missing keywords are sent inside tags", all(k in h["body"]["messages"][0]["content"] for k in ("<resume>", "<job>", "<missing>")) and "Never invent" in json.dumps(h["body"].get("system")))
+        t.check("tailoring uses one suggestion and saves nothing by itself", tl.get("left") == 2 and w.api("GET", f"resumes/{rid}")[1]["resume"]["data"]["summary"] == "Recruiter for retail stores in Pune.")
+        MODE["v"] = "junk"; s, j = w.api("POST", f"resumes/{rid}/tailor", {"scanId": sid, "consent": True})
+        t.check("an unreadable answer changes nothing and gives the suggestion back", s == 422 and "Nothing was changed" in str(j) and w.api("GET", "ai/status")[1]["ai"]["left"] == 2, (s, str(j)[:200]))
+        t.check("someone else's resume cannot be tailored", v.api("POST", f"resumes/{rid}/tailor", {"scanId": sid, "consent": True})[0] in (404, 422))
+        MODE["v"] = "ok"
         ws = u.page("/workspace.html")[2]
-        t.check("the workspace loads Tara AI", "/tara-ai.js" in ws)
+        t.check("the workspace loads Tara AI", "/tara-help.js" in ws)
         s, _, priv = Client(inst.base).page("/privacy.html")
-        t.check("the privacy policy names Claude and Anthropic", "Anthropic" in priv and "Tara AI" in priv)
+        t.check("the privacy policy covers CVTara team writing help without naming AI or its provider", "CVTara team writing help" in priv and "text-processing provider" in priv and "Anthropic" not in priv and "Claude" not in priv)
     finally:
         inst.stop(); srv.shutdown()

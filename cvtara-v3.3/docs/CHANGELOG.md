@@ -1,3 +1,20 @@
+# CVTara v3.22.1 — Pricing and referral rules, small fixes, landing spacing
+
+## 3.22.1
+- **Pricing (#23):** the home page says plans start at ₹99 everywhere (the "A plan, paid once" card said ₹299). Only packages count for "Give ₹50, get ₹50": Job Hunt (₹299), Pro (₹599) and up. Quick Download (₹99) and the add-on services (₹499, ₹699) get no referral discount and never earn credit.
+- **Carry-over fixes (#16, 3.21.1):** OneSignal App ID from the push panel, plain password-reset wording, branded mailer preview. On the 3.22.0 download dialog, free accounts no longer get a "uses 1 credit" warning on the reward-download link, a 402 offers "Download for ₹99" and "See plans", and a blank print tab is closed on error.
+- **Home page spacing (#17):** no empty bands between sections.
+- **Owner mailer (#3):** templates added in later releases show up, and every email type is labelled.
+- No migrations. Rebuild the ready-made pages after updating.
+
+# CVTara v3.22.0 — CVTara team wording, daily limit on services
+
+## 3.22.0
+- **CVTara team:** customers see Tara Expert Review, Profile Boost, the writing help, ATS "Fix my resume" and the cover-letter writer as work by the CVTara team. No page, email, policy or message names AI or the provider. The owner console keeps its internal wording.
+- **Daily limit:** each paid service can be ordered 3 times per customer per day, then it is hidden for that customer until tomorrow.
+- The workspace script `tara-ai.js` is now `tara-help.js`.
+- Includes the live fixes from PRs #18 (indexing), #20 (ATS match), #21 (resume import) and #22 (cover letters). Run `php artisan migrate --force` and rebuild all pages after uploading.
+
 # CVTara v3.21.0 — Resume upload, readable referral links, new landing page, owner console fixes
 
 ## 3.21.0 (workspace)

@@ -30,7 +30,7 @@ body{min-height:100vh;margin:0;background:radial-gradient(1100px 520px at 85% -1
 .au-card .sub{margin:0 0 18px;color:var(--muted,#64748b);font-size:15px}
 .au-grid{display:grid;grid-template-columns:1fr 1fr;gap:0 16px}
 .au-grid .full{grid-column:1/-1}
-.au-card label{display:grid;gap:6px;margin:0 0 14px;font-weight:700;font-size:13px;color:var(--ink,#334155)}
+.au-card label{display:grid;align-content:start;gap:6px;margin:0 0 14px;font-weight:700;font-size:13px;color:var(--ink,#334155)}
 .au-card label small{display:inline;font-weight:500;color:var(--muted,#64748b);font-size:12px}
 .au-card input:not([type=checkbox]),.au-card select{width:100%;height:46px;padding:0 13px;border:1.5px solid var(--line,#d6deea);border-radius:11px;box-sizing:border-box;font:inherit;font-weight:500;background:var(--paper,#fff);color:var(--ink,#0f172a);transition:border-color .15s,box-shadow .15s}
 .au-card input:focus,.au-card select:focus{outline:none;border-color:#1557d2;box-shadow:0 0 0 3px rgba(21,87,210,.16)}
