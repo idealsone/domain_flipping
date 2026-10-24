@@ -93,7 +93,7 @@ def run(ctx, t):
         t.check("with writing help on, the team's letter comes back", s == 200 and j.get("team") is True and j["letter"]["opening"] == GOOD["opening"] and "Check the learner count." in j["checks"], (s, str(j)[:300]))
         t.check("it uses one of today's suggestions", left() == before - 1, (before, left()))
         sys = json.dumps(HITS[-1].get("system")) if HITS else ""
-        t.check("the request keeps the resume and job in tags and the Tara team rule", "<resume>" in HITS[-1]["messages"][0]["content"] and "<job>" in HITS[-1]["messages"][0]["content"] and "never mention AI" in sys and "Never invent" in sys)
+        t.check("the request keeps the resume and job in tags and the CVTara team rule", "<resume>" in HITS[-1]["messages"][0]["content"] and "<job>" in HITS[-1]["messages"][0]["content"] and "never mention AI" in sys and "Never invent" in sys)
         t.check("greeting and sign-off are set by CVTara, not the writer", j["letter"]["salutation"] == "Dear Hiring Manager," and j["letter"]["signoff"] == "Yours sincerely,")
         MODE["v"] = "bad"; before = left(); s, j = draft(jobText=JD)
         t.check("an unusable answer falls back to the standard letter and costs nothing", s == 200 and j.get("team") is False and "Northwind Learning" in j["letter"]["opening"] and left() == before, (s, j.get("team"), before, left()))

@@ -1,6 +1,6 @@
 /* "Fix my resume for this job": the Resume Builder opened from an ATS Match report (?draft=…&fix=<scan id>).
    Shows the job's missing keywords and gaps beside the resume, adds the keywords the person ticks to Skills in one click,
-   can ask the Tara team to tailor the summary (when the owner has switched writing help on), then saves and re-checks against the same job.
+   can ask the CVTara team to tailor the summary (when the owner has switched writing help on), then saves and re-checks against the same job.
    Nothing is added that the person did not choose. */
 (() => {
   'use strict';
@@ -34,7 +34,7 @@
 <div class="jf-grid"><section><h4>1 · Keywords you really have</h4>${missing.length ? `<div class="jf-kw">${missing.map(k => `<label><input type="checkbox" value="${E(k)}"> ${E(k)}</label>`).join('')}</div><button class="button primary small" type="button" data-jf-add>Add ticked keywords to my Skills</button>` : '<p class="ats-muted">Your resume already shows every keyword we found in this job.</p>'}
 <p class="ats-muted">Then use the same words in a bullet under the job where you did that work — recruiters and tracking systems both look for them in context.</p></section>
 <section><h4>2 · What this job asks for</h4>${gaps.length ? `<ol class="jf-gaps">${gaps.map(g => `<li>${E(g)}</li>`).join('')}</ol>` : '<p class="ats-muted">No open requirements were found.</p>'}
-${ai?.enabled ? `<div class="jf-ai"><label class="jf-consent"><input type="checkbox" data-jf-consent> Share my summary and this job with the Tara team for a suggestion (see our privacy policy).</label><button class="button secondary small" type="button" data-jf-tara ${ai.left ? '' : 'disabled'}>Ask the Tara team to tailor my summary (${ai.left} left today)</button><div data-jf-out></div></div>` : ''}</section>
+${ai?.enabled ? `<div class="jf-ai"><label class="jf-consent"><input type="checkbox" data-jf-consent> Share my summary and this job with the CVTara team for a suggestion (see our privacy policy).</label><button class="button secondary small" type="button" data-jf-tara ${ai.left ? '' : 'disabled'}>Ask the CVTara team to tailor my summary (${ai.left} left today)</button><div data-jf-out></div></div>` : ''}</section>
 <section><h4>3 · Save and check again</h4><p class="ats-muted">Saves this resume to your profile and checks it against the same job. Uses 1 ATS scan.</p><button class="button primary small" type="button" data-jf-recheck>Save and re-check</button></section></div>
 <p role="status" class="ats-status" data-jf-status></p>`;
   }
@@ -64,9 +64,9 @@ ${ai?.enabled ? `<div class="jf-ai"><label class="jf-consent"><input type="check
     }
     if (e.target.closest('[data-jf-tara]')) {
       const d = draft(), text = String(d.summary || '').trim();
-      if (!box.querySelector('[data-jf-consent]').checked) { say('Tick the box to share your summary with the Tara team.', true); return; }
-      if (text.length < 20) { say('Write a short summary first (at least a sentence), then ask the Tara team to tailor it.', true); return; }
-      const b = e.target.closest('[data-jf-tara]'); b.disabled = true; say('The Tara team is tailoring your summary…');
+      if (!box.querySelector('[data-jf-consent]').checked) { say('Tick the box to share your summary with the CVTara team.', true); return; }
+      if (text.length < 20) { say('Write a short summary first (at least a sentence), then ask the CVTara team to tailor it.', true); return; }
+      const b = e.target.closest('[data-jf-tara]'); b.disabled = true; say('The CVTara team is tailoring your summary…');
       try {
         const r = await api('/api/ai/suggest', { method: 'POST', body: { task: 'tailor', text: text.slice(0, 12000), context: String(scan.jobText || '').slice(0, 8000), consent: true } });
         ai.left = r.left;
