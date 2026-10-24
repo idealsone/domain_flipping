@@ -1,3 +1,17 @@
+## 3.22.1 (fixes carried over from older pull requests)
+- **OneSignal push (from #5):** the App ID saved in Push notifications now wins over one typed under Integrations; default delay (8 s) and message; returning subscribers stay in sync.
+- **Download dialog (from #1):** free accounts no longer get a "uses 1 credit" warning on the reward-download link; a 402 now offers "Download for ₹99" and "See plans", and a blank print tab is closed on error. Free-plan copy no longer says "normal user".
+- **Password reset (from #2):** plain wording ("Use at least 12 characters…", "The two passwords do not match…") instead of Laravel defaults; an error under one box no longer pushes the other out of line.
+- **Owner mailer preview (from #3):** Preview shows the real branded HTML email via `/api/admin/email/preview`.
+
+# CVTara v3.22.0 — CVTara team wording, daily limit on services
+
+## 3.22.0
+- **CVTara team:** customers see Tara Expert Review, Profile Boost, the writing help, ATS "Fix my resume" and the cover-letter writer as work by the CVTara team. No page, email, policy or message names AI or the provider. The owner console keeps its internal wording.
+- **Daily limit:** each paid service can be ordered 3 times per customer per day, then it is hidden for that customer until tomorrow.
+- The workspace script `tara-ai.js` is now `tara-help.js`.
+- Includes the live fixes from PRs #18 (indexing), #20 (ATS match), #21 (resume import) and #22 (cover letters). Run `php artisan migrate --force` and rebuild all pages after uploading.
+
 # CVTara v3.21.0 — Resume upload, readable referral links, new landing page, owner console fixes
 
 ## 3.21.0 (workspace)

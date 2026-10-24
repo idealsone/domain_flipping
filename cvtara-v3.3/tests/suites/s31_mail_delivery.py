@@ -134,3 +134,6 @@ def _run(ctx, t, db, smtp):
     s, g = o.api("GET", "admin/content/emails")
     by = {x["id"]: x for x in g["data"]}
     t.check("an untouched old template shows the current wording, and the owner's own text is kept", "Give {{referral_discount}}" in by["nurture-11"]["subject"] and by["welcome"]["subject"] == "My own welcome", (by["nurture-11"]["subject"], by["welcome"]["subject"]))
+    # ---- owner console preview shows the real branded HTML email ----
+    s, pv = o.api("POST", "admin/email/preview", {"subject": "Hello {{name}}", "body": "# Hi Priya\nYour code:\n\n[code: 482913]", "trigger": "profile_created"})
+    t.check("email preview returns the branded HTML email", s == 200 and "<html" in pv.get("html", "").lower() and "482913" in pv.get("html", ""), s)

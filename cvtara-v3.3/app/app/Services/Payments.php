@@ -74,6 +74,9 @@ class Payments
         if (str_starts_with($plan, 'addon-') && ! Settings::access($u->id)['paid']) {
             abort(422, 'Add-on packs need an active plan. Choose a plan first.');
         }
+        if (in_array($plan, Services::hiddenToday($u->id), true)) {
+            abort(422, (Settings::plans()[$plan]['name'] ?? 'This service').' can be ordered up to '.Services::DAILY_LIMIT.' times a day. It will be available again tomorrow.');
+        }
         if (! str_starts_with($plan, 'addon-') && (Settings::plans()[$plan]['type'] ?? 'plan') === 'plan') {
             $now = Settings::access($u->id);
             $mine = (int) (Settings::plans()[$plan]['rank'] ?? 0);

@@ -40,6 +40,18 @@ return Application::configure(basePath: dirname(__DIR__))
             }
         });
         // A broken or missing page never shows a raw error: visitors are sent to the home page.
+        // Any other failure in the API still answers in the shape the pages expect, so a screen never shows a blank
+        // "Unable to complete this action". The owner sees the reason; customers see a plain retry message.
+        $e->render(function (\Throwable $x, Request $r) {
+            if (! $r->is('api/*') || $x instanceof ValidationException || $x instanceof HttpExceptionInterface || $x instanceof \Illuminate\Auth\AuthenticationException) {
+                return null;
+            }
+            $owner = (bool) ($r->user()?->is_admin);
+
+            return response()->json(['ok' => false, 'error' => $owner
+                ? 'Server error: '.mb_substr(class_basename($x).': '.$x->getMessage(), 0, 300).' ('.basename($x->getFile()).':'.$x->getLine().'). It is also in the Error Log.'
+                : 'Something went wrong on our side. Please try again in a minute.'], 500);
+        });
         $e->render(function (\Throwable $x, Request $r) {
             if ($r->is('api/*') || ! $r->isMethod('GET') || $x instanceof ValidationException || $x instanceof \Illuminate\Auth\AuthenticationException) {
                 return null;

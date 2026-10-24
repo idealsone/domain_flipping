@@ -48,6 +48,12 @@ def check(ctx, t):
     robots = R["robots"]
     t.check("robots.txt allows the SEO pages and page scripts, and names the sitemap",
             "Sitemap:" in robots and "Disallow: /\n" not in robots and "Disallow: /preview\n" not in robots and not re.search(r"Disallow: /(resume|interview|cover|ats|guides|calculators|templates)", robots), robots)
+    t.check("robots.txt does not block the noindex pages that every page links to (Search Console: indexed, though blocked)",
+            not re.search(r"Disallow: /(login|register|workspace|checkout|forgot|reset|r/)", robots), robots)
+    moved = {p: fetcher(ctx.inst.base, 0.27)(p) for p in ("/guides", "/calculators/", "/pricing", "/about", "/resume/")}
+    t.check("common guessed addresses move permanently to a real page instead of 404",
+            all(r[0] == 301 for r in moved.values()), {p: r[0] for p, r in moved.items()})
+    t.check("the guides page is in the sitemap", any(u.endswith("/guides.html") for u in locs))
     t.check("the sitemap lists the programmatic pages (400+)", len(seo) >= 400, len(seo))
     t.check("every sample page and hub is in the sitemap", all(p in seo for p in SAMPLES + HUBS), [p for p in SAMPLES + HUBS if p not in seo])
     t.check("every sitemap address and internal link answers 200 directly (no 404, 500 or redirect)", not kinds("status", "link"), kinds("status", "link")[:6])
