@@ -10,7 +10,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 
 /**
- * "Give ₹50, get ₹50". A referred friend gets ₹50 off their first purchase of ₹299 or more (smaller orders, such as Quick Download, earn nothing). The referrer earns ₹50 wallet credit once that purchase
+ * "Give ₹50, get ₹50". A referred friend gets ₹50 off their first package of ₹299 or more (Job Hunt and up; Quick Download and the add-on services such as Tara Expert Review earn nothing). The referrer earns ₹50 wallet credit once that purchase
  * has passed the 7-day refund window without a refund. Credit is spent at checkout, is never paid out as cash, expires 90 days after
  * it is earned, and at most ₹1,000 can be earned per calendar month. Five qualified friends also unlock one free Job Hunt month.
  *
@@ -88,7 +88,7 @@ class Wallet
         $min = (int) Referrals::config()['minQualifyingPaise'];
 
         return DB::table('purchases')->where('owner_id', $friendId)->where('status', 'paid')->where('is_live', true)->whereIn('provider', ['razorpay', 'cashfree'])
-            ->where('refunded_paise', 0)->whereNotNull('payment_reference')->whereNotNull('purchased_at')->where('plan', '!=', 'free')
+            ->where('refunded_paise', 0)->whereNotNull('payment_reference')->whereNotNull('purchased_at')->where('plan', '!=', 'free')->whereNotIn('plan', self::nonPackageKeys())
             ->whereRaw('amount_paise + discount_paise + addon_discount_paise + referral_discount_paise + wallet_paise + upgrade_credit_paise >= ?', [$min])
             ->whereNotIn('id', DB::table('refund_requests')->whereIn('status', ['requested', 'approved', 'processed'])->select('purchase_id'))
             ->orderBy('purchased_at')->first();
@@ -174,12 +174,18 @@ class Wallet
         return self::ledger($uid)['balancePaise'];
     }
 
-    /** Is this the buyer's first purchase of the qualifying size (₹299 by default) through a referral link? Then the friend discount applies. */
-    public static function friendDiscount(int $uid, int $listPaise = PHP_INT_MAX): int
+    /** Services and extra-credit packs never count for the referral, whatever they cost; only packages (Job Hunt, Pro and up) do. */
+    public static function nonPackageKeys(): array
+    {
+        return array_keys(array_filter(Settings::plans(), fn ($p) => ($p['type'] ?? 'plan') !== 'plan'));
+    }
+
+    /** Is this the buyer's first package of the qualifying size (₹299 by default) through a referral link? Then the friend discount applies. */
+    public static function friendDiscount(int $uid, int $listPaise = PHP_INT_MAX, string $plan = ''): int
     {
         $r = self::rules();
         $min = (int) Referrals::config()['minQualifyingPaise'];
-        if ($listPaise < $min) {
+        if ($listPaise < $min || in_array($plan, self::nonPackageKeys(), true)) {
             return 0;
         }
         $u = User::find($uid);
@@ -190,7 +196,7 @@ class Wallet
         if (! $ref || $ref->blocked || self::selfReferral($ref, $u)) {
             return 0;
         }
-        $bought = DB::table('purchases')->where('owner_id', $uid)->whereNotNull('purchased_at')->whereIn('status', ['paid', 'partially_refunded', 'refunded', 'disputed'])->where('provider', '!=', 'referral_reward')->whereRaw('amount_paise + referral_discount_paise + wallet_paise + upgrade_credit_paise >= ?', [max(1, $min)])->exists();
+        $bought = DB::table('purchases')->where('owner_id', $uid)->whereNotNull('purchased_at')->whereIn('status', ['paid', 'partially_refunded', 'refunded', 'disputed'])->where('provider', '!=', 'referral_reward')->whereNotIn('plan', self::nonPackageKeys())->whereRaw('amount_paise + referral_discount_paise + wallet_paise + upgrade_credit_paise >= ?', [max(1, $min)])->exists();
 
         return $bought ? 0 : $r['friendDiscountPaise'];
     }
