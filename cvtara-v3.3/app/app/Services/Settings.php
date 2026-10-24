@@ -109,7 +109,7 @@ class Settings
         $s = fn ($name, $tag, $price, $planPrice, $perks) => ['type' => 'service', 'name' => $name, 'audience' => 'all', 'tagline' => $tag, 'price' => $price, 'planPrice' => $planPrice, 'mrp' => 0, 'accessDays' => 0, 'savedResumes' => 0, 'savedLetters' => 0, 'atsScans' => 0, 'dailyMatches' => 0, 'exports' => 0, 'rank' => 0, 'perks' => $perks, 'popular' => false, 'bestValue' => false, 'referral' => false, 'sale' => false];
 
         return [
-            'expert-review' => $s('Tara Expert Review', 'Tara AI reviews your whole resume and sends you a written report', 499, 399, ['Comments on every section', 'ATS issues, a rewritten summary and bullets, and your top fixes', 'Delivered to your account and by email']),
+            'expert-review' => $s('Tara Expert Review', 'The CVTara team reviews your whole resume and sends you a written report', 499, 399, ['Comments on every section', 'ATS issues, a rewritten summary and bullets, and your top fixes', 'Delivered to your account and by email']),
             'profile-boost' => $s('Profile Boost', 'Your LinkedIn and Naukri headline, summary, skills and experience rewritten', 699, 599, ['Headline and About or profile summary', 'Key skills in the right order for your target job', 'One free revision within 7 days']),
         ];
     }

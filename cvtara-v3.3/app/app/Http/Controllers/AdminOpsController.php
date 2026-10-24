@@ -51,7 +51,7 @@ class AdminOpsController extends Controller
             return $ok(['requests' => Refunds::queue()]);
         }
         if ($path === 'services' && $get) {
-            return $ok(['orders' => Services::queue(), 'settings' => ExpertReview::settings()]);
+            return $ok(['orders' => Services::queue(), 'settings' => ExpertReview::settings(), 'dailyLimit' => Services::DAILY_LIMIT]);
         }
         if ($path === 'services/settings') {
             abort_unless($r->isMethod('POST'), 405);

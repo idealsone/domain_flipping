@@ -43,7 +43,7 @@
     const url = new URL(location.href); url.searchParams.set('plan', active); history.replaceState(null, '', url);
     const addon = p.type === 'addon', service = p.type === 'service';
     set('checkoutPlanName', p.name); set('checkoutPlanDescription', p.tagline);
-    set('checkoutAccess', active === 'expert-review' ? 'Written by Tara AI from your saved resume, then emailed and kept in your account' : service ? 'Done by our team within 48 working hours' : addon ? 'Valid as long as your current plan' : p.accessDays + ' days, no auto-renewal');
+    set('checkoutAccess', active === 'expert-review' ? 'Prepared by the CVTara team from your saved resume, then emailed and kept in your account' : service ? 'Done by the CVTara team within 48 working hours' : addon ? 'Valid as long as your current plan' : p.accessDays + ' days, no auto-renewal');
     set('checkoutResumes', service ? '—' : p.oneResume ? '1 resume, edit and re-download for 7 days' : (addon ? '+' : '') + p.savedResumes + ' tailored resumes');
     set('checkoutLetters', service ? '—' : (addon ? '+' : '') + p.savedLetters + ' cover letters');
     set('checkoutScans', service ? '—' : p.oneResume ? '3 free checks a day' : addon ? (p.atsScans ? '+' + p.atsScans + ' scans' : 'Unchanged') : p.atsScans == null ? 'Unlimited' : p.atsScans + ' scans');
@@ -53,7 +53,7 @@
   async function init() {
     const data = await window.CVTaraPlans.load();
     plans = data.plans || {};
-    if (!plans[active] || plans[active].sale === false || active === 'free') {
+    if (!plans[active] || plans[active].sale === false || plans[active].limitReached || active === 'free') {
       const aud = (() => { try { return localStorage.getItem('cvtara-audience') || 'fresher'; } catch { return 'fresher'; } })();
       active = Object.keys(plans).find(k => plans[k].type === 'plan' && plans[k].sale !== false && plans[k].popular && (plans[k].audience === aud || plans[k].audience === 'all')) || 'job-hunt';
     }
