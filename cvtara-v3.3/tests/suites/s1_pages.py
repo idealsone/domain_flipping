@@ -16,6 +16,8 @@ def run(ctx, t):
             t.check(f"{p} sets theme before paint", "cvtara-theme" in body)
     s, _, body = c.page("/robots.txt"); t.check("robots.txt points to the sitemap", "Sitemap:" in body and "cvtara.com" in body)
     s, _, body = c.page("/sitemap.xml"); t.check("sitemap lists cvtara pages", "<urlset" in body and "/blog" in body)
+    s, h, body = c.raw("GET", "/no-such-page-here")
+    t.check("an unknown address answers 404 with the CVTara page and links onward", s == 404 and "We could not find that page" in body.decode() and 'href="/resume-examples/"' in body.decode(), s)
     for p in ("/admin-guide.html", "/preview/go/admin"):
         s, h, _ = c.raw("GET", p)
         t.check(f"{p} is not public", s in (302, 401, 403, 404) or ctx.preview, s)
