@@ -213,6 +213,32 @@ class ApiController extends Controller
 
             return $ok(['check' => \App\Services\WritingCheck::run($v['type'], (array) $data, $id, (bool) ($v['full'] ?? false))]);
         }
+        // One-click cover letter: a complete letter from a saved resume and a job (pasted text, or the job of an ATS check).
+        if ($path === 'letters/draft' && $r->isMethod('POST')) {
+            $v = $r->validate(['resumeId' => ['required', 'regex:/^[a-f0-9-]{36}$/'], 'scanId' => ['nullable', 'regex:/^[a-f0-9-]{36}$/'], 'role' => 'nullable|string|max:160', 'company' => 'nullable|string|max:160', 'recipient' => 'nullable|string|max:180', 'jobText' => 'nullable|string|max:40000']);
+            abort_unless(Settings::get('features')['letter']['enabled'], 403);
+            $key = 'letter-draft:'.$id;
+            if (\Illuminate\Support\Facades\RateLimiter::tooManyAttempts($key, 8)) {
+                throw ValidationException::withMessages(['letter' => 'Please wait a moment before writing another letter.']);
+            }
+            \Illuminate\Support\Facades\RateLimiter::hit($key, 60);
+            $resume = DB::table('resume_drafts')->where('id', $v['resumeId'])->where('owner_id', $id)->first(['content_json', 'job_description', 'role', 'company']);
+            abort_unless($resume, 422, 'Choose one of your saved resumes.');
+            $job = ['role' => $v['role'] ?? '', 'company' => $v['company'] ?? '', 'recipient' => $v['recipient'] ?? '', 'text' => (string) ($v['jobText'] ?? '')];
+            if (! empty($v['scanId'])) {
+                $sc = DB::table('ats_scans')->where('id', $v['scanId'])->where('owner_id', $id)->where('status', 'done')->first(['job_text', 'job_title', 'company']);
+                abort_unless($sc, 422, 'That ATS check was not found.');
+                $job = [...$job, 'text' => trim($job['text']) !== '' ? $job['text'] : (string) $sc->job_text, 'role' => $job['role'] ?: (string) $sc->job_title, 'company' => $job['company'] ?: (string) $sc->company];
+            }
+            // A resume tailored for a job keeps that job's text, role and company.
+            $job = [...$job, 'text' => trim($job['text']) !== '' ? $job['text'] : (string) ($resume->job_description ?? ''), 'role' => $job['role'] ?: (string) ($resume->role ?? ''), 'company' => $job['company'] ?: (string) ($resume->company ?? '')];
+            $data = json_decode((string) $resume->content_json, true) ?: [];
+            abort_if(mb_strlen(\App\Services\AtsEngine::resumeText($data)) < 60, 422, 'This resume has too little content to write from. Add your experience in the builder first.');
+            $out = \App\Services\CoverLetterWriter::draft($u, $data, $job);
+            Settings::audit($id, 'cover_letter_drafted', (string) ($v['scanId'] ?? ''));
+
+            return $ok($out);
+        }
         if ($path === 'ai/status' && $get) {
             return $ok(['ai' => \App\Services\TaraAI::status($u)]);
         }
