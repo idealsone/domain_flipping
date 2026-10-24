@@ -2,7 +2,7 @@
   'use strict';
   const request = (path, body) => window.CVTaraAPI.request('/api/' + path, body === undefined ? undefined : {method: 'POST', body});
   const escape = value => String(value ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-  const rule = 'Your friend gets ₹50 off their first order of ₹299 or more (Job Hunt, Pro or bigger). You get ₹50 wallet credit once their purchase passes the 7-day refund window without a refund. Each friend counts once.';
+  const rule = 'Your friend gets ₹50 off their first package of ₹299 or more (Job Hunt, Pro or bigger; Quick Download and add-on services do not count). You get ₹50 wallet credit once their purchase passes the 7-day refund window without a refund. Each friend counts once.';
   async function render(host) {
     if (!window.CVTaraAPI || host.dataset.loading === 'true') return;
     host.dataset.loading = 'true';
