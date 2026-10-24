@@ -42,12 +42,14 @@ class MailAutomation
         return in_array(substr(sha1(($t['subject'] ?? '')."\n".($t['body'] ?? '')), 0, 16), self::OLD_DEFAULTS, true);
     }
 
-    /** The owner's saved template list with untouched pre-3.20 texts replaced by the current wording (for the editor). */
+    /** The owner's saved template list with untouched pre-3.20 texts replaced by the current wording, plus any template added in a later release (for the editor). */
     public static function upgradeTemplates(array $list): array
     {
         $defaults = collect(Settings::defaults()['emails'])->keyBy('id');
+        $list = array_map(fn ($t) => is_array($t) && isset($defaults[$t['id'] ?? '']) && self::isOldDefault($t) ? array_merge($t, ['subject' => $defaults[$t['id']]['subject'], 'body' => $defaults[$t['id']]['body']]) : $t, $list);
+        $have = array_column(array_filter($list, 'is_array'), 'id');
 
-        return array_map(fn ($t) => is_array($t) && isset($defaults[$t['id'] ?? '']) && self::isOldDefault($t) ? array_merge($t, ['subject' => $defaults[$t['id']]['subject'], 'body' => $defaults[$t['id']]['body']]) : $t, $list);
+        return array_merge($list, $defaults->reject(fn ($t, $id) => in_array($id, $have, true))->values()->all());
     }
 
     private static function template(string $trigger, ?string $id = null): ?array
