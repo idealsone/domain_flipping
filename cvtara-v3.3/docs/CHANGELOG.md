@@ -1,3 +1,12 @@
+# CVTara v3.22.1 — Pricing and referral rules, small fixes, landing spacing
+
+## 3.22.1
+- **Pricing (#23):** the home page says plans start at ₹99 everywhere (the "A plan, paid once" card said ₹299). Only packages count for "Give ₹50, get ₹50": Job Hunt (₹299), Pro (₹599) and up. Quick Download (₹99) and the add-on services (₹499, ₹699) get no referral discount and never earn credit.
+- **Carry-over fixes (#16, 3.21.1):** OneSignal App ID from the push panel, plain password-reset wording, branded mailer preview. The 3.21.1 download-dialog change is superseded by the 3.22.0 dialog, which already offers ₹99 on a 402.
+- **Home page spacing (#17):** no empty bands between sections.
+- **Owner mailer (#3):** templates added in later releases show up, and every email type is labelled.
+- No migrations. Rebuild the ready-made pages after updating.
+
 # CVTara v3.22.0 — CVTara team wording, daily limit on services
 
 ## 3.22.0
