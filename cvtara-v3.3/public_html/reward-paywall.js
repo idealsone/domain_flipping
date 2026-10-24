@@ -41,9 +41,10 @@
   };
   function addUnlock(dialog) {
     if (dialog.querySelector('.launch-panel')) return;
-    const section = document.createElement('section'); section.className = 'launch-panel';
-    section.innerHTML = '<h3>Choose how to unlock a clean download</h3><p>Your saved work stays in your profile. Download this resume for ₹99, or tailor one for every job with Job Hunt.</p><a class="button primary" href="/checkout.html?plan=quick">Download for ₹99</a> <a class="button secondary" href="/checkout.html?plan=job-hunt">See Job Hunt</a><details><summary>Give ₹50, get ₹50 with friends</summary><div data-rewards></div></details>';
-    dialog.querySelector('[data-close]').before(section);
+    const section = document.createElement('section'); section.className = 'launch-panel xd-unlock';
+    section.innerHTML = '<div><h3>Remove the watermark</h3><p>Download this resume clean for ₹99, or tailor one for every job with Job Hunt. Your saved work stays in your profile.</p></div><div class="xd-unlock-actions"><a class="button primary" href="/checkout.html?plan=quick">Clean download · ₹99</a><a class="button secondary" href="/checkout.html?plan=job-hunt">See Job Hunt</a></div><details><summary>Or give ₹50, get ₹50 with friends</summary><div data-rewards></div></details>';
+    const slot = dialog.querySelector('[data-unlock-slot]');
+    if (slot) slot.append(section); else dialog.querySelector('[data-close]').before(section);
     const details = section.querySelector('details');
     details.addEventListener('toggle', () => { if (details.open) render(section.querySelector('[data-rewards]')); });
   }
