@@ -426,9 +426,7 @@ class ContentController extends Controller
         if (! $admin && $path !== 'workspace.html') {
             $html = $this->serverLinks($path, $html);
         }
-        if (! $admin) {
-            $html = preg_replace('#<script[^>]*src="/owner-(console|advanced)\.js"[^>]*></script>#', '', $html);
-        }if ($path !== 'workspace.html' && ! $admin) {
+        if ($path !== 'workspace.html' && ! $admin) {
             $html = preg_replace('#<script[^>]*src="/(workspace-activity|profile-onboarding|product-roadmap)\.js"[^>]*></script>#', '', $html);
         }$html = str_replace('</head>', $head.'</head>', $html);
         $scripts = '<script src="/experience.js" defer></script>';
@@ -468,6 +466,10 @@ class ContentController extends Controller
             $html = $this->bundleStyles($html);
         }
 
+        // Lets page scripts skip account-only requests for visitors (ready-made pages are only ever served to visitors).
+        if ($r->user()) {
+            $html = preg_replace('/<body\b/', '<body data-signed-in="1"', $html, 1);
+        }
         if ($cacheable) {
             \App\Services\PageCache::write($path, $html);
         }

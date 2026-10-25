@@ -1,10 +1,10 @@
 <?php
 use Illuminate\Support\Facades\{Route,DB,Storage};
 use Illuminate\Http\Request;
-use App\Http\Controllers\{ApiController,AuthController,ContentController,ExportController,InstallController};
+use App\Http\Controllers\{ApiController,AuthController,ContentController,ExportController};
 use App\Models\User;
 Route::get('/login',fn(Request $r)=>app(AuthController::class)->page($r))->name('login');
-foreach(['register','forgot-password'] as $mode){Route::get('/'.$mode.($mode==='reset-password'?'/ {token}':''),fn(Request $r)=>app(AuthController::class)->page($r,$mode));}
+foreach(['register','forgot-password'] as $mode){Route::get('/'.$mode,fn(Request $r)=>app(AuthController::class)->page($r,$mode));}
 Route::get('/reset-password/{token}',fn(Request $r)=>app(AuthController::class)->page($r,'reset-password'));
 foreach(config('app.owner_paths') as $ownerPath){Route::get('/'.$ownerPath,fn(Request $r)=>app(AuthController::class)->page($r,'owner'));Route::post('/'.$ownerPath,[AuthController::class,'ownerLogin'])->middleware('throttle:20,1,owner-login');}
 Route::post('/login',[AuthController::class,'login'])->middleware('throttle:20,1,login');
@@ -23,7 +23,7 @@ Route::get('/media/{file}',function(string $file){abort_unless(preg_match('/^[a-
 Route::post('/client-error',function(Request $r){$v=$r->validate(['message'=>'required|string|max:1000','source'=>'nullable|string|max:300','line'=>'nullable|integer','url'=>'nullable|string|max:500']);\App\Services\ErrorLog::record('error','browser',$v['message'],isset($v['source'])?basename((string)parse_url($v['source'],PHP_URL_PATH)).':'.($v['line']??0):null,$v['url']??null,$r->user()?->id);return response()->noContent();})->middleware('throttle:30,1,client-error');
 Route::get('/preview',function(){abort_unless(config('app.preview'),404);$demo=\Illuminate\Support\Facades\DB::table('users')->where('email','demo@cvtara.test')->exists()?['customer'=>'demo@cvtara.test','owner'=>'owner@cvtara.test','password'=>config('app.demo_password')]:null;return response()->view('preview',['demo'=>$demo])->header('X-Robots-Tag','noindex');});
 Route::get('/preview/go/{who}',function(Request $r,string $who){abort_unless(config('app.preview')&&in_array($who,['customer','admin'],true),404);$u=User::where('email',$who==='admin'?'owner@cvtara.test':'demo@cvtara.test')->first();abort_unless($u,404);\Illuminate\Support\Facades\Auth::login($u);$r->session()->regenerate();return redirect($who==='admin'?'/admin.html':'/workspace.html');});
-Route::get('/console/{name}.js',function(Request $r,string $name){$u=$r->user();abort_unless($u&&$u->is_admin&&!$u->blocked&&in_array($name,['content','extras','ops','people','publish','referral','reports','feedback','speed','promos','campaigns','outreach'],true),404);return response()->file(resource_path('console/'.$name.'.js'),['Content-Type'=>'application/javascript','Cache-Control'=>'private, no-store']);});
+Route::get('/console/{name}.js',function(Request $r,string $name){$u=$r->user();abort_unless($u&&$u->is_admin&&!$u->blocked&&in_array($name,['owner','advanced','content','extras','ops','people','publish','referral','reports','feedback','speed','promos','campaigns','outreach'],true),404);return response()->file(resource_path('console/'.$name.'.js'),['Content-Type'=>'application/javascript','Cache-Control'=>'private, no-store']);});
 Route::match(['GET','POST'],'/email/unsubscribe/c/{token}',[\App\Http\Controllers\EmailController::class,'unsubscribeContact'])->where('token','[A-Za-z0-9]{48}')->middleware('throttle:30,1,unsubscribe');
 Route::match(['GET','POST'],'/email/unsubscribe/o/{contact}',[\App\Http\Controllers\EmailController::class,'outreachUnsubscribe'])->whereUuid('contact')->middleware('throttle:30,1,unsubscribe')->name('outreach.unsubscribe');
 Route::get('/go/o/{contact}/{step}/{to}',[\App\Http\Controllers\EmailController::class,'outreachClick'])->whereUuid('contact')->whereNumber('step')->whereIn('to',array_keys(\App\Services\Outreach::LANDINGS))->middleware('throttle:60,1,outreach-click')->name('outreach.click');

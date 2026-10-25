@@ -1106,7 +1106,7 @@
 </main>
 </div>
 </div>
-<script src="data.js">
+<script>(function(){var f=window.fetch,c=new Map;function wait(r,n){var a=+r.headers.get("Retry-After");return new Promise(function(s){setTimeout(s,1000*Math.min(8,a>0?a:2*(n+1)))})}window.fetch=function(i,o){var u=typeof i=="string"?i:i&&i.url||"",m=String(o&&o.method||i&&i.method||"GET").toUpperCase(),self=this,args=arguments;if(m!="GET"){c.clear();return f.apply(self,args)}if(u.indexOf("/api/")<0)return f.apply(self,args);var h=c.get(u);if(h&&Date.now()-h.t<3000)return h.p.then(function(r){return r.clone()});var p=(function go(n){return f.apply(self,args).then(function(r){return r.status==429&&n<3?wait(r,n).then(function(){return go(n+1)}):r})})(0);c.set(u,{t:Date.now(),p:p});p.then(function(r){if(!r.ok)c.delete(u)},function(){c.delete(u)});return p.then(function(r){return r.clone()})}})()</script><script src="data.js">
 </script>
 <script src="/reference-templates.js"></script>
 <script src="/premium-collection.js"></script>
@@ -1117,9 +1117,9 @@
 <script src="/connected-ui.js"></script>
 
 <script src="/workspace-activity.js"></script><script src="/refunds-admin.js" defer></script>
-<script src="/owner-console.js"></script>
+<script src="/console/owner.js"></script>
 <script src="/owner-public.js"></script>
-<script src="/owner-advanced.js"></script>
+<script src="/console/advanced.js"></script>
 <script src="/profile-onboarding.js"></script>
 <script src="/product-roadmap.js"></script>
 <script src="/business-ui.js" defer></script><script src="/plans-ui.js" defer></script><script src="/console/extras.js" defer></script><script src="/console/ops.js" defer></script><script src="/console/people.js" defer></script><script src="/console/referral.js" defer></script><script src="/console/reports.js" defer></script><script src="/console/feedback.js" defer></script><script src="/console/speed.js" defer></script><script src="/promo.js" defer></script><script src="/console/promos.js" defer></script><script src="/console/campaigns.js" defer></script><script src="/console/outreach.js" defer></script><script src="/console/content.js" defer></script><script src="/console/publish.js" defer></script><script>setTimeout(function(){document.body&&document.body.classList.add("admin-ready")},8000)</script></body>
