@@ -141,7 +141,7 @@ Order of operations (`app/app/Http/Controllers/ContentController.php`):
 4. Resolve the file: `guides|calculators/...` gets a trailing slash, `index.html` appended; if a blog post exists in `Settings::get('blog')` it must be `published` (404 otherwise) and `features.blog.enabled` must be true (`:95-106`). `realpath` must stay inside `resources/frontend/` and end in `.html`; unknown slugs with a post fall back to `article.html` (`:107-110`).
 5. Article injection: title replaced via `e()`, body rendered with `Str::markdown(... html_input: strip, allow_unsafe_links: false)`, FAQ lines `question|answer` rendered through `e()` (`:112-124`). Legal pages (`about|privacy|terms|refund`) replace the `<main class="legal-shell">` or first `<article>` with the saved markdown (`:126-133`).
 6. SEO: custom title/description from `seo.pages[/uri]`, canonical, `robots` meta (index only when `searchIndexing` and not admin/workspace/checkout), `csrf-token` meta, `cvtara-user` meta (user id or `guest`), four stylesheets, `error-report.js`, keywords, Open Graph/Twitter tags, JSON-LD (WebSite on `/`, BlogPosting on posts) with `JSON_HEX_*` flags (`:134-169`).
-7. Scripts: for non-admins it **removes** the `owner-console.js` / `owner-advanced.js` script tags (`:171`) and, outside the workspace, `workspace-activity|profile-onboarding|product-roadmap` (`:172-173`); it **appends** `experience.js` always, `launch-ui.js` on every page but `/`, `referral-center.js` on workspace/admin, `reward-paywall.js` on workspace, `fomo-popup.js` on public pages except `/`, workspace, checkout (`:175-187`), optionally `setup-assistant.js` for admins if the file exists (`:191`, it does not exist in the package), removes the `owner-console.css` link for non-admins (`:194-196`), forces `defer` on external scripts (`:197`) and appends `?v=<12-char sha256>` to local JS/CSS references (`:198-205`).
+7. Scripts: the owner console scripts are served only to signed-in owners from `/console/*.js`; outside the workspace, `workspace-activity|profile-onboarding|product-roadmap` (`:172-173`); it **appends** `experience.js` always, `launch-ui.js` on every page but `/`, `referral-center.js` on workspace/admin, `reward-paywall.js` on workspace, `fomo-popup.js` on public pages except `/`, workspace, checkout (`:175-187`), optionally `setup-assistant.js` for admins if the file exists (`:191`, it does not exist in the package), removes the `owner-console.css` link for non-admins (`:194-196`), forces `defer` on external scripts (`:197`) and appends `?v=<12-char sha256>` to local JS/CSS references (`:198-205`).
 8. Response header: `private, no-store` for admin/workspace, `no-cache` elsewhere (`:206`).
 
 Other server-rendered pieces: `auth.blade.php` (login/register/forgot/reset, a single template switched by `$mode`), `document-print.blade.php` (print preview, renders client-side from embedded JSON), `preview.blade.php`, `OwnerMaintenance` HTML.
@@ -355,7 +355,7 @@ Account view -> "Your data" panel (`workspace-ui.js privacy()`): JSON download v
 | Users: search, edit, mark paid, revoke, block, delete, CSV | people | `admin-people.js` | `users`, `users/update`, `users/grant`, `users/revoke`, `users/block`, `users/delete` (step-up) |
 | Orders list and detail modal | orders | `admin-people.js` | `purchases`, `orders/{id}` |
 | Resume / cover-letter library | resumelib, letterlib | `admin-content.js library()` | `content/library` |
-| Site content, per-page SEO | sitedesign, seo | `admin-content.js`, `owner-console.js` | `content/site`, `content/seo`, `seo` |
+| Site content, per-page SEO | sitedesign, seo | `admin-content.js`, `console/owner.js` | `content/site`, `content/seo`, `seo` |
 | Mailer: templates, switch, queue, test | mailer | `admin-content.js` | `content/emails`, `content/integrations`, `email/jobs`, `email/process`, `setup/email-test` |
 | Error log | errors | `admin-people.js` | `errors`, `errors/clear`, `errors/download` |
 | Blog editor and SEO files | bloghub | `admin-publish.js` | `content/blog`, `content/seo`, `media` |
@@ -365,8 +365,8 @@ Account view -> "Your data" panel (`workspace-ui.js privacy()`): JSON download v
 | Reviews | desk / reviews | `admin-ops.js desk()` | `reviews`, `feedback/add` |
 | Pricing and add-ons | pricing | `admin-extras.js pricingPanel()` | `plans` |
 | Business controls (maintenance, referral rules, coupons) | business | `business-ui.js` | `business-controls` |
-| Integrations, analytics, Search Console | integrations, analytics, keywords | `owner-advanced.js`, `owner-console.js` | `providers`, `reports`, `search/*` |
-| Popup, push, features | popup, push, features | `admin-extras.js`, `connected-ui.js`, `owner-console.js` | `content/popup`, `settings`, `content/features` |
+| Integrations, analytics, Search Console | integrations, analytics, keywords | `console/advanced.js`, `console/owner.js` | `providers`, `reports`, `search/*` |
+| Popup, push, features | popup, push, features | `admin-extras.js`, `connected-ui.js`, `console/owner.js` | `content/popup`, `settings`, `content/features` |
 
 Typical "mark paid" journey: Users -> Mark paid -> choose plan, optional days and amount, note -> step-up dialog (email code + password) -> `POST users/grant` creates a `manual` purchase with the plan snapshot and calls the same `Payments::capture`, optionally e-mails the thank-you immediately (`AdminOpsController.php:94-119`). Revoke marks every active purchase `refunded` and reverses commissions (`:136-152`). Delete runs the same anonymisation as self-service deletion (`:153-161`).
 
@@ -391,7 +391,7 @@ Typical "mark paid" journey: Users -> Mark paid -> choose plan, optional days an
 | `launch-ui.js`, `reward-paywall.js` | export dialog, TOC, writing-help dialog; referral milestone panel |
 | `referral-center.js`, `referral-dashboard.js` | referral/payout UI for customers and owner |
 | `owner-public.js` | applies owner content to public pages; analytics consent; feedback form |
-| `owner-console.js`, `owner-advanced.js`, `admin-*.js`, `product-roadmap.js` | owner console |
+| `console/owner.js`, `console/advanced.js`, `admin-*.js`, `product-roadmap.js` | owner console |
 | `home-ui.js`, `fomo-popup.js`, `experience.js`, `error-report.js`, `onesignal-push.js` | landing page, popup, motion/fetch progress bar and help link, error reporting, push |
 
 **Cross-script contracts**: custom events `cvtara-workspace-view`, `cvtara-profile-rendered`, `cvtara-resume-saved`, `cvtara-letter-saved`, `cvtara-owner-content`, `cvtara-library-refresh`, `cvtara-allowance`, `cvtara-settings`; globals `CVTaraAPI`, `CVTaraStudio`, `CVTaraExport`, `CVTaraPlans`, `CVTaraBusiness`, `CVTaraCoupon`, `CVTaraOwnerContent`, `CVTaraProfile`, `CVTaraAdminKit`, `CVTaraEnsureRecent`.

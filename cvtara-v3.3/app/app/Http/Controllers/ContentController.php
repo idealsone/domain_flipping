@@ -426,9 +426,7 @@ class ContentController extends Controller
         if (! $admin && $path !== 'workspace.html') {
             $html = $this->serverLinks($path, $html);
         }
-        if (! $admin) {
-            $html = preg_replace('#<script[^>]*src="/owner-(console|advanced)\.js"[^>]*></script>#', '', $html);
-        }if ($path !== 'workspace.html' && ! $admin) {
+        if ($path !== 'workspace.html' && ! $admin) {
             $html = preg_replace('#<script[^>]*src="/(workspace-activity|profile-onboarding|product-roadmap)\.js"[^>]*></script>#', '', $html);
         }$html = str_replace('</head>', $head.'</head>', $html);
         $scripts = '<script src="/experience.js" defer></script>';
