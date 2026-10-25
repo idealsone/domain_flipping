@@ -1,11 +1,11 @@
 #!/bin/bash
-# CVTara 3.22.2 overlay deploy (PR #25). Runs once; later runs print the log.
-H=/home/u280039231/domains/cvtara.com; W=/home/u280039231/cvtara_deploy; L=$W/d3222.log; mkdir -p $W
-if [ -f $W/d3222.done ] || [ -f $W/d3222.lock ]; then cat $L; exit 0; fi
-touch $W/d3222.lock; exec >>$L 2>&1; echo "== start $(date -u)"
+# CVTara 3.22.2 overlay deploy (PR #25), second attempt after a checksum-list fix; approved by the owner 2026-10-25 11:08 UTC. Runs once; later runs print the log.
+H=/home/u280039231/domains/cvtara.com; W=/home/u280039231/cvtara_deploy; L=$W/d3222b.log; mkdir -p $W
+if [ -f $W/d3222b.done ] || [ -f $W/d3222b.lock ]; then cat $L; exit 0; fi
+touch $W/d3222b.lock; exec >>$L 2>&1; echo "== start $(date -u)"
 SRC=https://raw.githubusercontent.com/idealsone/domain_flipping/deploy-pkg-3-22-2
-cd $W && curl -fsSL "$SRC/cvt3222.tgz" -o cvt3222.tgz && curl -fsSL "$SRC/rebuild.php" -o rebuild3222.php && curl -fsSL "$SRC/errors.php" -o errors3222.php || { echo "ABORT download"; touch $W/d3222.done; exit 1; }
-echo "0b73132b32fcd375f6aec6e937d326b6b612cf22745d7bbf3f8b2f0c9109d4d2  cvt3222.tgz" | sha256sum -c - || { echo "ABORT tgz checksum"; touch $W/d3222.done; exit 1; }
+cd $W && curl -fsSL "$SRC/cvt3222.tgz" -o cvt3222.tgz && curl -fsSL "$SRC/rebuild.php" -o rebuild3222.php && curl -fsSL "$SRC/errors.php" -o errors3222.php || { echo "ABORT download"; touch $W/d3222b.done; exit 1; }
+echo "c135797e26c1a5444b492b9dec9475e87921a88fe793337295f70ede3e8a11b1  cvt3222.tgz" | sha256sum -c - || { echo "ABORT tgz checksum"; touch $W/d3222b.done; exit 1; }
 echo "-- unresolved errors before"; php $W/errors3222.php
 cd $H; bad=0
 while read p rest; do cur=$(sha256sum "$p" 2>/dev/null | cut -c1-64); ok=0; for x in $rest; do [ "$cur" = "$x" ] && ok=1; done; [ $ok = 1 ] || { echo "MISMATCH $p $cur"; bad=1; }; done <<'LIST'
@@ -96,16 +96,16 @@ cvtara_app/resources/frontend/templates.html 66a30e5b4acbbc3d03e9286d34bea70f9c2
 cvtara_app/resources/frontend/terms.html 5dcaa61099f697890fc52fc127cb0243a4daaa1616e2f2423a7805ba56f630b4
 cvtara_app/resources/frontend/workspace.html 30887e832ec29b024efb2d7f747ac0112fe738e5051c3c0be79bf40b68f9e046 9d9690da2c18fa5da741a20817680cd4184279b65077ae50dd89b8af924fe2af
 cvtara_app/routes/web.php fdde165aa4ce742ee2ff9844a6cad8518f866d0c3ed3038b16057bbc325ec7cf
-public_html/owner-advanced.js 2ffdce02c8dc031da7d1d79f1a2db2df59e48dc810d54ce6034cdedc4307b820 35be7f6b7d7e591fa9c10190fe59ff77d800281528db27e1fbb8abef424d5ed4
-public_html/owner-console.js 3d5c4f87e73fe8641efa6faf5276743756f888d5b6cdfc48f3b69e33e171fae4 e585b7f319e981a4f3a150d343e0ea5e9d966f6b2ace70f8d263a7fe2a7ccc78
-public_html/owner-public.js 2c11197a5bd33bb360a65265d894399cb3437abe42c819037d616a8fa22d68f5 de2dfa78075adad6bab53bb32c598619d6a800b6b0270de341d68105eba06ad4 f2dbba455b847169adff7ce066319c98e054dc9f55d601293ea3f2130df7efff
+public_html/owner-advanced.js 33f4e6de2c6d28f6b095cbcfc2b97c78d4b43bd0da8df163078843fc9d61e064 35be7f6b7d7e591fa9c10190fe59ff77d800281528db27e1fbb8abef424d5ed4
+public_html/owner-console.js 09665bb3c3b89d0d1eb6c6ffb2b219d09fc6dd50353c76dbe1a9798bc187aed4 3d5c4f87e73fe8641efa6faf5276743756f888d5b6cdfc48f3b69e33e171fae4
+public_html/owner-public.js de2dfa78075adad6bab53bb32c598619d6a800b6b0270de341d68105eba06ad4 f2dbba455b847169adff7ce066319c98e054dc9f55d601293ea3f2130df7efff
 LIST
-[ $bad = 0 ] || { echo "ABORT live files differ from the expected base; nothing changed"; touch $W/d3222.done; exit 1; }
+[ $bad = 0 ] || { echo "ABORT live files differ from the expected base; nothing changed"; touch $W/d3222b.done; exit 1; }
 B=$W/backup_3222_$(date -u +%Y%m%d_%H%M); mkdir -p $B
-tar -czf $B/files.tgz $(tar -tzf $W/cvt3222.tgz | grep -v '^BUILD_INFO.json$' | while read f; do [ -f "$f" ] && echo "$f"; done) public_html/owner-advanced.js public_html/owner-console.js $(ls BUILD_INFO.json cvtara_app/BUILD_INFO.json 2>/dev/null) && tar -tzf $B/files.tgz | wc -l || { echo "ABORT files backup"; touch $W/d3222.done; exit 1; }
+tar -czf $B/files.tgz $(tar -tzf $W/cvt3222.tgz | grep -v '^BUILD_INFO.json$' | while read f; do [ -f "$f" ] && echo "$f"; done) public_html/owner-advanced.js public_html/owner-console.js $(ls BUILD_INFO.json cvtara_app/BUILD_INFO.json 2>/dev/null) && tar -tzf $B/files.tgz | wc -l || { echo "ABORT files backup"; touch $W/d3222b.done; exit 1; }
 ev(){ grep -E "^$1=" cvtara_app/.env | tail -1 | cut -d= -f2- | sed -e 's/^"//' -e 's/"$//'; }
 MYSQL_PWD="$(ev DB_PASSWORD)" mysqldump --single-transaction --no-tablespaces -h "$(ev DB_HOST)" -u "$(ev DB_USERNAME)" "$(ev DB_DATABASE)" | gzip > $B/database.sql.gz
-[ "${PIPESTATUS[0]}" = 0 ] && [ $(stat -c%s $B/database.sql.gz) -gt 10000 ] || { echo "ABORT database backup"; touch $W/d3222.done; exit 1; }
+[ "${PIPESTATUS[0]}" = 0 ] && [ $(stat -c%s $B/database.sql.gz) -gt 10000 ] || { echo "ABORT database backup"; touch $W/d3222b.done; exit 1; }
 echo "backup ok $B $(stat -c%s $B/database.sql.gz) bytes"
 mkdir -p $W/x3222 && tar -xzf $W/cvt3222.tgz -C $W/x3222 && cp -a $W/x3222/cvtara_app/. cvtara_app/ && cp -a $W/x3222/public_html/. public_html/ || { echo "COPY FAILED, restore from $B/files.tgz"; }
 for b in BUILD_INFO.json cvtara_app/BUILD_INFO.json; do [ -f $b ] && cp $W/x3222/BUILD_INFO.json $b; done
@@ -115,4 +115,4 @@ cd cvtara_app && php artisan optimize:clear; cd $H
 php $W/rebuild3222.php
 for u in / /login /templates.html /owner-console.js /console/owner.js; do echo "$u $(curl -s -o /dev/null -w '%{http_code}' https://cvtara.com$u)"; done
 grep -o '"version": *"[^"]*"' cvtara_app/BUILD_INFO.json BUILD_INFO.json 2>/dev/null
-echo "== done $(date -u)"; rm -rf $W/x3222; touch $W/d3222.done; rm -f $W/d3222.lock
+echo "== done $(date -u)"; rm -rf $W/x3222; touch $W/d3222b.done; rm -f $W/d3222b.lock
