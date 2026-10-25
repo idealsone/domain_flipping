@@ -468,6 +468,10 @@ class ContentController extends Controller
             $html = $this->bundleStyles($html);
         }
 
+        // Lets page scripts skip account-only requests for visitors (ready-made pages are only ever served to visitors).
+        if ($r->user()) {
+            $html = preg_replace('/<body\b/', '<body data-signed-in="1"', $html, 1);
+        }
         if ($cacheable) {
             \App\Services\PageCache::write($path, $html);
         }
