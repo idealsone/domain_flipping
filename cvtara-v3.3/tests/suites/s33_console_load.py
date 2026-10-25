@@ -1,9 +1,8 @@
 """Owner console pages load: the site-wide page limit (240 a minute) no longer counts the API calls the console makes, so a minute
 of clicking around never leaves a console page stuck on "Loading…". Visitors are still limited, and visitors' pages no longer ask
 for an account allowance they cannot have (a 401 on every page view). The owner's
-own scripts (which name the writing provider) are served only to a signed-in owner. Runs last because it uses up
-this machine's visitor allowance for a minute."""
-import os
+own scripts (which name the writing provider) are served only to a signed-in owner."""
+import os, time
 NAME = "Owner console load"
 
 
@@ -20,3 +19,4 @@ def run(ctx, t):
     t.check("visitors' pages skip the account check; signed-in pages are marked for it", s == 200 and "data-signed-in" not in home and s2 == 200 and 'data-signed-in="1"' in mine)
     v = ctx.client(); codes = [v.raw("GET", "/login")[0] for _ in range(250)]
     t.check("visitors are still limited to 240 pages a minute", 0 < codes.count(200) <= 240 and codes[-1] == 429, (codes.count(200), sorted(set(codes))))
+    time.sleep(61)  # give the next suites this machine's visitor allowance back
