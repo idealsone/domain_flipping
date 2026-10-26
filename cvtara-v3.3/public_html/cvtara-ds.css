@@ -457,3 +457,15 @@ body.dark .rp-tabs button.active{background:#3b6cf0;border-color:#3b6cf0}
 .side-nav{overflow-y:auto}
 /* Keep every page the same width: reserve the scrollbar space so short and long pages do not shift sideways. */
 html{overflow-y:scroll;scrollbar-gutter:stable}
+/* Owner console lists: one page at a time with page numbers and a rows-per-page choice. */
+.cv-pager{flex-wrap:wrap;justify-content:space-between;gap:10px;padding:0 12px}
+.cv-pager .gp-links{display:flex;flex-wrap:wrap;gap:4px;align-items:center}
+.cv-pager .gp-links .button{min-width:34px;padding-inline:9px}
+.cv-pager .button[aria-current]{opacity:1;cursor:default}
+.cv-pager .gp-info,.cv-pager .gp-size,.cv-pager .gp-gap{font-size:13px;color:var(--muted)}
+.cv-pager .gp-size{display:flex;gap:6px;align-items:center}
+.cv-pager .gp-size select{padding:4px 6px;border:1px solid var(--line);border-radius:8px;background:var(--paper);color:var(--ink);font:inherit}
+.cv-grid-bar{padding:12px 12px 0;margin:0}
+.cv-grid-wrap{overflow:auto}
+.cv-grid tbody[aria-busy=true]{opacity:.55;transition:opacity .15s}
+@media (max-width:640px){.cv-pager{justify-content:center}.cv-pager .gp-info{width:100%;text-align:center}}

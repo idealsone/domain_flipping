@@ -37,32 +37,6 @@
     }
   };
 
-  /* ---------- users ---------- */
-  const U = { page: 1, q: '', plans: null };
-  async function usersPanel() {
-    const host = $('#admin-users');
-    if (!host) return;
-    if (!U.plans) { try { U.plans = (await api('/api/admin/plans')).plans; } catch { U.plans = {}; } }
-    let d;
-    try { d = await api(`/api/admin/users?page=${U.page}&q=${encodeURIComponent(U.q)}`); } catch (e) { host.innerHTML = `<p role="alert">${E(e.message)}</p>`; return; }
-    const from = d.usersTotal ? (d.page - 1) * d.perPage + 1 : 0, to = Math.min(d.usersTotal, d.page * d.perPage);
-    host.innerHTML = `<div id="adUsers"><div class="admin-heading"><div><h2>Users &amp; access</h2><p>${d.usersTotal} account${d.usersTotal === 1 ? '' : 's'} · search, review plans and block abusive accounts.</p></div></div>
-      <div class="ad-toolbar"><input type="search" id="adUserQ" placeholder="Search by name or email" value="${E(U.q)}" aria-label="Search users"><button class="button secondary" id="adUserGo">Search</button></div>
-      <div class="panel panel-pad" style="overflow:auto"><table class="ad-table"><thead><tr><th>User</th><th>Plan</th><th>Resumes</th><th>Applications</th><th>Joined</th><th>Status</th><th></th></tr></thead><tbody>${d.users.map(u => `<tr><td><b>${E(u.name || 'Name not added')}</b><br><small>${E(u.email)}</small></td><td>${u.paid ? `<span class="ad-pill ok">${E(U.plans[u.last_plan]?.name || u.last_plan)}</span><br><small>until ${dt(u.accessUntil)}</small>` : u.ever_paid ? '<span class="ad-pill mid">Expired</span>' : '<span class="ad-pill mid">Free</span>'}</td><td>${u.resumes}</td><td>${u.applications}</td><td>${dt(u.created_at)}</td><td>${u.blocked ? '<span class="ad-pill bad">Blocked</span>' : '<span class="ad-pill ok">Active</span>'}${u.isAdmin ? ' <span class="ad-pill mid">Owner</span>' : ''}</td><td>${u.isAdmin ? '' : `<button class="button secondary small" data-block="${E(u.owner_id)}" data-state="${u.blocked ? 0 : 1}" ${u.blocked ? '' : 'style="color:#b91c1c"'}>${u.blocked ? 'Unblock' : 'Block'}</button>`}</td></tr>`).join('') || '<tr><td colspan="7" style="text-align:center;color:var(--muted)">No users match.</td></tr>'}</tbody></table>
-      <div class="ad-toolbar" style="margin:14px 0 0;align-items:center"><button class="button secondary small" data-pg="-1" ${d.page <= 1 ? 'disabled' : ''}>← Previous</button><span style="color:var(--muted)">Showing ${from}–${to} of ${d.usersTotal}</span><button class="button secondary small" data-pg="1" ${to >= d.usersTotal ? 'disabled' : ''}>Next →</button></div></div><p role="status" id="adUserSt"></p></div>`;
-    const go = () => { U.q = $('#adUserQ').value.trim(); U.page = 1; usersPanel(); };
-    $('#adUserGo').onclick = go; $('#adUserQ').onkeydown = e => { if (e.key === 'Enter') go(); };
-    $$('[data-pg]', host).forEach(b => b.onclick = () => { U.page += Number(b.dataset.pg); usersPanel(); });
-    $$('[data-block]', host).forEach(b => b.onclick = async () => {
-      const blocking = b.dataset.state === '1';
-      const note = prompt(blocking ? 'Why are you blocking this account? (kept in the audit log)' : 'Note for unblocking (kept in the audit log)', '');
-      if (note === null) return;
-      if (note.trim().length < 5) { $('#adUserSt').textContent = 'Please enter a note of at least 5 characters.'; return; }
-      if (!(await ensureRecent())) return;
-      try { await api('/api/admin/users/block', { userId: Number(b.dataset.block), blocked: blocking, note: note.trim() }); $('#adUserSt') && ($('#adUserSt').textContent = blocking ? 'Account blocked and signed out.' : 'Account unblocked.'); const m = $('#adUserSt')?.textContent; await usersPanel(); $('#adUserSt').textContent = m; } catch (e) { $('#adUserSt').textContent = e.message; }
-    });
-  }
-
   /* ---------- pricing & add-ons ---------- */
   async function pricingPanel() {
     const host = $('#admin-pricing');
@@ -169,15 +143,12 @@
     $('#adEmailTest').onclick = async () => { $('#adToolSt').textContent = 'Sending…'; try { const r = await api('/api/admin/setup/email-test', {}); $('#adToolSt').textContent = `Queued and processed: ${r.delivery.sent} sent.`; } catch (err) { $('#adToolSt').textContent = err.message; } };
   }
 
-  const panels = { users: usersPanel, pricing: pricingPanel, popup: popupPanel, setup: setupPanel };
-  const loaded = {};
-  const run = k => { if (panels[k]) { loaded[k] = true; panels[k](); } };
+  // Users live in the paged Users view (people.js); this file no longer loads a second copy of the list.
+  const panels = { pricing: pricingPanel, popup: popupPanel, setup: setupPanel };
+  const run = k => { if (panels[k]) panels[k](); };
   document.addEventListener('click', e => { const b = e.target.closest('[data-admin-view]'); if (b && panels[b.dataset.adminView]) setTimeout(() => run(b.dataset.adminView), 0); });
-  // other scripts render #admin-users too; make sure ours is what stays on screen
-  const obs = new MutationObserver(() => { const h = $('#admin-users'); if (h && loaded.users && !$('#adUsers') && !h.dataset.busy) { h.dataset.busy = '1'; usersPanel().finally(() => delete h.dataset.busy); } });
   addEventListener('load', () => setTimeout(() => {
     const tab = new URLSearchParams(location.search).get('tab');
-    ['users', 'pricing', 'popup', 'setup'].forEach(k => { if (tab === k || k === 'users') run(k); });
-    const h = $('#admin-users'); if (h) obs.observe(h, { childList: true });
+    if (panels[tab]) run(tab);
   }, 900));
 })();

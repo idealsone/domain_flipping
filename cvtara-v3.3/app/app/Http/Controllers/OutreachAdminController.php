@@ -36,7 +36,7 @@ class OutreachAdminController extends Controller
                 $q->where(fn ($w) => $w->where('c.email', 'like', $like)->orWhere('c.name', 'like', $like)->orWhere('c.source', 'like', $like)->orWhere('c.college', 'like', $like));
             }
             $total = (clone $q)->count();
-            $per = min(100, max(10, (int) $r->query('per', 50)));
+            $per = min(100, max(10, (int) $r->query('per', 20)));
             $page = max(1, (int) $r->query('page', 1));
             $rows = $q->orderByDesc('c.updated_at')->offset(($page - 1) * $per)->limit($per)->get(['c.id', 'c.email', 'c.name', 'c.list', 'c.college', 'c.designation', 'c.city', 'c.clicks', 'c.shares', 'c.source', 'c.status', 'c.step', 'c.next_at', 'c.last_sent_at', 'c.error', 'c.created_at', 's.email as sender']);
 

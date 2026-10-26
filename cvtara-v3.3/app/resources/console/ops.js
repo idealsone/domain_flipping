@@ -77,19 +77,8 @@
   const parse = s => { s = String(s || ''); return new Date(s.replace(' ', 'T') + (/[zZ]$|[+-]\d\d:?\d\d$/.test(s) ? '' : 'Z')); };
   const short = p => { const r = (p || 0) / 100; return r >= 1e5 ? '₹' + (r / 1e5).toFixed(1).replace(/\.0$/, '') + 'L' : r >= 1e3 ? '₹' + (r / 1e3).toFixed(r >= 1e4 ? 0 : 1).replace(/\.0$/, '') + 'K' : '₹' + Math.round(r).toLocaleString('en-IN'); };
   const dmy = d => d.toLocaleDateString('en-IN', { day: 'numeric', month: 'short' });
-  const sameDay = (a, b) => a.toDateString() === b.toDateString();
-  const planName = p => { try { return JSON.parse(p.limits_json).name; } catch (e) { return p.plan; } };
+    const planName = p => { try { return JSON.parse(p.limits_json).name; } catch (e) { return p.plan; } };
   const pill = st => `<span class="pill ${/paid|success|published|active/i.test(st) ? 'st-paid' : /refund|hidden|fail/i.test(st) ? 'st-failed' : /pending/i.test(st) ? 'st-started' : 'st-free'}">${E(st === 'paid' ? 'success' : st)}</span>`;
-  let cache = null, cacheAt = 0;
-  async function data(force) {
-    if (!force && cache && Date.now() - cacheAt < 15000) return cache;
-    const [u, p, d] = await Promise.all([api('/api/admin/users'), api('/api/admin/purchases'), api('/api/admin/dashboard?days=30').catch(() => ({}))]);
-    cache = { users: u.users || [], total: u.usersTotal ?? (u.users || []).length, paidUsers: u.paidUsers || 0, purchases: p.purchases || [], dash: d }; cacheAt = Date.now(); return cache;
-  }
-  const userMap = d => Object.fromEntries(d.users.map(u => [String(u.owner_id), u]));
-  const net = p => (p.amount_paise || 0) - (p.refunded_paise || 0);
-  const paidOnes = d => d.purchases.filter(p => /paid|refund/i.test(p.status));
-
   function barChart(vals, labels) {
     const W = 560, H = 190, max = Math.max(...vals, 1), bw = 38, gap = (W - bw * vals.length) / (vals.length + 1);
     return `<svg viewBox="0 0 ${W} ${H}" class="ops-svg" role="img" aria-label="Signups last 7 days">${vals.map((v, i) => { const h = Math.max(4, (v / max) * 120), x = gap + i * (bw + gap); return `<text x="${x + bw / 2}" y="${H - 36 - h}" text-anchor="middle" class="ops-t">${v}</text><rect x="${x}" y="${H - 28 - h}" width="${bw}" height="${h}" rx="3" fill="#1557d2"/><text x="${x + bw / 2}" y="${H - 8}" text-anchor="middle" class="ops-t2">${E(labels[i])}</text>`; }).join('')}</svg>`;
@@ -138,43 +127,28 @@
     } catch (e) { h.innerHTML = `<div class="panel panel-pad" role="alert">${E(e.message)}</div>`; }
   }
 
-  async function orders() {
-    const h = $('#admin-orders'); if (!h) return; h.innerHTML = '<div class="ops-skel"></div>';
-    try {
-      const d = await data(true), um = userMap(d);
-      let q = '', st = 'all';
-      const draw = () => {
-        const rows = d.purchases.filter(p => (st === 'all' || p.status === st) && (!q || (planName(p) + ' ' + ((um[String(p.owner_id)] || {}).name || '') + ' ' + (p.payment_reference || '')).toLowerCase().includes(q)));
-        $('#opsOrdBody').innerHTML = rows.map(p => `<tr><td><b>ORD-${String(p.id).slice(0, 6).toUpperCase()}</b></td><td>${E((um[String(p.owner_id)] || {}).name || 'Customer')}</td><td>${E(planName(p))}</td><td><b>${short(p.amount_paise)}</b>${p.refunded_paise ? `<br><small>reversed ${short(p.refunded_paise)}</small>` : ''}</td><td><code>${E(p.payment_reference || p.provider_order_id || '—')}</code></td><td>${pill(p.status)}</td><td>${dmy(parse(p.created_at))}</td></tr>`).join('') || '<tr><td colspan="7">No orders match.</td></tr>';
-        $('#opsOrdCount').textContent = rows.length + ' of ' + d.purchases.length + ' orders';
-      };
-      h.innerHTML = `<div class="pg-head"><h2>All Orders</h2><p>Complete transaction history</p></div>
-        <div class="ops-filters"><input id="opsOrdQ" placeholder="Search by name, plan or reference" aria-label="Search orders"><select id="opsOrdS"><option value="all">All statuses</option><option value="paid">Paid</option><option value="refunded">Reversed by bank</option><option value="partially_refunded">Partially refunded</option><option value="disputed">Disputed</option></select><span id="opsOrdCount"></span><button class="button secondary small" data-admin-view="commerce">Coupons &amp; payouts →</button></div>
-        <section class="panel"><table class="ad-table"><thead><tr><th>Order ID</th><th>User</th><th>Plan</th><th>Amount</th><th>Payment Ref</th><th>Status</th><th>Date</th></tr></thead><tbody id="opsOrdBody"></tbody></table></section>`;
-      $('#opsOrdQ').oninput = e => { q = e.target.value.toLowerCase(); draw(); }; $('#opsOrdS').onchange = e => { st = e.target.value; draw(); }; draw();
-    } catch (e) { h.innerHTML = `<div class="panel panel-pad" role="alert">${E(e.message)}</div>`; }
-  }
-
   async function desk() {
     const h = $('#admin-desk'); if (!h) return; h.innerHTML = '<div class="ops-skel"></div>';
-    let tab = 'pending', list = [];
-    const load = async () => { list = (await api('/api/admin/reviews')).reviews || []; paint(); };
+    let tab = 'pending', list = [], counts = {}, page = 1, per = 20, q = '', timer = null;
+    // One page of the chosen tab at a time; the tab counts come from the server.
+    const load = async () => { const d = await api(`/api/admin/reviews?status=${tab}&page=${page}&per=${per}${q ? '&q=' + encodeURIComponent(q) : ''}`); list = d.reviews || []; counts = d.counts || {}; page = d.page || 1; paint(d); };
     const initials = n => String(n || '?').split(/\s+/).map(w => w[0]).slice(0, 2).join('').toUpperCase();
-    const paint = () => {
-      const by = s => list.filter(r => s === 'pending' ? r.status === 'pending' : s === 'published' ? r.status === 'published' : r.status === 'hidden');
-      $('#opsRvTabs').innerHTML = [['pending', 'Pending'], ['published', 'Published'], ['hidden', 'Hidden']].map(([k, l]) => `<button class="${tab === k ? 'on' : ''}" data-rt="${k}">${l} (${by(k).length})</button>`).join('');
-      $('#opsRvList').innerHTML = by(tab).map(r => `<article class="panel panel-pad ops-rv"><span class="av">${E(initials(r.display_name))}</span><div><b>${E(r.display_name)}</b> <small>${'★'.repeat(r.rating)}${'☆'.repeat(5 - r.rating)} · ${E(r.source === 'owner_verified' ? 'verified, with consent' : r.source === 'dummy' ? 'sample' : r.source)}</small><p>“${E(r.content)}”</p><div class="ops-rv-act">${r.status !== 'published' ? `<button class="button small ops-ok" data-rv="${r.id}" data-st="published">✓ Approve &amp; Publish</button>` : `<button class="button small secondary" data-rv="${r.id}" data-st="hidden">Unpublish</button>`}${r.status !== 'hidden' ? `<button class="button small ops-no" data-rv="${r.id}" data-st="hidden">✕ Reject</button>` : `<button class="button small secondary" data-rv="${r.id}" data-st="pending">Restore</button>`}</div></div></article>`).join('') || '<div class="panel panel-pad"><p>Nothing here.</p></div>';
+    const paint = d => {
+      $('#opsRvTabs').innerHTML = [['pending', 'Pending'], ['published', 'Published'], ['hidden', 'Hidden']].map(([k, l]) => `<button class="${tab === k ? 'on' : ''}" data-rt="${k}">${l} (${counts[k] || 0})</button>`).join('');
+      pager($('#opsRvPg'), d, (p, n) => { page = p; per = n; load(); });
+      $('#opsRvList').innerHTML = list.map(r => `<article class="panel panel-pad ops-rv"><span class="av">${E(initials(r.display_name))}</span><div><b>${E(r.display_name)}</b> <small>${'★'.repeat(r.rating)}${'☆'.repeat(5 - r.rating)} · ${E(r.source === 'owner_verified' ? 'verified, with consent' : r.source === 'dummy' ? 'sample' : r.source)}</small><p>“${E(r.content)}”</p><div class="ops-rv-act">${r.status !== 'published' ? `<button class="button small ops-ok" data-rv="${r.id}" data-st="published">✓ Approve &amp; Publish</button>` : `<button class="button small secondary" data-rv="${r.id}" data-st="hidden">Unpublish</button>`}${r.status !== 'hidden' ? `<button class="button small ops-no" data-rv="${r.id}" data-st="hidden">✕ Reject</button>` : `<button class="button small secondary" data-rv="${r.id}" data-st="pending">Restore</button>`}</div></div></article>`).join('') || '<div class="panel panel-pad"><p>Nothing here.</p></div>';
     };
     h.innerHTML = `<div class="pg-head"><h2>User Reviews</h2><p>Add, moderate and publish user reviews shown on the landing page</p></div>
       <section class="panel panel-pad"><h3>＋ Add New Review</h3><form id="opsRvForm" class="ops-form"><label>Full name<input name="name" required maxlength="100" placeholder="Priya Sharma"></label><label>Company &amp; role<input name="role" maxlength="100" placeholder="TCS · Software Engineer"></label><label>City<input name="city" maxlength="60" placeholder="Mumbai"></label><label>Star rating<select name="rating"><option value="5">★★★★★ 5 Stars</option><option value="4">★★★★ 4 Stars</option><option value="3">★★★ 3 Stars</option></select></label><label class="wide">Review text<textarea name="content" required minlength="10" maxlength="2000" rows="3" placeholder="Write the review feedback…"></textarea></label><label>Source<select name="source"><option value="dummy">Sample (cannot be published)</option><option value="verified">Verified customer (consent on file)</option></select></label><label>Customer account email<input name="customerEmail" type="email" placeholder="Required for verified reviews — a paying customer"></label><label>Consent reference<input name="consentReference" placeholder="Required for verified reviews — where consent is recorded"></label><div class="wide"><button class="button primary">Add Review</button> <span id="opsRvSt" role="status"></span></div></form></section>
-      <div class="ops-tabs" id="opsRvTabs"></div><div id="opsRvList"></div>`;
+      <div class="ops-tabs" id="opsRvTabs"></div><div class="ops-filters"><input type="search" id="opsRvQ" placeholder="Search name, review text or email" aria-label="Search reviews"></div><div id="opsRvList"></div><div class="ops-pager" id="opsRvPg"></div>`;
+    $('#opsRvQ').oninput = e => { clearTimeout(timer); timer = setTimeout(() => { q = e.target.value.trim(); page = 1; load(); }, 350); };
     $('#opsRvForm').onsubmit = async e => {
       e.preventDefault(); const f = e.target, v = Object.fromEntries(new FormData(f)), st = $('#opsRvSt'); st.textContent = 'Saving…';
       try { await api('/api/admin/feedback/add', { method: 'POST', body: { name: v.name + (v.role ? ' · ' + v.role : '') + (v.city ? ', ' + v.city : ''), content: v.content, rating: Number(v.rating), source: v.source, consent: v.source === 'verified', consentReference: v.consentReference || '', customerEmail: v.customerEmail || '' } }); st.textContent = 'Added.'; f.reset(); await load(); }
       catch (err) { st.textContent = err.message; }
     };
     h.onclick = async e => {
-      const t = e.target.closest('[data-rt]'); if (t) { tab = t.dataset.rt; return paint(); }
+      const t = e.target.closest('[data-rt]'); if (t) { tab = t.dataset.rt; page = 1; return load(); }
       const b = e.target.closest('[data-rv]'); if (!b) return; b.disabled = true;
       try { await api('/api/admin/reviews', { method: 'POST', body: { id: b.dataset.rv, status: b.dataset.st } }); await load(); } catch (err) { b.disabled = false; (window.alert || console.error)(err.message); }
     };
@@ -183,17 +157,18 @@
 
   /* ---- Live stats card ---- */
   async function live() {
+    if (document.hidden && $('#opsLive')) return;
     if (!$('#opsLive')) { const c = document.createElement('aside'); c.id = 'opsLive'; c.className = 'ops-live'; c.innerHTML = '<header><span class="live-dot"></span> LIVE STATS <button type="button" aria-label="Collapse">⤢</button></header><div></div><footer></footer>'; document.body.appendChild(c); c.querySelector('button').onclick = () => { c.dataset.manual = '1'; c.classList.toggle('min'); }; }
     try {
-      const d = await data(true), now = new Date(), act = d.dash.activity || [];
-      const today = act.filter(a => sameDay(parse(a.created_at), now));
-      const rows = [['Active users', new Set(act.filter(a => now - parse(a.created_at) < 864e5).map(a => a.owner_id)).size], ['Resumes today', today.filter(a => /resume/.test(a.event)).length], ['Revenue today', short(paidOnes(d).filter(p => sameDay(parse(p.created_at), now)).reduce((s, p) => s + net(p), 0))], ['ATS scans', today.filter(a => /compared|ats/.test(a.event)).length], ['Signups today', d.users.filter(u => sameDay(parse(u.created_at), now)).length]];
+      // One small cached request (five counts) instead of the user, order and dashboard lists every 30 seconds.
+      const d = await api('/api/admin/live'), now = new Date();
+      const rows = [['Active users', d.activeUsers], ['Resumes today', d.resumesToday], ['Revenue today', short(d.revenueTodayPaise)], ['ATS scans', d.scansToday], ['Signups today', d.signupsToday]];
       $('#opsLive > div').innerHTML = rows.map(r => `<p><span>${r[0]}</span><b>${r[1]}</b></p>`).join('');
       $('#opsLive footer').textContent = 'Updated ' + now.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' });
     } catch (e) { /* keep last values */ }
   }
 
-  const render = { settings, errors, dashboard, orders, desk };
+  const render = { settings, errors, dashboard, desk };
 
   /* ================= shared kit for the owner-console modules ================= */
   function modal(title, html, o = {}) {
@@ -213,9 +188,77 @@
   const ensureRecent = async () => (window.CVTaraEnsureRecent ? window.CVTaraEnsureRecent() : true);
   const download = (name, text, type) => { const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([text], { type: type || 'text/plain' })); a.download = name; document.body.append(a); a.click(); setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 500); };
   const csv = (rows, cols) => cols.join(',') + '\n' + rows.map(r => cols.map(c => '"' + String(r[c] ?? '').replace(/"/g, '""').replace(/^[=+\-@\t\r]/, "'$&") + '"').join(',')).join('\n');
-  window.CVTaraAdminKit = { $, $$, E, api, inr, short, parse, dmy, pill, data, userMap, planName, modal, toast, ensureRecent, download, csv, META, HUB, register: (k, fn, meta) => { render[k] = fn; if (meta) META[k] = meta; }, open: k => open(k) };
+  /* ================= console-wide list rule =================
+     Every list in the owner console shows one page at a time (20 rows unless the owner picks another size).
+     pager() draws the page links; grid() asks the server for one page with its search, filters, date range and sort,
+     so nothing ever downloads or draws a whole table. */
+  const SIZES = [10, 20, 50, 100];
+  function pager(el, d, go) {
+    if (!el) return;
+    const total = Number(d.total) || 0, per = Number(d.per) || 20, pages = Math.max(1, Math.ceil(total / per)), page = Math.min(Math.max(1, Number(d.page) || 1), pages);
+    if (!total) { el.innerHTML = ''; return; }
+    const nums = [...new Set([1, page - 2, page - 1, page, page + 1, page + 2, pages])].filter(n => n >= 1 && n <= pages).sort((a, b) => a - b);
+    const btn = (n, label, on, aria) => `<button type="button" class="button small ${on ? 'primary' : 'secondary'}" data-gp="${n}" ${n < 1 || n > pages || (on && label === String(n)) ? 'disabled' : ''} ${on ? 'aria-current="page"' : ''} aria-label="${aria || 'Page ' + n}">${label}</button>`;
+    let links = '', prev = 0;
+    nums.forEach(n => { if (n - prev > 1) links += '<span class="gp-gap">…</span>'; links += btn(n, String(n), n === page); prev = n; });
+    const from = (page - 1) * per + 1, to = Math.min(total, page * per);
+    el.classList.add('cv-pager');
+    el.innerHTML = `<span class="gp-info">${from.toLocaleString('en-IN')}–${to.toLocaleString('en-IN')} of ${total.toLocaleString('en-IN')}</span>
+      <span class="gp-links">${btn(page - 1, '‹ Prev', false, 'Previous page')}${links}${btn(page + 1, 'Next ›', false, 'Next page')}</span>
+      <label class="gp-size">Rows <select aria-label="Rows per page">${SIZES.map(s => `<option ${s === per ? 'selected' : ''}>${s}</option>`).join('')}</select></label>`;
+    el.onclick = e => { const b = e.target.closest('[data-gp]'); if (b && !b.disabled) go(Number(b.dataset.gp), per); };
+    el.onchange = e => { if (e.target.matches('.gp-size select')) go(1, Number(e.target.value)); };
+  }
+  const memo = new Map();
+  // host must be an element the grid owns: its click/input/change handlers are replaced on every call.
+  function grid(host, spec) {
+    if (!host) return null;
+    const id = spec.id || spec.url, cols = spec.columns, F = spec.filters || [];
+    const st = memo.get(id) || { q: '', page: 1, per: spec.per || 20, sort: spec.sort || '', dir: spec.dir || 'desc', f: {} };
+    memo.set(id, st);
+    if (spec.q !== undefined) { st.q = spec.q; st.page = 1; }
+    const field = f => f.type === 'date' ? `<label class="ops-f">${E(f.label)}<input type="date" data-gf="${f.key}" value="${E(st.f[f.key] || '')}"></label>`
+      : `<label class="ops-f">${E(f.label)}<select data-gf="${f.key}"><option value="all">All</option>${(typeof f.options === 'function' ? f.options() : f.options).map(o => `<option value="${E(o[0])}" ${st.f[f.key] === String(o[0]) ? 'selected' : ''}>${E(o[1])}</option>`).join('')}</select></label>`;
+    host.innerHTML = `<div class="cv-grid">${spec.search === false && !F.length && !spec.tools ? '' : `<div class="cv-grid-bar ops-filterbox">${spec.search === false ? '' : `<label class="ops-f grow">Search<input type="search" data-gq value="${E(st.q)}" placeholder="${E(spec.search || 'Search')}"></label>`}${F.map(field).join('')}${F.length || st.q ? '<button type="button" class="button secondary small" data-greset>Clear</button>' : ''}${spec.tools || ''}</div>`}
+      <div class="cv-grid-wrap"><table class="ad-table ${spec.cls || ''}" data-kit="grid"><thead><tr>${cols.map(c => `<th class="${c.cls || ''} ${c.sort ? 'kit-sort' : ''}" ${c.sort ? `data-gs="${c.sort}" tabindex="0" aria-sort="${st.sort === c.sort ? (st.dir === 'asc' ? 'ascending' : 'descending') : 'none'}"` : ''}>${E(c.label)}</th>`).join('')}</tr></thead><tbody><tr><td colspan="${cols.length}"><div class="ops-skel" style="height:48px;margin:0"></div></td></tr></tbody></table></div>
+      <div class="ops-pager"></div></div>`;
+    const body = $('tbody', host), pg = $('.ops-pager', host);
+    let seq = 0, timer = null;
+    const api_ = { state: st, data: null, reload, host };
+    async function reload() {
+      const n = ++seq;
+      const qs = new URLSearchParams({ page: st.page, per: st.per, ...(spec.params ? spec.params() : {}) });
+      if (st.q) qs.set('q', st.q); if (st.sort) { qs.set('sort', st.sort); qs.set('dir', st.dir); }
+      Object.entries(st.f).forEach(([k, v]) => { if (v && v !== 'all') qs.set(k, v); });
+      body.setAttribute('aria-busy', 'true');
+      try {
+        const d = await api(spec.url + (spec.url.includes('?') ? '&' : '?') + qs);
+        if (n !== seq) return;
+        const rows = d[spec.rowsKey || 'rows'] || [];
+        api_.data = d; st.page = d.page || st.page;
+        body.innerHTML = rows.map(r => `<tr ${spec.row ? spec.row(r) : ''}>${cols.map(c => `<td class="${c.cls || ''}">${c.html ? c.html(r) : E(r[c.key])}</td>`).join('')}</tr>`).join('') || `<tr><td colspan="${cols.length}">${E(st.q || Object.values(st.f).some(v => v && v !== 'all') ? 'Nothing matches these filters.' : (spec.empty || 'Nothing here yet.'))}</td></tr>`;
+        pager(pg, { total: d.total, per: d.per || st.per, page: d.page }, (p, per) => { st.page = p; st.per = per; reload(); host.scrollIntoView({ block: 'nearest' }); });
+        if (spec.onData) spec.onData(d, rows);
+      } catch (e) { if (n === seq) body.innerHTML = `<tr><td colspan="${cols.length}" role="alert">${E((e && e.message) || 'Could not load this list.')}</td></tr>`; }
+      finally { if (n === seq) body.removeAttribute('aria-busy'); }
+    }
+    host.oninput = e => { if (e.target.matches('[data-gq]')) { clearTimeout(timer); timer = setTimeout(() => { st.q = e.target.value.trim(); st.page = 1; reload(); }, 350); } };
+    host.onchange = e => { const k = e.target.dataset.gf; if (k) { st.f[k] = e.target.value; st.page = 1; reload(); } };
+    const sortBy = th => { const s = th.dataset.gs; st.dir = st.sort === s && st.dir === 'desc' ? 'asc' : 'desc'; st.sort = s; st.page = 1; $$('th[data-gs]', host).forEach(t => t.setAttribute('aria-sort', t === th ? (st.dir === 'asc' ? 'ascending' : 'descending') : 'none')); reload(); };
+    host.onclick = e => {
+      const th = e.target.closest('th[data-gs]'); if (th) return sortBy(th);
+      if (e.target.closest('[data-greset]')) { st.q = ''; st.f = {}; st.page = 1; $$('[data-gf]', host).forEach(x => { x.value = x.type === 'date' ? '' : 'all'; }); const q = $('[data-gq]', host); if (q) q.value = ''; reload(); }
+      if (spec.onClick) spec.onClick(e, api_);
+    };
+    host.onkeydown = e => { const th = e.target.closest && e.target.closest('th[data-gs]'); if (th && e.key === 'Enter') sortBy(th); if (spec.onKey) spec.onKey(e, api_); };
+    reload();
+    return api_;
+  }
+  window.CVTaraAdminKit = { $, $$, E, api, inr, short, parse, dmy, pill, planName, modal, toast, ensureRecent, download, csv, pager, grid, SIZES, META, HUB, register: (k, fn, meta) => { render[k] = fn; if (meta) META[k] = meta; }, open: k => open(k) };
 
   function open(k) {
+    // The old 'users' view was a second, unpaged copy of the user list; send it to the paged Users view.
+    if (k === 'users') { const b = $('.side-nav [data-admin-view="people"]'); if (b) { b.click(); return; } }
     current = k; title(k); banner(k);
     const lv = $('#opsLive'); if (lv && !lv.dataset.manual) lv.classList.toggle('min', k !== 'dashboard');
     $$('.side-nav [data-admin-view]').forEach(b => b.classList.toggle('active', b.dataset.adminView === (HUB.includes(k) ? 'settings' : k)));

@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\User;
 use App\Services\AccountSecurity;
+use App\Services\AdminTable;
 use App\Services\AffiliateProfiles;
 use App\Services\Referrals;
 use App\Services\Settings;
@@ -20,7 +21,24 @@ class AffiliateAdminController extends Controller
         $admin = $r->user();
         $get = $r->isMethod('GET');
         if ($path === 'referrals' && $get) {
-            return $ok(['rules' => Referrals::config(), 'withdrawals' => DB::table('withdrawals as w')->join('users as u', 'u.id', '=', 'w.owner_id')->orderByDesc('w.created_at')->limit(500)->get(['w.id', 'w.owner_id', 'w.amount_paise', 'w.destination_masked', 'w.status', 'w.provider', 'w.provider_status', 'w.provider_transfer_id', 'w.approved_at', 'w.reference', 'w.note', 'w.due_at', 'w.created_at', 'u.name', 'u.email']), 'creators' => DB::table('creator_applications as c')->join('users as u', 'u.id', '=', 'c.owner_id')->get(['c.*', 'u.name', 'u.email']), 'profiles' => DB::table('payout_profiles as p')->join('users as u', 'u.id', '=', 'p.owner_id')->get(['p.owner_id', 'p.status', 'p.destination_hash', 'p.destination_masked', 'p.risk_flags_json', 'p.review_note', 'p.eligible_at', 'u.name', 'u.email']), 'affiliates' => User::whereNotNull('referral_code')->limit(500)->get(['id', 'name', 'email', 'referral_code'])->map(fn ($u) => [...$u->toArray(), ...Referrals::balance($u->id), 'rateBps' => Referrals::rate($u->id)])]);
+            // Rules and queue counts only; each list below is fetched one page at a time from referrals/list/{kind}.
+            return $ok(['rules' => Referrals::config(), 'counts' => [
+                'affiliates' => DB::table('users')->whereNotNull('referral_code')->count(),
+                'withdrawals' => DB::table('withdrawals')->where('status', 'requested')->count(),
+                'profiles' => DB::table('payout_profiles')->whereNotIn('status', ['approved', 'rejected'])->count(),
+                'creators' => DB::table('creator_applications')->where('status', 'pending')->count(),
+            ]]);
+        }
+        if ($get && preg_match('#^referrals/list/(withdrawals|profiles|creators|affiliates)$#', $path, $m)) {
+            $person = ['u.name', 'u.email'];
+
+            return $ok(match ($m[1]) {
+                'withdrawals' => AdminTable::query($r, DB::table('withdrawals as w')->join('users as u', 'u.id', '=', 'w.owner_id')->select(['w.id', 'w.owner_id', 'w.amount_paise', 'w.destination_masked', 'w.status', 'w.provider', 'w.provider_status', 'w.provider_transfer_id', 'w.approved_at', 'w.reference', 'w.note', 'w.due_at', 'w.created_at', 'u.name', 'u.email']), ['search' => [...$person, 'w.reference'], 'filters' => ['status' => 'w.status'], 'date' => 'w.created_at', 'sorts' => ['date' => 'w.created_at', 'amount' => 'w.amount_paise', 'status' => 'w.status'], 'sort' => 'date', 'key' => 'w.id']),
+                'profiles' => AdminTable::query($r, DB::table('payout_profiles as p')->join('users as u', 'u.id', '=', 'p.owner_id')->select(['p.owner_id', 'p.status', 'p.destination_hash', 'p.destination_masked', 'p.risk_flags_json', 'p.review_note', 'p.eligible_at', 'p.created_at', 'u.name', 'u.email']), ['search' => $person, 'filters' => ['status' => 'p.status'], 'sorts' => ['date' => 'p.created_at', 'status' => 'p.status', 'name' => 'u.name'], 'sort' => 'date', 'key' => 'p.owner_id']),
+                'creators' => AdminTable::query($r, DB::table('creator_applications as c')->join('users as u', 'u.id', '=', 'c.owner_id')->select(['c.*', 'u.name', 'u.email']), ['search' => $person, 'filters' => ['status' => 'c.status'], 'sorts' => ['date' => 'c.created_at', 'status' => 'c.status', 'name' => 'u.name'], 'sort' => 'date', 'key' => 'c.owner_id']),
+                // Balances are worked out only for the 20 or so people on the requested page.
+                'affiliates' => AdminTable::query($r, DB::table('users as u')->whereNotNull('u.referral_code')->select(['u.id', 'u.name', 'u.email', 'u.referral_code', 'u.created_at']), ['search' => [...$person, 'u.referral_code'], 'sorts' => ['joined' => 'u.created_at', 'name' => 'u.name', 'email' => 'u.email'], 'sort' => 'joined', 'key' => 'u.id'], fn ($u) => [...(array) $u, ...Referrals::balance($u->id), 'rateBps' => Referrals::rate($u->id)]),
+            });
         }
         if ($get && ! preg_match('#^referrals/(profiles/[0-9]+|withdrawals/[a-f0-9-]{36})$#', $path)) {
             abort(405);
