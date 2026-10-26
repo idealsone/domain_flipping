@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\User;
 use App\Services\AccountSecurity;
 use App\Services\BusinessControls;
+use App\Services\FastIndex;
 use App\Services\MailAutomation;
 use App\Services\SearchConsole;
 use App\Services\Settings;
@@ -22,7 +23,7 @@ class AdminController extends Controller
         $id = $r->user()->id;
         $get = $r->isMethod('GET');
         abort_unless($get || $r->isMethod('POST'), 405);
-        if ($get && in_array($path, ['feedback/add', 'email/process', 'media', 'search/import', 'search/sync', 'referrals/settings'])) {
+        if ($get && in_array($path, ['feedback/add', 'email/process', 'media', 'search/import', 'search/sync', 'indexing/submit', 'indexing/sitemap', 'indexing/settings', 'referrals/settings'])) {
             abort(405);
         }
         if (preg_match(SpeedAdminController::ROUTES, $path)) {
@@ -338,6 +339,35 @@ class AdminController extends Controller
         }
         if ($path === 'search/sync') {
             return $ok(['data' => app(SearchConsole::class)->sync()]);
+        }
+        if ($path === 'indexing') {
+            return $ok(FastIndex::status());
+        }
+        if ($path === 'indexing/settings') {
+            $v = $r->validate(['auto' => 'required|boolean', 'google' => 'required|boolean']);
+            FastIndex::settings($v['auto'], $v['google']);
+
+            return $ok(FastIndex::status());
+        }
+        if ($path === 'indexing/submit') {
+            $v = $r->validate(['mode' => 'required|in:changed,all,urls', 'urls' => 'required_if:mode,urls|nullable|string|max:20000', 'google' => 'required|boolean']);
+            $paths = $v['mode'] === 'all' ? 'all' : null;
+            if ($v['mode'] === 'urls') {
+                $origin = FastIndex::origin();
+                $paths = [];
+                foreach (preg_split('/\s+/', trim($v['urls'])) as $u) {
+                    abort_unless(str_starts_with($u, $origin.'/') && filter_var($u, FILTER_VALIDATE_URL), 422, 'Each address must start with '.$origin.'/ (one per line).');
+                    $paths[] = substr($u, strlen($origin));
+                }
+                abort_unless(count($paths) <= 100, 422, 'Send at most 100 addresses at a time.');
+            }
+
+            return $ok(['entry' => FastIndex::submit($paths, $v['google'])] + FastIndex::status());
+        }
+        if ($path === 'indexing/sitemap') {
+            FastIndex::sitemap();
+
+            return $ok(FastIndex::status());
         }
         abort(404);
     }

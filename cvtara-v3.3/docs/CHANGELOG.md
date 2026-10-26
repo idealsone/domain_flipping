@@ -1,3 +1,12 @@
+# CVTara v3.24.0 — Search Console connection fixes and fast indexing
+
+## 3.24.0
+- **Fast indexing (Owner console > Keyword intelligence):** new box that sends new and changed public pages to IndexNow (Bing, Yandex and other engines index within minutes), resubmits the sitemap to Google through the Search Console API, and can optionally ask Google to recrawl pages through the Google Indexing API (off by default; Google officially supports it only for job-posting and livestream pages; at most 200 a day and 40 per run). An hourly run sends changes automatically when switched on. Only sitemap pages are sent, and nothing while search indexing is off.
+- **IndexNow key file:** served at `/{key}.txt`; the key is made the first time the box is opened.
+- **Search Console sync errors are plain:** a bad paste, the wrong kind of key, a switched-off Google API, a missing permission or a mistyped property now each say what to fix, instead of a server error.
+- **Integrations > Analytics help:** says which Google APIs to enable, to add the service account as an Owner, and how to write the property.
+- No migrations. Rebuild the ready-made pages after updating.
+
 # CVTara v3.23.0 — PhonePe payment gateway beside Razorpay
 
 ## 3.23.0

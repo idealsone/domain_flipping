@@ -186,6 +186,10 @@ class ContentController extends Controller
 
             return response($xml.'</urlset>', 200, ['Content-Type' => 'application/xml']);
         }
+        // IndexNow key file: search engines fetch it to confirm the pages sent from Owner Console > Keyword intelligence are ours.
+        if (preg_match('/^[a-f0-9]{32}\.txt$/', $path) && $path === \App\Services\FastIndex::state()['key'].'.txt') {
+            return response(substr($path, 0, 32), 200, ['Content-Type' => 'text/plain; charset=utf-8']);
+        }
         if ($path === 'robots.txt') {
             // Sign-in, checkout and account pages are left crawlable on purpose: they answer noindex, and Google can only see that when it may fetch them.
             // Blocking them here is what Search Console reports as "Indexed, though blocked by robots.txt".
