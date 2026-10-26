@@ -2,7 +2,7 @@
 (() => {
   'use strict';
   const K = window.CVTaraAdminKit; if (!K) return;
-  const { $, $$, E, api, short, parse, dmy, pill, modal, toast, ensureRecent, download, csv } = K;
+  const { $, $$, E, api, short, parse, dmy, pill, modal, toast, ensureRecent } = K;
   const dtm = d => { const x = parse(d); return isNaN(x) ? '' : x.toLocaleString('en-IN', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' }); };
   const err = e => (e && e.message) || 'Something went wrong.';
   let planCache = null;
@@ -10,54 +10,42 @@
   const planLabel = (pl, key) => (pl[key] && pl[key].name) || key || '';
 
   /* ======================= USERS ======================= */
-  const U = { q: '', page: 1, f: 'all', timer: null };
+  const U = { q: undefined, grid: null };
   async function people() {
     const h = $('#admin-people'); if (!h) return;
-    if (!h.dataset.built) {
-      h.dataset.built = '1';
-      h.innerHTML = `<div class="pg-head"><h2>Users</h2><p>Search accounts, mark customers as paid with subscription details, edit or remove them. Customers get a thank-you email instantly.</p></div>
-        <div class="ops-kpis" id="pkpi"></div>
-        <div class="ops-filters"><input id="pq" type="search" placeholder="Search by name or email" aria-label="Search users"><select id="pf" aria-label="Filter users"><option value="all">All users</option><option value="normal">Normal users</option><option value="paid">Paid (active)</option><option value="expired">Expired</option><option value="blocked">Blocked</option></select><span id="pcount"></span><button class="button primary small" id="pexport">Export CSV</button></div>
-        <section class="panel"><table class="ad-table"><thead><tr><th>User</th><th>Subscription</th><th>Resumes</th><th>Joined</th><th>Status</th><th class="r">Actions</th></tr></thead><tbody id="pbody"><tr><td colspan="6"><div class="ops-skel" style="height:60px;margin:0"></div></td></tr></tbody></table></section>
-        <div class="ops-pager" id="ppager"></div>`;
-      $('#pq').oninput = e => { clearTimeout(U.timer); U.timer = setTimeout(() => { U.q = e.target.value.trim(); U.page = 1; people(); }, 300); };
-      $('#pf').onchange = e => { U.f = e.target.value; U.page = 1; people(); };
-      h.addEventListener('click', onClick);
-    }
-    try {
-      const [d, pl] = await Promise.all([api(`/api/admin/users?page=${U.page}&q=${encodeURIComponent(U.q)}&f=${encodeURIComponent(U.f)}`), plans()]);
-      U.data = d; U.pl = pl; paint();
-    } catch (e) { $('#pbody').innerHTML = `<tr><td colspan="6" role="alert">${E(err(e))}</td></tr>`; }
+    h.innerHTML = `<div class="pg-head"><h2>Users</h2><p>Search accounts, mark customers as paid with subscription details, edit or remove them. Customers get a thank-you email instantly.</p></div>
+      <div class="ops-kpis" id="pkpi"></div><section class="panel" id="pgrid"></section>`;
+    const pl = U.pl = await plans().catch(() => ({}));
+    const q = U.q; U.q = undefined;
+    U.grid = K.grid($('#pgrid'), {
+      id: 'users', url: '/api/admin/users', rowsKey: 'users', search: 'Search by name or email', q, sort: 'joined',
+      filters: [{ key: 'f', label: 'Show', options: [['normal', 'Normal users'], ['paid', 'Paid (active)'], ['expired', 'Expired'], ['blocked', 'Blocked'], ['owner', 'Owner']] }, { key: 'from', label: 'Joined from', type: 'date' }, { key: 'to', label: 'Joined to', type: 'date' }],
+      tools: '<span class="ops-f"><span>&nbsp;</span><button type="button" class="button primary small" id="pexport">Export CSV</button></span>',
+      row: u => `data-uid="${E(u.owner_id)}"`,
+      columns: [
+        { label: 'User', sort: 'name', html: u => `<b>${E(u.name || '—')}</b><br><small>${E(u.email)}</small>` },
+        { label: 'Subscription', html: u => u.paid ? `<span class="pill st-paid">${E(planLabel(pl, u.last_plan))}</span><br><small>until ${dmy(parse(u.accessUntil))}</small>` : u.ever_paid ? `<span class="pill st-failed">Expired</span><br><small>was ${E(planLabel(pl, u.last_plan))}</small>` : '<span class="pill st-free">Normal user</span>' },
+        { label: 'Resumes', html: u => `${u.resumes ?? 0}<small> · ${u.applications ?? 0} apps</small>` },
+        { label: 'Joined', sort: 'joined', html: u => dmy(parse(u.created_at)) },
+        { label: 'Status', html: u => u.isAdmin ? '<span class="pill st-queued">Owner</span>' : u.blocked ? '<span class="pill st-failed">Blocked</span>' : '<span class="pill st-paid">Active</span>' },
+        { label: 'Actions', cls: 'r', html: u => u.isAdmin ? '' : `<button class="button small secondary" data-act="edit" title="Edit details">✏️ Edit</button> <button class="button small ${u.paid ? 'secondary' : 'primary'}" data-act="sub" title="Subscription">${u.paid ? '💳 Manage' : '💳 Mark paid'}</button> <button class="button small secondary" data-act="block" title="${u.blocked ? 'Unblock' : 'Block'}">${u.blocked ? '✔ Unblock' : '🚫 Block'}</button> <button class="button small ops-no" data-act="delete" title="Delete account">🗑</button>` }
+      ],
+      empty: 'No users yet.',
+      onData: d => { $('#pkpi').innerHTML = [['Total users', d.totalUsers], ['Paid (active)', d.paidUsers], ['Normal users', d.totalUsers - d.paidUsers], ['Blocked', d.blockedUsers ?? 0]].map(([l, v]) => `<div class="kpi"><span>${l}</span><b>${Number(v || 0).toLocaleString('en-IN')}</b></div>`).join(''); },
+      onClick: (e, g) => {
+        if (e.target.closest('#pexport')) { const st = g.state; toast('Preparing export…'); K.exportReport({ dataset: 'users', q: st.q, status: ['paid', 'normal', 'blocked', 'owner'].includes(st.f.f) ? st.f.f : 'all', columns: 'id,name,email,phone,city,level,profession,joined,plan,paid,status,resumes' }, 'csv').then(() => toast('Export ready'), x => toast(err(x), true)); return; }
+        const b = e.target.closest('[data-act]'); if (!b || !g.data) return;
+        const u = (g.data.users || []).find(x => String(x.owner_id) === b.closest('tr').dataset.uid); if (!u) return;
+        ({ edit: editUser, sub: subscription, block: blockUser, delete: deleteUser })[b.dataset.act](u);
+      }
+    });
   }
-  const state = u => u.isAdmin ? 'owner' : u.blocked ? 'blocked' : u.paid ? 'paid' : u.ever_paid ? 'expired' : 'normal';
-  function paint() {
-    const d = U.data; if (!d) return;
-    const all = d.users || [];
-    const rows = all;
-    $('#pkpi').innerHTML = [['Total users', d.totalUsers], ['Paid (active)', d.paidUsers], ['Normal users', d.totalUsers - d.paidUsers], ['Blocked', d.blockedUsers ?? 0]].map(([l, v]) => `<div class="kpi"><span>${l}</span><b>${v}</b></div>`).join('');
-    $('#pcount').textContent = `${rows.length} shown · ${d.usersTotal} match the filter`;
-    $('#pbody').innerHTML = rows.map(u => {
-      const st = state(u), me = u.isAdmin;
-      const sub = u.paid ? `<span class="pill st-paid">${E(planLabel(U.pl, u.last_plan))}</span><br><small>until ${dmy(parse(u.accessUntil))}</small>` : u.ever_paid ? `<span class="pill st-failed">Expired</span><br><small>was ${E(planLabel(U.pl, u.last_plan))}</small>` : '<span class="pill st-free">Normal user</span>';
-      const stp = me ? '<span class="pill st-queued">Owner</span>' : u.blocked ? '<span class="pill st-failed">Blocked</span>' : '<span class="pill st-paid">Active</span>';
-      return `<tr data-uid="${u.owner_id}"><td><b>${E(u.name || '—')}</b><br><small>${E(u.email)}</small></td><td>${sub}</td><td>${u.resumes ?? 0}<small> · ${u.applications ?? 0} apps</small></td><td>${dmy(parse(u.created_at))}</td><td>${stp}</td>
-        <td class="r">${me ? '' : `<button class="button small secondary" data-act="edit" title="Edit details">✏️ Edit</button> <button class="button small ${u.paid ? 'secondary' : 'primary'}" data-act="sub" title="Subscription">${u.paid ? '💳 Manage' : '💳 Mark paid'}</button> <button class="button small secondary" data-act="block" title="${u.blocked ? 'Unblock' : 'Block'}">${u.blocked ? '✔ Unblock' : '🚫 Block'}</button> <button class="button small ops-no" data-act="delete" title="Delete account">🗑</button>`}</td></tr>`;
-    }).join('') || '<tr><td colspan="6">No users match.</td></tr>';
-    const pages = Math.max(1, Math.ceil((d.usersTotal || 0) / (d.perPage || 100)));
-    $('#ppager').innerHTML = pages > 1 ? `<button class="button secondary small" data-pg="-1" ${U.page <= 1 ? 'disabled' : ''}>← Previous</button><span>Page ${U.page} of ${pages}</span><button class="button secondary small" data-pg="1" ${U.page >= pages ? 'disabled' : ''}>Next →</button>` : '';
-    $('#pexport').onclick = () => { toast('Preparing export…'); K.exportReport({ dataset: 'users', q: U.q, status: ['paid', 'normal', 'blocked', 'owner'].includes(U.f) ? U.f : 'all', columns: 'id,name,email,phone,city,level,profession,joined,plan,paid,status,resumes' }, 'csv').then(() => toast('Export ready'), x => toast(err(x), true)); };
-  }
-  function onClick(e) {
-    const pg = e.target.closest('[data-pg]'); if (pg) { U.page += Number(pg.dataset.pg); return people(); }
-    const b = e.target.closest('[data-act]'); if (!b) return;
-    const u = (U.data.users || []).find(x => String(x.owner_id) === b.closest('tr').dataset.uid); if (!u) return;
-    ({ edit: editUser, sub: subscription, block: blockUser, delete: deleteUser })[b.dataset.act](u);
-  }
+  const refresh = () => (U.grid && document.contains(U.grid.host) ? U.grid.reload() : people());
   function editUser(u) {
     const m = modal('Edit user', `<form class="ops-form"><label>Full name<input name="name" required maxlength="120" value="${E(u.name)}"></label><label>Email<input name="email" type="email" required value="${E(u.email)}"></label><label>Phone<input name="phone" maxlength="40" value="${E(u.phone || '')}"></label><label>City<input name="city" maxlength="120" value="${E(u.city || '')}"></label><label>Profession / target role<input name="profession" maxlength="120" value="${E(u.profession || '')}"></label><label>Level<select name="experienceLevel"><option value="fresher" ${u.experience_level === 'fresher' ? 'selected' : ''}>Fresher</option><option value="experienced" ${u.experience_level === 'experienced' ? 'selected' : ''}>Experienced</option></select></label><div class="wide"><button class="button primary">Save changes</button> <span role="status" class="ops-st"></span></div></form>`);
     m.body.querySelector('form').onsubmit = async ev => {
       ev.preventDefault(); const st = m.body.querySelector('.ops-st'); st.textContent = 'Saving…';
-      try { if (!(await ensureRecent())) { st.textContent = 'Verification cancelled.'; return; } const v = Object.fromEntries(new FormData(ev.target)); await api('/api/admin/users/update', { method: 'POST', body: { userId: Number(u.owner_id), ...v } }); toast('User updated'); m.close(); people(); } catch (x) { st.textContent = err(x); }
+      try { if (!(await ensureRecent())) { st.textContent = 'Verification cancelled.'; return; } const v = Object.fromEntries(new FormData(ev.target)); await api('/api/admin/users/update', { method: 'POST', body: { userId: Number(u.owner_id), ...v } }); toast('User updated'); m.close(); refresh(); } catch (x) { st.textContent = err(x); }
     };
   }
   async function subscription(u) {
@@ -80,12 +68,12 @@
         if (!(await ensureRecent())) { st.textContent = 'Verification cancelled.'; return; }
         const body = { userId: Number(u.owner_id), plan: f.plan.value, note: f.note.value, sendEmail: f.sendEmail.checked }; if (f.days.value) body.days = Number(f.days.value); if (f.amount.value !== '') body.amount = Number(f.amount.value);
         const r = await api('/api/admin/users/grant', { method: 'POST', body });
-        toast(f.sendEmail.checked ? (r.mail && r.mail.sent ? '✓ Subscription active — thank-you email sent' : '✓ Subscription active — email queued (check User Mailer if it does not arrive)') : '✓ Subscription active'); m.close(); people();
+        toast(f.sendEmail.checked ? (r.mail && r.mail.sent ? '✓ Subscription active — thank-you email sent' : '✓ Subscription active — email queued (check User Mailer if it does not arrive)') : '✓ Subscription active'); m.close(); refresh();
       } catch (x) { st.textContent = err(x); }
     };
     const rv = $('#revokeBtn', m.body); if (rv) rv.onclick = async () => {
       const note = await askNote('Revoke access', 'Reason (kept in the audit log)'); if (!note) return;
-      try { if (!(await ensureRecent())) return; const r = await api('/api/admin/users/revoke', { method: 'POST', body: { userId: Number(u.owner_id), note } }); toast(`Access revoked (${r.revoked} purchase${r.revoked === 1 ? '' : 's'})`); m.close(); people(); } catch (x) { st.textContent = err(x); }
+      try { if (!(await ensureRecent())) return; const r = await api('/api/admin/users/revoke', { method: 'POST', body: { userId: Number(u.owner_id), note } }); toast(`Access revoked (${r.revoked} purchase${r.revoked === 1 ? '' : 's'})`); m.close(); refresh(); } catch (x) { st.textContent = err(x); }
     };
   }
   function askNote(title, label) {
@@ -99,11 +87,11 @@
   function blockUser(u) {
     const blocking = !u.blocked;
     const m = modal(blocking ? 'Block user' : 'Unblock user', `<p>${blocking ? 'Blocked users are signed out immediately and cannot sign in.' : 'The user will be able to sign in again.'}</p><form class="ops-form"><label class="wide">Reason (audit log)<input name="note" required minlength="5" maxlength="500" placeholder="Why are you doing this?"></label><div class="wide"><button class="button ${blocking ? 'ops-no' : 'primary'}">${blocking ? 'Block user' : 'Unblock user'}</button> <span class="ops-st" role="status"></span></div></form>`);
-    m.body.querySelector('form').onsubmit = async ev => { ev.preventDefault(); const st = m.body.querySelector('.ops-st'); try { if (!(await ensureRecent())) return; await api('/api/admin/users/block', { method: 'POST', body: { userId: Number(u.owner_id), blocked: blocking, note: ev.target.note.value } }); toast(blocking ? 'User blocked' : 'User unblocked'); m.close(); people(); } catch (x) { st.textContent = err(x); } };
+    m.body.querySelector('form').onsubmit = async ev => { ev.preventDefault(); const st = m.body.querySelector('.ops-st'); try { if (!(await ensureRecent())) return; await api('/api/admin/users/block', { method: 'POST', body: { userId: Number(u.owner_id), blocked: blocking, note: ev.target.note.value } }); toast(blocking ? 'User blocked' : 'User unblocked'); m.close(); refresh(); } catch (x) { st.textContent = err(x); } };
   }
   function deleteUser(u) {
     const m = modal('Delete account', `<p>This removes <b>${E(u.name)}</b>’s account from the server for good: sign-in, profile, resumes, letters, applications, ATS scans, support messages and screenshots. Payment and refund records stay for your accounts, filed under “Deleted customers” with no name or email. <b>This cannot be undone.</b></p><form class="ops-form"><label class="wide">Type <b>DELETE</b> to confirm<input name="c" autocomplete="off" required></label><div class="wide"><button class="button ops-no">Delete permanently</button> <span class="ops-st" role="status"></span></div></form>`);
-    m.body.querySelector('form').onsubmit = async ev => { ev.preventDefault(); const st = m.body.querySelector('.ops-st'); if (ev.target.c.value !== 'DELETE') { st.textContent = 'Type DELETE exactly.'; return; } try { if (!(await ensureRecent())) return; await api('/api/admin/users/delete', { method: 'POST', body: { userId: Number(u.owner_id), confirm: 'DELETE' } }); toast('Account deleted'); m.close(); people(); } catch (x) { st.textContent = err(x); } };
+    m.body.querySelector('form').onsubmit = async ev => { ev.preventDefault(); const st = m.body.querySelector('.ops-st'); if (ev.target.c.value !== 'DELETE') { st.textContent = 'Type DELETE exactly.'; return; } try { if (!(await ensureRecent())) return; await api('/api/admin/users/delete', { method: 'POST', body: { userId: Number(u.owner_id), confirm: 'DELETE' } }); toast('Account deleted'); m.close(); refresh(); } catch (x) { st.textContent = err(x); } };
   }
 
   /* ======================= ORDERS ======================= */
@@ -121,14 +109,13 @@
           <div class="ops-f"><span>&nbsp;</span><span><button class="button secondary small" id="oreset">Reset</button> <button class="button secondary small" id="ocustom">Custom report…</button> <span class="kit-menu"><button class="button primary small" data-k="exp" id="oexp">Export all ▾</button><div class="kit-pop" hidden><button type="button" data-xf="csv">CSV (Excel-ready)</button><button type="button" data-xf="xls">Excel (.xls)</button><button type="button" data-xf="json">JSON</button><button type="button" data-xf="print">Print / Save as PDF</button></div></span></span></div></section>
         <div class="ops-kpis" id="okpi"></div>
         <section class="panel"><table class="ad-table ops-click"><thead><tr><th>Order ID</th><th>Customer</th><th>Plan</th><th>Amount</th><th>Source</th><th>Status</th><th>Date</th></tr></thead><tbody id="obody"></tbody></table></section><div class="ops-pager" id="opager"></div>`;
-      const prm = () => { const p = { dataset: 'orders', q: O.q, status: O.status, plan: O.plan, provider: O.provider, from: O.from, to: O.to, min: O.min, max: O.max, columns: 'order,date,customer,email,plan,amount_inr,discount_inr,reversed_inr,net_inr,coupon,status,provider,reference,access_until', per: '50', page: String(O.page) }; Object.keys(p).forEach(k => { if (p[k] === '' || p[k] === 'all') delete p[k]; }); return p; };
+      const prm = () => { const p = { dataset: 'orders', q: O.q, status: O.status, plan: O.plan, provider: O.provider, from: O.from, to: O.to, min: O.min, max: O.max, columns: 'order,date,customer,email,plan,amount_inr,discount_inr,reversed_inr,net_inr,coupon,status,provider,reference,access_until', per: String(O.per || 20), page: String(O.page) }; Object.keys(p).forEach(k => { if (p[k] === '' || p[k] === 'all') delete p[k]; }); return p; };
       const draw = async () => {
         $('#obody').innerHTML = '<tr><td colspan="7">Loading…</td></tr>';
         const d = await api('/api/admin/report?' + new URLSearchParams({ ...prm(), format: 'json', columns: 'order,date,customer,email,plan,amount_inr,reversed_inr,status,provider' })), s = d.sums || {};
         $('#okpi').innerHTML = `<div class="kpi"><span>Orders found</span><b>${d.total.toLocaleString('en-IN')}</b></div><div class="kpi"><span>Billed</span><b>${short((s.amount_inr || 0) * 100)}</b></div><div class="kpi"><span>Reversed by bank</span><b>${short((s.reversed_inr || 0) * 100)}</b></div><div class="kpi"><span>Net</span><b>${short((s.net_inr || 0) * 100)}</b></div>`;
         $('#obody').innerHTML = d.rows.map(p => `<tr data-oid="${E(p.id || '')}" tabindex="0"><td><b>${E(p.order)}</b></td><td>${E(p.customer || 'Customer')}<br><small>${E(p.email || '')}</small></td><td>${E(planLabel(pl, p.plan))}</td><td><b>${short(p.amount_inr * 100)}</b>${p.reversed_inr ? `<br><small>reversed ${short(p.reversed_inr * 100)}</small>` : ''}</td><td>${E(p.provider === 'manual' ? 'Recorded by owner' : p.provider)}</td><td>${pill(p.status)}</td><td>${dtm(p.date)}</td></tr>`).join('') || '<tr><td colspan="7">No orders match these filters.</td></tr>';
-        const pages = Math.max(1, Math.ceil(d.total / d.per));
-        $('#opager').innerHTML = d.total ? `<span>Page ${d.page} of ${pages}</span> <button class="button secondary small" data-op="${d.page - 1}" ${d.page <= 1 ? 'disabled' : ''}>← Prev</button> <button class="button secondary small" data-op="${d.page + 1}" ${d.page >= pages ? 'disabled' : ''}>Next →</button>` : '';
+        K.pager($('#opager'), d, (p, per) => { O.page = p; O.per = per; draw().catch(x => toast(err(x), true)); });
       };
       const bind = (id, k, ev = 'input') => { $('#' + id).addEventListener(ev, e => { O[k] = e.target.value; O.page = 1; clearTimeout(bind.t); bind.t = setTimeout(() => draw().catch(x => toast(err(x), true)), ev === 'input' ? 350 : 0); }); };
       bind('oq', 'q'); bind('os', 'status', 'change'); bind('op', 'plan', 'change'); bind('ov', 'provider', 'change'); bind('of', 'from', 'change'); bind('ot', 'to', 'change'); bind('omin', 'min'); bind('omax', 'max');
@@ -138,7 +125,6 @@
         const b = e.target.closest('button'); if (!b) return;
         if (b.dataset.k) { b.nextElementSibling.hidden = !b.nextElementSibling.hidden; }
         else if (b.dataset.xf) { b.closest('.kit-pop').hidden = true; toast('Preparing export…'); K.exportReport(prm(), b.dataset.xf).then(() => toast('Export ready'), x => toast(err(x), true)); }
-        else if (b.dataset.op) { O.page = Number(b.dataset.op); draw().catch(x => toast(err(x), true)); }
       });
       const open = tr => tr && tr.dataset.oid && orderDetail(tr.dataset.oid);
       $('#obody').onclick = e => open(e.target.closest('tr[data-oid]')); $('#obody').onkeydown = e => { if (e.key === 'Enter') open(e.target.closest('tr[data-oid]')); };
@@ -158,13 +144,14 @@
         <section><h4>Timeline</h4><ol class="ord-time">${(r.timeline || []).map(t => `<li><b>${E(String(t.event).replace(/_/g, ' '))}</b><small>${dtm(t.created_at)}</small></li>`).join('') || '<li><small>No events recorded.</small></li>'}</ol><h4 style="margin-top:14px">Emails sent for this customer</h4><ol class="ord-time">${(r.emails || []).map(t => `<li><b>${E(t.subject)}</b><small>${E(t.status)}${t.sent_at ? ' · ' + dtm(t.sent_at) : ''}</small></li>`).join('') || '<li><small>None.</small></li>'}</ol></section></div>
         <div class="ord-actions"><button class="button secondary" data-goto-user>View customer</button>${active ? '<button class="button ops-no" data-revoke>Revoke access</button>' : ''}<button class="button secondary" data-copy>Copy order summary</button></div>`;
       m.body.querySelector('[data-copy]').onclick = () => { const t = `${r.orderNo} · ${K.planName(o)} · ${short(o.amount_paise)} · ${o.status} · ${u.name} <${u.email}> · ref ${o.payment_reference || '-'}`; (navigator.clipboard ? navigator.clipboard.writeText(t) : Promise.reject()).then(() => toast('Copied'), () => toast(t)); };
-      m.body.querySelector('[data-goto-user]').onclick = () => { m.close(); U.q = u.email || ''; U.page = 1; K.open('people'); const b = $('.side-nav [data-admin-view="people"]'); if (b) b.click(); setTimeout(() => { const i = $('#pq'); if (i) i.value = U.q; }, 400); };
+      m.body.querySelector('[data-goto-user]').onclick = () => { m.close(); U.q = u.email || ''; const b = $('.side-nav [data-admin-view="people"]'); if (b) b.click(); else K.open('people'); };
       const rv = m.body.querySelector('[data-revoke]'); if (rv) rv.onclick = async () => { const note = await askNote('Revoke access', 'Reason (kept in the audit log)'); if (!note) return; try { if (!(await ensureRecent())) return; await api('/api/admin/users/revoke', { method: 'POST', body: { userId: Number(u.id), note } }); toast('Access revoked'); m.close(); orders(); } catch (x) { toast(err(x), true); } };
     } catch (e) { m.body.innerHTML = `<p role="alert">${E(err(e))}</p>`; }
   }
 
   /* ======================= ERROR LOG ======================= */
-  const L = { level: 'all', source: 'all', q: '', days: 30, open: false, sel: new Set(), timer: null };
+  const L = { level: 'all', source: 'all', q: '', days: 30, open: false, sel: new Set(), timer: null, page: 1, per: 20, qt: null };
+  const qs = () => { const q = new URLSearchParams({ days: L.days }); if (L.level !== 'all') q.set('level', L.level); if (L.source !== 'all') q.set('source', L.source); if (L.q) q.set('q', L.q); if (L.open) q.set('state', 'open'); return q.toString(); };
   async function errors() {
     const h = $('#admin-errors'); if (!h) return;
     clearInterval(L.timer);
@@ -174,24 +161,24 @@
         <div class="ops-kpis" id="ekpi"></div>
         <section class="panel panel-pad ops-filterbox"><label class="ops-f grow">Search<input id="eq" type="search" placeholder="Search messages"></label><label class="ops-f">Level<select id="el"><option value="all">All</option><option value="error">Errors</option><option value="warning">Warnings</option><option value="info">Info</option></select></label><label class="ops-f">Source<select id="es"><option value="all">All</option><option value="server">Server</option><option value="browser">Browser</option><option value="mail">Email</option><option value="payment">Payments</option><option value="cron">Daily checks</option></select></label><label class="ops-f">Period<select id="ed"><option value="1">24 hours</option><option value="7">7 days</option><option value="30" selected>30 days</option><option value="365">1 year</option></select></label><label class="ops-f ops-check"><span>&nbsp;</span><span><input type="checkbox" id="eo"> Open only</span></label></section>
         <div class="ops-bar"><button class="button primary small" id="edl">⬇ Download CSV</button><button class="button secondary small" id="edj">⬇ Download JSON</button><span class="grow"></span><button class="button secondary small" id="eres">✓ Mark selected resolved</button><button class="button secondary small" id="eclr">Delete resolved</button><button class="button secondary small" id="eref">↻ Refresh</button></div>
-        <div class="ops-term"><div class="ops-term-bar"><span class="live-dot"></span> <span id="eupd">loading…</span><label style="margin-left:auto"><input type="checkbox" id="eauto" checked> auto-refresh 30s</label></div><div id="elist" class="ops-elist"></div></div>`;
-      const set = (id, k, ev = 'input') => $('#' + id).addEventListener(ev, e => { L[k] = e.target.type === 'checkbox' ? e.target.checked : e.target.value; errors(); });
+        <div class="ops-term"><div class="ops-term-bar"><span class="live-dot"></span> <span id="eupd">loading…</span><label style="margin-left:auto"><input type="checkbox" id="eauto" checked> auto-refresh 30s</label></div><div id="elist" class="ops-elist"></div></div><div class="ops-pager" id="epg"></div>`;
+      const set = (id, k, ev = 'input') => $('#' + id).addEventListener(ev, e => { L[k] = e.target.type === 'checkbox' ? e.target.checked : e.target.value; L.page = 1; clearTimeout(L.qt); L.qt = setTimeout(errors, ev === 'input' ? 350 : 0); });
       set('eq', 'q'); set('el', 'level', 'change'); set('es', 'source', 'change'); set('ed', 'days', 'change'); set('eo', 'open', 'change');
       $('#eref').onclick = () => errors();
       $('#eres').onclick = async () => { if (!L.sel.size) return toast('Select entries first', true); try { await api('/api/admin/errors/clear', { method: 'POST', body: { mode: 'resolve', ids: [...L.sel].filter(x => !String(x).startsWith('mail-')).map(Number) } }); L.sel.clear(); toast('Marked resolved'); errors(); } catch (e) { toast(err(e), true); } };
-      $('#eclr').onclick = async () => { const rows = (L.rows || []).filter(r => r.resolved_at && !String(r.id).startsWith('mail-')); if (!rows.length) return toast('No resolved entries to delete'); try { await api('/api/admin/errors/clear', { method: 'POST', body: { mode: 'delete', ids: rows.map(r => Number(r.id)) } }); toast(rows.length + ' deleted'); errors(); } catch (e) { toast(err(e), true); } };
-      const cols = ['last_seen', 'first_seen', 'level', 'source', 'occurrences', 'message', 'location', 'url', 'resolved'];
-      $('#edl').onclick = () => download('cvtara-error-log-' + new Date().toISOString().slice(0, 10) + '.csv', csv(L.rows || [], cols), 'text/csv');
-      $('#edj').onclick = () => download('cvtara-error-log-' + new Date().toISOString().slice(0, 10) + '.json', JSON.stringify((L.rows || []).map(r => Object.fromEntries(cols.map(c => [c, r[c]]))), null, 2), 'application/json');
+      $('#eclr').onclick = async () => { try { const r = await api('/api/admin/errors/clear', { method: 'POST', body: { mode: 'purge-resolved' } }); toast((r.affected ?? 0) + ' resolved entries deleted'); errors(); } catch (e) { toast(err(e), true); } };
+      // Downloads come from the server with every entry that matches the filters, not just the page on screen.
+      const dl = fmt => { const a = document.createElement('a'); a.href = '/api/admin/errors/download?' + qs() + (fmt === 'json' ? '&format=json' : ''); a.download = ''; document.body.append(a); a.click(); a.remove(); };
+      $('#edl').onclick = () => dl('csv'); $('#edj').onclick = () => dl('json');
       $('#eauto').onchange = e => { clearInterval(L.timer); if (e.target.checked) L.timer = setInterval(() => $('.admin-view.active')?.id === 'admin-errors' && errors(), 30000); };
       h.addEventListener('change', e => { const c = e.target.closest('[data-esel]'); if (c) { c.checked ? L.sel.add(c.dataset.esel) : L.sel.delete(c.dataset.esel); } });
     }
     if ($('#eauto') && $('#eauto').checked) L.timer = setInterval(() => $('.admin-view.active')?.id === 'admin-errors' && errors(), 30000);
     try {
-      const qs = new URLSearchParams({ days: L.days }); if (L.level !== 'all') qs.set('level', L.level); if (L.source !== 'all') qs.set('source', L.source); if (L.q) qs.set('q', L.q); if (L.open) qs.set('state', 'open');
-      const d = await api('/api/admin/errors?' + qs); L.rows = d.errors || [];
+      const d = await api('/api/admin/errors?' + qs() + `&page=${L.page}&per=${L.per}`); L.rows = d.errors || []; L.page = d.page || 1;
+      K.pager($('#epg'), d, (p, per) => { L.page = p; L.per = per; errors(); });
       const s = d.summary || {};
-      $('#ekpi').innerHTML = `<div class="kpi"><span>Errors</span><b style="color:#ef4444">${s.error || 0}</b></div><div class="kpi"><span>Warnings</span><b style="color:#f59e0b">${s.warning || 0}</b></div><div class="kpi"><span>Entries in period</span><b>${s.total || 0}</b></div><div class="kpi"><span>Browser errors</span><b>${L.rows.filter(r => r.source === 'browser').length}</b></div><div class="kpi"><span>Failed emails</span><b>${L.rows.filter(r => r.source === 'mail').length}</b></div>`;
+      $('#ekpi').innerHTML = `<div class="kpi"><span>Errors</span><b style="color:#ef4444">${s.error || 0}</b></div><div class="kpi"><span>Warnings</span><b style="color:#f59e0b">${s.warning || 0}</b></div><div class="kpi"><span>Entries in period</span><b>${s.total || 0}</b></div><div class="kpi"><span>Browser errors</span><b>${s.browser || 0}</b></div><div class="kpi"><span>Failed emails</span><b>${s.mail || 0}</b></div>`;
       $('#eupd').textContent = 'live · updated ' + new Date().toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
       $('#elist').innerHTML = L.rows.map(r => `<div class="ops-erow ${r.resolved_at ? 'done' : ''}"><input type="checkbox" data-esel="${E(r.id)}" ${L.sel.has(String(r.id)) ? 'checked' : ''} aria-label="Select"><span class="lv ${E(r.level)}">${E(r.level.toUpperCase())}</span><span class="src">${E(r.source)}</span><div class="msg"><b>${E(r.message)}</b><small>${E(r.location || '')}${r.url ? ' · ' + E(r.url) : ''}</small></div><span class="cnt" title="occurrences">×${r.occurrences}</span><span class="when">${dtm(r.last_seen)}</span></div>`).join('') || '<div class="ops-erow"><span class="msg"><b>No entries for these filters 🎉</b><small>New errors appear here automatically.</small></span></div>';
     } catch (e) { $('#elist').innerHTML = `<div class="ops-erow"><span class="msg" role="alert"><b>${E(err(e))}</b></span></div>`; }

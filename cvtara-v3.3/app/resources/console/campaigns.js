@@ -76,12 +76,10 @@
   async function contacts(h) {
     const tbl = $('#cmContacts', h); if (!tbl) return;
     try {
-      const qs = new URLSearchParams({ page: String(C.page) }); if (C.q) qs.set('q', C.q);
+      const qs = new URLSearchParams({ page: String(C.page), per: String(C.per || 20) }); if (C.q) qs.set('q', C.q);
       const d = await api('/api/admin/campaigns/contacts?' + qs);
       tbl.innerHTML = d.contacts.length ? `<thead><tr><th>Email</th><th>Name</th><th>Came from</th><th>Added</th><th>Status</th><th></th></tr></thead><tbody>${d.contacts.map(c => `<tr data-cid="${c.id}"><td>${E(c.email)}</td><td>${E(c.name || '—')}</td><td>${E(c.source || '—')}</td><td>${E(K.dmy(K.parse(c.created_at)))}</td><td>${c.unsubscribed_at ? '<span class="ad-pill bad">Unsubscribed</span>' : '<span class="ad-pill ok">Can be emailed</span>'}</td><td><button class="button secondary small" data-cdel>Remove</button></td></tr>`).join('')}</tbody>` : '<tbody><tr><td>No contacts yet.</td></tr></tbody>';
-      const pages = Math.max(1, Math.ceil(d.total / d.per));
-      $('#cmPager', h).innerHTML = d.total ? `<span>${n(d.total)} contact${d.total === 1 ? '' : 's'} · page ${d.page} of ${pages}</span> <button class="button secondary small" data-pg="${d.page - 1}" ${d.page <= 1 ? 'disabled' : ''}>← Prev</button> <button class="button secondary small" data-pg="${d.page + 1}" ${d.page >= pages ? 'disabled' : ''}>Next →</button>` : '';
-      $('#cmPager', h).onclick = e => { const b = e.target.closest('[data-pg]'); if (b && !b.disabled) { C.page = +b.dataset.pg; contacts(h); } };
+      K.pager($('#cmPager', h), d, (p, per) => { C.page = p; C.per = per; contacts(h); });
       tbl.onclick = async e => { const b = e.target.closest('[data-cdel]'); if (!b) return; e.stopPropagation(); if (!confirm('Remove this contact from your list?')) return; try { await post('/api/admin/campaigns/contacts/delete', { id: +b.closest('tr').dataset.cid }, true); toast('Removed'); contacts(h); } catch (x) { toast(err(x), true); } };
     } catch (e) { tbl.innerHTML = `<tbody><tr><td role="alert">${E(err(e))}</td></tr></tbody>`; }
   }

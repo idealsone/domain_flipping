@@ -1,3 +1,13 @@
+# CVTara v3.25.0 — Owner console lists load one page at a time
+
+## 3.25.0
+- **Every owner console list is paged:** lists show 20 rows with page numbers, Previous/Next and a rows-per-page choice (10, 20, 50 or 100). Users, Orders, Error Log, Reviews, Referral Ops (withdrawals, payout identities, creator applications, affiliate balances), User Mailer emails, Keyword intelligence (page checklist and Search Console queries and pages), Customer purchase history, Support Inbox, campaign contacts, outreach contacts and Reports all ask the server for one page, so nothing downloads or draws a whole table.
+- **One filter bar per list:** search plus the filters that fit the list (status, plan, payment source, section, checklist score, email type, date range), with sortable column headers. Search, filters and sorting run in the database, and the total always counts everything that matches.
+- **Smaller tables stay light too:** any other table in the console (blog posts, website URLs, analytics, campaigns, health history) shows 20 rows at a time with the same page links.
+- **Faster console start:** opening the console no longer loads the full user list three times. The Users list, the dashboard numbers and the live stats card are now separate small requests; the dashboard numbers are shared for 30 seconds and the live card asks for five counts. The old second Users screen opens the paged Users view.
+- **Error Log:** downloads include every entry that matches the filters, and "Delete resolved" removes all resolved entries, not only those on screen.
+- **Migration:** adds indexes for list sorting (users, purchases, reviews, emails and withdrawals by date). Run `php artisan migrate --force` after updating.
+
 # CVTara v3.24.0 — Search Console connection fixes and fast indexing
 
 ## 3.24.0
