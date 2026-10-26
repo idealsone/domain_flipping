@@ -48,6 +48,14 @@ Artisan::command('cvtara:cron', function () {
             \App\Services\ErrorLog::exception($e);
         }
     }
+    // New or changed public pages go to IndexNow (and Google, if the owner switched it on) once an hour.
+    if (\Illuminate\Support\Facades\Cache::add('fast-index-run', 1, 3600)) {
+        try {
+            \App\Services\FastIndex::run();
+        } catch (\Throwable $e) {
+            \App\Services\ErrorLog::exception($e);
+        }
+    }
     try {
         \App\Services\Health::run();
     } catch (\Throwable $e) {
