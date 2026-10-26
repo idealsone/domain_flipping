@@ -94,7 +94,7 @@ class AdminController extends Controller
         }
         if ($path === 'providers') {
             $p = Settings::providers();
-            $fields = ['jobreader' => ['enabled', 'provider', 'scrapingbeeApiKey', 'zenrowsApiKey', 'customUrlTemplate', 'customApiKey', 'dailyLimit'], 'payments' => ['provider', 'mode', 'razorpayKeyId', 'razorpayKeySecret', 'razorpayWebhookSecret'], 'email' => ['provider', 'resendApiKey', 'smtpHost', 'smtpPort', 'smtpUser', 'smtpPassword', 'fromEmail', 'fromName', 'replyTo', 'postalAddress'], 'ai' => ['provider', 'claudeApiKey', 'model', 'dailyLimit', 'writerApiKey'], 'grammar' => ['url', 'username', 'premiumApiKey'], 'analytics' => ['measurementId', 'searchConsoleProperty', 'searchConsoleServiceAccount'], 'push' => ['oneSignalAppId', 'oneSignalRestApiKey']];
+            $fields = ['jobreader' => ['enabled', 'provider', 'scrapingbeeApiKey', 'zenrowsApiKey', 'customUrlTemplate', 'customApiKey', 'dailyLimit'], 'payments' => ['provider', 'mode', 'razorpayKeyId', 'razorpayKeySecret', 'razorpayWebhookSecret', 'phonepeMode', 'phonepeClientId', 'phonepeClientVersion', 'phonepeClientSecret', 'phonepeWebhookUsername', 'phonepeWebhookPassword'], 'email' => ['provider', 'resendApiKey', 'smtpHost', 'smtpPort', 'smtpUser', 'smtpPassword', 'fromEmail', 'fromName', 'replyTo', 'postalAddress'], 'ai' => ['provider', 'claudeApiKey', 'model', 'dailyLimit', 'writerApiKey'], 'grammar' => ['url', 'username', 'premiumApiKey'], 'analytics' => ['measurementId', 'searchConsoleProperty', 'searchConsoleServiceAccount'], 'push' => ['oneSignalAppId', 'oneSignalRestApiKey']];
             $secret = fn ($k) => preg_match('/Secret|ApiKey|Password|ServiceAccount|AuthToken/', $k);
             if ($get) {
                 foreach ($p as &$service) {
@@ -117,6 +117,9 @@ class AdminController extends Controller
                     abort(422, 'The custom address must contain {url} where the job link goes.');
                 }
             }
+            if ($r->service === 'payments') {
+                validator($r->values, ['provider' => 'sometimes|in:razorpay,phonepe,both', 'mode' => 'sometimes|in:test,live', 'phonepeMode' => 'sometimes|in:test,live', 'phonepeClientVersion' => 'nullable|regex:/^[0-9]{1,4}$/'])->validate();
+            }
             if ($r->service === 'grammar') {
                 validator($r->values, ['url' => 'nullable|url:http,https|max:300', 'username' => 'nullable|string|max:190'])->validate();
             }
@@ -135,7 +138,20 @@ class AdminController extends Controller
                 };
                 abort_unless($ready, 422, 'Enter the key (or address) for the selected reading service first.');
             }if ($r->service === 'payments') {
-                abort_unless(! empty($p['payments']['razorpayKeyId']) && ! empty($p['payments']['razorpayKeySecret']), 422, 'Enter the Razorpay Key ID and Key secret.');
+                $pay = $p['payments'];
+                $choice = $pay['provider'] ?? 'razorpay';
+                if (in_array($choice, ['razorpay', 'both'], true)) {
+                    abort_unless(! empty($pay['razorpayKeyId']) && ! empty($pay['razorpayKeySecret']), 422, 'Enter the Razorpay Key ID and Key secret.');
+                }
+                if (in_array($choice, ['phonepe', 'both'], true)) {
+                    abort_unless(\App\Services\PhonePe::configured($pay), 422, 'Enter the PhonePe Client ID and Client secret.');
+                    abort_unless(! empty($pay['phonepeWebhookUsername']) && ! empty($pay['phonepeWebhookPassword']), 422, 'Enter the PhonePe webhook username and password you set in the PhonePe dashboard.');
+                    try {
+                        \App\Services\PhonePe::token($pay, true);
+                    } catch (\Throwable $e) {
+                        abort(422, 'PhonePe did not accept these credentials. Check the Client ID, Client version, Client secret and the Test/Live mode.');
+                    }
+                }
             }if (! empty($p['email']['fromEmail'])) {
                 abort_unless(filter_var($p['email']['fromEmail'], FILTER_VALIDATE_EMAIL), 422);
             }if (! empty($p['email']['replyTo'])) {

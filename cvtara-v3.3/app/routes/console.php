@@ -40,6 +40,14 @@ Artisan::command('cvtara:cron', function () {
             \App\Services\ErrorLog::exception($e);
         }
     }
+    // PhonePe orders whose customer closed the payment page before returning, and whose callback has not arrived.
+    if (\Illuminate\Support\Facades\Cache::add('phonepe-reconcile', 1, 300)) {
+        try {
+            \App\Services\PhonePe::reconcile();
+        } catch (\Throwable $e) {
+            \App\Services\ErrorLog::exception($e);
+        }
+    }
     try {
         \App\Services\Health::run();
     } catch (\Throwable $e) {

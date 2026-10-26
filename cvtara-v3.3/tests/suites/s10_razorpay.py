@@ -1,4 +1,4 @@
-"""Razorpay is the only payment gateway: order, signed verify, refund, and no mobile number at checkout."""
+"""Razorpay checkout: order, signed verify, refund, and no mobile number at checkout."""
 import hashlib, hmac
 NAME = "Razorpay checkout"
 SECRET = "rzp_secret_test_value"
@@ -45,6 +45,6 @@ def run(ctx, t):
         t.check("an order paid through Cashfree before the switch asks the customer to write to support", s == 422 and "support" in str(j), (s, str(j)[:200]))
         db.q("update purchases set provider='razorpay', status='refunded', refunded_paise=29900 where id=?", purchase)
         t.check("the Cashfree webhook address is gone", Client(inst.base)._post_raw("/webhooks/cashfree", b"{}", {"Content-Type": "application/json", "Accept": "application/json"})[0] in (404, 405))
-        s, j = o.api("GET", "admin/setup/status"); t.check("setup status sees payments configured and lists only the Razorpay webhook", s == 200 and list(j.get("webhooks", {}).keys()) == ["razorpay"], j.get("webhooks"))
+        s, j = o.api("GET", "admin/setup/status"); t.check("setup status lists the Razorpay and PhonePe webhooks", s == 200 and sorted(j.get("webhooks", {}).keys()) == ["phonepe", "razorpay"], j.get("webhooks"))
     finally:
         inst.stop(); rz.stop()
