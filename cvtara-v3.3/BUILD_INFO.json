@@ -1,7 +1,7 @@
 {
   "brand": "CVTara",
-  "version": "3.22.2",
-  "package_date": "2026-10-25",
+  "version": "3.23.0",
+  "package_date": "2026-10-26",
   "source": "3.2.0-RC1 audited and extended through 3.19.0: Razorpay as the only payment gateway, Tara AI writing help powered by Claude, owner email campaigns; Check my writing (3.17.0); programmatic SEO pages (3.15.0); plainer trust points and unused code removed; new packages (Quick Download, Job Hunt, Pro), 7-day refund if unused, Give ₹50 get ₹50 wallet referral; plain-language home with what you get, no exit pop-up or referral milestone rewards, branded email with sign-up code, reminders and monthly guide, plan-needed dialog, credits and scans per plan, server-side ATS Match with job-link reading, feedback inbox, ready-made pages and busy mode, resume upload, ATS-friendly score per resume and application status reminders; offers & festivals, recent-activity notices, home/blog/article/contact rework",
   "status": "Private Hostinger acceptance package; not approved for public paid launch",
   "runtime": "PHP 8.3+, Laravel 13, MySQL/MariaDB",
@@ -12,6 +12,7 @@
   },
   "known_launch_blockers": [
     "Live Razorpay payment, refund and webhook acceptance and live email delivery remain pending.",
+    "PhonePe was tested only against a local stand-in of its API; a sandbox payment, refund and webhook on PhonePe's test environment are pending, and PhonePe merchant approval is needed before live keys exist.",
     "Hostinger staging install and real-device validation remain pending.",
     "Some plan perks (Naukri/LinkedIn export, 1-on-1 call, priority support, lifetime updates) are listed text, not built features.",
     "Identity, tax, fraud-review and payout operating policies require owner approval.",

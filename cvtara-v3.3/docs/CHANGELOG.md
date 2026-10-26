@@ -1,3 +1,14 @@
+# CVTara v3.23.0 — PhonePe payment gateway beside Razorpay
+
+## 3.23.0
+- **PhonePe checkout (PG API v2, Standard Checkout):** the server creates the order and sends the customer to PhonePe's payment page. Access is granted only after PhonePe's order-status API says the payment is complete, checked when the customer comes back, when PhonePe's callback arrives, and every 5 minutes by the scheduled job for orders whose customer closed the page.
+- **Callback:** `POST /webhooks/phonepe`, authorised with the username and password set in the PhonePe dashboard (PhonePe sends SHA256 of `username:password`). Subscribe to checkout.order.completed, checkout.order.failed, pg.refund.completed and pg.refund.failed.
+- **Refunds:** approving a 7-day refund on a PhonePe order sends the full amount back through PhonePe's refund API; a failed refund callback is logged in the Error Log for the owner.
+- **Owner console > Integrations > Payments:** "Gateways shown at checkout" is Razorpay, PhonePe or both. PhonePe needs the Client ID, Client version, Client secret, webhook username and password, and Test (sandbox) or Live. Credentials are checked with PhonePe when saved and stored encrypted.
+- **Checkout:** with both gateways on, the customer picks one. Referral credit, wallet, coupons and add-on rules work the same for PhonePe payments. Receipts say which gateway was used.
+- **Policies:** the default privacy policy and terms name PhonePe beside Razorpay. A saved copy in Footer & policies is not changed: update it before switching PhonePe on.
+- No migrations. Rebuild the ready-made pages after updating.
+
 # CVTara v3.22.2 — Owner console pages load reliably, lighter pages, unused code removed
 
 ## 3.22.2

@@ -74,7 +74,7 @@ class Referrals
     public static function credit(object $p): void
     {
         // Cash commission is the older programme; the "Give ₹50, get ₹50" wallet replaced it. Balances already earned stay withdrawable.
-        if (self::config()['mode'] !== 'commission' || ! $p->is_live || $p->status !== 'paid' || ! in_array($p->provider, ['razorpay', 'cashfree'], true) || ! self::config()['enabled']) {
+        if (self::config()['mode'] !== 'commission' || ! $p->is_live || $p->status !== 'paid' || ! in_array($p->provider, ['razorpay', 'phonepe', 'cashfree'], true) || ! self::config()['enabled']) {
             return;
         }$buyer = User::find($p->owner_id);
         if (! $buyer?->referred_by || $buyer->referred_by === $buyer->id) {
