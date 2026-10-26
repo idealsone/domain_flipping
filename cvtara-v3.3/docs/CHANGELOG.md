@@ -7,6 +7,7 @@
 - **Owner console > Integrations > Payments:** "Gateways shown at checkout" is Razorpay, PhonePe or both. PhonePe needs the Client ID, Client version, Client secret, webhook username and password, and Test (sandbox) or Live. Credentials are checked with PhonePe when saved and stored encrypted.
 - **Checkout:** with both gateways on, the customer picks one. Referral credit, wallet, coupons and add-on rules work the same for PhonePe payments. Receipts say which gateway was used.
 - **Policies:** the default privacy policy and terms name PhonePe beside Razorpay. A saved copy in Footer & policies is not changed: update it before switching PhonePe on.
+- **Contact us:** the contact page shows the support phone number +91 82178 23192 (tap to call). A number saved under Footer, policies & contact replaces it.
 - No migrations. Rebuild the ready-made pages after updating.
 
 # CVTara v3.22.2 — Owner console pages load reliably, lighter pages, unused code removed
