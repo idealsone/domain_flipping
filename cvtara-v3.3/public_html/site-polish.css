@@ -66,6 +66,12 @@ body.has-topbar [data-header]{top:44px}
 @media (max-width:760px){.to-top{right:14px;bottom:calc(78px + env(safe-area-inset-bottom))}}
 @media print{.to-top{display:none}}
 [data-header] .site-header{background:var(--paper)}
+/* Analytics consent: owner-console.css (where this used to live) is only sent to admins, so visitors got the banner unstyled at the very bottom of the page and Google Analytics never started */
+.owner-consent{position:fixed;left:50%;bottom:20px;transform:translateX(-50%);z-index:5100;width:min(560px,calc(100% - 32px));display:flex;flex-wrap:wrap;align-items:center;gap:10px 12px;padding:16px 18px;background:var(--paper,#fff);color:var(--ink,#0f172a);border:1px solid var(--line,#e2e8f0);border-radius:14px;box-shadow:0 14px 44px rgba(15,23,42,.22)}
+.owner-consent p{flex:1 1 100%;margin:0;font-size:15px;line-height:1.5}
+.owner-consent button{margin:0}
+@media (max-width:760px){.owner-consent{bottom:calc(78px + env(safe-area-inset-bottom))}.owner-consent button{flex:1 1 0}}
+@media print{.owner-consent{display:none}}
 
 /* Human touch (3.26): one solid brand blue for main buttons and the announcement bar on every page, no blue-to-purple gradient or glow.
    The referral offer keeps its own accent colour. */
