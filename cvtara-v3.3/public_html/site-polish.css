@@ -84,3 +84,24 @@ html body[data-page=workspace] .side-nav button.active,html body[data-page=works
 html body .ws-hero{background:#16233f;border-radius:14px}
 html body .ws-hero .button.mint{background:#fff!important;color:#16233f!important;border-color:#fff}
 html body .ws-hero .ws-plan-chip{background:rgba(255,255,255,.06);border-color:rgba(255,255,255,.14)}
+
+/* Public pages (3.26): the homepage's look carried across the site. Serif headings, one solid blue for actions,
+   plain section labels, flat covers and panels instead of gradients, no emoji artwork. */
+:root{--cv-serif:'Fraunces',Georgia,'Times New Roman',serif;--cv-blue:#1f4fd1;--cv-accent:#b4531a;--sp-head:var(--cv-serif);--sp-cta:#1f4fd1;--sp-cta-hover:#173fae;--sp-cta-ink:#fff;--sp-tint:#f7f4ee}
+html.dark,html[data-theme=dark]{--cv-accent:#f59e5b;--sp-tint:#1a2033}
+body:is([data-page=templates],[data-page=coverletters],[data-page=blog],[data-page=guides],[data-page=article],[data-page=legal],[data-page=contact],[data-page=checkout]) main :is(h1,h2):not(.doc-name):not([class*=rs-]),
+body[data-page=seo] .sp-shell :is(h1,h2){font-family:var(--cv-serif);font-weight:600;letter-spacing:-.012em}
+.sp-shell h3{font-family:'Inter',system-ui,sans-serif}
+.sp-hero{background:var(--sp-surface);box-shadow:none}
+.sp-eyebrow{background:none;border:0;padding:0;border-radius:0;letter-spacing:.02em;color:var(--cv-accent)}
+.sp-cta{color:#fff!important;font-weight:600}
+.sp-secondary{border-radius:10px}
+.blog-art,.blog2 .blog-art,.blog2 .blog-art.is-guide{background:#16233f!important}
+.blog-art:after{display:none}
+.b2-band{background:#16233f}
+/* the generated cover only repeated the page title in a coloured box; real cover photos still show */
+.b2-cover{display:none}
+.article-cta{background:var(--sp-tint,#f7f4ee)}
+/* Night mode: blue text links lifted so they stay readable on dark panels */
+:where(html.dark,html[data-theme=dark]) :is(.tp-all,.b2-go,.sp-shell a:not([class]),main a:not([class]),.calculator-result>span){color:#8fb0ff}
+html.dark body[data-page] .legal-shell a,html.dark .cover-letter-card em{color:#8fb0ff}
