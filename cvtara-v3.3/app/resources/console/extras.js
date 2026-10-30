@@ -147,8 +147,5 @@
   const panels = { pricing: pricingPanel, popup: popupPanel, setup: setupPanel };
   const run = k => { if (panels[k]) panels[k](); };
   document.addEventListener('click', e => { const b = e.target.closest('[data-admin-view]'); if (b && panels[b.dataset.adminView]) setTimeout(() => run(b.dataset.adminView), 0); });
-  addEventListener('load', () => setTimeout(() => {
-    const tab = new URLSearchParams(location.search).get('tab');
-    if (panels[tab]) run(tab);
-  }, 900));
+  // A ?tab= address is opened by ops.js through the side menu, which reaches these panels via the click handler above.
 })();
