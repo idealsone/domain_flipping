@@ -45,7 +45,6 @@
 <script src="/premium-collection.js"></script>
 <script src="/template-curation.js" defer></script><script src="/template-picker.js" defer></script><script src="/preview.js"></script>
 <script src="/profile-api.js"></script>
-<script src="/onesignal-push.js"></script>
 <script src="/connected-ui.js"></script>
 <script src="/business-ui.js" defer></script></body>
 </html>

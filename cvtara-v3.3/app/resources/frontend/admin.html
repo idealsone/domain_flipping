@@ -947,7 +947,7 @@
 <div class="admin-heading">
 <div>
 <span class="eyebrow">SECURE PROVIDER SETTINGS</span>
-<h2>Payments, email, AI, analytics and push.</h2>
+<h2>Payments, email, AI and analytics.</h2>
 <p>Secrets are stored only in the installed Hostinger database and never included in the downloadable package or public website.</p>
 </div>
 <button class="button primary" data-save="Integration">Save integration settings</button>
@@ -1014,30 +1014,15 @@
 </form>
 
 <form class="admin-card admin-form">
-<h3>Analytics & push</h3>
+<h3>Analytics</h3>
 <label>Google Analytics 4 ID<input placeholder="G-XXXXXXXXXX">
 </label>
 <label>Meta Pixel ID<input>
 </label>
 <label>Microsoft Clarity ID<input>
 </label>
-<label>OneSignal App ID<input>
-</label>
-<label>Push prompt timing<select>
-<option>After second engaged session</option>
-<option>After completed diagnosis</option>
-<option>Disabled</option>
-</select>
-</label>
-<div class="admin-note">Do not request push permission on page load. Ask after value is demonstrated.</div>
 </form>
 </div>
-</section>
-
-<section class="admin-view" id="admin-push">
-<div class="admin-heading"><div><span class="eyebrow">ONESIGNAL · PERMISSION-RESPECTING</span><h2>Control web-push prompts and campaigns.</h2><p>The branded soft prompt demonstrates value first. Native browser permission opens only after the visitor explicitly chooses to continue.</p></div><a class="button primary" href="index.html?push-demo=1" target="_blank">Preview public prompt ↗</a></div>
-<div class="admin-grid"><form class="admin-card admin-form"><h3>Provider & prompt</h3><label>Provider<select><option>OneSignal</option><option>Disabled</option></select></label><label>OneSignal App ID<input placeholder="Configured only after private installation"></label><label>Prompt heading<input value="Get useful career alerts—not spam."></label><label>Prompt message<textarea>New salary tools, resume checks and practical job-search guides. You control the frequency.</textarea></label><div class="form-row"><label>Delay seconds<input type="number" value="5"></label><label>Maximum prompts / visitor<input type="number" value="1"></label></div><label>Trigger<select><option>After completed diagnosis</option><option>After engaged session</option><option>Manual campaign link only</option></select></label><label class="switch-line"><span>Native permission only after explicit click</span><input type="checkbox" checked></label><button class="button primary" data-save="Push prompt">Save prompt</button></form><form class="admin-card admin-form"><h3>Campaign composer</h3><label>Audience<select><option>Subscribed users</option><option>Free users with consent</option><option>Paid users with consent</option><option>Access expiring</option><option>Blog readers</option></select></label><label>Title<input value="New: IT fresher resume format guide"></label><label>Message<textarea>See the section order, project examples and readable resume preview.</textarea></label><label>Destination URL<input value="/guides/resume/it-fresher-format/"></label><div class="form-row"><label>Schedule<input type="datetime-local"></label><label>UTM campaign<input value="push_it_fresher_guide"></label></div><label class="switch-line"><span>Respect promotional frequency cap</span><input type="checkbox" checked></label><button class="button secondary" data-toast="Push campaign preview created. No notification was sent from this private demo.">Preview campaign</button></form></div>
-<section class="admin-card" style="margin-top:15px"><div class="admin-heading"><div><h3>Delivery rules and recent activity</h3><p>Transactional account email remains separate from optional promotional push.</p></div></div><div class="admin-grid"><div class="stage-list"><span>Maximum promotional pushes · 2 per week</span><span>Quiet hours · 21:00–09:00 recipient local time</span><span>Unsubscribe link / browser controls · always available</span><span>Consent timestamp and provider subscriber ID · recorded</span></div><table class="admin-table"><thead><tr><th>Campaign</th><th>Audience</th><th>Status</th></tr></thead><tbody><tr><td>Salary guide digest</td><td>Blog readers</td><td>Draft</td></tr><tr><td>Access-expiry reminder</td><td>Expiring users</td><td>Automated</td></tr></tbody></table></div></section>
 </section>
 
 <section class="admin-view" id="admin-legal">
@@ -1113,7 +1098,6 @@
 <script src="/template-curation.js" defer></script><script src="preview.js">
 </script>
 <script src="/profile-api.js"></script>
-<script src="/onesignal-push.js"></script>
 <script src="/connected-ui.js"></script>
 
 <script src="/workspace-activity.js"></script><script src="/refunds-admin.js" defer></script>
