@@ -1,4 +1,0 @@
-.env
-storage/logs/*.log
-storage/cache/*.cache
-storage/installed.lock

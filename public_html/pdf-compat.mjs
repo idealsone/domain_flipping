@@ -1,4 +1,0 @@
-// Byte encoding methods used by PDF.js; support browsers predating these methods.
-if(!Uint8Array.prototype.toHex)Object.defineProperty(Uint8Array.prototype,'toHex',{value:function(){return Array.from(this,b=>b.toString(16).padStart(2,'0')).join('');},configurable:true});
-if(!Uint8Array.prototype.toBase64)Object.defineProperty(Uint8Array.prototype,'toBase64',{value:function(options={}){let out='';for(let i=0;i<this.length;i+=8192)out+=String.fromCharCode(...this.subarray(i,i+8192));out=btoa(out);if(options.alphabet==='base64url')out=out.replace(/\+/g,'-').replace(/\//g,'_');return options.omitPadding?out.replace(/=+$/,''):out;},configurable:true});
-if(!Uint8Array.fromBase64)Object.defineProperty(Uint8Array,'fromBase64',{value:function(text,options={}){if(options.alphabet==='base64url')text=text.replace(/-/g,'+').replace(/_/g,'/');return Uint8Array.from(atob(text),c=>c.charCodeAt(0));},configurable:true});
