@@ -19,12 +19,14 @@ def run(ctx, t):
                   "business controls/coupons": ("admin/business-controls", bc),
                   "payment provider keys": ("admin/providers", {"service": "payments", "values": {"provider": "razorpay", "razorpayKeyId": "rzp_live_x"}}),
                   "email provider": ("admin/providers", {"service": "email", "values": {"provider": "resend", "resendApiKey": "re_x"}}),
-                  "integrations content": ("admin/content/integrations", {"data": {}, "revision": 0}),
-                  "email templates content": ("admin/content/emails", {"data": {}, "revision": 0}),
-                  "legal content": ("admin/content/legal", {"data": {}, "revision": 0})}
+                  "integrations content": ("admin/content/integrations", {"data": {}, "revision": 0})}
         for label, (path, body) in writes.items():
             s, j = o.api("POST", path, body)
             t.check(f"{label}: blocked without confirmation", s == 422 and "Verify your email code" in str(j), f"{s} {str(j)[:120]}")
-        s, j = o.api("POST", "admin/content/blog", {"data": {}, "revision": 0}); t.check("blog content is not step-up protected (normal editing)", "Verify your email code" not in str(j), j)
+        t.check("owners unlock for an hour, so a run of saves asks once", "unlock for 1 hour" in str(j), j)
+        # Plain text saves (email wording, legal pages, blog, Expert Review auto switch) never ask for a code.
+        for key in ("blog", "emails", "legal"):
+            s, j = o.api("POST", f"admin/content/{key}", {"data": {}, "revision": 0}); t.check(f"{key} content is not step-up protected (normal editing)", "Verify your email code" not in str(j), j)
+        s, j = o.api("POST", "admin/services/settings", {"autoReview": False}); t.check("Expert Review auto switch needs no code", s == 200, j)
     finally:
         inst.stop()
