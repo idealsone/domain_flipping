@@ -72,6 +72,12 @@ Artisan::command('cvtara:cron', function () {
     } catch (\Throwable $e) {
         \App\Services\ErrorLog::exception($e);
     }
+    // SEO agent: once a day (Mon–Sat from 11 AM India time) pull Search Console and propose changes for the owner to approve.
+    try {
+        \App\Services\SeoAgent::run();
+    } catch (\Throwable $e) {
+        \App\Services\ErrorLog::exception($e);
+    }
     // Tara Expert Review orders waiting for Tara AI: a few per run, so the run stays inside the host's time limit.
     try {
         \App\Services\ExpertReview::run();

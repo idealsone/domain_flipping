@@ -28,6 +28,7 @@
         <div class="kpi"><small>New paying customers</small><b>${n(m.newCustomers)}</b><small>${n(m.repeatPurchases)} repeat purchases</small></div>
       </div>
       <section class="panel panel-pad"><h3 style="margin-top:0">Next actions</h3><ul style="margin:0;padding-left:18px">${D.actions.map(a => `<li>${E(a)}</li>`).join('')}</ul></section>
+      <section class="panel panel-pad" data-nokit id="grSeo"><h3 style="margin-top:0">SEO agent</h3><div class="ops-skel"></div></section>
       <section class="panel panel-pad" data-nokit><h3 style="margin-top:0">Funnel</h3>
         <p class="muted" style="margin-top:0">Each step shows the people who reached it and, below, the share of the step before.${D.analytics ? ' Visitors are people who allowed analytics on the cookie banner, so the real number is higher.' : ' Visitors show as unavailable until Analytics is switched on in Integrations.'}</p>
         <div style="overflow:auto"><table class="ad-table"><thead><tr><th></th>${Object.values(st).map(l => `<th>${E(l)}</th>`).join('')}</tr></thead><tbody>${funnel(D.today, 'Today')}${funnel(D.week, 'Last 7 days')}${funnel(m, 'This month')}</tbody></table></div>
@@ -42,7 +43,7 @@
         <p class="muted" style="margin-bottom:0">Actuals fill in from each day's stored numbers. Gross target = purchases × ${inr(D.settings.avgPaise)} average.</p></section>
       <div class="ops-two">
         <section class="panel panel-pad"><h3 style="margin-top:0">AI spending this month</h3>
-          <p style="margin-top:0"><b>${inr(B.spentPaise)}</b> of ${inr(B.capPaise)} cap${B.pct === null ? '' : ' (' + B.pct + '%)'}</p>
+          <p style="margin-top:0"><b>${inr(B.spentPaise)}</b> ${B.capPaise ? 'of ' + inr(B.capPaise) + ' cap' + (B.pct === null ? '' : ' (' + B.pct + '%)') : 'spent (no limit set; monitoring only)'}</p>
           <div class="ops-bar" style="height:8px;border-radius:4px;background:var(--line,#e5e7eb);overflow:hidden"><div style="height:100%;width:${Math.min(100, B.pct || 0)}%;background:${B.pct >= 90 ? '#dc2626' : B.pct >= 75 ? '#d97706' : '#16a34a'}"></div></div>
           <p class="muted">${Object.entries(B.byPurpose).map(([k, v]) => `${E(k === 'customer' ? 'Customer add-ons' : k)}: ${inr(v.paise)} (${n(v.calls)} requests)`).join(' · ') || 'No requests yet this month.'}</p>
           <p class="muted" style="margin-bottom:0">Alerts at 50%, 75% and 90% go to the Error Log and the reports. At 100% growth tasks stop; paid customer add-ons keep working. Cost is worked out from the token prices below, so keep them in line with your AI provider's pricing page.</p></section>
@@ -60,7 +61,48 @@
     $('#grB', h).onchange = e => { R.band = e.target.value; R.page = 1; reports(h); };
     $('#grNow', h).onclick = async () => { try { const hr = new Date(Date.now() + 5.5 * 3600e3).getUTCHours(); await api('/api/admin/growth/report-now', { method: 'POST', body: { slot: hr >= 19 ? 'evening' : 'midday' } }); toast('Report saved and emailed'); R.page = 1; reports(h); } catch (x) { toast(err(x)); } };
     $('#grSet', h).onclick = settings;
-    reports(h);
+    reports(h); seo(h);
+  }
+
+  const KIND = { meta: 'New title and description', links: 'Links from related pages' };
+  const ST = { pending: ['Waiting for you', 'mid'], approved: ['Live', 'ok'], rejected: ['Rejected', ''], reverted: ['Undone', ''] };
+  const P = { page: 1, per: 20, status: 'pending', kind: 'all' };
+  async function seo(h) {
+    const box = $('#grSeo', h); if (!box) return;
+    let d; try { d = (await api('/api/admin/growth/seo')).seo; } catch (e) { box.innerHTML = `<h3 style="margin-top:0">SEO agent</h3><p role="alert">${E(err(e))}</p>`; return; }
+    const kw = (rows, f) => rows.length ? `<table class="ad-table"><tbody>${rows.map(f).join('')}</tbody></table>` : '<p class="muted">Nothing yet.</p>';
+    box.innerHTML = `<h3 style="margin-top:0">SEO agent</h3>
+      <p class="muted" style="margin-top:0">Every day from 11 AM (Monday to Saturday) it reads Search Console, finds searches close to page 1, pages that are seen but rarely clicked and searches split across pages, and proposes changes. Nothing goes live until you approve it, and every live change can be undone.</p>
+      ${d.ready ? '' : '<div class="panel panel-pad" role="alert" style="border-left:4px solid #d97706;margin-bottom:10px">Search Console is not connected, so rankings are unavailable. Add the property and service-account key in Integrations → Analytics.</div>'}
+      <div class="ops-kpis"><div class="kpi"><small>Google clicks (4 weeks)</small><b>${n(d.clicks)}</b><small>${d.endDate ? 'data up to ' + E(d.endDate) : ''}</small></div><div class="kpi"><small>Impressions</small><b>${n(d.impressions)}</b><small>times CVTara was shown</small></div><div class="kpi"><small>Waiting for you</small><b>${n(d.pending)}</b><small>${n(d.live)} live</small></div></div>
+      <div class="ops-two"><div><h4>Close to page 1</h4>${kw(d.striking, r => `<tr><td>${E(r.query)}<br><small class="muted">${E(r.path)}</small></td><td>#${r.position}</td><td>${n(r.impressions)}</td></tr>`)}</div>
+        <div><h4>Seen but rarely clicked</h4>${kw(d.lowCtr, r => `<tr><td>${E(r.path)}</td><td>#${Math.round(r.position * 10) / 10}</td><td>${(Math.round(r.ctr * 1000) / 10)}% clicked</td></tr>`)}
+        <h4>Searches split across two pages</h4>${kw(d.split, r => `<tr><td>${E(r.query)}<br><small class="muted">${r.pages.map(E).join(' · ')}</small></td></tr>`)}
+        <h4>Searches with no good page yet</h4>${kw(d.gaps, r => `<tr><td>${E(r.query)}</td><td>best #${r.best}</td><td>${n(r.impressions)}</td></tr>`)}</div></div>
+      <h4>Proposed changes</h4>
+      <div class="ops-filterbox"><label class="ops-f">Status<select id="spS"><option value="all">All</option>${Object.entries(ST).map(([k, v]) => `<option value="${k}">${E(v[0])}</option>`).join('')}</select></label>
+        <label class="ops-f">Kind<select id="spK"><option value="all">All</option>${Object.entries(KIND).map(([k, v]) => `<option value="${k}">${E(v)}</option>`).join('')}</select></label>
+        <button class="button secondary small" id="spRun">Check Search Console now</button></div>
+      <div id="spL"></div><div class="ops-pager" id="spP"></div>`;
+    $('#spS', box).value = P.status; $('#spK', box).value = P.kind;
+    $('#spS', box).onchange = e => { P.status = e.target.value; P.page = 1; proposals(box); };
+    $('#spK', box).onchange = e => { P.kind = e.target.value; P.page = 1; proposals(box); };
+    $('#spRun', box).onclick = async e => { e.target.disabled = true; try { const r = await api('/api/admin/growth/seo/run', { method: 'POST', body: {} }); toast(`Read ${n(r.pairs)} searches · ${r.meta} title and ${r.links} link proposals`); seo(h); } catch (x) { toast(err(x)); e.target.disabled = false; } };
+    proposals(box);
+  }
+  async function proposals(box) {
+    const l = $('#spL', box); if (!l) return;
+    try {
+      const qs = new URLSearchParams({ page: String(P.page), per: String(P.per) }); if (P.status !== 'all') qs.set('status', P.status); if (P.kind !== 'all') qs.set('kind', P.kind);
+      const d = await api('/api/admin/growth/seo/proposals?' + qs);
+      l.innerHTML = d.rows.length ? d.rows.map(p => `<div class="panel panel-pad" style="margin-bottom:8px"><div style="display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap"><b>${E(KIND[p.kind] || p.kind)} · <a href="${E(p.path)}" target="_blank" rel="noopener">${E(p.path)}</a></b><span class="pill ${(ST[p.status] || ['', ''])[1]}">${E((ST[p.status] || [p.status])[0])}</span></div>
+        <p class="muted" style="margin:6px 0">${E(p.reason)}</p>
+        ${p.kind === 'meta' ? `<table class="ad-table"><tbody><tr><th>Now</th><td>${E(p.before.title)}<br><small>${E(p.before.description)}</small></td></tr><tr><th>Proposed</th><td><b>${E(p.data.title)}</b><br><small>${E(p.data.description)}</small></td></tr></tbody></table>`
+          : `<p style="margin:6px 0">Add a link "<b>${E(p.data.label)}</b>" on:</p><ul style="margin:0;padding-left:18px">${p.data.from.map(f => `<li><a href="${E(f)}" target="_blank" rel="noopener">${E(f)}</a></li>`).join('')}</ul>`}
+        <div style="margin-top:8px">${p.status === 'pending' ? `<button class="button primary small" data-a="approve" data-id="${E(p.id)}">Approve</button> <button class="button secondary small" data-a="reject" data-id="${E(p.id)}">Reject</button>` : p.status === 'approved' ? `<button class="button secondary small" data-a="undo" data-id="${E(p.id)}">Undo</button>` : ''}</div></div>`).join('') : '<p class="muted">No proposals here.</p>';
+      l.querySelectorAll('button[data-a]').forEach(b => { b.onclick = async () => { b.disabled = true; try { await api('/api/admin/growth/seo/decide', { method: 'POST', body: { id: b.dataset.id, action: b.dataset.a } }); toast(b.dataset.a === 'approve' ? 'Live. Search engines are told within the hour.' : b.dataset.a === 'undo' ? 'Undone' : 'Rejected'); proposals(box); } catch (x) { toast(err(x)); b.disabled = false; } }; });
+      K.pager($('#spP', box), d, (p, per) => { P.page = p; P.per = per; proposals(box); });
+    } catch (e) { l.innerHTML = `<p role="alert">${E(err(e))}</p>`; }
   }
 
   async function reports(h) {
@@ -77,7 +119,7 @@
   function settings() {
     const s = D.settings;
     const m = modal('Targets and settings', `<form id="grForm" class="ops-form">
-      <label>Monthly AI spending cap (₹)<input name="budgetInr" type="number" min="0" step="100" value="${E(s.budgetInr)}" required></label>
+      <label>Monthly AI spending cap (₹, 0 = no limit)<input name="budgetInr" type="number" min="0" step="100" value="${E(s.budgetInr)}" required></label>
       <label>Stretch target (% of committed)<input name="stretchPct" type="number" min="100" max="500" value="${E(s.stretchPct)}" required></label>
       <label>Average purchase (₹)<input name="avg" type="number" min="1" step="0.01" value="${E(s.avgPaise / 100)}" required></label>
       <label>Send reports to (blank = every owner account)<input name="reportEmail" type="email" value="${E(s.reportEmail)}"></label>
@@ -97,5 +139,5 @@
     };
   }
 
-  K.register('growth', growth, ['📈', 'Growth', 'This month against the first-year plan, the funnel, the 2 PM / 7 PM reports and the AI spending cap.']);
+  K.register('growth', growth, ['📈', 'Growth', 'This month against the first-year plan, the funnel, the SEO agent, the 2 PM / 7 PM reports and AI spending.']);
 })();

@@ -148,6 +148,14 @@ class SeoPages
         };
         if ($page) {
             $page['path'] = '/'.implode('/', $s).'/';
+            // Changes the owner approved from the SEO agent (Growth page): a new title and description, and links to pages it is pushing up.
+            if ($o = SeoAgent::override($page['path'])) {
+                $page['title'] = $o['title'] ?? $page['title'];
+                $page['description'] = $o['description'] ?? $page['description'];
+                if ($links = array_values(array_filter($o['links'] ?? [], fn ($l) => $l[0] !== $page['path'] && self::owns(ltrim($l[0], '/'))))) {
+                    $page['related'][] = ['Popular with job seekers', array_map(fn ($l) => [$l[0], $l[1]], $links)];
+                }
+            }
             $page['title'] = self::fit($page['title'], 50);
             $page['description'] = self::fit($page['description'], 155);
             $page['index'] ??= true;

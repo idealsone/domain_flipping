@@ -19,7 +19,7 @@ class Growth
     public const LADDER = ['2026-11' => 100, '2026-12' => 200, '2027-01' => 330, '2027-02' => 600, '2027-03' => 800, '2027-04' => 1000, '2027-05' => 1300, '2027-06' => 1500, '2027-07' => 1850, '2027-08' => 1900, '2027-09' => 2000, '2027-10' => 2230];
 
     /** usdInr and the per-million-token prices are the owner's to keep current (AI provider pricing page). */
-    public const DEFAULTS = ['ladder' => self::LADDER, 'avgPaise' => 12677, 'stretchPct' => 200, 'reports' => true, 'reportEmail' => '', 'budgetInr' => 2000, 'usdInr' => 88, 'inputUsdPerM' => 5, 'outputUsdPerM' => 25];
+    public const DEFAULTS = ['ladder' => self::LADDER, 'avgPaise' => 12677, 'stretchPct' => 200, 'reports' => true, 'reportEmail' => '', 'budgetInr' => 0, 'usdInr' => 88, 'inputUsdPerM' => 5, 'outputUsdPerM' => 25];
 
     public const SLOTS = ['midday' => 14, 'evening' => 19];
 
@@ -257,6 +257,18 @@ class Growth
         $L[] = '- Marketing mails sent: '.number_format($today['marketingSent']).'. Outreach mails sent: '.number_format($today['outreachSent']).'.';
         $L[] = '- Ad spend and cost per customer: Data unavailable (no ad account connected).';
         $L[] = '';
+        $L[] = '## Search (Google, last 4 weeks)';
+        $seo = SeoAgent::summary();
+        if (! $seo['ready'] && $seo['clicks'] === null) {
+            $L[] = '- Data unavailable: connect Search Console in Integrations so the SEO agent can read rankings.';
+        } else {
+            $L[] = '- Clicks: '.self::num($seo['clicks']).'. Impressions: '.self::num($seo['impressions']).'.'.($seo['endDate'] ? ' Data up to '.$seo['endDate'].'.' : '');
+            foreach (array_slice($seo['striking'], 0, 3) as $r) {
+                $L[] = '- Close to page 1: "'.$r['query'].'" at position '.$r['position'].' ('.number_format($r['impressions']).' impressions).';
+            }
+            $L[] = '- SEO changes waiting for your approval: '.$seo['pending'].'. Live: '.$seo['live'].'.';
+        }
+        $L[] = '';
         $L[] = '## Risks';
         $risks = array_map(fn ($p) => '- '.$p, $health['problems'] ?? []);
         if (($health['metrics']['mailFailed24h'] ?? 0) > 0) {
@@ -268,7 +280,14 @@ class Growth
         array_push($L, ...($risks ?: ['- None found.']));
         $L[] = '';
         $L[] = '## Decisions needed from you';
-        $L[] = $budget['stopped'] ? '- AI spending cap reached: raise it on the Growth page or wait for next month.' : '- None.';
+        $dec = [];
+        if ($budget['stopped']) {
+            $dec[] = '- AI spending cap reached: raise it on the Growth page or wait for next month.';
+        }
+        if (($n = DB::table('seo_proposals')->where('status', 'pending')->count()) > 0) {
+            $dec[] = '- '.$n.' SEO change'.($n === 1 ? '' : 's').' to approve or reject on the Growth page.';
+        }
+        array_push($L, ...($dec ?: ['- None.']));
         $L[] = '';
         $L[] = '## Next actions';
         foreach (self::actions($month, $today) as $a) {
