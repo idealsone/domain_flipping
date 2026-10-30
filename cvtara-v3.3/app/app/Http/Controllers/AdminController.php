@@ -58,7 +58,7 @@ class AdminController extends Controller
             $key = $m[1];
             if ($get) {
                 return $ok(['data' => $key === 'emails' ? \App\Services\MailAutomation::upgradeTemplates((array) Settings::get($key)) : Settings::get($key), 'revision' => Settings::revision($key), 'connections' => ['payments' => ! empty(Settings::providers()['payments']), 'email' => ! empty(Settings::providers()['email']), 'ai' => ! empty(Settings::providers()['ai']), 'grammar' => ! empty(Settings::providers()['grammar'])]]);
-            }if (in_array($key, ['integrations', 'emails', 'legal', 'site'], true)) {
+            }if ($key === 'integrations') { // payment and email provider switches; plain page and email text saves need no code
                 AccountSecurity::requireRecent($r);
             }$r->validate(['data' => 'present|array', 'revision' => 'required|integer']);
             abort_if(strlen(json_encode($r->data)) > 4000000, 413);
