@@ -271,8 +271,11 @@
     const b = e.target.closest('[data-admin-view]'); if (!b) return;
     setTimeout(() => open(b.dataset.adminView), 20);
   });
-  addEventListener('load', () => setTimeout(() => { Object.keys(META).forEach(banner); settings(); const first = $('.side-nav [data-admin-view="dashboard"]'); if (first) first.click(); const D = window.CVTARA_DATA; const cnt = (v, n) => { const el = $('.side-nav [data-admin-view="' + v + '"] .nav-count'); if (el && n) el.textContent = n; }; if (D) { cnt('resumelib', D.templates.length); cnt('letterlib', D.coverLetters.length); cnt('bloghub', (D.blog || []).length); }
-    Promise.resolve(dashboard()).catch(() => 0).finally(() => { document.body.classList.add('admin-ready'); live(); setInterval(live, 30000); }); }, 400));
+  // Starts on the window load event, or 2.5 s after the page is parsed if a slow outside script (analytics, fonts) holds that event back.
+  // The cover comes off as soon as the first view is open; the dashboard fills in its own placeholders.
+  const boot = f => { let done = false; const go = () => { if (!done) { done = true; f(); } }; addEventListener('load', go); document.addEventListener('DOMContentLoaded', () => setTimeout(go, 2500)); };
+  boot(() => setTimeout(() => { Object.keys(META).forEach(banner); settings(); const tab = new URLSearchParams(location.search).get('tab'); const nav = v => v && $('.side-nav [data-admin-view="' + CSS.escape(v) + '"]'); const first = nav(tab) || nav('dashboard'); if (first) first.click(); document.body.classList.add('admin-ready'); const D = window.CVTARA_DATA; const cnt = (v, n) => { const el = $('.side-nav [data-admin-view="' + v + '"] .nav-count'); if (el && n) el.textContent = n; }; if (D) { cnt('resumelib', D.templates.length); cnt('letterlib', D.coverLetters.length); cnt('bloghub', (D.blog || []).length); }
+    Promise.resolve(dashboard()).catch(() => 0).finally(() => { live(); setInterval(live, 30000); }); }, 400));
   // banners must survive panels re-rendering themselves
   new MutationObserver(() => { const v = $('.admin-view.active'); if (v && !v.querySelector(':scope > .ops-banner')) banner(v.id.replace('admin-', '')); }).observe(document.body, { childList: true, subtree: true });
 })();
