@@ -7,6 +7,7 @@ class FakeGoogle:
     def __init__(self):
         self.calls, self.indexnow, self.published, self.sitemaps = [], [], [], []
         self.deny_indexing = False
+        self.sa_rows = {}  # rows to answer per dimension list, e.g. {"query,page": [...]}
         outer = self
 
         class H(BaseHTTPRequestHandler):
@@ -29,6 +30,8 @@ class FakeGoogle:
                     if outer.deny_indexing: return self._send(403, {"error": {"message": "Permission denied. Failed to verify the URL ownership."}})
                     outer.published.append(json.loads(raw)["url"]); return self._send(200, {"urlNotificationMetadata": {}})
                 if self.path.endswith("/searchAnalytics/query"):
+                    dims = ",".join(json.loads(raw or b"{}").get("dimensions", []))
+                    if dims in outer.sa_rows: return self._send(200, {"rows": outer.sa_rows[dims]})
                     return self._send(200, {"rows": [{"keys": ["resume builder"], "clicks": 3, "impressions": 90, "ctr": 0.033, "position": 11.2}]})
                 return self._send(404, {"error": {"message": "not found"}})
 

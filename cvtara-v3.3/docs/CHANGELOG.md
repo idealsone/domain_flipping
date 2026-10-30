@@ -1,3 +1,12 @@
+# CVTara v3.27.0 — SEO agent and AI spending without a limit
+
+## 3.27.0
+- **SEO agent (Growth page):** every day from 11 AM India time, Monday to Saturday, it reads Search Console (searches, pages, and which page each search showed) and lists searches close to page 1 (positions 4 to 20), pages that are seen often but rarely clicked, searches split across two pages, and searches with no good page yet. Searches naming other brands (job sites, other resume makers, Word/Google Docs, big employers) are left out.
+- **Proposed changes, approved by the owner:** a new title and description for low-click resume pages, written for the searches that show them, and links to pages close to page 1 from up to 5 related pages (a "Popular with job seekers" block). Each proposal says why, with the numbers, and shows the before and after. Nothing changes on the site until the owner presses Approve; Undo takes a change off again; the page is refreshed straight away and search engines are told within the hour. A page that was decided on rests for 30 days. Daily limits and the minimum impressions are editable, and "Check Search Console now" runs it on demand.
+- **Reports:** the 2 PM and 7 PM reports gain a Search section (Google clicks and impressions, the top searches close to page 1, changes waiting for approval), or "Data unavailable" until Search Console is connected.
+- **AI spending is monitored, not limited, by default:** the cap now defaults to 0 (no limit). Spending is still counted per request and shown on the Growth page; setting a cap brings back the alerts and the stop for growth tasks.
+- **Migration:** adds seo_proposals. Run `php artisan migrate --force` after updating.
+
 # CVTara v3.26.0 — Growth page, owner reports and the AI spending cap
 
 ## 3.26.0
