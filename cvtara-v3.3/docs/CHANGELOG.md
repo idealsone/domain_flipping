@@ -1,3 +1,12 @@
+# CVTara v3.25.1 — Push notifications removed
+
+## 3.25.1
+- **No more push-notification invitation:** the site already reaches people by email and the offer popup, so the OneSignal "Get career updates" box and its script are gone from every page, guide and ready-made SEO page.
+- **Browsers that subscribed earlier are cleaned up:** `/OneSignalSDKWorker.js` now unsubscribes and unregisters itself the next time the browser checks it, so nobody keeps getting pushes.
+- **Owner console:** the Push notifications page, the Push switch in Integrations, the OneSignal key fields and the "Push setup" shortcut are removed. Saved OneSignal settings are no longer sent to the website and are dropped the next time integrations are saved.
+- **Security headers:** OneSignal is no longer an allowed script or worker source.
+- No migrations. Rebuild the ready-made pages after updating so the old script tag disappears from them.
+
 # CVTara v3.25.0 — Owner console lists load one page at a time
 
 ## 3.25.0
