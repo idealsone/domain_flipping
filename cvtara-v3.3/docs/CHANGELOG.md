@@ -7,6 +7,15 @@
 - **AI spending is monitored, not limited, by default:** the cap now defaults to 0 (no limit). Spending is still counted per request and shown on the Growth page; setting a cap brings back the alerts and the stop for growth tasks.
 - **Migration:** adds seo_proposals. Run `php artisan migrate --force` after updating.
 
+# CVTara v3.26.1 — A calmer, more human look across the site
+
+## 3.26.1
+- **Homepage:** rewritten in a plain, personal voice and cut from 13 sections to 10, with a short founder note. The blue-to-purple gradient, glows, pill labels, emoji icons and rotating headline are gone; one solid blue, serif headings and warm backgrounds instead. Reviews stay hidden until one is approved.
+- **Every public page:** the same serif headings and solid blue actions (no amber buttons or gradient covers); the generated article cover that only repeated the title is hidden.
+- **Night mode:** blue links on dark panels lifted to a readable blue on 5 pages.
+- **Customer workspace and owner console:** one set of line icons in the sidebars instead of emoji, neutral sidebars, a solid welcome panel, and Clear cache is no longer the loudest button.
+- **Migration:** saved copies of the old default homepage text move to the new text (owner edits are kept). Run `php artisan migrate --force`.
+
 # CVTara v3.26.0 — Growth page, owner reports and the AI spending cap
 
 ## 3.26.0
@@ -16,6 +25,15 @@
 - **Monthly cap on AI spending:** every writing-help, Expert Review and Profile Boost request records its tokens and cost (prices and ₹ rate editable). Default cap ₹2,000 a month, alerts at 50%, 75% and 90% in the Error Log and the reports. At 100% growth tasks stop; paid customer add-ons keep working.
 - **Campaign segments:** an email campaign to customers can be limited to one college and/or target role, read from each consenting customer's newest resume. The Growth page shows college totals (users who agreed to emails) to choose which placement cells to contact. The privacy policy now says how these resume details are used.
 - **Migration:** adds growth_snapshots, growth_reports, ai_usage, profiles.college / target_role / last_company and email_campaigns.seg_college / seg_role, and updates the saved privacy text if it still has the default sentence. Run `php artisan migrate --force` after updating.
+
+# CVTara v3.25.2 — Push notifications removed
+
+## 3.25.2
+- **No more push-notification invitation:** the site already reaches people by email and the offer popup, so the OneSignal "Get career updates" box and its script are gone from every page, guide and ready-made SEO page.
+- **Browsers that subscribed earlier are cleaned up:** `/OneSignalSDKWorker.js` now unsubscribes and unregisters itself the next time the browser checks it, so nobody keeps getting pushes.
+- **Owner console:** the Push notifications page, the Push switch in Integrations, the OneSignal key fields and the "Push setup" shortcut are removed. Saved OneSignal settings are no longer sent to the website and are dropped the next time integrations are saved.
+- **Security headers:** OneSignal is no longer an allowed script or worker source.
+- No migrations. Rebuild the ready-made pages after updating so the old script tag disappears from them.
 
 # CVTara v3.25.0 — Owner console lists load one page at a time
 

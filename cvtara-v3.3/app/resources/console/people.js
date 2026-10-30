@@ -7,7 +7,9 @@
   const err = e => (e && e.message) || 'Something went wrong.';
   let planCache = null;
   const plans = async () => planCache || (planCache = (await api('/api/admin/plans')).plans || {});
-  const planLabel = (pl, key) => (pl[key] && pl[key].name) || key || '';
+  // Plan keys sold before the 3.16 packages still sit on old purchases (Settings::planAlias).
+  const OLD = { 'fresher-basic': 'job-hunt', 'fresher-standard': 'job-hunt', 'pro-basic': 'job-hunt', 'pro-standard': 'job-hunt', 'fresher-pro': 'pro', 'pro-pro': 'pro' };
+  const planLabel = (pl, key) => (pl[key] && pl[key].name) || (pl[OLD[key]] && pl[OLD[key]].name) || key || '';
 
   /* ======================= USERS ======================= */
   const U = { q: undefined, grid: null };
@@ -50,10 +52,10 @@
   }
   async function subscription(u) {
     const pl = await plans();
-    const keys = Object.keys(pl).filter(k => k !== 'free'), grp = t => keys.filter(k => (t === 'addon' ? pl[k].type === 'addon' : pl[k].type !== 'addon' && pl[k].audience === t));
+    const keys = Object.keys(pl).filter(k => k !== 'free' && pl[k].sale), grp = t => keys.filter(k => pl[k].type === t).sort((a, b) => pl[a].price - pl[b].price);
     const opt = k => `<option value="${k}">${E(pl[k].name)} — ₹${pl[k].price}${pl[k].accessDays ? ' · ' + pl[k].accessDays + ' days' : ''}</option>`;
     const m = modal(u.paid ? 'Manage subscription' : 'Mark as paid', `<p class="ops-note" style="margin-top:0"><b>${E(u.name)}</b> · ${E(u.email)} — ${u.paid ? `currently <b>${E(planLabel(pl, u.last_plan))}</b> until ${dmy(parse(u.accessUntil))}` : 'a normal user with no subscription'}.</p>
-      <form class="ops-form"><label class="wide">Plan<select name="plan" required>${['fresher', 'experienced'].map(a => `<optgroup label="${a === 'fresher' ? 'Fresher plans' : 'Experienced plans'}">${grp(a).map(opt).join('')}</optgroup>`).join('')}<optgroup label="Add-on packs (need an active plan)">${grp('addon').map(opt).join('')}</optgroup></select></label>
+      <form class="ops-form"><label class="wide">Plan<select name="plan" required><optgroup label="Packages">${grp('plan').map(opt).join('')}</optgroup>${grp('addon').length ? `<optgroup label="Add-on packs (need an active plan)">${grp('addon').map(opt).join('')}</optgroup>` : ''}</select></label>
       <label>Access days<input name="days" type="number" min="1" max="1095" placeholder="plan default"></label><label>Amount actually received (₹)<input name="amount" type="number" min="0" step="1" value="0" required title="Enter 0 for a complimentary plan. Only enter an amount you have really received."></label>
       <label class="wide">Note (kept in the audit log)<input name="note" required minlength="3" maxlength="300" placeholder="e.g. Paid by UPI on 14 Oct, ref 4821"></label>
       <label class="wide ops-check"><input type="checkbox" name="sendEmail" checked> Email the customer a thank-you now (plan, validity and download link)</label>
