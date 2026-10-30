@@ -1,3 +1,22 @@
+# CVTara v3.26.1 — A calmer, more human look across the site
+
+## 3.26.1
+- **Homepage:** rewritten in a plain, personal voice and cut from 13 sections to 10, with a short founder note. The blue-to-purple gradient, glows, pill labels, emoji icons and rotating headline are gone; one solid blue, serif headings and warm backgrounds instead. Reviews stay hidden until one is approved.
+- **Every public page:** the same serif headings and solid blue actions (no amber buttons or gradient covers); the generated article cover that only repeated the title is hidden.
+- **Night mode:** blue links on dark panels lifted to a readable blue on 5 pages.
+- **Customer workspace and owner console:** one set of line icons in the sidebars instead of emoji, neutral sidebars, a solid welcome panel, and Clear cache is no longer the loudest button.
+- **Migration:** saved copies of the old default homepage text move to the new text (owner edits are kept). Run `php artisan migrate --force`.
+
+# CVTara v3.26.0 — Growth page, owner reports and the AI spending cap
+
+## 3.26.0
+- **Growth page (owner console):** this month against the first-year plan (Nov 2026 to Oct 2027, 13,810 purchases, ₹17.5 lakh gross), with committed and stretch (200%) targets, pace for the days gone, a green / amber / red band and the purchases needed per day. The funnel (visitors, sign-ups, verified, started a resume, opened checkout, paid) for today, the last 7 days and the month, the weakest step, plan mix, visitor sources, new vs repeat buyers, and net after refunds. Anything the site cannot measure (ad spend, visitors while analytics is off) shows as "Data unavailable". Monthly targets, the stretch percentage and the average purchase are editable.
+- **2 PM and 7 PM reports, Monday to Saturday (India time):** saved on the Growth page (paged list with filters) and emailed to the owner: targets vs actuals, today's funnel, risks from the Health check, decisions needed, and next actions from fixed rules (weakest funnel step, low traffic, amber/red recovery, refunds, unsubscribes). One report per slot per day; a "Send a report now" button for checks.
+- **Daily snapshots:** yesterday's numbers are stored once a day, so the year plan fills in month by month.
+- **Monthly cap on AI spending:** every writing-help, Expert Review and Profile Boost request records its tokens and cost (prices and ₹ rate editable). Default cap ₹2,000 a month, alerts at 50%, 75% and 90% in the Error Log and the reports. At 100% growth tasks stop; paid customer add-ons keep working.
+- **Campaign segments:** an email campaign to customers can be limited to one college and/or target role, read from each consenting customer's newest resume. The Growth page shows college totals (users who agreed to emails) to choose which placement cells to contact. The privacy policy now says how these resume details are used.
+- **Migration:** adds growth_snapshots, growth_reports, ai_usage, profiles.college / target_role / last_company and email_campaigns.seg_college / seg_role, and updates the saved privacy text if it still has the default sentence. Run `php artisan migrate --force` after updating.
+
 # CVTara v3.25.2 — Push notifications removed
 
 ## 3.25.2

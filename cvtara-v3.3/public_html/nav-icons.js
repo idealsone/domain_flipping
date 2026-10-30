@@ -36,7 +36,7 @@
     smile: 'M12 22a10 10 0 1 0 0-20 10 10 0 0 0 0 20zM8 14s1.5 2 4 2 4-2 4-2M9 9h.01M15 9h.01'
   };
   const MAP = {
-    dashboard: 'grid', people: 'users', orders: 'bag', resumelib: 'files', letterlib: 'mail', sitedesign: 'layout', business: 'trend', referral: 'gift',
+    dashboard: 'grid', people: 'users', orders: 'bag', resumelib: 'files', letterlib: 'mail', sitedesign: 'layout', business: 'trend', growth: 'trend', referral: 'gift',
     mailer: 'mail', reports: 'chart', promos: 'tag', campaigns: 'megaphone', outreach: 'send', feedback: 'chat', speed: 'zap', errors: 'alert',
     bloghub: 'pen', desk: 'star', reviews: 'star', pricing: 'rupee', settings: 'sliders', integrations: 'sliders', features: 'sliders', policies: 'scale',
     legal: 'scale', health: 'pulse', setup: 'pulse', seo: 'search', keywords: 'search', analytics: 'chart', push: 'bell',
