@@ -28,7 +28,7 @@ class CampaignAdminController extends Controller
             $aud = (string) $r->query('audience');
             abort_unless(isset(Campaigns::AUDIENCES[$aud]), 422, 'Choose who should get this campaign.');
 
-            return $ok(['audience' => $aud, 'count' => Campaigns::count($aud)]);
+            return $ok(['audience' => $aud, 'count' => Campaigns::count($aud, mb_substr((string) $r->query('college'), 0, 160), mb_substr((string) $r->query('role'), 0, 120))]);
         }
         if ($path === 'campaigns/contacts' && $get) {
             $q = DB::table('email_contacts')->orderByDesc('id');
@@ -59,16 +59,17 @@ class CampaignAdminController extends Controller
             return $ok(['to' => $r->user()->email, 'emailOn' => (bool) (Settings::get('integrations')['email'] ?? false)]);
         }
         if ($path === 'campaigns/save') {
-            $v = $r->validate(['id' => ['nullable', 'regex:/^[a-f0-9-]{36}$/'], 'name' => 'required|string|max:120', 'audience' => 'required|in:'.implode(',', array_keys(Campaigns::AUDIENCES))] + $text);
+            $v = $r->validate(['id' => ['nullable', 'regex:/^[a-f0-9-]{36}$/'], 'name' => 'required|string|max:120', 'audience' => 'required|in:'.implode(',', array_keys(Campaigns::AUDIENCES)), 'segCollege' => 'nullable|string|max:160', 'segRole' => 'nullable|string|max:120'] + $text);
+            $seg = ['seg_college' => $v['audience'] === 'contacts' ? '' : trim((string) ($v['segCollege'] ?? '')), 'seg_role' => $v['audience'] === 'contacts' ? '' : trim((string) ($v['segRole'] ?? ''))];
             $now = now();
             if (! empty($v['id'])) {
                 $c = $this->find($v['id']);
                 abort_if($c->started_at || in_array($c->status, ['done', 'cancelled'], true), 422, 'This campaign has already started, so its text is fixed. Use Copy to make a new one.');
-                DB::table('email_campaigns')->where('id', $c->id)->update(['name' => $v['name'], 'subject' => $v['subject'], 'body' => $v['body'], 'audience' => $v['audience'], 'updated_at' => $now]);
+                DB::table('email_campaigns')->where('id', $c->id)->update(['name' => $v['name'], 'subject' => $v['subject'], 'body' => $v['body'], 'audience' => $v['audience'], ...$seg, 'updated_at' => $now]);
                 $cid = $c->id;
             } else {
                 $cid = (string) Str::uuid();
-                DB::table('email_campaigns')->insert(['id' => $cid, 'name' => $v['name'], 'subject' => $v['subject'], 'body' => $v['body'], 'audience' => $v['audience'], 'status' => 'draft', 'created_by' => $id, 'created_at' => $now, 'updated_at' => $now]);
+                DB::table('email_campaigns')->insert(['id' => $cid, 'name' => $v['name'], 'subject' => $v['subject'], 'body' => $v['body'], 'audience' => $v['audience'], ...$seg, 'status' => 'draft', 'created_by' => $id, 'created_at' => $now, 'updated_at' => $now]);
             }
             Settings::audit($id, 'campaign_saved', $cid);
 
@@ -79,7 +80,7 @@ class CampaignAdminController extends Controller
             $v = $r->validate(['id' => ['required', 'regex:/^[a-f0-9-]{36}$/'], 'when' => 'required|in:now,schedule', 'at' => ['required_if:when,schedule', 'nullable', 'regex:/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/']]);
             $c = $this->find($v['id']);
             abort_unless(in_array($c->status, ['draft', 'scheduled', 'paused'], true) && ! $c->started_at, 422, 'This campaign has already been sent or cancelled.');
-            abort_unless(Campaigns::count($c->audience) > 0, 422, 'Nobody in this audience can be emailed yet.');
+            abort_unless(Campaigns::count($c->audience, (string) $c->seg_college, (string) $c->seg_role) > 0, 422, 'Nobody in this audience can be emailed yet.');
             if ($v['when'] === 'schedule') {
                 $at = Campaigns::toUtc($v['at']);
                 abort_if($at->lte(now()), 422, 'Pick a time in the future (India time).');
@@ -162,7 +163,7 @@ class CampaignAdminController extends Controller
     private function snapshot(): array
     {
         $list = DB::table('email_campaigns')->orderByDesc('created_at')->limit(100)->get()->map(fn ($c) => [
-            'id' => $c->id, 'name' => $c->name, 'subject' => $c->subject, 'body' => $c->body, 'audience' => $c->audience, 'status' => $c->status,
+            'id' => $c->id, 'name' => $c->name, 'subject' => $c->subject, 'body' => $c->body, 'audience' => $c->audience, 'segCollege' => (string) ($c->seg_college ?? ''), 'segRole' => (string) ($c->seg_role ?? ''), 'status' => $c->status,
             'scheduledAt' => Campaigns::local($c->scheduled_at), 'startedAt' => Campaigns::local($c->started_at), 'finishedAt' => Campaigns::local($c->finished_at), 'createdAt' => Campaigns::local($c->created_at),
             'stats' => Campaigns::stats($c->id),
         ])->all();

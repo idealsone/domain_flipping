@@ -74,7 +74,7 @@
       h.innerHTML = `<div class="pg-head"><h2>Templates & site design</h2><p>What the public website says, prefilled from the live site. Change anything and it updates the website — no files to edit.</p></div>
         <div class="sd-grid"><section class="panel panel-pad"><h3>Homepage content</h3><form id="sdForm" class="ops-form">
           ${inp('heroPill', 'Small label above the headline', s.heroPill)}${inp('announce', 'Announcement bar', s.announce, { hint: 'Use <code>{{from}}</code> for the lowest plan price.' })}
-          ${inp('heroTitle', 'Headline (first part)', s.heroTitle, { wide: true, hint: 'The rotating job titles are added after this text.' })}${inp('heroRoles', 'Rotating job titles (one per line)', (s.heroRoles || []).join('\n'), { wide: true, area: true, rows: 5 })}
+          ${inp('heroTitle', 'Headline', s.heroTitle, { wide: true })}${inp('heroRoles', 'Rotating job titles after the headline (optional, one per line)', (s.heroRoles || []).join('\n'), { wide: true, area: true, rows: 5, hint: 'Leave empty for a fixed headline.' })}
           ${inp('heroLead', 'Sub-headline', s.heroLead, { wide: true, area: true, hint: 'Wrap words in <code>**double stars**</code> to make them bold.' })}
           ${inp('ctaPrimary', 'Main button', s.ctaPrimary)}${inp('ctaSecondary', 'Second button', s.ctaSecondary)}${inp('announceLink', 'Announcement link text', s.announceLink)}
           ${inp('ctaFinalTitle', 'Closing section title', s.ctaFinalTitle, { wide: true })}${inp('ctaFinalText', 'Closing section text', s.ctaFinalText, { wide: true, area: true, rows: 2 })}${inp('ctaFinalButton', 'Closing button', s.ctaFinalButton)}

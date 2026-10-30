@@ -3,7 +3,7 @@
 /* Sign-in and sign-up use the same type, colours and buttons as the home page */
 body{min-height:100vh;margin:0;background:radial-gradient(1100px 520px at 85% -10%,rgba(79,70,229,.16),transparent 60%),radial-gradient(900px 420px at -10% 10%,rgba(21,87,210,.13),transparent 60%),var(--bg,#f8fafc);color:var(--ink,#0f172a)}
 .au{min-height:100vh;display:grid;grid-template-columns:minmax(380px,.9fr) 1.1fr}
-.au-side{position:relative;overflow:hidden;background:linear-gradient(150deg,#1e1b4b,#312e81 60%,#3730a3);color:#fff;padding:44px clamp(32px,5vw,72px);display:flex;flex-direction:column;justify-content:center;gap:26px}
+.au-side{position:relative;overflow:hidden;background:#16233f;color:#fff;padding:44px clamp(32px,5vw,72px);display:flex;flex-direction:column;justify-content:center;gap:26px}
 .au-side:before{content:"";position:absolute;right:-120px;top:-120px;width:360px;height:360px;border-radius:50%;background:radial-gradient(circle,rgba(129,140,248,.35),transparent 70%)}
 .au-side>*{position:relative}
 .au-side .brand{display:inline-flex;align-items:center;gap:10px;color:#fff;text-decoration:none}.au-side .brand b{color:#fff;font-size:22px;letter-spacing:-.01em}
@@ -39,7 +39,7 @@ body{min-height:100vh;margin:0;background:radial-gradient(1100px 520px at 85% -1
 .au-pw button:hover{background:rgba(21,87,210,.08)}
 .au-card .terms{display:flex;gap:10px;align-items:flex-start;font-weight:500;font-size:13.5px;color:var(--muted,#475569);margin:2px 0 4px}
 .au-card .terms input{margin-top:3px;width:17px;height:17px;accent-color:#1557d2}
-.au-go{width:100%;height:50px;border:0;border-radius:12px;background:linear-gradient(135deg,#1557d2,#4f46e5);color:#fff;font:inherit;font-weight:800;font-size:16px;cursor:pointer;margin-top:8px;box-shadow:0 10px 24px rgba(21,87,210,.28);transition:transform .15s,box-shadow .15s}
+.au-go{width:100%;height:50px;border:0;border-radius:12px;background:#1f4fd1;color:#fff;font:inherit;font-weight:700;font-size:16px;cursor:pointer;margin-top:8px;box-shadow:none;transition:transform .15s,box-shadow .15s}
 .au-go:hover{transform:translateY(-1px);box-shadow:0 14px 28px rgba(21,87,210,.34)}
 .au-card a{color:#1557d2;font-weight:700;text-decoration:none}.au-card a:hover{text-decoration:underline}
 .au-links{margin:18px 0 0;display:flex;justify-content:space-between;gap:10px 14px;flex-wrap:wrap;font-size:14px;color:var(--muted,#64748b)}

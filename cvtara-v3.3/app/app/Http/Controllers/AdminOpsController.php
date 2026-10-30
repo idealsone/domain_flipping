@@ -55,7 +55,6 @@ class AdminOpsController extends Controller
         }
         if ($path === 'services/settings') {
             abort_unless($r->isMethod('POST'), 405);
-            AccountSecurity::requireRecent($r);
             $v = $r->validate(['autoReview' => 'required|boolean']);
             Settings::put('serviceSettings', ['autoReview' => (bool) $v['autoReview']]);
             Settings::audit($admin, 'service_settings_saved', $v['autoReview'] ? 'auto_on' : 'auto_off');

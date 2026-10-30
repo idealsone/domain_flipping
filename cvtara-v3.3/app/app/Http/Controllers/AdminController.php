@@ -36,6 +36,9 @@ class AdminController extends Controller
         if (preg_match(PromoAdminController::ROUTES, $path)) {
             return app(PromoAdminController::class)->run($r, $path);
         }
+        if (preg_match(GrowthAdminController::ROUTES, $path)) {
+            return app(GrowthAdminController::class)->run($r, $path);
+        }
         if (preg_match(OutreachAdminController::ROUTES, $path)) {
             return app(OutreachAdminController::class)->run($r, $path);
         }
@@ -58,7 +61,7 @@ class AdminController extends Controller
             $key = $m[1];
             if ($get) {
                 return $ok(['data' => $key === 'emails' ? \App\Services\MailAutomation::upgradeTemplates((array) Settings::get($key)) : Settings::get($key), 'revision' => Settings::revision($key), 'connections' => ['payments' => ! empty(Settings::providers()['payments']), 'email' => ! empty(Settings::providers()['email']), 'ai' => ! empty(Settings::providers()['ai']), 'grammar' => ! empty(Settings::providers()['grammar'])]]);
-            }if (in_array($key, ['integrations', 'emails', 'legal', 'site'], true)) {
+            }if ($key === 'integrations') { // payment and email provider switches; plain page and email text saves need no code
                 AccountSecurity::requireRecent($r);
             }$r->validate(['data' => 'present|array', 'revision' => 'required|integer']);
             abort_if(strlen(json_encode($r->data)) > 4000000, 413);
@@ -89,14 +92,15 @@ class AdminController extends Controller
         if ($path === 'settings') {
             if ($get) {
                 return $ok(['settings' => Settings::get('public', [])]);
-            }$v = $r->validate(['heroTitle' => 'sometimes|string|max:200', 'heroDescription' => 'sometimes|string|max:1000', 'primaryCTA' => 'sometimes|string|max:80', 'secondaryCTA' => 'sometimes|string|max:80', 'accent' => 'sometimes|regex:/^#[a-fA-F0-9]{6}$/', 'pushEnabled' => 'sometimes|boolean', 'oneSignalAppId' => 'nullable|uuid', 'pushDelay' => 'sometimes|integer|min:0|max:300', 'pushMessage' => 'sometimes|string|max:500']);
-            Settings::put('public', array_merge(Settings::get('public', []), $v));
+            }$v = $r->validate(['heroTitle' => 'sometimes|string|max:200', 'heroDescription' => 'sometimes|string|max:1000', 'primaryCTA' => 'sometimes|string|max:80', 'secondaryCTA' => 'sometimes|string|max:80', 'accent' => 'sometimes|regex:/^#[a-fA-F0-9]{6}$/']);
+            Settings::put('public', array_diff_key(array_merge(Settings::get('public', []), $v), array_flip(['pushEnabled', 'oneSignalAppId', 'pushDelay', 'pushMessage'])));
 
             return $ok(['settings' => Settings::get('public')]);
         }
         if ($path === 'providers') {
             $p = Settings::providers();
-            $fields = ['jobreader' => ['enabled', 'provider', 'scrapingbeeApiKey', 'zenrowsApiKey', 'customUrlTemplate', 'customApiKey', 'dailyLimit'], 'payments' => ['provider', 'mode', 'razorpayKeyId', 'razorpayKeySecret', 'razorpayWebhookSecret', 'phonepeMode', 'phonepeClientId', 'phonepeClientVersion', 'phonepeClientSecret', 'phonepeWebhookUsername', 'phonepeWebhookPassword'], 'email' => ['provider', 'resendApiKey', 'smtpHost', 'smtpPort', 'smtpUser', 'smtpPassword', 'fromEmail', 'fromName', 'replyTo', 'postalAddress'], 'ai' => ['provider', 'claudeApiKey', 'model', 'dailyLimit', 'writerApiKey'], 'grammar' => ['url', 'username', 'premiumApiKey'], 'analytics' => ['measurementId', 'searchConsoleProperty', 'searchConsoleServiceAccount'], 'push' => ['oneSignalAppId', 'oneSignalRestApiKey']];
+            unset($p['push']);
+            $fields = ['jobreader' => ['enabled', 'provider', 'scrapingbeeApiKey', 'zenrowsApiKey', 'customUrlTemplate', 'customApiKey', 'dailyLimit'], 'payments' => ['provider', 'mode', 'razorpayKeyId', 'razorpayKeySecret', 'razorpayWebhookSecret', 'phonepeMode', 'phonepeClientId', 'phonepeClientVersion', 'phonepeClientSecret', 'phonepeWebhookUsername', 'phonepeWebhookPassword'], 'email' => ['provider', 'resendApiKey', 'smtpHost', 'smtpPort', 'smtpUser', 'smtpPassword', 'fromEmail', 'fromName', 'replyTo', 'postalAddress'], 'ai' => ['provider', 'claudeApiKey', 'model', 'dailyLimit', 'writerApiKey'], 'grammar' => ['url', 'username', 'premiumApiKey'], 'analytics' => ['measurementId', 'searchConsoleProperty', 'searchConsoleServiceAccount']];
             $secret = fn ($k) => preg_match('/Secret|ApiKey|Password|ServiceAccount|AuthToken/', $k);
             if ($get) {
                 foreach ($p as &$service) {
@@ -470,14 +474,14 @@ class AdminController extends Controller
             }validator($d, ['watermarkText' => 'required|string|max:100'])->validate();
         }
         if ($k === 'integrations') {
-            validator($d, array_fill_keys(['payments', 'email', 'ai', 'analytics', 'push'], 'required|boolean') + ['grammar' => 'sometimes|boolean'])->validate();
+            validator($d, array_fill_keys(['payments', 'email', 'ai', 'analytics'], 'required|boolean') + ['grammar' => 'sometimes|boolean'])->validate();
         }
         if ($k === 'popup') {
             validator($d, ['enabled' => 'required|boolean', 'delaySeconds' => 'required|integer|min:0|max:600', 'showSeconds' => 'required|integer|min:3|max:30', 'gapSeconds' => 'required|integer|min:3|max:120', 'useLiveActivity' => 'required|boolean', 'custom' => 'present|array|max:20', 'custom.*.title' => 'nullable|string|max:60', 'custom.*.text' => 'required|string|max:200', 'custom.*.icon' => 'nullable|string|max:8', 'custom.*.enabled' => 'required|boolean'])->validate();
             \Illuminate\Support\Facades\Cache::forget('public-activity');
         }
         if ($k === 'site') {
-            validator($d, ['announce' => 'nullable|string|max:300', 'announceLink' => 'nullable|string|max:300', 'heroPill' => 'nullable|string|max:120', 'heroTitle' => 'required|string|max:200', 'heroRoles' => 'required|array|min:1|max:12', 'heroRoles.*' => 'string|max:60', 'heroLead' => 'required|string|max:600', 'ctaPrimary' => 'required|string|max:60', 'ctaSecondary' => 'required|string|max:60', 'ctaFinalTitle' => 'nullable|string|max:200', 'ctaFinalText' => 'nullable|string|max:400', 'pages' => 'present|array', 'pages.*.title' => 'nullable|string|max:180', 'pages.*.description' => 'nullable|string|max:400', 'pages.*.keywords' => 'nullable|string|max:400'])->validate();
+            validator($d, ['announce' => 'nullable|string|max:300', 'announceLink' => 'nullable|string|max:300', 'heroPill' => 'nullable|string|max:120', 'heroTitle' => 'required|string|max:200', 'heroRoles' => 'present|array|max:12', 'heroRoles.*' => 'string|max:60', 'heroLead' => 'required|string|max:600', 'ctaPrimary' => 'required|string|max:60', 'ctaSecondary' => 'required|string|max:60', 'ctaFinalTitle' => 'nullable|string|max:200', 'ctaFinalText' => 'nullable|string|max:400', 'pages' => 'present|array', 'pages.*.title' => 'nullable|string|max:180', 'pages.*.description' => 'nullable|string|max:400', 'pages.*.keywords' => 'nullable|string|max:400'])->validate();
         }
         if ($k === 'seo') {
             validator($d, ['sitemapEnabled' => 'required|boolean', 'searchIndexing' => 'required|boolean', 'siteUrl' => 'nullable|url:https|max:255', 'pages' => 'present|array'])->validate();

@@ -66,3 +66,48 @@ body.has-topbar [data-header]{top:44px}
 @media (max-width:760px){.to-top{right:14px;bottom:calc(78px + env(safe-area-inset-bottom))}}
 @media print{.to-top{display:none}}
 [data-header] .site-header{background:var(--paper)}
+/* Analytics consent: owner-console.css (where this used to live) is only sent to admins, so visitors got the banner unstyled at the very bottom of the page and Google Analytics never started */
+.owner-consent{position:fixed;left:50%;bottom:20px;transform:translateX(-50%);z-index:5100;width:min(560px,calc(100% - 32px));display:flex;flex-wrap:wrap;align-items:center;gap:10px 12px;padding:16px 18px;background:var(--paper,#fff);color:var(--ink,#0f172a);border:1px solid var(--line,#e2e8f0);border-radius:14px;box-shadow:0 14px 44px rgba(15,23,42,.22)}
+.owner-consent p{flex:1 1 100%;margin:0;font-size:15px;line-height:1.5}
+.owner-consent button{margin:0}
+@media (max-width:760px){.owner-consent{bottom:calc(78px + env(safe-area-inset-bottom))}.owner-consent button{flex:1 1 0}}
+@media print{.owner-consent{display:none}}
+
+/* Human touch (3.26): one solid brand blue for main buttons and the announcement bar on every page, no blue-to-purple gradient or glow.
+   The referral offer keeps its own accent colour. */
+html body .button.primary:not(.cv-referral .button):not(.b2-band .button){background:#1f4fd1!important;border-color:#1f4fd1;box-shadow:none!important}
+html body .button.primary:not(.cv-referral .button):not(.b2-band .button):hover{background:#173fae!important}
+html body .lp-announce{background:#1f4fd1}
+html body .mobile-cta-bar a:last-child{background:#1f4fd1}
+
+/* Workspace and owner console (3.26): plain line icons in the sidebar, neutral sidebars, a solid welcome panel instead of a purple gradient */
+.side-nav i[data-icon]{display:inline-grid;place-items:center;width:20px;height:20px;font-size:0;opacity:.85}
+.side-nav i[data-icon] svg{width:18px;height:18px}
+.side-nav .active i[data-icon],.side-nav button:hover i[data-icon],.side-nav a:hover i[data-icon]{opacity:1}
+html body[data-page=workspace] .side-panel,html body[data-page=admin] .side-panel,html body[data-page=admin] .admin-side{background:#111827}
+html body.dark[data-page=workspace] .side-panel,html body.dark[data-page=admin] .side-panel{background:#0d121c;border-right:1px solid #232b3a}
+html body[data-page=workspace] .side-nav button.active,html body[data-page=workspace] .side-nav a.active{background:#1f4fd1}
+html body .ws-hero{background:#16233f;border-radius:14px}
+html body .ws-hero .button.mint{background:#fff!important;color:#16233f!important;border-color:#fff}
+html body .ws-hero .ws-plan-chip{background:rgba(255,255,255,.06);border-color:rgba(255,255,255,.14)}
+
+/* Public pages (3.26): the homepage's look carried across the site. Serif headings, one solid blue for actions,
+   plain section labels, flat covers and panels instead of gradients, no emoji artwork. */
+:root{--cv-serif:'Fraunces',Georgia,'Times New Roman',serif;--cv-blue:#1f4fd1;--cv-accent:#b4531a;--sp-head:var(--cv-serif);--sp-cta:#1f4fd1;--sp-cta-hover:#173fae;--sp-cta-ink:#fff;--sp-tint:#f7f4ee}
+html.dark,html[data-theme=dark]{--cv-accent:#f59e5b;--sp-tint:#1a2033}
+body:is([data-page=templates],[data-page=coverletters],[data-page=blog],[data-page=guides],[data-page=article],[data-page=legal],[data-page=contact],[data-page=checkout]) main :is(h1,h2):not(.doc-name):not([class*=rs-]),
+body[data-page=seo] .sp-shell :is(h1,h2){font-family:var(--cv-serif);font-weight:600;letter-spacing:-.012em}
+.sp-shell h3{font-family:'Inter',system-ui,sans-serif}
+.sp-hero{background:var(--sp-surface);box-shadow:none}
+.sp-eyebrow{background:none;border:0;padding:0;border-radius:0;letter-spacing:.02em;color:var(--cv-accent)}
+.sp-cta{color:#fff!important;font-weight:600}
+.sp-secondary{border-radius:10px}
+.blog-art,.blog2 .blog-art,.blog2 .blog-art.is-guide{background:#16233f!important}
+.blog-art:after{display:none}
+.b2-band{background:#16233f}
+/* the generated cover only repeated the page title in a coloured box; real cover photos still show */
+.b2-cover{display:none}
+.article-cta{background:var(--sp-tint,#f7f4ee)}
+/* Night mode: blue text links lifted so they stay readable on dark panels */
+:where(html.dark,html[data-theme=dark]) :is(.tp-all,.b2-go,.sp-shell a:not([class]),main a:not([class]),.calculator-result>span){color:#8fb0ff}
+html.dark body[data-page] .legal-shell a,html.dark .cover-letter-card em{color:#8fb0ff}
