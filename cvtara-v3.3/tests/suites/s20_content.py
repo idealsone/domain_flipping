@@ -58,6 +58,7 @@ def run(ctx, t):
     links = re.findall(r'<link rel="stylesheet" href="(/[^"]+)"', home.split("</head>")[0])
     own = [l for l in links if not l.startswith("//")]
     t.check("the home page loads its own styles as one combined file, with the home look in it", len(own) == 1 and own[0].startswith("/assets/bundle/") and "/* /home-v3.css */" in c.page(own[0].split("?")[0])[2], links)
+    t.check("the analytics consent banner is styled for visitors, not only in the admin-only stylesheet", ".owner-consent{position:fixed" in rd("site-polish.css"))
     t.check("the header menu stays at the top and a back-to-top button is offered", "[data-header]{position:sticky" in rd("site-polish.css") and 'id="toTop"' in rd("preview.js"))
     t.check("the menu says Resume by Role and links the city and state pages", ">Resume by Role</a>" in rd("preview.js") and ">Examples</a>" not in rd("preview.js") and 'href="/resume-builder/india/"' in rd("preview.js"))
     t.check("page data used by several scripts is fetched once per page", "'/api/public-content': 1" in rd("csrf-lazy.js"))
