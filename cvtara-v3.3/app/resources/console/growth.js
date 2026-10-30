@@ -1,4 +1,4 @@
-/* Owner console: Growth — the first-year target ladder, this month against plan, the funnel, the 2 PM / 7 PM reports and the Claude spending cap. Every number comes from the server; a number the site cannot measure shows as "Data unavailable". */
+/* Owner console: Growth — the first-year target ladder, this month against plan, the funnel, the 2 PM / 7 PM reports and the AI spending cap. Every number comes from the server; a number the site cannot measure shows as "Data unavailable". */
 (() => {
   'use strict';
   const K = window.CVTaraAdminKit; if (!K) return;
@@ -41,11 +41,11 @@
         ${D.year.rows.map(r => `<tr><td>${E(monthName(r.month))}</td><td>${n(r.target)}</td><td>${r.purchases === null ? '—' : n(r.purchases)}</td><td>${inr(r.targetPaise)}</td><td>${r.grossPaise === null ? '—' : inr(r.grossPaise)}</td></tr>`).join('')}</tbody></table></div>
         <p class="muted" style="margin-bottom:0">Actuals fill in from each day's stored numbers. Gross target = purchases × ${inr(D.settings.avgPaise)} average.</p></section>
       <div class="ops-two">
-        <section class="panel panel-pad"><h3 style="margin-top:0">Claude spending this month</h3>
+        <section class="panel panel-pad"><h3 style="margin-top:0">AI spending this month</h3>
           <p style="margin-top:0"><b>${inr(B.spentPaise)}</b> of ${inr(B.capPaise)} cap${B.pct === null ? '' : ' (' + B.pct + '%)'}</p>
           <div class="ops-bar" style="height:8px;border-radius:4px;background:var(--line,#e5e7eb);overflow:hidden"><div style="height:100%;width:${Math.min(100, B.pct || 0)}%;background:${B.pct >= 90 ? '#dc2626' : B.pct >= 75 ? '#d97706' : '#16a34a'}"></div></div>
           <p class="muted">${Object.entries(B.byPurpose).map(([k, v]) => `${E(k === 'customer' ? 'Customer add-ons' : k)}: ${inr(v.paise)} (${n(v.calls)} requests)`).join(' · ') || 'No requests yet this month.'}</p>
-          <p class="muted" style="margin-bottom:0">Alerts at 50%, 75% and 90% go to the Error Log and the reports. At 100% growth tasks stop; paid customer add-ons keep working. Cost is worked out from the token prices below, so keep them in line with the Claude pricing page.</p></section>
+          <p class="muted" style="margin-bottom:0">Alerts at 50%, 75% and 90% go to the Error Log and the reports. At 100% growth tasks stop; paid customer add-ons keep working. Cost is worked out from the token prices below, so keep them in line with your AI provider's pricing page.</p></section>
         <section class="panel panel-pad" data-nokit><h3 style="margin-top:0">Colleges with the most users</h3>
           <p class="muted" style="margin-top:0">Totals of users who agreed to emails, read from their resumes. Use it to choose which placement cells to contact first. It never shows who the students are.</p>
           ${D.colleges.length ? `<table class="ad-table"><tbody>${D.colleges.map(c => `<tr><td>${E(c.college)}</td><td>${n(c.users)}</td></tr>`).join('')}</tbody></table>` : '<p class="muted">Nothing yet.</p>'}</section>
@@ -77,7 +77,7 @@
   function settings() {
     const s = D.settings;
     const m = modal('Targets and settings', `<form id="grForm" class="ops-form">
-      <label>Monthly Claude cap (₹)<input name="budgetInr" type="number" min="0" step="100" value="${E(s.budgetInr)}" required></label>
+      <label>Monthly AI spending cap (₹)<input name="budgetInr" type="number" min="0" step="100" value="${E(s.budgetInr)}" required></label>
       <label>Stretch target (% of committed)<input name="stretchPct" type="number" min="100" max="500" value="${E(s.stretchPct)}" required></label>
       <label>Average purchase (₹)<input name="avg" type="number" min="1" step="0.01" value="${E(s.avgPaise / 100)}" required></label>
       <label>Send reports to (blank = every owner account)<input name="reportEmail" type="email" value="${E(s.reportEmail)}"></label>
@@ -97,5 +97,5 @@
     };
   }
 
-  K.register('growth', growth, ['📈', 'Growth', 'This month against the first-year plan, the funnel, the 2 PM / 7 PM reports and the Claude spending cap.']);
+  K.register('growth', growth, ['📈', 'Growth', 'This month against the first-year plan, the funnel, the 2 PM / 7 PM reports and the AI spending cap.']);
 })();

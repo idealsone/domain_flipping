@@ -8,7 +8,7 @@ use Illuminate\Support\Str;
 
 /**
  * Growth page: the first-year target ladder, the funnel from visit to repeat purchase, daily snapshots, the 2 PM and 7 PM
- * owner reports (Mon–Sat, India time) and the monthly cap on Claude spending. Every number is counted by the database;
+ * owner reports (Mon–Sat, India time) and the monthly cap on AI spending. Every number is counted by the database;
  * nothing here asks a model to do arithmetic. A number the site cannot measure is null and shows as "Data unavailable".
  */
 class Growth
@@ -18,7 +18,7 @@ class Growth
     /** Owner's first-year plan (Nov 2026 – Oct 2027): purchases per month. Gross target = purchases × average purchase. */
     public const LADDER = ['2026-11' => 100, '2026-12' => 200, '2027-01' => 330, '2027-02' => 600, '2027-03' => 800, '2027-04' => 1000, '2027-05' => 1300, '2027-06' => 1500, '2027-07' => 1850, '2027-08' => 1900, '2027-09' => 2000, '2027-10' => 2230];
 
-    /** usdInr and the per-million-token prices are the owner's to keep current (Claude API pricing page). */
+    /** usdInr and the per-million-token prices are the owner's to keep current (AI provider pricing page). */
     public const DEFAULTS = ['ladder' => self::LADDER, 'avgPaise' => 12677, 'stretchPct' => 200, 'reports' => true, 'reportEmail' => '', 'budgetInr' => 2000, 'usdInr' => 88, 'inputUsdPerM' => 5, 'outputUsdPerM' => 25];
 
     public const SLOTS = ['midday' => 14, 'evening' => 19];
@@ -175,7 +175,7 @@ class Growth
         return $out ?: ['On pace. Keep going and check the plan mix and refunds before scaling anything.'];
     }
 
-    /** Claude spending this month (India time) against the owner's cap. */
+    /** AI spending this month (India time) against the owner's cap. */
     public static function budget(): array
     {
         $s = self::settings();
@@ -187,7 +187,7 @@ class Growth
         return ['spentPaise' => $spent, 'capPaise' => $cap, 'pct' => $cap ? round($spent / $cap * 100, 1) : null, 'byPurpose' => $rows->mapWithKeys(fn ($r) => [$r->purpose => ['paise' => (int) $r->p, 'calls' => (int) $r->n]])->all(), 'stopped' => $cap > 0 && $spent >= $cap];
     }
 
-    /** Called after every Claude request. Customer add-ons are paid for, so they are counted but never stopped by the cap. */
+    /** Called after every AI request. Customer add-ons are paid for, so they are counted but never stopped by the cap. */
     public static function recordAi(string $purpose, string $model, int $in, int $out): void
     {
         $s = self::settings();
@@ -196,13 +196,13 @@ class Growth
         $b = self::budget();
         foreach ([90, 75, 50] as $step) {
             if ($b['pct'] !== null && $b['pct'] >= $step) {
-                ErrorLog::record('warning', 'ai', "Claude spending has reached {$step}% of this month's cap (₹".number_format($b['spentPaise'] / 100).' of ₹'.number_format($b['capPaise'] / 100).'). Growth tasks stop at 100%; customer add-ons keep working.', 'ai-budget:'.now()->tz(self::TZ)->format('Y-m').':'.$step);
+                ErrorLog::record('warning', 'ai', "AI spending has reached {$step}% of this month's cap (₹".number_format($b['spentPaise'] / 100).' of ₹'.number_format($b['capPaise'] / 100).'). Growth tasks stop at 100%; customer add-ons keep working.', 'ai-budget:'.now()->tz(self::TZ)->format('Y-m').':'.$step);
                 break;
             }
         }
     }
 
-    /** Growth tasks (not customer add-ons) may call Claude only while this month's spending is under the cap. */
+    /** Growth tasks (not customer add-ons) may call the AI provider only while this month's spending is under the cap. */
     public static function aiAllowed(string $purpose): bool
     {
         return $purpose === 'customer' || ! self::budget()['stopped'];
@@ -263,12 +263,12 @@ class Growth
             $risks[] = '- '.$health['metrics']['mailFailed24h'].' mails failed in the last 24 hours (Health page).';
         }
         if ($budget['pct'] !== null && $budget['pct'] >= 50) {
-            $risks[] = '- Claude spending is at '.$budget['pct'].'% of the monthly cap.';
+            $risks[] = '- AI spending is at '.$budget['pct'].'% of the monthly cap.';
         }
         array_push($L, ...($risks ?: ['- None found.']));
         $L[] = '';
         $L[] = '## Decisions needed from you';
-        $L[] = $budget['stopped'] ? '- Claude cap reached: raise it on the Growth page or wait for next month.' : '- None.';
+        $L[] = $budget['stopped'] ? '- AI spending cap reached: raise it on the Growth page or wait for next month.' : '- None.';
         $L[] = '';
         $L[] = '## Next actions';
         foreach (self::actions($month, $today) as $a) {

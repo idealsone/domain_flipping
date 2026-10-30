@@ -1,5 +1,5 @@
 """Growth page: month against the target ladder, funnel counts, the 2 PM / 7 PM report (saved and emailed, Mon–Sat only,
-once per slot), the Claude spending cap, resume segments by college and role, and campaign audiences limited to a segment."""
+once per slot), the AI spending cap, resume segments by college and role, and campaign audiences limited to a segment."""
 import json
 NAME = "Growth page, reports, Claude cap and segments"
 
@@ -67,14 +67,14 @@ def run(ctx, t):
     t.check("reports are listed one page at a time and can be read", s == 200 and d["total"] >= 1 and o.api("GET", "admin/growth/report?id=" + d["rows"][0]["id"])[0] == 200, d)
     t.check("a snapshot of the day before is stored", db.q("select count(*) from growth_snapshots where day='2026-11-01'")[0][0] == 1)
 
-    # Claude spending: counted per request, alerts at 50%, growth tasks stop at the cap, customer add-ons do not.
+    # AI spending: counted per request, alerts at 50%, growth tasks stop at the cap, customer add-ons do not.
     tinker("App\\Services\\Settings::put('growth', ['budgetInr' => 10] + App\\Services\\Growth::settings());")
     r = tinker("App\\Services\\Growth::recordAi('customer', 'm', 200000, 20000); App\\Services\\Growth::recordAi('seo', 'm', 0, 0); $b = App\\Services\\Growth::budget(); echo json_encode([$b, App\\Services\\Growth::aiAllowed('seo'), App\\Services\\Growth::aiAllowed('customer')]);")
     try: b, seo, cust = json.loads((r.stdout.strip().splitlines() or ["[]"])[-1])
     except ValueError: b, seo, cust = {}, None, None
     t.check("each request's cost is worked out from its tokens", b.get("spentPaise", 0) == 13200 and b["byPurpose"]["customer"]["calls"] == 1, (r.stdout + r.stderr)[-300:])
     t.check("over the cap growth tasks stop but paid customer add-ons keep working", seo is False and cust is True, (seo, cust))
-    t.check("crossing the cap is written to the Error Log", db.q("select count(*) from error_logs where message like '%Claude spending has reached%'")[0][0] >= 1)
+    t.check("crossing the cap is written to the Error Log", db.q("select count(*) from error_logs where message like '%AI spending has reached%'")[0][0] >= 1)
     s, j = o.api("POST", "admin/growth/settings", {"budgetInr": 2000, "stretchPct": 200, "avgPaise": 12677, "reports": True, "reportEmail": "", "usdInr": 88, "inputUsdPerM": 5, "outputUsdPerM": 25, "ladder": {"2026-11": 120}})
     t.check("the owner can change the cap and the monthly targets", s == 200 and j["settings"]["budgetInr"] == 2000 and j["settings"]["ladder"]["2026-11"] == 120 and j["settings"]["ladder"]["2027-10"] == 2230, f"{s} {j}")
     tinker("App\\Services\\Settings::put('growth', []);")
