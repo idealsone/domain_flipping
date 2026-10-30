@@ -73,3 +73,14 @@ html body .button.primary:not(.cv-referral .button):not(.b2-band .button){backgr
 html body .button.primary:not(.cv-referral .button):not(.b2-band .button):hover{background:#173fae!important}
 html body .lp-announce{background:#1f4fd1}
 html body .mobile-cta-bar a:last-child{background:#1f4fd1}
+
+/* Workspace and owner console (3.26): plain line icons in the sidebar, neutral sidebars, a solid welcome panel instead of a purple gradient */
+.side-nav i[data-icon]{display:inline-grid;place-items:center;width:20px;height:20px;font-size:0;opacity:.85}
+.side-nav i[data-icon] svg{width:18px;height:18px}
+.side-nav .active i[data-icon],.side-nav button:hover i[data-icon],.side-nav a:hover i[data-icon]{opacity:1}
+html body[data-page=workspace] .side-panel,html body[data-page=admin] .side-panel,html body[data-page=admin] .admin-side{background:#111827}
+html body.dark[data-page=workspace] .side-panel,html body.dark[data-page=admin] .side-panel{background:#0d121c;border-right:1px solid #232b3a}
+html body[data-page=workspace] .side-nav button.active,html body[data-page=workspace] .side-nav a.active{background:#1f4fd1}
+html body .ws-hero{background:#16233f;border-radius:14px}
+html body .ws-hero .button.mint{background:#fff!important;color:#16233f!important;border-color:#fff}
+html body .ws-hero .ws-plan-chip{background:rgba(255,255,255,.06);border-color:rgba(255,255,255,.14)}
