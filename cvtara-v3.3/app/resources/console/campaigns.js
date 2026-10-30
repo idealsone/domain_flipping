@@ -85,11 +85,13 @@
   }
 
   function edit(c) {
-    const f = c || { id: '', name: '', subject: '', body: SAMPLE, audience: 'customers_all', status: 'draft' };
+    const f = c || { id: '', name: '', subject: '', body: SAMPLE, audience: 'customers_all', segCollege: '', segRole: '', status: 'draft' };
     const soon = new Date(Date.now() + 5.5 * 3600e3 + 3600e3).toISOString().slice(0, 13) + ':00';
     const m = modal(c && c.id ? 'Edit campaign' : 'New campaign', `<form id="cmForm" class="ops-form">
       <label class="wide">Campaign name (only you see this)<input name="name" maxlength="120" required value="${E(f.name)}"></label>
       <label class="wide">Who gets it<select name="audience">${S.audiences.map(a => `<option value="${E(a.key)}" ${a.key === f.audience ? 'selected' : ''}>${E(a.label)} (${n(S.counts[a.key])})</option>`).join('')}</select></label>
+      <label>Only this college (optional)<input name="segCollege" maxlength="160" value="${E(f.segCollege || '')}" placeholder="e.g. RV College"></label>
+      <label>Only this target role (optional)<input name="segRole" maxlength="120" value="${E(f.segRole || '')}" placeholder="e.g. Data analyst"></label>
       <p class="muted wide" id="cmCount" style="margin:0"></p>
       <label class="wide">Subject line<input name="subject" maxlength="180" required value="${E(f.subject)}"></label>
       <label class="wide">Message<textarea name="body" rows="12" maxlength="20000" required>${E(f.body)}</textarea></label>
@@ -102,9 +104,9 @@
       <p role="status" id="cmEdMsg" class="wide"></p></form>`, { wide: true });
     const fm = $('#cmForm', m.el), say = x => { $('#cmEdMsg', m.el).textContent = x; };
     let id = f.id || '';
-    const body = () => ({ id: id || null, name: fm.name.value.trim(), audience: fm.audience.value, subject: fm.subject.value.trim(), body: fm.body.value });
-    const count = async () => { try { const r = await api('/api/admin/campaigns/count?audience=' + encodeURIComponent(fm.audience.value)); $('#cmCount', m.el).textContent = r.count ? `${n(r.count)} ${r.count === 1 ? 'person' : 'people'} will get this email right now. People who unsubscribe before their email goes out are skipped.` : 'Nobody in this group can be emailed yet.'; fm.querySelector('[data-send]').textContent = r.count ? `Send to ${n(r.count)} ${r.count === 1 ? 'person' : 'people'}` : 'Send'; } catch (x) { say(err(x)); } };
-    fm.audience.onchange = count; count();
+    const body = () => ({ id: id || null, name: fm.name.value.trim(), audience: fm.audience.value, segCollege: fm.segCollege.value.trim(), segRole: fm.segRole.value.trim(), subject: fm.subject.value.trim(), body: fm.body.value });
+    const count = async () => { try { const r = await api('/api/admin/campaigns/count?' + new URLSearchParams({ audience: fm.audience.value, college: fm.segCollege.value.trim(), role: fm.segRole.value.trim() })); $('#cmCount', m.el).textContent = r.count ? `${n(r.count)} ${r.count === 1 ? 'person' : 'people'} will get this email right now. People who unsubscribe before their email goes out are skipped.` : 'Nobody in this group can be emailed yet.'; fm.querySelector('[data-send]').textContent = r.count ? `Send to ${n(r.count)} ${r.count === 1 ? 'person' : 'people'}` : 'Send'; } catch (x) { say(err(x)); } };
+    fm.audience.onchange = count; fm.segCollege.onchange = count; fm.segRole.onchange = count; count();
     const save = async () => { if (!fm.reportValidity()) throw new Error('Fill in the name, subject and message first.'); const r = await post('/api/admin/campaigns/save', body(), true); id = r.id; S = r; return r; };
     fm.onsubmit = async e => { e.preventDefault(); try { await save(); toast('Draft saved'); say('Saved.'); campaigns(); } catch (x) { say(err(x)); } };
     fm.querySelector('[data-prev]').onclick = async () => {
