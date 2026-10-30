@@ -1,3 +1,8 @@
+# CVTara v3.26.2 — Owner console stays on the page you were on
+
+## 3.26.2
+- **Owner console:** reloading the page (or coming back to it after fetching the security code from email) reopened the Overview for the Settings pages reached from cards: Integrations (payment keys), Footer & policies, SEO, Product controls, Offers & popup, Keyword intelligence and Health. They now reopen where you were, like the side-menu pages already did. No migration.
+
 # CVTara v3.26.1 — A calmer, more human look across the site
 
 ## 3.26.1
