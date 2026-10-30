@@ -1,0 +1,4 @@
+#!/bin/bash
+# Read-only status check for the SEO agent (prints yes/no and counts, never keys). Runs once.
+W=/home/u280039231/cvtara_deploy; [ -f $W/seocheck.done ] && { cat $W/seocheck.log; exit 0; }
+cd /home/u280039231/domains/cvtara.com/cvtara_app && php artisan tinker --execute='$p=App\Services\Settings::providers()["analytics"]??[]; $d=App\Services\Settings::get("searchData",[]); $i=App\Services\Settings::get("integrations",[]); echo json_encode(["scReady"=>App\Services\SearchConsole::ready(),"property"=>App\Services\SearchConsole::property(),"gaOn"=>(bool)($i["analytics"]??false),"gaId"=>!empty($p["measurementId"]),"dataAt"=>$d["updatedAt"]??null,"queries"=>count($d["query"]??[]),"pages"=>count($d["page"]??[]),"aiOn"=>App\Services\TaraAI::enabled(),"views7d"=>DB::table("page_views")->where("created_at",">",now()->subDays(7))->count()]);' > $W/seocheck.log 2>&1; touch $W/seocheck.done; cat $W/seocheck.log
