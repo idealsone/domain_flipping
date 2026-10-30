@@ -66,3 +66,10 @@ body.has-topbar [data-header]{top:44px}
 @media (max-width:760px){.to-top{right:14px;bottom:calc(78px + env(safe-area-inset-bottom))}}
 @media print{.to-top{display:none}}
 [data-header] .site-header{background:var(--paper)}
+
+/* Human touch (3.26): one solid brand blue for main buttons and the announcement bar on every page, no blue-to-purple gradient or glow.
+   The referral offer keeps its own accent colour. */
+html body .button.primary:not(.cv-referral .button):not(.b2-band .button){background:#1f4fd1!important;border-color:#1f4fd1;box-shadow:none!important}
+html body .button.primary:not(.cv-referral .button):not(.b2-band .button):hover{background:#173fae!important}
+html body .lp-announce{background:#1f4fd1}
+html body .mobile-cta-bar a:last-child{background:#1f4fd1}

@@ -443,24 +443,17 @@
         "Capgemini India"
       ]
     },
-    "announce": "Create your account, build and preview · Plans from {{from}} · Pay once, no auto-renewal",
+    "announce": "Build your resume free. Download from {{from}}, and nothing renews on its own.",
     "announceLink": "See plans",
-    "heroPill": "ATS-friendly resumes for Indian job seekers",
-    "heroTitle": "Land your dream job as a",
-    "heroRoles": [
-      "Data Analyst",
-      "Software Engineer",
-      "HR Manager",
-      "Marketing Lead",
-      "Product Designer",
-      "Finance Analyst"
-    ],
-    "heroLead": "Upload the resume you have or build one from a template. CVTara makes it **ATS-friendly**, shows what each job is missing, and creates a tailored resume and cover letter for it, then tracks every application for you.",
-    "ctaPrimary": "Build my resume →",
-    "ctaSecondary": "Try the ATS check",
-    "ctaFinalTitle": "Your next job offer starts with a better resume",
-    "ctaFinalText": "Upload the resume you have or start from a template. See your ATS-friendly score in minutes.",
+    "heroPill": "Built in Bangalore by an HR professional",
+    "heroTitle": "One good resume, and a sharper copy for every job you apply to.",
+    "heroRoles": [],
+    "heroLead": "Upload the resume you already have, or start from a template. Paste a job from Naukri, LinkedIn or a company careers page, and CVTara shows what the recruiter will look for and what your resume doesn't say yet. Fix it, add a matching cover letter, and download.",
+    "ctaPrimary": "Start my resume",
+    "ctaSecondary": "Check my resume against a job",
+    "ctaFinalTitle": "Start with the resume you have",
+    "ctaFinalText": "Upload it, see what a job is looking for, and fix the gaps. Nothing to pay until you download.",
     "pages": {},
-    "ctaFinalButton": "Create my resume →"
+    "ctaFinalButton": "Start my resume"
   }
 }

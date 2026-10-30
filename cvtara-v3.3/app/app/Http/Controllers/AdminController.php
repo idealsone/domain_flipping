@@ -477,7 +477,7 @@ class AdminController extends Controller
             \Illuminate\Support\Facades\Cache::forget('public-activity');
         }
         if ($k === 'site') {
-            validator($d, ['announce' => 'nullable|string|max:300', 'announceLink' => 'nullable|string|max:300', 'heroPill' => 'nullable|string|max:120', 'heroTitle' => 'required|string|max:200', 'heroRoles' => 'required|array|min:1|max:12', 'heroRoles.*' => 'string|max:60', 'heroLead' => 'required|string|max:600', 'ctaPrimary' => 'required|string|max:60', 'ctaSecondary' => 'required|string|max:60', 'ctaFinalTitle' => 'nullable|string|max:200', 'ctaFinalText' => 'nullable|string|max:400', 'pages' => 'present|array', 'pages.*.title' => 'nullable|string|max:180', 'pages.*.description' => 'nullable|string|max:400', 'pages.*.keywords' => 'nullable|string|max:400'])->validate();
+            validator($d, ['announce' => 'nullable|string|max:300', 'announceLink' => 'nullable|string|max:300', 'heroPill' => 'nullable|string|max:120', 'heroTitle' => 'required|string|max:200', 'heroRoles' => 'present|array|max:12', 'heroRoles.*' => 'string|max:60', 'heroLead' => 'required|string|max:600', 'ctaPrimary' => 'required|string|max:60', 'ctaSecondary' => 'required|string|max:60', 'ctaFinalTitle' => 'nullable|string|max:200', 'ctaFinalText' => 'nullable|string|max:400', 'pages' => 'present|array', 'pages.*.title' => 'nullable|string|max:180', 'pages.*.description' => 'nullable|string|max:400', 'pages.*.keywords' => 'nullable|string|max:400'])->validate();
         }
         if ($k === 'seo') {
             validator($d, ['sitemapEnabled' => 'required|boolean', 'searchIndexing' => 'required|boolean', 'siteUrl' => 'nullable|url:https|max:255', 'pages' => 'present|array'])->validate();
