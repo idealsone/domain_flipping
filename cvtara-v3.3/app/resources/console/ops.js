@@ -28,12 +28,11 @@
     seo: ['◎', 'SEO & sitemap', 'Search titles, descriptions and sitemap.'],
     keywords: ['⌕', 'Keyword intelligence', 'Target keywords and Search Console results.'],
     analytics: ['↗', 'Analytics', 'Traffic and recorded product activity.'],
-    integrations: ['⚙', 'Integrations', 'Payments, email, AI, analytics and push services.'],
-    push: ['◉', 'Push notifications', 'OneSignal push setup.'],
+    integrations: ['⚙', 'Integrations', 'Payments, email, AI and analytics services.'],
     legal: ['§', 'Footer & policies', 'Footer links, legal pages and contact details.'],
     setup: ['✔', 'Setup & health', 'Launch checklist, cron, webhooks and test tools.']
   };
-  const HUB = ['policies', 'health', 'features', 'popup', 'keywords', 'analytics', 'integrations', 'push', 'seo', 'overview'];
+  const HUB = ['policies', 'health', 'features', 'popup', 'keywords', 'analytics', 'integrations', 'seo', 'overview'];
   let current = 'overview';
 
   function banner(k) {
