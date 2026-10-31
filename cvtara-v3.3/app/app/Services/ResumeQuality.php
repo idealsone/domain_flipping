@@ -57,7 +57,7 @@ class ResumeQuality
         $add('numbers', 'Numbers and results', 8, $nb ? min(1, ($nums / $nb) / 0.3) : 0, 'Add numbers to some bullets: percentages, team size, volume, savings.');
         $add('education', 'Education', 8, ! empty($d['education']) ? 1 : 0, 'Add your education.');
         $add('skills', 'Skills list', 12, min(1, count($skills) / 8), 'List at least 8 skills, tools and methods that match your target roles.');
-        $add('structure', 'Standard headings and plain text', 5, 1, '');
+        $add('structure', 'Standard headings and plain text', 5, $words >= 60 ? 1 : 0, 'Fill in your resume: an almost empty resume has nothing for a tracking system to read.');
         $add('length', 'Length', 6, $words >= 250 && $words <= 900 ? 1 : ($words < 250 ? $words / 250 : max(0, 1 - ($words - 900) / 600)), $words < 250 ? 'Add more detail: aim for 250 to 900 words.' : 'Shorten it: keep it under about 900 words.');
 
         $score = (int) min(100, array_sum(array_column($c, 'got')));

@@ -247,6 +247,11 @@ Artisan::command('cvtara:ats-analyse {file}', function (string $file) {
     $this->line(json_encode(array_map(fn ($p) => \App\Services\AtsEngine::analyse($p[0], $p[1]), $pairs), JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES));
 })->purpose('Run the ATS engine on resume/job pairs');
 
+Artisan::command('cvtara:ats-report {file}', function (string $file) {
+    $pairs = json_decode((string) file_get_contents($file), true) ?: [];
+    $this->line(json_encode(array_map(fn ($p) => \App\Services\AtsEngine::report($p[0], $p[1]), $pairs), JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES));
+})->purpose('Full ATS Match report (score, keywords, gaps) for saved-resume/job pairs');
+
 Artisan::command('cvtara:prebuild', function () {
     $r = \App\Services\PageCache::build();
     $this->info('Pre-built '.$r['built'].' public pages'.($r['skipped'] ? '; could not build: '.implode(', ', $r['skipped']) : '').'.');

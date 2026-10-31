@@ -1,3 +1,15 @@
+# CVTara v3.27.2 — Pre-launch check: fairer ATS Match for Indian job posts
+
+## 3.27.2
+- **ATS Match, degrees:** B.Com, M.Com, BCA, MCA, BBA, B.Sc, M.Sc, B.E., M.E., B.A., PGDM, Diploma, Graduate, MBBS, B.Pharm and similar are now recognised, so the education requirement no longer shows "Not found" for an Indian degree. "Scrum master" is no longer read as a master's degree.
+- **ATS Match, experience:** "3 to 5 years" asks for 3 years (it asked for 5). A fresher post ("0 to 2 years") asks for no minimum, so freshers are no longer marked down for experience.
+- **ATS Match, keywords:** location, salary/LPA, job type, shift, notice period and how-to-apply lines are no longer counted as keywords (Mumbai, Maharashtra, LPA, WhatsApp, "Title" were showing as "missing"). A list of acceptable degrees ("B.Com / M.Com / BBA") is checked once as the education requirement instead of marking the other degrees as missing. The employer named on the title line ("Java Developer - TCS") is not a keyword. Seniority words (Senior, Junior) are not keywords.
+- **ATS Match, requirements:** when a job names a skill twice, the sentence that says it is required sets its priority ("Must have: Java" makes Java Required). "Good to have", "is a plus" and "added advantage" mark a requirement as preferred. An education line ("Education: B.Tech from a recognised university") no longer adds an "Education and edtech" requirement to a non-teaching job. "Data analyst" counts as data analysis.
+- **ATS-friendly score:** an empty resume now scores 0 (it got 5 for "standard headings").
+- **No AI wording in public files:** the owner's service-queue script (it names the writing service) moved from a public file to the owner-only /console/refunds.js. "ai resume builder" was taken out of the home page keywords (also removed from saved keywords by a migration).
+- **ATS checker page:** the first button is the check itself; "Use this template" is only on template, example and role pages.
+- **Migration:** 2026_10_31_000001_no_ai_keyword. Run `php artisan migrate --force` and rebuild ready-made pages. Delete public_html/refunds-admin.js on the live site.
+
 # CVTara v3.27.1 — Owner console stays on the page you were on
 
 ## 3.27.1
