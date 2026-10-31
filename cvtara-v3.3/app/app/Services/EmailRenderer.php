@@ -13,7 +13,7 @@ use Illuminate\Support\Facades\URL;
 class EmailRenderer
 {
     /** Triggers that are marketing: they need the person's consent and always carry an unsubscribe link. */
-    public const MARKETING = ['nurture', 'blog_published', 'abandoned_purchase', 'monthly_digest', 'campaign'];
+    public const MARKETING = ['nurture', 'blog_published', 'abandoned_purchase', 'monthly_digest', 'campaign', 'referral_invite', 'plan_ended'];
 
     /** Triggers that carry a one-time code or a sign-in link: sent at once, never with offers, never with an unsubscribe link. */
     public const SECURITY = ['email_verification', 'security_verification', 'password_reset'];
