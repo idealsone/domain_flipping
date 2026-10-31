@@ -6,7 +6,7 @@ PW = "OwnerPassw0rd!!x"
 def run(ctx, t):
     from lib.env import Instance
     ctx.inst.stop() if False else None
-    inst = Instance(ctx.app, ctx.public, preview=False).start()
+    inst = Instance(ctx.app, ctx.public, preview=False, extra_env={"OWNER_LOGIN_CODE": "off"}).start()  # this suite checks the step-up itself
     try:
         r = inst.artisan("tinker", "--execute", "$u=new App\\Models\\User(); $u->forceFill(['name'=>'Owner','email'=>'owner@test.local','password'=>Hash::make('" + PW + "'),'is_admin'=>true,'email_verified_at'=>now(),'referral_code'=>'ownercode000001'])->save();")
         from lib.http import Client
