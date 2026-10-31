@@ -14,6 +14,18 @@ class MailAutomation
     /** Days after sign-up for the 12 yearly plan nudges (sent only until the first purchase, only with consent). */
     public const NURTURE_DAYS = [2, 7, 14, 30, 60, 90, 120, 150, 180, 240, 300, 360];
 
+    /**
+     * Which nudge template goes out at each of those days (template "nurture-N"). Most people decide in their first two weeks,
+     * so the plain "what each package includes" mail (10) goes on day 14 instead of day 300, and the fresher tips (8) on day 30.
+     */
+    public const NURTURE_ORDER = [1, 2, 10, 8, 3, 4, 5, 11, 9, 6, 7, 12];
+
+    /** Days after a Job Hunt or Pro purchase for the one referral invite: the 7-day refund window has passed and the package has been used. */
+    public const REFERRAL_INVITE_DAYS = 8;
+
+    /** Days after a plan ends, with no new plan bought, for the one "your work is still saved" mail. */
+    public const PLAN_ENDED_DAYS = 14;
+
     /** Triggers that carry a one-time code: the code is removed from the outbox once the mail is sent. */
     private const CODE_TRIGGERS = ['security_verification', 'email_verification'];
 
@@ -289,7 +301,7 @@ class MailAutomation
             $held = self::sentLast24h() >= max(0, self::mailboxCap() - self::RESERVE);
             $jobs = DB::table('mail_outbox')->whereIn('status', ['queued', 'failed'])->where('attempts', '<', 5)->where('due_at', '<=', now())
                 ->when($held, fn ($q) => $q->whereNotIn('trigger', EmailRenderer::MARKETING))
-                ->orderByRaw("CASE WHEN `trigger` IN ('security_verification','email_verification','password_reset') THEN 0 WHEN `trigger` IN ('purchase_verified','profile_created','refund_requested','refund_processed','refund_rejected','campaign_test') THEN 1 WHEN `trigger` IN ('campaign','nurture','monthly_digest','blog_published','abandoned_purchase') THEN 3 ELSE 2 END")
+                ->orderByRaw("CASE WHEN `trigger` IN ('security_verification','email_verification','password_reset') THEN 0 WHEN `trigger` IN ('purchase_verified','profile_created','refund_requested','refund_processed','refund_rejected','campaign_test') THEN 1 WHEN `trigger` IN ('campaign','nurture','monthly_digest','blog_published','abandoned_purchase','referral_invite','plan_ended') THEN 3 ELSE 2 END")
                 ->orderBy('due_at')->limit(self::PER_RUN)->get();
             $sent = 0;
             $processed = 0;
@@ -357,15 +369,22 @@ class MailAutomation
             if (DB::table('purchases')->where('owner_id', $p->owner_id)->whereIn('status', ['paid', 'partially_refunded'])->where('created_at', '>', $p->created_at)->exists()) {
                 continue;
             }
+            // One checkout reminder per person a week, however many times they opened checkout.
+            if (DB::table('mail_outbox')->where('owner_id', $p->owner_id)->where('trigger', 'abandoned_purchase')->where('created_at', '>=', now()->subDays(7))->exists()) {
+                continue;
+            }
             if ($u = User::find($p->owner_id)) {
                 self::queue($u, 'abandoned_purchase', $p->id);
             }
-        }foreach (DB::table('applications')->where('follow_up', today())->get() as $a) {
+        }
+        foreach (DB::table('applications')->where('follow_up', today())->get() as $a) {
             if ($u = User::find($a->owner_id)) {
                 self::queue($u, 'followup_due', $a->id.':'.today()->toDateString());
             }
         }
         self::nurture();
+        self::referralInvites();
+        self::planEnded();
         self::monthlyDigest();
     }
 
@@ -382,7 +401,12 @@ class MailAutomation
                 continue;
             }
             $left = (strtotime($p->access_until) - time()) / 86400;
+            $length = (int) ($p->access_days ?? 0);
             foreach ($steps as $day => $window) {
+                // A short plan only gets the reminders that make sense for it: a 7-day Quick Download is not told "7 days left" on the day it is bought.
+                if ($length > 0 && $length < $day * 2) {
+                    continue;
+                }
                 if ($left <= $day && $left > $day - $window) {
                     $plans = Settings::plans();
                     self::queue($u, 'access_expiring_'.$day, $p->id, ['days' => (string) $day, 'plan_name' => $plans[$p->plan]['name'] ?? (string) $p->plan, 'access_until' => date('j M Y', strtotime($p->access_until)), 'renew_url' => rtrim((string) config('app.url'), '/').'/checkout.html']);
@@ -413,10 +437,59 @@ class MailAutomation
             if ($step === null || self::recentMarketing($u->id, 3)) {
                 continue;
             }
-            if ($step === 10 && ! Wallet::enabled()) {
+            $template = self::NURTURE_ORDER[$step] ?? ($step + 1);
+            if ($template === 11 && ! Wallet::enabled()) {
                 continue; // the referral nudge only goes out while "Give ₹50, get ₹50" is switched on
             }
-            self::queue($u, 'nurture', 'n'.($step + 1), [], false, 'nurture-'.($step + 1));
+            self::queue($u, 'nurture', 'n'.($step + 1), [], false, 'nurture-'.$template);
+        }
+    }
+
+    /** Paid plans that count for the follow-ups below: no add-ons, services or free referral rewards. */
+    private static function planPurchases()
+    {
+        return DB::table('purchases')->whereIn('status', ['paid', 'partially_refunded'])->where('provider', '!=', 'referral_reward')->where('plan', 'not like', 'addon-%')->whereNotNull('purchased_at');
+    }
+
+    /**
+     * One referral invite per customer, ever: a week after a package that earns the referral bonus (₹299 and up, so Job Hunt or Pro,
+     * never the ₹99 Quick Download or the add-ons), once the refund window has passed and only while "Give ₹50, get ₹50" is on.
+     */
+    private static function referralInvites(): void
+    {
+        if (! Wallet::enabled()) {
+            return;
+        }
+        $min = Wallet::rules()['minQualifyingPaise'];
+        $services = array_keys(array_filter(Settings::plans(), fn ($p) => ($p['type'] ?? 'plan') !== 'plan'));
+        $rows = self::planPurchases()->where('refunded_paise', 0)->where('amount_paise', '>=', $min)->whereNotIn('plan', $services ?: [''])
+            ->whereBetween('purchased_at', [now()->subDays(self::REFERRAL_INVITE_DAYS + 14), now()->subDays(self::REFERRAL_INVITE_DAYS)])
+            ->whereNotIn('owner_id', DB::table('mail_outbox')->where('trigger', 'referral_invite')->select('owner_id'))
+            ->whereIn('owner_id', DB::table('profiles')->where('marketing_consent', true)->select('owner_id'))->orderBy('purchased_at')->limit(300)->get();
+        foreach ($rows->unique('owner_id') as $p) {
+            $u = User::find($p->owner_id);
+            if (! $u || $u->blocked || $u->is_admin || self::recentMarketing($u->id, 2)) {
+                continue;
+            }
+            self::queue($u, 'referral_invite', 'r1', ['plan_name' => Settings::plans()[$p->plan]['name'] ?? (string) $p->plan]);
+        }
+    }
+
+    /** One mail two weeks after a plan has ended with nothing bought since: the work is still saved, and what it costs to pick up again. */
+    private static function planEnded(): void
+    {
+        $rows = self::planPurchases()->whereBetween('access_until', [now()->subDays(self::PLAN_ENDED_DAYS + 14), now()->subDays(self::PLAN_ENDED_DAYS)])
+            ->whereNotIn('owner_id', DB::table('mail_outbox')->where('trigger', 'plan_ended')->where('created_at', '>=', now()->subDays(60))->select('owner_id'))
+            ->whereIn('owner_id', DB::table('profiles')->where('marketing_consent', true)->select('owner_id'))->orderByDesc('access_until')->limit(300)->get();
+        foreach ($rows->unique('owner_id') as $p) {
+            if (self::planPurchases()->where('owner_id', $p->owner_id)->where('access_until', '>', $p->access_until)->exists()) {
+                continue; // bought again (or still has a longer plan running)
+            }
+            $u = User::find($p->owner_id);
+            if (! $u || $u->blocked || $u->is_admin || self::recentMarketing($u->id, 3)) {
+                continue;
+            }
+            self::queue($u, 'plan_ended', $p->id, ['plan_name' => Settings::plans()[$p->plan]['name'] ?? (string) $p->plan, 'access_until' => date('j M Y', strtotime($p->access_until))]);
         }
     }
 
