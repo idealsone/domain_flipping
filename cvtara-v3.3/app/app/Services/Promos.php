@@ -190,10 +190,18 @@ class Promos
         foreach (DB::table('promo_stats')->selectRaw('campaign_id, kind, sum(n) as n')->groupBy('campaign_id', 'kind')->get() as $r) {
             $out[$r->campaign_id][$r->kind] = (int) $r->n;
         }
+        // Counts start from the owner's "count from" moment: subtract what had been counted before it.
+        foreach ((array) ((Settings::get('statsReset', []) ?: [])['promoBaseline'] ?? []) as $cid => $kinds) {
+            foreach ((array) $kinds as $kind => $n) {
+                if (isset($out[$cid][$kind])) {
+                    $out[$cid][$kind] = max(0, $out[$cid][$kind] - (int) $n);
+                }
+            }
+        }
         foreach (self::all() as $c) {
             $s = $out[$c['id']] ?? [];
             $code = strtoupper($c['couponCode'] ?? '');
-            $p = $code ? DB::table('purchases')->where('coupon_code', $code)->whereIn('status', ['paid', 'partially_refunded']) : null;
+            $p = $code ? Settings::sinceStart(DB::table('purchases'), 'created_at')->where('coupon_code', $code)->whereIn('status', ['paid', 'partially_refunded']) : null;
             $out[$c['id']] = ['shown' => $s['shown'] ?? 0, 'click' => $s['click'] ?? 0, 'copy' => $s['copy'] ?? 0, 'close' => $s['close'] ?? 0, 'orders' => $p ? (int) (clone $p)->count() : 0, 'revenuePaise' => $p ? (int) (clone $p)->sum('amount_paise') : 0];
         }
 

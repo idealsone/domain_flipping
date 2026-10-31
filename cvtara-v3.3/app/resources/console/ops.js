@@ -93,7 +93,7 @@
     const h = $('#admin-dashboard'); if (!h) return; if (!h.dataset.ok) h.innerHTML = '<div class="ops-skel"></div><div class="ops-skel"></div>';
     try {
       // Every number comes from the server (full database, real money only), never from a truncated page of rows.
-      const [k, dash, ro] = await Promise.all([api('/api/admin/report/kpis?days=30'), api('/api/admin/dashboard?days=30').catch(() => ({})), api('/api/admin/report?dataset=orders&per=10&columns=customer,plan,amount_inr,status,date&format=json')]);
+      const [k, dash, ro] = await Promise.all([api('/api/admin/report/kpis?days=30'), api('/api/admin/dashboard?days=30').catch(() => ({})), api('/api/admin/report?dataset=orders&fresh=1&per=10&columns=customer,plan,amount_inr,status,date&format=json')]);
       const d = { total: k.users, paidUsers: k.paidUsers, dash }, last7 = k.series.slice(-7);
       const newThisWeek = k.signups7, revenue = k.netRevenuePaise, revWeek = last7.reduce((s, x) => s + x.revenuePaise, 0), ordersWeek = last7.reduce((s, x) => s + x.orders, 0);
       const ev = Object.fromEntries(((dash.eventCounts) || []).map(e => [e.event, e.count]));
@@ -107,6 +107,7 @@
       h.dataset.ok = '1';
       h.innerHTML = `
         <div class="pg-head"><h2>Overview</h2><p>How the business is doing right now</p></div>
+        <p class="ops-note" style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin:0 0 12px">${k.countingSince ? `Revenue, orders and offer counts start from ${E(dmy(parse(k.countingSince)))}, ${E(parse(k.countingSince).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' }))}. Older orders are kept in the Orders list.` : 'Revenue, orders and offer counts include every order so far.'} <button type="button" class="button small secondary" id="opsFreshStart">Start counting from now</button></p>
         <div class="ops-kpis six">
           <div class="kpi"><span>Total members</span><b>${d.total.toLocaleString('en-IN')}</b><small>+${newThisWeek} this week</small></div>
           <div class="kpi"><span>Paid users</span><b>${d.paidUsers}</b><small>+${ordersWeek} orders this week</small></div>
@@ -123,6 +124,11 @@
           <div><h3 class="ops-h3">Recent Orders</h3><section class="panel"><table class="ad-table"><thead><tr><th>User</th><th>Plan</th><th>Amount</th><th>Status</th><th>Date</th></tr></thead><tbody>${recent.map(p => `<tr><td>${E(p.customer || 'Customer')}</td><td>${E(p.plan)}</td><td><b>${short(p.amount_inr * 100)}</b></td><td>${pill(p.status)}</td><td>${dmy(parse(p.date))}</td></tr>`).join('') || '<tr><td colspan="5">No orders yet.</td></tr>'}</tbody></table></section></div>
           <div><h3 class="ops-h3">Recent Activity</h3><section class="panel"><table class="ad-table"><thead><tr><th>User</th><th>Event</th><th>Time</th></tr></thead><tbody>${act.map(a => `<tr><td>${E(a.name || 'Visitor')}</td><td>${E(String(a.event).replace(/_/g, ' '))}</td><td>${dmy(parse(a.created_at))}</td></tr>`).join('') || '<tr><td colspan="3">No activity recorded yet.</td></tr>'}</tbody></table></section></div>
         </div>`;
+      const fs = $('#opsFreshStart');
+      if (fs) fs.onclick = async () => {
+        if (!confirm('Start counting revenue, orders and offers seen from this moment? No order or payment is deleted.')) return;
+        try { await api('/api/admin/report/fresh-start', { method: 'POST', body: {} }); toast('Counts now start from this moment.'); dashboard(); } catch (e) { toast(e.message); }
+      };
     } catch (e) { h.innerHTML = `<div class="panel panel-pad" role="alert">${E(e.message)}</div>`; }
   }
 

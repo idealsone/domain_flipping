@@ -1,3 +1,9 @@
+# CVTara v3.27.2 — Count revenue and offers from launch
+
+## 3.27.2
+- **Start counting from now (Owner console > Overview):** one button sets the moment revenue, orders, paid users, the Growth page (actual vs target, 2 PM and 7 PM reports), offers seen/clicks/coupon sales and Outreach revenue start counting from. Nothing is deleted: older orders stay in the Orders list and exports for refunds, accounts and tax. Needs the owner's email security code. Pressing it again moves the start. No migration.
+- **Real money only:** "Paid users" and conversion no longer count test-mode payments or free plans given by hand, and the live "Revenue today" figure no longer counts test-mode payments. Abandoned and failed checkouts were never counted; a test now guards that.
+
 # CVTara v3.27.1 — Owner console stays on the page you were on
 
 ## 3.27.1

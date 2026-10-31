@@ -45,7 +45,7 @@ class AdminController extends Controller
         if (preg_match(SupportAdminController::ROUTES, $path)) {
             return app(SupportAdminController::class)->run($r, $path);
         }
-        if (preg_match('#^report(/meta|/kpis)?$#', $path)) {
+        if (preg_match('#^report(/meta|/kpis|/fresh-start)?$#', $path)) {
             return app(ReportController::class)->run($r, $path);
         }
         if (preg_match(AdminOpsController::ROUTES, $path)) {
@@ -279,7 +279,7 @@ class AdminController extends Controller
                 $day = now()->startOfDay();
                 $ev = fn ($like) => DB::table('activity_events')->where('created_at', '>=', $day)->where('event', 'like', $like)->count();
 
-                return ['activeUsers' => DB::table('activity_events')->where('created_at', '>=', now()->subDay())->whereNotNull('owner_id')->distinct('owner_id')->count('owner_id'), 'resumesToday' => $ev('%resume%'), 'revenueTodayPaise' => (int) DB::table('purchases')->where('created_at', '>=', $day)->where('provider', '!=', 'referral_reward')->whereIn('status', ['paid', 'partially_refunded', 'refunded'])->sum(DB::raw('amount_paise - refunded_paise')), 'scansToday' => DB::table('activity_events')->where('created_at', '>=', $day)->where(fn ($w) => $w->where('event', 'like', '%compared%')->orWhere('event', 'like', '%ats%'))->count(), 'signupsToday' => User::where('created_at', '>=', $day)->count(), 'totalUsers' => User::count()];
+                return ['activeUsers' => DB::table('activity_events')->where('created_at', '>=', now()->subDay())->whereNotNull('owner_id')->distinct('owner_id')->count('owner_id'), 'resumesToday' => $ev('%resume%'), 'revenueTodayPaise' => (int) Settings::sinceStart(DB::table('purchases'), 'created_at')->where('created_at', '>=', $day)->when(! config('app.preview'), fn ($q) => $q->where('is_live', true)->where('provider', '!=', 'demo'))->where('provider', '!=', 'referral_reward')->whereIn('status', ['paid', 'partially_refunded', 'refunded'])->sum(DB::raw('amount_paise - refunded_paise')), 'scansToday' => DB::table('activity_events')->where('created_at', '>=', $day)->where(fn ($w) => $w->where('event', 'like', '%compared%')->orWhere('event', 'like', '%ats%'))->count(), 'signupsToday' => User::where('created_at', '>=', $day)->count(), 'totalUsers' => User::count()];
             }));
         }
         if ($path === 'users/block') {

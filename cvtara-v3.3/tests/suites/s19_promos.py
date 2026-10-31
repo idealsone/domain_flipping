@@ -85,6 +85,16 @@ def run(ctx, t):
     s, j = c.api("POST", "checkout/start", {"plan": plan, "coupon": "DIWALI25", "showInActivity": True}); c.api("POST", "checkout/verify", {"provider": "demo", "orderId": j["orderId"]})
     me = next(x for x in o.api("GET", "admin/promos")[1]["campaigns"] if x["id"] == a_id)["stats"]
     t.check("the owner sees seen, clicks, copies, orders and revenue per offer", me["shown"] == 2 and me["click"] == 1 and me["copy"] == 1 and me["close"] == 1 and me["orders"] == 1 and me["revenuePaise"] > 0, me)
+    import time; time.sleep(1.2)
+    t.check("customers cannot restart the counts", c.api("POST", "admin/report/fresh-start", {})[0] == 403)
+    s, j = o.api("POST", "admin/report/fresh-start", {}); t.check("the owner can start counting from now", s == 200 and j.get("since"), j)
+    me = next(x for x in o.api("GET", "admin/promos")[1]["campaigns"] if x["id"] == a_id)["stats"]
+    t.check("after a fresh start offers seen, clicks, orders and revenue read zero", me["shown"] == 0 and me["click"] == 0 and me["orders"] == 0 and me["revenuePaise"] == 0, me)
+    c.api("POST", "promo/event", {"id": a_id, "kind": "shown"})
+    me = next(x for x in o.api("GET", "admin/promos")[1]["campaigns"] if x["id"] == a_id)["stats"]
+    t.check("offers seen after the fresh start are counted", me["shown"] == 1, me)
+    t.check("no promo statistics row was deleted", ctx.db().q("select sum(n) from promo_stats where kind='shown'")[0][0] == 3)
+    ctx.db().q("delete from site_settings where key='statsReset'")
 
     # recent-activity notice
     pa = c.api("GET", "public-activity")[1]
