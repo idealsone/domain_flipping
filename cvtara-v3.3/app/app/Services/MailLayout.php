@@ -269,7 +269,10 @@ class MailLayout
             .'@media (prefers-color-scheme:dark){.cv-bg{background:#0b1120!important}.cv-card{background:#111827!important;border-color:#273449!important}.cv-ink{color:#f8fafc!important}.cv-txt{color:#d5dbe5!important}.cv-mut{color:#9aa6b8!important}.cv-acc{color:#8db4ff!important}.cv-tint{background:#16213a!important;border-color:#2c3d63!important}.cv-warm{background:#2b1e10!important;border-color:#6b4218!important}.cv-line{border-color:#273449!important}}'
             .'[data-ogsc] .cv-ink{color:#f8fafc!important}[data-ogsc] .cv-txt{color:#d5dbe5!important}[data-ogsc] .cv-mut{color:#9aa6b8!important}[data-ogsb] .cv-bg{background:#0b1120!important}[data-ogsb] .cv-card{background:#111827!important}'
             .'</style>';
-        $word = '<span class="cv-ink" style="color:'.$c['ink'].'">CV</span><span class="cv-acc" style="color:'.$c['accent'].'">Tara</span>';
+        // Logo: the CVTara mark as a PNG (mail apps do not show SVG) next to the wordmark in text, so the name still reads when images are off.
+        $size = $light ? 26 : 30;
+        $img = '<img src="'.self::e($site.'/assets/brand/cvtara-mail-mark.png').'" width="'.$size.'" height="'.$size.'" alt="" style="display:inline-block;width:'.$size.'px;height:'.$size.'px;border:0;vertical-align:middle;margin:0 8px 0 0">';
+        $word = $img.'<span style="vertical-align:middle"><span class="cv-ink" style="color:'.$c['ink'].'">CV</span><span class="cv-acc" style="color:'.$c['accent'].'">Tara</span></span>';
         $markStyle = 'text-decoration:none;font-family:'.$f.';font-size:'.($light ? '19' : '22').'px;font-weight:800;letter-spacing:-.02em;color:'.$c['ink'];
         // The outreach card keeps its links to the one that matters, so its wordmark is not a link.
         $mark = $light ? '<span style="'.$markStyle.'">'.$word.'</span>' : '<a href="'.self::e($site).'" target="_blank" style="'.$markStyle.'">'.$word.'</a>';

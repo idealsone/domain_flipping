@@ -227,8 +227,8 @@
       "trigger": "access_expiring",
       "enabled": false,
       "delayHours": 0,
-      "subject": "Your access is expiring",
-      "body": "Hi {{name}},\nReview your plan and access dates in your profile."
+      "subject": "Your CVTara plan is ending soon",
+      "body": "# Your plan is ending soon\nHi {{name}},\n\nYour {{plan_name}} plan runs until {{access_until}}. After that, clean downloads stop, but your resumes and cover letters stay saved in your account and you can keep editing them.\n\n[button: See my plan | {{site_url}}/workspace.html?view=account]\n\nPlans are paid once and never renew on their own."
     },
     {
       "id": "followup",
@@ -250,16 +250,25 @@
     },
     {
       "id": "abandoned",
-      "name": "Abandoned purchase",
+      "name": "Payment not finished (about 1 hour later)",
       "trigger": "abandoned_purchase",
       "enabled": true,
-      "delayHours": 24,
-      "subject": "Your CVTara plan is waiting, {{name}}",
-      "body": "# You were one step away\n[preheader: Your resumes are saved. Here are the packages, paid once with no auto-renewal.]\nHi {{name}}, you started choosing a package but did not finish. Your resumes and letters are saved.\n\n[plans]\n\n[offer]\n\n[button: Finish choosing | {{checkout_url}}]\n\nIf something stopped you, reply to this email and a real person will answer."
+      "delayHours": 0,
+      "subject": "Your {{plan_name}} payment did not go through, {{name}}",
+      "body": "# Finish your payment in one step\n[preheader: Your {{plan_name}} package is still waiting. The link opens it with the same price.]\nHi {{name}}, you opened the payment for {{plan_name}} ({{amount}}) but it was not completed. No money was taken.\n\nThis happens often: a UPI app that timed out, a bank page that did not load, or a card OTP that did not arrive. The link below opens the same package again, so you can pay with UPI, card or net banking in a minute.\n\n[button: Finish my payment | {{checkout_url}}]\n\n- Paid once, no auto-renewal\n- Full refund within 7 days if you have not used anything from it\n- Your resumes and letters stay saved either way\n\nIf money was taken but your plan is not active, or the payment keeps failing, reply to this email and a real person will sort it out."
+    },
+    {
+      "id": "abandoned-2",
+      "name": "Payment not finished (one day later)",
+      "trigger": "abandoned_purchase",
+      "enabled": true,
+      "delayHours": 0,
+      "subject": "Still want {{plan_name}}? Your link is here, {{name}}",
+      "body": "# Your package is still waiting\n[preheader: One last reminder. After this we will not write about this payment again.]\nHi {{name}}, yesterday you started paying for {{plan_name}} ({{amount}}) and it did not finish. If you still want it, this link opens the same package:\n\n[button: Finish my payment | {{checkout_url}}]\n\nNot sure it is the right package? Here is what each one includes:\n\n[plans]\n\nIf something stopped you, such as the price, the payment page or which package to pick, reply and tell us. A real person will answer.\n\nThis is the last reminder about this payment."
     },
     {
       "id": "nurture-1",
-      "name": "Plan nudge 1 of 12",
+      "name": "Plan nudge 1 of 12 (day 2)",
       "trigger": "nurture",
       "enabled": true,
       "delayHours": 0,
@@ -268,7 +277,7 @@
     },
     {
       "id": "nurture-2",
-      "name": "Plan nudge 2 of 12",
+      "name": "Plan nudge 2 of 12 (day 7)",
       "trigger": "nurture",
       "enabled": true,
       "delayHours": 0,
@@ -277,7 +286,7 @@
     },
     {
       "id": "nurture-3",
-      "name": "Plan nudge 3 of 12",
+      "name": "Plan nudge 5 of 12 (day 60)",
       "trigger": "nurture",
       "enabled": true,
       "delayHours": 0,
@@ -286,7 +295,7 @@
     },
     {
       "id": "nurture-4",
-      "name": "Plan nudge 4 of 12",
+      "name": "Plan nudge 6 of 12 (day 90)",
       "trigger": "nurture",
       "enabled": true,
       "delayHours": 0,
@@ -295,7 +304,7 @@
     },
     {
       "id": "nurture-5",
-      "name": "Plan nudge 5 of 12",
+      "name": "Plan nudge 7 of 12 (day 120)",
       "trigger": "nurture",
       "enabled": true,
       "delayHours": 0,
@@ -304,7 +313,7 @@
     },
     {
       "id": "nurture-6",
-      "name": "Plan nudge 6 of 12",
+      "name": "Plan nudge 10 of 12 (day 240)",
       "trigger": "nurture",
       "enabled": true,
       "delayHours": 0,
@@ -313,7 +322,7 @@
     },
     {
       "id": "nurture-7",
-      "name": "Plan nudge 7 of 12",
+      "name": "Plan nudge 11 of 12 (day 300)",
       "trigger": "nurture",
       "enabled": true,
       "delayHours": 0,
@@ -322,7 +331,7 @@
     },
     {
       "id": "nurture-8",
-      "name": "Plan nudge 8 of 12",
+      "name": "Plan nudge 4 of 12 (day 30)",
       "trigger": "nurture",
       "enabled": true,
       "delayHours": 0,
@@ -331,7 +340,7 @@
     },
     {
       "id": "nurture-9",
-      "name": "Plan nudge 9 of 12",
+      "name": "Plan nudge 9 of 12 (day 180)",
       "trigger": "nurture",
       "enabled": true,
       "delayHours": 0,
@@ -340,7 +349,7 @@
     },
     {
       "id": "nurture-10",
-      "name": "Plan nudge 10 of 12",
+      "name": "Plan nudge 3 of 12 (day 14)",
       "trigger": "nurture",
       "enabled": true,
       "delayHours": 0,
@@ -349,7 +358,7 @@
     },
     {
       "id": "nurture-11",
-      "name": "Plan nudge 11 of 12",
+      "name": "Plan nudge 8 of 12 (day 150)",
       "trigger": "nurture",
       "enabled": true,
       "delayHours": 0,
@@ -358,12 +367,30 @@
     },
     {
       "id": "nurture-12",
-      "name": "Plan nudge 12 of 12",
+      "name": "Plan nudge 12 of 12 (day 360)",
       "trigger": "nurture",
       "enabled": true,
       "delayHours": 0,
       "subject": "A year on: pick up where you left off",
       "body": "# A year on: pick up where you left off\nHi {{name}},\n\nYour resumes and letters are still saved in your account. If you are job hunting again, start with a fresh ATS check against the job you want.\n\n[offer]\n\n[button: Open my workspace | {{site_url}}/workspace.html?view=resumes]\n\nClean downloads start at {{from_price}}, paid once with no auto-renewal.\n\nYou get these tips because you said yes to them. Unsubscribe with one click at the bottom; account emails such as receipts and sign-in codes will still reach you."
+    },
+    {
+      "id": "referral-invite",
+      "name": "Referral invite (a week after Job Hunt or Pro)",
+      "trigger": "referral_invite",
+      "enabled": true,
+      "delayHours": 0,
+      "subject": "{{name}}, know a friend who is job hunting?",
+      "body": "# Know a friend who is job hunting?\n[preheader: Your friend gets {{referral_discount}} off, and you get {{referral_reward}} credit for your next package.]\nHi {{name}}, thank you for choosing {{plan_name}}. We hope it is helping with your applications.\n\nIf a friend or classmate is applying too, you can share your referral link with them:\n\n- Your friend gets {{referral_discount}} off their first package of {{referral_min}} or more (Job Hunt or Pro)\n- You get {{referral_reward}} wallet credit once their order passes the 7-day refund window\n- Credit is spent at checkout on your own next package; it is not paid out as cash\n\n[button: Get my referral link | {{site_url}}/workspace.html?view=referrals]\n\nQuick Download orders and add-ons such as Expert Review and Profile Boost do not count for the referral bonus. Please only share with people who would find CVTara useful.\n\nYou get this mail because you said yes to tips from CVTara. Unsubscribe with one click at the bottom; receipts and sign-in codes will still reach you."
+    },
+    {
+      "id": "plan-ended",
+      "name": "Plan ended two weeks ago",
+      "trigger": "plan_ended",
+      "enabled": true,
+      "delayHours": 0,
+      "subject": "Your CVTara resumes are still saved, {{name}}",
+      "body": "# Your work is still saved\n[preheader: Everything you made stays in your account. Pick up again only if you need it.]\nHi {{name}}, your {{plan_name}} plan ended on {{access_until}}. Nothing is lost: your resumes, tailored versions and cover letters are still in your account, and you can keep editing and previewing them for free.\n\nIf you are still applying, two things are worth doing before your next application:\n\n- Run a fresh ATS check against the new job, since every job asks for different words\n- Add anything new since you last updated: a project, a certificate, a result with a number\n\n[button: Open my workspace | {{site_url}}/workspace.html?view=resumes]\n\nWhen you need clean downloads again, packages start at {{from_price}}, paid once with no auto-renewal and a 7-day refund if unused.\n\n[offer]\n\nGot the job? Congratulations. Reply and tell us, we would love to hear it.\n\nYou get this mail because you said yes to tips from CVTara. Unsubscribe with one click at the bottom; receipts and sign-in codes will still reach you."
     },
     {
       "id": "digest",
