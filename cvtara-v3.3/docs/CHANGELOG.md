@@ -5,7 +5,7 @@
 - **Referral invite for Job Hunt and Pro buyers:** one mail, 8 days after the purchase (past the 7-day refund window), inviting them to share their link: the friend gets ₹50 off ₹299 and up, they get ₹50 credit. Once per customer, opted-in only, only while the referral programme is on; never after the ₹99 Quick Download or add-ons.
 - **"Your work is still saved":** one mail 14 days after a plan ends when nothing was bought again: their resumes are kept, a fresh-ATS-check tip and packages from ₹99. Opted-in only.
 - **₹99 Quick Download reminders:** a 7-day plan no longer gets "your plan ends in 7 days" on the day it is bought plus a 4-day reminder; it gets only "ends tomorrow". Longer plans keep 7, 4 and 1 day reminders.
-- **Checkout reminder:** at most one a week per person, however many times they opened checkout (it was one per checkout attempt).
+- **Unfinished payments (Razorpay and PhonePe):** when someone opens the payment window and does not pay, a reminder goes out about an hour later with a link straight back to the same package (and the same coupon while it still works), saying no money was taken. If still unpaid a day later, one last reminder with the packages. Then nothing more for a week, however many times they open checkout. A waiting reminder is dropped if they pay in the meantime (before, a reminder could arrive after they had paid). Opted-in customers only, as before.
 - Both new mails can be edited or switched off in Email templates. No migration.
 
 # CVTara v3.27.1 — Owner console stays on the page you were on

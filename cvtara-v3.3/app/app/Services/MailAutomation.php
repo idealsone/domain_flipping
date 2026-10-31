@@ -134,7 +134,7 @@ class MailAutomation
         }
         $vars = array_merge(['name' => trim(explode(' ', trim($u->name))[0]) ?: 'there', 'email' => $u->email, 'payment_reference' => $ref], self::sharedVars(), $vars);
         $id = (string) Str::uuid();
-        $n = DB::table('mail_outbox')->insertOrIgnore(['id' => $id, 'dedupe' => hash('sha256', "$u->id:$trigger:$ref:".$template['id']), 'owner_id' => $u->id, 'trigger' => $trigger, 'recipient' => $u->email, 'subject' => self::fill($template['subject'], $vars), 'body' => self::fill($template['body'], $vars), 'due_at' => now()->addHours($essential ? 0 : ($template['delayHours'] ?? 0) + $extraDelayHours), 'created_at' => now(), 'updated_at' => now()]);
+        $n = DB::table('mail_outbox')->insertOrIgnore(['id' => $id, 'dedupe' => hash('sha256', "$u->id:$trigger:$ref:".$template['id']), 'owner_id' => $u->id, 'trigger' => $trigger, 'recipient' => $u->email, 'subject' => self::fill($template['subject'], $vars), 'body' => self::fill($template['body'], $vars), 'due_at' => now()->addHours($essential || $trigger === 'abandoned_purchase' ? 0 : ($template['delayHours'] ?? 0) + $extraDelayHours), 'created_at' => now(), 'updated_at' => now()]);
         if (! $n) {
             return null;
         }
@@ -315,6 +315,12 @@ class MailAutomation
 
                     continue;
                 }
+                // A payment reminder is dropped if they paid while it waited.
+                if ($j->trigger === 'abandoned_purchase' && $j->owner_id && self::paidSince((int) $j->owner_id, date('Y-m-d H:i:s', strtotime((string) $j->created_at) - 3 * 86400))) {
+                    DB::table('mail_outbox')->where('id', $j->id)->update(['status' => 'cancelled']);
+
+                    continue;
+                }
                 if (EmailRenderer::isMarketing($j->trigger) && ! self::marketingAllowed($j)) {
                     DB::table('mail_outbox')->where('id', $j->id)->update(['status' => 'cancelled']);
 
@@ -365,18 +371,7 @@ class MailAutomation
             return;
         }
         self::expiryReminders();
-        foreach (DB::table('purchases')->where('status', 'created')->whereBetween('created_at', [now()->subDays(7), now()->subHour()])->get() as $p) {
-            if (DB::table('purchases')->where('owner_id', $p->owner_id)->whereIn('status', ['paid', 'partially_refunded'])->where('created_at', '>', $p->created_at)->exists()) {
-                continue;
-            }
-            // One checkout reminder per person a week, however many times they opened checkout.
-            if (DB::table('mail_outbox')->where('owner_id', $p->owner_id)->where('trigger', 'abandoned_purchase')->where('created_at', '>=', now()->subDays(7))->exists()) {
-                continue;
-            }
-            if ($u = User::find($p->owner_id)) {
-                self::queue($u, 'abandoned_purchase', $p->id);
-            }
-        }
+        self::unfinishedPayments();
         foreach (DB::table('applications')->where('follow_up', today())->get() as $a) {
             if ($u = User::find($a->owner_id)) {
                 self::queue($u, 'followup_due', $a->id.':'.today()->toDateString());
@@ -386,6 +381,45 @@ class MailAutomation
         self::referralInvites();
         self::planEnded();
         self::monthlyDigest();
+    }
+
+    /**
+     * Someone opened the payment window (Razorpay or PhonePe) and did not finish. Two reminders at most, each with a link straight back to
+     * the same package (and the same coupon while it still works): about an hour later, and a day later if still unpaid. Then nothing for a
+     * week, however many times they open checkout. A reminder still waiting is dropped once they pay (see process()).
+     */
+    private static function unfinishedPayments(): void
+    {
+        $open = DB::table('purchases')->where('status', 'created')->whereBetween('created_at', [now()->subDays(3), now()->subHour()])->orderByDesc('created_at')->get()->unique('owner_id');
+        $site = rtrim((string) config('app.url'), '/');
+        $plans = Settings::plans();
+        foreach ($open as $p) {
+            if (self::paidSince($p->owner_id, (string) $p->created_at)) {
+                continue;
+            }
+            $sent = DB::table('mail_outbox')->where('owner_id', $p->owner_id)->where('trigger', 'abandoned_purchase')->where('created_at', '>=', now()->subDays(7))->orderBy('created_at')->get(['created_at']);
+            if ($sent->count() === 0) {
+                $step = 1;
+            } elseif ($sent->count() === 1 && strtotime((string) $sent[0]->created_at) <= time() - 20 * 3600 && ! self::paidSince($p->owner_id, (string) $sent[0]->created_at)) {
+                $step = 2;
+            } else {
+                continue;
+            }
+            $u = User::find($p->owner_id);
+            if (! $u || $u->blocked || $u->is_admin) {
+                continue;
+            }
+            $coupon = trim((string) ($p->coupon_code ?? ''));
+            $q = ['plan' => $p->plan] + ($coupon !== '' && Promos::couponUsable(Promos::coupon($coupon)) ? ['coupon' => $coupon] : []);
+            $vars = ['checkout_url' => $site.'/checkout.html?'.http_build_query($q), 'plan_name' => $plans[$p->plan]['name'] ?? (string) $p->plan, 'amount' => '₹'.number_format($p->amount_paise / 100)];
+            self::queue($u, 'abandoned_purchase', $p->id.($step === 2 ? ':2' : ''), $vars, false, $step === 2 ? 'abandoned-2' : 'abandoned');
+        }
+    }
+
+    /** A plan or add-on paid for after the given time. */
+    private static function paidSince(int $ownerId, string $since): bool
+    {
+        return DB::table('purchases')->where('owner_id', $ownerId)->whereIn('status', ['paid', 'partially_refunded'])->where('provider', '!=', 'referral_reward')->where('created_at', '>', $since)->exists();
     }
 
     /** One mail 7 days, 4 days and 1 day before a plan ends (never twice, never when the plan has already been renewed). */

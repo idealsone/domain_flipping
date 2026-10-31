@@ -250,12 +250,21 @@
     },
     {
       "id": "abandoned",
-      "name": "Abandoned purchase",
+      "name": "Payment not finished (about 1 hour later)",
       "trigger": "abandoned_purchase",
       "enabled": true,
-      "delayHours": 24,
-      "subject": "Your CVTara plan is waiting, {{name}}",
-      "body": "# You were one step away\n[preheader: Your resumes are saved. Here are the packages, paid once with no auto-renewal.]\nHi {{name}}, you started choosing a package but did not finish. Your resumes and letters are saved.\n\n[plans]\n\n[offer]\n\n[button: Finish choosing | {{checkout_url}}]\n\nIf something stopped you, reply to this email and a real person will answer."
+      "delayHours": 0,
+      "subject": "Your {{plan_name}} payment did not go through, {{name}}",
+      "body": "# Finish your payment in one step\n[preheader: Your {{plan_name}} package is still waiting. The link opens it with the same price.]\nHi {{name}}, you opened the payment for {{plan_name}} ({{amount}}) but it was not completed. No money was taken.\n\nThis happens often: a UPI app that timed out, a bank page that did not load, or a card OTP that did not arrive. The link below opens the same package again, so you can pay with UPI, card or net banking in a minute.\n\n[button: Finish my payment | {{checkout_url}}]\n\n- Paid once, no auto-renewal\n- Full refund within 7 days if you have not used anything from it\n- Your resumes and letters stay saved either way\n\nIf money was taken but your plan is not active, or the payment keeps failing, reply to this email and a real person will sort it out."
+    },
+    {
+      "id": "abandoned-2",
+      "name": "Payment not finished (one day later)",
+      "trigger": "abandoned_purchase",
+      "enabled": true,
+      "delayHours": 0,
+      "subject": "Still want {{plan_name}}? Your link is here, {{name}}",
+      "body": "# Your package is still waiting\n[preheader: One last reminder. After this we will not write about this payment again.]\nHi {{name}}, yesterday you started paying for {{plan_name}} ({{amount}}) and it did not finish. If you still want it, this link opens the same package:\n\n[button: Finish my payment | {{checkout_url}}]\n\nNot sure it is the right package? Here is what each one includes:\n\n[plans]\n\nIf something stopped you, such as the price, the payment page or which package to pick, reply and tell us. A real person will answer.\n\nThis is the last reminder about this payment."
     },
     {
       "id": "nurture-1",
