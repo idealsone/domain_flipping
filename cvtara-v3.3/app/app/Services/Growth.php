@@ -36,7 +36,7 @@ class Growth
     /** Successful payments that count as sales: live gateway money, not demo or free referral rewards. */
     private static function sales()
     {
-        $q = DB::table('purchases')->whereNotNull('purchased_at')->whereIn('status', ['paid', 'captured', 'partially_refunded', 'refunded', 'disputed'])->where('amount_paise', '>', 0);
+        $q = Settings::sinceStart(DB::table('purchases'), 'purchased_at')->whereNotNull('purchased_at')->whereIn('status', ['paid', 'captured', 'partially_refunded', 'refunded', 'disputed'])->where('amount_paise', '>', 0);
 
         return config('app.preview') ? $q->where('provider', '!=', 'referral_reward') : $q->where('is_live', true)->whereNotIn('provider', ['demo', 'referral_reward']);
     }
@@ -65,7 +65,7 @@ class Growth
             'signups' => $in(DB::table('users')->where('is_admin', false))->count(),
             'verified' => $in(DB::table('users')->where('is_admin', false), 'email_verified_at')->count(),
             'activated' => $in(DB::table('resume_drafts'))->distinct()->count('owner_id'),
-            'checkouts' => $in(DB::table('purchases')->where('provider', '!=', 'referral_reward')->where('amount_paise', '>', 0))->distinct()->count('owner_id'),
+            'checkouts' => $in(Settings::sinceStart(DB::table('purchases'), 'created_at')->where('provider', '!=', 'referral_reward')->where('amount_paise', '>', 0))->distinct()->count('owner_id'),
             'buyers' => $rows->pluck('owner_id')->unique()->count(),
             'purchases' => $rows->count(),
             'newCustomers' => $firstBuyers,
@@ -110,7 +110,8 @@ class Growth
     public static function yearPlan(): array
     {
         $s = self::settings();
-        $done = DB::table('growth_snapshots')->get(['day', 'metrics_json'])->groupBy(fn ($r) => substr((string) $r->day, 0, 7))
+        $since = Settings::statsSince();
+        $done = DB::table('growth_snapshots')->when($since, fn ($q) => $q->where('day', '>=', $since->copy()->tz(self::TZ)->toDateString()))->get(['day', 'metrics_json'])->groupBy(fn ($r) => substr((string) $r->day, 0, 7))
             ->map(fn ($g) => ['purchases' => $g->sum(fn ($r) => json_decode($r->metrics_json, true)['purchases'] ?? 0), 'grossPaise' => $g->sum(fn ($r) => json_decode($r->metrics_json, true)['grossPaise'] ?? 0)]);
         $rows = [];
         foreach ($s['ladder'] as $k => $n) {

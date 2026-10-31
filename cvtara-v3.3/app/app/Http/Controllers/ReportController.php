@@ -15,6 +15,7 @@ class ReportController extends Controller
     // Money that really reached the business: live gateway payments and manual payments with an amount received.
     private static function realMoney($q)
     {
+        Settings::sinceStart($q, 'p.created_at'); // the owner's "count from" moment; older orders stay in the Orders list
         if (config('app.preview')) {
             return $q->whereNotIn('p.provider', ['referral_reward']); // demo environments count their sample payments
         }
@@ -24,6 +25,9 @@ class ReportController extends Controller
 
     public function run(Request $r, string $path)
     {
+        if ($path === 'report/fresh-start') {
+            return $this->freshStart($r);
+        }
         abort_unless($r->isMethod('GET'), 405);
         if ($path === 'report/meta') {
             return response()->json(['ok' => true, 'datasets' => array_map(fn ($d) => ['label' => $d['label'], 'columns' => $d['columns'], 'filters' => $d['filters'], 'defaults' => $d['defaults']], self::datasets())]);
@@ -33,6 +37,23 @@ class ReportController extends Controller
         }
 
         return $this->report($r);
+    }
+
+    /** Start revenue and offer counts from now. No order or payment is deleted: totals simply count from this moment. */
+    private function freshStart(Request $r)
+    {
+        abort_unless($r->isMethod('POST'), 405);
+        \App\Services\AccountSecurity::requireRecent($r);
+        $baseline = [];
+        foreach (DB::table('promo_stats')->selectRaw('campaign_id, kind, sum(n) as n')->groupBy('campaign_id', 'kind')->get() as $row) {
+            $baseline[$row->campaign_id][$row->kind] = (int) $row->n;
+        }
+        $at = now()->utc()->toIso8601String();
+        Settings::put('statsReset', ['at' => $at, 'by' => $r->user()->id, 'promoBaseline' => $baseline]);
+        Settings::audit($r->user()->id, 'stats_fresh_start', $at);
+        \Illuminate\Support\Facades\Cache::forget('admin-live');
+
+        return response()->json(['ok' => true, 'since' => $at]);
     }
 
     private function kpis(int $days): array
@@ -49,8 +70,8 @@ class ReportController extends Controller
             $series[] = ['date' => $d, 'signups' => (int) ($sig[$d]->c ?? 0), 'revenuePaise' => (int) ($rev[$d]->s ?? 0), 'orders' => (int) ($rev[$d]->c ?? 0)];
         }
         $users = User::count();
-        $everPaid = (int) DB::table('purchases as p')->whereIn('p.status', ['paid', 'partially_refunded', 'refunded'])->whereNotNull('p.purchased_at')->whereNotIn('p.provider', ['referral_reward'])->distinct()->count('p.owner_id');
-        $paidNow = (int) DB::table('purchases as p')->whereIn('p.status', ['paid', 'partially_refunded'])->where('p.access_until', '>', now())->whereNotIn('p.provider', ['referral_reward'])->distinct()->count('p.owner_id');
+        $everPaid = (int) self::realMoney(DB::table('purchases as p'))->where('p.amount_paise', '>', 0)->whereIn('p.status', ['paid', 'partially_refunded', 'refunded'])->whereNotNull('p.purchased_at')->whereNotIn('p.provider', ['referral_reward'])->distinct()->count('p.owner_id');
+        $paidNow = (int) self::realMoney(DB::table('purchases as p'))->where('p.amount_paise', '>', 0)->whereIn('p.status', ['paid', 'partially_refunded'])->where('p.access_until', '>', now())->whereNotIn('p.provider', ['referral_reward'])->distinct()->count('p.owner_id');
 
         return [
             'days' => $days, 'users' => $users, 'blocked' => User::where('blocked', true)->count(), 'signupsInRange' => array_sum(array_column($series, 'signups')),
@@ -59,6 +80,7 @@ class ReportController extends Controller
             'orders' => (int) (clone $money())->count(), 'ordersInRange' => (int) (clone $money())->where('p.created_at', '>=', $since)->count(),
             'avgOrderPaise' => ($c = (int) (clone $money())->count()) ? intdiv($net, $c) : 0, 'series' => $series,
             'note' => 'Revenue counts live gateway payments and manual payments with an amount received. Demo, test and zero-value grants are excluded.',
+            'countingSince' => Settings::statsSince()?->toIso8601String(),
         ];
     }
 
@@ -180,6 +202,9 @@ class ReportController extends Controller
             }
             if ($r->query('live') === '1') {
                 self::realMoney($q);
+            }
+            if ($r->query('fresh') === '1') {
+                Settings::sinceStart($q, 'p.created_at');
             }
             if (is_numeric($r->query('min'))) {
                 $q->where('p.amount_paise', '>=', (int) round($r->query('min') * 100));

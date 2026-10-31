@@ -1,5 +1,5 @@
 """Owner reports and export, server-side totals, no-refund wording, retention and the smaller audit fixes."""
-import csv, io
+import csv, io, json
 NAME = "Reports, policies and housekeeping"
 
 
@@ -44,6 +44,26 @@ def run(ctx, t):
     s, j = o.api("POST", "admin/feedback/add", dict(body, customerEmail="nobody@test.local")); t.check("verified review for an unknown email is refused", s == 422)
     o.api("POST", "admin/users/grant", {"userId": db.q("select id from users where email='rep-a@test.local'")[0][0], "plan": "job-hunt", "note": "test", "amount": 299, "sendEmail": False})
     s, j = o.api("POST", "admin/feedback/add", body); t.check("verified review for a paying customer is accepted", s == 200, f"{s} {j}")
+
+    # fresh start: totals count from a chosen moment, orders are kept
+    k0 = o.api("GET", "admin/report/kpis?days=30")[1]; orders0 = o.api("GET", "admin/report?dataset=orders&per=10")[1]["total"]
+    g0 = o.api("GET", "admin/growth")[1]
+    import time; time.sleep(1.2)
+    s, j = o.api("POST", "admin/report/fresh-start", {})
+    k1 = o.api("GET", "admin/report/kpis?days=30")[1]
+    t.check("revenue had something to reset", k0["netRevenuePaise"] > 0 and k0["orders"] > 0, k0["netRevenuePaise"])
+    t.check("after a fresh start revenue, orders and paid users read zero", s == 200 and k1["netRevenuePaise"] == 0 and k1["rangeRevenuePaise"] == 0 and k1["orders"] == 0 and k1["paidUsers"] == 0 and sum(x["revenuePaise"] for x in k1["series"]) == 0 and k1["countingSince"], {x: k1.get(x) for x in ("netRevenuePaise", "orders", "paidUsers", "countingSince")})
+    t.check("no order is deleted: the Orders list still has them all", o.api("GET", "admin/report?dataset=orders&per=10")[1]["total"] == orders0 and o.api("GET", "admin/report?dataset=orders&fresh=1&per=10")[1]["total"] == 0)
+    g1 = o.api("GET", "admin/growth")[1]
+    t.check("the Growth page counts sales from the fresh start", g1["month"]["metrics"]["purchases"] == 0 and g1["month"]["metrics"]["grossPaise"] == 0, g1.get("month", {}).get("metrics"))
+    ctx.client().register("rep-b@test.local")
+    for st in ("created", "failed"):  # an abandoned or failed checkout is never a sale
+        db.q(f"insert into purchases(id,owner_id,plan,amount_paise,status,provider,is_live,limits_json,access_days,created_at,updated_at) values('unpaid-{st}',(select id from users where email='rep-b@test.local'),'pro',59900,'{st}','razorpay',1,'{{}}',30,datetime('now'),datetime('now'))")
+    gr = o.api("POST", "admin/users/grant", {"userId": db.q("select id from users where email='rep-b@test.local'")[0][0], "plan": "quick", "note": "after", "amount": 99, "sendEmail": False})
+    k2 = o.api("GET", "admin/report/kpis?days=30")[1]
+    t.check("money received after the fresh start is counted", k2["netRevenuePaise"] == 9900 and k2["orders"] == 1, (gr, k2["netRevenuePaise"], db.q("select plan,amount_paise,created_at,provider,is_live,status from purchases")))
+    db.q("delete from site_settings where key='statsReset'")
+    t.check("without a start moment every order counts again", o.api("GET", "admin/report/kpis?days=30")[1]["netRevenuePaise"] == k0["netRevenuePaise"] + 9900)
 
     # retention
     db.q("insert into mail_outbox (id, dedupe, trigger, recipient, subject, body, status, due_at, sent_at, created_at, updated_at) values ('old1','d-old1','x','a@b.c','s','SECRET BODY','sent',datetime('now','-60 day'),datetime('now','-60 day'),datetime('now','-60 day'),datetime('now','-60 day'))")

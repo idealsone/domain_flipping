@@ -70,7 +70,7 @@ class Settings
     public static function put(string $key, $data): void
     {
         self::$memo = [];
-        if (! in_array($key, ['providers', 'operator', 'integrations', 'speed', 'promos', 'campaignSettings', 'serviceSettings'], true)) {
+        if (! in_array($key, ['providers', 'operator', 'integrations', 'speed', 'promos', 'campaignSettings', 'serviceSettings', 'statsReset'], true)) {
             PageCache::purge();
         }
         $json = json_encode($data);
@@ -204,6 +204,22 @@ class Settings
         }
 
         return $out;
+    }
+
+    /** The moment the owner chose to count revenue and offer statistics from (null = all time). Orders are never deleted; totals just start here. */
+    public static function statsSince(): ?\Illuminate\Support\Carbon
+    {
+        $at = (self::get('statsReset', []) ?: [])['at'] ?? null;
+
+        return $at ? \Illuminate\Support\Carbon::parse($at)->utc() : null;
+    }
+
+    /** Limit a query to rows on or after the owner's "count from" moment. */
+    public static function sinceStart($q, string $col)
+    {
+        $s = self::statsSince();
+
+        return $s ? $q->where($col, '>=', $s) : $q;
     }
 
     public static function audit($user, string $event, string $ref = ''): void
