@@ -69,7 +69,7 @@
   const P = { page: 1, per: 20, status: 'pending', kind: 'all' };
   async function seo(h) {
     const box = $('#grSeo', h); if (!box) return;
-    let d; try { d = (await api('/api/admin/growth/seo')).seo; } catch (e) { box.innerHTML = `<h3 style="margin-top:0">SEO agent</h3><p role="alert">${E(err(e))}</p>`; return; }
+    let d, cov = []; try { const j = await api('/api/admin/growth/seo'); d = j.seo; cov = j.coverage || []; } catch (e) { box.innerHTML = `<h3 style="margin-top:0">SEO agent</h3><p role="alert">${E(err(e))}</p>`; return; }
     const kw = (rows, f) => rows.length ? `<table class="ad-table"><tbody>${rows.map(f).join('')}</tbody></table>` : '<p class="muted">Nothing yet.</p>';
     box.innerHTML = `<h3 style="margin-top:0">SEO agent</h3>
       <p class="muted" style="margin-top:0">Every day from 11 AM (Monday to Saturday) it reads Search Console, finds searches close to page 1, pages that are seen but rarely clicked and searches split across pages, and proposes changes. Nothing goes live until you approve it, and every live change can be undone.</p>
@@ -84,6 +84,8 @@
         <label class="ops-f">Kind<select id="spK"><option value="all">All</option>${Object.entries(KIND).map(([k, v]) => `<option value="${k}">${E(v)}</option>`).join('')}</select></label>
         <button class="button secondary small" id="spRun">Check Search Console now</button></div>
       <div id="spL"></div><div class="ops-pager" id="spP"></div>
+      <h4>Which pages Google is showing</h4>
+      ${(D2 => D2.length ? `<table class="ad-table"><thead><tr><th>Section</th><th>Pages in sitemap</th><th>Shown by Google (4 weeks)</th><th>Impressions</th></tr></thead><tbody>${D2.map(c => `<tr><td>${E(c.section)}</td><td>${n(c.pages)}</td><td>${n(c.seen)} (${c.pages ? Math.round(c.seen * 100 / c.pages) : 0}%)</td><td>${n(c.impressions)}</td></tr>`).join('')}</tbody></table>` : '')(cov)}
       <h4>Tracked pages and searches</h4>
       <p class="muted" style="margin-top:0">Updated with every Search Console check and kept week by week. Changes compare with the week before.</p>
       <div class="ops-filterbox"><label class="ops-f">Show<select id="stK"><option value="page">Pages</option><option value="query">Searches</option></select></label>
@@ -97,7 +99,7 @@
     proposals(box); track(box);
   }
   const TR = { kind: 'page', band: 'all', q: '', page: 1, per: 20 };
-  const BANDS = { page: [['all', 'All pages'], ['top', 'On page 1'], ['close', 'Close to page 1 (11–20)'], ['far', 'Beyond page 2'], ['lowctr', 'Seen but rarely clicked'], ['notarget', 'Title misses its main search']],
+  const BANDS = { page: [['all', 'All pages'], ['top', 'On page 1'], ['close', 'Close to page 1 (11–20)'], ['far', 'Beyond page 2'], ['lowctr', 'Seen but rarely clicked'], ['notarget', 'Title misses its main search'], ['seen', 'Shown by Google'], ['unseen', 'Not shown by Google yet']],
     query: [['all', 'All searches'], ['nobrand', 'Without other brands'], ['top', 'On page 1'], ['close', 'Close to page 1 (11–20)'], ['far', 'Beyond page 2'], ['lowctr', 'Seen but rarely clicked'], ['brand', 'Naming other brands']] };
   const delta = (v, good) => v === null || v === undefined || v === 0 ? '' : ` <small style="color:${(v > 0) === good ? '#15803d' : '#b91c1c'}">${v > 0 ? '+' : ''}${n(v)}</small>`;
   async function track(box) {
@@ -113,7 +115,7 @@
       const pos = r => r.position ? '#' + (Math.round(r.position * 10) / 10) + delta(r.positionChange, true) : '—';
       const pct = r => (Math.round(r.ctr * 1000) / 10) + '%';
       t.innerHTML = !d.rows.length ? '<tbody><tr><td class="muted">Nothing tracked yet. It fills in after the first Search Console check.</td></tr></tbody>'
-        : TR.kind === 'page' ? `<thead><tr><th>Page</th><th>Main search</th><th>Impressions</th><th>Clicks</th><th>Clicked</th><th>Position</th><th>Searches it shows for</th></tr></thead><tbody>${d.rows.map(r => `<tr><td><a href="${E(r.key)}" target="_blank" rel="noopener">${E(r.key)}</a></td><td>${E(r.target || '—')}${r.titleHasTarget === false ? '<br><small style="color:#b91c1c">not in the title</small>' : ''}</td><td>${n(r.impressions)}${delta(r.impressionsChange, true)}</td><td>${n(r.clicks)}</td><td>${pct(r)}</td><td>${pos(r)}</td><td><small>${r.queries.slice(0, 5).map(q => `${E(q[0])} (#${Math.round(q[2] * 10) / 10})`).join('<br>') || '—'}</small></td></tr>`).join('')}</tbody>`
+        : TR.kind === 'page' ? `<thead><tr><th>Page</th><th>Main search</th><th>Impressions</th><th>Clicks</th><th>Clicked</th><th>Position</th><th>Searches it shows for</th></tr></thead><tbody>${d.rows.map(r => `<tr><td><a href="${E(r.key)}" target="_blank" rel="noopener">${E(r.key)}</a></td><td>${E(r.target || '—')}${r.titleHasTarget === false ? '<br><small style="color:#b91c1c">not in the title</small>' : ''}</td><td>${r.unseen ? '<span class="pill mid">Not shown yet</span>' : n(r.impressions) + delta(r.impressionsChange, true)}</td><td>${n(r.clicks)}</td><td>${pct(r)}</td><td>${pos(r)}</td><td><small>${r.queries.slice(0, 5).map(q => `${E(q[0])} (#${Math.round(q[2] * 10) / 10})`).join('<br>') || '—'}</small></td></tr>`).join('')}</tbody>`
         : `<thead><tr><th>Search</th><th>Impressions</th><th>Clicks</th><th>Clicked</th><th>Position</th><th>Page shown</th></tr></thead><tbody>${d.rows.map(r => `<tr><td>${E(r.key)}${r.brand ? ' <span class="pill">other brand</span>' : ''}</td><td>${n(r.impressions)}${delta(r.impressionsChange, true)}</td><td>${n(r.clicks)}</td><td>${pct(r)}</td><td>${pos(r)}</td><td><small>${r.pages.map(E).join('<br>') || '—'}</small></td></tr>`).join('')}</tbody>`;
       K.pager($('#stP', box), d, (p, per) => { TR.page = p; TR.per = per; track(box); });
     } catch (e) { t.innerHTML = `<tbody><tr><td role="alert">${E(err(e))}</td></tr></tbody>`; }

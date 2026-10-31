@@ -39,6 +39,22 @@ def run(ctx, t):
         tinker = lambda code: inst.artisan("tinker", "--execute=" + code)
         last = lambda r: (r.stdout.strip().splitlines() or [""])[-1]
 
+        for pg, kind in (("/templates.html", "CollectionPage"), ("/about.html", "AboutPage"), ("/contact.html", "ContactPage"), ("/privacy.html", "WebPage")):
+            html = o.raw("GET", pg)[2].decode()
+            t.check(f"{pg} has page and breadcrumb schema and the site links in its footer", f'"@type":"{kind}"' in html and '"BreadcrumbList"' in html and 'class="footer-links"' in html and 'href="/resume-examples/"' in html, html[:200])
+        for pg, h1 in (("/resume-builder/", "Free resume builder for India"), ("/cover-letter-generator/", "Cover letter generator"), ("/cover-letter-examples/how-to-write/", "How to write a cover letter"), ("/ats-checker/", "Free ATS resume checker and resume score")):
+            st, _, html = Client(inst.base).raw("GET", pg); html = html.decode()
+            t.check(f"{pg} is a landing page for its search, with a sign-up button and FAQ schema", st == 200 and f">{h1}<" in html and 'href="/register"' in html and '"FAQPage"' in html, f"{st} {html[:200]}")
+        st, _, lt = Client(inst.base).raw("GET", "/llms.txt"); lt = lt.decode()
+        t.check("llms.txt summarises the site, its tools, guides, calculators and plans for answer engines", st == 200 and lt.startswith("# CVTara") and "/resume-builder/" in lt and "/ats-checker/" in lt and "## Calculators" in lt and "/calculators/" in lt and "₹99" in lt and not __import__("re").search(r"\bAI\b|artificial intelligence|Claude|Anthropic", lt), lt[:400])
+        rb = Client(inst.base).raw("GET", "/robots.txt")[2].decode()
+        t.check("robots.txt does not block answer-engine crawlers", "User-agent: *" in rb and "GPTBot" not in rb)
+        calc = Client(inst.base).raw("GET", "/calculators/ctc-to-in-hand-salary-calculator/")[2].decode()
+        t.check("calculators carry WebApplication schema and say India in the title", '"WebApplication"' in calc and '"price":"0"' in calc and "<title>CTC to In-Hand Salary Calculator for India | CVTara</title>" in calc, calc[calc.find("<title>"):calc.find("<title>") + 90])
+        t.check("signed-in customers still go straight to the builder from /resume-builder", o.raw("GET", "/resume-builder")[0] == 302)
+        sm = o.raw("GET", "/sitemap.xml")[2].decode()
+        t.check("the new landing pages are in the sitemap", all(f"/{x}</loc>" in sm for x in ("resume-builder/", "cover-letter-generator/", "cover-letter-examples/how-to-write/")), sm[:300])
+        t.check("main hub headings name what the page is", "<h1>Resume templates for your next role" in o.raw("GET", "/templates.html")[2].decode() and "<h1>Career guides and salary calculators" in o.raw("GET", "/guides.html")[2].decode())
         t.check("the SEO agent data is owner-only", Client(inst.base).api("GET", "admin/growth/seo")[0] in (401, 403))
         s, j = o.api("POST", "admin/growth/seo/run", {})
         t.check("running without Search Console says what to connect", s == 422 and "Integrations" in str(j), f"{s} {j}")
@@ -63,7 +79,7 @@ def run(ctx, t):
         t.check("clicks and impressions come from Search Console", seo.get("clicks") == 11 and seo.get("impressions") == 1300 and seo.get("pending") == 4, seo)
 
         # Every page and search is tracked week by week, with the searches each page shows for.
-        s, d = o.api("GET", "admin/growth/seo/tracked?kind=page")
+        s, d = o.api("GET", "admin/growth/seo/tracked?kind=page&band=seen")
         rows = {r["key"]: r for r in d.get("rows", [])}
         py = rows.get(PY, {})
         t.check("each page is tracked with impressions, clicks, position and its searches", s == 200 and d["total"] == 3 and py.get("impressions") == 700 and py["queries"][0][0] == "python fresher cv format", f"{s} {d}")
@@ -71,10 +87,15 @@ def run(ctx, t):
         t.check("brand searches are not listed against a page", not any("naukri" in q[0] for q in rows.get(SE, {}).get("queries", [])), rows.get(SE))
         s, d = o.api("GET", "admin/growth/seo/tracked?kind=query&band=nobrand")
         t.check("searches are tracked with the page shown, and other brands can be filtered out", s == 200 and d["total"] == 2 and all("naukri" not in r["key"] for r in d["rows"]) and d["rows"][0]["pages"], d)
-        t.check("tracked lists are paged and searchable", o.api("GET", "admin/growth/seo/tracked?kind=page&q=python")[1]["total"] == 1 and o.api("GET", "admin/growth/seo/tracked?kind=page&band=lowctr")[1]["total"] == 1)
+        s, u = o.api("GET", "admin/growth/seo/tracked?kind=page&band=unseen&q=resume-builder")
+        t.check("sitemap pages Google has not shown yet are listed too, city pages included", s == 200 and u["total"] > 20 and all(r.get("unseen") and r["impressions"] == 0 for r in u["rows"]), f"{s} {u.get('total')}")
+        cov = o.api("GET", "admin/growth/seo")[1].get("coverage", [])
+        ex = [c for c in cov if c["section"] == "resume-examples"]
+        t.check("coverage per section counts pages in the sitemap and pages Google showed", ex and ex[0]["seen"] == 3 and ex[0]["pages"] > 3, cov[:4])
+        t.check("tracked lists are paged and searchable", o.api("GET", "admin/growth/seo/tracked?kind=page&band=seen&q=python")[1]["total"] == 1 and o.api("GET", "admin/growth/seo/tracked?kind=page&band=lowctr")[1]["total"] == 1)
         db.q("update seo_track set week=date(week,'-7 days'), impressions=impressions-100, position=position+2")
         o.api("POST", "admin/growth/seo/run", {})
-        py = {r["key"]: r for r in o.api("GET", "admin/growth/seo/tracked?kind=page")[1]["rows"]}.get(PY, {})
+        py = {r["key"]: r for r in o.api("GET", "admin/growth/seo/tracked?kind=page&band=seen")[1]["rows"]}.get(PY, {})
         t.check("the change since the week before is shown", py.get("impressionsChange") == 100 and py.get("positionChange") == 2, py)
 
         s, d = o.api("GET", "admin/growth/seo/proposals?status=pending")
@@ -122,7 +143,7 @@ def run(ctx, t):
 
         body = json.loads(last(tinker("echo json_encode(App\\Services\\Growth::report('evening'));")) or "{}").get("body", "")
         wbody = json.loads(last(tinker("echo json_encode(App\\Services\\Growth::report('weekly'));")) or "{}").get("body", "")
-        t.check("the weekly report lists the pages with most impressions and the searches they show for", f"Page {PY}: 700 impressions (+100 on the week before)" in wbody and '"python fresher cv format"' in wbody, wbody[wbody.find("## Search"):wbody.find("## Search") + 900])
+        t.check("the weekly report lists the pages with most impressions and the searches they show for", f"Page {PY}: 700 impressions (+100 on the week before)" in wbody and '"python fresher cv format"' in wbody and "Pages Google showed in the last 4 weeks: 3 of" in wbody, wbody[wbody.find("## Search"):wbody.find("## Search") + 900])
         t.check("the report shows Google clicks, searches close to page 1 and changes waiting", "Clicks: 11" in body and '"data analyst resume"' in body and "waiting for your approval" in body and "naukri" not in body, body[body.find("## Search"):body.find("## Search") + 500])
         t.check("AI spending has no limit by default", json.loads(last(tinker("echo json_encode(App\\Services\\Growth::settings()['budgetInr']);"))) == 0 and last(tinker("echo json_encode(App\\Services\\Growth::aiAllowed('seo'));")) == "true")
     finally:

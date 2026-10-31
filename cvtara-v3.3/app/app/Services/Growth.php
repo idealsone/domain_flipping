@@ -281,6 +281,9 @@ class Growth
                     $L[] = '- Page '.$r['key'].': '.number_format($r['impressions']).' impressions'.($r['impressionsChange'] !== null ? ' ('.($r['impressionsChange'] >= 0 ? '+' : '').number_format($r['impressionsChange']).' on the week before)' : '').', '.number_format($r['clicks']).' clicks, position '.round($r['position'], 1)
                         .($r['queries'] ? '. Searches: '.implode(', ', array_map(fn ($q) => '"'.$q[0].'"', array_slice($r['queries'], 0, 3))) : '').'.';
                 }
+                $cov = SeoAgent::coverage();
+                $L[] = '- Pages Google showed in the last 4 weeks: '.number_format(array_sum(array_column($cov, 'seen'))).' of '.number_format(array_sum(array_column($cov, 'pages'))).' in the sitemap ('
+                    .implode(', ', array_map(fn ($c) => $c['section'].' '.$c['seen'].'/'.$c['pages'], array_slice($cov, 0, 6))).').';
                 $moved = collect(SeoAgent::tracked('query'))->where('brand', false)->filter(fn ($r) => $r['positionChange'] !== null && abs($r['positionChange']) >= 3)->sortByDesc(fn ($r) => abs($r['positionChange']))->take(5);
                 foreach ($moved as $r) {
                     $L[] = '- "'.$r['key'].'" moved '.($r['positionChange'] > 0 ? 'up ' : 'down ').abs($r['positionChange']).' places, now '.round($r['position'], 1).'.';

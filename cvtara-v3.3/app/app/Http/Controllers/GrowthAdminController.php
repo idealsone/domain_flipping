@@ -44,7 +44,7 @@ class GrowthAdminController extends Controller
             return $ok(['report' => $row]);
         }
         if ($path === 'growth/seo' && $get) {
-            return $ok(['seo' => SeoAgent::summary(), 'settings' => SeoAgent::settings()]);
+            return $ok(['seo' => SeoAgent::summary(), 'settings' => SeoAgent::settings(), 'coverage' => SeoAgent::coverage()]);
         }
         if ($path === 'growth/seo/proposals' && $get) {
             return $ok(AdminTable::query($r, DB::table('seo_proposals'), [
@@ -56,7 +56,7 @@ class GrowthAdminController extends Controller
             $kind = $r->query('kind') === 'query' ? 'query' : 'page';
             $band = fn ($row, $v) => match ($v) {
                 'top' => $row['position'] > 0 && $row['position'] <= 10, 'close' => $row['position'] > 10 && $row['position'] <= 20, 'far' => $row['position'] > 20,
-                'lowctr' => $row['impressions'] >= 50 && $row['ctr'] < 0.01, 'notarget' => ($row['titleHasTarget'] ?? null) === false, 'brand' => ($row['brand'] ?? false) === true, 'nobrand' => ($row['brand'] ?? false) === false, default => true,
+                'lowctr' => $row['impressions'] >= 50 && $row['ctr'] < 0.01, 'notarget' => ($row['titleHasTarget'] ?? null) === false, 'unseen' => ! empty($row['unseen']), 'seen' => empty($row['unseen']), 'brand' => ($row['brand'] ?? false) === true, 'nobrand' => ($row['brand'] ?? false) === false, default => true,
             };
 
             return $ok(AdminTable::rows($r, SeoAgent::tracked($kind), [

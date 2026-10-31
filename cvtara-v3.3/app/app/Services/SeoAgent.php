@@ -98,7 +98,7 @@ class SeoAgent
     {
         $weeks = DB::table('seo_track')->where('kind', $kind)->distinct()->orderByDesc('week')->limit(2)->pluck('week')->map(fn ($w) => substr((string) $w, 0, 10))->all();
         if (! $weeks) {
-            return [];
+            return $kind === 'page' ? self::unseen([]) : [];
         }
         $prev = isset($weeks[1]) ? DB::table('seo_track')->where('kind', $kind)->where('week', $weeks[1])->get()->keyBy('key') : collect();
 
@@ -118,7 +118,38 @@ class SeoAgent
             }
 
             return $row;
-        })->all();
+        })->pipe(fn ($rows) => $kind === 'page' ? array_merge($rows->all(), self::unseen($rows->pluck('key')->all())) : $rows->all());
+    }
+
+    /** Sitemap pages that Google has not shown in the last 4 weeks, so the owner can see what is not getting impressions yet. */
+    private static function unseen(array $seen): array
+    {
+        $seen = array_flip($seen);
+        $out = [];
+        foreach (array_keys(FastIndex::pages()) as $path) {
+            if (! isset($seen[$path])) {
+                $out[] = ['key' => $path, 'week' => null, 'clicks' => 0, 'impressions' => 0, 'ctr' => 0.0, 'position' => 0.0, 'impressionsChange' => null, 'positionChange' => null, 'queries' => [], 'target' => self::target($path), 'titleHasTarget' => null, 'unseen' => true];
+            }
+        }
+
+        return $out;
+    }
+
+    /** How many sitemap pages each section has, and how many Google showed in the last 4 weeks. */
+    public static function coverage(): array
+    {
+        $by = [];
+        foreach (self::tracked('page') as $r) {
+            $sec = explode('/', trim($r['key'], '/'))[0] ?: 'home';
+            $sec = str_ends_with($sec, '.html') ? 'main pages' : $sec;
+            $by[$sec] ??= ['section' => $sec, 'pages' => 0, 'seen' => 0, 'impressions' => 0];
+            $by[$sec]['pages']++;
+            $by[$sec]['seen'] += empty($r['unseen']) ? 1 : 0;
+            $by[$sec]['impressions'] += $r['impressions'];
+        }
+        usort($by, fn ($a, $b) => $b['pages'] <=> $a['pages']);
+
+        return $by;
     }
 
     /** Whether a title carries the main words of a search (ignoring small words and plural s). */

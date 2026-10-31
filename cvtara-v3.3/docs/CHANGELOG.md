@@ -1,3 +1,15 @@
+# CVTara v3.28.0 — Weekly report, page and search tracking, on-page SEO fixes
+
+## 3.28.0
+- **Weekly owner report (default):** one report every Monday from 10 AM India time covering Monday to Sunday of the week before: sales against the plan, last week's funnel, Search (Google clicks and impressions, searches close to page 1, pages seen but rarely clicked, the pages with most impressions and the searches they show for, searches that moved 3+ places, SEO changes that went live), risks, decisions and next actions. The 2 PM / 7 PM daily reports remain a choice under Targets and settings. Report risks are now written in plain words instead of internal check names.
+- **Tracked pages and searches (Growth → SEO agent):** every Search Console check keeps this week's numbers per page and per search (up to 1,000 searches), so each page shows impressions, clicks, click rate, position, the change since the week before, the searches it shows for, its main search and whether its title carries it. Filters: on page 1, close to page 1, beyond page 2, seen but rarely clicked, title misses its main search, and searches naming other brands. Paged and searchable.
+- **On-page SEO audit of all 522 sitemap pages:** every page has one title, one description, one H1, a canonical address and alt text on every image. Fixed: the footer's site links were missing on Templates, About, Contact, Privacy, Terms and Refund (the server only filled an empty footer written on one line); those pages and Cover letters / Guides now carry page and breadcrumb schema; the Templates, Cover letters, Guides and Blog headings now name what the page is.
+- **New landing pages for high-intent searches:** /resume-builder/ (free resume builder, resume maker; signed-in customers still go straight to the builder), /cover-letter-generator/ (cover letter from your saved resume and the job post) and /cover-letter-examples/how-to-write/ (with a sample letter). The ATS checker now also targets "resume score". All three are in the sitemap, the footer and llms.txt, with FAQ and breadcrumb schema.
+- **Which pages Google shows:** the SEO agent lists every sitemap page Google has not shown yet next to those it has, and a per-section table (resume examples, city pages, interview questions, guides, calculators…) of pages shown out of pages in the sitemap. The weekly report gives the same count.
+- **Calculators:** each calculator page now carries WebApplication schema (free, runs in the browser) beside its article, breadcrumb and FAQ schema, and short calculator titles say "for India" unless the owner has written a title.
+- **Answer engines:** new /llms.txt summarising CVTara, its tools, guides, every calculator and the plans. robots.txt already lets every crawler in.
+- **Migration:** adds seo_track. Run `php artisan migrate --force` after updating.
+
 # CVTara v3.27.1 — Owner console stays on the page you were on
 
 ## 3.27.1
