@@ -16,7 +16,7 @@ SPAM_SUBJECT = re.compile(r"\bfree\b\s*!|100% free|guarantee|act now|limited tim
 SPAM_BODY = re.compile(r"100% free|guaranteed|act now|click here|risk[- ]free|earn money|you have been selected|hurry|only \d+ left|\bwinner\b|\$\$\$|!!!", re.I)
 SHORTENERS = re.compile(r"https?://(www\.)?(bit\.ly|tinyurl\.com|goo\.gl|t\.co|ow\.ly|is\.gd|cutt\.ly|rb\.gy|shorturl\.at|tiny\.cc|buff\.ly|rebrand\.ly)/", re.I)
 ACRONYMS = {"ATS", "PDF", "CV", "PIN", "OTP", "TPO", "HR", "UPI", "GST", "INR", "ORD", "AI", "IT", "CSV", "FAQ", "KB"}
-MARKETING = re.compile(r"^(nurture-\d+|digest|abandoned|blog|outreach-.+|campaign.*)$")
+MARKETING = re.compile(r"^(nurture-\d+|digest|abandoned(-2)?|referral-invite|plan-ended|blog|outreach-.+|campaign.*)$")
 SECURITY = {"verify", "reset", "security"}
 
 

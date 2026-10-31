@@ -227,8 +227,8 @@
       "trigger": "access_expiring",
       "enabled": false,
       "delayHours": 0,
-      "subject": "Your access is expiring",
-      "body": "Hi {{name}},\nReview your plan and access dates in your profile."
+      "subject": "Your CVTara plan is ending soon",
+      "body": "# Your plan is ending soon\nHi {{name}},\n\nYour {{plan_name}} plan runs until {{access_until}}. After that, clean downloads stop, but your resumes and cover letters stay saved in your account and you can keep editing them.\n\n[button: See my plan | {{site_url}}/workspace.html?view=account]\n\nPlans are paid once and never renew on their own."
     },
     {
       "id": "followup",
