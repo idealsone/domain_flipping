@@ -106,7 +106,7 @@
       const act = (dash.activity || []).slice(0, 5);
       h.dataset.ok = '1';
       h.innerHTML = `
-        <div class="pg-head"><h2>Overview</h2><p>How the business is doing right now</p></div>
+        <div class="pg-head"><h2>Overview</h2><p>How the business is doing right now</p><button type="button" class="button primary small" data-open-report="daily" style="margin-top:6px">⬇ Download reports</button></div>
         <div class="ops-kpis six">
           <div class="kpi"><span>Total members</span><b>${d.total.toLocaleString('en-IN')}</b><small>+${newThisWeek} this week</small></div>
           <div class="kpi"><span>Paid users</span><b>${d.paidUsers}</b><small>+${ordersWeek} orders this week</small></div>
@@ -128,9 +128,9 @@
 
   async function desk() {
     const h = $('#admin-desk'); if (!h) return; h.innerHTML = '<div class="ops-skel"></div>';
-    let tab = 'pending', list = [], counts = {}, page = 1, per = 20, q = '', timer = null;
+    let tab = 'pending', list = [], counts = {}, page = 1, per = 20, q = '', timer = null, from = '', to = '';
     // One page of the chosen tab at a time; the tab counts come from the server.
-    const load = async () => { const d = await api(`/api/admin/reviews?status=${tab}&page=${page}&per=${per}${q ? '&q=' + encodeURIComponent(q) : ''}`); list = d.reviews || []; counts = d.counts || {}; page = d.page || 1; paint(d); };
+    const load = async () => { const d = await api(`/api/admin/reviews?status=${tab}&page=${page}&per=${per}${q ? '&q=' + encodeURIComponent(q) : ''}${from ? '&from=' + from : ''}${to ? '&to=' + to : ''}`); list = d.reviews || []; counts = d.counts || {}; page = d.page || 1; paint(d); };
     const initials = n => String(n || '?').split(/\s+/).map(w => w[0]).slice(0, 2).join('').toUpperCase();
     const paint = d => {
       $('#opsRvTabs').innerHTML = [['pending', 'Pending'], ['published', 'Published'], ['hidden', 'Hidden']].map(([k, l]) => `<button class="${tab === k ? 'on' : ''}" data-rt="${k}">${l} (${counts[k] || 0})</button>`).join('');
@@ -139,7 +139,9 @@
     };
     h.innerHTML = `<div class="pg-head"><h2>User Reviews</h2><p>Add, moderate and publish user reviews shown on the landing page</p></div>
       <section class="panel panel-pad"><h3>＋ Add New Review</h3><form id="opsRvForm" class="ops-form"><label>Full name<input name="name" required maxlength="100" placeholder="Priya Sharma"></label><label>Company &amp; role<input name="role" maxlength="100" placeholder="TCS · Software Engineer"></label><label>City<input name="city" maxlength="60" placeholder="Mumbai"></label><label>Star rating<select name="rating"><option value="5">★★★★★ 5 Stars</option><option value="4">★★★★ 4 Stars</option><option value="3">★★★ 3 Stars</option></select></label><label class="wide">Review text<textarea name="content" required minlength="10" maxlength="2000" rows="3" placeholder="Write the review feedback…"></textarea></label><label>Source<select name="source"><option value="dummy">Sample (cannot be published)</option><option value="verified">Verified customer (consent on file)</option></select></label><label>Customer account email<input name="customerEmail" type="email" placeholder="Required for verified reviews — a paying customer"></label><label>Consent reference<input name="consentReference" placeholder="Required for verified reviews — where consent is recorded"></label><div class="wide"><button class="button primary">Add Review</button> <span id="opsRvSt" role="status"></span></div></form></section>
-      <div class="ops-tabs" id="opsRvTabs"></div><div class="ops-filters"><input type="search" id="opsRvQ" placeholder="Search name, review text or email" aria-label="Search reviews"></div><div id="opsRvList"></div><div class="ops-pager" id="opsRvPg"></div>`;
+      <div class="ops-tabs" id="opsRvTabs"></div><div class="ops-filterbox" id="opsRvBar"><label class="ops-f grow">Search<input type="search" id="opsRvQ" placeholder="Search name, review text or email" aria-label="Search reviews"></label>${rangeHtml('', '')}${dlHtml()}</div><div id="opsRvList"></div><div class="ops-pager" id="opsRvPg"></div>`;
+    wireDownload($('#opsRvBar'), fmt => exportUrl('/api/admin/reviews', { status: tab, q, from, to }, fmt));
+    $('#opsRvBar').onchange = e => { const rg = rangeChange(e, $('#opsRvBar')); if (rg) { [from, to] = rg; page = 1; load(); } };
     $('#opsRvQ').oninput = e => { clearTimeout(timer); timer = setTimeout(() => { q = e.target.value.trim(); page = 1; load(); }, 350); };
     $('#opsRvForm').onsubmit = async e => {
       e.preventDefault(); const f = e.target, v = Object.fromEntries(new FormData(f)), st = $('#opsRvSt'); st.textContent = 'Saving…';
@@ -208,6 +210,68 @@
     el.onclick = e => { const b = e.target.closest('[data-gp]'); if (b && !b.disabled) go(Number(b.dataset.gp), per); };
     el.onchange = e => { if (e.target.matches('.gp-size select')) go(1, Number(e.target.value)); };
   }
+  /* ================= downloads =================
+     Every list can be downloaded as CSV, Excel or PDF with the filters and dates on screen. The server builds the file
+     from ALL matching rows (not the page shown), so the file is the whole report for that period. */
+  const ymd = d => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+  const RANGES = [['all', 'All time'], ['today', 'Today'], ['yesterday', 'Yesterday'], ['7', 'Last 7 days'], ['30', 'Last 30 days'], ['90', 'Last 90 days'], ['month', 'This month'], ['lastmonth', 'Last month'], ['year', 'This year'], ['lastyear', 'Last year'], ['custom', 'Custom dates']];
+  function rangeOf(k) {
+    const t = new Date(), d = n => { const x = new Date(t); x.setDate(x.getDate() - n); return ymd(x); };
+    if (k === 'today') return [ymd(t), ymd(t)];
+    if (k === 'yesterday') return [d(1), d(1)];
+    if (/^\d+$/.test(k)) return [d(Number(k) - 1), ymd(t)];
+    if (k === 'month') return [ymd(new Date(t.getFullYear(), t.getMonth(), 1)), ymd(t)];
+    if (k === 'lastmonth') return [ymd(new Date(t.getFullYear(), t.getMonth() - 1, 1)), ymd(new Date(t.getFullYear(), t.getMonth(), 0))];
+    if (k === 'year') return [`${t.getFullYear()}-01-01`, ymd(t)];
+    if (k === 'lastyear') return [`${t.getFullYear() - 1}-01-01`, `${t.getFullYear() - 1}-12-31`];
+    return ['', ''];
+  }
+  const rangeKey = (from, to) => (!from && !to ? 'all' : (RANGES.find(([k]) => k !== 'all' && k !== 'custom' && rangeOf(k).join() === [from, to].join()) || ['custom'])[0]);
+  // Period picker + From/To. Inputs carry data-gf="from|to" so any list can read them; the picker carries data-grange.
+  const rangeHtml = (from, to, withInputs = true, label = 'Period') => `<label class="ops-f">${E(label)}<select data-grange aria-label="${E(label)}">${RANGES.map(([k, l]) => `<option value="${k}" ${rangeKey(from, to) === k ? 'selected' : ''}>${l}</option>`).join('')}</select></label>${withInputs ? `<label class="ops-f">From<input type="date" data-gf="from" value="${E(from || '')}" max="${ymd(new Date())}"></label><label class="ops-f">To<input type="date" data-gf="to" value="${E(to || '')}" max="${ymd(new Date())}"></label>` : ''}`;
+  // Call from a change handler: a Period pick fills From/To; a typed date switches the picker to "Custom dates". Returns [from, to] or null.
+  function rangeChange(e, box) {
+    const t = e.target;
+    if (t.matches('[data-grange]')) {
+      if (t.value === 'custom') { const f = $('[data-gf="from"]', box); if (f) f.focus(); return null; }
+      const [from, to] = rangeOf(t.value); const f = $('[data-gf="from"]', box), x = $('[data-gf="to"]', box);
+      if (f) f.value = from; if (x) x.value = to; return [from, to];
+    }
+    if (t.matches('[data-gf="from"],[data-gf="to"]')) {
+      const f = $('[data-gf="from"]', box), x = $('[data-gf="to"]', box), sel = $('[data-grange]', box);
+      if (sel) sel.value = rangeKey(f ? f.value : '', x ? x.value : '');
+      return [f ? f.value : '', x ? x.value : ''];
+    }
+    return null;
+  }
+  const dlHtml = (label = 'Download') => `<span class="kit-menu cv-dl"><button type="button" class="button primary small" data-dl-open aria-haspopup="true">⬇ ${E(label)} ▾</button><div class="kit-pop" hidden><button type="button" data-dl="csv">CSV (opens in Excel / Sheets)</button><button type="button" data-dl="xlsx">Excel (.xlsx)</button><button type="button" data-dl="pdf">PDF (to read or print)</button></div></span>`;
+  async function fetchFile(url) {
+    const res = await fetch(url, { credentials: 'same-origin', headers: { Accept: 'application/json' } });
+    if (!res.ok) { let m = 'Download failed (' + res.status + ').'; try { m = (await res.json()).error || m; } catch (e) { /* not JSON */ } throw new Error(m); }
+    const cd = res.headers.get('Content-Disposition') || '', m = /filename\*?=(?:UTF-8'')?"?([^";]+)/i.exec(cd);
+    const a = document.createElement('a'); a.href = URL.createObjectURL(await res.blob()); a.download = m ? decodeURIComponent(m[1]) : 'cvtara-report';
+    document.body.append(a); a.click(); setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 1500);
+  }
+  // Wires a dlHtml() menu inside box. urlFor(fmt) returns the list URL with its filters plus export=fmt.
+  function wireDownload(box, urlFor) {
+    if (!box || box.dataset.dlWired) return; box.dataset.dlWired = '1';
+    // Console panels scroll their own overflow, which would clip the menu; tables keep their own scroll box.
+    const pn = box.closest('.panel'); if (pn) pn.style.overflow = 'visible';
+    box.addEventListener('click', e => {
+      const o = e.target.closest('[data-dl-open]'); if (o && box.contains(o)) {
+        const p = o.nextElementSibling; p.hidden = !p.hidden; p.style.left = p.style.right = '';
+        // Opens to the left by default; a button near the left edge opens to the right so the menu stays on the page.
+        const area = ($('.admin-content') || document.body).getBoundingClientRect(); if (!p.hidden && p.getBoundingClientRect().left < area.left + 8) { p.style.left = '0'; p.style.right = 'auto'; }
+        return;
+      }
+      const b = e.target.closest('[data-dl]'); if (!b || !box.contains(b)) return;
+      b.closest('.kit-pop').hidden = true; const fmt = b.dataset.dl; toast('Preparing your ' + (fmt === 'xlsx' ? 'Excel' : fmt.toUpperCase()) + ' file…');
+      fetchFile(urlFor(fmt)).then(() => toast('Downloaded'), x => toast((x && x.message) || 'Download failed.', true));
+    });
+  }
+  document.addEventListener('click', e => { $$('.cv-dl .kit-pop').forEach(p => { if (!p.parentElement.contains(e.target)) p.hidden = true; }); });
+  const exportUrl = (url, params, fmt) => { const qs = new URLSearchParams(); Object.entries(params || {}).forEach(([k, v]) => { if (v !== undefined && v !== null && v !== '' && v !== 'all' && !['page', 'per'].includes(k)) qs.set(k, v); }); qs.set('export', fmt); return url + (url.includes('?') ? '&' : '?') + qs; };
+
   const memo = new Map();
   // host must be an element the grid owns: its click/input/change handlers are replaced on every call.
   function grid(host, spec) {
@@ -216,13 +280,16 @@
     const st = memo.get(id) || { q: '', page: 1, per: spec.per || 20, sort: spec.sort || '', dir: spec.dir || 'desc', f: {} };
     memo.set(id, st);
     if (spec.q !== undefined) { st.q = spec.q; st.page = 1; }
+    const hasFrom = F.some(f => f.key === 'from'), dates = spec.dates || hasFrom;
     const field = f => f.type === 'date' ? `<label class="ops-f">${E(f.label)}<input type="date" data-gf="${f.key}" value="${E(st.f[f.key] || '')}"></label>`
       : `<label class="ops-f">${E(f.label)}<select data-gf="${f.key}"><option value="all">All</option>${(typeof f.options === 'function' ? f.options() : f.options).map(o => `<option value="${E(o[0])}" ${st.f[f.key] === String(o[0]) ? 'selected' : ''}>${E(o[1])}</option>`).join('')}</select></label>`;
-    host.innerHTML = `<div class="cv-grid">${spec.search === false && !F.length && !spec.tools ? '' : `<div class="cv-grid-bar ops-filterbox">${spec.search === false ? '' : `<label class="ops-f grow">Search<input type="search" data-gq value="${E(st.q)}" placeholder="${E(spec.search || 'Search')}"></label>`}${F.map(field).join('')}${F.length || st.q ? '<button type="button" class="button secondary small" data-greset>Clear</button>' : ''}${spec.tools || ''}</div>`}
+    host.innerHTML = `<div class="cv-grid">${spec.search === false && !F.length && !spec.tools ? '' : `<div class="cv-grid-bar ops-filterbox">${spec.search === false ? '' : `<label class="ops-f grow">Search<input type="search" data-gq value="${E(st.q)}" placeholder="${E(spec.search || 'Search')}"></label>`}${dates ? rangeHtml(st.f.from, st.f.to, !hasFrom, typeof spec.dates === 'string' ? spec.dates : 'Period') : ''}${F.map(field).join('')}${F.length || st.q || dates ? '<button type="button" class="button secondary small" data-greset>Clear</button>' : ''}${spec.tools || ''}${spec.download === false ? '' : dlHtml()}</div>`}
       <div class="cv-grid-wrap"><table class="ad-table ${spec.cls || ''}" data-kit="grid"><thead><tr>${cols.map(c => `<th class="${c.cls || ''} ${c.sort ? 'kit-sort' : ''}" ${c.sort ? `data-gs="${c.sort}" tabindex="0" aria-sort="${st.sort === c.sort ? (st.dir === 'asc' ? 'ascending' : 'descending') : 'none'}"` : ''}>${E(c.label)}</th>`).join('')}</tr></thead><tbody><tr><td colspan="${cols.length}"><div class="ops-skel" style="height:48px;margin:0"></div></td></tr></tbody></table></div>
       <div class="ops-pager"></div></div>`;
     const body = $('tbody', host), pg = $('.ops-pager', host);
     let seq = 0, timer = null;
+    const listParams = () => { const p = { ...(spec.params ? spec.params() : {}) }; if (st.q) p.q = st.q; if (st.sort) { p.sort = st.sort; p.dir = st.dir; } Object.entries(st.f).forEach(([k, v]) => { if (v && v !== 'all') p[k] = v; }); return p; };
+    if (spec.download !== false) wireDownload($('.cv-grid-bar', host), fmt => exportUrl(spec.url, listParams(), fmt));
     const api_ = { state: st, data: null, reload, host };
     async function reload() {
       const n = ++seq;
@@ -242,18 +309,22 @@
       finally { if (n === seq) body.removeAttribute('aria-busy'); }
     }
     host.oninput = e => { if (e.target.matches('[data-gq]')) { clearTimeout(timer); timer = setTimeout(() => { st.q = e.target.value.trim(); st.page = 1; reload(); }, 350); } };
-    host.onchange = e => { const k = e.target.dataset.gf; if (k) { st.f[k] = e.target.value; st.page = 1; reload(); } };
+    host.onchange = e => {
+      const rg = rangeChange(e, host); if (rg) { st.f.from = rg[0]; st.f.to = rg[1]; st.page = 1; reload(); return; }
+      if (e.target.matches('[data-grange]')) return;
+      const k = e.target.dataset.gf; if (k) { st.f[k] = e.target.value; st.page = 1; reload(); }
+    };
     const sortBy = th => { const s = th.dataset.gs; st.dir = st.sort === s && st.dir === 'desc' ? 'asc' : 'desc'; st.sort = s; st.page = 1; $$('th[data-gs]', host).forEach(t => t.setAttribute('aria-sort', t === th ? (st.dir === 'asc' ? 'ascending' : 'descending') : 'none')); reload(); };
     host.onclick = e => {
       const th = e.target.closest('th[data-gs]'); if (th) return sortBy(th);
-      if (e.target.closest('[data-greset]')) { st.q = ''; st.f = {}; st.page = 1; $$('[data-gf]', host).forEach(x => { x.value = x.type === 'date' ? '' : 'all'; }); const q = $('[data-gq]', host); if (q) q.value = ''; reload(); }
+      if (e.target.closest('[data-greset]')) { st.q = ''; st.f = {}; st.page = 1; $$('[data-gf]', host).forEach(x => { x.value = x.type === 'date' ? '' : 'all'; }); const rs = $('[data-grange]', host); if (rs) rs.value = 'all'; const q = $('[data-gq]', host); if (q) q.value = ''; reload(); }
       if (spec.onClick) spec.onClick(e, api_);
     };
     host.onkeydown = e => { const th = e.target.closest && e.target.closest('th[data-gs]'); if (th && e.key === 'Enter') sortBy(th); if (spec.onKey) spec.onKey(e, api_); };
     reload();
     return api_;
   }
-  window.CVTaraAdminKit = { $, $$, E, api, inr, short, parse, dmy, pill, planName, modal, toast, ensureRecent, download, csv, pager, grid, SIZES, META, HUB, register: (k, fn, meta) => { render[k] = fn; if (meta) META[k] = meta; }, open: k => open(k) };
+  window.CVTaraAdminKit = { $, $$, E, api, inr, short, parse, dmy, pill, planName, modal, toast, ensureRecent, download, csv, pager, grid, SIZES, fetchFile, dlHtml, wireDownload, exportUrl, rangeHtml, rangeChange, rangeOf, META, HUB, register: (k, fn, meta) => { render[k] = fn; if (meta) META[k] = meta; }, open: k => open(k) };
 
   function open(k) {
     // The old 'users' view was a second, unpaged copy of the user list; send it to the paged Users view.
@@ -267,6 +338,7 @@
   document.addEventListener('click', e => {
     const t = e.target.closest('[data-ops-toggle]');
     if (t) { const sub = $('#opsNav'); const open = sub.classList.toggle('closed') === false; t.setAttribute('aria-expanded', String(open)); t.querySelector('em').textContent = open ? '▲' : '▼'; return; }
+    const rp = e.target.closest('[data-open-report]'); if (rp && window.CVTaraAdminKit.openReport) { window.CVTaraAdminKit.openReport({ dataset: rp.dataset.openReport }); return; }
     const b = e.target.closest('[data-admin-view]'); if (!b) return;
     setTimeout(() => open(b.dataset.adminView), 20);
   });

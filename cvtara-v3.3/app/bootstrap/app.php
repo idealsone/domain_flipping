@@ -43,7 +43,7 @@ return Application::configure(basePath: dirname(__DIR__))
         // Any other failure in the API still answers in the shape the pages expect, so a screen never shows a blank
         // "Unable to complete this action". The owner sees the reason; customers see a plain retry message.
         $e->render(function (\Throwable $x, Request $r) {
-            if (! $r->is('api/*') || $x instanceof ValidationException || $x instanceof HttpExceptionInterface || $x instanceof \Illuminate\Auth\AuthenticationException) {
+            if (! $r->is('api/*') || $x instanceof ValidationException || $x instanceof HttpExceptionInterface || $x instanceof \Illuminate\Auth\AuthenticationException || $x instanceof \Illuminate\Http\Exceptions\HttpResponseException) {
                 return null;
             }
             $owner = (bool) ($r->user()?->is_admin);
@@ -53,7 +53,7 @@ return Application::configure(basePath: dirname(__DIR__))
                 : 'Something went wrong on our side. Please try again in a minute.'], 500);
         });
         $e->render(function (\Throwable $x, Request $r) {
-            if ($r->is('api/*') || ! $r->isMethod('GET') || $x instanceof ValidationException || $x instanceof \Illuminate\Auth\AuthenticationException) {
+            if ($r->is('api/*') || ! $r->isMethod('GET') || $x instanceof ValidationException || $x instanceof \Illuminate\Auth\AuthenticationException || $x instanceof \Illuminate\Http\Exceptions\HttpResponseException) {
                 return null;
             }
             $page = str_contains((string) $r->header('Accept', ''), 'text/html') && ! preg_match('#\.(js|mjs|css|map|png|jpe?g|webp|gif|svg|ico|woff2?|txt|xml|json|pdf|zip)$#i', $r->path());

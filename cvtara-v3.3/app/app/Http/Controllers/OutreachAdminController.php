@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Services\AccountSecurity;
+use App\Services\AdminTable;
 use App\Services\Outreach;
 use App\Services\Settings;
 use Illuminate\Http\Request;
@@ -35,6 +36,8 @@ class OutreachAdminController extends Controller
                 $like = '%'.str_replace(['\\', '%', '_'], ['\\\\', '\\%', '\\_'], mb_substr(mb_strtolower($term), 0, 80)).'%';
                 $q->where(fn ($w) => $w->where('c.email', 'like', $like)->orWhere('c.name', 'like', $like)->orWhere('c.source', 'like', $like)->orWhere('c.college', 'like', $like));
             }
+            AdminTable::dates($r, $q, 'c.created_at');
+            AdminTable::export($r, (clone $q)->orderByDesc('c.created_at')->select(['c.created_at', 'c.email', 'c.name', 'c.list', 'c.college', 'c.designation', 'c.city', 'c.source', 'c.status', 'c.step', 'c.clicks', 'c.shares', 'c.last_sent_at', 'c.next_at', 'c.error', 's.email as sender']), ['export' => ['title' => 'Outreach contacts', 'columns' => ['created_at' => 'Added', 'email' => 'Email', 'name' => 'Name', 'list' => 'List', 'college' => 'College', 'designation' => 'Designation', 'city' => 'City', 'source' => 'Source', 'status' => 'Status', 'step' => 'Mails sent', 'clicks' => 'Clicks', 'shares' => 'Shares', 'last_sent_at' => 'Last sent', 'next_at' => 'Next mail', 'error' => 'Error', 'sender' => 'Mailbox']]]);
             $total = (clone $q)->count();
             $per = min(100, max(10, (int) $r->query('per', 20)));
             $page = max(1, (int) $r->query('page', 1));

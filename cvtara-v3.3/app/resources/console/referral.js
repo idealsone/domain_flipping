@@ -33,16 +33,16 @@
       <h3 class="ops-h3">Affiliate balances</h3><section class="panel" id="rfAff"></section>`;
     // Each list is its own server-paged table; row buttons are handled by click() below.
     const who = x => `<b>${E(x.name)}</b><br><small>${E(x.email)}</small>`, url = k => '/api/admin/referrals/list/' + k;
-    K.grid($('#rfWd'), { id: 'ref-wd', url: url('withdrawals'), search: 'Search customer or bank reference', sort: 'date', empty: 'No withdrawal requests right now.',
+    K.grid($('#rfWd'), { dates: true, id: 'ref-wd', url: url('withdrawals'), search: 'Search customer or bank reference', sort: 'date', empty: 'No withdrawal requests right now.',
       filters: [{ key: 'status', label: 'Status', options: [['requested', 'Requested'], ['processing', 'Processing'], ['paid', 'Paid'], ['rejected', 'Rejected']] }, { key: 'from', label: 'From', type: 'date' }, { key: 'to', label: 'To', type: 'date' }],
       columns: [{ label: 'Customer', html: who }, { label: 'Amount', sort: 'amount', html: w => `<b>${short(w.amount_paise)}</b>` }, { label: 'Destination', html: w => E(w.destination_masked || '—') }, { label: 'Requested', sort: 'date', html: w => dmy(parse(w.created_at)) }, { label: 'Status', sort: 'status', html: w => `${pill(w.status)}${w.approved_at ? ' <small>reviewed</small>' : ''}` }, { label: 'Actions', cls: 'r', html: wdActions }] });
-    K.grid($('#rfPf'), { id: 'ref-pf', url: url('profiles'), search: 'Search customer', sort: 'date', empty: 'No payout identities submitted yet.',
+    K.grid($('#rfPf'), { dates: true, id: 'ref-pf', url: url('profiles'), search: 'Search customer', sort: 'date', empty: 'No payout identities submitted yet.',
       filters: [{ key: 'status', label: 'Status', options: [['pending', 'Pending'], ['approved', 'Approved'], ['rejected', 'Rejected']] }],
       columns: [{ label: 'Customer', sort: 'name', html: who }, { label: 'Destination', html: p => E(p.destination_masked || '—') }, { label: 'Status', sort: 'status', html: p => pill(p.status) }, { label: 'Risk flags', html: p => E(flags(p.risk_flags_json)) }, { label: 'Actions', cls: 'r', html: p => `<button class="button small secondary" data-pf-view="${p.owner_id}">View</button> ${p.status !== 'approved' ? `<button class="button small ops-ok" data-pf="${p.owner_id}" data-hash="${E(p.destination_hash || '')}">Review</button>` : ''}` }] });
-    K.grid($('#rfCr'), { id: 'ref-cr', url: url('creators'), search: 'Search applicant', sort: 'date', empty: 'No creator applications.',
+    K.grid($('#rfCr'), { dates: true, id: 'ref-cr', url: url('creators'), search: 'Search applicant', sort: 'date', empty: 'No creator applications.',
       filters: [{ key: 'status', label: 'Status', options: [['pending', 'Pending'], ['approved', 'Approved'], ['rejected', 'Rejected']] }],
       columns: [{ label: 'Applicant', sort: 'name', html: who }, { label: 'Rate', html: x => `${(x.rate_bps || 0) / 100}%` }, { label: 'Status', sort: 'status', html: x => pill(x.status) }, { label: 'Note', html: x => E(x.review_note || '') }, { label: 'Actions', cls: 'r', html: x => `<button class="button small ops-ok" data-cr="${x.owner_id}" data-rate="${x.rate_bps || r.rateBps || 0}">Review</button>` }] });
-    K.grid($('#rfAff'), { id: 'ref-aff', url: url('affiliates'), search: 'Search name, email or referral code', sort: 'joined', empty: 'No affiliates yet.',
+    K.grid($('#rfAff'), { dates: true, id: 'ref-aff', url: url('affiliates'), search: 'Search name, email or referral code', sort: 'joined', empty: 'No affiliates yet.',
       columns: [{ label: 'Name', sort: 'name', html: a => `<b>${E(a.name)}</b>` }, { key: 'email', label: 'Email', sort: 'email' }, { label: 'Rate', html: a => `${(a.rateBps || 0) / 100}%` }, { label: 'Available', html: a => short(a.availablePaise) }, { label: 'In review', html: a => short((a.pendingPaise || 0) + (a.reservedPaise || 0)) }, { label: 'Total paid', html: a => short(a.paidPaise) }] });
     $('#rfForm').onsubmit = save; h.onclick = click;
   }

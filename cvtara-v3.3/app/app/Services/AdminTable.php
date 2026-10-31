@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use Illuminate\Database\Query\Builder;
+use Illuminate\Http\Exceptions\HttpResponseException;
 use Illuminate\Http\Request;
 
 /**
@@ -16,6 +17,10 @@ use Illuminate\Http\Request;
  *  date    => column (or row key) limited by ?from=Y-m-d and ?to=Y-m-d
  *  sorts   => [name => column|key] that ?sort= may pick; anything else falls back to 'sort'/'dir'
  *  key     => unique column added as the last sort so pages never overlap
+ *  export  => optional ['title' => 'Orders', 'name' => 'cvtara-orders', 'columns' => [key => label], 'map' => fn (array $batch): array]
+ *
+ * Downloads: the same request with ?export=csv|xlsx|pdf answers with a file holding EVERY row that matches the
+ * search, filters, date range and sort (not just the page on screen). Endpoints built on this class get it for free.
  */
 final class AdminTable
 {
@@ -44,12 +49,7 @@ final class AdminTable
             }
         }
         if (! empty($spec['date'])) {
-            if ($from = self::day($r, 'from')) {
-                $q->where($spec['date'], '>=', $from.' 00:00:00');
-            }
-            if ($to = self::day($r, 'to')) {
-                $q->where($spec['date'], '<=', $to.' 23:59:59');
-            }
+            self::dates($r, $q, $spec['date']);
         }
         $total = (clone $q)->count();
         $page = min($page, max(1, (int) ceil($total / $per)));
@@ -59,6 +59,7 @@ final class AdminTable
         if (! empty($spec['key'])) {
             $q->orderBy($spec['key'], $dir);
         }
+        self::export($r, $q, $spec, $map, $total);
         $rows = $q->forPage($page, $per)->get();
         $rows = ($map ? $rows->map($map) : $rows)->values()->all();
 
@@ -69,7 +70,7 @@ final class AdminTable
     public static function rows(Request $r, array $rows, array $spec): array
     {
         [$page, $per, $sort, $dir, $term] = self::params($r, $spec);
-        $rows = array_slice(array_values($rows), 0, self::MAX_ROWS);
+        $rows = array_slice(array_values($rows), 0, self::exporting($r) ? Export::MAX_ROWS : self::MAX_ROWS);
         $get = fn ($row, $k) => is_array($row) ? ($row[$k] ?? null) : ($row->$k ?? null);
         if ($term !== '' && ! empty($spec['search'])) {
             $needle = mb_strtolower($term);
@@ -110,8 +111,86 @@ final class AdminTable
         }
         $total = count($rows);
         $page = min($page, max(1, (int) ceil($total / $per)));
+        if ($fmt = Export::format($r)) {
+            Export::guard($fmt, $total);
+            $x = self::writer($r, $fmt, $spec);
+            foreach (array_chunk(array_values($rows), 1000) as $batch) {
+                $x->add(self::shape($spec, $batch));
+            }
+            self::send($r, $x, $spec);
+        }
 
         return self::out(array_slice(array_values($rows), ($page - 1) * $per, $per), $total, $page, $per, $sort, $dir);
+    }
+
+    /** Limits a hand-built list query to ?from= / ?to= (Y-m-d, whole days). */
+    public static function dates(Request $r, Builder $q, string $col): Builder
+    {
+        if ($from = self::day($r, 'from')) {
+            $q->where($col, '>=', $from.' 00:00:00');
+        }
+        if ($to = self::day($r, 'to')) {
+            $q->where($col, '<=', $to.' 23:59:59');
+        }
+
+        return $q;
+    }
+
+    /**
+     * For lists that build their own (already filtered and ordered) query: when the request has ?export=, answer with
+     * a file of every matching row and stop; otherwise do nothing and let the endpoint return its page as before.
+     */
+    public static function export(Request $r, Builder $q, array $spec = [], ?callable $map = null, ?int $total = null): void
+    {
+        if (! ($fmt = Export::format($r))) {
+            return;
+        }
+        Export::guard($fmt, $total ?? (clone $q)->count());
+        $x = self::writer($r, $fmt, $spec);
+        for ($p = 1; ($batch = (clone $q)->forPage($p, 1000)->get())->isNotEmpty(); $p++) {
+            $x->add(self::shape($spec, ($map ? $batch->map($map) : $batch)->values()->all()));
+            if ($batch->count() < 1000) {
+                break;
+            }
+        }
+        self::send($r, $x, $spec);
+    }
+
+    /** True when this request asks for a file rather than a page. */
+    public static function exporting(Request $r): bool
+    {
+        return Export::format($r) !== null;
+    }
+
+    private static function writer(Request $r, string $fmt, array $spec): Export
+    {
+        $e = $spec['export'] ?? [];
+        $title = $e['title'] ?? self::title($r);
+
+        return Export::open($fmt, $e['name'] ?? 'cvtara-'.strtolower(preg_replace('/[^a-z0-9]+/i', '-', $title)), $title, $e['columns'] ?? null);
+    }
+
+    private static function shape(array $spec, array $rows): array
+    {
+        $rows = array_map(fn ($x) => is_array($x) ? $x : (array) $x, $rows);
+
+        return isset($spec['export']['map']) ? ($spec['export']['map'])($rows) : $rows;
+    }
+
+    /** Stops the request here and answers with the file: the endpoint's own JSON code never runs. */
+    private static function send(Request $r, Export $x, array $spec): never
+    {
+        Settings::audit($r->user()?->id, 'list_exported', mb_substr(self::title($r).':'.$x->count(), 0, 190));
+
+        throw new HttpResponseException($x->finish(Export::notes($r, $spec['export']['labels'] ?? [])));
+    }
+
+    /** "api/admin/referrals/withdrawals" -> "Referrals withdrawals" when the endpoint gives no title. */
+    private static function title(Request $r): string
+    {
+        $p = preg_replace('#^api/admin/#', '', $r->path());
+
+        return ucfirst(trim(str_replace(['/', '-', '_'], ' ', $p))) ?: 'Report';
     }
 
     private static function params(Request $r, array $spec): array
