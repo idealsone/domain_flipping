@@ -161,7 +161,8 @@ class SeoPages
             $page['index'] ??= true;
             $page['cta'] ??= self::cta();
             $page['related'][] = ['Tools', [['/ats-checker/', 'Free ATS resume check'], ['/#pricing', 'Plans and pricing'], ['/templates.html', 'Template gallery'], ['/register', 'Build my resume free']]];
-            $page['picker'] = self::pickerLink($s);
+            // tools and word lists are not template pages: their first button is their own action, not "Use this template"
+            $page['picker'] = in_array($s[0], ['ats-checker', 'resume-words'], true) ? '' : self::pickerLink($s);
         }
 
         return $page;
