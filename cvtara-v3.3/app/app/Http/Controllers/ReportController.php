@@ -3,8 +3,11 @@
 namespace App\Http\Controllers;
 
 use App\Models\User;
+use App\Services\Export;
 use App\Services\Settings;
+use Illuminate\Database\Query\Builder;
 use Illuminate\Http\Request;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 
 /** Owner-only reports: server-side totals for the dashboard and a custom report builder with export. */
@@ -86,6 +89,21 @@ class ReportController extends Controller
                 ['key' => 'last_seen', 'label' => 'Last seen'], ['key' => 'first_seen', 'label' => 'First seen'], ['key' => 'level', 'label' => 'Level'], ['key' => 'source', 'label' => 'Source'], ['key' => 'message', 'label' => 'Message'], ['key' => 'url', 'label' => 'Page'], ['key' => 'occurrences', 'label' => 'Times', 'num' => true], ['key' => 'resolved', 'label' => 'Resolved']]],
             'scans' => ['label' => 'ATS checks', 'filters' => ['q', 'status', 'from', 'to'], 'defaults' => ['date', 'customer', 'job_title', 'company', 'source', 'score', 'status'], 'columns' => [
                 ['key' => 'date', 'label' => 'Checked'], ['key' => 'customer', 'label' => 'Customer'], ['key' => 'email', 'label' => 'Email'], ['key' => 'job_title', 'label' => 'Job title'], ['key' => 'company', 'label' => 'Company'], ['key' => 'source', 'label' => 'Job source'], ['key' => 'score', 'label' => 'Match %', 'num' => true], ['key' => 'status', 'label' => 'Status'], ['key' => 'job_url', 'label' => 'Job link']]],
+            'daily' => ['label' => 'Daily summary', 'filters' => ['from', 'to'], 'defaults' => ['date', 'signups', 'orders', 'revenue_inr', 'reversed_inr', 'net_inr', 'ats_checks', 'resumes', 'page_views', 'visitors'], 'columns' => [
+                ['key' => 'date', 'label' => 'Date'], ['key' => 'signups', 'label' => 'Sign-ups', 'num' => true], ['key' => 'orders', 'label' => 'Paid orders', 'num' => true], ['key' => 'revenue_inr', 'label' => 'Revenue (INR)', 'num' => true], ['key' => 'reversed_inr', 'label' => 'Reversed (INR)', 'num' => true], ['key' => 'net_inr', 'label' => 'Net (INR)', 'num' => true],
+                ['key' => 'ats_checks', 'label' => 'ATS checks', 'num' => true], ['key' => 'resumes', 'label' => 'Resumes created', 'num' => true], ['key' => 'page_views', 'label' => 'Page views', 'num' => true], ['key' => 'visitors', 'label' => 'Visitors', 'num' => true], ['key' => 'emails_sent', 'label' => 'Emails sent', 'num' => true], ['key' => 'support', 'label' => 'Support reports', 'num' => true]]],
+            'traffic' => ['label' => 'Pages visited', 'filters' => ['q', 'from', 'to'], 'defaults' => ['path', 'views', 'visitors'], 'columns' => [
+                ['key' => 'path', 'label' => 'Page'], ['key' => 'views', 'label' => 'Views', 'num' => true], ['key' => 'visitors', 'label' => 'Visitors', 'num' => true]]],
+            'sources' => ['label' => 'Traffic sources', 'filters' => ['from', 'to'], 'defaults' => ['source', 'views', 'visitors'], 'columns' => [
+                ['key' => 'source', 'label' => 'Source'], ['key' => 'views', 'label' => 'Views', 'num' => true], ['key' => 'visitors', 'label' => 'Visitors', 'num' => true]]],
+            'activity' => ['label' => 'Product activity', 'filters' => ['q', 'from', 'to'], 'defaults' => ['event', 'count', 'people'], 'columns' => [
+                ['key' => 'event', 'label' => 'Action'], ['key' => 'count', 'label' => 'Times', 'num' => true], ['key' => 'people', 'label' => 'Signed-in people', 'num' => true]]],
+            'reviews' => ['label' => 'User reviews', 'filters' => ['q', 'status', 'from', 'to'], 'defaults' => ['date', 'name', 'rating', 'review', 'status', 'source'], 'columns' => [
+                ['key' => 'date', 'label' => 'Added'], ['key' => 'name', 'label' => 'Shown as'], ['key' => 'email', 'label' => 'Account email'], ['key' => 'rating', 'label' => 'Stars', 'num' => true], ['key' => 'review', 'label' => 'Review'], ['key' => 'status', 'label' => 'Status'], ['key' => 'source', 'label' => 'Source'], ['key' => 'consent', 'label' => 'Consent']]],
+            'support' => ['label' => 'Support reports', 'filters' => ['q', 'status', 'from', 'to'], 'defaults' => ['date', 'name', 'email', 'area', 'kind', 'message', 'status'], 'columns' => [
+                ['key' => 'date', 'label' => 'Sent'], ['key' => 'name', 'label' => 'Name'], ['key' => 'email', 'label' => 'Email'], ['key' => 'plan', 'label' => 'Plan'], ['key' => 'area', 'label' => 'Area'], ['key' => 'kind', 'label' => 'Kind'], ['key' => 'page', 'label' => 'Page'], ['key' => 'rating', 'label' => 'Rating', 'num' => true], ['key' => 'message', 'label' => 'Message'], ['key' => 'status', 'label' => 'Status'], ['key' => 'resolved_at', 'label' => 'Resolved']]],
+            'growth' => ['label' => 'Growth reports', 'filters' => ['status', 'from', 'to'], 'defaults' => ['day', 'slot', 'band', 'report'], 'columns' => [
+                ['key' => 'day', 'label' => 'Day'], ['key' => 'slot', 'label' => 'Report'], ['key' => 'band', 'label' => 'Status'], ['key' => 'report', 'label' => 'Report text'], ['key' => 'sent', 'label' => 'Written at']]],
             'mail' => ['label' => 'Email queue', 'filters' => ['q', 'status', 'from', 'to'], 'defaults' => ['date', 'recipient', 'subject', 'trigger', 'status'], 'columns' => [
                 ['key' => 'date', 'label' => 'Created'], ['key' => 'recipient', 'label' => 'To'], ['key' => 'subject', 'label' => 'Subject'], ['key' => 'trigger', 'label' => 'Type'], ['key' => 'status', 'label' => 'Status'], ['key' => 'attempts', 'label' => 'Attempts', 'num' => true], ['key' => 'error', 'label' => 'Error'], ['key' => 'sent_at', 'label' => 'Sent']]],
         ];
@@ -100,7 +118,10 @@ class ReportController extends Controller
         $allKeys = array_column($meta['columns'], 'key');
         $cols = $r->query('columns') === 'ALL' ? $allKeys : (array_values(array_intersect($allKeys, array_filter(explode(',', (string) $r->query('columns', ''))))) ?: $meta['defaults']);
         $page = max(1, (int) $r->query('page', 1));
-        $format = in_array($r->query('format'), ['csv', 'xls', 'json'], true) ? $r->query('format') : 'json';
+        $format = in_array($r->query('format'), ['csv', 'xls', 'xlsx', 'pdf', 'json'], true) ? $r->query('format') : 'json';
+        if (in_array($set, self::SUMMARIES, true)) {
+            return $this->summaryReport($r, $set, $meta, $cols, $format);
+        }
         $per = $format === 'json' ? min(500, max(10, (int) $r->query('per', 50))) : self::MAX_EXPORT;
         $dir = $r->query('dir') === 'asc' ? 'asc' : 'desc';
         [$q, $sortable, $map, $totalsQ] = $this->build($set, $r);
@@ -117,30 +138,110 @@ class ReportController extends Controller
             $agg = (clone $totalsQ)->selectRaw('COALESCE(SUM(p.amount_paise),0) a, COALESCE(SUM(p.refunded_paise),0) b, COALESCE(SUM(p.discount_paise),0) d')->first();
             $sums = ['amount_inr' => (float) self::inr($agg->a), 'reversed_inr' => (float) self::inr($agg->b), 'discount_inr' => (float) self::inr($agg->d), 'net_inr' => (float) self::inr($agg->a - $agg->b)];
         }
-        \App\Services\Settings::audit($r->user()->id, 'report_'.($format === 'json' ? 'viewed' : 'exported'), $set.':'.$total);
+        Settings::audit($r->user()->id, 'report_'.($format === 'json' ? 'viewed' : 'exported'), $set.':'.$total);
         if ($format === 'json') {
             return response()->json(['ok' => true, 'dataset' => $set, 'columns' => $columns, 'rows' => $out, 'total' => $total, 'page' => $page, 'per' => $per, 'sums' => $sums]);
         }
         abort_if($total > self::MAX_EXPORT, 422, 'Too many rows to export at once. Narrow the dates.');
+        if ($format !== 'xls') {
+            return $this->file($r, $set, $format, $columns, $out, $total);
+        }
         $name = 'cvtara-'.$set.'-'.now()->format('Ymd-His');
         $head = array_map(fn ($c) => $c['label'], $columns);
-        if ($format === 'csv') {
-            $fh = fopen('php://temp', 'w+');
-            fwrite($fh, "\xEF\xBB\xBF");
-            fputcsv($fh, $head);
-            foreach ($out as $row) {
-                fputcsv($fh, array_map(fn ($c) => self::safeCell($row[$c['key']] ?? ''), $columns));
-            }
-            rewind($fh);
-
-            return response(stream_get_contents($fh), 200, ['Content-Type' => 'text/csv; charset=utf-8', 'Content-Disposition' => 'attachment; filename="'.$name.'.csv"', 'Cache-Control' => 'private, no-store']);
-        }
         $html = '<html><head><meta charset="utf-8"></head><body><table border="1"><tr>'.implode('', array_map(fn ($h) => '<th>'.e($h).'</th>', $head)).'</tr>';
         foreach ($out as $row) {
             $html .= '<tr>'.implode('', array_map(fn ($c) => '<td>'.e((string) self::safeCell($row[$c['key']] ?? '')).'</td>', $columns)).'</tr>';
         }
 
         return response($html.'</table></body></html>', 200, ['Content-Type' => 'application/vnd.ms-excel; charset=utf-8', 'Content-Disposition' => 'attachment; filename="'.$name.'.xls"', 'Cache-Control' => 'private, no-store']);
+    }
+
+    /** Data sets that are totals worked out per day / page / source rather than one row per record. */
+    private const SUMMARIES = ['daily', 'traffic', 'sources', 'activity'];
+
+    private function file(Request $r, string $set, string $format, array $columns, array $rows, int $total)
+    {
+        Export::guard($format, $total);
+        $x = Export::open($format, 'cvtara-'.$set, self::datasets()[$set]['label'], array_column($columns, 'label', 'key'));
+        $x->add($rows);
+
+        return $x->finish(Export::notes($r, ['q' => 'Search', 'live' => 'Real money only', 'min' => 'Min ₹', 'max' => 'Max ₹']));
+    }
+
+    private function summaryReport(Request $r, string $set, array $meta, array $cols, string $format)
+    {
+        $tz = 'Asia/Kolkata';
+        $day = fn ($k, $def) => preg_match('/^\d{4}-\d{2}-\d{2}$/', (string) $r->query($k, '')) ? (string) $r->query($k) : $def;
+        $to = $day('to', now()->tz($tz)->toDateString());
+        $from = $day('from', Carbon::parse($to)->subDays(29)->toDateString());
+        abort_if($from > $to, 422, 'The From date is after the To date.');
+        abort_if(Carbon::parse($from)->diffInDays(Carbon::parse($to)) > 1100, 422, 'Pick a range of three years or less.');
+        $range = fn ($q, $col) => $q->where($col, '>=', $from.' 00:00:00')->where($col, '<=', $to.' 23:59:59');
+        $term = trim((string) $r->query('q', ''));
+        $rows = [];
+        if ($set === 'daily') {
+            $per = fn ($q, $col, $sel = 'COUNT(*) c') => $range($q, $col)->selectRaw('substr('.$col.',1,10) d, '.$sel)->groupBy('d')->get()->keyBy('d');
+            $sig = $per(DB::table('users'), 'created_at');
+            $rev = $per(self::realMoney(DB::table('purchases as p'))->whereIn('p.status', ['paid', 'partially_refunded', 'refunded']), 'p.created_at', 'COUNT(*) c, SUM(p.amount_paise) a, SUM(p.refunded_paise) b');
+            $ats = $per(DB::table('ats_scans')->where('status', 'done'), 'created_at');
+            $res = $per(DB::table('resume_drafts'), 'created_at');
+            $pv = $per(DB::table('page_views'), 'created_at', 'COUNT(*) c, COUNT(DISTINCT visitor_id) v');
+            $mail = $per(DB::table('mail_outbox')->where('status', 'sent'), 'created_at');
+            $sup = $per(DB::table('support_reports'), 'created_at');
+            for ($d = Carbon::parse($to); $d->toDateString() >= $from; $d->subDay()) {
+                $k = $d->toDateString();
+                $a = (int) ($rev[$k]->a ?? 0);
+                $b = (int) ($rev[$k]->b ?? 0);
+                $rows[] = ['date' => $k, 'signups' => (int) ($sig[$k]->c ?? 0), 'orders' => (int) ($rev[$k]->c ?? 0), 'revenue_inr' => (float) self::inr($a), 'reversed_inr' => (float) self::inr($b), 'net_inr' => (float) self::inr($a - $b),
+                    'ats_checks' => (int) ($ats[$k]->c ?? 0), 'resumes' => (int) ($res[$k]->c ?? 0), 'page_views' => (int) ($pv[$k]->c ?? 0), 'visitors' => (int) ($pv[$k]->v ?? 0), 'emails_sent' => (int) ($mail[$k]->c ?? 0), 'support' => (int) ($sup[$k]->c ?? 0)];
+            }
+        } elseif ($set === 'traffic' || $set === 'sources') {
+            $col = $set === 'traffic' ? 'path' : 'source';
+            $q = $range(DB::table('page_views'), 'created_at');
+            if ($term !== '' && $set === 'traffic') {
+                $q->where('path', 'like', $this->like($term));
+            }
+            $rows = $q->selectRaw($col.', COUNT(*) views, COUNT(DISTINCT visitor_id) visitors')->groupBy($col)->orderByDesc('views')->limit(self::MAX_EXPORT)->get()
+                ->map(fn ($x) => [$col => $x->$col, 'views' => (int) $x->views, 'visitors' => (int) $x->visitors])->all();
+        } else {
+            $q = $range(DB::table('activity_events'), 'created_at');
+            if ($term !== '') {
+                $q->where('event', 'like', $this->like($term));
+            }
+            $rows = $q->selectRaw('event, COUNT(*) c, COUNT(DISTINCT owner_id) p')->groupBy('event')->orderByDesc('c')->get()
+                ->map(fn ($x) => ['event' => str_replace('_', ' ', $x->event), 'count' => (int) $x->c, 'people' => (int) $x->p])->all();
+        }
+        $sort = (string) $r->query('sort', '');
+        if (in_array($sort, array_column($meta['columns'], 'key'), true)) {
+            $dir = $r->query('dir') === 'asc' ? 1 : -1;
+            usort($rows, fn ($a, $b) => (is_numeric($a[$sort]) && is_numeric($b[$sort]) ? $a[$sort] <=> $b[$sort] : strnatcasecmp((string) $a[$sort], (string) $b[$sort])) * $dir);
+        }
+        $total = count($rows);
+        $columns = array_values(array_filter(array_map(fn ($k) => collect($meta['columns'])->firstWhere('key', $k), $cols)));
+        $sums = null;
+        if ($set === 'daily') {
+            foreach (array_filter($meta['columns'], fn ($c) => ! empty($c['num'])) as $c) {
+                $sums[$c['key']] = round(array_sum(array_column($rows, $c['key'])), 2);
+            }
+        }
+        Settings::audit($r->user()->id, 'report_'.($format === 'json' ? 'viewed' : 'exported'), $set.':'.$total);
+        $rows = array_map(fn ($row) => array_intersect_key($row, array_flip($cols)), $rows);
+        if ($format === 'json') {
+            $per = min(500, max(10, (int) $r->query('per', 50)));
+            $page = max(1, (int) $r->query('page', 1));
+
+            return response()->json(['ok' => true, 'dataset' => $set, 'columns' => $columns, 'rows' => array_slice($rows, ($page - 1) * $per, $per), 'total' => $total, 'page' => $page, 'per' => $per, 'sums' => $sums, 'range' => ['from' => $from, 'to' => $to]]);
+        }
+        if ($format === 'xls') {
+            $format = 'xlsx';
+        }
+        if ($sums) {
+            $rows[] = ['date' => 'Total'] + array_intersect_key($sums, array_flip($cols));
+        }
+        $r->query->set('from', $from);
+        $r->query->set('to', $to);
+
+        return $this->file($r, $set, $format, $columns, $rows, $total);
     }
 
     // Spreadsheet programs run text that starts with = + - @ as a formula; make exported text inert.
@@ -166,7 +267,7 @@ class ReportController extends Controller
         return '%'.addcslashes($term, '%_\\').'%';
     }
 
-    /** @return array{0:\Illuminate\Database\Query\Builder,1:array,2:mixed,3:\Illuminate\Database\Query\Builder} */
+    /** @return array{0:Builder,1:array,2:mixed,3:Builder} */
     private function build(string $set, Request $r): array
     {
         $term = trim((string) $r->query('q', ''));
@@ -270,6 +371,46 @@ class ReportController extends Controller
 
             return [$q->select('e.*'), ['_default' => 'e.last_seen', 'last_seen' => 'e.last_seen', 'level' => 'e.level', 'source' => 'e.source', 'occurrences' => 'e.occurrences'], null, $count];
         }
+        if ($set === 'reviews') {
+            $q = DB::table('feedback as f')->leftJoin('users as u', 'u.id', '=', 'f.owner_id');
+            $this->dates($q, $r, 'f.created_at');
+            if (in_array($r->query('status'), ['pending', 'published', 'hidden'], true)) {
+                $q->where('f.status', $r->query('status'));
+            }
+            if ($term !== '') {
+                $l = $this->like($term);
+                $q->where(fn ($w) => $w->where('f.display_name', 'like', $l)->orWhere('f.content', 'like', $l)->orWhere('u.email', 'like', $l));
+            }
+            $count = clone $q;
+
+            return [$q->select(['f.created_at', 'f.display_name', 'f.rating', 'f.content', 'f.status', 'f.source', 'f.consent', 'u.email as u_email']), ['_default' => 'f.created_at', 'date' => 'f.created_at', 'rating' => 'f.rating', 'status' => 'f.status', 'name' => 'f.display_name'], null, $count];
+        }
+        if ($set === 'support') {
+            $q = DB::table('support_reports as s');
+            $this->dates($q, $r, 's.created_at');
+            if (in_array($r->query('status'), ['new', 'seen', 'working', 'resolved', 'closed'], true)) {
+                $q->where('s.status', $r->query('status'));
+            } elseif ($r->query('status') === 'open') {
+                $q->whereIn('s.status', ['new', 'seen', 'working']);
+            }
+            if ($term !== '') {
+                $l = $this->like($term);
+                $q->where(fn ($w) => $w->where('s.message', 'like', $l)->orWhere('s.email', 'like', $l)->orWhere('s.name', 'like', $l)->orWhere('s.page', 'like', $l));
+            }
+            $count = clone $q;
+
+            return [$q->select(['s.created_at', 's.name', 's.email', 's.plan', 's.area', 's.kind', 's.page', 's.rating', 's.message', 's.status', 's.resolved_at']), ['_default' => 's.created_at', 'date' => 's.created_at', 'status' => 's.status', 'rating' => 's.rating', 'area' => 's.area'], null, $count];
+        }
+        if ($set === 'growth') {
+            $q = DB::table('growth_reports as g');
+            $this->dates($q, $r, 'g.created_at');
+            if (is_string($r->query('status')) && preg_match('/^[a-z0-9]{1,10}$/', $r->query('status'))) {
+                $q->where('g.slot', $r->query('status'));
+            }
+            $count = clone $q;
+
+            return [$q->select(['g.day', 'g.slot', 'g.band', 'g.body', 'g.created_at']), ['_default' => 'g.created_at', 'day' => 'g.day', 'slot' => 'g.slot', 'band' => 'g.band'], null, $count];
+        }
         $q = DB::table('mail_outbox as m');
         $this->dates($q, $r, 'm.created_at');
         if ($r->query('status') && $r->query('status') !== 'all') {
@@ -301,6 +442,9 @@ class ReportController extends Controller
                 'commissions' => ['date' => $x->created_at, 'referrer' => $x->a_name, 'referrer_email' => $x->a_email, 'buyer' => $x->b_name, 'amount_inr' => (float) self::inr($x->amount_paise), 'rate' => $x->rate_bps / 100, 'reversed_inr' => (float) self::inr($x->reversed_paise), 'purchase' => 'ORD-'.strtoupper(substr($x->purchase_id, 0, 6))],
                 'withdrawals' => ['date' => $x->created_at, 'customer' => $x->u_name, 'email' => $x->u_email, 'amount_inr' => (float) self::inr($x->amount_paise), 'method' => $x->method, 'destination' => $x->destination_masked, 'status' => $x->status, 'reference' => $x->reference, 'paid_at' => $x->paid_at],
                 'scans' => ['date' => $x->created_at, 'customer' => $x->u_name, 'email' => $x->u_email, 'job_title' => $x->job_title, 'company' => $x->company, 'source' => $x->source, 'score' => $x->score, 'status' => $x->status, 'job_url' => $x->job_url],
+                'reviews' => ['date' => $x->created_at, 'name' => $x->display_name, 'email' => $x->u_email, 'rating' => (int) $x->rating, 'review' => $x->content, 'status' => $x->status, 'source' => $x->source === 'dummy' ? 'Sample' : $x->source, 'consent' => $x->consent ? 'Yes' : 'No'],
+                'support' => ['date' => $x->created_at, 'name' => $x->name, 'email' => $x->email, 'plan' => $x->plan, 'area' => $x->area, 'kind' => $x->kind, 'page' => $x->page, 'rating' => $x->rating === null ? '' : (int) $x->rating, 'message' => $x->message, 'status' => $x->status, 'resolved_at' => $x->resolved_at],
+                'growth' => ['day' => $x->day, 'slot' => $x->slot, 'band' => $x->band, 'report' => trim(html_entity_decode(strip_tags(preg_replace('#<(br|/p|/div|/li|/h\d|/tr)[^>]*>#i', "\n", (string) $x->body)), ENT_QUOTES | ENT_HTML5, 'UTF-8')), 'sent' => $x->created_at],
                 'errors' => ['last_seen' => $x->last_seen, 'first_seen' => $x->first_seen, 'level' => $x->level, 'source' => $x->source, 'message' => $x->message, 'url' => $x->url, 'occurrences' => (int) $x->occurrences, 'resolved' => $x->resolved_at ? 'Yes' : 'No'],
                 default => ['date' => $x->created_at, 'recipient' => $x->recipient, 'subject' => $x->subject, 'trigger' => $x->trigger, 'status' => $x->status, 'attempts' => (int) $x->attempts, 'error' => $x->error, 'sent_at' => $x->sent_at],
             };

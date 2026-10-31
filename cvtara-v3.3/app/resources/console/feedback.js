@@ -25,11 +25,14 @@
         <label class="ops-f">Status<select id="fbs">${opt('open', 'Open (not finished)', F.status)}${opt('all', 'Everything', F.status)}${Object.entries(STATUS).map(([k, l]) => opt(k, l, F.status)).join('')}</select></label>
         <label class="ops-f">About<select id="fba">${opt('all', 'Everything', F.area)}${Object.entries(META.areas).map(([k, l]) => opt(k, l, F.area)).join('')}</select></label>
         <label class="ops-f">Type<select id="fbk">${opt('all', 'Everything', F.kind)}${Object.entries(META.kinds).map(([k, l]) => opt(k, l, F.kind)).join('')}</select></label>
-        <button type="button" class="button secondary" id="fbr">Refresh</button></div></section>
+        ${K.rangeHtml(F.from, F.to)}<button type="button" class="button secondary" id="fbr">Refresh</button> ${K.dlHtml()}</div></section>
       <section class="panel" data-nokit style="overflow:auto"><table class="ad-table" id="fbt"><tbody><tr><td>Loading…</td></tr></tbody></table></section><div class="ops-pager" id="fbp"></div>`;
     const reload = () => { F.page = 1; list(h); };
     let t; $('#fbq', h).oninput = e => { F.q = e.target.value; clearTimeout(t); t = setTimeout(reload, 300); };
     $('#fbs', h).onchange = e => { F.status = e.target.value; reload(); };
+    const bar = $('.ops-filterbox', h);
+    bar.addEventListener('change', e => { const rg = K.rangeChange(e, bar); if (rg) { [F.from, F.to] = rg; reload(); } });
+    K.wireDownload(bar, fmt => K.exportUrl('/api/admin/support', { q: F.q, status: F.status, area: F.area, kind: F.kind, from: F.from, to: F.to }, fmt));
     $('#fba', h).onchange = e => { F.area = e.target.value; reload(); };
     $('#fbk', h).onchange = e => { F.kind = e.target.value; reload(); };
     $('#fbr', h).onclick = () => feedback();
@@ -39,7 +42,7 @@
   async function list(h) {
     const tbl = $('#fbt', h); if (!tbl) return;
     try {
-      const qs = new URLSearchParams({ page: String(F.page), per: String(F.per || 20) }); if (F.q) qs.set('q', F.q); if (F.status !== 'all') qs.set('status', F.status); if (F.area !== 'all') qs.set('area', F.area); if (F.kind !== 'all') qs.set('kind', F.kind);
+      const qs = new URLSearchParams({ page: String(F.page), per: String(F.per || 20) }); if (F.q) qs.set('q', F.q); if (F.status !== 'all') qs.set('status', F.status); if (F.area !== 'all') qs.set('area', F.area); if (F.kind !== 'all') qs.set('kind', F.kind); if (F.from) qs.set('from', F.from); if (F.to) qs.set('to', F.to);
       const d = await api('/api/admin/support?' + qs);
       tbl.innerHTML = d.rows.length ? `<thead><tr><th>Received</th><th>From</th><th>About</th><th>Message</th><th>Status</th></tr></thead><tbody>${d.rows.map(r => `<tr data-id="${E(r.id)}" class="fb-row" tabindex="0" style="cursor:pointer">
         <td>${E(when(r.created_at))}</td><td><b>${E(r.name || 'Visitor')}</b><br><small>${E(r.email || 'no email')} · ${E(r.plan || '')}</small></td>

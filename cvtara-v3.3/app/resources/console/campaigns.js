@@ -33,7 +33,7 @@
           <label class="wide">Or upload a CSV file<input type="file" name="file" accept=".csv,.txt,text/csv,text/plain"></label>
           <label class="wide" style="display:flex;gap:8px;align-items:flex-start"><input type="checkbox" name="confirm" style="width:auto;margin-top:3px"><span>I confirm that everyone on this list agreed to receive emails from CVTara.</span></label>
           <button class="button primary" type="submit">Import contacts</button></form><p role="status" id="cmImpMsg"></p>
-        <div class="ops-filterbox" style="margin-top:12px"><label class="ops-f grow">Search contacts<input id="cmQ" type="search" value="${E(C.q)}" placeholder="Email, name or where they came from…"></label></div>
+        <div class="ops-filterbox" style="margin-top:12px"><label class="ops-f grow">Search contacts<input id="cmQ" type="search" value="${E(C.q)}" placeholder="Email, name or where they came from…"></label>${K.rangeHtml(C.from, C.to, true, 'Added')}${K.dlHtml()}</div>
         <div style="overflow:auto"><table class="ad-table" id="cmContacts"><tbody><tr><td>Loading…</td></tr></tbody></table></div><div class="ops-pager" id="cmPager"></div></section>
       <section class="panel panel-pad"><h3>Do-not-mail list</h3><p class="muted" style="margin:0 0 10px">Addresses here never get a campaign email. People who unsubscribe from a campaign are added automatically. ${n(S.doNotMail)} address${S.doNotMail === 1 ? '' : 'es'} on the list.</p>
         <form id="cmSup" class="ops-form"><label class="wide">Add addresses (one per line)<textarea name="emails" rows="3"></textarea></label><button class="button secondary" type="submit">Add to do-not-mail list</button></form></section>
@@ -56,6 +56,9 @@
         toast(r.added + ' contacts added'); await campaigns(); $('#cmImpMsg', h).textContent = parts.join(' · ') + '.';
       } catch (x) { out.textContent = err(x); }
     };
+    const cbar = $('#cmQ', h).closest('.ops-filterbox');
+    cbar.addEventListener('change', e => { const rg = K.rangeChange(e, cbar); if (rg) { [C.from, C.to] = rg; C.page = 1; contacts(h); } });
+    K.wireDownload(cbar, fmt => K.exportUrl('/api/admin/campaigns/contacts', { q: C.q, from: C.from, to: C.to }, fmt));
     let t; $('#cmQ', h).oninput = e => { C.q = e.target.value; C.page = 1; clearTimeout(t); t = setTimeout(() => contacts(h), 300); };
     contacts(h);
     h.onclick = async e => {
@@ -76,7 +79,7 @@
   async function contacts(h) {
     const tbl = $('#cmContacts', h); if (!tbl) return;
     try {
-      const qs = new URLSearchParams({ page: String(C.page), per: String(C.per || 20) }); if (C.q) qs.set('q', C.q);
+      const qs = new URLSearchParams({ page: String(C.page), per: String(C.per || 20) }); if (C.q) qs.set('q', C.q); if (C.from) qs.set('from', C.from); if (C.to) qs.set('to', C.to);
       const d = await api('/api/admin/campaigns/contacts?' + qs);
       tbl.innerHTML = d.contacts.length ? `<thead><tr><th>Email</th><th>Name</th><th>Came from</th><th>Added</th><th>Status</th><th></th></tr></thead><tbody>${d.contacts.map(c => `<tr data-cid="${c.id}"><td>${E(c.email)}</td><td>${E(c.name || '—')}</td><td>${E(c.source || '—')}</td><td>${E(K.dmy(K.parse(c.created_at)))}</td><td>${c.unsubscribed_at ? '<span class="ad-pill bad">Unsubscribed</span>' : '<span class="ad-pill ok">Can be emailed</span>'}</td><td><button class="button secondary small" data-cdel>Remove</button></td></tr>`).join('')}</tbody>` : '<tbody><tr><td>No contacts yet.</td></tr></tbody>';
       K.pager($('#cmPager', h), d, (p, per) => { C.page = p; C.per = per; contacts(h); });
