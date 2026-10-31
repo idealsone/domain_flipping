@@ -1,6 +1,6 @@
-# CVTara v3.28.0 — Weekly report, page and search tracking, on-page SEO fixes
+# CVTara v3.29.0 — Weekly report, page and search tracking, on-page SEO fixes
 
-## 3.28.0
+## 3.29.0
 - **Weekly owner report (default):** one report every Monday from 10 AM India time covering Monday to Sunday of the week before: sales against the plan, last week's funnel, Search (Google clicks and impressions, searches close to page 1, pages seen but rarely clicked, the pages with most impressions and the searches they show for, searches that moved 3+ places, SEO changes that went live), risks, decisions and next actions. The 2 PM / 7 PM daily reports remain a choice under Targets and settings. Report risks are now written in plain words instead of internal check names.
 - **Tracked pages and searches (Growth → SEO agent):** every Search Console check keeps this week's numbers per page and per search (up to 1,000 searches), so each page shows impressions, clicks, click rate, position, the change since the week before, the searches it shows for, its main search and whether its title carries it. Filters: on page 1, close to page 1, beyond page 2, seen but rarely clicked, title misses its main search, and searches naming other brands. Paged and searchable.
 - **On-page SEO audit of all 522 sitemap pages:** every page has one title, one description, one H1, a canonical address and alt text on every image. Fixed: the footer's site links were missing on Templates, About, Contact, Privacy, Terms and Refund (the server only filled an empty footer written on one line); those pages and Cover letters / Guides now carry page and breadcrumb schema; the Templates, Cover letters, Guides and Blog headings now name what the page is.
@@ -9,6 +9,18 @@
 - **Calculators:** each calculator page now carries WebApplication schema (free, runs in the browser) beside its article, breadcrumb and FAQ schema, and short calculator titles say "for India" unless the owner has written a title.
 - **Answer engines:** new /llms.txt summarising CVTara, its tools, guides, every calculator and the plans. robots.txt already lets every crawler in.
 - **Migration:** adds seo_track. Run `php artisan migrate --force` after updating.
+# CVTara v3.28.0 — Honest follow-ups from sign-up to purchase
+
+## 3.28.0
+- **Package mail on day 14:** the plain "what each package includes" nudge now goes 14 days after sign-up instead of day 300, and the fresher tips on day 30, when people are actually deciding. The other nudges keep their days; the editor names show each nudge's day.
+- **Referral invite for Job Hunt and Pro buyers:** one mail, 8 days after the purchase (past the 7-day refund window), inviting them to share their link: the friend gets ₹50 off ₹299 and up, they get ₹50 credit. Once per customer, opted-in only, only while the referral programme is on; never after the ₹99 Quick Download or add-ons.
+- **"Your work is still saved":** one mail 14 days after a plan ends when nothing was bought again: their resumes are kept, a fresh-ATS-check tip and packages from ₹99. Opted-in only.
+- **₹99 Quick Download reminders:** a 7-day plan no longer gets "your plan ends in 7 days" on the day it is bought plus a 4-day reminder; it gets only "ends tomorrow". Longer plans keep 7, 4 and 1 day reminders.
+- **Unfinished payments (Razorpay and PhonePe):** when someone opens the payment window and does not pay, a reminder goes out about an hour later with a link straight back to the same package (and the same coupon while it still works), saying no money was taken. If still unpaid a day later, one last reminder with the packages. Then nothing more for a week, however many times they open checkout. A waiting reminder is dropped if they pay in the meantime (before, a reminder could arrive after they had paid). Opted-in customers only, as before.
+- **Logo in every mail:** the CVTara mark (PNG, so Gmail and Outlook show it) next to the name at the top of every customer and outreach mail; the name still reads when images are off.
+- **Outreach mail footer:** says who is writing and from where (CVTara, postal address, support address) above the unsubscribe link.
+- **Growth reports: revenue follow-ups:** the 2 PM and 7 PM reports show unfinished payments in the last 7 days, reminders sent, how many came back and paid (and how much), new free sign-ups and how many agreed to tips, plus referral invites and "work is still saved" mails. Two new next actions: when few unfinished payments come back, and when most new sign-ups did not agree to tips.
+- Both new mails can be edited or switched off in Email templates. No migration.
 
 # CVTara v3.27.1 — Owner console stays on the page you were on
 

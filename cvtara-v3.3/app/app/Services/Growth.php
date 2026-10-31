@@ -175,7 +175,45 @@ class Growth
             $out[] = 'More than 2% of marketing mail led to an unsubscribe. Slow down campaigns and check the audience and wording.';
         }
 
+        $fu = self::followUps();
+        if ($fu['unpaid'] >= 5 && $fu['recovered'] * 5 < $fu['reminded']) {
+            $out[] = 'Fewer than 1 in 5 unfinished payments come back after the reminder. Try a test payment on phone with UPI on both gateways, and read the replies to the reminder mail.';
+        }
+        if ($fu['freeSignups'] >= 20 && $fu['freeReachable'] * 2 < $fu['freeSignups']) {
+            $out[] = 'Less than half of new sign-ups agreed to tips, so most free users get no follow-up mail. Make the tips tick-box on sign-up clearer (it must stay unticked by default).';
+        }
+
         return $out ?: ['On pace. Keep going and check the plan mix and refunds before scaling anything.'];
+    }
+
+    /**
+     * What the automatic follow-ups did in the last 7 days: unfinished payments and how many came back to pay after a reminder,
+     * free sign-ups still to convert, and how many of them can be reached by email at all (only with their consent).
+     */
+    public static function followUps(int $days = 7): array
+    {
+        $since = now()->subDays($days);
+        $paid = fn () => DB::table('purchases')->whereIn('status', ['paid', 'partially_refunded'])->where('provider', '!=', 'referral_reward');
+        $unpaid = DB::table('purchases')->where('status', 'created')->where('created_at', '>=', $since)->whereNotIn('owner_id', $paid()->where('created_at', '>=', $since)->select('owner_id'))->distinct()->count('owner_id');
+        $reminded = DB::table('mail_outbox')->where('trigger', 'abandoned_purchase')->where('status', 'sent')->where('created_at', '>=', $since)->select('owner_id', DB::raw('min(created_at) as first'))->groupBy('owner_id')->get();
+        $recovered = 0;
+        $recoveredPaise = 0;
+        foreach ($reminded as $r) {
+            $p = $paid()->where('owner_id', $r->owner_id)->where('created_at', '>', $r->first)->where('created_at', '<=', date('Y-m-d H:i:s', strtotime((string) $r->first) + 7 * 86400))->get(['amount_paise']);
+            if ($p->isNotEmpty()) {
+                $recovered++;
+                $recoveredPaise += (int) $p->sum('amount_paise');
+            }
+        }
+        $free = DB::table('users')->where('is_admin', false)->where('blocked', false)->where('created_at', '>=', $since)->whereNotIn('id', $paid()->select('owner_id'));
+        $freeCount = (clone $free)->count();
+        $reachable = (clone $free)->whereIn('id', DB::table('profiles')->where('marketing_consent', true)->select('owner_id'))->count();
+
+        return ['days' => $days, 'unpaid' => $unpaid, 'reminded' => $reminded->count(), 'recovered' => $recovered, 'recoveredPaise' => $recoveredPaise,
+            'freeSignups' => $freeCount, 'freeReachable' => $reachable,
+            'nudgesSent' => DB::table('mail_outbox')->whereIn('trigger', ['nurture', 'download_locked'])->where('status', 'sent')->where('created_at', '>=', $since)->count(),
+            'referralInvites' => DB::table('mail_outbox')->where('trigger', 'referral_invite')->where('status', 'sent')->where('created_at', '>=', $since)->count(),
+            'winBacks' => DB::table('mail_outbox')->where('trigger', 'plan_ended')->where('status', 'sent')->where('created_at', '>=', $since)->count()];
     }
 
     /** AI spending this month (India time) against the owner's cap. */
@@ -262,6 +300,12 @@ class Growth
         $L[] = '- Sales: '.number_format($today['purchases']).' purchases, '.self::inr($today['grossPaise']);
         $L[] = '- Marketing mails sent: '.number_format($today['marketingSent']).'. Outreach mails sent: '.number_format($today['outreachSent']).'.';
         $L[] = '- Ad spend and cost per customer: Data unavailable (no ad account connected).';
+        $L[] = '';
+        $fu = self::followUps();
+        $L[] = '## Revenue follow-ups (last 7 days)';
+        $L[] = '- Unfinished payments: '.number_format($fu['unpaid']).' people opened payment and have not paid. Reminders sent: '.number_format($fu['reminded']).'. Came back and paid within 7 days of a reminder: '.number_format($fu['recovered']).' ('.self::inr($fu['recoveredPaise']).').';
+        $L[] = '- New free sign-ups: '.number_format($fu['freeSignups']).', of whom '.number_format($fu['freeReachable']).' agreed to tips and get the follow-up mails. Package and tip mails sent: '.number_format($fu['nudgesSent']).'.';
+        $L[] = '- Referral invites to Job Hunt and Pro buyers: '.number_format($fu['referralInvites']).'. "Your work is still saved" mails after a plan ended: '.number_format($fu['winBacks']).'.';
         $L[] = '';
         $L[] = '## Search (Google, last 4 weeks)';
         $seo = SeoAgent::summary();

@@ -73,6 +73,10 @@ def run(ctx, t):
     t.check("the report is emailed to the owner", len(rows) > before and "2 PM growth report" in rows[0][0] and "@" in rows[0][2], rows[:1])
     body = rows[0][1] if rows else ""
     t.check("the report has committed and stretch targets, funnel, risks, decisions and next actions", all(x in body for x in ["committed", "stretch", "Today so far", "Risks", "Decisions needed from you", "Next actions"]), body[:600])
+    t.check("the report shows what the revenue follow-ups did (unfinished payments, recovered sales, free sign-ups reachable by email)", "Revenue follow-ups (last 7 days)" in body and "Unfinished payments" in body and "agreed to tips" in body, body[:900])
+    r = tinker("echo json_encode(App\\Services\\Growth::followUps());")
+    fu = (r.stdout.strip().splitlines() or ["{}"])[-1]
+    t.check("follow-up numbers come from the database", all(k in fu for k in ['"unpaid"', '"recovered"', '"freeReachable"']), (r.stdout + r.stderr)[-300:])
     s, d = o.api("GET", "admin/growth/reports?slot=midday")
     t.check("reports are listed one page at a time and can be read", s == 200 and d["total"] >= 1 and o.api("GET", "admin/growth/report?id=" + d["rows"][0]["id"])[0] == 200, d)
     t.check("a snapshot of the day before is stored", db.q("select count(*) from growth_snapshots where day='2026-11-01'")[0][0] == 1)

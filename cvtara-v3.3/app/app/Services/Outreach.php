@@ -419,12 +419,14 @@ class Outreach
                 }
             }
         }
-        $text = rtrim($text).($sign !== '' ? "\n\n".$sign : '')."\n\nDon't want these emails? Unsubscribe: ".$unsub."\n";
+        // Who is writing and from where, on every outreach mail: readers and mail filters both look for it.
+        $postal = 'CVTara · '.EmailRenderer::postalAddress().' · '.EmailRenderer::supportAddress();
+        $text = rtrim($text).($sign !== '' ? "\n\n".$sign : '')."\n\n--\n".$postal."\nDon't want these emails? Unsubscribe: ".$unsub."\n";
         $f = MailLayout::FONT;
-        $foot = '<p class="cv-mut" style="margin:22px 0 0;font-family:'.$f.';font-size:12px;line-height:1.6;color:'.$c['muted'].'">Don\'t want these emails? <a href="'.e($unsub).'" class="cv-mut" style="color:'.$c['muted'].'">Unsubscribe</a>.</p>';
+        $foot = '<p class="cv-mut" style="margin:22px 0 0;font-family:'.$f.';font-size:12px;line-height:1.6;color:'.$c['muted'].'">'.e($postal).'<br>Don\'t want these emails? <a href="'.e($unsub).'" class="cv-mut" style="color:'.$c['muted'].'">Unsubscribe</a>.</p>';
         $signHtml = $sign !== '' ? '<p class="cv-txt" style="margin:18px 0 0;font-family:'.$f.';font-size:15px;line-height:1.6;color:'.$c['text'].'">'.nl2br(e($sign), false).'</p>' : '';
         if ($card) {
-            // The light card: small wordmark, no colour band or images, so it reads like a note rather than a newsletter.
+            // The light card: small logo and wordmark, no colour band or other images, so it reads like a note rather than a newsletter.
             $html = MailLayout::page(['subject' => $subject, 'preheader' => $parsed['preheader'], 'headline' => $head, 'content' => $html, 'signature' => $signHtml.$foot, 'footer' => '', 'variant' => 'light']);
         } else {
             $html = '<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>'.e($subject).'</title></head><body style="margin:0;padding:16px;font:15px/1.6 Arial,Helvetica,sans-serif;color:#1f2937">'
