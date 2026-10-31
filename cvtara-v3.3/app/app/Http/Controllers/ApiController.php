@@ -32,6 +32,13 @@ class ApiController extends Controller
             abort(405);
         }$d = $r->all();
         $ok = fn ($a = []) => response()->json(['ok' => true, ...$a]);
+        // Per-account (or per-IP) cap for endpoints that cost a gateway call, a heavy parse or a database write, so one
+        // account or script cannot flood them. Answers 429 with a plain message.
+        $cap = function (string $name, int $max, int $seconds, string $msg) use ($r, $id) {
+            $k = $name.':'.($id ?: 'ip:'.$r->ip());
+            abort_if(\Illuminate\Support\Facades\RateLimiter::tooManyAttempts($k, $max), 429, $msg);
+            \Illuminate\Support\Facades\RateLimiter::hit($k, $seconds);
+        };
         if ($path === 'csrf' && $get) {
             return $ok(['token' => csrf_token()]);
         }
@@ -123,6 +130,7 @@ class ApiController extends Controller
             return $ok(['content' => $content, 'reviews' => DB::table('feedback')->where('status', 'published')->where('consent', true)->get(['id', 'display_name', 'rating', 'content', 'created_at'])]);
         }
         if ($path === 'traffic') {
+            $cap('traffic', 60, 60, 'Too many requests. Please wait.');
             if (($d['consent'] ?? false) && Settings::get('integrations')['analytics']) {
                 $p = $r->validate(['path' => ['required','regex:#^/[a-zA-Z0-9/_.-]*$#','not_regex:#\.\.#','max:200'], 'source' => 'required|in:direct,google,bing,social,referral']);
                 if (! preg_match('/admin|workspace|setup/', $p['path'])) {
@@ -271,6 +279,7 @@ class ApiController extends Controller
         }
         if ($path === 'resumes/import') {
             abort_unless($r->isMethod('POST'), 405);
+            $cap('resume-import', 20, 600, 'Too many uploads in a few minutes. Wait a little and try again.');
 
             return $this->importResume($r);
         }
@@ -465,6 +474,7 @@ class ApiController extends Controller
             return $ok([...BusinessControls::quote($v['plan'], $v['coupon'] ?? '', $u->id, $r->boolean('useWallet', true)), 'gateways' => Payments::publicGateways()]);
         }
         if ($path === 'checkout/start') {
+            $cap('checkout-start', 12, 600, 'Too many checkout attempts. Wait a few minutes and try again.');
             \App\Services\EmailVerification::guard($r->user());
             $r->validate(['plan' => 'required|in:'.implode(',', Settings::paidPlanKeys()), 'showInActivity' => 'nullable|boolean', 'useWallet' => 'nullable|boolean', 'gateway' => 'nullable|in:'.implode(',', array_keys(Payments::GATEWAYS))]);
             if ($r->has('showInActivity')) {
@@ -479,6 +489,9 @@ class ApiController extends Controller
             Payments::demoVerify($u, $r->orderId);
 
             return $ok();
+        }
+        if (str_starts_with($path, 'checkout/verify')) {
+            $cap('checkout-verify', 30, 60, 'Too many payment checks. Wait a moment; your payment is safe and will be confirmed.');
         }
         if ($path === 'checkout/verify' && $r->input('provider') === 'phonepe') {
             $v = $r->validate(['orderId' => 'required|string|max:63|regex:/^[A-Za-z0-9_-]+$/']);
