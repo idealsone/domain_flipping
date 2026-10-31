@@ -197,7 +197,7 @@ class Growth
         $recovered = 0;
         $recoveredPaise = 0;
         foreach ($reminded as $r) {
-            $p = $paid()->where('owner_id', $r->owner_id)->where('created_at', '>', $r->first)->where('created_at', '<=', date('Y-m-d H:i:s', strtotime((string) $r->first) + 7 * 86400))->get(['amount_paise']);
+            $p = Settings::sinceStart($paid(), 'created_at')->where('owner_id', $r->owner_id)->where('created_at', '>', $r->first)->where('created_at', '<=', date('Y-m-d H:i:s', strtotime((string) $r->first) + 7 * 86400))->get(['amount_paise']);
             if ($p->isNotEmpty()) {
                 $recovered++;
                 $recoveredPaise += (int) $p->sum('amount_paise');
