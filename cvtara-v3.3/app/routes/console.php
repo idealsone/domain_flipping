@@ -10,6 +10,7 @@ use Illuminate\Support\Str;
 
 Artisan::command('cvtara:cron', function () {
     \App\Services\Settings::put('cronHeartbeat', ['at' => now()->toIso8601String()]);
+    \App\Services\ErrorLog::flushPending(); // errors recorded while the database was unreachable
     // Mail that is already due goes first, so the daily backup or a slow scan never delays it.
     $send = function () {
         try {

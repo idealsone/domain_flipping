@@ -59,8 +59,11 @@ return [
             'prefix_indexes' => true,
             'strict' => true,
             'engine' => null,
+            // Persistent connections are reused by each PHP worker, so a burst of visitors no longer opens a new
+            // MySQL connection per request (Hostinger refuses those with "[2002] Operation not permitted").
             'options' => extension_loaded('pdo_mysql') ? array_filter([
                 Mysql::ATTR_SSL_CA => env('MYSQL_ATTR_SSL_CA'),
+                \PDO::ATTR_PERSISTENT => (bool) env('DB_PERSISTENT', true),
             ]) : [],
         ],
 

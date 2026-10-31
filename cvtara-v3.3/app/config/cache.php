@@ -17,6 +17,10 @@ return [
 
     'default' => env('CACHE_STORE', 'database'),
 
+    // Request rate limits are counted in files, not MySQL: parallel owner-console requests deadlocked on the
+    // `cache` table ("1213 Deadlock found") and every page view cost extra database writes.
+    'limiter' => env('CACHE_LIMITER', 'file'),
+
     /*
     |--------------------------------------------------------------------------
     | Cache Stores
