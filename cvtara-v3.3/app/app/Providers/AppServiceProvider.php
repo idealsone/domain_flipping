@@ -14,7 +14,8 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        //
+        // Retry MySQL connections the host refuses during a burst of visitors (see RetryingMySqlConnector).
+        $this->app->bind('db.connector.mysql', \App\Database\RetryingMySqlConnector::class);
     }
 
     /**
