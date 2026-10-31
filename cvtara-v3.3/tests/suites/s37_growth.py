@@ -50,15 +50,15 @@ def run(ctx, t):
     saved = [c for c in (j.get("campaigns") or []) if c.get("id") == j.get("id")]
     t.check("the segment is saved with the campaign", s == 200 and saved and saved[0]["segCollege"] == "RV College", f"{s} {saved}")
 
-    # Weekly by default: one report on Monday from 10 AM covering the week before, nothing on other days.
+    # Weekly by default: one report on Sunday from 9 AM covering the week before, nothing on other days.
     before = db.q("select count(*) from mail_outbox where `trigger`='growth_report'")[0][0]
     wk = lambda when: (tinker(f"Carbon\\Carbon::setTestNow(Carbon\\Carbon::parse('{when}', 'Asia/Kolkata')); echo json_encode(App\\Services\\Growth::run());").stdout.strip().splitlines() or [""])[-1]
     t.check("reports are weekly by default: nothing on a Tuesday afternoon", "midday" not in wk("2026-11-03 14:30") and "weekly" not in wk("2026-11-03 19:30"))
-    t.check("nothing before 10 AM on Monday", "weekly" not in wk("2026-11-09 09:30"))
-    t.check("the weekly report goes out on Monday from 10 AM, once", "weekly" in wk("2026-11-09 10:05") and "weekly" not in wk("2026-11-09 15:00"))
+    t.check("nothing before 9 AM on Sunday, nothing on Monday", "weekly" not in wk("2026-11-08 08:30") and "weekly" not in wk("2026-11-09 10:30"))
+    t.check("the weekly report goes out on Sunday from 9 AM, once", "weekly" in wk("2026-11-08 09:05") and "weekly" not in wk("2026-11-08 15:00"))
     row = db.q("select subject,body from mail_outbox where `trigger`='growth_report' order by created_at desc limit 1")
-    t.check("the weekly report covers last week and is emailed", row and row[0][0].startswith("Weekly growth report") and "Mon 2 Nov to Sun 8 Nov 2026" in row[0][1] and "## Last week" in row[0][1] and "## Search" in row[0][1], row[:1])
-    t.check("only one weekly report is stored for the week", db.q("select count(*) from growth_reports where slot='weekly' and day='2026-11-09'")[0][0] == 1)
+    t.check("the weekly report covers last week and is emailed", row and row[0][0].startswith("Weekly growth report") and "Sun 1 Nov to Sat 7 Nov 2026" in row[0][1] and "## Last week" in row[0][1] and "## Search" in row[0][1], row[:1])
+    t.check("only one weekly report is stored for the week", db.q("select count(*) from growth_reports where slot='weekly' and day='2026-11-08'")[0][0] == 1)
 
     # Daily reports when the owner chooses them: one per slot per day, skipped on Sunday.
     tinker("App\\Services\\Settings::put('growth', ['reportEvery' => 'daily'] + App\\Services\\Growth::settings());")

@@ -19,7 +19,7 @@
     const M = D.month, m = M.metrics, b = BAND[M.band] || BAND.none, B = D.budget, st = D.stages;
     const funnel = (row, label) => `<tr><th scope="row">${label}</th>${Object.keys(st).map((k, i, ks) => `<td>${n(row[k])}${i ? `<br><small class="muted">${pct(row[k], row[ks[i - 1]])}</small>` : ''}</td>`).join('')}</tr>`;
     const plans = Object.entries(m.plans || {});
-    h.innerHTML = `<div class="pg-head"><p>Where CVTara stands against the first-year plan of ${n(D.year.totalTarget)} purchases (${inr(D.year.totalPaise)} gross). Numbers are counted from payments, sign-ups and resumes; nothing is estimated. ${D.settings.reportEvery === 'daily' ? 'Reports go to you at 2 PM and 7 PM, Monday to Saturday.' : 'A weekly report goes to you every Monday morning.'}</p></div>
+    h.innerHTML = `<div class="pg-head"><p>Where CVTara stands against the first-year plan of ${n(D.year.totalTarget)} purchases (${inr(D.year.totalPaise)} gross). Numbers are counted from payments, sign-ups and resumes; nothing is estimated. ${D.settings.reportEvery === 'daily' ? 'Reports go to you at 2 PM and 7 PM, Monday to Saturday.' : 'A weekly report goes to you every Sunday morning.'}</p></div>
       <div class="ops-kpis">
         <div class="kpi"><small>${E(M.label)} purchases</small><b>${n(m.purchases)}</b><small>${M.target ? 'of ' + n(M.target) + ' committed · ' + n(M.stretch) + ' stretch' : 'no target set'}</small></div>
         <div class="kpi"><small>Gross sales</small><b>${inr(m.grossPaise)}</b><small>${M.targetPaise ? 'of ' + inr(M.targetPaise) + ' · net ' + inr(m.netPaise) : 'net ' + inr(m.netPaise)}</small></div>
@@ -140,7 +140,7 @@
     try {
       const qs = new URLSearchParams({ page: String(R.page), per: String(R.per) }); if (R.slot !== 'all') qs.set('slot', R.slot); if (R.band !== 'all') qs.set('band', R.band);
       const d = await api('/api/admin/growth/reports?' + qs);
-      tbl.innerHTML = d.rows.length ? `<thead><tr><th>Day</th><th>Report</th><th>Band</th><th></th></tr></thead><tbody>${d.rows.map(r => `<tr><td>${E(String(r.day).slice(0, 10))}</td><td>${({ weekly: 'Weekly', midday: '2 PM', evening: '7 PM' })[r.slot] || E(r.slot)}</td><td><span class="pill ${(BAND[r.band] || BAND.none)[1]}">${E((BAND[r.band] || BAND.none)[0])}</span></td><td><button class="button secondary small" data-id="${E(r.id)}">Read</button></td></tr>`).join('')}</tbody>` : `<tbody><tr><td class="muted">No reports yet. ${D.settings.reportEvery === 'daily' ? 'The first one goes out at 2 PM.' : 'The first one goes out on Monday morning.'}</td></tr></tbody>`;
+      tbl.innerHTML = d.rows.length ? `<thead><tr><th>Day</th><th>Report</th><th>Band</th><th></th></tr></thead><tbody>${d.rows.map(r => `<tr><td>${E(String(r.day).slice(0, 10))}</td><td>${({ weekly: 'Weekly', midday: '2 PM', evening: '7 PM' })[r.slot] || E(r.slot)}</td><td><span class="pill ${(BAND[r.band] || BAND.none)[1]}">${E((BAND[r.band] || BAND.none)[0])}</span></td><td><button class="button secondary small" data-id="${E(r.id)}">Read</button></td></tr>`).join('')}</tbody>` : `<tbody><tr><td class="muted">No reports yet. ${D.settings.reportEvery === 'daily' ? 'The first one goes out at 2 PM.' : 'The first one goes out on Sunday morning.'}</td></tr></tbody>`;
       tbl.querySelectorAll('button[data-id]').forEach(b => { b.onclick = async () => { try { const r = (await api('/api/admin/growth/report?id=' + encodeURIComponent(b.dataset.id))).report; modal('Growth report', `<pre style="white-space:pre-wrap;font:inherit;margin:0">${E(r.body.replace(/^\[button:.*$/m, '').replace(/^#+ /gm, ''))}</pre>`); } catch (x) { toast(err(x)); } }; });
       K.pager($('#grP', h), d, (p, per) => { R.page = p; R.per = per; reports(h); });
     } catch (e) { tbl.innerHTML = `<tbody><tr><td role="alert">${E(err(e))}</td></tr></tbody>`; }
@@ -154,7 +154,7 @@
       <label>Average purchase (₹)<input name="avg" type="number" min="1" step="0.01" value="${E(s.avgPaise / 100)}" required></label>
       <label>Send reports to (blank = every owner account)<input name="reportEmail" type="email" value="${E(s.reportEmail)}"></label>
       <label class="wide" style="display:flex;gap:8px;align-items:center"><input type="checkbox" name="reports" ${s.reports ? 'checked' : ''}> Email me the growth report</label>
-      <label>How often<select name="reportEvery"><option value="weekly">Weekly (Monday morning)</option><option value="daily">Daily at 2 PM and 7 PM (Monday to Saturday)</option></select></label>
+      <label>How often<select name="reportEvery"><option value="weekly">Weekly (Sunday 9 AM)</option><option value="daily">Daily at 2 PM and 7 PM (Monday to Saturday)</option></select></label>
       <label>US$ to ₹<input name="usdInr" type="number" min="1" step="0.01" value="${E(s.usdInr)}" required></label>
       <label>Input price (US$ per million tokens)<input name="inputUsdPerM" type="number" min="0" step="0.01" value="${E(s.inputUsdPerM)}" required></label>
       <label>Output price (US$ per million tokens)<input name="outputUsdPerM" type="number" min="0" step="0.01" value="${E(s.outputUsdPerM)}" required></label>

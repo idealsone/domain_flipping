@@ -23,8 +23,8 @@ class Growth
 
     public const SLOTS = ['midday' => 14, 'evening' => 19];
 
-    /** The weekly report goes out on Monday from this hour (India time) and covers Monday to Sunday of the week before. */
-    public const WEEKLY_HOUR = 10;
+    /** The weekly report goes out on Sunday from this hour (India time) and covers Sunday to Saturday of the week before. */
+    public const WEEKLY_HOUR = 9;
 
     public const STAGES = ['visitors' => 'Visitors', 'signups' => 'Sign-ups', 'verified' => 'Verified email', 'activated' => 'Started a resume', 'checkouts' => 'Opened checkout', 'buyers' => 'Paid'];
 
@@ -428,7 +428,7 @@ class Growth
             ->map(fn ($r) => ['college' => $r->college, 'users' => (int) $r->users])->all();
     }
 
-    /** One cron run: yesterday's snapshot after midnight, segments, and the report that is due: weekly on Monday morning (default), or 2 PM / 7 PM Mon–Sat. */
+    /** One cron run: yesterday's snapshot after midnight, segments, and the report that is due: weekly on Sunday morning (default), or 2 PM / 7 PM Mon–Sat. */
     public static function run(?Carbon $now = null): array
     {
         $now = ($now ?? now())->copy()->tz(self::TZ);
@@ -441,7 +441,7 @@ class Growth
             self::segments();
         }
         if (self::settings()['reports'] && self::settings()['reportEvery'] === 'weekly') {
-            if ($now->isMonday() && $now->hour >= self::WEEKLY_HOUR && self::sendReport('weekly', $now)) {
+            if ($now->isSunday() && $now->hour >= self::WEEKLY_HOUR && self::sendReport('weekly', $now)) {
                 $done[] = 'weekly';
             }
         } elseif (self::settings()['reports'] && ! $now->isSunday()) {
