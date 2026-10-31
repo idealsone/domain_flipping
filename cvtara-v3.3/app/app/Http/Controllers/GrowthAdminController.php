@@ -52,9 +52,21 @@ class GrowthAdminController extends Controller
             ], fn ($p) => ['id' => $p->id, 'kind' => $p->kind, 'path' => $p->path, 'query' => $p->query, 'status' => $p->status, 'reason' => $p->reason, 'impressions' => (int) $p->impressions, 'position' => (float) $p->position,
                 'data' => json_decode($p->data_json, true), 'before' => json_decode($p->before_json, true), 'createdAt' => $p->created_at, 'decidedAt' => $p->decided_at]));
         }
+        if ($path === 'growth/seo/tracked' && $get) {
+            $kind = $r->query('kind') === 'query' ? 'query' : 'page';
+            $band = fn ($row, $v) => match ($v) {
+                'top' => $row['position'] > 0 && $row['position'] <= 10, 'close' => $row['position'] > 10 && $row['position'] <= 20, 'far' => $row['position'] > 20,
+                'lowctr' => $row['impressions'] >= 50 && $row['ctr'] < 0.01, 'notarget' => ($row['titleHasTarget'] ?? null) === false, 'brand' => ($row['brand'] ?? false) === true, 'nobrand' => ($row['brand'] ?? false) === false, default => true,
+            };
+
+            return $ok(AdminTable::rows($r, SeoAgent::tracked($kind), [
+                'search' => $kind === 'page' ? ['key', 'target'] : ['key'], 'filters' => ['band' => $band],
+                'sorts' => ['impressions' => 'impressions', 'clicks' => 'clicks', 'position' => 'position', 'ctr' => 'ctr', 'change' => 'impressionsChange', 'key' => 'key'], 'sort' => 'impressions',
+            ]));
+        }
         abort_unless($r->isMethod('POST'), 405);
         if ($path === 'growth/report-now') {
-            $v = $r->validate(['slot' => 'required|in:'.implode(',', array_keys(Growth::SLOTS))]);
+            $v = $r->validate(['slot' => 'required|in:weekly,'.implode(',', array_keys(Growth::SLOTS))]);
             $id = Growth::sendReport($v['slot'], null, true);
             Settings::audit($r->user()->id, 'growth_report_sent', $v['slot']);
 
@@ -86,12 +98,13 @@ class GrowthAdminController extends Controller
             AccountSecurity::requireRecent($r);
             $v = $r->validate([
                 'budgetInr' => 'required|integer|min:0|max:500000', 'stretchPct' => 'required|integer|min:100|max:500',
-                'avgPaise' => 'required|integer|min:100|max:10000000', 'reports' => 'required|boolean', 'reportEmail' => 'nullable|email|max:190',
+                'avgPaise' => 'required|integer|min:100|max:10000000', 'reports' => 'required|boolean', 'reportEvery' => 'sometimes|in:weekly,daily', 'reportEmail' => 'nullable|email|max:190',
                 'usdInr' => 'required|numeric|min:1|max:1000', 'inputUsdPerM' => 'required|numeric|min:0|max:1000', 'outputUsdPerM' => 'required|numeric|min:0|max:1000',
                 'ladder' => 'required|array', 'ladder.*' => 'integer|min:0|max:10000000',
             ]);
             $v['ladder'] = array_intersect_key($v['ladder'], Growth::LADDER);
             $v['reportEmail'] = (string) ($v['reportEmail'] ?? '');
+            $v['reportEvery'] ??= Growth::settings()['reportEvery'];
             Settings::put('growth', $v);
             Settings::audit($r->user()->id, 'growth_settings_saved', 'cap ₹'.$v['budgetInr']);
 

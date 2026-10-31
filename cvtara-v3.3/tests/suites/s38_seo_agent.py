@@ -62,6 +62,21 @@ def run(ctx, t):
         t.check("pages seen but rarely clicked are listed", any(r["path"] == PY for r in seo.get("lowCtr", [])), seo.get("lowCtr"))
         t.check("clicks and impressions come from Search Console", seo.get("clicks") == 11 and seo.get("impressions") == 1300 and seo.get("pending") == 4, seo)
 
+        # Every page and search is tracked week by week, with the searches each page shows for.
+        s, d = o.api("GET", "admin/growth/seo/tracked?kind=page")
+        rows = {r["key"]: r for r in d.get("rows", [])}
+        py = rows.get(PY, {})
+        t.check("each page is tracked with impressions, clicks, position and its searches", s == 200 and d["total"] == 3 and py.get("impressions") == 700 and py["queries"][0][0] == "python fresher cv format", f"{s} {d}")
+        t.check("each resume page has a main search and a check that its title carries it", py.get("target") == "python developer resume example" and py.get("titleHasTarget") is True, py)
+        t.check("brand searches are not listed against a page", not any("naukri" in q[0] for q in rows.get(SE, {}).get("queries", [])), rows.get(SE))
+        s, d = o.api("GET", "admin/growth/seo/tracked?kind=query&band=nobrand")
+        t.check("searches are tracked with the page shown, and other brands can be filtered out", s == 200 and d["total"] == 2 and all("naukri" not in r["key"] for r in d["rows"]) and d["rows"][0]["pages"], d)
+        t.check("tracked lists are paged and searchable", o.api("GET", "admin/growth/seo/tracked?kind=page&q=python")[1]["total"] == 1 and o.api("GET", "admin/growth/seo/tracked?kind=page&band=lowctr")[1]["total"] == 1)
+        db.q("update seo_track set week=date(week,'-7 days'), impressions=impressions-100, position=position+2")
+        o.api("POST", "admin/growth/seo/run", {})
+        py = {r["key"]: r for r in o.api("GET", "admin/growth/seo/tracked?kind=page")[1]["rows"]}.get(PY, {})
+        t.check("the change since the week before is shown", py.get("impressionsChange") == 100 and py.get("positionChange") == 2, py)
+
         s, d = o.api("GET", "admin/growth/seo/proposals?status=pending")
         rows = {p["kind"]: p for p in d.get("rows", []) if p["kind"] == "meta" or p["path"] == DA}
         meta, links = rows.get("meta", {}), rows.get("links", {})
@@ -106,6 +121,8 @@ def run(ctx, t):
         t.check("it does not run on Sunday", run_at("2026-11-08 12:00") == "null")
 
         body = json.loads(last(tinker("echo json_encode(App\\Services\\Growth::report('evening'));")) or "{}").get("body", "")
+        wbody = json.loads(last(tinker("echo json_encode(App\\Services\\Growth::report('weekly'));")) or "{}").get("body", "")
+        t.check("the weekly report lists the pages with most impressions and the searches they show for", f"Page {PY}: 700 impressions (+100 on the week before)" in wbody and '"python fresher cv format"' in wbody, wbody[wbody.find("## Search"):wbody.find("## Search") + 900])
         t.check("the report shows Google clicks, searches close to page 1 and changes waiting", "Clicks: 11" in body and '"data analyst resume"' in body and "waiting for your approval" in body and "naukri" not in body, body[body.find("## Search"):body.find("## Search") + 500])
         t.check("AI spending has no limit by default", json.loads(last(tinker("echo json_encode(App\\Services\\Growth::settings()['budgetInr']);"))) == 0 and last(tinker("echo json_encode(App\\Services\\Growth::aiAllowed('seo'));")) == "true")
     finally:

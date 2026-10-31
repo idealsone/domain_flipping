@@ -55,8 +55,80 @@ class SeoAgent
         }
         $rows = array_map(fn ($r) => ['query' => (string) $r['keys'][0], 'path' => self::path((string) $r['keys'][1]), 'clicks' => (int) $r['clicks'], 'impressions' => (int) $r['impressions'], 'ctr' => (float) $r['ctr'], 'position' => round((float) $r['position'], 1)], $d['rows'] ?? []);
         Settings::put('seoPairs', ['rows' => $rows, 'startDate' => $data['startDate'], 'endDate' => $data['endDate'], 'updatedAt' => now()->toIso8601String()]);
+        self::track($data, $rows);
 
         return ['ready' => true, 'queries' => count($data['query'] ?? []), 'pairs' => count($rows)];
+    }
+
+    /** This week's row per page and per search (the last 4 weeks, as Search Console gives it), kept for week-to-week changes. */
+    private static function track(array $data, array $pairs): void
+    {
+        $week = now()->tz(Growth::TZ)->startOfWeek()->toDateString();
+        $byPath = collect($pairs)->reject(fn ($r) => self::branded($r['query']))->groupBy('path');
+        $byQuery = collect($pairs)->groupBy('query');
+        $rows = [];
+        foreach ($data['page'] ?? [] as $r) {
+            $path = self::path((string) $r['key']);
+            $top = $byPath->get($path, collect())->sortByDesc('impressions')->take(10)->map(fn ($x) => [$x['query'], $x['impressions'], $x['position']])->values()->all();
+            $rows[] = ['week' => $week, 'kind' => 'page', 'key' => mb_substr($path, 0, 300), 'clicks' => (int) $r['clicks'], 'impressions' => (int) $r['impressions'], 'ctr' => round((float) $r['ctr'], 5), 'position' => round((float) $r['position'], 2), 'extra_json' => json_encode(['queries' => $top]), 'created_at' => now(), 'updated_at' => now()];
+        }
+        foreach (collect($data['query'] ?? [])->sortByDesc('impressions')->take(1000) as $r) {
+            $q = (string) $r['key'];
+            $pages = $byQuery->get($q, collect())->sortByDesc('impressions')->pluck('path')->unique()->take(3)->values()->all();
+            $rows[] = ['week' => $week, 'kind' => 'query', 'key' => mb_substr($q, 0, 300), 'clicks' => (int) $r['clicks'], 'impressions' => (int) $r['impressions'], 'ctr' => round((float) $r['ctr'], 5), 'position' => round((float) $r['position'], 2), 'extra_json' => json_encode(['pages' => $pages, 'brand' => self::branded($q)]), 'created_at' => now(), 'updated_at' => now()];
+        }
+        foreach (array_chunk($rows, 200) as $chunk) {
+            DB::table('seo_track')->upsert($chunk, ['week', 'kind', 'key'], ['clicks', 'impressions', 'ctr', 'position', 'extra_json', 'updated_at']);
+        }
+    }
+
+    /** The search a page is built for: the heading of a resume / interview / city page, else its most-seen search. */
+    public static function target(string $path, array $queries = []): string
+    {
+        $page = SeoPages::owns(ltrim($path, '/')) ? SeoPages::find($path) : null;
+
+        return mb_strtolower(trim((string) ($page['h1'] ?? ($queries[0][0] ?? ''))));
+    }
+
+    /**
+     * Tracked pages or searches for the Growth page: the latest week's numbers, the change since the week before and,
+     * for a page, the searches it shows for and whether its title carries its main search.
+     */
+    public static function tracked(string $kind): array
+    {
+        $weeks = DB::table('seo_track')->where('kind', $kind)->distinct()->orderByDesc('week')->limit(2)->pluck('week')->map(fn ($w) => substr((string) $w, 0, 10))->all();
+        if (! $weeks) {
+            return [];
+        }
+        $prev = isset($weeks[1]) ? DB::table('seo_track')->where('kind', $kind)->where('week', $weeks[1])->get()->keyBy('key') : collect();
+
+        return DB::table('seo_track')->where('kind', $kind)->where('week', $weeks[0])->orderByDesc('impressions')->limit(2000)->get()->map(function ($r) use ($prev, $kind) {
+            $x = json_decode((string) $r->extra_json, true) ?: [];
+            $p = $prev->get($r->key);
+            $row = ['key' => $r->key, 'week' => substr((string) $r->week, 0, 10), 'clicks' => (int) $r->clicks, 'impressions' => (int) $r->impressions, 'ctr' => (float) $r->ctr, 'position' => (float) $r->position,
+                'impressionsChange' => $p ? (int) $r->impressions - (int) $p->impressions : null, 'positionChange' => $p ? round((float) $p->position - (float) $r->position, 1) : null];
+            if ($kind === 'page') {
+                $row['queries'] = $x['queries'] ?? [];
+                $row['target'] = self::target($r->key, $row['queries']);
+                $title = (string) ((SeoPages::owns(ltrim($r->key, '/')) ? SeoPages::find($r->key) : null)['title'] ?? '');
+                $row['titleHasTarget'] = $title === '' ? null : self::covers($title, $row['target']);
+            } else {
+                $row['pages'] = $x['pages'] ?? [];
+                $row['brand'] = (bool) ($x['brand'] ?? false);
+            }
+
+            return $row;
+        })->all();
+    }
+
+    /** Whether a title carries the main words of a search (ignoring small words and plural s). */
+    public static function covers(string $title, string $search): bool
+    {
+        $norm = fn ($w) => rtrim($w, 's');
+        $t = array_map($norm, preg_split('/\W+/u', mb_strtolower($title), -1, PREG_SPLIT_NO_EMPTY));
+        $words = array_filter(array_map($norm, preg_split('/\W+/u', mb_strtolower($search), -1, PREG_SPLIT_NO_EMPTY)), fn ($w) => mb_strlen($w) > 2 && ! in_array($w, ['for', 'and', 'the', 'with', 'example', 'sample'], true));
+
+        return ! array_diff($words, $t);
     }
 
     /** What the data says, without changing anything. */

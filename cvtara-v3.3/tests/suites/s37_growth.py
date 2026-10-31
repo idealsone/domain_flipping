@@ -50,8 +50,18 @@ def run(ctx, t):
     saved = [c for c in (j.get("campaigns") or []) if c.get("id") == j.get("id")]
     t.check("the segment is saved with the campaign", s == 200 and saved and saved[0]["segCollege"] == "RV College", f"{s} {saved}")
 
-    # Reports: one per slot per day, emailed to the owner, skipped on Sunday.
+    # Weekly by default: one report on Monday from 10 AM covering the week before, nothing on other days.
     before = db.q("select count(*) from mail_outbox where `trigger`='growth_report'")[0][0]
+    wk = lambda when: (tinker(f"Carbon\\Carbon::setTestNow(Carbon\\Carbon::parse('{when}', 'Asia/Kolkata')); echo json_encode(App\\Services\\Growth::run());").stdout.strip().splitlines() or [""])[-1]
+    t.check("reports are weekly by default: nothing on a Tuesday afternoon", "midday" not in wk("2026-11-03 14:30") and "weekly" not in wk("2026-11-03 19:30"))
+    t.check("nothing before 10 AM on Monday", "weekly" not in wk("2026-11-09 09:30"))
+    t.check("the weekly report goes out on Monday from 10 AM, once", "weekly" in wk("2026-11-09 10:05") and "weekly" not in wk("2026-11-09 15:00"))
+    row = db.q("select subject,body from mail_outbox where `trigger`='growth_report' order by created_at desc limit 1")
+    t.check("the weekly report covers last week and is emailed", row and row[0][0].startswith("Weekly growth report") and "Mon 2 Nov to Sun 8 Nov 2026" in row[0][1] and "## Last week" in row[0][1] and "## Search" in row[0][1], row[:1])
+    t.check("only one weekly report is stored for the week", db.q("select count(*) from growth_reports where slot='weekly' and day='2026-11-09'")[0][0] == 1)
+
+    # Daily reports when the owner chooses them: one per slot per day, skipped on Sunday.
+    tinker("App\\Services\\Settings::put('growth', ['reportEvery' => 'daily'] + App\\Services\\Growth::settings());")
     r = tinker("Carbon\\Carbon::setTestNow(Carbon\\Carbon::parse('2026-11-02 14:05', 'Asia/Kolkata')); echo json_encode(App\\Services\\Growth::run());")
     out = (r.stdout.strip().splitlines() or [""])[-1]
     t.check("the 2 PM report goes out on a Monday after 2 PM", "midday" in out, (r.stdout + r.stderr)[-300:])
@@ -59,7 +69,7 @@ def run(ctx, t):
     t.check("the same report is not sent twice", "midday" not in (r.stdout.strip().splitlines() or [""])[-1], r.stdout[-200:])
     r = tinker("Carbon\\Carbon::setTestNow(Carbon\\Carbon::parse('2026-11-08 19:30', 'Asia/Kolkata')); echo json_encode(App\\Services\\Growth::run());")
     t.check("no report on Sunday", "evening" not in (r.stdout.strip().splitlines() or [""])[-1], r.stdout[-200:])
-    rows = db.q("select subject,body,recipient from mail_outbox where `trigger`='growth_report' order by created_at desc")
+    rows = db.q("select subject,body,recipient from mail_outbox where `trigger`='growth_report' and subject like '2 PM%' order by created_at desc")
     t.check("the report is emailed to the owner", len(rows) > before and "2 PM growth report" in rows[0][0] and "@" in rows[0][2], rows[:1])
     body = rows[0][1] if rows else ""
     t.check("the report has committed and stretch targets, funnel, risks, decisions and next actions", all(x in body for x in ["committed", "stretch", "Today so far", "Risks", "Decisions needed from you", "Next actions"]), body[:600])
@@ -75,7 +85,7 @@ def run(ctx, t):
     t.check("each request's cost is worked out from its tokens", b.get("spentPaise", 0) == 13200 and b["byPurpose"]["customer"]["calls"] == 1, (r.stdout + r.stderr)[-300:])
     t.check("over the cap growth tasks stop but paid customer add-ons keep working", seo is False and cust is True, (seo, cust))
     t.check("crossing the cap is written to the Error Log", db.q("select count(*) from error_logs where message like '%AI spending has reached%'")[0][0] >= 1)
-    s, j = o.api("POST", "admin/growth/settings", {"budgetInr": 2000, "stretchPct": 200, "avgPaise": 12677, "reports": True, "reportEmail": "", "usdInr": 88, "inputUsdPerM": 5, "outputUsdPerM": 25, "ladder": {"2026-11": 120}})
-    t.check("the owner can change the cap and the monthly targets", s == 200 and j["settings"]["budgetInr"] == 2000 and j["settings"]["ladder"]["2026-11"] == 120 and j["settings"]["ladder"]["2027-10"] == 2230, f"{s} {j}")
+    s, j = o.api("POST", "admin/growth/settings", {"budgetInr": 2000, "stretchPct": 200, "avgPaise": 12677, "reports": True, "reportEvery": "weekly", "reportEmail": "", "usdInr": 88, "inputUsdPerM": 5, "outputUsdPerM": 25, "ladder": {"2026-11": 120}})
+    t.check("the owner can change the cap and the monthly targets", s == 200 and j["settings"]["budgetInr"] == 2000 and j["settings"]["ladder"]["2026-11"] == 120 and j["settings"]["ladder"]["2027-10"] == 2230 and j["settings"]["reportEvery"] == "weekly", f"{s} {j}")
     tinker("App\\Services\\Settings::put('growth', []);")
     t.check("the privacy policy says how resume details are used for emails", "college, target role" in json.load(open(f"{ctx.app}/resources/data/defaults.json"))["legal"]["privacy"])

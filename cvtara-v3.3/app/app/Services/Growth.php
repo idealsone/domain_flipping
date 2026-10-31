@@ -19,9 +19,12 @@ class Growth
     public const LADDER = ['2026-11' => 100, '2026-12' => 200, '2027-01' => 330, '2027-02' => 600, '2027-03' => 800, '2027-04' => 1000, '2027-05' => 1300, '2027-06' => 1500, '2027-07' => 1850, '2027-08' => 1900, '2027-09' => 2000, '2027-10' => 2230];
 
     /** usdInr and the per-million-token prices are the owner's to keep current (AI provider pricing page). */
-    public const DEFAULTS = ['ladder' => self::LADDER, 'avgPaise' => 12677, 'stretchPct' => 200, 'reports' => true, 'reportEmail' => '', 'budgetInr' => 0, 'usdInr' => 88, 'inputUsdPerM' => 5, 'outputUsdPerM' => 25];
+    public const DEFAULTS = ['ladder' => self::LADDER, 'avgPaise' => 12677, 'stretchPct' => 200, 'reports' => true, 'reportEvery' => 'weekly', 'reportEmail' => '', 'budgetInr' => 0, 'usdInr' => 88, 'inputUsdPerM' => 5, 'outputUsdPerM' => 25];
 
     public const SLOTS = ['midday' => 14, 'evening' => 19];
+
+    /** The weekly report goes out on Monday from this hour (India time) and covers Monday to Sunday of the week before. */
+    public const WEEKLY_HOUR = 10;
 
     public const STAGES = ['visitors' => 'Visitors', 'signups' => 'Sign-ups', 'verified' => 'Verified email', 'activated' => 'Started a resume', 'checkouts' => 'Opened checkout', 'buyers' => 'Paid'];
 
@@ -233,12 +236,15 @@ class Growth
     {
         $now = ($now ?? now())->copy()->tz(self::TZ);
         $month = self::month($now);
-        $today = self::metrics($now->copy()->startOfDay(), $now);
+        $weekly = $slot === 'weekly';
+        // The weekly report covers the 7 full days before today; the daily ones cover today so far.
+        $today = $weekly ? self::metrics($now->copy()->startOfDay()->subDays(7), $now->copy()->startOfDay()) : self::metrics($now->copy()->startOfDay(), $now);
         $m = $month['metrics'];
         $health = Health::snapshot();
         $budget = self::budget();
         $bandName = ['green' => 'Green: on pace', 'amber' => 'Amber: 70–89% of pace', 'red' => 'Red: below 70% of pace', 'none' => 'No target for this month'][$month['band']];
-        $L = ['# '.($slot === 'midday' ? 'Midday' : 'End-of-day').' growth report, '.$now->format('D j M Y, g:i A').' IST', ''];
+        $L = [$weekly ? '# Weekly growth report, '.$now->copy()->startOfDay()->subDays(7)->format('D j M').' to '.$now->copy()->subDay()->format('D j M Y')
+            : '# '.($slot === 'midday' ? 'Midday' : 'End-of-day').' growth report, '.$now->format('D j M Y, g:i A').' IST', ''];
         $L[] = '## '.$month['label'].': '.$bandName;
         if ($month['target']) {
             $L[] = '- Purchases: '.number_format($m['purchases']).' of '.number_format($month['target']).' committed ('.number_format($month['stretch']).' stretch). Pace for today: '.$month['pace'].' ('.$month['attainment'].'%).';
@@ -249,7 +255,7 @@ class Growth
         }
         $L[] = '- New paying customers: '.number_format($m['newCustomers']).'. Repeat purchases: '.number_format($m['repeatPurchases']).'.';
         $L[] = '';
-        $L[] = '## Today so far';
+        $L[] = $weekly ? '## Last week' : '## Today so far';
         foreach (self::STAGES as $k => $label) {
             $L[] = '- '.$label.': '.self::num($today[$k]);
         }
@@ -266,11 +272,30 @@ class Growth
             foreach (array_slice($seo['striking'], 0, 3) as $r) {
                 $L[] = '- Close to page 1: "'.$r['query'].'" at position '.$r['position'].' ('.number_format($r['impressions']).' impressions).';
             }
+            if ($weekly) {
+                foreach (array_slice($seo['lowCtr'], 0, 3) as $r) {
+                    $L[] = '- Seen but rarely clicked: '.$r['path'].' ('.number_format($r['impressions']).' impressions, '.round($r['ctr'] * 100, 1).'% clicked).';
+                }
+                $pages = SeoAgent::tracked('page');
+                foreach (array_slice($pages, 0, 5) as $r) {
+                    $L[] = '- Page '.$r['key'].': '.number_format($r['impressions']).' impressions'.($r['impressionsChange'] !== null ? ' ('.($r['impressionsChange'] >= 0 ? '+' : '').number_format($r['impressionsChange']).' on the week before)' : '').', '.number_format($r['clicks']).' clicks, position '.round($r['position'], 1)
+                        .($r['queries'] ? '. Searches: '.implode(', ', array_map(fn ($q) => '"'.$q[0].'"', array_slice($r['queries'], 0, 3))) : '').'.';
+                }
+                $moved = collect(SeoAgent::tracked('query'))->where('brand', false)->filter(fn ($r) => $r['positionChange'] !== null && abs($r['positionChange']) >= 3)->sortByDesc(fn ($r) => abs($r['positionChange']))->take(5);
+                foreach ($moved as $r) {
+                    $L[] = '- "'.$r['key'].'" moved '.($r['positionChange'] > 0 ? 'up ' : 'down ').abs($r['positionChange']).' places, now '.round($r['position'], 1).'.';
+                }
+                $L[] = '- SEO changes that went live last week: '.DB::table('seo_proposals')->where('status', 'approved')->where('decided_at', '>=', $now->copy()->startOfDay()->subDays(7)->utc())->count().'.';
+            }
             $L[] = '- SEO changes waiting for your approval: '.$seo['pending'].'. Live: '.$seo['live'].'.';
         }
         $L[] = '';
         $L[] = '## Risks';
-        $risks = array_map(fn ($p) => '- '.$p, $health['problems'] ?? []);
+        $plain = ['database' => 'The database is not answering.', 'storageWritable' => 'The site cannot write to its storage folder.', 'https' => 'The site address is not set to https.', 'domain' => 'The site address is not the live domain.',
+            'backupFresh' => 'No backup in the last 36 hours.', 'previewOff' => 'Preview mode is still on.', 'privateFolder' => 'The app folder is inside the public folder.', 'scheduler' => 'The every-minute cron has not run in the last 10 minutes.',
+            'emailConfigured' => 'Email sending is not set up.', 'emailSenderAligned' => 'The sender email is not on the site domain, so mail may land in spam.', 'emailPostalAddress' => 'The postal address for email footers is empty (Integrations → Email).',
+            'mailQueueMoving' => 'Emails are waiting in the queue for more than 10 minutes.', 'paymentsConfigured' => 'No payment gateway is set up.', 'debugOff' => 'Debug mode is on.'];
+        $risks = array_map(fn ($p) => '- '.($plain[$p] ?? $p), $health['problems'] ?? []);
         if (($health['metrics']['mailFailed24h'] ?? 0) > 0) {
             $risks[] = '- '.$health['metrics']['mailFailed24h'].' mails failed in the last 24 hours (Health page).';
         }
@@ -317,7 +342,7 @@ class Growth
         $r = self::report($slot, $now);
         $id = (string) Str::uuid();
         DB::table('growth_reports')->upsert([['id' => $id, 'day' => $day, 'slot' => $slot, 'band' => $r['band'], 'body' => $r['body'], 'created_at' => now(), 'updated_at' => now()]], ['day', 'slot'], ['id', 'band', 'body', 'updated_at']);
-        $subject = ($slot === 'midday' ? '2 PM' : '7 PM').' growth report: '.['green' => 'on pace', 'amber' => 'behind pace', 'red' => 'well behind pace', 'none' => 'no target yet'][$r['band']];
+        $subject = ['midday' => '2 PM', 'evening' => '7 PM', 'weekly' => 'Weekly'][$slot].' growth report: '.['green' => 'on pace', 'amber' => 'behind pace', 'red' => 'well behind pace', 'none' => 'no target yet'][$r['band']];
         foreach (self::recipients() as $to) {
             DB::table('mail_outbox')->insert(['id' => (string) Str::uuid(), 'dedupe' => (string) Str::uuid(), 'owner_id' => null, 'trigger' => 'growth_report', 'recipient' => $to, 'subject' => $subject, 'body' => $r['body'], 'due_at' => now(), 'created_at' => now(), 'updated_at' => now()]);
         }
@@ -356,7 +381,7 @@ class Growth
             ->map(fn ($r) => ['college' => $r->college, 'users' => (int) $r->users])->all();
     }
 
-    /** One cron run: yesterday's snapshot after midnight, segments, and the report whose hour has come (Mon–Sat). */
+    /** One cron run: yesterday's snapshot after midnight, segments, and the report that is due: weekly on Monday morning (default), or 2 PM / 7 PM Mon–Sat. */
     public static function run(?Carbon $now = null): array
     {
         $now = ($now ?? now())->copy()->tz(self::TZ);
@@ -368,7 +393,11 @@ class Growth
         if (\Illuminate\Support\Facades\Cache::add('growth-segments', 1, 900)) {
             self::segments();
         }
-        if (self::settings()['reports'] && ! $now->isSunday()) {
+        if (self::settings()['reports'] && self::settings()['reportEvery'] === 'weekly') {
+            if ($now->isMonday() && $now->hour >= self::WEEKLY_HOUR && self::sendReport('weekly', $now)) {
+                $done[] = 'weekly';
+            }
+        } elseif (self::settings()['reports'] && ! $now->isSunday()) {
             foreach (array_reverse(self::SLOTS, true) as $slot => $hour) {
                 if ($now->hour >= $hour) {
                     // Only the latest slot that is due: a cron that was down all day sends one report, not two.

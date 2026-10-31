@@ -1,4 +1,4 @@
-/* Owner console: Growth — the first-year target ladder, this month against plan, the funnel, the 2 PM / 7 PM reports and the AI spending cap. Every number comes from the server; a number the site cannot measure shows as "Data unavailable". */
+/* Owner console: Growth — the first-year target ladder, this month against plan, the funnel, the owner reports (weekly by default, or 2 PM / 7 PM) and AI spending. Every number comes from the server; a number the site cannot measure shows as "Data unavailable". */
 (() => {
   'use strict';
   const K = window.CVTaraAdminKit; if (!K) return;
@@ -19,7 +19,7 @@
     const M = D.month, m = M.metrics, b = BAND[M.band] || BAND.none, B = D.budget, st = D.stages;
     const funnel = (row, label) => `<tr><th scope="row">${label}</th>${Object.keys(st).map((k, i, ks) => `<td>${n(row[k])}${i ? `<br><small class="muted">${pct(row[k], row[ks[i - 1]])}</small>` : ''}</td>`).join('')}</tr>`;
     const plans = Object.entries(m.plans || {});
-    h.innerHTML = `<div class="pg-head"><p>Where CVTara stands against the first-year plan of ${n(D.year.totalTarget)} purchases (${inr(D.year.totalPaise)} gross). Numbers are counted from payments, sign-ups and resumes; nothing is estimated. Reports go to you at 2 PM and 7 PM, Monday to Saturday.</p></div>
+    h.innerHTML = `<div class="pg-head"><p>Where CVTara stands against the first-year plan of ${n(D.year.totalTarget)} purchases (${inr(D.year.totalPaise)} gross). Numbers are counted from payments, sign-ups and resumes; nothing is estimated. ${D.settings.reportEvery === 'daily' ? 'Reports go to you at 2 PM and 7 PM, Monday to Saturday.' : 'A weekly report goes to you every Monday morning.'}</p></div>
       <div class="ops-kpis">
         <div class="kpi"><small>${E(M.label)} purchases</small><b>${n(m.purchases)}</b><small>${M.target ? 'of ' + n(M.target) + ' committed · ' + n(M.stretch) + ' stretch' : 'no target set'}</small></div>
         <div class="kpi"><small>Gross sales</small><b>${inr(m.grossPaise)}</b><small>${M.targetPaise ? 'of ' + inr(M.targetPaise) + ' · net ' + inr(m.netPaise) : 'net ' + inr(m.netPaise)}</small></div>
@@ -52,14 +52,14 @@
           ${D.colleges.length ? `<table class="ad-table"><tbody>${D.colleges.map(c => `<tr><td>${E(c.college)}</td><td>${n(c.users)}</td></tr>`).join('')}</tbody></table>` : '<p class="muted">Nothing yet.</p>'}</section>
       </div>
       <section class="panel panel-pad" data-nokit><h3 style="margin-top:0">Reports</h3>
-        <div class="ops-filterbox"><label class="ops-f">Time<select id="grS"><option value="all">Both</option><option value="midday">2 PM</option><option value="evening">7 PM</option></select></label>
+        <div class="ops-filterbox"><label class="ops-f">Time<select id="grS"><option value="all">All</option><option value="weekly">Weekly</option><option value="midday">2 PM</option><option value="evening">7 PM</option></select></label>
           <label class="ops-f">Band<select id="grB"><option value="all">All</option>${Object.entries(BAND).map(([k, v]) => `<option value="${k}">${E(v[0])}</option>`).join('')}</select></label>
           <button class="button secondary small" id="grNow">Send a report now</button> <button class="button secondary small" id="grSet">Targets and settings</button></div>
         <div style="overflow:auto"><table class="ad-table" id="grT"><tbody><tr><td>Loading…</td></tr></tbody></table></div><div class="ops-pager" id="grP"></div></section>`;
     $('#grS', h).value = R.slot; $('#grB', h).value = R.band;
     $('#grS', h).onchange = e => { R.slot = e.target.value; R.page = 1; reports(h); };
     $('#grB', h).onchange = e => { R.band = e.target.value; R.page = 1; reports(h); };
-    $('#grNow', h).onclick = async () => { try { const hr = new Date(Date.now() + 5.5 * 3600e3).getUTCHours(); await api('/api/admin/growth/report-now', { method: 'POST', body: { slot: hr >= 19 ? 'evening' : 'midday' } }); toast('Report saved and emailed'); R.page = 1; reports(h); } catch (x) { toast(err(x)); } };
+    $('#grNow', h).onclick = async () => { try { const hr = new Date(Date.now() + 5.5 * 3600e3).getUTCHours(); await api('/api/admin/growth/report-now', { method: 'POST', body: { slot: D.settings.reportEvery === 'daily' ? (hr >= 19 ? 'evening' : 'midday') : 'weekly' } }); toast('Report saved and emailed'); R.page = 1; reports(h); } catch (x) { toast(err(x)); } };
     $('#grSet', h).onclick = settings;
     reports(h); seo(h);
   }
@@ -83,12 +83,40 @@
       <div class="ops-filterbox"><label class="ops-f">Status<select id="spS"><option value="all">All</option>${Object.entries(ST).map(([k, v]) => `<option value="${k}">${E(v[0])}</option>`).join('')}</select></label>
         <label class="ops-f">Kind<select id="spK"><option value="all">All</option>${Object.entries(KIND).map(([k, v]) => `<option value="${k}">${E(v)}</option>`).join('')}</select></label>
         <button class="button secondary small" id="spRun">Check Search Console now</button></div>
-      <div id="spL"></div><div class="ops-pager" id="spP"></div>`;
+      <div id="spL"></div><div class="ops-pager" id="spP"></div>
+      <h4>Tracked pages and searches</h4>
+      <p class="muted" style="margin-top:0">Updated with every Search Console check and kept week by week. Changes compare with the week before.</p>
+      <div class="ops-filterbox"><label class="ops-f">Show<select id="stK"><option value="page">Pages</option><option value="query">Searches</option></select></label>
+        <label class="ops-f">Filter<select id="stB"></select></label>
+        <label class="ops-f">Search<input id="stQ" type="search" placeholder="Page or search words"></label></div>
+      <div style="overflow-x:auto"><table class="ad-table" id="stT"></table></div><div class="ops-pager" id="stP"></div>`;
     $('#spS', box).value = P.status; $('#spK', box).value = P.kind;
     $('#spS', box).onchange = e => { P.status = e.target.value; P.page = 1; proposals(box); };
     $('#spK', box).onchange = e => { P.kind = e.target.value; P.page = 1; proposals(box); };
     $('#spRun', box).onclick = async e => { e.target.disabled = true; try { const r = await api('/api/admin/growth/seo/run', { method: 'POST', body: {} }); toast(`Read ${n(r.pairs)} searches · ${r.meta} title and ${r.links} link proposals`); seo(h); } catch (x) { toast(err(x)); e.target.disabled = false; } };
-    proposals(box);
+    proposals(box); track(box);
+  }
+  const TR = { kind: 'page', band: 'all', q: '', page: 1, per: 20 };
+  const BANDS = { page: [['all', 'All pages'], ['top', 'On page 1'], ['close', 'Close to page 1 (11–20)'], ['far', 'Beyond page 2'], ['lowctr', 'Seen but rarely clicked'], ['notarget', 'Title misses its main search']],
+    query: [['all', 'All searches'], ['nobrand', 'Without other brands'], ['top', 'On page 1'], ['close', 'Close to page 1 (11–20)'], ['far', 'Beyond page 2'], ['lowctr', 'Seen but rarely clicked'], ['brand', 'Naming other brands']] };
+  const delta = (v, good) => v === null || v === undefined || v === 0 ? '' : ` <small style="color:${(v > 0) === good ? '#15803d' : '#b91c1c'}">${v > 0 ? '+' : ''}${n(v)}</small>`;
+  async function track(box) {
+    const t = $('#stT', box); if (!t) return;
+    const b = $('#stB', box);
+    if (b.dataset.kind !== TR.kind) { b.innerHTML = BANDS[TR.kind].map(([k, v]) => `<option value="${k}">${E(v)}</option>`).join(''); b.dataset.kind = TR.kind; b.value = TR.band; }
+    $('#stK', box).onchange = e => { TR.kind = e.target.value; TR.band = 'all'; TR.page = 1; track(box); };
+    b.onchange = e => { TR.band = e.target.value; TR.page = 1; track(box); };
+    let tm; $('#stQ', box).oninput = e => { clearTimeout(tm); tm = setTimeout(() => { TR.q = e.target.value.trim(); TR.page = 1; track(box); }, 300); };
+    try {
+      const qs = new URLSearchParams({ kind: TR.kind, page: String(TR.page), per: String(TR.per) }); if (TR.band !== 'all') qs.set('band', TR.band); if (TR.q) qs.set('q', TR.q);
+      const d = await api('/api/admin/growth/seo/tracked?' + qs);
+      const pos = r => r.position ? '#' + (Math.round(r.position * 10) / 10) + delta(r.positionChange, true) : '—';
+      const pct = r => (Math.round(r.ctr * 1000) / 10) + '%';
+      t.innerHTML = !d.rows.length ? '<tbody><tr><td class="muted">Nothing tracked yet. It fills in after the first Search Console check.</td></tr></tbody>'
+        : TR.kind === 'page' ? `<thead><tr><th>Page</th><th>Main search</th><th>Impressions</th><th>Clicks</th><th>Clicked</th><th>Position</th><th>Searches it shows for</th></tr></thead><tbody>${d.rows.map(r => `<tr><td><a href="${E(r.key)}" target="_blank" rel="noopener">${E(r.key)}</a></td><td>${E(r.target || '—')}${r.titleHasTarget === false ? '<br><small style="color:#b91c1c">not in the title</small>' : ''}</td><td>${n(r.impressions)}${delta(r.impressionsChange, true)}</td><td>${n(r.clicks)}</td><td>${pct(r)}</td><td>${pos(r)}</td><td><small>${r.queries.slice(0, 5).map(q => `${E(q[0])} (#${Math.round(q[2] * 10) / 10})`).join('<br>') || '—'}</small></td></tr>`).join('')}</tbody>`
+        : `<thead><tr><th>Search</th><th>Impressions</th><th>Clicks</th><th>Clicked</th><th>Position</th><th>Page shown</th></tr></thead><tbody>${d.rows.map(r => `<tr><td>${E(r.key)}${r.brand ? ' <span class="pill">other brand</span>' : ''}</td><td>${n(r.impressions)}${delta(r.impressionsChange, true)}</td><td>${n(r.clicks)}</td><td>${pct(r)}</td><td>${pos(r)}</td><td><small>${r.pages.map(E).join('<br>') || '—'}</small></td></tr>`).join('')}</tbody>`;
+      K.pager($('#stP', box), d, (p, per) => { TR.page = p; TR.per = per; track(box); });
+    } catch (e) { t.innerHTML = `<tbody><tr><td role="alert">${E(err(e))}</td></tr></tbody>`; }
   }
   async function proposals(box) {
     const l = $('#spL', box); if (!l) return;
@@ -110,7 +138,7 @@
     try {
       const qs = new URLSearchParams({ page: String(R.page), per: String(R.per) }); if (R.slot !== 'all') qs.set('slot', R.slot); if (R.band !== 'all') qs.set('band', R.band);
       const d = await api('/api/admin/growth/reports?' + qs);
-      tbl.innerHTML = d.rows.length ? `<thead><tr><th>Day</th><th>Report</th><th>Band</th><th></th></tr></thead><tbody>${d.rows.map(r => `<tr><td>${E(String(r.day).slice(0, 10))}</td><td>${r.slot === 'midday' ? '2 PM' : '7 PM'}</td><td><span class="pill ${(BAND[r.band] || BAND.none)[1]}">${E((BAND[r.band] || BAND.none)[0])}</span></td><td><button class="button secondary small" data-id="${E(r.id)}">Read</button></td></tr>`).join('')}</tbody>` : '<tbody><tr><td class="muted">No reports yet. The first one goes out at 2 PM.</td></tr></tbody>';
+      tbl.innerHTML = d.rows.length ? `<thead><tr><th>Day</th><th>Report</th><th>Band</th><th></th></tr></thead><tbody>${d.rows.map(r => `<tr><td>${E(String(r.day).slice(0, 10))}</td><td>${({ weekly: 'Weekly', midday: '2 PM', evening: '7 PM' })[r.slot] || E(r.slot)}</td><td><span class="pill ${(BAND[r.band] || BAND.none)[1]}">${E((BAND[r.band] || BAND.none)[0])}</span></td><td><button class="button secondary small" data-id="${E(r.id)}">Read</button></td></tr>`).join('')}</tbody>` : `<tbody><tr><td class="muted">No reports yet. ${D.settings.reportEvery === 'daily' ? 'The first one goes out at 2 PM.' : 'The first one goes out on Monday morning.'}</td></tr></tbody>`;
       tbl.querySelectorAll('button[data-id]').forEach(b => { b.onclick = async () => { try { const r = (await api('/api/admin/growth/report?id=' + encodeURIComponent(b.dataset.id))).report; modal('Growth report', `<pre style="white-space:pre-wrap;font:inherit;margin:0">${E(r.body.replace(/^\[button:.*$/m, '').replace(/^#+ /gm, ''))}</pre>`); } catch (x) { toast(err(x)); } }; });
       K.pager($('#grP', h), d, (p, per) => { R.page = p; R.per = per; reports(h); });
     } catch (e) { tbl.innerHTML = `<tbody><tr><td role="alert">${E(err(e))}</td></tr></tbody>`; }
@@ -123,21 +151,22 @@
       <label>Stretch target (% of committed)<input name="stretchPct" type="number" min="100" max="500" value="${E(s.stretchPct)}" required></label>
       <label>Average purchase (₹)<input name="avg" type="number" min="1" step="0.01" value="${E(s.avgPaise / 100)}" required></label>
       <label>Send reports to (blank = every owner account)<input name="reportEmail" type="email" value="${E(s.reportEmail)}"></label>
-      <label class="wide" style="display:flex;gap:8px;align-items:center"><input type="checkbox" name="reports" ${s.reports ? 'checked' : ''}> Email the 2 PM and 7 PM reports (Monday to Saturday)</label>
+      <label class="wide" style="display:flex;gap:8px;align-items:center"><input type="checkbox" name="reports" ${s.reports ? 'checked' : ''}> Email me the growth report</label>
+      <label>How often<select name="reportEvery"><option value="weekly">Weekly (Monday morning)</option><option value="daily">Daily at 2 PM and 7 PM (Monday to Saturday)</option></select></label>
       <label>US$ to ₹<input name="usdInr" type="number" min="1" step="0.01" value="${E(s.usdInr)}" required></label>
       <label>Input price (US$ per million tokens)<input name="inputUsdPerM" type="number" min="0" step="0.01" value="${E(s.inputUsdPerM)}" required></label>
       <label>Output price (US$ per million tokens)<input name="outputUsdPerM" type="number" min="0" step="0.01" value="${E(s.outputUsdPerM)}" required></label>
       <fieldset class="wide" style="border:0;padding:0;margin:0"><legend>Purchases target per month</legend><div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:8px">
         ${Object.entries(s.ladder).map(([k, v]) => `<label class="ops-f">${E(monthName(k))}<input type="number" min="0" data-month="${E(k)}" value="${E(v)}"></label>`).join('')}</div></fieldset>
       <div class="wide"><button class="button primary">Save</button> <span role="status" id="grSt"></span></div></form>`);
-    const fm = $('#grForm', m.el);
+    const fm = $('#grForm', m.el); fm.reportEvery.value = s.reportEvery || 'weekly';
     fm.onsubmit = async e => {
       e.preventDefault(); const st = $('#grSt', m.el);
       const ladder = {}; fm.querySelectorAll('[data-month]').forEach(i => { ladder[i.dataset.month] = Number(i.value || 0); });
-      const body = { budgetInr: Number(fm.budgetInr.value), stretchPct: Number(fm.stretchPct.value), avgPaise: Math.round(Number(fm.avg.value) * 100), reportEmail: fm.reportEmail.value.trim(), reports: fm.reports.checked, usdInr: Number(fm.usdInr.value), inputUsdPerM: Number(fm.inputUsdPerM.value), outputUsdPerM: Number(fm.outputUsdPerM.value), ladder };
+      const body = { budgetInr: Number(fm.budgetInr.value), stretchPct: Number(fm.stretchPct.value), avgPaise: Math.round(Number(fm.avg.value) * 100), reportEmail: fm.reportEmail.value.trim(), reports: fm.reports.checked, reportEvery: fm.reportEvery.value, usdInr: Number(fm.usdInr.value), inputUsdPerM: Number(fm.inputUsdPerM.value), outputUsdPerM: Number(fm.outputUsdPerM.value), ladder };
       try { if (!(await ensureRecent())) return; await api('/api/admin/growth/settings', { method: 'POST', body }); toast('Saved'); m.close(); growth(); } catch (x) { st.textContent = err(x); }
     };
   }
 
-  K.register('growth', growth, ['📈', 'Growth', 'This month against the first-year plan, the funnel, the SEO agent, the 2 PM / 7 PM reports and AI spending.']);
+  K.register('growth', growth, ['📈', 'Growth', 'This month against the first-year plan, the funnel, the SEO agent, the owner reports and AI spending.']);
 })();
