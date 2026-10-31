@@ -19,7 +19,7 @@ class SeoPages
     private static ?array $data = null;
 
     /** Path prefixes owned by this class (used by the controller and the page cache). */
-    public const PREFIXES = ['resume-examples', 'resume-templates', 'cover-letter-examples', 'interview-questions', 'resume-builder', 'resume', 'resume-words', 'ats-checker'];
+    public const PREFIXES = ['resume-examples', 'resume-templates', 'cover-letter-examples', 'cover-letter-generator', 'interview-questions', 'resume-builder', 'resume', 'resume-words', 'ats-checker'];
 
     /** Existing guides and calculators that the programmatic pages link to. */
     private const GUIDES = [
@@ -54,6 +54,8 @@ class SeoPages
         ['/resume-words/', 'Resume words'],
         ['/resume-builder/india/', 'Resume help by city'],
         ['/ats-checker/', 'Free ATS check'],
+        ['/resume-builder/', 'Free resume builder'],
+        ['/cover-letter-generator/', 'Cover letter writer'],
     ];
 
     private const ATS_DEF = 'ATS (applicant tracking system, the software many employers use to store, search and filter resumes)';
@@ -72,7 +74,7 @@ class SeoPages
     public static function paths(): array
     {
         $d = self::data();
-        $p = ['resume-examples/', 'resume-templates/', 'cover-letter-examples/', 'interview-questions/', 'resume-builder/india/', 'resume-words/', 'ats-checker/'];
+        $p = ['resume-examples/', 'resume-templates/', 'cover-letter-examples/', 'cover-letter-examples/how-to-write/', 'cover-letter-generator/', 'interview-questions/', 'resume-builder/', 'resume-builder/india/', 'resume-words/', 'ats-checker/'];
         foreach ($d['categories'] as $c => $_) {
             $p[] = "resume-examples/$c/";
             if (self::rolesIn($c)) {
@@ -133,6 +135,9 @@ class SeoPages
             $s[0] === 'resume-templates' && $n === 1 => self::templatesHub(),
             $s[0] === 'resume-templates' && $n === 2 && isset($d['templates'][$s[1]]) => self::template($s[1]),
             $s[0] === 'cover-letter-examples' && $n === 1 => self::coverHub(),
+            $s[0] === 'cover-letter-examples' && $n === 2 && $s[1] === 'how-to-write' => self::coverHowTo(),
+            $s[0] === 'cover-letter-generator' && $n === 1 => self::coverWriter(),
+            $s[0] === 'resume-builder' && $n === 1 => self::builder(),
             $s[0] === 'cover-letter-examples' && $n === 2 && isset($d['categories'][$s[1]]) && self::rolesIn($s[1]) => self::cover($s[1]),
             $s[0] === 'interview-questions' && $n === 1 => self::interviewHub(),
             $s[0] === 'interview-questions' && $n === 2 && isset($d['roles'][$s[1]]) => self::interview($s[1]),
@@ -148,6 +153,14 @@ class SeoPages
         };
         if ($page) {
             $page['path'] = '/'.implode('/', $s).'/';
+            // Changes the owner approved from the SEO agent (Growth page): a new title and description, and links to pages it is pushing up.
+            if ($o = SeoAgent::override($page['path'])) {
+                $page['title'] = $o['title'] ?? $page['title'];
+                $page['description'] = $o['description'] ?? $page['description'];
+                if ($links = array_values(array_filter($o['links'] ?? [], fn ($l) => $l[0] !== $page['path'] && self::owns(ltrim($l[0], '/'))))) {
+                    $page['related'][] = ['Popular with job seekers', array_map(fn ($l) => [$l[0], $l[1]], $links)];
+                }
+            }
             $page['title'] = self::fit($page['title'], 50);
             $page['description'] = self::fit($page['description'], 155);
             $page['index'] ??= true;
@@ -545,7 +558,7 @@ class SeoPages
                 ['levels', 'Cover letters by experience level', self::cards(array_map(fn ($x) => ['/cover-letters.html?type='.$x[0].'#picker', $x[1], $x[2]], [['fresher', 'Freshers', 'Eager, learning-focused first-job letters'], ['experienced', 'Experienced', 'Results-led letters for your next step'], ['freelance', 'Freelance', 'Proposal-style letters to clients'], ['career-change', 'Career change', 'Letters that explain the switch'], ['senior', 'Senior and manager', 'Leadership letters with scope and results'], ['internship', 'Internship', 'Short letters for student applications']]))]],
             'faq' => [['How long should a cover letter be?', 'About 200 to 300 words, in 3 short paragraphs.'], ['Do Indian employers read cover letters?', 'Many read them for email applications and some portal roles. A short, specific letter can help you stand out.'], ['Should I write a new letter for every job?', 'Yes. Change the first and second paragraphs to match each job post.'], ['Can I send it in the email body?', 'Yes. For email applications, a short letter in the body plus your resume attached works well.']],
             'cta' => self::cta(['/register', 'Write my cover letter free'], ['/cover-letters.html', 'See letter designs']),
-            'related' => [['Other collections', [['/resume-examples/', 'Resume examples'], ['/interview-questions/', 'Interview questions']]], ['Guides', self::guides('coverEmail', 'followup')]]];
+            'related' => [['Other collections', [['/cover-letter-examples/how-to-write/', 'How to write a cover letter'], ['/cover-letter-generator/', 'Cover letter generator'], ['/resume-examples/', 'Resume examples'], ['/interview-questions/', 'Interview questions']]], ['Guides', self::guides('coverEmail', 'followup')]]];
     }
 
     private static function cover(string $c): array
@@ -833,8 +846,8 @@ class SeoPages
 
     private static function atsChecker(): array
     {
-        return ['kind' => 'tool', 'eyebrow' => 'FREE ATS CHECK', 'title' => 'Free ATS Resume Checker for India', 'description' => 'Check how well an applicant tracking system can read your resume, and how it matches a job description. See missing keywords and what to fix.',
-            'h1' => 'Free ATS resume checker', 'lead' => 'An '.self::ATS_DEF.' reads your resume before a recruiter does. CVTara checks how readable your resume is and how well it matches a job post, then shows what to fix.',
+        return ['kind' => 'tool', 'eyebrow' => 'FREE ATS CHECK', 'title' => 'Free ATS Resume Checker & Resume Score', 'description' => 'Get a free resume score: check how well an applicant tracking system can read your resume and how it matches a job post. See missing keywords and fixes.',
+            'h1' => 'Free ATS resume checker and resume score', 'lead' => 'An '.self::ATS_DEF.' reads your resume before a recruiter does. CVTara checks how readable your resume is and how well it matches a job post, then shows what to fix.',
             'crumbs' => self::crumbs(['ATS checker', '/ats-checker/']), 'image' => self::image('ats', 'ATS resume check report with matched and missing keywords'),
             'sections' => [['what', 'What the check looks at', self::ul(['Standard section names such as Experience, Education and Skills', 'Readable text (not text inside images)', 'Contact details in the right place', 'Keywords and skills from the job description: matched, partly matched and missing', 'Simple fixes you can make in the builder'], 'sp-check')],
                 ['how', 'How it works', '<ol class="sp-steps"><li><b>Add your resume.</b> Upload a PDF or Word file, or build one from a template.</li><li><b>Add the job.</b> Paste the job description or add the job link.</li><li><b>See the report.</b> A match estimate, missing keywords and the top fixes.</li><li><b>Fix and recheck.</b> Edit in the builder and run the check again.</li></ol>'],
@@ -843,6 +856,58 @@ class SeoPages
             'faq' => [['Is the ATS check free?', 'Free accounts get a few checks every day. Plans include more scans.'], ['What score is good?', 'Aim to fix every missing must-have skill you really have. A higher match helps, but honesty matters more than a number.'], ['Does a two-column resume fail ATS?', 'Not always, but some systems read columns in the wrong order. A single column is safest.'], ['Which file type should I upload?', 'A text-based PDF or Word file. Scanned images cannot be read.']],
             'cta' => self::cta(['/register', 'Check my resume free'], ['/resume-templates/ats-friendly/', 'ATS-friendly templates']),
             'related' => [['Related', [['/resume-templates/', 'Resume templates by style'], ['/resume-examples/', 'Resume examples'], ['/interview-questions/', 'Interview questions']]], ['Guides', self::guides('ats', 'skills', 'pdfword')]]];
+    }
+
+    /** /resume-builder/: the free resume builder, for searches such as "free resume builder" and "resume maker". */
+    private static function builder(): array
+    {
+        $d = self::data();
+        $cities = array_map(fn ($c) => ["/resume-builder/$c/", $d['cities'][$c]['n']], array_slice(array_keys($d['cities']), 0, 12));
+
+        return ['kind' => 'tool', 'eyebrow' => 'FREE RESUME BUILDER', 'title' => 'Free Resume Builder & Resume Maker (India)', 'description' => 'Make a resume free with CVTara: pick an ATS-friendly template, fill guided sections, tailor it to each job and download a clean PDF. Built for India.',
+            'h1' => 'Free resume builder for India', 'lead' => 'Make your resume in a few guided steps: choose a template, add your details, and download a clean PDF. Keep one main resume and make a sharper copy for every job you apply to.',
+            'crumbs' => self::crumbs(['Resume builder', '/resume-builder/']), 'image' => self::image('resume-template', 'CVTara resume builder with a template on the left and the filled resume on the right'),
+            'sections' => [['steps', 'How to create a resume', '<ol class="sp-steps"><li><b>Pick a template.</b> Start from an <a href="/resume-templates/ats-friendly/">ATS-friendly</a>, <a href="/resume-templates/simple/">simple</a> or <a href="/resume-templates/professional/">professional</a> design.</li><li><b>Fill guided sections.</b> Contact details, a short summary, experience, education, skills and projects, with examples for your role.</li><li><b>Upload instead, if you like.</b> Import an old PDF or Word resume and edit it.</li><li><b>Tailor it to the job.</b> Compare it with a job post and add the skills you really have.</li><li><b>Download.</b> A clean, text-based PDF that applicant tracking systems can read.</li></ol>'],
+                ['free', 'What is free', self::ul(['Building, editing and previewing your resume', 'Templates, colours and fonts', 'A few job-match checks every day', 'Saving one resume to your account'], 'sp-check').'<p>Paid plans start at ₹99 for a single download and add more downloads, scans and cover letters. See <a href="/#pricing">plans and pricing</a>.</p>'],
+                ['india', 'Made for Indian job seekers', '<p>Formats that recruiters in India expect, examples for freshers and experienced professionals, and guides for '.self::e(self::and(array_column($cities, 1))).' and more.</p>'.self::links($cities)],
+                ['next', 'Before you apply', self::links([['/ats-checker/', 'Check your resume score free'], ['/resume-examples/', 'Resume examples by job'], ['/resume-words/', 'Stronger resume words'], ['/cover-letter-generator/', 'Write a matching cover letter']])]],
+            'faq' => [['Is the resume builder really free?', 'Yes. You can build, edit and preview your resume with every template free. You pay only when you download, from ₹99.'], ['Can I make a resume on my phone?', 'Yes. The builder works in the browser on phones, tablets and computers.'], ['Will my resume pass an ATS?', 'The templates use standard sections and readable text. No tool can promise a shortlist, but you can check your resume score before you apply.'], ['Can I upload my old resume?', 'Yes. Upload a text-based PDF or Word file and edit it in the builder.']],
+            'cta' => self::cta(['/register', 'Build my resume free'], ['/resume-templates/', 'See templates']),
+            'related' => [['Related', [['/resume-templates/', 'Resume templates'], ['/resume-examples/', 'Resume examples'], ['/resume-builder/india/', 'Resume help by city']]], ['Guides', self::guides('fresher', 'summary', 'ats')]]];
+    }
+
+    /** /cover-letter-generator/: write a cover letter from a saved resume and a job post. */
+    private static function coverWriter(): array
+    {
+        return ['kind' => 'tool', 'eyebrow' => 'COVER LETTER WRITER', 'title' => 'Cover Letter Generator from Your Resume', 'description' => 'Write a cover letter for a job in one click: CVTara uses your saved resume and the job post to draft a short, specific letter you can edit and download.',
+            'h1' => 'Cover letter generator', 'lead' => 'Add the job post, pick your saved resume, and get a short first draft that names the role, matches your real experience to what they ask for and ends with a polite close. You edit it before you send it.',
+            'crumbs' => self::crumbs(['Cover letter generator', '/cover-letter-generator/']), 'image' => self::image('cover-letter', 'A cover letter drafted from a resume and a job post'),
+            'sections' => [['how', 'How it works', '<ol class="sp-steps"><li><b>Save your resume</b> in the builder, or upload one.</li><li><b>Add the job.</b> Paste the job description or the job link.</li><li><b>Write the letter.</b> You get a three-paragraph draft built only from facts in your resume.</li><li><b>Edit and download</b> as PDF, or copy it into an email.</li></ol>'],
+                ['good', 'What a good cover letter does', self::ul(['Names the exact role and where you saw it', 'Picks two or three results from your resume that match the job', 'Stays under one page, usually 200 to 300 words', 'Ends with a clear, polite next step'], 'sp-check')],
+                ['honest', 'Your facts only', '<p>The draft uses what is in your resume and the job post. Nothing is invented, and you review every line before you send it.</p>'],
+                ['learn', 'Learn from examples', self::links([['/cover-letter-examples/how-to-write/', 'How to write a cover letter'], ['/cover-letter-examples/', 'Cover letter examples by industry'], ['/cover-letters.html', 'Cover letter designs'], self::GUIDES['coverEmail']])]],
+            'faq' => [['Is the cover letter generator free?', 'You start with a free account. Plans from ₹99 add downloads, and larger plans add more letters.'], ['Do I need a resume first?', 'Yes. The letter is written from your saved resume, so it matches what the employer will read.'], ['Can I edit the letter?', 'Yes. Change any line, then download it as PDF or copy it.'], ['How long should a cover letter be?', 'Usually 200 to 300 words in three short paragraphs.']],
+            'cta' => self::cta(['/register', 'Write my cover letter'], ['/cover-letter-examples/', 'See examples']),
+            'related' => [['Related', [['/cover-letter-examples/', 'Cover letter examples'], ['/resume-builder/', 'Free resume builder'], ['/ats-checker/', 'Free ATS check']]], ['Guides', self::guides('coverEmail', 'followup')]]];
+    }
+
+    /** /cover-letter-examples/how-to-write/: a plain guide for "how to write a cover letter". */
+    private static function coverHowTo(): array
+    {
+        $sample = '<blockquote class="sp-sample"><p>Dear Ms Rao,</p><p>I am applying for the Data Analyst role at your Bengaluru office, posted on your careers page. I have a B.Com and one year of reporting work, where I built weekly sales dashboards in Excel and SQL that cut report time from two days to half a day.</p><p>Your post asks for SQL, dashboards and clear communication with business teams. At my current job I write SQL every day, keep five dashboards up to date and present them to the sales head each Monday. I would bring the same care to your team.</p><p>Thank you for your time. I would be glad to talk about the role.<br>Priya Sharma · 98XXX XXXXX · priya@example.com</p></blockquote>';
+
+        return ['kind' => 'cover-letter', 'eyebrow' => 'COVER LETTER GUIDE', 'title' => 'How to Write a Cover Letter (With Example)', 'description' => 'How to write a cover letter in three short paragraphs: what to say first, how to match the job, how to close, with a sample letter for Indian job seekers.',
+            'h1' => 'How to write a cover letter', 'lead' => 'It is a short note that says which job you want, why you fit it and what happens next. Three paragraphs are enough.',
+            'crumbs' => self::crumbs(['Cover letter examples', '/cover-letter-examples/'], ['How to write a cover letter', '/cover-letter-examples/how-to-write/']), 'image' => self::image('cover-letter', 'A three-paragraph cover letter sample'),
+            'sections' => [['what', 'What is a cover letter?', '<p>It is a one-page letter or email sent with your resume. The resume lists what you have done; the letter connects it to one job and one employer.</p>'],
+                ['steps', 'How to write one, step by step', '<ol class="sp-steps"><li><b>Address a person.</b> Use the hiring manager\'s name if the post gives it, else "Dear Hiring Manager".</li><li><b>Open with the role.</b> Name the job, where you saw it and one line about who you are.</li><li><b>Match the job.</b> Pick two or three needs from the job post and show a real result for each, with numbers where you have them.</li><li><b>Close politely.</b> Thank them and say you would be glad to talk.</li><li><b>Sign off with contact details.</b> Name, phone and email.</li></ol>'],
+                ['sample', 'A sample letter', $sample],
+                ['length', 'How long should it be?', '<p>200 to 300 words, three or four short paragraphs, on one page. In an email, keep it even shorter and attach your resume as a PDF.</p>'],
+                ['avoid', 'Mistakes to avoid', self::ul(['Repeating your whole resume', 'One letter for every job with only the company name changed', 'Claims you cannot back up in an interview', 'Long paragraphs and spelling mistakes'], 'sp-check')],
+                ['more', 'Examples for your field', self::links(array_merge([['/cover-letter-generator/', 'Write yours from your resume']], array_map(fn ($c) => ["/cover-letter-examples/$c/", self::data()['categories'][$c]['n']], array_slice(array_values(array_filter(array_keys(self::data()['categories']), fn ($c) => self::rolesIn($c))), 0, 6)), [self::GUIDES['coverEmail']]))]],
+            'faq' => [['What should it include?', 'The role you are applying for, two or three results that match the job, and a polite close with your contact details.'], ['Is it necessary in India?', 'Not always, but it helps when the post asks for one, for email applications and when you are changing fields.'], ['Can I send it by email?', 'Yes. Put a short version in the email body and attach your resume as a PDF.']],
+            'cta' => self::cta(['/register', 'Write my cover letter'], ['/cover-letter-examples/', 'See examples by industry']),
+            'related' => [['Related', [['/cover-letter-examples/', 'Cover letter examples'], ['/cover-letter-generator/', 'Cover letter generator'], ['/resume-builder/', 'Free resume builder']]], ['Guides', self::guides('coverEmail', 'followup', 'thanks')]]];
     }
 
     // ---------------------------------------------------------------- output

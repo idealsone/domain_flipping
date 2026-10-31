@@ -1,3 +1,69 @@
+# CVTara v3.29.0 — Weekly report, page and search tracking, on-page SEO fixes
+
+## 3.29.0
+- **Weekly owner report (default):** one report every Sunday from 9 AM India time covering Sunday to Saturday of the week before: sales against the plan, last week's funnel, Search (Google clicks and impressions, searches close to page 1, pages seen but rarely clicked, the pages with most impressions and the searches they show for, searches that moved 3+ places, SEO changes that went live), risks, decisions and next actions. The 2 PM / 7 PM daily reports remain a choice under Targets and settings. The weekly report keeps the "Revenue follow-ups (last 7 days)" section from 3.28.0. Report risks are now written in plain words instead of internal check names.
+- **Tracked pages and searches (Growth → SEO agent):** every Search Console check keeps this week's numbers per page and per search (up to 1,000 searches), so each page shows impressions, clicks, click rate, position, the change since the week before, the searches it shows for, its main search and whether its title carries it. Filters: on page 1, close to page 1, beyond page 2, seen but rarely clicked, title misses its main search, and searches naming other brands. Paged and searchable.
+- **On-page SEO audit of all 522 sitemap pages:** every page has one title, one description, one H1, a canonical address and alt text on every image. Fixed: the footer's site links were missing on Templates, About, Contact, Privacy, Terms and Refund (the server only filled an empty footer written on one line); those pages and Cover letters / Guides now carry page and breadcrumb schema; the Templates, Cover letters, Guides and Blog headings now name what the page is.
+- **New landing pages for high-intent searches:** /resume-builder/ (free resume builder, resume maker; signed-in customers still go straight to the builder), /cover-letter-generator/ (cover letter from your saved resume and the job post) and /cover-letter-examples/how-to-write/ (with a sample letter). The ATS checker now also targets "resume score". All three are in the sitemap, the footer and llms.txt, with FAQ and breadcrumb schema.
+- **Which pages Google shows:** the SEO agent lists every sitemap page Google has not shown yet next to those it has, and a per-section table (resume examples, city pages, interview questions, guides, calculators…) of pages shown out of pages in the sitemap. The weekly report gives the same count.
+- **Calculators:** each calculator page now carries WebApplication schema (free, runs in the browser) beside its article, breadcrumb and FAQ schema, and short calculator titles say "for India" unless the owner has written a title.
+- **Answer engines:** new /llms.txt summarising CVTara, its tools, guides, every calculator and the plans. robots.txt already lets every crawler in.
+- **Migration:** adds seo_track. Run `php artisan migrate --force` after updating.
+# CVTara v3.28.0 — Honest follow-ups from sign-up to purchase
+
+## 3.28.0
+- **Package mail on day 14:** the plain "what each package includes" nudge now goes 14 days after sign-up instead of day 300, and the fresher tips on day 30, when people are actually deciding. The other nudges keep their days; the editor names show each nudge's day.
+- **Referral invite for Job Hunt and Pro buyers:** one mail, 8 days after the purchase (past the 7-day refund window), inviting them to share their link: the friend gets ₹50 off ₹299 and up, they get ₹50 credit. Once per customer, opted-in only, only while the referral programme is on; never after the ₹99 Quick Download or add-ons.
+- **"Your work is still saved":** one mail 14 days after a plan ends when nothing was bought again: their resumes are kept, a fresh-ATS-check tip and packages from ₹99. Opted-in only.
+- **₹99 Quick Download reminders:** a 7-day plan no longer gets "your plan ends in 7 days" on the day it is bought plus a 4-day reminder; it gets only "ends tomorrow". Longer plans keep 7, 4 and 1 day reminders.
+- **Unfinished payments (Razorpay and PhonePe):** when someone opens the payment window and does not pay, a reminder goes out about an hour later with a link straight back to the same package (and the same coupon while it still works), saying no money was taken. If still unpaid a day later, one last reminder with the packages. Then nothing more for a week, however many times they open checkout. A waiting reminder is dropped if they pay in the meantime (before, a reminder could arrive after they had paid). Opted-in customers only, as before.
+- **Logo in every mail:** the CVTara mark (PNG, so Gmail and Outlook show it) next to the name at the top of every customer and outreach mail; the name still reads when images are off.
+- **Outreach mail footer:** says who is writing and from where (CVTara, postal address, support address) above the unsubscribe link.
+- **Growth reports: revenue follow-ups:** the 2 PM and 7 PM reports show unfinished payments in the last 7 days, reminders sent, how many came back and paid (and how much), new free sign-ups and how many agreed to tips, plus referral invites and "work is still saved" mails. Two new next actions: when few unfinished payments come back, and when most new sign-ups did not agree to tips.
+- Both new mails can be edited or switched off in Email templates. No migration.
+
+# CVTara v3.27.1 — Owner console stays on the page you were on
+
+## 3.27.1
+- **Owner console:** reloading the page (or coming back to it after fetching the security code from email) reopened the Overview for the Settings pages reached from cards: Integrations (payment keys), Footer & policies, SEO, Product controls, Offers & popup, Keyword intelligence and Health. They now reopen where you were, like the side-menu pages already did. No migration.
+
+# CVTara v3.27.0 — SEO agent and AI spending without a limit
+
+## 3.27.0
+- **SEO agent (Growth page):** every day from 11 AM India time, Monday to Saturday, it reads Search Console (searches, pages, and which page each search showed) and lists searches close to page 1 (positions 4 to 20), pages that are seen often but rarely clicked, searches split across two pages, and searches with no good page yet. Searches naming other brands (job sites, other resume makers, Word/Google Docs, big employers) are left out.
+- **Proposed changes, approved by the owner:** a new title and description for low-click resume pages, written for the searches that show them, and links to pages close to page 1 from up to 5 related pages (a "Popular with job seekers" block). Each proposal says why, with the numbers, and shows the before and after. Nothing changes on the site until the owner presses Approve; Undo takes a change off again; the page is refreshed straight away and search engines are told within the hour. A page that was decided on rests for 30 days. Daily limits and the minimum impressions are editable, and "Check Search Console now" runs it on demand.
+- **Reports:** the 2 PM and 7 PM reports gain a Search section (Google clicks and impressions, the top searches close to page 1, changes waiting for approval), or "Data unavailable" until Search Console is connected.
+- **AI spending is monitored, not limited, by default:** the cap now defaults to 0 (no limit). Spending is still counted per request and shown on the Growth page; setting a cap brings back the alerts and the stop for growth tasks.
+- **Migration:** adds seo_proposals. Run `php artisan migrate --force` after updating.
+
+# CVTara v3.26.1 — A calmer, more human look across the site
+
+## 3.26.1
+- **Homepage:** rewritten in a plain, personal voice and cut from 13 sections to 10, with a short founder note. The blue-to-purple gradient, glows, pill labels, emoji icons and rotating headline are gone; one solid blue, serif headings and warm backgrounds instead. Reviews stay hidden until one is approved.
+- **Every public page:** the same serif headings and solid blue actions (no amber buttons or gradient covers); the generated article cover that only repeated the title is hidden.
+- **Night mode:** blue links on dark panels lifted to a readable blue on 5 pages.
+- **Customer workspace and owner console:** one set of line icons in the sidebars instead of emoji, neutral sidebars, a solid welcome panel, and Clear cache is no longer the loudest button.
+- **Migration:** saved copies of the old default homepage text move to the new text (owner edits are kept). Run `php artisan migrate --force`.
+
+# CVTara v3.26.0 — Growth page, owner reports and the AI spending cap
+
+## 3.26.0
+- **Growth page (owner console):** this month against the first-year plan (Nov 2026 to Oct 2027, 13,810 purchases, ₹17.5 lakh gross), with committed and stretch (200%) targets, pace for the days gone, a green / amber / red band and the purchases needed per day. The funnel (visitors, sign-ups, verified, started a resume, opened checkout, paid) for today, the last 7 days and the month, the weakest step, plan mix, visitor sources, new vs repeat buyers, and net after refunds. Anything the site cannot measure (ad spend, visitors while analytics is off) shows as "Data unavailable". Monthly targets, the stretch percentage and the average purchase are editable.
+- **2 PM and 7 PM reports, Monday to Saturday (India time):** saved on the Growth page (paged list with filters) and emailed to the owner: targets vs actuals, today's funnel, risks from the Health check, decisions needed, and next actions from fixed rules (weakest funnel step, low traffic, amber/red recovery, refunds, unsubscribes). One report per slot per day; a "Send a report now" button for checks.
+- **Daily snapshots:** yesterday's numbers are stored once a day, so the year plan fills in month by month.
+- **Monthly cap on AI spending:** every writing-help, Expert Review and Profile Boost request records its tokens and cost (prices and ₹ rate editable). Default cap ₹2,000 a month, alerts at 50%, 75% and 90% in the Error Log and the reports. At 100% growth tasks stop; paid customer add-ons keep working.
+- **Campaign segments:** an email campaign to customers can be limited to one college and/or target role, read from each consenting customer's newest resume. The Growth page shows college totals (users who agreed to emails) to choose which placement cells to contact. The privacy policy now says how these resume details are used.
+- **Migration:** adds growth_snapshots, growth_reports, ai_usage, profiles.college / target_role / last_company and email_campaigns.seg_college / seg_role, and updates the saved privacy text if it still has the default sentence. Run `php artisan migrate --force` after updating.
+
+# CVTara v3.25.2 — Push notifications removed
+
+## 3.25.2
+- **No more push-notification invitation:** the site already reaches people by email and the offer popup, so the OneSignal "Get career updates" box and its script are gone from every page, guide and ready-made SEO page.
+- **Browsers that subscribed earlier are cleaned up:** `/OneSignalSDKWorker.js` now unsubscribes and unregisters itself the next time the browser checks it, so nobody keeps getting pushes.
+- **Owner console:** the Push notifications page, the Push switch in Integrations, the OneSignal key fields and the "Push setup" shortcut are removed. Saved OneSignal settings are no longer sent to the website and are dropped the next time integrations are saved.
+- **Security headers:** OneSignal is no longer an allowed script or worker source.
+- No migrations. Rebuild the ready-made pages after updating so the old script tag disappears from them.
+
 # CVTara v3.25.0 — Owner console lists load one page at a time
 
 ## 3.25.0

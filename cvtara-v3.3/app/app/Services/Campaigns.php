@@ -47,7 +47,7 @@ class Campaigns
     }
 
     /** Everyone the audience reaches right now, already without opted-out, blocked and suppressed addresses. */
-    public static function audience(string $aud)
+    public static function audience(string $aud, string $college = '', string $role = '')
     {
         if ($aud === 'contacts') {
             // People with a CVTara account are reached through the customer audiences only, so their own email choice wins.
@@ -63,12 +63,19 @@ class Campaigns
             $q->whereIn('u.id', self::paidPlans()->select('owner_id'))->whereNotIn('u.id', self::paidPlans()->where('access_until', '>', now())->select('owner_id'));
         }
 
+        // Segments read the college and target role from each person's newest resume (Growth::segments), consenting customers only.
+        foreach (['p.college' => $college, 'p.target_role' => $role] as $col => $v) {
+            if (($v = trim($v)) !== '') {
+                $q->where($col, 'like', '%'.addcslashes(mb_strtolower($v), '%_\\').'%');
+            }
+        }
+
         return $q->select('u.email', 'u.name', 'u.id as owner_id', DB::raw('NULL as contact_id'));
     }
 
-    public static function count(string $aud): int
+    public static function count(string $aud, string $college = '', string $role = ''): int
     {
-        return self::audience($aud)->count();
+        return self::audience($aud, $college, $role)->count();
     }
 
     public static function counts(): array
@@ -104,7 +111,7 @@ class Campaigns
     public static function start(object $c): int
     {
         $n = 0;
-        self::audience($c->audience)->orderBy('email')->chunk(500, function ($rows) use ($c, &$n) {
+        self::audience($c->audience, (string) ($c->seg_college ?? ''), (string) ($c->seg_role ?? ''))->orderBy('email')->chunk(500, function ($rows) use ($c, &$n) {
             $ins = [];
             foreach ($rows as $r) {
                 $ins[] = ['campaign_id' => $c->id, 'email' => mb_strtolower($r->email), 'name' => mb_substr((string) $r->name, 0, 120), 'owner_id' => $r->owner_id, 'contact_id' => $r->contact_id, 'status' => 'pending', 'created_at' => now(), 'updated_at' => now()];
