@@ -1,5 +1,10 @@
 # CVTara v3.29.0 — Weekly report, page and search tracking, on-page SEO fixes
 
+## 3.29.2
+
+- Growth page lists now download as CSV, Excel or PDF with the page's filters: growth reports and SEO proposals (with a date range), tracked pages and searches (with the Pages/Searches choice, filter and search box), and the "Which pages Google is showing" table (CSV).
+- Downloads use plain column names (Page, Main search, Impressions, Change vs week before, Position, Searches it shows for and so on).
+
 ## 3.29.0
 - **Weekly owner report (default):** one report every Sunday from 9 AM India time covering Sunday to Saturday of the week before: sales against the plan, last week's funnel, Search (Google clicks and impressions, searches close to page 1, pages seen but rarely clicked, the pages with most impressions and the searches they show for, searches that moved 3+ places, SEO changes that went live), risks, decisions and next actions. The 2 PM / 7 PM daily reports remain a choice under Targets and settings. The weekly report keeps the "Revenue follow-ups (last 7 days)" section from 3.28.0. Report risks are now written in plain words instead of internal check names.
 - **Tracked pages and searches (Growth → SEO agent):** every Search Console check keeps this week's numbers per page and per search (up to 1,000 searches), so each page shows impressions, clicks, click rate, position, the change since the week before, the searches it shows for, its main search and whether its title carries it. Filters: on page 1, close to page 1, beyond page 2, seen but rarely clicked, title misses its main search, and searches naming other brands. Paged and searchable.

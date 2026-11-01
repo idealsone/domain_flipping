@@ -146,5 +146,25 @@ def run(ctx, t):
         t.check("the weekly report lists the pages with most impressions and the searches they show for", f"Page {PY}: 700 impressions (+100 on the week before)" in wbody and '"python fresher cv format"' in wbody and "Pages Google showed in the last 4 weeks: 3 of" in wbody, wbody[wbody.find("## Search"):wbody.find("## Search") + 900])
         t.check("the report shows Google clicks, searches close to page 1 and changes waiting", "Clicks: 11" in body and '"data analyst resume"' in body and "waiting for your approval" in body and "naukri" not in body, body[body.find("## Search"):body.find("## Search") + 500])
         t.check("AI spending has no limit by default", json.loads(last(tinker("echo json_encode(App\\Services\\Growth::settings()['budgetInr']);"))) == 0 and last(tinker("echo json_encode(App\\Services\\Growth::aiAllowed('seo'));")) == "true")
+
+        # Growth lists download with the page's filters (owner rule: every console list downloads).
+        import csv as _csv, io as _io
+        def dl(path):
+            s2, h2, b2 = o.raw("GET", "/api/admin/" + path, None, {"Accept": "application/json"})
+            return s2, (list(_csv.reader(_io.StringIO(b2.decode("utf-8-sig")))) if "export=csv" in path else b2[:4]) if s2 == 200 else b2[:200]
+        s, rows = dl("growth/seo/tracked?kind=page&band=seen&export=csv")
+        t.check("tracked pages download as CSV with plain column names and the same filter", s == 200 and rows[0][:2] == ["Page", "Main search"] and "Searches it shows for" in rows[0] and len(rows) == 4 and any(PY in r[0] for r in rows[1:]), rows if s == 200 else (s, rows))
+        s, rows = dl("growth/seo/tracked?kind=query&band=nobrand&export=xlsx")
+        t.check("tracked searches download as Excel", s == 200 and rows[:2] == b"PK", (s, rows))
+        s, rows = dl("growth/seo/tracked?kind=query&band=nobrand&export=csv")
+        t.check("tracked searches CSV has the page shown and no other brands", s == 200 and rows[0][0] == "Search" and "Pages shown" in rows[0] and len(rows) == 3 and all("naukri" not in r[0] for r in rows[1:]), rows)
+        s, rows = dl("growth/seo/proposals?export=csv")
+        t.check("SEO proposals download with what changes", s == 200 and rows[0][:3] == ["Proposed", "Kind", "Page"] and "Change" in rows[0] and len(rows) >= 2, rows if s == 200 else (s, rows))
+        s, rows = dl("growth/seo/proposals?export=csv&from=2001-01-01&to=2001-01-02")
+        t.check("SEO proposals download respects the date range", s == 200 and len(rows) <= 1, rows)
+        s, rows = dl("growth/reports?export=csv")
+        t.check("growth reports download as CSV", s == 200 and (rows in ([], [["No rows"]]) or rows[0][:2] == ["Day", "Report"]), rows if s == 200 else (s, rows))
+        s, h, b = o.raw("GET", "/api/admin/growth/seo/tracked?kind=page&export=pdf", None, {"Accept": "application/json"})
+        t.check("tracked pages download as PDF", s == 200 and b[:5] == b"%PDF-", (s, b[:80]))
     finally:
         inst.stop(); g.stop()

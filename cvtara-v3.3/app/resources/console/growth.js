@@ -9,7 +9,7 @@
   const pct = (a, b) => a === null || b === null || !b || a > b ? '—' : (Math.round(a / b * 1000) / 10) + '%';
   const BAND = { green: ['On pace', 'ok'], amber: ['Behind pace (70–89%)', 'mid'], red: ['Well behind pace (below 70%)', 'bad'], none: ['No target this month', ''] };
   const monthName = k => new Date(k + '-01T00:00:00').toLocaleDateString('en-IN', { month: 'short', year: 'numeric' });
-  const R = { page: 1, per: 20, slot: 'all', band: 'all' };
+  const R = { page: 1, per: 20, slot: 'all', band: 'all', from: '', to: '' };
   let D = null;
 
   async function growth() {
@@ -54,11 +54,14 @@
       <section class="panel panel-pad" data-nokit><h3 style="margin-top:0">Reports</h3>
         <div class="ops-filterbox"><label class="ops-f">Time<select id="grS"><option value="all">All</option><option value="weekly">Weekly</option><option value="midday">2 PM</option><option value="evening">7 PM</option></select></label>
           <label class="ops-f">Band<select id="grB"><option value="all">All</option>${Object.entries(BAND).map(([k, v]) => `<option value="${k}">${E(v[0])}</option>`).join('')}</select></label>
-          <button class="button secondary small" id="grNow">Send a report now</button> <button class="button secondary small" id="grSet">Targets and settings</button></div>
+          ${K.rangeHtml(R.from, R.to, true, 'Sent')}<button class="button secondary small" id="grNow">Send a report now</button> <button class="button secondary small" id="grSet">Targets and settings</button> ${K.dlHtml()}</div>
         <div style="overflow:auto"><table class="ad-table" id="grT"><tbody><tr><td>Loading…</td></tr></tbody></table></div><div class="ops-pager" id="grP"></div></section>`;
     $('#grS', h).value = R.slot; $('#grB', h).value = R.band;
     $('#grS', h).onchange = e => { R.slot = e.target.value; R.page = 1; reports(h); };
     $('#grB', h).onchange = e => { R.band = e.target.value; R.page = 1; reports(h); };
+    const grBar = $('#grS', h).closest('.ops-filterbox');
+    grBar.addEventListener('change', e => { const rg = K.rangeChange(e, grBar); if (rg) { [R.from, R.to] = rg; R.page = 1; reports(h); } });
+    K.wireDownload(grBar, fmt => K.exportUrl('/api/admin/growth/reports', { slot: R.slot, band: R.band, from: R.from, to: R.to }, fmt));
     $('#grNow', h).onclick = async () => { try { const hr = new Date(Date.now() + 5.5 * 3600e3).getUTCHours(); await api('/api/admin/growth/report-now', { method: 'POST', body: { slot: D.settings.reportEvery === 'daily' ? (hr >= 19 ? 'evening' : 'midday') : 'weekly' } }); toast('Report saved and emailed'); R.page = 1; reports(h); } catch (x) { toast(err(x)); } };
     $('#grSet', h).onclick = settings;
     reports(h); seo(h);
@@ -66,7 +69,7 @@
 
   const KIND = { meta: 'New title and description', links: 'Links from related pages' };
   const ST = { pending: ['Waiting for you', 'mid'], approved: ['Live', 'ok'], rejected: ['Rejected', ''], reverted: ['Undone', ''] };
-  const P = { page: 1, per: 20, status: 'pending', kind: 'all' };
+  const P = { page: 1, per: 20, status: 'pending', kind: 'all', from: '', to: '' };
   async function seo(h) {
     const box = $('#grSeo', h); if (!box) return;
     let d, cov = []; try { const j = await api('/api/admin/growth/seo'); d = j.seo; cov = j.coverage || []; } catch (e) { box.innerHTML = `<h3 style="margin-top:0">SEO agent</h3><p role="alert">${E(err(e))}</p>`; return; }
@@ -81,20 +84,25 @@
         <h4>Searches with no good page yet</h4>${kw(d.gaps, r => `<tr><td>${E(r.query)}</td><td>best #${r.best}</td><td>${n(r.impressions)}</td></tr>`)}</div></div>
       <h4>Proposed changes</h4>
       <div class="ops-filterbox"><label class="ops-f">Status<select id="spS"><option value="all">All</option>${Object.entries(ST).map(([k, v]) => `<option value="${k}">${E(v[0])}</option>`).join('')}</select></label>
-        <label class="ops-f">Kind<select id="spK"><option value="all">All</option>${Object.entries(KIND).map(([k, v]) => `<option value="${k}">${E(v)}</option>`).join('')}</select></label>
-        <button class="button secondary small" id="spRun">Check Search Console now</button></div>
+        ${K.rangeHtml(P.from, P.to, true, 'Proposed')}<label class="ops-f">Kind<select id="spK"><option value="all">All</option>${Object.entries(KIND).map(([k, v]) => `<option value="${k}">${E(v)}</option>`).join('')}</select></label>
+        <button class="button secondary small" id="spRun">Check Search Console now</button> ${K.dlHtml()}</div>
       <div id="spL"></div><div class="ops-pager" id="spP"></div>
-      <h4>Which pages Google is showing</h4>
+      <h4 style="display:flex;justify-content:space-between;gap:8px;align-items:center">Which pages Google is showing${cov.length ? ' <button type="button" class="button secondary small" id="covDl">⬇ CSV</button>' : ''}</h4>
       ${(D2 => D2.length ? `<table class="ad-table"><thead><tr><th>Section</th><th>Pages in sitemap</th><th>Shown by Google (4 weeks)</th><th>Impressions</th></tr></thead><tbody>${D2.map(c => `<tr><td>${E(c.section)}</td><td>${n(c.pages)}</td><td>${n(c.seen)} (${c.pages ? Math.round(c.seen * 100 / c.pages) : 0}%)</td><td>${n(c.impressions)}</td></tr>`).join('')}</tbody></table>` : '')(cov)}
       <h4>Tracked pages and searches</h4>
       <p class="muted" style="margin-top:0">Updated with every Search Console check and kept week by week. Changes compare with the week before.</p>
       <div class="ops-filterbox"><label class="ops-f">Show<select id="stK"><option value="page">Pages</option><option value="query">Searches</option></select></label>
         <label class="ops-f">Filter<select id="stB"></select></label>
-        <label class="ops-f">Search<input id="stQ" type="search" placeholder="Page or search words"></label></div>
+        <label class="ops-f">Search<input id="stQ" type="search" placeholder="Page or search words"></label> ${K.dlHtml()}</div>
       <div style="overflow-x:auto"><table class="ad-table" id="stT"></table></div><div class="ops-pager" id="stP"></div>`;
     $('#spS', box).value = P.status; $('#spK', box).value = P.kind;
     $('#spS', box).onchange = e => { P.status = e.target.value; P.page = 1; proposals(box); };
     $('#spK', box).onchange = e => { P.kind = e.target.value; P.page = 1; proposals(box); };
+    const spBar = $('#spS', box).closest('.ops-filterbox');
+    spBar.addEventListener('change', e => { const rg = K.rangeChange(e, spBar); if (rg) { [P.from, P.to] = rg; P.page = 1; proposals(box); } });
+    K.wireDownload(spBar, fmt => K.exportUrl('/api/admin/growth/seo/proposals', { status: P.status, kind: P.kind, from: P.from, to: P.to }, fmt));
+    K.wireDownload($('#stK', box).closest('.ops-filterbox'), fmt => K.exportUrl('/api/admin/growth/seo/tracked', { kind: TR.kind, band: TR.band, q: TR.q }, fmt));
+    const cd = $('#covDl', box); if (cd) cd.onclick = () => K.download('cvtara-google-coverage.csv', K.csv(cov.map(c => ({ Section: c.section, 'Pages in sitemap': c.pages, 'Shown by Google (4 weeks)': c.seen, Impressions: c.impressions })), ['Section', 'Pages in sitemap', 'Shown by Google (4 weeks)', 'Impressions']), 'text/csv');
     $('#spRun', box).onclick = async e => { e.target.disabled = true; try { const r = await api('/api/admin/growth/seo/run', { method: 'POST', body: {} }); toast(`Read ${n(r.pairs)} searches · ${r.meta} title and ${r.links} link proposals`); seo(h); } catch (x) { toast(err(x)); e.target.disabled = false; } };
     proposals(box); track(box);
   }
@@ -123,7 +131,7 @@
   async function proposals(box) {
     const l = $('#spL', box); if (!l) return;
     try {
-      const qs = new URLSearchParams({ page: String(P.page), per: String(P.per) }); if (P.status !== 'all') qs.set('status', P.status); if (P.kind !== 'all') qs.set('kind', P.kind);
+      const qs = new URLSearchParams({ page: String(P.page), per: String(P.per) }); if (P.status !== 'all') qs.set('status', P.status); if (P.kind !== 'all') qs.set('kind', P.kind); if (P.from) qs.set('from', P.from); if (P.to) qs.set('to', P.to);
       const d = await api('/api/admin/growth/seo/proposals?' + qs);
       l.innerHTML = d.rows.length ? d.rows.map(p => `<div class="panel panel-pad" style="margin-bottom:8px"><div style="display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap"><b>${E(KIND[p.kind] || p.kind)} · <a href="${E(p.path)}" target="_blank" rel="noopener">${E(p.path)}</a></b><span class="pill ${(ST[p.status] || ['', ''])[1]}">${E((ST[p.status] || [p.status])[0])}</span></div>
         <p class="muted" style="margin:6px 0">${E(p.reason)}</p>
@@ -138,7 +146,7 @@
   async function reports(h) {
     const tbl = $('#grT', h); if (!tbl) return;
     try {
-      const qs = new URLSearchParams({ page: String(R.page), per: String(R.per) }); if (R.slot !== 'all') qs.set('slot', R.slot); if (R.band !== 'all') qs.set('band', R.band);
+      const qs = new URLSearchParams({ page: String(R.page), per: String(R.per) }); if (R.slot !== 'all') qs.set('slot', R.slot); if (R.band !== 'all') qs.set('band', R.band); if (R.from) qs.set('from', R.from); if (R.to) qs.set('to', R.to);
       const d = await api('/api/admin/growth/reports?' + qs);
       tbl.innerHTML = d.rows.length ? `<thead><tr><th>Day</th><th>Report</th><th>Band</th><th></th></tr></thead><tbody>${d.rows.map(r => `<tr><td>${E(String(r.day).slice(0, 10))}</td><td>${({ weekly: 'Weekly', midday: '2 PM', evening: '7 PM' })[r.slot] || E(r.slot)}</td><td><span class="pill ${(BAND[r.band] || BAND.none)[1]}">${E((BAND[r.band] || BAND.none)[0])}</span></td><td><button class="button secondary small" data-id="${E(r.id)}">Read</button></td></tr>`).join('')}</tbody>` : `<tbody><tr><td class="muted">No reports yet. ${D.settings.reportEvery === 'daily' ? 'The first one goes out at 2 PM.' : 'The first one goes out on Sunday morning.'}</td></tr></tbody>`;
       tbl.querySelectorAll('button[data-id]').forEach(b => { b.onclick = async () => { try { const r = (await api('/api/admin/growth/report?id=' + encodeURIComponent(b.dataset.id))).report; modal('Growth report', `<pre style="white-space:pre-wrap;font:inherit;margin:0">${E(r.body.replace(/^\[button:.*$/m, '').replace(/^#+ /gm, ''))}</pre>`); } catch (x) { toast(err(x)); } }; });

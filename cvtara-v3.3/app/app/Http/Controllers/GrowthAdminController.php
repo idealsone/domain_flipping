@@ -35,6 +35,7 @@ class GrowthAdminController extends Controller
         if ($path === 'growth/reports' && $get) {
             return $ok(AdminTable::query($r, DB::table('growth_reports')->select(['id', 'day', 'slot', 'band', 'created_at']), [
                 'filters' => ['slot' => 'slot', 'band' => 'band'], 'date' => 'created_at', 'sorts' => ['sort' => 'created_at'], 'key' => 'id',
+                'export' => ['title' => 'Growth reports', 'map' => fn ($rows) => array_map(fn ($x) => ['Day' => substr((string) $x['day'], 0, 10), 'Report' => ['weekly' => 'Weekly', 'midday' => '2 PM', 'evening' => '7 PM'][$x['slot']] ?? $x['slot'], 'Band' => ucfirst((string) $x['band']), 'Sent' => $x['created_at']], $rows)],
             ]));
         }
         if ($path === 'growth/report' && $get) {
@@ -49,6 +50,16 @@ class GrowthAdminController extends Controller
         if ($path === 'growth/seo/proposals' && $get) {
             return $ok(AdminTable::query($r, DB::table('seo_proposals'), [
                 'search' => ['path', 'query'], 'filters' => ['status' => 'status', 'kind' => 'kind'], 'date' => 'created_at', 'sorts' => ['sort' => 'created_at', 'impressions' => 'impressions'], 'key' => 'id',
+                'export' => ['title' => 'SEO proposals', 'map' => fn ($rows) => array_map(function ($x) {
+                    $d = (array) ($x['data'] ?? []);
+                    $b = (array) ($x['before'] ?? []);
+
+                    return ['Proposed' => $x['createdAt'], 'Kind' => $x['kind'] === 'meta' ? 'Title and description' : 'Internal link', 'Page' => $x['path'], 'Search' => $x['query'], 'Status' => ucfirst((string) $x['status']),
+                        'Why' => $x['reason'], 'Impressions' => (int) $x['impressions'], 'Position' => (float) $x['position'],
+                        'Now' => $x['kind'] === 'meta' ? trim(($b['title'] ?? '').' / '.($b['description'] ?? ''), ' /') : '',
+                        'Change' => $x['kind'] === 'meta' ? trim(($d['title'] ?? '').' / '.($d['description'] ?? ''), ' /') : 'Link "'.($d['label'] ?? '').'" on '.implode(', ', $d['from'] ?? []),
+                        'Decided' => $x['decidedAt']];
+                }, $rows)],
             ], fn ($p) => ['id' => $p->id, 'kind' => $p->kind, 'path' => $p->path, 'query' => $p->query, 'status' => $p->status, 'reason' => $p->reason, 'impressions' => (int) $p->impressions, 'position' => (float) $p->position,
                 'data' => json_decode($p->data_json, true), 'before' => json_decode($p->before_json, true), 'createdAt' => $p->created_at, 'decidedAt' => $p->decided_at]));
         }
@@ -62,6 +73,14 @@ class GrowthAdminController extends Controller
             return $ok(AdminTable::rows($r, SeoAgent::tracked($kind), [
                 'search' => $kind === 'page' ? ['key', 'target'] : ['key'], 'filters' => ['band' => $band],
                 'sorts' => ['impressions' => 'impressions', 'clicks' => 'clicks', 'position' => 'position', 'ctr' => 'ctr', 'change' => 'impressionsChange', 'key' => 'key'], 'sort' => 'impressions',
+                'export' => ['title' => $kind === 'page' ? 'Tracked pages' : 'Tracked searches', 'map' => fn ($rows) => array_map(fn ($x) => array_filter([
+                    $kind === 'page' ? 'Page' : 'Search' => $x['key'], 'Main search' => $kind === 'page' ? ($x['target'] ?? '') : null,
+                    'Main search in title' => $kind === 'page' ? (($x['titleHasTarget'] ?? null) === null ? '' : ($x['titleHasTarget'] ? 'Yes' : 'No')) : null,
+                    'Shown by Google' => empty($x['unseen']) ? 'Yes' : 'Not yet', 'Impressions' => (int) ($x['impressions'] ?? 0), 'Change vs week before' => $x['impressionsChange'] ?? '',
+                    'Clicks' => (int) ($x['clicks'] ?? 0), 'Clicked %' => round((float) ($x['ctr'] ?? 0) * 100, 1), 'Position' => ! empty($x['position']) ? round((float) $x['position'], 1) : '', 'Places moved' => $x['positionChange'] ?? '',
+                    'Searches it shows for' => $kind === 'page' ? implode('; ', array_map(fn ($q) => $q[0], array_slice($x['queries'] ?? [], 0, 10))) : null,
+                    'Pages shown' => $kind === 'query' ? implode('; ', $x['pages'] ?? []) : null, 'Other brand' => $kind === 'query' ? (! empty($x['brand']) ? 'Yes' : '') : null,
+                ], fn ($v) => $v !== null), $rows)],
             ]));
         }
         abort_unless($r->isMethod('POST'), 405);
