@@ -27,6 +27,20 @@ return Application::configure(basePath: dirname(__DIR__))
             }
             \App\Services\ErrorLog::exception($x, auth()->id(), request()->path());
         });
+        // The host refused a database connection even after retrying (a burst of visitors): say "busy" and let the
+        // page try again by itself, instead of an error or a jump to the home page.
+        $e->render(function (\Illuminate\Database\QueryException $x, Request $r) {
+            if (! \App\Database\RetryingMySqlConnector::isBusy($x)) {
+                return null;
+            }
+            if ($r->is('api/*') || $r->expectsJson()) {
+                return response()->json(['ok' => false, 'busy' => true, 'error' => 'CVTara is very busy right now. Please try again in a few seconds.'], 503, ['Retry-After' => '5']);
+            }
+            $again = $r->isMethod('GET') ? '<meta http-equiv="refresh" content="5">' : '';
+            $tip = $r->isMethod('GET') ? 'This page will try again by itself in a few seconds.' : 'Please go back and send it again in a few seconds.';
+
+            return response('<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex,nofollow">'.$again.'<title>One moment | CVTara</title><style>body{margin:0;min-height:100vh;display:grid;place-items:center;background:#f8fafc;color:#0f172a;font:16px/1.5 system-ui,sans-serif;text-align:center}@media(prefers-color-scheme:dark){body{background:#0f1117;color:#f1f5f9}}p{color:#64748b;margin:6px 0}</style></head><body><main><h1>One moment, please</h1><p>CVTara is very busy right now.</p><p>'.$tip.'</p></main></body></html>', 503, ['Retry-After' => '5', 'X-Robots-Tag' => 'noindex, nofollow', 'Cache-Control' => 'no-store']);
+        });
         $e->render(function (ValidationException $x, Request $r) {
             if ($r->is('api/*')) {
                 return response()->json(['ok' => false, 'error' => collect($x->errors())->flatten()->first(), 'errors' => $x->errors()], 422);
@@ -43,7 +57,7 @@ return Application::configure(basePath: dirname(__DIR__))
         // Any other failure in the API still answers in the shape the pages expect, so a screen never shows a blank
         // "Unable to complete this action". The owner sees the reason; customers see a plain retry message.
         $e->render(function (\Throwable $x, Request $r) {
-            if (! $r->is('api/*') || $x instanceof ValidationException || $x instanceof HttpExceptionInterface || $x instanceof \Illuminate\Auth\AuthenticationException) {
+            if (! $r->is('api/*') || $x instanceof ValidationException || $x instanceof HttpExceptionInterface || $x instanceof \Illuminate\Auth\AuthenticationException || $x instanceof \Illuminate\Http\Exceptions\HttpResponseException) {
                 return null;
             }
             $owner = (bool) ($r->user()?->is_admin);
@@ -53,7 +67,7 @@ return Application::configure(basePath: dirname(__DIR__))
                 : 'Something went wrong on our side. Please try again in a minute.'], 500);
         });
         $e->render(function (\Throwable $x, Request $r) {
-            if ($r->is('api/*') || ! $r->isMethod('GET') || $x instanceof ValidationException || $x instanceof \Illuminate\Auth\AuthenticationException) {
+            if ($r->is('api/*') || ! $r->isMethod('GET') || $x instanceof ValidationException || $x instanceof \Illuminate\Auth\AuthenticationException || $x instanceof \Illuminate\Http\Exceptions\HttpResponseException) {
                 return null;
             }
             $page = str_contains((string) $r->header('Accept', ''), 'text/html') && ! preg_match('#\.(js|mjs|css|map|png|jpe?g|webp|gif|svg|ico|woff2?|txt|xml|json|pdf|zip)$#i', $r->path());

@@ -1,4 +1,4 @@
-"""Pre-launch checks (3.27.2): ATS Match reads Indian job posts fairly (degrees such as B.Com/B.E., "0 to 2 years" for freshers,
+"""Pre-launch checks (3.29.2): ATS Match reads Indian job posts fairly (degrees such as B.Com/B.E., "0 to 2 years" for freshers,
 location/salary lines and the employer's name are not keywords, "good to have" is optional),
 and nothing the public can download calls the product AI."""
 import json, os, re, tempfile

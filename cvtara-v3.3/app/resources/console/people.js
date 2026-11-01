@@ -21,8 +21,7 @@
     const q = U.q; U.q = undefined;
     U.grid = K.grid($('#pgrid'), {
       id: 'users', url: '/api/admin/users', rowsKey: 'users', search: 'Search by name or email', q, sort: 'joined',
-      filters: [{ key: 'f', label: 'Show', options: [['normal', 'Normal users'], ['paid', 'Paid (active)'], ['expired', 'Expired'], ['blocked', 'Blocked'], ['owner', 'Owner']] }, { key: 'from', label: 'Joined from', type: 'date' }, { key: 'to', label: 'Joined to', type: 'date' }],
-      tools: '<span class="ops-f"><span>&nbsp;</span><button type="button" class="button primary small" id="pexport">Export CSV</button></span>',
+      dates: 'Joined', filters: [{ key: 'f', label: 'Show', options: [['normal', 'Normal users'], ['paid', 'Paid (active)'], ['expired', 'Expired'], ['blocked', 'Blocked'], ['owner', 'Owner']] }],
       row: u => `data-uid="${E(u.owner_id)}"`,
       columns: [
         { label: 'User', sort: 'name', html: u => `<b>${E(u.name || '—')}</b><br><small>${E(u.email)}</small>` },
@@ -35,7 +34,6 @@
       empty: 'No users yet.',
       onData: d => { $('#pkpi').innerHTML = [['Total users', d.totalUsers], ['Paid (active)', d.paidUsers], ['Normal users', d.totalUsers - d.paidUsers], ['Blocked', d.blockedUsers ?? 0]].map(([l, v]) => `<div class="kpi"><span>${l}</span><b>${Number(v || 0).toLocaleString('en-IN')}</b></div>`).join(''); },
       onClick: (e, g) => {
-        if (e.target.closest('#pexport')) { const st = g.state; toast('Preparing export…'); K.exportReport({ dataset: 'users', q: st.q, status: ['paid', 'normal', 'blocked', 'owner'].includes(st.f.f) ? st.f.f : 'all', columns: 'id,name,email,phone,city,level,profession,joined,plan,paid,status,resumes' }, 'csv').then(() => toast('Export ready'), x => toast(err(x), true)); return; }
         const b = e.target.closest('[data-act]'); if (!b || !g.data) return;
         const u = (g.data.users || []).find(x => String(x.owner_id) === b.closest('tr').dataset.uid); if (!u) return;
         ({ edit: editUser, sub: subscription, block: blockUser, delete: deleteUser })[b.dataset.act](u);
@@ -105,12 +103,12 @@
       const sel = (id, label, opts, val) => `<label class="ops-f">${label}<select id="${id}"><option value="all">All</option>${opts.map(o => `<option value="${E(o[0])}" ${val === o[0] ? 'selected' : ''}>${E(o[1])}</option>`).join('')}</select></label>`;
       O.page = O.page || 1;
       h.innerHTML = `<div class="pg-head"><h2>All Orders</h2><p>Complete transaction history — every filter runs on the server, so nothing is cut off. Click any order for every detail.</p></div>
-        <section class="panel panel-pad ops-filterbox" data-nokit><label class="ops-f grow">Search<input id="oq" type="search" placeholder="Customer, email, reference or order no." value="${E(O.q)}"></label>
+        <section class="panel panel-pad ops-filterbox" data-nokit style="overflow:visible"><label class="ops-f grow">Search<input id="oq" type="search" placeholder="Customer, email, reference or order no." value="${E(O.q)}"></label>
           ${sel('os', 'Status', [['paid', 'Paid'], ['refunded', 'Reversed by bank'], ['partially_refunded', 'Partly reversed'], ['disputed', 'Disputed'], ['pending', 'Pending'], ['created', 'Started, not paid']], O.status)}${sel('op', 'Plan', planOpts, O.plan)}${sel('ov', 'Payment source', provOpts, O.provider)}
-          <label class="ops-f">From<input id="of" type="date" value="${O.from}"></label><label class="ops-f">To<input id="ot" type="date" value="${O.to}"></label><label class="ops-f">Min ₹<input id="omin" type="number" min="0" value="${O.min}" style="width:90px"></label><label class="ops-f">Max ₹<input id="omax" type="number" min="0" value="${O.max}" style="width:90px"></label>
-          <div class="ops-f"><span>&nbsp;</span><span><button class="button secondary small" id="oreset">Reset</button> <button class="button secondary small" id="ocustom">Custom report…</button> <span class="kit-menu"><button class="button primary small" data-k="exp" id="oexp">Export all ▾</button><div class="kit-pop" hidden><button type="button" data-xf="csv">CSV (Excel-ready)</button><button type="button" data-xf="xls">Excel (.xls)</button><button type="button" data-xf="json">JSON</button><button type="button" data-xf="print">Print / Save as PDF</button></div></span></span></div></section>
+          ${K.rangeHtml(O.from, O.to)}<label class="ops-f">Min ₹<input id="omin" type="number" min="0" value="${O.min}" style="width:90px"></label><label class="ops-f">Max ₹<input id="omax" type="number" min="0" value="${O.max}" style="width:90px"></label>
+          <div class="ops-f"><span>&nbsp;</span><span><button class="button secondary small" id="oreset">Reset</button> <button class="button secondary small" id="ocustom">Custom report…</button> <span class="kit-menu"><button class="button primary small" data-k="exp" id="oexp">⬇ Download ▾</button><div class="kit-pop" hidden><button type="button" data-xf="csv">CSV (opens in Excel / Sheets)</button><button type="button" data-xf="xlsx">Excel (.xlsx)</button><button type="button" data-xf="pdf">PDF (to read or print)</button><button type="button" data-xf="json">JSON</button></div></span></span></div></section>
         <div class="ops-kpis" id="okpi"></div>
-        <section class="panel"><table class="ad-table ops-click"><thead><tr><th>Order ID</th><th>Customer</th><th>Plan</th><th>Amount</th><th>Source</th><th>Status</th><th>Date</th></tr></thead><tbody id="obody"></tbody></table></section><div class="ops-pager" id="opager"></div>`;
+        <section class="panel" data-nokit><table class="ad-table ops-click"><thead><tr><th>Order ID</th><th>Customer</th><th>Plan</th><th>Amount</th><th>Source</th><th>Status</th><th>Date</th></tr></thead><tbody id="obody"></tbody></table></section><div class="ops-pager" id="opager"></div>`;
       const prm = () => { const p = { dataset: 'orders', q: O.q, status: O.status, plan: O.plan, provider: O.provider, from: O.from, to: O.to, min: O.min, max: O.max, columns: 'order,date,customer,email,plan,amount_inr,discount_inr,reversed_inr,net_inr,coupon,status,provider,reference,access_until', per: String(O.per || 20), page: String(O.page) }; Object.keys(p).forEach(k => { if (p[k] === '' || p[k] === 'all') delete p[k]; }); return p; };
       const draw = async () => {
         $('#obody').innerHTML = '<tr><td colspan="7">Loading…</td></tr>';
@@ -120,7 +118,8 @@
         K.pager($('#opager'), d, (p, per) => { O.page = p; O.per = per; draw().catch(x => toast(err(x), true)); });
       };
       const bind = (id, k, ev = 'input') => { $('#' + id).addEventListener(ev, e => { O[k] = e.target.value; O.page = 1; clearTimeout(bind.t); bind.t = setTimeout(() => draw().catch(x => toast(err(x), true)), ev === 'input' ? 350 : 0); }); };
-      bind('oq', 'q'); bind('os', 'status', 'change'); bind('op', 'plan', 'change'); bind('ov', 'provider', 'change'); bind('of', 'from', 'change'); bind('ot', 'to', 'change'); bind('omin', 'min'); bind('omax', 'max');
+      bind('oq', 'q'); bind('os', 'status', 'change'); bind('op', 'plan', 'change'); bind('ov', 'provider', 'change');  bind('omin', 'min'); bind('omax', 'max');
+      $('#admin-orders .ops-filterbox').addEventListener('change', e => { const rg = K.rangeChange(e, e.currentTarget); if (rg) { [O.from, O.to] = rg; O.page = 1; draw().catch(x => toast(err(x), true)); } });
       $('#oreset').onclick = () => { Object.assign(O, { q: '', status: 'all', plan: 'all', provider: 'all', from: '', to: '', min: '', max: '', page: 1 }); orders(); };
       $('#ocustom').onclick = () => K.openReport({ dataset: 'orders', q: O.q, status: O.status, plan: O.plan, provider: O.provider, from: O.from, to: O.to, min: O.min, max: O.max });
       h.addEventListener('click', e => {
@@ -152,8 +151,8 @@
   }
 
   /* ======================= ERROR LOG ======================= */
-  const L = { level: 'all', source: 'all', q: '', days: 30, open: false, sel: new Set(), timer: null, page: 1, per: 20, qt: null };
-  const qs = () => { const q = new URLSearchParams({ days: L.days }); if (L.level !== 'all') q.set('level', L.level); if (L.source !== 'all') q.set('source', L.source); if (L.q) q.set('q', L.q); if (L.open) q.set('state', 'open'); return q.toString(); };
+  const L = { level: 'all', source: 'all', q: '', days: 30, from: K.rangeOf('30')[0], to: K.rangeOf('30')[1], open: false, sel: new Set(), timer: null, page: 1, per: 20, qt: null };
+  const qs = () => { const q = new URLSearchParams({ days: 36500 }); if (L.from) q.set('from', L.from); if (L.to) q.set('to', L.to); if (L.level !== 'all') q.set('level', L.level); if (L.source !== 'all') q.set('source', L.source); if (L.q) q.set('q', L.q); if (L.open) q.set('state', 'open'); return q.toString(); };
   async function errors() {
     const h = $('#admin-errors'); if (!h) return;
     clearInterval(L.timer);
@@ -161,17 +160,19 @@
       h.dataset.built = '1';
       h.innerHTML = `<div class="pg-head"><h2>Error Log</h2><p>Every server error, browser error, failed email and daily health warning is collected here. Download it, work through it, mark items resolved.</p></div>
         <div class="ops-kpis" id="ekpi"></div>
-        <section class="panel panel-pad ops-filterbox"><label class="ops-f grow">Search<input id="eq" type="search" placeholder="Search messages"></label><label class="ops-f">Level<select id="el"><option value="all">All</option><option value="error">Errors</option><option value="warning">Warnings</option><option value="info">Info</option></select></label><label class="ops-f">Source<select id="es"><option value="all">All</option><option value="server">Server</option><option value="browser">Browser</option><option value="mail">Email</option><option value="payment">Payments</option><option value="cron">Daily checks</option></select></label><label class="ops-f">Period<select id="ed"><option value="1">24 hours</option><option value="7">7 days</option><option value="30" selected>30 days</option><option value="365">1 year</option></select></label><label class="ops-f ops-check"><span>&nbsp;</span><span><input type="checkbox" id="eo"> Open only</span></label></section>
-        <div class="ops-bar"><button class="button primary small" id="edl">⬇ Download CSV</button><button class="button secondary small" id="edj">⬇ Download JSON</button><span class="grow"></span><button class="button secondary small" id="eres">✓ Mark selected resolved</button><button class="button secondary small" id="eclr">Delete resolved</button><button class="button secondary small" id="eref">↻ Refresh</button></div>
+        <section class="panel panel-pad ops-filterbox"><label class="ops-f grow">Search<input id="eq" type="search" placeholder="Search messages"></label><label class="ops-f">Level<select id="el"><option value="all">All</option><option value="error">Errors</option><option value="warning">Warnings</option><option value="info">Info</option></select></label><label class="ops-f">Source<select id="es"><option value="all">All</option><option value="server">Server</option><option value="browser">Browser</option><option value="mail">Email</option><option value="payment">Payments</option><option value="cron">Daily checks</option></select></label>${K.rangeHtml(L.from, L.to)}<label class="ops-f ops-check"><span>&nbsp;</span><span><input type="checkbox" id="eo"> Open only</span></label></section>
+        <div class="ops-bar"><span id="edlbox">${K.dlHtml()}</span><button class="button secondary small" id="edj">⬇ JSON</button><span class="grow"></span><button class="button secondary small" id="eres">✓ Mark selected resolved</button><button class="button secondary small" id="eclr">Delete resolved</button><button class="button secondary small" id="eref">↻ Refresh</button></div>
         <div class="ops-term"><div class="ops-term-bar"><span class="live-dot"></span> <span id="eupd">loading…</span><label style="margin-left:auto"><input type="checkbox" id="eauto" checked> auto-refresh 30s</label></div><div id="elist" class="ops-elist"></div></div><div class="ops-pager" id="epg"></div>`;
       const set = (id, k, ev = 'input') => $('#' + id).addEventListener(ev, e => { L[k] = e.target.type === 'checkbox' ? e.target.checked : e.target.value; L.page = 1; clearTimeout(L.qt); L.qt = setTimeout(errors, ev === 'input' ? 350 : 0); });
-      set('eq', 'q'); set('el', 'level', 'change'); set('es', 'source', 'change'); set('ed', 'days', 'change'); set('eo', 'open', 'change');
+      set('eq', 'q'); set('el', 'level', 'change'); set('es', 'source', 'change');
+      $('#admin-errors .ops-filterbox').addEventListener('change', e => { const rg = K.rangeChange(e, e.currentTarget); if (rg) { [L.from, L.to] = rg; L.page = 1; errors(); } }); set('eo', 'open', 'change');
       $('#eref').onclick = () => errors();
       $('#eres').onclick = async () => { if (!L.sel.size) return toast('Select entries first', true); try { await api('/api/admin/errors/clear', { method: 'POST', body: { mode: 'resolve', ids: [...L.sel].filter(x => !String(x).startsWith('mail-')).map(Number) } }); L.sel.clear(); toast('Marked resolved'); errors(); } catch (e) { toast(err(e), true); } };
       $('#eclr').onclick = async () => { try { const r = await api('/api/admin/errors/clear', { method: 'POST', body: { mode: 'purge-resolved' } }); toast((r.affected ?? 0) + ' resolved entries deleted'); errors(); } catch (e) { toast(err(e), true); } };
       // Downloads come from the server with every entry that matches the filters, not just the page on screen.
       const dl = fmt => { const a = document.createElement('a'); a.href = '/api/admin/errors/download?' + qs() + (fmt === 'json' ? '&format=json' : ''); a.download = ''; document.body.append(a); a.click(); a.remove(); };
-      $('#edl').onclick = () => dl('csv'); $('#edj').onclick = () => dl('json');
+      $('#edj').onclick = () => dl('json');
+      K.wireDownload($('#edlbox'), fmt => '/api/admin/errors?' + qs() + '&export=' + fmt);
       $('#eauto').onchange = e => { clearInterval(L.timer); if (e.target.checked) L.timer = setInterval(() => $('.admin-view.active')?.id === 'admin-errors' && errors(), 30000); };
       h.addEventListener('change', e => { const c = e.target.closest('[data-esel]'); if (c) { c.checked ? L.sel.add(c.dataset.esel) : L.sel.delete(c.dataset.esel); } });
     }

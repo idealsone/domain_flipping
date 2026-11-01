@@ -17,7 +17,7 @@ Route::post('/webhooks/phonepe',function(Request $r){abort_if(strlen($r->getCont
 Route::post('/webhooks/razorpay',function(Request $r){abort_if(strlen($r->getContent())>1000000,413);try{\App\Services\Payments::webhook($r->getContent(),$r->header('X-Razorpay-Signature',''),$r->header('X-Razorpay-Event-Id',''));}catch(\Illuminate\Validation\ValidationException $e){return response()->json(['ok'=>false,'retry'=>true],409);}return response()->json(['ok'=>true]);})->middleware('throttle:120,1,api');
 Route::match(['GET','POST','DELETE'],'/api/{path?}',[ApiController::class,'run'])->where('path','.*')->middleware('throttle:'.env('API_RATE_LIMIT',400).',1,api');
 Route::post('/export/{type}/{id}/{format}',[ExportController::class,'download'])->middleware(['auth','throttle:'.env('EXPORT_RATE_LIMIT',10).',1,exports']);
-Route::post('/contact/message',[\App\Http\Controllers\SupportController::class,'contact'])->middleware('throttle:30,1,contact-form');
+Route::post('/contact/message',[\App\Http\Controllers\SupportController::class,'contact'])->middleware(['throttle:30,1,contact-form','throttle:100,60,contact-form-hour']);
 Route::get('/support/options',[\App\Http\Controllers\SupportController::class,'options'])->middleware('auth');
 Route::post('/support/report',[\App\Http\Controllers\SupportController::class,'submit'])->middleware(['auth','throttle:30,1,support']);
 Route::get('/media/{file}',function(string $file){abort_unless(preg_match('/^[a-f0-9-]{36}\.webp$/',$file)&&Storage::disk('local')->exists('media/'.$file),404);return response(Storage::disk('local')->get('media/'.$file))->header('Content-Type','image/webp')->header('Cache-Control','public,max-age=86400');});
