@@ -51,7 +51,7 @@ def run(ctx, t):
     t.check("the segment is saved with the campaign", s == 200 and saved and saved[0]["segCollege"] == "RV College", f"{s} {saved}")
 
     # Weekly by default: one report on Sunday from 9 AM covering the week before, nothing on other days.
-    before = db.q("select count(*) from mail_outbox where `trigger`='growth_report'")[0][0]
+    before = db.q("select count(*) from mail_outbox where `trigger`='growth_report' and subject like '2 PM%'")[0][0]
     wk = lambda when: (tinker(f"Carbon\\Carbon::setTestNow(Carbon\\Carbon::parse('{when}', 'Asia/Kolkata')); echo json_encode(App\\Services\\Growth::run());").stdout.strip().splitlines() or [""])[-1]
     t.check("reports are weekly by default: nothing on a Tuesday afternoon", "midday" not in wk("2026-11-03 14:30") and "weekly" not in wk("2026-11-03 19:30"))
     t.check("nothing before 9 AM on Sunday, nothing on Monday", "weekly" not in wk("2026-11-08 08:30") and "weekly" not in wk("2026-11-09 10:30"))
