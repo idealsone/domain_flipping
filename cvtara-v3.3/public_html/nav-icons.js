@@ -37,7 +37,7 @@
   };
   const MAP = {
     dashboard: 'grid', people: 'users', orders: 'bag', resumelib: 'files', letterlib: 'mail', sitedesign: 'layout', business: 'trend', growth: 'trend', referral: 'gift',
-    mailer: 'mail', reports: 'chart', promos: 'tag', campaigns: 'megaphone', outreach: 'send', feedback: 'chat', speed: 'zap', errors: 'alert',
+    mailer: 'mail', reports: 'chart', promos: 'tag', campaigns: 'megaphone', outreach: 'send', feedback: 'chat', whatsnew: 'bell', speed: 'zap', errors: 'alert',
     bloghub: 'pen', desk: 'star', reviews: 'star', pricing: 'rupee', settings: 'sliders', integrations: 'sliders', features: 'sliders', policies: 'scale',
     legal: 'scale', health: 'pulse', setup: 'pulse', seo: 'search', keywords: 'search', analytics: 'chart', push: 'bell',
     resumes: 'file', builder: 'pen', match: 'target', letter: 'mail', tracker: 'check', billing: 'rupee', referrals: 'gift', wallet: 'wallet',

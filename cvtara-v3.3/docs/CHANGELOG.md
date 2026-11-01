@@ -1,9 +1,18 @@
-# CVTara v3.29.4 — Growth page downloads
+# CVTara v3.29.5 — Growth page downloads
 
-## 3.29.4
+## 3.29.5
 
 - Growth page lists now download as CSV, Excel or PDF with the page's filters: growth reports and SEO proposals (with a date range), tracked pages and searches (with the Pages/Searches choice, filter and search box), and the "Which pages Google is showing" table (CSV).
 - Downloads use plain column names (Page, Main search, Impressions, Change vs week before, Position, Searches it shows for and so on).
+
+# CVTara v3.29.4 — What's new for customers
+
+## 3.29.4
+- **What's new window:** when a signed-in customer opens their workspace after the owner publishes a note, a small window lists the notes they have not seen yet (up to 4, newest first, with dates and New / Improved / Fixed / Safety labels), signed by the CVTara team. "Got it" closes it for good on every device; it never covers another open window (the welcome form or a plan dialog go first). Brand-new accounts are not shown notes from before they joined, and notes older than 60 days are not pushed.
+- **What's new button:** a bell button in the workspace top bar (with a dot while there is something unread) and a link in the sidebar footer open the full list, grouped by month, any time.
+- **Owner console > What's new:** add, edit, hide or delete notes, preview them as a customer, and see how many customers read updates in the last 30 days. Editing a note that is already shown does not show it again. Text that mentions AI or the tools behind it is refused.
+- **Seeded** with 11 plain-language notes from 23 Oct to 1 Nov (ATS fairness for Indian jobs, account and payment protection, fewer errors at busy times, payment help, new look, faster pages, support phone, one-click tailoring, one-click cover letters, steadier ATS scores, better resume upload). Owner-only changes are left out.
+- No migration: notes live in site settings, and "seen" is one activity row per customer.
 
 # CVTara v3.29.3 — Count revenue and offers from launch
 
