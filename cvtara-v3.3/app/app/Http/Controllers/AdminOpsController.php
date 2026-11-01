@@ -4,11 +4,11 @@ namespace App\Http\Controllers;
 
 use App\Models\User;
 use App\Services\AccountSecurity;
+use App\Services\AdminTable;
 use App\Services\ExpertReview;
 use App\Services\Health;
 use App\Services\MailAutomation;
 use App\Services\Payments;
-use App\Services\Referrals;
 use App\Services\Refunds;
 use App\Services\Services;
 use App\Services\Settings;
@@ -86,9 +86,9 @@ class AdminOpsController extends Controller
         if ($path === 'errors') {
             abort_unless($get, 405);
 
-            $all = $this->errors($r, 2000);
+            $all = $this->errors($r, AdminTable::exporting($r) ? 20000 : 2000);
             // Level, source, period and search already ran in SQL; this sorts and cuts out the requested page.
-            $d = \App\Services\AdminTable::rows($r, $all['errors'], ['sorts' => ['last' => 'last_seen', 'count' => 'occurrences', 'level' => 'level'], 'sort' => 'last']);
+            $d = AdminTable::rows($r, $all['errors'], ['sorts' => ['last' => 'last_seen', 'count' => 'occurrences', 'level' => 'level'], 'sort' => 'last', 'export' => ['title' => 'Error log']]);
 
             return $ok(['errors' => $d['rows'], 'summary' => $all['summary'] + ['browser' => count(array_filter($all['errors'], fn ($e) => $e['source'] === 'browser')), 'mail' => count(array_filter($all['errors'], fn ($e) => $e['source'] === 'mail'))]] + $d);
         }
@@ -242,7 +242,11 @@ class AdminOpsController extends Controller
     private function errors(Request $r, int $limit = 300): array
     {
         $days = max(1, min(365, (int) $r->query('days', 30)));
-        $q = DB::table('error_logs')->where('last_seen', '>=', now()->subDays($days));
+        // A From/To range (Download with dates) replaces the "last N days" window.
+        $isDay = fn ($k) => (bool) preg_match('/^\d{4}-\d{2}-\d{2}$/', (string) $r->query($k, ''));
+        $ranged = $isDay('from') || $isDay('to');
+        $window = fn ($q, $col) => $ranged ? AdminTable::dates($r, $q, $col) : $q->where($col, '>=', now()->subDays($days));
+        $q = $window(DB::table('error_logs'), 'last_seen');
         if (in_array($r->query('level'), ['error', 'warning', 'info'], true)) {
             $q->where('level', $r->query('level'));
         }
@@ -258,7 +262,7 @@ class AdminOpsController extends Controller
         $rows = $q->orderByDesc('last_seen')->limit($limit)->get()->map(fn ($e) => (array) $e + ['resolved' => $e->resolved_at ? 'yes' : 'no'])->all();
         // failed e-mail jobs are errors too — surface them without duplicating storage
         if (! $r->query('source') || $r->query('source') === 'mail') {
-            foreach (DB::table('mail_outbox')->where('status', 'failed')->where('updated_at', '>=', now()->subDays($days))->orderByDesc('updated_at')->limit(100)->get() as $m) {
+            foreach ($window(DB::table('mail_outbox')->where('status', 'failed'), 'updated_at')->orderByDesc('updated_at')->limit(100)->get() as $m) {
                 $rows[] = ['id' => 'mail-'.$m->id, 'level' => 'error', 'source' => 'mail', 'message' => 'Email "'.$m->subject.'" to '.$m->recipient.' failed: '.$m->error, 'location' => $m->trigger, 'url' => null, 'occurrences' => max(1, (int) $m->attempts), 'first_seen' => (string) $m->created_at, 'last_seen' => (string) $m->updated_at, 'resolved_at' => null, 'resolved' => 'no'];
             }
             usort($rows, fn ($a, $b) => strcmp((string) $b['last_seen'], (string) $a['last_seen']));

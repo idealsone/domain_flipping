@@ -15,7 +15,8 @@ class AtsEngine
 
     private const HEADING = '/^(professional summary|summary|profile|experience|work experience|employment|education|qualifications|skills|technical skills|projects|certifications|languages|achievements)[:\s]*$/iu';
 
-    private const DEGREE = '/\b(bachelor|master|b\.tech|m\.tech|degree|mba|phd|licen[sc]e|registered nurse)\b/iu';
+    // Indian and international qualifications: "B.Com", "BCA", "B.E.", "M.Sc", "PGDM", "MBBS"… Short forms need their dots ("B.A.", "B.E.") so the words "be" and "ba" are not read as degrees.
+    private const DEGREE = '/(?<![\p{L}\p{N}])(bachelor\S*|master(?:\'s|s)?\s+(?:degree|of|in)|degree|graduat(?:e|es|ion)|post[- ]?graduat(?:e|ion)|diploma|b\.?\s?tech|m\.?\s?tech|b\.\s?sc|bsc|m\.\s?sc|msc|b\.\s?com|bcom|m\.\s?com|mcom|b\.\s?e\.|m\.\s?e\.|b\.\s?a\.|m\.\s?a\.|bba|bca|mba|mca|pgdm|pgdbm|ph\.?\s?d|mbbs|bds|llb|llm|b\.?\s?pharm|m\.?\s?pharm|b\.?\s?ed|iti|chartered accountant|ca inter|ca final|licen[sc]e|registered nurse|gnm|anm)(?![\p{L}\p{N}])/iu';
 
     private static ?array $catalog = null;
 
@@ -89,7 +90,7 @@ class AtsEngine
 
     private static function priority(string $q): string
     {
-        if (preg_match('/\b(preferred|desirable|nice to have|bonus|advantage)\b/iu', $q)) {
+        if (preg_match('/\b(preferred|desirable|nice to have|good to have|bonus|advantage|added advantage|is a plus|a plus|optional)\b/iu', $q)) {
             return 'Preferred';
         }
 
@@ -176,6 +177,11 @@ class AtsEngine
                 $names[] = $m[1];
             }
         }
+        // "Java Developer - TCS" / "Analyst at Infosys": the employer named on the title line
+        $parts = preg_split('/\s+(?:–|—|-|\||@|at)\s+/u', self::jobTitle($jobText), 2);
+        if (isset($parts[1]) && mb_strlen($parts[1]) <= 60 && ! array_filter(self::catalog(), fn ($c) => preg_match($c['re'], $parts[1]))) {
+            $names[] = $parts[1];
+        }
         $out = [];
         foreach ($names as $n) {
             preg_match_all('/[A-Za-z][A-Za-z0-9&]+/', $n, $m);
@@ -229,10 +235,14 @@ class AtsEngine
         $job = self::segments(self::jobFocus($jobText));
         $requirements = [];
         foreach (self::catalog() as $c) {
-            $source = self::find($job, fn ($r) => preg_match($c['re'], $r['text']) && ! self::negated($r['text'], $c['re']));
-            if (! $source) {
+            // a qualification line ("Education: B.Tech from a recognised university") asks for a degree, not for teaching or edtech experience
+            $pool = $c['group'] === 'Education' ? array_filter($job, fn ($r) => ! preg_match(self::DEGREE, $r['text']) && ! preg_match('/^(?:qualifications?|education(?:al qualification)?|eligibility)\s*[:\-–]/iu', $r['text'])) : $job;
+            $asks = array_values(array_filter($pool, fn ($r) => preg_match($c['re'], $r['text']) && ! self::negated($r['text'], $c['re'])));
+            if (! $asks) {
                 continue;
             }
+            // when the job names a skill more than once, the sentence that says it is required sets its priority
+            $source = self::find($asks, fn ($r) => self::priority($r['text']) === 'Required') ?? $asks[0];
             $candidates = array_values(array_filter($resume, fn ($r) => preg_match($c['re'], $r['text']) && ! self::negated($r['text'], $c['re'])));
             $evidenced = array_values(array_filter($candidates, fn ($r) => self::grade($r) === 'evidenced'));
             $rest = array_values(array_filter($candidates, fn ($r) => self::grade($r) !== 'evidenced'));
@@ -241,9 +251,11 @@ class AtsEngine
             $requirements[] = ['name' => $c['name'], 'group' => $c['group'], 'source' => $source['text'], 'priority' => self::priority($source['text']), 'status' => $status, 'evidence' => $evidence['text'] ?? '', 'section' => $evidence['section'] ?? '', 'method' => 'Curated related terms + sentence context',
                 'advice' => $status === 'evidenced' ? 'Check that this example accurately explains your own contribution and outcome.' : ($status === 'mentioned' ? 'Add one genuine example showing how you used this capability, your contribution and the result.' : 'Decide whether you have relevant experience. Add a truthful example if you do; otherwise treat this as a role gap.')];
         }
-        $yearsRe = '/([0-9]{1,2})(?:\s*[-–]\s*[0-9]{1,2})?\s*\+?\s*(?:years?|yrs?)\b/iu';
+        // "3+ years", "2-5 yrs", "3 to 5 years": the first number is the minimum asked for
+        $yearsRe = '/([0-9]{1,2})(?:\.[0-9])?(?:\s*(?:[-–]|to)\s*[0-9]{1,2})?\s*\+?\s*(?:years?|yrs?)\b/iu';
         $yearsRow = self::find($job, fn ($r) => preg_match($yearsRe, $r['text']) && preg_match('/\b(experience|exp|background|worked|working|hands-on)\b/iu', $r['text']));
-        if ($yearsRow && preg_match($yearsRe, $yearsRow['text'], $yj)) {
+        // a posting open to freshers ("0-2 years") asks for no minimum, so there is nothing to check
+        if ($yearsRow && preg_match($yearsRe, $yearsRow['text'], $yj) && (int) $yj[1] > 0) {
             preg_match_all('/([0-9]{1,2}(?:\.[0-9]+)?)\s*\+?\s*(?:years?|yrs?)\b/iu', $resumeText, $ym, PREG_SET_ORDER);
             $best = null;
             foreach ($ym as $b) {
@@ -352,7 +364,25 @@ class AtsEngine
             'method' => 'Deterministic analysis of the two texts you supplied. Related-term groups and action context identify evidence candidates. Unclassified requirements and eligibility need your review. No web research, employer ATS access, credential verification or hiring prediction is performed.'];
     }
 
-    private const KW_STOP = 'the a an and or of for to in on at by with as from be is are was were have has this that your our you we will must should required requires requirements about into over under their they them his her its it who whom which what when where while also able ability across all any can could may might more most other some such than then there these those through using use used within without would work working works role roles job jobs team teams candidate candidates company looking join skills skill strong good great excellent knowledge experience experienced years year plus etc including include includes ensure ensuring manage managing responsible responsibilities responsibility preferred nice have having bonus apply application applications position opportunity opportunities benefits offer offers hybrid remote office full time part employee employees environment business new help support provide providing well one two three first based related relevant like both each every per via day days month months week weeks need needs needed make making get getting take taking high level highly ideal best build write present develop design deliver create lead drive own maintain participate collaborate communicate perform conduct identify improve analyse analyze understand deep proven track record seeking hire hiring description overview type location employment extensive desired profile monitor track coordinate address prepare thrive possess seamless smooth regular periodic overall key ideally minimum maximum significant advantage willingness frequent fast paced growth across';
+    private const KW_STOP = 'the a an and or of for to in on at by with as from be is are was were have has this that your our you we will must should required requires requirements about into over under their they them his her its it who whom which what when where while also able ability across all any can could may might more most other some such than then there these those through using use used within without would work working works role roles job jobs team teams candidate candidates company looking join skills skill strong good great excellent knowledge experience experienced years year plus etc including include includes ensure ensuring manage managing responsible responsibilities responsibility preferred nice have having bonus apply application applications position opportunity opportunities benefits offer offers hybrid remote office full time part employee employees environment business new help support provide providing well one two three first based related relevant like both each every per via day days month months week weeks need needs needed make making get getting take taking high level highly ideal best build write present develop design deliver create lead drive own maintain participate collaborate communicate perform conduct identify improve analyse analyze understand deep proven track record seeking hire hiring description overview type location employment extensive desired profile monitor track coordinate address prepare thrive possess seamless smooth regular periodic overall key ideally minimum maximum significant advantage willingness frequent fast paced growth across title senior junior fresher freshers immediate joiner joiners interested share resume email phone whatsapp lpa ctc inr salary stipend india indian bengaluru bangalore mumbai delhi ncr noida gurgaon gurugram hyderabad chennai pune kolkata ahmedabad jaipur lucknow kochi chandigarh indore coimbatore nagpur maharashtra karnataka telangana tamil nadu uttar pradesh haryana gujarat kerala west bengal rajasthan';
+
+    /** Posting details that are not skills: location, pay, shift, how to apply. */
+    private const META_LINE = '/^\s*(?:[•*\-–]\s*)?(?:job |work )?(?:location|salary|ctc|pay|package|compensation|stipend|job type|employment type|work mode|work from|shift|timings?|working days|notice period|openings|vacancies|no\.? of (?:positions|openings)|posted|date posted|apply|how to apply|contact|contact person|phone|mobile|email|whatsapp|interested candidates|industry|department|functional area|role category)\b/iu';
+
+    /** The job text whose words are compared, without posting details and without the qualification line (education is its own requirement). */
+    private static function keywordText(string $jobText): string
+    {
+        $keep = [];
+        foreach (preg_split('/\n/u', $jobText) as $line) {
+            if (preg_match(self::META_LINE, $line) || preg_match('/^\s*(?:[•*\-–]\s*)?(?:qualifications?|education(?:al qualification)?|eligibility)\s*[:\-–]/iu', $line)
+                || (preg_match(self::DEGREE, $line) && count(preg_split('/\s+/u', trim($line))) <= 14)) {
+                continue;
+            }
+            $keep[] = $line;
+        }
+
+        return implode("\n", $keep);
+    }
 
     private static function stem(string $w): string
     {
@@ -381,7 +411,7 @@ class AtsEngine
         $freq = [];
         $shown = [];
         $employer = self::companyWords($jobText);
-        $jobText = self::jobFocus($jobText);
+        $jobText = self::keywordText(self::jobFocus($jobText));
         $tl = mb_strtolower($title);
         preg_match_all($re, $jobText, $jm, PREG_OFFSET_CAPTURE);
         foreach ($jm[0] as [$raw, $byte]) {
