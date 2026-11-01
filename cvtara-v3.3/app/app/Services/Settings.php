@@ -70,7 +70,7 @@ class Settings
     public static function put(string $key, $data): void
     {
         self::$memo = [];
-        if (! in_array($key, ['providers', 'operator', 'integrations', 'speed', 'promos', 'campaignSettings', 'serviceSettings', 'statsReset'], true)) {
+        if (! in_array($key, ['providers', 'operator', 'integrations', 'speed', 'promos', 'campaignSettings', 'serviceSettings', 'statsReset', 'whatsNew'], true)) {
             PageCache::purge();
         }
         $json = json_encode($data);
