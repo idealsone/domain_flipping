@@ -289,6 +289,16 @@ class ApiController extends Controller
 
             return $ok(['quality' => \App\Services\ResumeQuality::score(json_decode($row->content_json, true) ?: [])]);
         }
+        if ($path === 'whats-new' && $get) {
+            return $ok(\App\Services\WhatsNew::forUser($u));
+        }
+        if ($path === 'whats-new/seen') {
+            abort_unless($r->isMethod('POST'), 405);
+            $cap('whats-new-seen', 20, 600, 'Please try again in a few minutes.');
+            \App\Services\WhatsNew::markSeen($id);
+
+            return $ok();
+        }
         if ($path === 'notifications') {
             if ($r->isMethod('POST')) {
                 $ids = array_filter((array) $r->input('ids', []), fn ($x) => is_string($x) && preg_match('/^[a-f0-9-]{36}$/', $x));
