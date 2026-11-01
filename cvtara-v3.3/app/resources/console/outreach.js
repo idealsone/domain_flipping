@@ -112,8 +112,8 @@
       <section class="panel panel-pad" data-nokit><h3 style="margin-top:0">Contacts</h3>
         <div class="ops-filterbox"><label class="ops-f grow">Search<input id="orQ" type="search" value="${E(F.q)}" placeholder="Email, name, college or source…"></label>
           <label class="ops-f">List<select id="orL"><option value="all">Both lists</option>${Object.entries(D.lists).map(([k, l]) => `<option value="${k}" ${F.list === k ? 'selected' : ''}>${E(l)}</option>`).join('')}</select></label>
-          <label class="ops-f">Status<select id="orS"><option value="all">All (${total})</option>${Object.entries(STATUS).map(([k, l]) => `<option value="${k}" ${F.status === k ? 'selected' : ''}>${E(l)} (${c[k] || 0})</option>`).join('')}</select></label>
-          <button class="button secondary small" id="orExport">Download CSV</button> <button class="button secondary small" id="orSuppress">Mark bounced / unsubscribed</button> <button class="button secondary small" id="orStop">Stop everyone waiting</button></div>
+          ${K.rangeHtml(F.from, F.to, true, 'Added')}<label class="ops-f">Status<select id="orS"><option value="all">All (${total})</option>${Object.entries(STATUS).map(([k, l]) => `<option value="${k}" ${F.status === k ? 'selected' : ''}>${E(l)} (${c[k] || 0})</option>`).join('')}</select></label>
+          <button class="button secondary small" id="orSuppress">Mark bounced / unsubscribed</button> <button class="button secondary small" id="orStop">Stop everyone waiting</button> ${K.dlHtml()}</div>
         <div style="overflow:auto"><table class="ad-table" id="orT"><tbody><tr><td>Loading…</td></tr></tbody></table></div><div class="ops-pager" id="orP"></div></section>
 
       <section class="panel panel-pad" data-nokit><h3 style="margin-top:0">Latest sends</h3><div style="overflow:auto"><table class="ad-table"><thead><tr><th>When</th><th>To</th><th>From</th><th>Mail</th><th>Result</th></tr></thead><tbody>${D.recent.length ? D.recent.map(x => `<tr><td>${E(when(x.created_at))}</td><td>${E(x.email || '')}</td><td>${E(x.sender || '')}</td><td>${x.kind === 'warmup' ? '<small>Warm-up</small> ' : x.step + '. '}${E(x.subject)}</td><td><span class="ad-pill ${x.status === 'sent' ? 'ok' : 'bad'}">${E(x.status)}</span>${x.error ? `<br><small>${E(x.error)}</small>` : ''}</td></tr>`).join('') : '<tr><td colspan="5">Nothing sent yet.</td></tr>'}</tbody></table></div></section>
@@ -184,7 +184,9 @@
     let t; $('#orQ', h).oninput = e => { F.q = e.target.value; clearTimeout(t); t = setTimeout(() => { F.page = 1; list(h); }, 300); };
     $('#orS', h).onchange = e => { F.status = e.target.value; F.page = 1; list(h); };
     $('#orL', h).onchange = e => { F.list = e.target.value; F.page = 1; list(h); };
-    $('#orExport', h).onclick = async () => { try { const r = await fetch('/api/admin/outreach/export', { credentials: 'same-origin', headers: { Accept: 'text/csv' } }); if (!r.ok) throw new Error('Download failed.'); download('outreach-contacts.csv', await r.text(), 'text/csv'); } catch (x) { toast(err(x), true); } };
+    const bar = $('#orQ', h).closest('.ops-filterbox');
+    bar.addEventListener('change', e => { const rg = K.rangeChange(e, bar); if (rg) { [F.from, F.to] = rg; F.page = 1; list(h); } });
+    K.wireDownload(bar, fmt => K.exportUrl('/api/admin/outreach/contacts', { q: F.q, status: F.status, list: F.list, from: F.from, to: F.to }, fmt));
     $('#orStop', h).onclick = async () => { if (!confirm('Stop everyone who has not been mailed yet? They will be marked Removed and never mailed. People already in a sequence keep getting their follow-ups.')) return; try { const r = await api('/api/admin/outreach/stop-queued', { method: 'POST', body: {} }); toast(r.updated + ' contacts stopped'); outreach(); } catch (x) { toast(err(x), true); } };
     $('#orSuppress', h).onclick = () => {
       const m = modal('Mark addresses as bounced or unsubscribed', `<form id="orSup"><p class="muted">Paste addresses from bounce notices or unsubscribe replies that arrived in the mailboxes. They will never be mailed again.</p><label class="ops-f">Addresses<textarea name="t" rows="8" required></textarea></label><label class="ops-f">Mark as<select name="s"><option value="bounced">Bounced</option><option value="unsubscribed">Unsubscribed</option></select></label><button class="button primary">Save</button><p role="status" class="ops-st"></p></form>`);
@@ -229,7 +231,7 @@
   async function list(h) {
     const tbl = $('#orT', h); if (!tbl) return;
     try {
-      const qs = new URLSearchParams({ page: String(F.page), per: String(F.per || 20) }); if (F.q) qs.set('q', F.q); if (F.status !== 'all') qs.set('status', F.status); if (F.list !== 'all') qs.set('list', F.list);
+      const qs = new URLSearchParams({ page: String(F.page), per: String(F.per || 20) }); if (F.q) qs.set('q', F.q); if (F.status !== 'all') qs.set('status', F.status); if (F.list !== 'all') qs.set('list', F.list); if (F.from) qs.set('from', F.from); if (F.to) qs.set('to', F.to);
       const d = await api('/api/admin/outreach/contacts?' + qs);
       tbl.innerHTML = d.rows.length ? `<thead><tr><th>Contact</th><th>Status</th><th>Mails sent</th><th>Next mail</th><th>Mailbox</th></tr></thead><tbody>${d.rows.map(r => `<tr><td><b>${E(r.email)}</b><br><small>${E([r.name, r.designation, r.college, r.city].filter(Boolean).join(' · '))}${r.source ? ' · ' + E(r.source) : ''}</small><br><small class="muted">${E(D.lists[r.list] || '')}${r.clicks ? ' · ' + r.clicks + ' click' + (r.clicks === 1 ? '' : 's') : ''}${r.shares ? ' · shared ' + r.shares + '×' : ''}</small></td><td><span class="ad-pill ${tone(r.status)}">${E(STATUS[r.status] || r.status)}</span>${r.error ? `<br><small>${E(r.error)}</small>` : ''}</td><td>${r.step}${r.last_sent_at ? `<br><small>last ${E(when(r.last_sent_at))}</small>` : ''}</td><td>${r.status === 'active' ? E(when(r.next_at)) : r.status === 'queued' ? 'In line' : '—'}</td><td>${E(r.sender || '—')}</td></tr>`).join('')}</tbody>` : '<tbody><tr><td>No contacts match.</td></tr></tbody>';
       K.pager($('#orP', h), d, (p, per) => { F.page = p; F.per = per; list(h); });

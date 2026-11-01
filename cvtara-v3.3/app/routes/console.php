@@ -10,6 +10,7 @@ use Illuminate\Support\Str;
 
 Artisan::command('cvtara:cron', function () {
     \App\Services\Settings::put('cronHeartbeat', ['at' => now()->toIso8601String()]);
+    \App\Services\ErrorLog::flushPending(); // errors recorded while the database was unreachable
     // Mail that is already due goes first, so the daily backup or a slow scan never delays it.
     $send = function () {
         try {
@@ -246,6 +247,11 @@ Artisan::command('cvtara:ats-analyse {file}', function (string $file) {
     $pairs = json_decode((string) file_get_contents($file), true) ?: [];
     $this->line(json_encode(array_map(fn ($p) => \App\Services\AtsEngine::analyse($p[0], $p[1]), $pairs), JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES));
 })->purpose('Run the ATS engine on resume/job pairs');
+
+Artisan::command('cvtara:ats-report {file}', function (string $file) {
+    $pairs = json_decode((string) file_get_contents($file), true) ?: [];
+    $this->line(json_encode(array_map(fn ($p) => \App\Services\AtsEngine::report($p[0], $p[1]), $pairs), JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES));
+})->purpose('Full ATS Match report (score, keywords, gaps) for saved-resume/job pairs');
 
 Artisan::command('cvtara:prebuild', function () {
     $r = \App\Services\PageCache::build();

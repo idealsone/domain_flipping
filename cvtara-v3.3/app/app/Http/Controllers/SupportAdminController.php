@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Services\AdminTable;
 use App\Services\Settings;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -47,6 +48,8 @@ class SupportAdminController extends Controller
                 $like = '%'.str_replace(['\\', '%', '_'], ['\\\\', '\\%', '\\_'], mb_substr($term, 0, 80)).'%';
                 $q->where(fn ($w) => $w->where('s.message', 'like', $like)->orWhere('s.email', 'like', $like)->orWhere('s.name', 'like', $like)->orWhere('s.page', 'like', $like));
             }
+            AdminTable::dates($r, $q, 's.created_at');
+            AdminTable::export($r, (clone $q)->orderByDesc('s.created_at')->select(['s.created_at', 's.name', 's.email', 's.plan', 's.area', 's.kind', 's.page', 's.rating', 's.status', 's.message', 's.resolved_at']), ['export' => ['title' => 'Support reports', 'columns' => ['created_at' => 'Sent', 'name' => 'Name', 'email' => 'Email', 'plan' => 'Plan', 'area' => 'Area', 'kind' => 'Kind', 'page' => 'Page', 'rating' => 'Rating', 'status' => 'Status', 'message' => 'Message', 'resolved_at' => 'Resolved']]]);
             $total = (clone $q)->count();
             $per = min(50, max(5, (int) $r->query('per', 20)));
             $page = max(1, (int) $r->query('page', 1));

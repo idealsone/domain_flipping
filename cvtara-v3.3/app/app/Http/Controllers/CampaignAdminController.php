@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Services\AccountSecurity;
+use App\Services\AdminTable;
 use App\Services\Campaigns;
 use App\Services\EmailRenderer;
 use App\Services\MailAutomation;
@@ -36,8 +37,10 @@ class CampaignAdminController extends Controller
                 $like = '%'.str_replace(['%', '_'], ['\%', '\_'], mb_strtolower($s)).'%';
                 $q->where(fn ($w) => $w->where('email', 'like', $like)->orWhere('name', 'like', $like)->orWhere('source', 'like', $like));
             }
+            AdminTable::dates($r, $q, 'created_at');
+            AdminTable::export($r, (clone $q)->select(['created_at', 'email', 'name', 'source', 'confirmed_at', 'unsubscribed_at']), ['export' => ['title' => 'Email contacts', 'columns' => ['created_at' => 'Added', 'email' => 'Email', 'name' => 'Name', 'source' => 'Source', 'confirmed_at' => 'Confirmed', 'unsubscribed_at' => 'Unsubscribed']]]);
             $page = max(1, (int) $r->query('page', 1));
-            $per = in_array((int) $r->query('per'), \App\Services\AdminTable::SIZES, true) ? (int) $r->query('per') : \App\Services\AdminTable::PER;
+            $per = in_array((int) $r->query('per'), AdminTable::SIZES, true) ? (int) $r->query('per') : AdminTable::PER;
             $total = (clone $q)->count();
 
             return $ok(['contacts' => $q->forPage($page, $per)->get(['id', 'email', 'name', 'source', 'confirmed_at', 'unsubscribed_at', 'created_at']), 'total' => $total, 'page' => $page, 'per' => $per]);
