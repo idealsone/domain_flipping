@@ -65,7 +65,7 @@ class Health
         array_unshift($hist, $snap);
         Settings::put('healthHistory', $hist);
         if ($snap['status'] !== 'healthy') {
-            ErrorLog::record('warning', 'cron', 'Daily health check: '.($snap['problems'] ? implode(', ', $snap['problems']) : 'errors or failed mail in the last 24h'), 'health:'.$snap['date']);
+            ErrorLog::record('warning', 'cron', 'Daily health check: '.($snap['problems'] ? implode(', ', $snap['problems']) : 'errors or failed mail in the last 24h'), 'health'); // one row per problem set that counts days, not a new row every day
         }
 
         return $snap;

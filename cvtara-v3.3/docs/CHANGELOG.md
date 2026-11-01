@@ -1,9 +1,31 @@
-# CVTara v3.28.1 — Count revenue and offers from launch
+# CVTara v3.29.3 — Count revenue and offers from launch
 
-## 3.28.1
+## 3.29.3
 - **Start counting from now (Owner console > Overview):** one button sets the moment revenue, orders, paid users, the Growth page (actual vs target, 2 PM and 7 PM reports), offers seen/clicks/coupon sales and Outreach revenue start counting from. Nothing is deleted: older orders stay in the Orders list and exports for refunds, accounts and tax. Needs the owner's email security code. Pressing it again moves the start. No migration.
 - **Real money only:** "Paid users" and conversion no longer count test-mode payments or free plans given by hand, and the live "Revenue today" figure no longer counts test-mode payments. Abandoned and failed checkouts were never counted; a test now guards that.
 
+# CVTara v3.29.2 — Pre-launch check: fairer ATS Match for Indian job posts
+
+## 3.29.2
+- **ATS Match, degrees:** B.Com, M.Com, BCA, MCA, BBA, B.Sc, M.Sc, B.E., M.E., B.A., PGDM, Diploma, Graduate, MBBS, B.Pharm and similar are now recognised, so the education requirement no longer shows "Not found" for an Indian degree. "Scrum master" is no longer read as a master's degree.
+- **ATS Match, experience:** "3 to 5 years" asks for 3 years (it asked for 5). A fresher post ("0 to 2 years") asks for no minimum, so freshers are no longer marked down for experience.
+- **ATS Match, keywords:** location, salary/LPA, job type, shift, notice period and how-to-apply lines are no longer counted as keywords (Mumbai, Maharashtra, LPA, WhatsApp, "Title" were showing as "missing"). A list of acceptable degrees ("B.Com / M.Com / BBA") is checked once as the education requirement instead of marking the other degrees as missing. The employer named on the title line ("Java Developer - TCS") is not a keyword. Seniority words (Senior, Junior) are not keywords.
+- **ATS Match, requirements:** when a job names a skill twice, the sentence that says it is required sets its priority ("Must have: Java" makes Java Required). "Good to have", "is a plus" and "added advantage" mark a requirement as preferred. An education line ("Education: B.Tech from a recognised university") no longer adds an "Education and edtech" requirement to a non-teaching job. "Data analyst" counts as data analysis.
+- **ATS-friendly score:** an empty resume now scores 0 (it got 5 for "standard headings").
+- **No AI wording in public files:** the owner's service-queue script (it names the writing service) moved from a public file to the owner-only /console/refunds.js. "ai resume builder" was taken out of the home page keywords (also removed from saved keywords by a migration).
+- **ATS checker page:** the first button is the check itself; "Use this template" is only on template, example and role pages.
+- **Migration:** 2026_11_01_000001_no_ai_keyword. Run `php artisan migrate --force` and rebuild ready-made pages. Delete public_html/refunds-admin.js on the live site.
+# CVTara v3.29.0 — Weekly report, page and search tracking, on-page SEO fixes
+
+## 3.29.0
+- **Weekly owner report (default):** one report every Sunday from 9 AM India time covering Sunday to Saturday of the week before: sales against the plan, last week's funnel, Search (Google clicks and impressions, searches close to page 1, pages seen but rarely clicked, the pages with most impressions and the searches they show for, searches that moved 3+ places, SEO changes that went live), risks, decisions and next actions. The 2 PM / 7 PM daily reports remain a choice under Targets and settings. The weekly report keeps the "Revenue follow-ups (last 7 days)" section from 3.28.0. Report risks are now written in plain words instead of internal check names.
+- **Tracked pages and searches (Growth → SEO agent):** every Search Console check keeps this week's numbers per page and per search (up to 1,000 searches), so each page shows impressions, clicks, click rate, position, the change since the week before, the searches it shows for, its main search and whether its title carries it. Filters: on page 1, close to page 1, beyond page 2, seen but rarely clicked, title misses its main search, and searches naming other brands. Paged and searchable.
+- **On-page SEO audit of all 522 sitemap pages:** every page has one title, one description, one H1, a canonical address and alt text on every image. Fixed: the footer's site links were missing on Templates, About, Contact, Privacy, Terms and Refund (the server only filled an empty footer written on one line); those pages and Cover letters / Guides now carry page and breadcrumb schema; the Templates, Cover letters, Guides and Blog headings now name what the page is.
+- **New landing pages for high-intent searches:** /resume-builder/ (free resume builder, resume maker; signed-in customers still go straight to the builder), /cover-letter-generator/ (cover letter from your saved resume and the job post) and /cover-letter-examples/how-to-write/ (with a sample letter). The ATS checker now also targets "resume score". All three are in the sitemap, the footer and llms.txt, with FAQ and breadcrumb schema.
+- **Which pages Google shows:** the SEO agent lists every sitemap page Google has not shown yet next to those it has, and a per-section table (resume examples, city pages, interview questions, guides, calculators…) of pages shown out of pages in the sitemap. The weekly report gives the same count.
+- **Calculators:** each calculator page now carries WebApplication schema (free, runs in the browser) beside its article, breadcrumb and FAQ schema, and short calculator titles say "for India" unless the owner has written a title.
+- **Answer engines:** new /llms.txt summarising CVTara, its tools, guides, every calculator and the plans. robots.txt already lets every crawler in.
+- **Migration:** adds seo_track. Run `php artisan migrate --force` after updating.
 # CVTara v3.28.0 — Honest follow-ups from sign-up to purchase
 
 ## 3.28.0
