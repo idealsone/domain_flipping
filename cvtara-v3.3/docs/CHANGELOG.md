@@ -1,3 +1,8 @@
+# CVTara v3.29.6 — Outreach sends from campus@ and placements@
+
+## 3.29.6
+- **Outreach:** each list can send from its own alias of the mailbox. Students get mail from campus@cvtara.in and placement cells from placements@cvtara.in by default (change it under Outreach › your lists › Send from). Replies and one-click unsubscribe use the same alias. Because every alias is the same mailbox, add the mailbox once: one daily limit covers both lists. An alias on another domain than the mailbox is ignored. No migration.
+
 # CVTara v3.29.5 — Growth page downloads
 
 ## 3.29.5

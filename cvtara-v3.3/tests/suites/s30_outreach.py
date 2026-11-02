@@ -184,6 +184,8 @@ def _run(ctx, t, db, smtp):
     stu = "email,name\n" + "".join(f"s{i}@example.com,Student {i}\n" for i in range(1, 7))
     o.api("POST", "admin/outreach/import", {"text": stu, "list": "students", "consent": True, "checkDomains": False})
     t.check("contacts can be filtered by list", o.api("GET", "admin/outreach/contacts?list=colleges")[1]["total"] == 1)
+    t.check("a bad send-from alias is refused", o.api("POST", "admin/outreach/settings", dict(cfg(True, students), lists={"students": {"design": "plain", "from": "not-an-address", "steps": students}, "colleges": colleges}))[0] == 422)
+    t.check("an alias on another domain than the mailbox falls back to the mailbox", __import__("json").loads(ctx.inst.artisan("tinker", "--execute", "echo json_encode(App\\Services\\Outreach::fromFor((object) ['email' => 'priya@cvtara.in'], ['from' => 'x@other.example']));").stdout.strip() or '""') == "priya@cvtara.in")
     t.check("a bad warm-up address is refused", o.api("POST", "admin/outreach/settings", cfg(True, students, seeds=["not-an-address"]))[0] == 422)
     seeds = ["seed1@warmup.example", "seed2@warmup.example"]
     s, d = o.api("POST", "admin/outreach/settings", cfg(True, students, seeds=seeds, design="card"))
@@ -207,8 +209,10 @@ def _run(ctx, t, db, smtp):
     msg, text, html = _mail(tm[0]) if tm else (None, "", "")
     t.check("the placement officer gets the colleges sequence, personalised", tm and msg["Subject"] == "Placement support for ABC College of Engineering students" and text.startswith("Hello Ramesh,"), tm and msg["Subject"])
     t.check("the colleges list keeps its plain, personal look", tm and "<table" not in html)
+    t.check("colleges send from the placements@ alias of the same mailbox, with unsubscribe to that alias", tm and "placements@cvtara.in" in msg["From"] and "mailto:placements@cvtara.in" in (msg["List-Unsubscribe"] or ""), tm and msg["From"])
     sm = [m for m in camp if m["to"][0].startswith("s")]
     msg, text, html = _mail(sm[0])
+    t.check("students saved without an alias send from the mailbox itself", "warm@cvtara.in" in msg["From"], msg["From"])
     t.check("students get the designed mail: heading, bullet list and a button", "<h1" in html and "&#10003;" in html and "background:#1557d2" in html and "Check my resume: http" in text and 'name="color-scheme"' in html, html[:200])
     s, d = o.api("GET", "admin/outreach")
     t.check("the overview counts each list and the warm-up mix", d["byList"]["colleges"]["reached"] == 1 and d["byList"]["students"]["reached"] >= 5 and d["mix30"]["warmup"] == 4, (d.get("byList"), d.get("mix30")))

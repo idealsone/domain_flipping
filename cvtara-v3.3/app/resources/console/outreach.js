@@ -79,7 +79,7 @@
 
       <section class="panel panel-pad" data-nokit><h3 style="margin-top:0">Mails in each sequence</h3>
         <div role="tablist" id="orTabs" style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px">${Object.entries(D.lists).map(([k, l]) => `<button role="tab" class="button small ${k === CUR ? 'primary' : 'secondary'}" data-list="${k}" aria-selected="${k === CUR}">${E(l)}</button>`).join('')}</div>
-        <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;margin-bottom:8px"><label class="ops-f">Start from a template<select id="orLib"></select></label><label class="ops-f">Look<select id="orDesign"><option value="card">Designed: light card with a button</option><option value="plain">Plain: a personal note</option></select></label></div>
+        <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;margin-bottom:8px"><label class="ops-f">Start from a template<select id="orLib"></select></label><label class="ops-f">Send from (alias of the mailbox)<input id="orFrom" type="email" placeholder="campus@cvtara.in" style="min-width:220px"></label><label class="ops-f">Look<select id="orDesign"><option value="card">Designed: light card with a button</option><option value="plain">Plain: a personal note</option></select></label></div>
         <p class="muted" style="margin:0 0 12px"><small>Placeholders: {{name}} first name · {{college}} · {{designation}} · {{city}} · {{ats_url}} free ATS check · {{site_url}} home page · {{plans_url}} plans · {{share_url}} send to a friend on WhatsApp · {{sender_name}} · {{from_price}} lowest package price · {{offer_line}} the offer live now (empty when none, and the line is left out). Prices and offers come from Pricing and Offers & festivals, so mails never show an old price. Formatting: start with "# Heading", use "- " for bullets, and put [button: Label | {{ats_url}}] on its own line. Links are tracked.</small></p>
         <div id="orSteps"></div>
         <div style="display:flex;gap:8px;flex-wrap:wrap;margin:6px 0 16px"><button class="button secondary small" id="orAddStep">+ Add follow-up</button></div>
@@ -126,6 +126,7 @@
     const box = $('#orSteps', h), STEPS = steps0();
     $('#orLib', h).innerHTML = '<option value="">Choose…</option>' + Object.entries(lib()).map(([k, v]) => `<option value="${k}">${E(v.name)} (${v.steps.length} mails)</option>`).join('');
     $('#orDesign', h).value = CFG.lists[CUR].design;
+    $('#orFrom', h).value = CFG.lists[CUR].from || '';
     h.querySelectorAll('#orTabs [data-list]').forEach(b => { const on = b.dataset.list === CUR; b.classList.toggle('primary', on); b.classList.toggle('secondary', !on); b.setAttribute('aria-selected', String(on)); });
     box.innerHTML = STEPS.map((s, i) => `<fieldset class="panel panel-pad" style="margin:0 0 10px;border:1px solid var(--line,#e2e8f0)"><legend style="font-weight:700;padding:0 6px">${i === 0 ? 'First mail' : 'Follow-up ' + i}</legend>
       <div style="display:flex;gap:10px;flex-wrap:wrap"><label class="ops-f grow">Subject<input data-k="subject" data-i="${i}" maxlength="160" value="${E(s.subject)}"></label>${i ? `<label class="ops-f">Days after the previous mail<input type="number" min="1" max="60" data-k="delayDays" data-i="${i}" value="${Number(s.delayDays) || 3}" style="width:90px"></label>` : ''}</div>
@@ -150,6 +151,7 @@
     const msg = $('#orMsg', h);
     $('#orTabs', h).onclick = e => { const b = e.target.closest('[data-list]'); if (b) { CUR = b.dataset.list; steps(h); } };
     $('#orDesign', h).onchange = e => { CFG.lists[CUR].design = e.target.value; };
+    $('#orFrom', h).oninput = e => { CFG.lists[CUR].from = e.target.value.trim(); };
     $('#orLib', h).onchange = e => { const t = lib()[e.target.value]; if (!t) return; if (!confirm(`Replace the current ${D.lists[CUR]} mails with "${t.name}"? Nothing is saved until you press Save.`)) { e.target.value = ''; return; } CFG.lists[CUR].steps = JSON.parse(JSON.stringify(t.steps)); steps(h); };
     $('#orAddStep', h).onclick = () => { const S = steps0(); if (S.length < 4) { S.push({ subject: 'Re: ' + (S[S.length - 1].subject || ''), body: (CUR === 'colleges' ? 'Hello' : 'Hi') + ' {{name}},\n\n', delayDays: 3 }); steps(h); } };
     $('#orSave', h).onclick = async () => {

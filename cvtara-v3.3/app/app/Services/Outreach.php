@@ -19,6 +19,8 @@ use Illuminate\Support\Str;
  * - Right before each send the address is checked again: a CVTara account, an unsubscribe or a bounce stops it for good.
  * - A mailbox pauses itself after repeated failures or too many bounces; the others carry on.
  * - Two lists, each with its own sequence: students (job seekers) and colleges (placement officers).
+ *   Each list can send from its own alias of the mailbox (campus@ for students, placements@ for colleges), so one
+ *   mailbox and one daily limit serve both; an alias on another domain than the mailbox is ignored.
  * - Part of each mailbox's daily amount (40% by default) goes to short warm-up notes to the owner's own addresses,
  *   so the mailbox keeps a steady, healthy history. With nothing else to send, warm-up may use the whole day.
  */
@@ -60,12 +62,12 @@ class Outreach
             'footer' => '',
             'warmup' => ['share' => 40, 'seeds' => []],
             'lists' => [
-                'students' => ['design' => 'card', 'steps' => [
+                'students' => ['design' => 'card', 'from' => 'campus@cvtara.in', 'steps' => [
                     ['subject' => '{{name}}, will your resume get shortlisted?', 'delayDays' => 0, 'body' => "# Will your resume get shortlisted?\n[preheader: A one-minute check shows the keywords your resume is missing for any job.]\nHi {{name}},\n\nMany companies that hire freshers screen resumes with software (an ATS) before anyone reads them. If your resume does not use the words the job asks for, it can be passed over in seconds.\n\nCVTara checks your resume against any job description, at no cost, and shows you:\n- your match score for that job\n- the keywords you are missing\n- what to fix before you apply\n\n[button: Check my resume | {{ats_url}}]\n\nIt takes about a minute, and placement season is a good time to fix it.\n\n{{sender_name}}"],
                     ['subject' => 'Re: will your resume get shortlisted?', 'delayDays' => 3, 'body' => "Hi {{name}},\n\nA quick placement tip: send a slightly different resume for each role. Same facts, but the words that role asks for.\n\nCVTara keeps one primary resume and makes a tailored version for each job in a click, with fresher designs from the guided template library and a matching cover letter.\n\n{{tara_line}}\n\n[button: Make my job-ready resume | {{site_url}}]\n\nFriends applying too? Send them the check on WhatsApp: {{share_url}}"],
                     ['subject' => 'last note from me, {{name}}', 'delayDays' => 5, 'body' => "# Your resume, ready before the next interview\nHi {{name}},\n\nThis is my last mail about it. Building, editing and checking your resume on CVTara costs nothing. You pay only when you download a clean copy, from {{from_price}}, paid once with no auto-renewal and a full refund within 7 days if you have not used it.\n\n{{offer_line}}\n\n[button: See the packages | {{plans_url}}]\n\nAll the best for your placements.\n\n{{sender_name}}"],
                 ]],
-                'colleges' => ['design' => 'plain', 'steps' => [
+                'colleges' => ['design' => 'plain', 'from' => 'placements@cvtara.in', 'steps' => [
                     ['subject' => 'Placement support for {{college}} students', 'delayDays' => 0, 'body' => "Hello {{name}},\n\nI'm writing from CVTara, a resume platform built by an HR team in Bengaluru. You will know how many capable students at {{college}} lose out at the resume shortlist stage.\n\nWe would like to give {{college}}'s final-year students our ATS resume check this placement season, at no cost:\n- each student sees how their resume scores against real job descriptions\n- they get the missing keywords and fixes in minutes\n- you share one link with the batch, with nothing to install\n\nShall I send you the link and a short note you can forward to students? A reply to this email is enough.\n\n{{sender_name}}"],
                     ['subject' => 'Re: Placement support for {{college}} students', 'delayDays' => 4, 'body' => "Hello {{name}},\n\nFollowing up on my note. Here is the link your students can use straight away: {{ats_url}}\n\nIf it helps, we can also run a 30-minute online session for the batch on writing a resume that passes ATS screening, at no cost to the college.\n\nWould a date in the next two weeks suit you? A one-line reply is enough.\n\n{{sender_name}}"],
                     ['subject' => 'Re: Placement support for {{college}} students', 'delayDays' => 7, 'body' => "Hello {{name}},\n\nI don't want to fill your inbox, so this is my last note. If the ATS check or a resume session would help {{college}}'s students this season, just reply and I'll set it up.\n\nYou can also forward the check to your students on WhatsApp: {{share_url}}\n\n{{sender_name}}"],
@@ -88,6 +90,7 @@ class Outreach
             $l = array_merge($def, (array) ($savedLists[$k] ?? []));
             $l['steps'] = array_values(array_slice((array) $l['steps'], 0, 4)) ?: $def['steps'];
             $l['design'] = in_array($l['design'], ['card', 'plain'], true) ? $l['design'] : $def['design'];
+            $l['from'] = mb_strtolower(trim((string) ($l['from'] ?? '')));
             $c['lists'][$k] = $l;
         }
 
@@ -294,10 +297,11 @@ class Outreach
     public static function deliver(object $s, string $to, array $mail): void
     {
         self::mailer($s)->send([], [], function ($m) use ($s, $to, $mail) {
-            $m->from($s->email, $s->from_name ?: null)->to($to)->subject($mail['subject'])->text($mail['text'])->html($mail['html']);
+            $from = $mail['from'] ?? $s->email;
+            $m->from($from, $s->from_name ?: null)->to($to)->subject($mail['subject'])->text($mail['text'])->html($mail['html']);
             $h = $m->getSymfonyMessage()->getHeaders();
             if (! empty($mail['unsubscribe'])) {
-                $h->addTextHeader('List-Unsubscribe', '<'.$mail['unsubscribe'].'>, <mailto:'.$s->email.'?subject=Unsubscribe>');
+                $h->addTextHeader('List-Unsubscribe', '<'.$mail['unsubscribe'].'>, <mailto:'.$from.'?subject=Unsubscribe>');
                 $h->addTextHeader('List-Unsubscribe-Post', 'List-Unsubscribe=One-Click');
             }
         });
@@ -359,15 +363,25 @@ class Outreach
         return URL::signedRoute('outreach.click', ['contact' => $contactId, 'step' => $step, 'to' => $to]);
     }
 
+    /** The address a list sends from: its alias when that alias is on the mailbox's own domain, otherwise the mailbox itself. */
+    public static function fromFor(object $s, array $list): string
+    {
+        $alias = mb_strtolower(trim((string) ($list['from'] ?? '')));
+        $domain = fn ($e) => mb_strtolower((string) substr(strrchr($e, '@'), 1));
+
+        return $alias !== '' && filter_var($alias, FILTER_VALIDATE_EMAIL) && $domain($alias) === $domain($s->email) ? $alias : $s->email;
+    }
+
     public static function listOf(array $c, object $ct): array
     {
         return $c['lists'][$ct->list ?? 'students'] ?? $c['lists']['students'];
     }
 
-    /** @return array{subject:string,text:string,html:string,unsubscribe:string} */
+    /** @return array{subject:string,text:string,html:string,unsubscribe:string,from:string} */
     public static function render(array $step, object $ct, object $s, array $c, ?string $design = null): array
     {
         $list = $ct->list ?? 'students';
+        $from = self::fromFor($s, (array) ($c['lists'][$list] ?? []));
         $design ??= self::listOf($c, $ct)['design'];
         // "Dr. Ramesh Kumar" → "Ramesh": greet by first name without the title.
         $first = trim(explode(' ', trim(preg_replace('/^((dr|prof|mr|mrs|ms|miss|shri|sri|smt)\.?\s+)+/i', '', trim((string) $ct->name))))[0] ?? '');
@@ -433,7 +447,7 @@ class Outreach
                 .$html.$signHtml.$foot.'</body></html>';
         }
 
-        return ['subject' => $subject, 'text' => $text, 'html' => $html, 'unsubscribe' => $unsub];
+        return ['subject' => $subject, 'text' => $text, 'html' => $html, 'unsubscribe' => $unsub, 'from' => $from];
     }
 
     // ---------------------------------------------------------------- list import and clean-up

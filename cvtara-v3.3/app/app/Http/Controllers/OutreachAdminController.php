@@ -65,9 +65,9 @@ class OutreachAdminController extends Controller
             $v = $r->validate([
                 'enabled' => 'required|boolean', 'windowStart' => 'required|integer|min:0|max:23', 'windowEnd' => 'required|integer|min:1|max:24', 'footer' => 'nullable|string|max:400',
                 'warmup' => 'required|array', 'warmup.share' => 'required|integer|min:0|max:60', 'warmup.seeds' => 'present|array|max:'.Outreach::MAX_SEEDS, 'warmup.seeds.*' => 'email|max:190',
-                'lists' => 'required|array:'.implode(',', array_keys(Outreach::LISTS)), 'lists.*.design' => 'required|in:card,plain',
+                'lists' => 'required|array:'.implode(',', array_keys(Outreach::LISTS)), 'lists.*.design' => 'required|in:card,plain', 'lists.*.from' => 'nullable|email|max:190',
                 'lists.*.steps' => 'required|array|min:1|max:4', 'lists.*.steps.*.subject' => 'required|string|max:160', 'lists.*.steps.*.body' => 'required|string|max:5000', 'lists.*.steps.*.delayDays' => 'required|integer|min:0|max:60',
-            ], ['lists.*.steps.*.subject.required' => 'Every mail needs a subject.', 'lists.*.steps.*.body.required' => 'Every mail needs a message.', 'warmup.seeds.*.email' => 'Each warm-up address must be a valid email address.', 'warmup.seeds.max' => 'Use up to '.Outreach::MAX_SEEDS.' warm-up addresses.']);
+            ], ['lists.*.steps.*.subject.required' => 'Every mail needs a subject.', 'lists.*.steps.*.body.required' => 'Every mail needs a message.', 'warmup.seeds.*.email' => 'Each warm-up address must be a valid email address.', 'warmup.seeds.max' => 'Use up to '.Outreach::MAX_SEEDS.' warm-up addresses.', 'lists.*.from.email' => 'The send-from alias must be a valid email address.']);
             abort_unless($v['windowEnd'] > $v['windowStart'], 422, 'The send window must end after it starts.');
             abort_unless(count($v['lists']) === count(Outreach::LISTS), 422, 'Both lists need their mails.');
             $lists = [];
@@ -75,7 +75,7 @@ class OutreachAdminController extends Controller
                 foreach ($l['steps'] as $i => $st) {
                     abort_if($i > 0 && $st['delayDays'] < 1, 422, 'Follow-ups need at least 1 day after the previous mail.');
                 }
-                $lists[$k] = ['design' => $l['design'], 'steps' => array_map(fn ($st, $i) => ['subject' => trim($st['subject']), 'body' => trim(str_replace("\r", '', $st['body'])), 'delayDays' => $i === 0 ? 0 : (int) $st['delayDays']], $l['steps'], array_keys($l['steps']))];
+                $lists[$k] = ['design' => $l['design'], 'from' => mb_strtolower(trim((string) ($l['from'] ?? ''))), 'steps' => array_map(fn ($st, $i) => ['subject' => trim($st['subject']), 'body' => trim(str_replace("\r", '', $st['body'])), 'delayDays' => $i === 0 ? 0 : (int) $st['delayDays']], $l['steps'], array_keys($l['steps']))];
             }
             if ($v['enabled'] && ! (Outreach::config()['enabled'] ?? false)) {
                 AccountSecurity::requireRecent($r);
