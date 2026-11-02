@@ -1,7 +1,8 @@
-# CVTara v3.29.9 — Outreach mails polished
+# CVTara v3.29.9 — Attractive outreach mails
 
 ## 3.29.9
-- **Outreach mails:** both recommended sequences rewritten. Student mails have a clear heading, tick-list benefits, one main button, a tip box, the live festive offer as a highlighted box and a proper sign-off; the WhatsApp share is a short link instead of a long web address. Placement-cell mails stay plain and personal, with a courteous sign-off, short links instead of long addresses, and the unverified "built by an HR team" line removed. Subjects are capitalised and personal. The other ready-made templates (freshers, experienced, ATS check, festival, batch session) got the same polish. A list still on the earlier recommended mails, word for word, moves to the new ones by itself; a list the owner edited is kept as it is. No migration.
+- **Outreach mails, new "Campaign" look (now the default for both lists):** a coloured header with the CVTara mark, a small label, the headline and a one-line summary; a "How it works" row of three numbered steps; and one big rounded button in a highlighted panel with small print under it. Students get a blue-violet header with an orange button ("For students & freshers"); placement cells a calmer navy header with a green button ("For placement cells"). Works on phones and in dark mode, and passes the spam-style check. New template lines: `[steps: A | B | C]` and `[small: text]` under a button; the Designed and Plain looks show steps as a list and leave the small print out.
+- Both recommended sequences rewritten for it (headings, tick lists, one clear call to action per mail, the live offer as a highlighted box, short links instead of long addresses, proper sign-offs; the unverified "built by an HR team" line removed). The other ready-made templates got the same polish. A list still on the earlier recommended mails, word for word, moves to the new mails and the Campaign look by itself; a list the owner edited is kept as it is. No migration.
 
 # CVTara v3.29.8 — Outreach finds the email column in any sheet
 

@@ -222,7 +222,9 @@ def _run(ctx, t, db, smtp):
     s, d = o.api("POST", "admin/outreach/settings", cfg(True, students, seeds=seeds, design="card"))
     t.check("owner saves both lists, the warm-up share and warm-up addresses", s == 200 and d["config"]["warmup"] == {"share": 40, "seeds": seeds} and d["config"]["lists"]["students"]["design"] == "card", (s, str(d)[:200]))
     s, d = o.api("POST", "admin/outreach/preview", {"subject": colleges["steps"][0]["subject"], "body": colleges["steps"][0]["body"], "list": "colleges", "design": "card"})
-    t.check("the colleges preview fills the officer's name and college, and returns the designed HTML", s == 200 and "ABC College of Engineering" in d["subject"] and d["text"].startswith("Hello Ramesh,") and "<table" in d["html"], d.get("subject"))
+    t.check("the colleges preview fills the officer's name and college, and returns the designed HTML", s == 200 and "ABC College of Engineering" in d["subject"] and "\n\nHello Ramesh," in d["text"] and "<table" in d["html"], d.get("subject"))
+    s, d = o.api("POST", "admin/outreach/preview", {"subject": students[0]["subject"], "body": students[0]["body"], "list": "students", "design": "plain"})
+    t.check("the plain look shows the how-it-works steps as a list and leaves the small print out", s == 200 and "- Add your resume" in d["text"] and "[small" not in d["text"] and "[steps" not in d["text"] and "[small" not in d["html"], d.get("text", "")[:300])
 
     n0 = len(smtp.messages)
     for hr in range(10):
@@ -238,8 +240,8 @@ def _run(ctx, t, db, smtp):
     t.check("the send log marks warm-up notes", db.q("select count(*) from outreach_sends where kind='warmup' and to_email in (?, ?)", *seeds)[0][0] == 4)
     tm = [m for m in camp if m["to"] == ["tpo1@abc.edu.in"]]
     msg, text, html = _mail(tm[0]) if tm else (None, "", "")
-    t.check("the placement officer gets the colleges sequence, personalised", tm and msg["Subject"] == "Free ATS resume check for ABC College of Engineering students" and text.startswith("Hello Ramesh,"), tm and msg["Subject"])
-    t.check("the colleges list keeps its plain, personal look", tm and "<table" not in html)
+    t.check("the placement officer gets the colleges sequence, personalised", tm and msg["Subject"] == "Free ATS resume check for ABC College of Engineering students" and "Hello Ramesh," in text and "Free ATS resume checks for ABC College of Engineering" in text, tm and msg["Subject"])
+    t.check("placement cells get the campaign look: navy header, green button, small print under it", tm and "For placement cells" in html and "#059669" in html and "See what your students get" in html and "reply to this email for the batch link" in html and "[small" not in html)
     t.check("colleges send from the placements@ alias of the same mailbox, with unsubscribe to that alias", tm and "placements@cvtara.in" in msg["From"] and "mailto:placements@cvtara.in" in (msg["List-Unsubscribe"] or ""), tm and msg["From"])
     sm = [m for m in camp if m["to"][0].startswith("s")]
     msg, text, html = _mail(sm[0])

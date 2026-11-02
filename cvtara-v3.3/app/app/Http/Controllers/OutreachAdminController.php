@@ -65,7 +65,7 @@ class OutreachAdminController extends Controller
             $v = $r->validate([
                 'enabled' => 'required|boolean', 'windowStart' => 'required|integer|min:0|max:23', 'windowEnd' => 'required|integer|min:1|max:24', 'footer' => 'nullable|string|max:400',
                 'warmup' => 'required|array', 'warmup.share' => 'required|integer|min:0|max:60', 'warmup.seeds' => 'present|array|max:'.Outreach::MAX_SEEDS, 'warmup.seeds.*' => 'email|max:190',
-                'lists' => 'required|array:'.implode(',', array_keys(Outreach::LISTS)), 'lists.*.design' => 'required|in:card,plain', 'lists.*.from' => 'nullable|email|max:190',
+                'lists' => 'required|array:'.implode(',', array_keys(Outreach::LISTS)), 'lists.*.design' => 'required|in:campaign,card,plain', 'lists.*.from' => 'nullable|email|max:190',
                 'lists.*.steps' => 'required|array|min:1|max:4', 'lists.*.steps.*.subject' => 'required|string|max:160', 'lists.*.steps.*.body' => 'required|string|max:5000', 'lists.*.steps.*.delayDays' => 'required|integer|min:0|max:60',
             ], ['lists.*.steps.*.subject.required' => 'Every mail needs a subject.', 'lists.*.steps.*.body.required' => 'Every mail needs a message.', 'warmup.seeds.*.email' => 'Each warm-up address must be a valid email address.', 'warmup.seeds.max' => 'Use up to '.Outreach::MAX_SEEDS.' warm-up addresses.', 'lists.*.from.email' => 'The send-from alias must be a valid email address.']);
             abort_unless($v['windowEnd'] > $v['windowStart'], 422, 'The send window must end after it starts.');
@@ -174,7 +174,7 @@ class OutreachAdminController extends Controller
             return $ok(['updated' => $n]);
         }
         if ($path === 'outreach/preview') {
-            $v = $r->validate(['subject' => 'required|string|max:160', 'body' => 'required|string|max:5000', 'name' => 'nullable|string|max:120', 'list' => 'nullable|in:'.implode(',', array_keys(Outreach::LISTS)), 'design' => 'nullable|in:card,plain']);
+            $v = $r->validate(['subject' => 'required|string|max:160', 'body' => 'required|string|max:5000', 'name' => 'nullable|string|max:120', 'list' => 'nullable|in:'.implode(',', array_keys(Outreach::LISTS)), 'design' => 'nullable|in:campaign,card,plain']);
             $sender = DB::table('outreach_senders')->orderBy('created_at')->first() ?: (object) ['email' => 'you@example.in', 'from_name' => 'Your name'];
             $list = $v['list'] ?? 'students';
             $sample = $list === 'colleges' ? ['name' => 'Dr. Ramesh Kumar', 'college' => 'ABC College of Engineering', 'designation' => 'Training and Placement Officer', 'city' => 'Mysuru'] : ['name' => 'Asha Rao', 'college' => 'ABC College of Engineering'];
