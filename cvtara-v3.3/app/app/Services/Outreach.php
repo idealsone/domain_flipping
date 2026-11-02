@@ -542,33 +542,100 @@ class Outreach
         return reset($n) > 0 ? (string) key($n) : ',';
     }
 
-    public static function import(string $raw, string $source, bool $checkDomains = true, string $list = 'students'): array
+    /**
+     * Finds the columns of an import and how many leading lines to skip (title rows and the header row).
+     * Headers are matched loosely ("Email-ID", "Student E-mail", "Candidate Name"); without a usable
+     * header, the column that holds the most addresses is used, so a sheet that starts with "S No" still works.
+     */
+    public static function columns(array $top, string $sep): array
     {
-        $lines = preg_split('/\r\n|\r|\n/', trim($raw));
-        $res = ['received' => 0, 'added' => 0, 'invalid' => 0, 'role' => 0, 'noMail' => 0, 'duplicate' => 0, 'existing' => 0, 'users' => 0, 'suppressed' => 0, 'samples' => []];
-        $list = isset(self::LISTS[$list]) ? $list : 'students';
         $col = ['email' => 0, 'name' => 1, 'college' => false, 'designation' => false, 'city' => false];
-        // Rows copied from Excel or Google Sheets are tab-separated; some exports use semicolons.
-        $sep = self::separator((string) ($lines[0] ?? ''));
-        $first = str_getcsv((string) ($lines[0] ?? ''), $sep, '"', '');
-        $head = array_map(fn ($x) => preg_replace('/[^a-z ]/', '', mb_strtolower(trim((string) $x))), $first);
-        $aliases = ['email' => ['email', 'email id', 'email address', 'mail id', 'mail'], 'name' => ['name', 'first name', 'full name', 'contact name', 'tpo name', 'student name', 'candidate name', 'candidate', 'user name', 'username', 'name of the candidate', 'name of the student'],
-            'college' => ['college', 'college name', 'institute', 'institution', 'university'], 'designation' => ['designation', 'title', 'role', 'position'], 'city' => ['city', 'location', 'district']];
-        $pick = function ($names) use ($head) {
-            foreach ($names as $n) {
-                if (($i = array_search($n, $head, true)) !== false) {
+        $rows = array_map(fn ($l) => str_getcsv((string) $l, $sep, '"', ''), $top);
+        $isMail = fn ($v) => (bool) preg_match('/^[^@\s<>"\']+@[^@\s]+\.[a-z]{2,}$/i', trim((string) $v, " \t<>\"'"));
+        $norm = fn ($v) => preg_replace('/[^a-z]/', '', mb_strtolower((string) $v));
+        $find = function (array $head, array $exact, array $has, array $not = []) use ($norm) {
+            $h = array_map($norm, $head);
+            foreach ($exact as $n) {
+                if (($i = array_search($n, $h, true)) !== false) {
                     return $i;
+                }
+            }
+            foreach ($h as $i => $x) {
+                if ($x === '') {
+                    continue;
+                }
+                foreach ($has as $n) {
+                    if (str_contains($x, $n)) {
+                        foreach ($not as $bad) {
+                            if (str_contains($x, $bad)) {
+                                continue 3;
+                            }
+                        }
+
+                        return $i;
+                    }
                 }
             }
 
             return false;
         };
-        if ($pick($aliases['email']) !== false) {
-            foreach ($aliases as $k => $names) {
-                $col[$k] = $pick($names);
+        // A header row: one of the first rows that names an email column and holds no address itself.
+        foreach (array_slice($rows, 0, 10, true) as $r => $cells) {
+            if (array_filter($cells, $isMail)) {
+                break;
             }
-            array_shift($lines);
+            $e = $find($cells, ['email', 'emailid', 'emailaddress', 'mailid', 'mail', 'emailids', 'mailaddress'], ['email', 'mail']);
+            if ($e === false) {
+                continue;
+            }
+            $col['email'] = $e;
+            $col['name'] = $find($cells, ['name', 'firstname', 'fullname', 'contactname', 'tponame', 'studentname', 'candidatename', 'candidate', 'username', 'nameofthecandidate', 'nameofthestudent'], ['name'], ['college', 'institut', 'universit', 'company', 'father', 'mother', 'parent', 'school', 'branch', 'course', 'last', 'sur']);
+            $col['college'] = $find($cells, ['college', 'collegename', 'institute', 'institution', 'university', 'institutename'], ['college', 'institut', 'universit']);
+            $col['designation'] = $find($cells, ['designation', 'title', 'role', 'position', 'jobtitle'], ['designation', 'position']);
+            $col['city'] = $find($cells, ['city', 'location', 'district', 'town'], ['city', 'district']);
+
+            return [$col, $r + 1];
         }
+        // No usable header: take the column with the most addresses, and skip the lines above the first address.
+        $count = [];
+        $firstMail = null;
+        foreach ($rows as $r => $cells) {
+            foreach ($cells as $i => $v) {
+                if ($isMail($v)) {
+                    $count[$i] = ($count[$i] ?? 0) + 1;
+                    $firstMail ??= $r;
+                }
+            }
+        }
+        if (! $count) {
+            return [$col, 0];
+        }
+        arsort($count);
+        $col['email'] = (int) array_key_first($count);
+        $col['name'] = false;
+        $head = $firstMail > 0 ? $rows[$firstMail - 1] : [];
+        if ($head) {
+            $col['name'] = $find($head, ['name', 'fullname', 'studentname', 'candidatename'], ['name'], ['college', 'institut', 'universit', 'company', 'father', 'mother', 'parent']);
+            $col['college'] = $find($head, ['college', 'collegename', 'institute', 'university'], ['college', 'institut', 'universit']);
+            $col['designation'] = $find($head, ['designation', 'title', 'role', 'position'], ['designation', 'position']);
+            $col['city'] = $find($head, ['city', 'location', 'district'], ['city', 'district']);
+        }
+        if ($col['name'] === false && $col['email'] === 0) {
+            $col['name'] = 1;
+        }
+
+        return [$col, (int) $firstMail];
+    }
+
+    public static function import(string $raw, string $source, bool $checkDomains = true, string $list = 'students'): array
+    {
+        $lines = preg_split('/\r\n|\r|\n/', trim($raw));
+        $res = ['received' => 0, 'added' => 0, 'invalid' => 0, 'role' => 0, 'noMail' => 0, 'duplicate' => 0, 'existing' => 0, 'users' => 0, 'suppressed' => 0, 'samples' => []];
+        $list = isset(self::LISTS[$list]) ? $list : 'students';
+        // Rows copied from Excel or Google Sheets are tab-separated; some exports use semicolons.
+        $sep = self::separator(implode("\n", array_slice($lines, 0, 5)));
+        [$col, $skip] = self::columns(array_slice($lines, 0, 60), $sep);
+        $lines = array_slice($lines, $skip);
         $seen = [];
         $rows = [];
         $sample = function (string $why, string $e) use (&$res) {

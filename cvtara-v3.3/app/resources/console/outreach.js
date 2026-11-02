@@ -10,7 +10,7 @@
   const when = s => { if (!s) return '—'; const d = parse(s); return d.toLocaleDateString('en-IN', { day: 'numeric', month: 'short' }) + ' ' + d.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' }); };
   const pct = (a, b) => b ? (Math.round(a / b * 1000) / 10) + '%' : '—';
   const inr = p => '₹' + Math.round(Number(p || 0) / 100).toLocaleString('en-IN');
-  let D = null, CFG = null, CUR = 'students';
+  let D = null, CFG = null, CUR = 'students', SEQOPEN = false;
   const steps0 = () => CFG.lists[CUR].steps;
 
   /* Ready-made sequences. Short personal subject, one main link, a real reason to click, a polite follow-up.
@@ -78,11 +78,12 @@
           <td style="white-space:nowrap"><button class="button secondary small" data-act="test">Send test</button> <button class="button secondary small" data-act="edit">Edit</button> <button class="button secondary small" data-act="${s.enabled ? 'pause' : 'resume'}">${s.enabled ? 'Pause' : 'Resume'}</button> <button class="button secondary small" data-act="more" aria-label="More actions">⋯</button></td></tr>`).join('') : '<tr><td colspan="6">No mailboxes yet. Add the mailboxes you created on your sending domain.</td></tr>'}</tbody></table></div></section>
 
       <section class="panel panel-pad" data-nokit><h3 style="margin-top:0">Mails in each sequence</h3>
+        <details id="orSeq" ${SEQOPEN ? 'open' : ''} style="border:1px solid var(--line,#e2e8f0);border-radius:10px;padding:0 12px;margin-bottom:8px"><summary style="cursor:pointer;font-weight:700;padding:10px 0">Show and edit the mails <small class="muted" style="font-weight:400">· ${Object.entries(D.lists).map(([k, l]) => `${E(l)}: ${((CFG.lists[k] || {}).steps || []).length} mails`).join(' · ')}</small></summary>
         <div role="tablist" id="orTabs" style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px">${Object.entries(D.lists).map(([k, l]) => `<button role="tab" class="button small ${k === CUR ? 'primary' : 'secondary'}" data-list="${k}" aria-selected="${k === CUR}">${E(l)}</button>`).join('')}</div>
         <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;margin-bottom:8px"><label class="ops-f">Start from a template<select id="orLib"></select></label><label class="ops-f">Send from (alias of the mailbox)<input id="orFrom" type="email" placeholder="campus@cvtara.in" style="min-width:220px"></label><label class="ops-f">Look<select id="orDesign"><option value="card">Designed: light card with a button</option><option value="plain">Plain: a personal note</option></select></label></div>
         <p class="muted" style="margin:0 0 12px"><small>Placeholders: {{name}} first name · {{college}} · {{designation}} · {{city}} · {{ats_url}} free ATS check · {{site_url}} home page · {{plans_url}} plans · {{share_url}} send to a friend on WhatsApp · {{sender_name}} · {{from_price}} lowest package price · {{offer_line}} the offer live now (empty when none, and the line is left out). Prices and offers come from Pricing and Offers & festivals, so mails never show an old price. Formatting: start with "# Heading", use "- " for bullets, and put [button: Label | {{ats_url}}] on its own line. Links are tracked.</small></p>
         <div id="orSteps"></div>
-        <div style="display:flex;gap:8px;flex-wrap:wrap;margin:6px 0 16px"><button class="button secondary small" id="orAddStep">+ Add follow-up</button></div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;margin:6px 0 16px"><button class="button secondary small" id="orAddStep">+ Add follow-up</button></div></details>
         <h3 style="margin:20px 0 6px">Warm-up</h3>
         <p class="muted" style="margin:0 0 10px">Part of each mailbox's daily amount goes to short, link-free notes to your own addresses, mixed in with the campaign. That keeps each mailbox's history healthy. When no one is waiting to be mailed, warm-up uses the whole day. Open and reply to a few of these notes now and then; that is what mail providers notice.</p>
         <div style="display:flex;gap:12px;flex-wrap:wrap;align-items:flex-start">
@@ -101,7 +102,8 @@
       <section class="panel panel-pad" data-nokit><h3 style="margin-top:0">Add contacts</h3>
         <p class="muted" style="margin-top:0">Paste or upload a CSV with an <b>email</b> column and, if you have them, <b>name</b>, <b>college</b>, <b>designation</b> and <b>city</b> columns (for placement officers, put the officer's name in <b>name</b>). Up to 20,000 rows at a time. Add each college as its own source, so you can stop one list without touching the others. Bad addresses, system addresses, domains that cannot receive mail, duplicates, existing CVTara users and anyone who unsubscribed or bounced before are left out.</p>
         <div style="display:grid;gap:10px">
-          <label class="ops-f">CSV or Excel (.xlsx) file<input type="file" id="orFile" accept=".csv,.txt,.xlsx,text/csv,text/plain,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"></label>
+          <div style="display:flex;gap:12px;flex-wrap:wrap;align-items:flex-end"><label class="ops-f grow">CSV or Excel (.xlsx) file<input type="file" id="orFile" accept=".csv,.txt,.xlsx,text/csv,text/plain,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"></label><button type="button" class="button secondary small" id="orSample">⬇ Download blank sheet</button></div>
+          <p class="muted" style="margin:0"><small>Fill the blank sheet in Excel or Google Sheets (one person per row, keep the first row as it is), save it as .xlsx or CSV and upload it here. Extra columns such as S No are ignored.</small></p>
           <label class="ops-f">…or paste rows<textarea id="orText" rows="5" placeholder="email,name,college,designation,city&#10;tpo@abc.edu.in,Ramesh Kumar,ABC College of Engineering,Training and Placement Officer,Mysuru"></textarea></label>
           <div style="display:flex;gap:12px;flex-wrap:wrap;align-items:flex-end"><label class="ops-f">Add to list<select id="orImpList">${Object.entries(D.lists).map(([k, l]) => `<option value="${k}" ${k === CUR ? 'selected' : ''}>${E(l)}</option>`).join('')}</select></label><label class="ops-f grow">Where these came from<input id="orSource" maxlength="120" placeholder="e.g. ABC College placement cell sign-ups, Oct 2026"></label>
           <label style="display:flex;gap:8px;align-items:center"><input type="checkbox" id="orMx" checked> Check that each domain can receive mail</label></div>
@@ -168,6 +170,11 @@
       if (act === 'more') return more(s);
       if (act === 'test') { const to = prompt('Send a test mail to:', ''); if (to === null) return; b.disabled = true; try { const r = await api('/api/admin/outreach/senders', { method: 'POST', body: { action: 'test', id: s.id, to: to || null, list: CUR } }); toast(r.message); } catch (x) { toast(err(x), true); } b.disabled = false; return; }
       try { await api('/api/admin/outreach/senders', { method: 'POST', body: { action: act, id: s.id } }); toast(act === 'pause' ? 'Mailbox paused' : 'Mailbox resumed'); outreach(); } catch (x) { toast(err(x), true); }
+    };
+    $('#orSeq', h).ontoggle = e => { SEQOPEN = e.target.open; };
+    $('#orSample', h).onclick = () => {
+      const l = $('#orImpList', h).value, cols = l === 'colleges' ? 'email,name,college,designation,city' : 'email,name,college,city';
+      download(`cvtara-${l}-contacts.csv`, '\ufeff' + cols + '\r\n', 'text/csv');
     };
     let SHEET = null;
     $('#orFile', h).onchange = async e => {

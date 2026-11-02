@@ -1,3 +1,8 @@
+# CVTara v3.29.8 — Outreach finds the email column in any sheet
+
+## 3.29.8
+- **Outreach › Add contacts:** the email column is found even when the sheet starts with a title row, has an S No column first, or names it "Email-ID", "Student E-mail" and similar. If no heading names it, the column holding the addresses is used. Before, such a sheet was read from the first column and every row came back as "Not a valid address". A **Download blank sheet** button gives the right columns for the chosen list. The mail editor now folds away under "Show and edit the mails", so the page is shorter. No migration.
+
 # CVTara v3.29.7 — Outreach import takes Excel files
 
 ## 3.29.7
