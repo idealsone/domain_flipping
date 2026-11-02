@@ -9,8 +9,7 @@ echo "543f70d48dbae0316fa5966ce3639176a96ef1f7cdb96a7dc2d3d01ab7bf2c39  cvt3299.
 cd $H; bad=0
 while read p rest; do if [ -f "$p" ]; then cur=$(sha256sum "$p" | cut -c1-64); else cur=ABSENT; fi; ok=0; for x in $rest; do [ "$cur" = "$x" ] && ok=1; done; [ $ok = 1 ] || { echo "MISMATCH $p $cur"; bad=1; }; done <<'LIST'
 cvtara_app/app/Services/Outreach.php b380d38c0691a074d1ac425d32920e44c30d8671dc8df3808a59bda2168c616f 66f7ac0b03edfc69abda95d5533d32236f663b2dfc6c16b26ecd6ffcc4a5e5d4
-cvtara_app/resources/console/outreach.js 2dc8914532a2970d4b61a7d73769e006a16cae3751ead959fd1500e635789b04
-$(curl 2d425a87a40bf36564ca793e753005b302ae66ebac2f867a0260d18172aa12fd
+cvtara_app/resources/console/outreach.js 2dc8914532a2970d4b61a7d73769e006a16cae3751ead959fd1500e635789b04 2d425a87a40bf36564ca793e753005b302ae66ebac2f867a0260d18172aa12fd
 LIST
 grep -q '"version": *"3.29.8"' cvtara_app/BUILD_INFO.json BUILD_INFO.json 2>/dev/null || { echo "MISMATCH live version is not 3.29.8"; grep -o '"version": *"[^"]*"' cvtara_app/BUILD_INFO.json BUILD_INFO.json 2>/dev/null; bad=1; }
 [ $bad = 0 ] || { echo "ABORT live files differ from the expected base; nothing changed"; touch $W/d3299.done; rm -f $W/d3299.lock; exit 1; }
