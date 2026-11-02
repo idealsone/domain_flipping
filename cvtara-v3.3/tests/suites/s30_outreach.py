@@ -1,9 +1,24 @@
 """Outreach: sending mailboxes on another domain, list import with checks, warm-up, send window, spacing,
 follow-ups from the same mailbox, tracked clicks, one-click unsubscribe, bounces, automatic stop on sign-up and auto-pause,
 the students and colleges lists, designed mail, the WhatsApp share link and the warm-up share of each day."""
-import email, json, re, urllib.parse
+import base64, email, io, json, re, urllib.parse, zipfile
 from lib.fake_smtp import FakeSmtp
 NAME = "Outreach mailboxes, warm-up and stop rules"
+
+
+def _xlsx(rows):
+    """A minimal Excel file: shared strings for text cells, as Excel writes them, with the sheet behind a workbook relationship."""
+    strings = sorted({c for r in rows for c in r}); idx = {v: i for i, v in enumerate(strings)}
+    esc = lambda x: x.replace("&", "&amp;").replace("<", "&lt;")
+    col = lambda i: chr(65 + i)
+    sheet = "".join(f'<row r="{n}">' + "".join(f'<c r="{col(i)}{n}" t="s"><v>{idx[c]}</v></c>' for i, c in enumerate(r) if c != "") + "</row>" for n, r in enumerate(rows, 1))
+    b = io.BytesIO(); z = zipfile.ZipFile(b, "w")
+    z.writestr("[Content_Types].xml", '<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"/>')
+    z.writestr("xl/workbook.xml", '<workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"><sheets><sheet name="Leads" sheetId="1" r:id="rId7"/></sheets></workbook>')
+    z.writestr("xl/_rels/workbook.xml.rels", '<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId7" Type="worksheet" Target="worksheets/leads.xml"/></Relationships>')
+    z.writestr("xl/sharedStrings.xml", '<sst xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">' + "".join(f"<si><t>{esc(v)}</t></si>" for v in strings) + "</sst>")
+    z.writestr("xl/worksheets/leads.xml", f'<worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"><sheetData>{sheet}</sheetData></worksheet>')
+    z.close(); return base64.b64encode(b.getvalue()).decode()
 
 
 def _mail(m):
@@ -188,7 +203,12 @@ def _run(ctx, t, db, smtp):
     t.check("rows pasted from Excel (tab-separated, 'Candidate Name' column) import with their names", s == 200 and d["result"]["added"] == 2 and db.q("select name from outreach_contacts where email='xl1@example.com'") == [("Meera Shah",)], (s, str(d)[:200]))
     s, d = o.api("POST", "admin/outreach/import", {"text": "email;name\nsemi1@example.com;Kavya\n", "list": "students", "consent": True, "checkDomains": False})
     t.check("semicolon-separated rows import too", s == 200 and d["result"]["added"] == 1, (s, str(d)[:200]))
-    db.q("delete from outreach_contacts where email in ('xl1@example.com','xl2@example.com','semi1@example.com')")
+    sheet = _xlsx([["Candidate Name", "", "Email ID"], ["Nisha Verma", "", "xlsx1@example.com"], ["R & D Team", "", "xlsx2@example.com"]])
+    s, d = o.api("POST", "admin/outreach/import", {"sheet": sheet, "list": "students", "source": "leads.xlsx", "consent": True, "checkDomains": False})
+    t.check("an Excel .xlsx file imports from its first sheet, columns found by their headings", s == 200 and d["result"]["added"] == 2 and db.q("select name from outreach_contacts where email='xlsx1@example.com'") == [("Nisha Verma",)] and db.q("select name from outreach_contacts where email='xlsx2@example.com'") == [("R & D Team",)], (s, str(d)[:200]))
+    s, d = o.api("POST", "admin/outreach/import", {"sheet": base64.b64encode(b"not a spreadsheet").decode(), "list": "students", "consent": True})
+    t.check("a file that is not an Excel workbook is refused with a plain message", s == 422 and "Excel file could not be read" in str(d), (s, d))
+    db.q("delete from outreach_contacts where email in ('xl1@example.com','xl2@example.com','semi1@example.com','xlsx1@example.com','xlsx2@example.com')")
     t.check("contacts can be filtered by list", o.api("GET", "admin/outreach/contacts?list=colleges")[1]["total"] == 1)
     t.check("a bad send-from alias is refused", o.api("POST", "admin/outreach/settings", dict(cfg(True, students), lists={"students": {"design": "plain", "from": "not-an-address", "steps": students}, "colleges": colleges}))[0] == 422)
     t.check("an alias on another domain than the mailbox falls back to the mailbox", __import__("json").loads(ctx.inst.artisan("tinker", "--execute", "echo json_encode(App\\Services\\Outreach::fromFor((object) ['email' => 'priya@cvtara.in'], ['from' => 'x@other.example']));").stdout.strip() or '""') == "priya@cvtara.in")

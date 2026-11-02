@@ -148,8 +148,13 @@ class OutreachAdminController extends Controller
         }
 
         if ($path === 'outreach/import') {
-            $v = $r->validate(['text' => 'required|string|max:3000000', 'source' => 'nullable|string|max:120', 'list' => 'nullable|in:'.implode(',', array_keys(Outreach::LISTS)), 'consent' => 'accepted', 'checkDomains' => 'nullable|boolean'], ['consent.accepted' => 'Confirm that everyone on this list agreed to hear from you.']);
+            $v = $r->validate(['text' => 'required_without:sheet|nullable|string|max:3000000', 'sheet' => 'nullable|string|max:12000000', 'source' => 'nullable|string|max:120', 'list' => 'nullable|in:'.implode(',', array_keys(Outreach::LISTS)), 'consent' => 'accepted', 'checkDomains' => 'nullable|boolean'], ['consent.accepted' => 'Confirm that everyone on this list agreed to hear from you.']);
             @set_time_limit(120);
+            if (! empty($v['sheet'])) {
+                // An Excel (.xlsx) file, sent as base64: its first sheet becomes tab-separated rows.
+                $v['text'] = Outreach::sheetText((string) base64_decode($v['sheet'], true));
+                abort_if($v['text'] === '', 422, 'That Excel file could not be read. Save it as .xlsx or CSV and try again.');
+            }
             $res = Outreach::import($v['text'], trim((string) ($v['source'] ?? '')) ?: 'Import '.now()->format('d M Y'), $r->boolean('checkDomains', true), $v['list'] ?? 'students');
             Settings::audit($id, 'outreach_imported', $res['added'].' added of '.$res['received']);
 

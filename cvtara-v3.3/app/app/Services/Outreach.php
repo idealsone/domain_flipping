@@ -458,6 +458,81 @@ class Outreach
      *
      * @return array{received:int,added:int,invalid:int,role:int,noMail:int,duplicate:int,existing:int,users:int,suppressed:int,samples:array}
      */
+    /**
+     * The first worksheet of an Excel (.xlsx) file as tab-separated rows, ready for import(). Empty when the file cannot be read.
+     * Reads the sheet as a stream, so a 20,000-row file stays light.
+     */
+    public static function sheetText(string $bytes): string
+    {
+        if (! class_exists(\ZipArchive::class) || ! str_starts_with($bytes, "PK")) {
+            return '';
+        }
+        $tmp = tempnam(sys_get_temp_dir(), 'cvx');
+        file_put_contents($tmp, $bytes);
+        $zip = new \ZipArchive;
+        try {
+            if ($zip->open($tmp) !== true) {
+                return '';
+            }
+            $shared = [];
+            if (($xml = $zip->getFromName('xl/sharedStrings.xml')) !== false) {
+                $doc = @simplexml_load_string($xml);
+                foreach ($doc ? $doc->si : [] as $si) {
+                    $shared[] = isset($si->t) ? (string) $si->t : implode('', array_map('strval', $si->xpath('.//*[local-name()="t"]') ?: []));
+                }
+            }
+            // The first sheet in the workbook's order, through its relationship id; sheet1.xml if that cannot be read.
+            $path = 'xl/worksheets/sheet1.xml';
+            $wb = @simplexml_load_string((string) $zip->getFromName('xl/workbook.xml'));
+            $rels = @simplexml_load_string((string) $zip->getFromName('xl/_rels/workbook.xml.rels'));
+            if ($wb && $rels && isset($wb->sheets->sheet[0])) {
+                $rid = (string) ($wb->sheets->sheet[0]->attributes('http://schemas.openxmlformats.org/officeDocument/2006/relationships')['id'] ?? '');
+                foreach ($rels->Relationship as $rel) {
+                    if ((string) $rel['Id'] === $rid) {
+                        $target = ltrim((string) $rel['Target'], '/');
+                        $path = str_starts_with($target, 'xl/') ? $target : 'xl/'.$target;
+                    }
+                }
+            }
+            $sheet = $zip->getFromName($path);
+            if ($sheet === false) {
+                return '';
+            }
+            $r = new \XMLReader;
+            $r->XML($sheet);
+            $out = [];
+            $row = null;
+            while ($r->read() && count($out) <= self::MAX_IMPORT + 1) {
+                if ($r->nodeType === \XMLReader::ELEMENT && $r->localName === 'row') {
+                    $row = [];
+                } elseif ($r->nodeType === \XMLReader::END_ELEMENT && $r->localName === 'row') {
+                    if ($row && implode('', $row) !== '') {
+                        ksort($row);
+                        $out[] = implode("\t", array_replace(array_fill(0, max(array_keys($row)) + 1, ''), $row));
+                    }
+                    $row = null;
+                } elseif ($row !== null && $r->nodeType === \XMLReader::ELEMENT && $r->localName === 'c') {
+                    $type = (string) $r->getAttribute('t');
+                    $col = 0;
+                    foreach (str_split(preg_replace('/[^A-Z]/', '', strtoupper((string) $r->getAttribute('r')))) as $ch) {
+                        $col = $col * 26 + ord($ch) - 64;
+                    }
+                    $cell = new \SimpleXMLElement($r->readOuterXml());
+                    $val = $type === 'inlineStr' ? implode('', array_map('strval', $cell->xpath('.//*[local-name()="t"]') ?: [])) : (string) ($cell->v ?? '');
+                    if ($type === 's') {
+                        $val = $shared[(int) $val] ?? '';
+                    }
+                    $row[max(0, $col - 1)] = trim(str_replace(["\t", "\r", "\n"], ' ', $val));
+                }
+            }
+
+            return implode("\n", $out);
+        } finally {
+            $zip->close();
+            @unlink($tmp);
+        }
+    }
+
     /** The column separator of an import: tab, semicolon or comma, whichever the first row uses most. */
     public static function separator(string $line): string
     {

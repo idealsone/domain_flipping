@@ -1,7 +1,7 @@
-# CVTara v3.29.7 — Outreach import takes Excel rows
+# CVTara v3.29.7 — Outreach import takes Excel files
 
 ## 3.29.7
-- **Outreach › Add contacts:** rows copied from Excel or Google Sheets (tab-separated) and semicolon CSVs now import; before, they were all rejected as invalid addresses. A "Candidate name", "Student name" or "User name" column is read as the name. Choosing an .xlsx file now says to save it as CSV first, and pressing Check and add without the consent box ticked shows a clear message. No migration.
+- **Outreach › Add contacts:** Excel (.xlsx) files upload directly (first sheet, up to 20,000 rows, columns found by their headings). Rows copied from Excel or Google Sheets (tab-separated) and semicolon CSVs now import; before, they were all rejected as invalid addresses. A "Candidate name", "Student name" or "User name" column is read as the name. An old .xls file asks to be saved as .xlsx or CSV, and pressing Check and add without the consent box ticked shows a clear message. No migration.
 
 # CVTara v3.29.6 — Outreach sends from campus@ and placements@
 

@@ -101,7 +101,7 @@
       <section class="panel panel-pad" data-nokit><h3 style="margin-top:0">Add contacts</h3>
         <p class="muted" style="margin-top:0">Paste or upload a CSV with an <b>email</b> column and, if you have them, <b>name</b>, <b>college</b>, <b>designation</b> and <b>city</b> columns (for placement officers, put the officer's name in <b>name</b>). Up to 20,000 rows at a time. Add each college as its own source, so you can stop one list without touching the others. Bad addresses, system addresses, domains that cannot receive mail, duplicates, existing CVTara users and anyone who unsubscribed or bounced before are left out.</p>
         <div style="display:grid;gap:10px">
-          <label class="ops-f">CSV file<input type="file" id="orFile" accept=".csv,.txt,text/csv,text/plain"></label>
+          <label class="ops-f">CSV or Excel (.xlsx) file<input type="file" id="orFile" accept=".csv,.txt,.xlsx,text/csv,text/plain,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"></label>
           <label class="ops-f">…or paste rows<textarea id="orText" rows="5" placeholder="email,name,college,designation,city&#10;tpo@abc.edu.in,Ramesh Kumar,ABC College of Engineering,Training and Placement Officer,Mysuru"></textarea></label>
           <div style="display:flex;gap:12px;flex-wrap:wrap;align-items:flex-end"><label class="ops-f">Add to list<select id="orImpList">${Object.entries(D.lists).map(([k, l]) => `<option value="${k}" ${k === CUR ? 'selected' : ''}>${E(l)}</option>`).join('')}</select></label><label class="ops-f grow">Where these came from<input id="orSource" maxlength="120" placeholder="e.g. ABC College placement cell sign-ups, Oct 2026"></label>
           <label style="display:flex;gap:8px;align-items:center"><input type="checkbox" id="orMx" checked> Check that each domain can receive mail</label></div>
@@ -169,17 +169,28 @@
       if (act === 'test') { const to = prompt('Send a test mail to:', ''); if (to === null) return; b.disabled = true; try { const r = await api('/api/admin/outreach/senders', { method: 'POST', body: { action: 'test', id: s.id, to: to || null, list: CUR } }); toast(r.message); } catch (x) { toast(err(x), true); } b.disabled = false; return; }
       try { await api('/api/admin/outreach/senders', { method: 'POST', body: { action: act, id: s.id } }); toast(act === 'pause' ? 'Mailbox paused' : 'Mailbox resumed'); outreach(); } catch (x) { toast(err(x), true); }
     };
-    $('#orFile', h).onchange = async e => { const f = e.target.files[0]; if (!f) return; if (/\.(xlsx?|ods|numbers)$/i.test(f.name)) { e.target.value = ''; $('#orImportRes', h).textContent = 'That is a spreadsheet file. In Excel or Google Sheets use File › Save as / Download › CSV, then choose the .csv file here. You can also copy the rows and paste them below.'; toast('Save the sheet as CSV first.', true); return; } if (f.size > 3e6) { toast('That file is over 3 MB. Split it into smaller files.', true); return; } $('#orText', h).value = await f.text(); if (!$('#orSource', h).value) $('#orSource', h).value = f.name; };
+    let SHEET = null;
+    $('#orFile', h).onchange = async e => {
+      const f = e.target.files[0]; SHEET = null; if (!f) return;
+      if (/\.(xls|ods|numbers)$/i.test(f.name)) { e.target.value = ''; $('#orImportRes', h).textContent = 'Save this sheet as Excel .xlsx or as CSV, then choose that file.'; toast('Use an .xlsx or .csv file.', true); return; }
+      if (f.size > 8e6) { toast('That file is over 8 MB. Split it into smaller files.', true); e.target.value = ''; return; }
+      if (/\.xlsx$/i.test(f.name)) {
+        // Sent as is; the server reads the first sheet. Up to 20,000 rows, same columns as a CSV.
+        const b = new Uint8Array(await f.arrayBuffer()); let bin = ''; for (let k = 0; k < b.length; k += 0x8000) bin += String.fromCharCode.apply(null, b.subarray(k, k + 0x8000));
+        SHEET = btoa(bin); $('#orText', h).value = ''; $('#orImportRes', h).textContent = `Excel file ready: ${f.name}. The first sheet is used.`;
+      } else { if (f.size > 3e6) { toast('That file is over 3 MB. Split it into smaller files.', true); return; } $('#orText', h).value = await f.text(); }
+      if (!$('#orSource', h).value) $('#orSource', h).value = f.name;
+    };
     $('#orImport', h).onclick = async ev => {
       const out = $('#orImportRes', h), text = $('#orText', h).value.trim();
-      if (!text) { out.textContent = 'Choose a file or paste some rows first.'; return; }
+      if (!text && !SHEET) { out.textContent = 'Choose a file or paste some rows first.'; return; }
       if (!$('#orConsent', h).checked) { out.textContent = 'Tick the box to confirm everyone on this list agreed to hear from you.'; toast('Tick the consent box above “Check and add” first.', true); $('#orConsent', h).focus(); return; }
       ev.target.disabled = true; out.textContent = 'Checking addresses… this can take up to a minute for a big list.';
       try {
-        const { result: r } = await api('/api/admin/outreach/import', { method: 'POST', body: { text, source: $('#orSource', h).value, list: $('#orImpList', h).value, consent: true, checkDomains: $('#orMx', h).checked } });
+        const { result: r } = await api('/api/admin/outreach/import', { method: 'POST', body: { ...(SHEET && !text ? { sheet: SHEET } : { text }), source: $('#orSource', h).value, list: $('#orImpList', h).value, consent: true, checkDomains: $('#orMx', h).checked } });
         const row = (l, n) => n ? `<li>${E(l)}: <b>${n.toLocaleString('en-IN')}</b></li>` : '';
         out.innerHTML = `<div class="panel panel-pad" style="background:#f0fdf4"><b>${r.added.toLocaleString('en-IN')} added</b> of ${r.received.toLocaleString('en-IN')} rows.<ul style="margin:8px 0 0;padding-left:18px">${row('Not a valid address', r.invalid)}${row('System addresses (no-reply, postmaster…)', r.role)}${row('Domain cannot receive mail', r.noMail)}${row('Duplicates in this file', r.duplicate)}${row('Already in your list', r.existing)}${row('Already CVTara users', r.users)}${row('Unsubscribed or bounced before', r.suppressed)}</ul>${r.samples.length ? `<details style="margin-top:8px"><summary>Examples left out</summary><ul>${r.samples.map(x => `<li>${E(x.email)} — ${E(x.reason)}</li>`).join('')}</ul></details>` : ''}</div>`;
-        $('#orText', h).value = ''; $('#orFile', h).value = ''; D = null; setTimeout(() => outreach().then(() => { const o = $('#orImportRes'); if (o) o.innerHTML = out.innerHTML; }), 50);
+        $('#orText', h).value = ''; $('#orFile', h).value = ''; SHEET = null; D = null; setTimeout(() => outreach().then(() => { const o = $('#orImportRes'); if (o) o.innerHTML = out.innerHTML; }), 50);
       } catch (x) { out.textContent = err(x); }
       ev.target.disabled = false;
     };
