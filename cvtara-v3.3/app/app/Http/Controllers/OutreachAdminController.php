@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Services\AccountSecurity;
+use App\Services\AdminTable;
 use App\Services\Outreach;
 use App\Services\Settings;
 use Illuminate\Http\Request;
@@ -35,6 +36,8 @@ class OutreachAdminController extends Controller
                 $like = '%'.str_replace(['\\', '%', '_'], ['\\\\', '\\%', '\\_'], mb_substr(mb_strtolower($term), 0, 80)).'%';
                 $q->where(fn ($w) => $w->where('c.email', 'like', $like)->orWhere('c.name', 'like', $like)->orWhere('c.source', 'like', $like)->orWhere('c.college', 'like', $like));
             }
+            AdminTable::dates($r, $q, 'c.created_at');
+            AdminTable::export($r, (clone $q)->orderByDesc('c.created_at')->select(['c.created_at', 'c.email', 'c.name', 'c.list', 'c.college', 'c.designation', 'c.city', 'c.source', 'c.status', 'c.step', 'c.clicks', 'c.shares', 'c.last_sent_at', 'c.next_at', 'c.error', 's.email as sender']), ['export' => ['title' => 'Outreach contacts', 'columns' => ['created_at' => 'Added', 'email' => 'Email', 'name' => 'Name', 'list' => 'List', 'college' => 'College', 'designation' => 'Designation', 'city' => 'City', 'source' => 'Source', 'status' => 'Status', 'step' => 'Mails sent', 'clicks' => 'Clicks', 'shares' => 'Shares', 'last_sent_at' => 'Last sent', 'next_at' => 'Next mail', 'error' => 'Error', 'sender' => 'Mailbox']]]);
             $total = (clone $q)->count();
             $per = min(100, max(10, (int) $r->query('per', 20)));
             $page = max(1, (int) $r->query('page', 1));
@@ -206,8 +209,8 @@ class OutreachAdminController extends Controller
         $pending = (int) ($counts['queued'] ?? 0);
         $reached = DB::table('outreach_contacts')->where('step', '>', 0)->count();
         $funnel = ['reached' => $reached, 'clicked' => DB::table('outreach_contacts')->whereNotNull('clicked_at')->count(), 'registered' => DB::table('outreach_contacts')->where('status', 'registered')->where('step', '>', 0)->count(),
-            'paid' => DB::table('outreach_contacts as c')->join('purchases as p', 'p.owner_id', '=', 'c.user_id')->where('c.status', 'registered')->where('c.step', '>', 0)->whereIn('p.status', ['paid', 'partially_refunded'])->where('p.amount_paise', '>', 0)->whereNotIn('p.provider', ['referral_reward', 'manual', 'demo'])->distinct()->count('c.id'),
-            'revenuePaise' => (int) DB::table('outreach_contacts as c')->join('purchases as p', 'p.owner_id', '=', 'c.user_id')->where('c.status', 'registered')->where('c.step', '>', 0)->whereIn('p.status', ['paid', 'partially_refunded'])->whereNotIn('p.provider', ['referral_reward', 'manual', 'demo'])->sum(DB::raw('p.amount_paise - p.refunded_paise'))];
+            'paid' => DB::table('outreach_contacts as c')->join('purchases as p', 'p.owner_id', '=', 'c.user_id')->where('c.status', 'registered')->where('c.step', '>', 0)->whereIn('p.status', ['paid', 'partially_refunded'])->where('p.amount_paise', '>', 0)->whereNotIn('p.provider', ['referral_reward', 'manual', 'demo'])->when(Settings::statsSince(), fn ($q, $since) => $q->where('p.created_at', '>=', $since))->distinct()->count('c.id'),
+            'revenuePaise' => (int) DB::table('outreach_contacts as c')->join('purchases as p', 'p.owner_id', '=', 'c.user_id')->where('c.status', 'registered')->where('c.step', '>', 0)->whereIn('p.status', ['paid', 'partially_refunded'])->whereNotIn('p.provider', ['referral_reward', 'manual', 'demo'])->when(Settings::statsSince(), fn ($q, $since) => $q->where('p.created_at', '>=', $since))->sum(DB::raw('p.amount_paise - p.refunded_paise'))];
 
         return ['config' => $c, 'senders' => $senders->values(), 'counts' => $counts, 'daily' => $daily, 'recent' => $recent, 'capacityToday' => $capacity, 'pending' => $pending, 'funnel' => $funnel, 'byList' => $byList, 'lists' => Outreach::LISTS, 'defaults' => Outreach::defaults()['lists'],
             'mix30' => ['campaign' => (int) ($warm30['campaign'] ?? 0), 'warmup' => (int) ($warm30['warmup'] ?? 0)],

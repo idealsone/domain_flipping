@@ -5,22 +5,22 @@
   // job-link copy stays hidden until the owner switches job links on
   if (document.querySelector('[data-needs-link]')) fetch('/api/public-content', { credentials: 'same-origin' }).then(r => r.json()).then(j => { if ((j.content || {}).jobLinks) document.querySelectorAll('[data-needs-link]').forEach(n => { n.hidden = false; }); }).catch(() => {});
   fetch('/api/public-content', { credentials: 'same-origin' }).then(r => r.json()).then(j => { const e = ((j.content || {}).site || {}).employers, box = $('#employerNames'); if (!e || !e.enabled || !box || !(e.names || []).length) return; $('#employerHead').textContent = e.heading || 'Employers across India'; $('#employerList').innerHTML = e.names.map(n => `<li>${E(n)}</li>`).join(''); box.hidden = false; }).catch(() => {});
-  // rotating role in the headline
-  const roles = ['Data Analyst', 'Software Engineer', 'HR Manager', 'Marketing Lead', 'Product Designer', 'Finance Analyst'];
+  // optional rotating role at the end of the headline: only when the owner lists job titles (Owner console → Templates & site design)
+  const roles = [];
   const out = $('#lpRotate');
-  if (out) {
-    if (matchMedia('(prefers-reduced-motion: reduce)').matches) out.textContent = roles[0];
-    else {
-      // swap the whole word every few seconds (a soft fade, not a letter-by-letter typing loop), only while it can be seen
-      let r = 0, seen = true;
-      if (window.IntersectionObserver) new IntersectionObserver(es => { seen = es[0].isIntersecting; }).observe(out);
-      setInterval(() => {
-        if (!seen || document.hidden || roles.length < 2) return;
-        out.classList.add('is-out');
-        setTimeout(() => { r = (r + 1) % roles.length; out.textContent = roles[r]; out.classList.remove('is-out'); }, 260);
-      }, 2600);
-    }
-  }
+  const rotate = () => {
+    if (!out || !roles.length) return;
+    out.textContent = roles[0];
+    if (roles.length < 2 || matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    // swap the whole word every few seconds (a soft fade, not a letter-by-letter typing loop), only while it can be seen
+    let r = 0, seen = true;
+    if (window.IntersectionObserver) new IntersectionObserver(es => { seen = es[0].isIntersecting; }).observe(out);
+    setInterval(() => {
+      if (!seen || document.hidden) return;
+      out.classList.add('is-out');
+      setTimeout(() => { r = (r + 1) % roles.length; out.textContent = roles[r]; out.classList.remove('is-out'); }, 260);
+    }, 2600);
+  };
   let site = null;
   const announceHtml = from => E((site && site.announce) || 'Create your account, build and preview · Plans from {{from}} · Pay once, no auto-renewal').replace('{{from}}', from) + ' · <a href="#pricing">' + E((site && site.announceLink) || 'See plans') + '</a>';
   const rich = t => E(t).replace(/\*\*(.+?)\*\*/g, '<b>$1</b>');
@@ -50,13 +50,15 @@
   const box = $('#lpReviews');
   if (box) fetch('/api/public-content', { headers: { Accept: 'application/json' } }).then(r => r.json()).then(d => {
     const rev = (d.reviews || []).slice(0, 6);
-    box.innerHTML = rev.length ? rev.map(r => `<article class="lp-review"><div class="stars" aria-label="${r.rating} out of 5">${'★'.repeat(r.rating)}${'☆'.repeat(5 - r.rating)}</div><p>“${E(r.content)}”</p><b>${E(r.display_name)}</b></article>`).join('')
-      : '<div class="lp-empty">Customer reviews will appear here once approved. <a href="/register">Be one of the first to build your resume →</a></div>';
+    // the section stays hidden until there is at least one approved review, so a new site never shows an empty wall
+    if (!rev.length) return;
+    box.innerHTML = rev.map(r => `<article class="lp-review"><div class="stars" aria-label="${r.rating} out of 5">${'★'.repeat(r.rating)}${'☆'.repeat(5 - r.rating)}</div><p>“${E(r.content)}”</p><b>${E(r.display_name)}</b></article>`).join('');
+    const sec = $('#reviews'); if (sec) sec.hidden = false;
   }).catch(() => { box.innerHTML = ''; });
   // owner-editable homepage copy (Owner console → Templates & site design)
   fetch('/api/public-content', { headers: { Accept: 'application/json' } }).then(r => r.json()).then(d => {
     const s = d.content && d.content.site; if (!s) return; site = s;
-    if (Array.isArray(s.heroRoles) && s.heroRoles.length) { roles.length = 0; roles.push(...s.heroRoles); if (out) out.textContent = roles[0]; }
+    if (Array.isArray(s.heroRoles) && s.heroRoles.length) { roles.push(...s.heroRoles.filter(Boolean)); rotate(); }
     const h1 = $('.lp-hero h1'); if (h1 && h1.firstChild && s.heroTitle) h1.firstChild.nodeValue = s.heroTitle + ' ';
     const pill = $('.lp-pill'); if (pill && pill.lastChild && s.heroPill) pill.lastChild.nodeValue = s.heroPill;
     if ($('.lp-lead') && s.heroLead) $('.lp-lead').innerHTML = rich(s.heroLead);

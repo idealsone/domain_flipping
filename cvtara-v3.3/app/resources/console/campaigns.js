@@ -33,7 +33,7 @@
           <label class="wide">Or upload a CSV file<input type="file" name="file" accept=".csv,.txt,text/csv,text/plain"></label>
           <label class="wide" style="display:flex;gap:8px;align-items:flex-start"><input type="checkbox" name="confirm" style="width:auto;margin-top:3px"><span>I confirm that everyone on this list agreed to receive emails from CVTara.</span></label>
           <button class="button primary" type="submit">Import contacts</button></form><p role="status" id="cmImpMsg"></p>
-        <div class="ops-filterbox" style="margin-top:12px"><label class="ops-f grow">Search contacts<input id="cmQ" type="search" value="${E(C.q)}" placeholder="Email, name or where they came from…"></label></div>
+        <div class="ops-filterbox" style="margin-top:12px"><label class="ops-f grow">Search contacts<input id="cmQ" type="search" value="${E(C.q)}" placeholder="Email, name or where they came from…"></label>${K.rangeHtml(C.from, C.to, true, 'Added')}${K.dlHtml()}</div>
         <div style="overflow:auto"><table class="ad-table" id="cmContacts"><tbody><tr><td>Loading…</td></tr></tbody></table></div><div class="ops-pager" id="cmPager"></div></section>
       <section class="panel panel-pad"><h3>Do-not-mail list</h3><p class="muted" style="margin:0 0 10px">Addresses here never get a campaign email. People who unsubscribe from a campaign are added automatically. ${n(S.doNotMail)} address${S.doNotMail === 1 ? '' : 'es'} on the list.</p>
         <form id="cmSup" class="ops-form"><label class="wide">Add addresses (one per line)<textarea name="emails" rows="3"></textarea></label><button class="button secondary" type="submit">Add to do-not-mail list</button></form></section>
@@ -56,6 +56,9 @@
         toast(r.added + ' contacts added'); await campaigns(); $('#cmImpMsg', h).textContent = parts.join(' · ') + '.';
       } catch (x) { out.textContent = err(x); }
     };
+    const cbar = $('#cmQ', h).closest('.ops-filterbox');
+    cbar.addEventListener('change', e => { const rg = K.rangeChange(e, cbar); if (rg) { [C.from, C.to] = rg; C.page = 1; contacts(h); } });
+    K.wireDownload(cbar, fmt => K.exportUrl('/api/admin/campaigns/contacts', { q: C.q, from: C.from, to: C.to }, fmt));
     let t; $('#cmQ', h).oninput = e => { C.q = e.target.value; C.page = 1; clearTimeout(t); t = setTimeout(() => contacts(h), 300); };
     contacts(h);
     h.onclick = async e => {
@@ -76,7 +79,7 @@
   async function contacts(h) {
     const tbl = $('#cmContacts', h); if (!tbl) return;
     try {
-      const qs = new URLSearchParams({ page: String(C.page), per: String(C.per || 20) }); if (C.q) qs.set('q', C.q);
+      const qs = new URLSearchParams({ page: String(C.page), per: String(C.per || 20) }); if (C.q) qs.set('q', C.q); if (C.from) qs.set('from', C.from); if (C.to) qs.set('to', C.to);
       const d = await api('/api/admin/campaigns/contacts?' + qs);
       tbl.innerHTML = d.contacts.length ? `<thead><tr><th>Email</th><th>Name</th><th>Came from</th><th>Added</th><th>Status</th><th></th></tr></thead><tbody>${d.contacts.map(c => `<tr data-cid="${c.id}"><td>${E(c.email)}</td><td>${E(c.name || '—')}</td><td>${E(c.source || '—')}</td><td>${E(K.dmy(K.parse(c.created_at)))}</td><td>${c.unsubscribed_at ? '<span class="ad-pill bad">Unsubscribed</span>' : '<span class="ad-pill ok">Can be emailed</span>'}</td><td><button class="button secondary small" data-cdel>Remove</button></td></tr>`).join('')}</tbody>` : '<tbody><tr><td>No contacts yet.</td></tr></tbody>';
       K.pager($('#cmPager', h), d, (p, per) => { C.page = p; C.per = per; contacts(h); });
@@ -85,11 +88,13 @@
   }
 
   function edit(c) {
-    const f = c || { id: '', name: '', subject: '', body: SAMPLE, audience: 'customers_all', status: 'draft' };
+    const f = c || { id: '', name: '', subject: '', body: SAMPLE, audience: 'customers_all', segCollege: '', segRole: '', status: 'draft' };
     const soon = new Date(Date.now() + 5.5 * 3600e3 + 3600e3).toISOString().slice(0, 13) + ':00';
     const m = modal(c && c.id ? 'Edit campaign' : 'New campaign', `<form id="cmForm" class="ops-form">
       <label class="wide">Campaign name (only you see this)<input name="name" maxlength="120" required value="${E(f.name)}"></label>
       <label class="wide">Who gets it<select name="audience">${S.audiences.map(a => `<option value="${E(a.key)}" ${a.key === f.audience ? 'selected' : ''}>${E(a.label)} (${n(S.counts[a.key])})</option>`).join('')}</select></label>
+      <label>Only this college (optional)<input name="segCollege" maxlength="160" value="${E(f.segCollege || '')}" placeholder="e.g. RV College"></label>
+      <label>Only this target role (optional)<input name="segRole" maxlength="120" value="${E(f.segRole || '')}" placeholder="e.g. Data analyst"></label>
       <p class="muted wide" id="cmCount" style="margin:0"></p>
       <label class="wide">Subject line<input name="subject" maxlength="180" required value="${E(f.subject)}"></label>
       <label class="wide">Message<textarea name="body" rows="12" maxlength="20000" required>${E(f.body)}</textarea></label>
@@ -102,9 +107,9 @@
       <p role="status" id="cmEdMsg" class="wide"></p></form>`, { wide: true });
     const fm = $('#cmForm', m.el), say = x => { $('#cmEdMsg', m.el).textContent = x; };
     let id = f.id || '';
-    const body = () => ({ id: id || null, name: fm.name.value.trim(), audience: fm.audience.value, subject: fm.subject.value.trim(), body: fm.body.value });
-    const count = async () => { try { const r = await api('/api/admin/campaigns/count?audience=' + encodeURIComponent(fm.audience.value)); $('#cmCount', m.el).textContent = r.count ? `${n(r.count)} ${r.count === 1 ? 'person' : 'people'} will get this email right now. People who unsubscribe before their email goes out are skipped.` : 'Nobody in this group can be emailed yet.'; fm.querySelector('[data-send]').textContent = r.count ? `Send to ${n(r.count)} ${r.count === 1 ? 'person' : 'people'}` : 'Send'; } catch (x) { say(err(x)); } };
-    fm.audience.onchange = count; count();
+    const body = () => ({ id: id || null, name: fm.name.value.trim(), audience: fm.audience.value, segCollege: fm.segCollege.value.trim(), segRole: fm.segRole.value.trim(), subject: fm.subject.value.trim(), body: fm.body.value });
+    const count = async () => { try { const r = await api('/api/admin/campaigns/count?' + new URLSearchParams({ audience: fm.audience.value, college: fm.segCollege.value.trim(), role: fm.segRole.value.trim() })); $('#cmCount', m.el).textContent = r.count ? `${n(r.count)} ${r.count === 1 ? 'person' : 'people'} will get this email right now. People who unsubscribe before their email goes out are skipped.` : 'Nobody in this group can be emailed yet.'; fm.querySelector('[data-send]').textContent = r.count ? `Send to ${n(r.count)} ${r.count === 1 ? 'person' : 'people'}` : 'Send'; } catch (x) { say(err(x)); } };
+    fm.audience.onchange = count; fm.segCollege.onchange = count; fm.segRole.onchange = count; count();
     const save = async () => { if (!fm.reportValidity()) throw new Error('Fill in the name, subject and message first.'); const r = await post('/api/admin/campaigns/save', body(), true); id = r.id; S = r; return r; };
     fm.onsubmit = async e => { e.preventDefault(); try { await save(); toast('Draft saved'); say('Saved.'); campaigns(); } catch (x) { say(err(x)); } };
     fm.querySelector('[data-prev]').onclick = async () => {

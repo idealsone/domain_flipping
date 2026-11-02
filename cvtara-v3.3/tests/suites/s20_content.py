@@ -40,8 +40,9 @@ def run(ctx, t):
     t.check("the home page shows designs first, then a five-step flow, who it is for and the ATS report", all(k in home for k in ('id="designs"', "heroResume", "heroLetter", "letterSpotlight", 'id="how"', "lp-flow", "lp-report", "lpPersona", "lp-incl")) and home.index('id="designs"') < home.index('id="how"') < home.index('id="diagnose"') < home.index('id="pricing"'), s)
     t.check("the home page has no repeated sections from the old layout", not any(k in home for k in ('id="why"', "lp-auto", "lp-screen", "lp-steps")))
     t.check("the home page explains how employer screening reads a resume, without claiming any employer endorses CVTara", "not endorsed by or affiliated with" in home and "selectable text" in home)
-    t.check("the home page compares CVTara with the usual alternatives in general terms and names no company", 'id="compare"' in home and "Typical resume builder" in home and "not statements about any named company" in home and "pay once, no auto-renewal" in home)
+    t.check("the home page reads like people made it: a founder note, plain section labels, no emoji icons, no purple gradient and no rotating headline by default", 'id="founder"' in home and "lp-founder" in home and not re.search(r"[👑🎯🎓💼🔄📄🔍🗂️💧]", home.split("<main")[1].split("</main>")[0]) and "lp-glow" not in home and 'id="compare"' not in home and '"heroRoles": []' in open(os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "app", "resources", "data", "defaults.json"), encoding="utf8").read())
     t.check("the home page offers upload as well as templates", "Upload" in home and "Upload or start fresh" in home)
+    t.check("the reviews section stays hidden until a review is approved", 'id="reviews" hidden' in home and "Customer reviews will appear here" not in rd("home-ui.js"))
     t.check("customer reviews appear in one section only", home.count("lpReviews") == 1 and "What users say" not in home and "CUSTOMER FEEDBACK" not in home)
     t.check("the FAQ is short and honest about payments and guarantees", home.count("<details") == 8 and "within 7 days of buying" in home and "guarantee an interview" in home)
     t.check("no placeholder or internal notes are shown to visitors", not re.search(r"replace with your facts|public launch|lorem ipsum", home, re.I))
@@ -58,10 +59,11 @@ def run(ctx, t):
     links = re.findall(r'<link rel="stylesheet" href="(/[^"]+)"', home.split("</head>")[0])
     own = [l for l in links if not l.startswith("//")]
     t.check("the home page loads its own styles as one combined file, with the home look in it", len(own) == 1 and own[0].startswith("/assets/bundle/") and "/* /home-v3.css */" in c.page(own[0].split("?")[0])[2], links)
+    t.check("the analytics consent banner is styled for visitors, not only in the admin-only stylesheet", ".owner-consent{position:fixed" in rd("site-polish.css"))
     t.check("the header menu stays at the top and a back-to-top button is offered", "[data-header]{position:sticky" in rd("site-polish.css") and 'id="toTop"' in rd("preview.js"))
     t.check("the menu says Resume by Role and links the city and state pages", ">Resume by Role</a>" in rd("preview.js") and ">Examples</a>" not in rd("preview.js") and 'href="/resume-builder/india/"' in rd("preview.js"))
     t.check("page data used by several scripts is fetched once per page", "'/api/public-content': 1" in rd("csrf-lazy.js"))
-    t.check("the home page says plainly what is free and what a plan adds", 'id="get"' in home and "Free, no card" in home and "paid once" in home.lower())
+    t.check("the home page says plainly what is free and what a plan adds, and that nothing renews", 'id="pricing"' in home and "Free to build" in home and "nothing renews on its own" in home)
     # blog
     s, _, blog = c.page("/blog.html")
     ld = re.findall(r'<script type="application/ld\+json">(.*?)</script>', blog, re.S)

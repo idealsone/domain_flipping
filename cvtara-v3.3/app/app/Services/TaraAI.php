@@ -71,9 +71,13 @@ class TaraAI
         return new Client(apiKey: $key, baseUrl: $o && config('app.env') !== 'production' ? rtrim($o, '/') : 'https://api.anthropic.com', requestOptions: ['timeout' => $timeout, 'maxRetries' => 0]);
     }
 
-    /** One request to Claude with the owner's key and model. Returns the text, or throws (refusal, empty answer, API error). */
-    public static function ask(string $system, string $prompt, int $maxTokens, int $timeout = 50): string
+    /** One request to Claude with the owner's key and model. Returns the text, or throws (refusal, empty answer, API error, or
+     * the monthly cap for growth tasks). Every answer's tokens are counted on the Growth page; $purpose names who asked. */
+    public static function ask(string $system, string $prompt, int $maxTokens, int $timeout = 50, string $purpose = 'customer'): string
     {
+        if (! Growth::aiAllowed($purpose)) {
+            throw new \RuntimeException('budget');
+        }
         $p = self::config();
         $m = self::client((string) ($p['claudeApiKey'] ?? ''), $timeout)->beta->messages->create(
             model: $p['model'] ?? '' ?: self::MODEL,
@@ -84,6 +88,11 @@ class TaraAI
             fallbacks: 'default',
             betas: ['server-side-fallback-2026-07-01'],
         );
+        try {
+            Growth::recordAi($purpose, (string) ($m->model ?? ''), (int) ($m->usage->inputTokens ?? 0), (int) ($m->usage->outputTokens ?? 0));
+        } catch (\Throwable $e) {
+            ErrorLog::exception($e); // counting must never cost the customer their answer
+        }
         if ($m->stopReason === 'refusal') {
             throw new \RuntimeException('refusal');
         }
@@ -115,6 +124,7 @@ class TaraAI
             $e instanceof APIStatusException => 'Claude returned an error (HTTP '.($e->status ?? '?').').',
             $e->getMessage() === 'refusal' => 'Claude declined to write this review.',
             $e->getMessage() === 'empty' => 'Claude returned an empty answer.',
+            $e->getMessage() === 'budget' => 'This month\'s Claude spending cap is reached (Growth page).',
             default => 'Unexpected error: '.mb_strimwidth($e->getMessage(), 0, 160, '…'),
         };
     }

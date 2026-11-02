@@ -7,6 +7,7 @@ PW = "OwnerPassw0rd!!x"
 def run(ctx, t):
     from lib.env import Instance
     from lib.http import Client
+    from lib.db import Db
     inst = Instance(ctx.app, ctx.public, preview=False).start()
     try:
         inst.artisan("tinker", "--execute", "$u=new App\\Models\\User(); $u->forceFill(['name'=>'Owner','email'=>'owner@test.local','password'=>Hash::make('" + PW + "'),'is_admin'=>true,'email_verified_at'=>now(),'referral_code'=>'ownercode000002'])->save();")
@@ -22,6 +23,9 @@ def run(ctx, t):
         cu = Client(inst.base); s, h, _ = cu.login("cust-op@test.local", "TestPassw0rd!!x", path="/afsar"); t.check("a customer cannot sign in on the owner page", "/admin" not in h.get("Location", "") and cu.raw("GET", "/admin.html", None, {"Accept": "text/html"})[0] == 302)
         for slug in ("afsar", "sanaulla"):
             ow = Client(inst.base); s, h, _ = ow.login("owner@test.local", PW, path="/" + slug)
+            if h.get("Location", "").rstrip("/").endswith("/" + slug):  # sign-in code step (email is on): enter the emailed code
+                body = Db(inst.db).q("select body from mail_outbox where subject like '%owner sign-in code%' order by created_at desc, rowid desc limit 1")[0][0]
+                s, h, _ = ow.form("/" + slug, {"code": re.search(r"\[code: (\d{6})\]", body).group(1)})
             t.check(f"owner signs in at /{slug} and lands in the console", s == 302 and h.get("Location", "").endswith("/admin.html"), h.get("Location"))
             s, _, b = ow.raw("GET", "/admin.html", None, {"Accept": "text/html"}); t.check(f"console opens after /{slug} sign-in", s == 200 and b"console/ops.js" in b, s)
         pub = Client(inst.base)

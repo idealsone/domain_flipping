@@ -1,0 +1,4 @@
+Contact: mailto:support@cvtara.com
+Expires: 2027-10-31T00:00:00.000Z
+Preferred-Languages: en
+Canonical: https://cvtara.com/.well-known/security.txt

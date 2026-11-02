@@ -75,7 +75,7 @@ def run(ctx, t):
         db.q("update profiles set marketing_consent=1 where owner_id=?", uid2)
         ctx.inst.artisan("cache:clear"); ctx.inst.artisan("cvtara:cron")
         n = db.q("select subject from mail_outbox where owner_id=? and trigger='nurture'", uid2)
-        t.check("a 40-day-old opted-in customer gets exactly one nudge (step 4)", len(n) == 1 and n[0][0] == subjects[3], n)
+        t.check("a 40-day-old opted-in customer gets exactly one nudge (step 4, the fresher tips)", len(n) == 1 and n[0][0] == subjects[7], n)
         ctx.inst.artisan("cache:clear"); ctx.inst.artisan("cvtara:cron")
         t.check("the same step is never sent twice", db.q("select count(*) from mail_outbox where owner_id=? and trigger='nurture'", uid2)[0][0] == 1)
         uid3 = (lambda e: (ctx.client().register(e), db.q("select id from users where email=?", e)[0][0])[1])("ver-c@test.local")
@@ -109,6 +109,69 @@ def run(ctx, t):
             t.check(f"{days} days left queues the {trig} reminder", db.q("select count(*) from mail_outbox where owner_id=? and trigger=?", uid4, trig)[0][0] == 1, trig)
         ctx.inst.artisan("cache:clear"); ctx.inst.artisan("cvtara:cron")
         t.check("each expiry reminder is sent once only", db.q("select count(*) from mail_outbox where owner_id=? and trigger like 'access_expiring%'", uid4)[0][0] == 3)
+
+        def user(e, consent=True):
+            ctx.client().register(e); i = db.q("select id from users where email=?", e)[0][0]
+            db.q("update users set email_verified_at=datetime('now') where id=?", i)
+            if consent: db.q("update profiles set marketing_consent=1 where owner_id=?", i)
+            return i
+        def buy(pid, owner, plan, paise, days, bought_ago, until, status="paid"):
+            vals = {"id": pid, "owner_id": owner, "plan": plan, "status": status, "amount_paise": paise, "provider": "demo", "limits_json": "{}", "access_days": days, "created_at": "2026-01-01 00:00:00", "updated_at": "2026-01-01 00:00:00"}
+            vals = {k: v for k, v in vals.items() if k in cols}
+            db.q(f"insert into purchases({','.join(vals)},purchased_at,access_until) values({','.join('?' for _ in vals)},{bought_ago},{until})", *vals.values())
+        def cron():
+            ctx.inst.artisan("cache:clear"); ctx.inst.artisan("cvtara:cron")
+        def count(uid, trig):
+            return db.q("select count(*) from mail_outbox where owner_id=? and trigger=?", uid, trig)[0][0]
+
+        # ---- a 7-day Quick Download is not told "7 days left" on the day it is bought; it gets the last-day reminder only ----
+        uq = user("ver-q@test.local")
+        buy("q-1", uq, "quick", 9900, 7, "datetime('now','-1 hour')", "datetime('now','+6.9 days')"); cron()
+        t.check("a fresh 7-day Quick Download gets no 'ends in 7 days' mail", count(uq, "access_expiring_7") == 0 and count(uq, "access_expiring_4") == 0)
+        db.q("update purchases set access_until=datetime('now','+0.6 days') where id='q-1'"); cron()
+        t.check("the Quick Download still gets the 'ends tomorrow' reminder", count(uq, "access_expiring_1") == 1)
+
+        # ---- one checkout reminder per person, however many times checkout was opened ----
+        ua = user("ver-ab@test.local")
+        for k in (1, 2, 3):
+            db.q("insert into purchases(id,owner_id,plan,status,amount_paise,provider,limits_json,access_days,created_at,updated_at) values(?,?,?,'created',29900,'demo','{}',30,datetime('now',?),datetime('now'))", f"ab-{k}", ua, "job-hunt", f"-{k + 1} hours")
+        cron(); cron()
+        t.check("three unfinished payments an hour or more old send one reminder", count(ua, "abandoned_purchase") == 1, count(ua, "abandoned_purchase"))
+        body = db.q("select body from mail_outbox where owner_id=? and trigger='abandoned_purchase'", ua)[0][0]
+        t.check("the reminder links straight back to the same package and names it", "plan=job-hunt" in body and "Job Hunt" in body and "No money was taken" in body, body[:300])
+        db.q("update mail_outbox set created_at=datetime('now','-21 hours') where owner_id=? and trigger='abandoned_purchase'", ua)
+        db.q("update purchases set created_at=datetime('now','-24 hours') where id='ab-1'"); cron()
+        last = db.q("select body from mail_outbox where owner_id=? and trigger='abandoned_purchase' order by created_at desc", ua)
+        t.check("a day later, still unpaid, one last reminder goes out", len(last) == 2 and "last reminder" in last[0][0], len(last))
+        cron(); cron()
+        t.check("after the second reminder nothing more is sent that week", count(ua, "abandoned_purchase") == 2)
+        up = user("ver-ab-paid@test.local")
+        db.q("insert into mail_outbox(id,dedupe,owner_id,trigger,recipient,subject,body,status,attempts,error,due_at,created_at,updated_at) values('ab-mail-x','ab-mail-x',?,'abandoned_purchase','ver-ab-paid@test.local','s','b','queued',0,'',datetime('now','+1 hour'),datetime('now'),datetime('now'))", up)
+        buy("ab-paid", up, "job-hunt", 29900, 30, "datetime('now')", "datetime('now','+30 days')")
+        db.q("update purchases set created_at=datetime('now') where id='ab-paid'")
+        db.q("update mail_outbox set due_at=datetime('now','-1 minute') where id='ab-mail-x'"); cron()
+        t.check("a waiting payment reminder is dropped once they pay", db.q("select status from mail_outbox where id='ab-mail-x'")[0][0] == "cancelled")
+
+        # ---- referral invite a week after Job Hunt or Pro, never after the ₹99 Quick Download, once only ----
+        ur = user("ver-ref@test.local"); uq2 = user("ver-ref-q@test.local"); un = user("ver-ref-n@test.local", consent=False)
+        buy("r-1", ur, "job-hunt", 29900, 30, "datetime('now','-9 days')", "datetime('now','+21 days')")
+        buy("r-2", uq2, "quick", 9900, 7, "datetime('now','-9 days')", "datetime('now','-2 days')")
+        buy("r-3", un, "pro", 59900, 90, "datetime('now','-9 days')", "datetime('now','+81 days')")
+        cron(); cron()
+        t.check("a Job Hunt buyer gets one referral invite after the refund window", count(ur, "referral_invite") == 1, count(ur, "referral_invite"))
+        t.check("a ₹99 Quick Download buyer gets no referral invite", count(uq2, "referral_invite") == 0)
+        t.check("a buyer who did not opt in gets no referral invite", count(un, "referral_invite") == 0)
+        body = db.q("select body from mail_outbox where owner_id=? and trigger='referral_invite'", ur)[0][0]
+        t.check("the invite names the ₹299 minimum and says add-ons do not count", "₹299" in body and "do not count" in body and "{{" not in body, body[:200])
+
+        # ---- two weeks after a plan ends, one "your work is still saved" mail, unless they bought again ----
+        ue = user("ver-end@test.local"); ub = user("ver-end-b@test.local")
+        buy("e-1", ue, "job-hunt", 29900, 30, "datetime('now','-45 days')", "datetime('now','-15 days')")
+        buy("e-2", ub, "job-hunt", 29900, 30, "datetime('now','-45 days')", "datetime('now','-15 days')")
+        buy("e-3", ub, "pro", 59900, 90, "datetime('now','-10 days')", "datetime('now','+80 days')")
+        cron(); cron()
+        t.check("a lapsed customer gets one 'work is still saved' mail", count(ue, "plan_ended") == 1, count(ue, "plan_ended"))
+        t.check("a customer who bought again gets none", count(ub, "plan_ended") == 0)
 
         # ---- resume saved mail at most once per fortnight; follow-up reminders over about a month ----
         t.check("follow-up reminders are spread over about a month (day 7, 15, 30)", sum(ctx.inst.artisan("tinker", "--execute=echo json_encode(App\\Services\\Tracker::GAPS);").stdout.strip().splitlines()[-1:] and [1]) == 1 and ctx.inst.artisan("tinker", "--execute=echo array_sum(App\\Services\\Tracker::GAPS);").stdout.strip().splitlines()[-1] == "30")

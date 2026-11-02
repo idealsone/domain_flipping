@@ -41,10 +41,16 @@ class AccountSecurity
             throw ValidationException::withMessages(['code' => 'The code or current password is incorrect.']);
         }
         $r->session()->forget('security_challenge');
-        $r->session()->put('sensitive_until', now()->timestamp + 600);
+        $r->session()->put('sensitive_until', now()->timestamp + self::window($r));
         $r->session()->put('sensitive_user', $r->user()->id);
         $r->user()->forceFill(['email_verified_at' => now()])->save();
         Settings::audit($r->user()->id, 'security_verified');
+    }
+
+    /** Owners get one code per working hour so a run of saves asks once; customers (payout details, withdrawals) keep 10 minutes. */
+    public static function window(Request $r): int
+    {
+        return $r->user()->is_admin ? 3600 : 600;
     }
 
     public static function requireRecent(Request $r): void
@@ -53,7 +59,7 @@ class AccountSecurity
             return; // preview/demo environments skip the email-code step; never enable on a live site
         }
         if (! $r->user()->email_verified_at || $r->session()->get('sensitive_until', 0) < now()->timestamp || $r->session()->get('sensitive_user') !== $r->user()->id) {
-            throw ValidationException::withMessages(['verification' => 'Verify your email code and current password first. Sensitive actions unlock for 10 minutes.']);
+            throw ValidationException::withMessages(['verification' => 'Verify your email code and current password first. '.($r->user()->is_admin ? 'Sensitive actions unlock for 1 hour.' : 'Sensitive actions unlock for 10 minutes.')]);
         }
     }
 }

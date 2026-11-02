@@ -10,6 +10,7 @@ use Illuminate\Support\Str;
 
 Artisan::command('cvtara:cron', function () {
     \App\Services\Settings::put('cronHeartbeat', ['at' => now()->toIso8601String()]);
+    \App\Services\ErrorLog::flushPending(); // errors recorded while the database was unreachable
     // Mail that is already due goes first, so the daily backup or a slow scan never delays it.
     $send = function () {
         try {
@@ -63,6 +64,18 @@ Artisan::command('cvtara:cron', function () {
     }
     try {
         \App\Services\Campaigns::run();
+    } catch (\Throwable $e) {
+        \App\Services\ErrorLog::exception($e);
+    }
+    // Growth page: yesterday's snapshot, resume segments, and the 2 PM / 7 PM owner report when its hour has come.
+    try {
+        \App\Services\Growth::run();
+    } catch (\Throwable $e) {
+        \App\Services\ErrorLog::exception($e);
+    }
+    // SEO agent: once a day (Mon–Sat from 11 AM India time) pull Search Console and propose changes for the owner to approve.
+    try {
+        \App\Services\SeoAgent::run();
     } catch (\Throwable $e) {
         \App\Services\ErrorLog::exception($e);
     }
@@ -234,6 +247,11 @@ Artisan::command('cvtara:ats-analyse {file}', function (string $file) {
     $pairs = json_decode((string) file_get_contents($file), true) ?: [];
     $this->line(json_encode(array_map(fn ($p) => \App\Services\AtsEngine::analyse($p[0], $p[1]), $pairs), JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES));
 })->purpose('Run the ATS engine on resume/job pairs');
+
+Artisan::command('cvtara:ats-report {file}', function (string $file) {
+    $pairs = json_decode((string) file_get_contents($file), true) ?: [];
+    $this->line(json_encode(array_map(fn ($p) => \App\Services\AtsEngine::report($p[0], $p[1]), $pairs), JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES));
+})->purpose('Full ATS Match report (score, keywords, gaps) for saved-resume/job pairs');
 
 Artisan::command('cvtara:prebuild', function () {
     $r = \App\Services\PageCache::build();

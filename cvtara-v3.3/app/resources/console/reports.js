@@ -53,6 +53,8 @@
       <span class="kit-menu"><button type="button" class="button primary small" data-k="exp">Export ▾</button><div class="kit-pop" hidden>
         <button type="button" data-f="csv">CSV (Excel-ready)</button><button type="button" data-f="xls">Excel (.xls)</button><button type="button" data-f="json">JSON</button><button type="button" data-f="print">Print / Save as PDF</button><button type="button" data-f="copy">Copy to clipboard</button></div></span>`;
     host.insertBefore(bar, host.firstChild);
+    // Lists with a server Download menu export every matching row there; this menu would only see the rows on screen.
+    const view = table.closest('.admin-view'); if (view && view.querySelector('.cv-dl')) $('[data-k=exp]', bar).parentElement.hidden = true;
     const pops = $$('.kit-pop', bar);
     $('[data-k=cols]', bar).nextElementSibling.innerHTML = cols.filter(c => c.label).map(c => `<label><input type="checkbox" data-c="${c.i}" checked> ${E(c.label)}</label>`).join('');
     const rowsEls = () => [...(table.tBodies[0] ? table.tBodies[0].rows : [])].filter(r => !(r.cells.length === 1 && r.cells[0].colSpan > 1));
@@ -91,8 +93,8 @@
   scan();
 
   /* ---------- Reports & Export view ---------- */
-  const STATUS = { orders: ['paid', 'pending', 'created', 'refunded', 'partially_refunded', 'disputed'], users: ['paid', 'normal', 'blocked', 'owner'], withdrawals: ['requested', 'processing', 'paid', 'rejected'], errors: ['open', 'error', 'warning', 'info'], mail: ['queued', 'sent', 'failed'], scans: ['done', 'void', 'reserved'], commissions: [] };
-  const STATUS_LABEL = { refunded: 'Reversed by bank', partially_refunded: 'Partly reversed', normal: 'Normal users', paid: 'Paid', open: 'Open (unresolved)' };
+  const STATUS = { orders: ['paid', 'pending', 'created', 'refunded', 'partially_refunded', 'disputed'], users: ['paid', 'normal', 'blocked', 'owner'], withdrawals: ['requested', 'processing', 'paid', 'rejected'], errors: ['open', 'error', 'warning', 'info'], mail: ['queued', 'sent', 'failed'], scans: ['done', 'void', 'reserved'], commissions: [], reviews: ['pending', 'published', 'hidden'], support: ['open', 'new', 'seen', 'working', 'resolved', 'closed'], growth: ['midday', 'evening', 'weekly'], daily: [], traffic: [], sources: [], activity: [] };
+  const STATUS_LABEL = { refunded: 'Reversed by bank', partially_refunded: 'Partly reversed', normal: 'Normal users', paid: 'Paid', open: 'Open (unresolved)', midday: '2 PM report', evening: '7 PM report', weekly: 'Weekly SEO report' };
   const PRESETS = 'cvtara-report-presets';
   const loadPresets = () => { try { return JSON.parse(localStorage.getItem(PRESETS) || '[]'); } catch (e) { return []; } };
   const savePresets = p => { try { localStorage.setItem(PRESETS, JSON.stringify(p.slice(0, 20))); } catch (e) { /* storage blocked */ } };
@@ -104,15 +106,15 @@
     if (!META) { try { META = (await api('/api/admin/report/meta')).datasets; } catch (e) { h.innerHTML = `<div class="panel panel-pad" role="alert">${E(err(e))}</div>`; return; } }
     const m = META[R.dataset], cols = R.columns && R.columns.dataset === R.dataset ? R.columns.keys : m.defaults, has = f => m.filters.includes(f);
     const opt = (v, l, cur) => `<option value="${E(v)}" ${cur === v ? 'selected' : ''}>${E(l)}</option>`;
-    h.innerHTML = `<div class="pg-head"><h2>Reports & Export</h2><p>Build a custom report from any data set, filter it, choose the columns, then export the full result as CSV, Excel, JSON or print it.</p></div>
-      <section class="panel panel-pad" data-nokit>
+    h.innerHTML = `<div class="pg-head"><h2>Reports & Export</h2><p>Pick a report, a period and filters, choose the columns, then download every matching row as CSV, Excel or PDF. Daily summary, pages visited, traffic sources and product activity default to the last 30 days.</p></div>
+      <section class="panel panel-pad" data-nokit style="overflow:visible">
         <div class="rp-tabs" role="tablist">${Object.entries(META).map(([k, d]) => `<button type="button" role="tab" class="${k === R.dataset ? 'active' : ''}" data-ds="${k}">${E(d.label)}</button>`).join('')}</div>
         <div class="ops-filterbox rp-filters">
           ${has('q') ? `<label class="ops-f grow">Search<input id="rq" type="search" value="${E(R.q)}" placeholder="Name, email, reference…"></label>` : ''}
           ${STATUS[R.dataset].length ? `<label class="ops-f">Status<select id="rs"><option value="all">All</option>${STATUS[R.dataset].map(s => opt(s, STATUS_LABEL[s] || s[0].toUpperCase() + s.slice(1).replace(/_/g, ' '), R.status)).join('')}</select></label>` : ''}
           ${has('plan') ? `<label class="ops-f">Plan<input id="rpl" value="${E(R.plan === 'all' ? '' : R.plan)}" placeholder="e.g. job-hunt" list="rpplans"><datalist id="rpplans">${['quick', 'job-hunt', 'pro', 'complete-kit', 'expert-review', 'profile-boost', 'fresher-basic', 'fresher-standard', 'fresher-pro', 'pro-basic', 'pro-standard', 'pro-pro', 'addon-10', 'addon-20', 'addon-30'].map(p => `<option value="${p}">`).join('')}</datalist></label>` : ''}
           ${has('provider') ? `<label class="ops-f">Payment source<select id="rpv"><option value="all">All</option>${['razorpay', 'phonepe', 'manual', 'referral_reward', 'demo'].map(p => opt(p, p === 'manual' ? 'Recorded by owner' : p === 'phonepe' ? 'PhonePe' : p[0].toUpperCase() + p.slice(1).replace('_', ' '), R.provider)).join('')}</select></label>` : ''}
-          <label class="ops-f">From<input id="rf" type="date" value="${R.from}"></label><label class="ops-f">To<input id="rt" type="date" value="${R.to}"></label>
+          ${K.rangeHtml(R.from, R.to)}
           ${has('min') ? `<label class="ops-f">Min ₹<input id="rmin" type="number" min="0" value="${R.min}" style="width:90px"></label><label class="ops-f">Max ₹<input id="rmax" type="number" min="0" value="${R.max}" style="width:90px"></label>` : ''}
           ${has('live') ? `<label class="ops-f ops-check"><input id="rlive" type="checkbox" ${R.live ? 'checked' : ''}> Real money only</label>` : ''}
         </div>
@@ -121,7 +123,7 @@
         <div class="rp-actions"><label class="ops-f">Sort by<select id="rsort">${opt('', 'Newest first', R.sort)}${m.columns.map(c => opt(c.key, c.label, R.sort)).join('')}</select></label>
           <label class="ops-f">Order<select id="rdir">${opt('desc', 'Descending', R.dir)}${opt('asc', 'Ascending', R.dir)}</select></label>
           <span class="rp-btns"><button type="button" class="button primary" id="rrun">Run report</button>
-            <span class="kit-menu"><button type="button" class="button secondary" data-k="exp">Export all rows ▾</button><div class="kit-pop" hidden><button type="button" data-xf="csv">CSV (Excel-ready)</button><button type="button" data-xf="xls">Excel (.xls)</button><button type="button" data-xf="json">JSON</button><button type="button" data-xf="print">Print / Save as PDF</button></div></span>
+            <span class="kit-menu"><button type="button" class="button secondary" data-k="exp">⬇ Download all rows ▾</button><div class="kit-pop" hidden><button type="button" data-xf="csv">CSV (opens in Excel / Sheets)</button><button type="button" data-xf="xlsx">Excel (.xlsx)</button><button type="button" data-xf="pdf">PDF (to read or print)</button><button type="button" data-xf="json">JSON</button><button type="button" data-xf="print">Print</button></div></span>
             <button type="button" class="button secondary" id="rsave">Save this report</button></span></div>
         <div id="rpresets" class="rp-presets"></div></section>
       <div class="ops-kpis" id="rkpi"></div>
@@ -135,7 +137,8 @@
   };
   function wire(h) {
     const set = (id, k, ev = 'change') => { const el = $('#' + id, h); if (el) el.addEventListener(ev, e => { R[k] = e.target.type === 'checkbox' ? e.target.checked : e.target.value; R.page = 1; if (ev === 'input') { clearTimeout(wire.t); wire.t = setTimeout(() => run(h), 350); } else run(h); }); };
-    set('rq', 'q', 'input'); set('rs', 'status'); set('rpv', 'provider'); set('rf', 'from'); set('rt', 'to'); set('rmin', 'min', 'input'); set('rmax', 'max', 'input'); set('rlive', 'live'); set('rsort', 'sort'); set('rdir', 'dir');
+    set('rq', 'q', 'input'); set('rs', 'status'); set('rpv', 'provider'); set('rmin', 'min', 'input'); set('rmax', 'max', 'input'); set('rlive', 'live'); set('rsort', 'sort'); set('rdir', 'dir');
+    $('.rp-filters', h).addEventListener('change', e => { const rg = K.rangeChange(e, e.currentTarget); if (rg) { [R.from, R.to] = rg; R.page = 1; run(h); } });
     const pl = $('#rpl', h); if (pl) pl.addEventListener('change', e => { R.plan = e.target.value.trim() || 'all'; R.page = 1; run(h); });
     h.onclick = e => {
       const b = e.target.closest('button'); if (!b) return;
@@ -164,9 +167,11 @@
       tbl.innerHTML = `<thead><tr>${d.columns.map(c => `<th${c.num ? ' class="r"' : ''}>${E(c.label)}</th>`).join('')}</tr></thead><tbody>${d.rows.map(r => `<tr>${d.columns.map(c => `<td${c.num ? ' class="r"' : ''}>${money(c.key) ? '₹' + Number(r[c.key] ?? 0).toLocaleString('en-IN', { minimumFractionDigits: 2 }) : E(r[c.key] ?? '')}</td>`).join('')}</tr>`).join('') || `<tr><td colspan="${d.columns.length || 1}">No rows match these filters.</td></tr>`}</tbody>`;
       K.pager($('#rpager', h), d, (p, per) => { R.page = p; R.per = per; run(h); });
       const s = d.sums, f = n => '₹' + Number(n).toLocaleString('en-IN', { maximumFractionDigits: 0 });
-      $('#rkpi', h).innerHTML = `<div class="kpi"><span>Rows</span><b>${d.total.toLocaleString('en-IN')}</b></div>` + (s ? `<div class="kpi"><span>Billed</span><b>${f(s.amount_inr)}</b></div><div class="kpi"><span>Reversed by bank</span><b>${f(s.reversed_inr)}</b></div><div class="kpi"><span>Net</span><b>${f(s.net_inr)}</b></div>` : '');
+      const n = v => Number(v || 0).toLocaleString('en-IN');
+      if (d.dataset === 'daily' && s) { $('#rkpi', h).innerHTML = `<div class="kpi"><span>${E(d.range.from)} to ${E(d.range.to)}</span><b>${n(d.total)} days</b></div><div class="kpi"><span>Sign-ups</span><b>${n(s.signups)}</b></div><div class="kpi"><span>Paid orders</span><b>${n(s.orders)}</b></div><div class="kpi"><span>Net</span><b>${f(s.net_inr)}</b></div>`; return; }
+      $('#rkpi', h).innerHTML = (d.range ? `<div class="kpi"><span>Period</span><b style="font-size:1rem">${E(d.range.from)} to ${E(d.range.to)}</b></div>` : '') + `<div class="kpi"><span>Rows</span><b>${d.total.toLocaleString('en-IN')}</b></div>` + (s ? `<div class="kpi"><span>Billed</span><b>${f(s.amount_inr)}</b></div><div class="kpi"><span>Reversed by bank</span><b>${f(s.reversed_inr)}</b></div><div class="kpi"><span>Net</span><b>${f(s.net_inr)}</b></div>` : '');
     } catch (e) { tbl.innerHTML = `<tbody><tr><td role="alert">${E(err(e))}</td></tr></tbody>`; }
   }
   K.openReport = (preset) => { Object.assign(R, { q: '', status: 'all', plan: 'all', provider: 'all', from: '', to: '', min: '', max: '', live: '', sort: '', page: 1, columns: null }, preset || {}); K.open('reports'); const b = $('.side-nav [data-admin-view="reports"]'); if (b) b.click(); };
-  K.register('reports', reports, ['📊', 'Reports & Export', 'Custom reports on orders, users, referral commissions, withdrawals, ATS checks, errors and email — filter, choose columns and export.']);
+  K.register('reports', reports, ['📊', 'Reports & Export', 'Every report in one place: daily summary, orders, users, traffic, activity, reviews, support, growth, referrals, ATS checks, errors and email. Pick dates and filters, then download CSV, Excel or PDF.']);
 })();
