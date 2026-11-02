@@ -238,13 +238,13 @@ def _run(ctx, t, db, smtp):
     t.check("the send log marks warm-up notes", db.q("select count(*) from outreach_sends where kind='warmup' and to_email in (?, ?)", *seeds)[0][0] == 4)
     tm = [m for m in camp if m["to"] == ["tpo1@abc.edu.in"]]
     msg, text, html = _mail(tm[0]) if tm else (None, "", "")
-    t.check("the placement officer gets the colleges sequence, personalised", tm and msg["Subject"] == "Placement support for ABC College of Engineering students" and text.startswith("Hello Ramesh,"), tm and msg["Subject"])
+    t.check("the placement officer gets the colleges sequence, personalised", tm and msg["Subject"] == "Free ATS resume check for ABC College of Engineering students" and text.startswith("Hello Ramesh,"), tm and msg["Subject"])
     t.check("the colleges list keeps its plain, personal look", tm and "<table" not in html)
     t.check("colleges send from the placements@ alias of the same mailbox, with unsubscribe to that alias", tm and "placements@cvtara.in" in msg["From"] and "mailto:placements@cvtara.in" in (msg["List-Unsubscribe"] or ""), tm and msg["From"])
     sm = [m for m in camp if m["to"][0].startswith("s")]
     msg, text, html = _mail(sm[0])
     t.check("students saved without an alias send from the mailbox itself", "warm@cvtara.in" in msg["From"], msg["From"])
-    t.check("students get the designed mail: heading, bullet list and a button", "<h1" in html and "&#10003;" in html and "background:#1557d2" in html and "Check my resume: http" in text and 'name="color-scheme"' in html, html[:200])
+    t.check("students get the designed mail: heading, bullet list and a button", "<h1" in html and "&#10003;" in html and "background:#1557d2" in html and "Check my resume free: http" in text and 'name="color-scheme"' in html, html[:200])
     s, d = o.api("GET", "admin/outreach")
     t.check("the overview counts each list and the warm-up mix", d["byList"]["colleges"]["reached"] == 1 and d["byList"]["students"]["reached"] >= 5 and d["mix30"]["warmup"] == 4, (d.get("byList"), d.get("mix30")))
 
@@ -254,3 +254,10 @@ def _run(ctx, t, db, smtp):
     s, h, b = ctx.client().raw("GET", share.split("127.0.0.1:" + str(ctx.inst.port))[-1])
     loc = urllib.parse.unquote(h.get("Location", ""))
     t.check("the share link opens WhatsApp with the free ATS check and counts the share", s in (301, 302) and loc.startswith("https://wa.me/?text=") and "/ats-checker/?utm_source=outreach&utm_medium=share" in loc and db.q("select shares, clicks from outreach_contacts where id=?", sid1)[0] == (1, 0), (s, loc))
+    old = json.load(open(__import__("os").path.join(__import__("os").path.dirname(__file__), "..", "fixtures", "outreach_old_defaults.json")))
+    edited = [dict(old["colleges"][0], subject="My own subject for {{college}}")] + old["colleges"][1:]
+    s, d = o.api("POST", "admin/outreach/settings", {"enabled": False, "windowStart": 9, "windowEnd": 19, "footer": "", "warmup": {"share": 40, "seeds": []},
+                                                      "lists": {"students": {"design": "card", "steps": old["students"]}, "colleges": {"design": "plain", "steps": edited}}})
+    lists = o.api("GET", "admin/outreach")[1]["config"]["lists"]
+    t.check("a list saved word for word on the earlier recommended mails moves to the new ones", s == 200 and lists["students"]["steps"][1]["subject"] == "{{name}}, one quick placement tip" and "tara_line" not in json.dumps(lists["students"]), (s, lists["students"]["steps"][1]["subject"]))
+    t.check("a list the owner edited keeps the owner's mails", lists["colleges"]["steps"][0]["subject"] == "My own subject for {{college}}", lists["colleges"]["steps"][0]["subject"])

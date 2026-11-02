@@ -1,3 +1,8 @@
+# CVTara v3.29.9 — Outreach mails polished
+
+## 3.29.9
+- **Outreach mails:** both recommended sequences rewritten. Student mails have a clear heading, tick-list benefits, one main button, a tip box, the live festive offer as a highlighted box and a proper sign-off; the WhatsApp share is a short link instead of a long web address. Placement-cell mails stay plain and personal, with a courteous sign-off, short links instead of long addresses, and the unverified "built by an HR team" line removed. Subjects are capitalised and personal. The other ready-made templates (freshers, experienced, ATS check, festival, batch session) got the same polish. A list still on the earlier recommended mails, word for word, moves to the new ones by itself; a list the owner edited is kept as it is. No migration.
+
 # CVTara v3.29.8 — Outreach finds the email column in any sheet
 
 ## 3.29.8
