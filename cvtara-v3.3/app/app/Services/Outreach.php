@@ -458,15 +458,26 @@ class Outreach
      *
      * @return array{received:int,added:int,invalid:int,role:int,noMail:int,duplicate:int,existing:int,users:int,suppressed:int,samples:array}
      */
+    /** The column separator of an import: tab, semicolon or comma, whichever the first row uses most. */
+    public static function separator(string $line): string
+    {
+        $n = ["\t" => substr_count($line, "\t"), ';' => substr_count($line, ';'), ',' => substr_count($line, ',')];
+        arsort($n);
+
+        return reset($n) > 0 ? (string) key($n) : ',';
+    }
+
     public static function import(string $raw, string $source, bool $checkDomains = true, string $list = 'students'): array
     {
         $lines = preg_split('/\r\n|\r|\n/', trim($raw));
         $res = ['received' => 0, 'added' => 0, 'invalid' => 0, 'role' => 0, 'noMail' => 0, 'duplicate' => 0, 'existing' => 0, 'users' => 0, 'suppressed' => 0, 'samples' => []];
         $list = isset(self::LISTS[$list]) ? $list : 'students';
         $col = ['email' => 0, 'name' => 1, 'college' => false, 'designation' => false, 'city' => false];
-        $first = str_getcsv((string) ($lines[0] ?? ''), ',', '"', '');
+        // Rows copied from Excel or Google Sheets are tab-separated; some exports use semicolons.
+        $sep = self::separator((string) ($lines[0] ?? ''));
+        $first = str_getcsv((string) ($lines[0] ?? ''), $sep, '"', '');
         $head = array_map(fn ($x) => preg_replace('/[^a-z ]/', '', mb_strtolower(trim((string) $x))), $first);
-        $aliases = ['email' => ['email', 'email id', 'email address', 'mail id', 'mail'], 'name' => ['name', 'first name', 'full name', 'contact name', 'tpo name', 'student name'],
+        $aliases = ['email' => ['email', 'email id', 'email address', 'mail id', 'mail'], 'name' => ['name', 'first name', 'full name', 'contact name', 'tpo name', 'student name', 'candidate name', 'candidate', 'user name', 'username', 'name of the candidate', 'name of the student'],
             'college' => ['college', 'college name', 'institute', 'institution', 'university'], 'designation' => ['designation', 'title', 'role', 'position'], 'city' => ['city', 'location', 'district']];
         $pick = function ($names) use ($head) {
             foreach ($names as $n) {
@@ -498,7 +509,7 @@ class Outreach
             if ($res['received'] > self::MAX_IMPORT) {
                 break;
             }
-            $cells = str_getcsv($line, str_contains($line, ',') || ! str_contains($line, ';') ? ',' : ';', '"', '');
+            $cells = str_getcsv($line, $sep, '"', '');
             $email = mb_strtolower(trim((string) ($cells[$col['email']] ?? ''), " \t<>\"'"));
             $cell = fn ($k, $max) => $col[$k] === false ? '' : mb_substr(trim(preg_replace('/\s+/', ' ', strip_tags((string) ($cells[$col[$k]] ?? '')))), 0, $max);
             $name = $cell('name', 120);

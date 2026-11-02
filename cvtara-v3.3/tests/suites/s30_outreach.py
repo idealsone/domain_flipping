@@ -183,6 +183,12 @@ def _run(ctx, t, db, smtp):
     db.q("update outreach_contacts set created_at='2001-01-01' where email='tpo1@abc.edu.in'")
     stu = "email,name\n" + "".join(f"s{i}@example.com,Student {i}\n" for i in range(1, 7))
     o.api("POST", "admin/outreach/import", {"text": stu, "list": "students", "consent": True, "checkDomains": False})
+    xl = "Email ID\tCandidate Name\nxl1@example.com\tMeera Shah\nxl2@example.com\tArjun Rao\n"
+    s, d = o.api("POST", "admin/outreach/import", {"text": xl, "list": "students", "source": "Excel paste", "consent": True, "checkDomains": False})
+    t.check("rows pasted from Excel (tab-separated, 'Candidate Name' column) import with their names", s == 200 and d["result"]["added"] == 2 and db.q("select name from outreach_contacts where email='xl1@example.com'") == [("Meera Shah",)], (s, str(d)[:200]))
+    s, d = o.api("POST", "admin/outreach/import", {"text": "email;name\nsemi1@example.com;Kavya\n", "list": "students", "consent": True, "checkDomains": False})
+    t.check("semicolon-separated rows import too", s == 200 and d["result"]["added"] == 1, (s, str(d)[:200]))
+    db.q("delete from outreach_contacts where email in ('xl1@example.com','xl2@example.com','semi1@example.com')")
     t.check("contacts can be filtered by list", o.api("GET", "admin/outreach/contacts?list=colleges")[1]["total"] == 1)
     t.check("a bad send-from alias is refused", o.api("POST", "admin/outreach/settings", dict(cfg(True, students), lists={"students": {"design": "plain", "from": "not-an-address", "steps": students}, "colleges": colleges}))[0] == 422)
     t.check("an alias on another domain than the mailbox falls back to the mailbox", __import__("json").loads(ctx.inst.artisan("tinker", "--execute", "echo json_encode(App\\Services\\Outreach::fromFor((object) ['email' => 'priya@cvtara.in'], ['from' => 'x@other.example']));").stdout.strip() or '""') == "priya@cvtara.in")

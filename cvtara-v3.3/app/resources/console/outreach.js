@@ -169,11 +169,11 @@
       if (act === 'test') { const to = prompt('Send a test mail to:', ''); if (to === null) return; b.disabled = true; try { const r = await api('/api/admin/outreach/senders', { method: 'POST', body: { action: 'test', id: s.id, to: to || null, list: CUR } }); toast(r.message); } catch (x) { toast(err(x), true); } b.disabled = false; return; }
       try { await api('/api/admin/outreach/senders', { method: 'POST', body: { action: act, id: s.id } }); toast(act === 'pause' ? 'Mailbox paused' : 'Mailbox resumed'); outreach(); } catch (x) { toast(err(x), true); }
     };
-    $('#orFile', h).onchange = async e => { const f = e.target.files[0]; if (!f) return; if (f.size > 3e6) { toast('That file is over 3 MB. Split it into smaller files.', true); return; } $('#orText', h).value = await f.text(); if (!$('#orSource', h).value) $('#orSource', h).value = f.name; };
+    $('#orFile', h).onchange = async e => { const f = e.target.files[0]; if (!f) return; if (/\.(xlsx?|ods|numbers)$/i.test(f.name)) { e.target.value = ''; $('#orImportRes', h).textContent = 'That is a spreadsheet file. In Excel or Google Sheets use File › Save as / Download › CSV, then choose the .csv file here. You can also copy the rows and paste them below.'; toast('Save the sheet as CSV first.', true); return; } if (f.size > 3e6) { toast('That file is over 3 MB. Split it into smaller files.', true); return; } $('#orText', h).value = await f.text(); if (!$('#orSource', h).value) $('#orSource', h).value = f.name; };
     $('#orImport', h).onclick = async ev => {
       const out = $('#orImportRes', h), text = $('#orText', h).value.trim();
       if (!text) { out.textContent = 'Choose a file or paste some rows first.'; return; }
-      if (!$('#orConsent', h).checked) { out.textContent = 'Tick the box to confirm everyone on this list agreed to hear from you.'; return; }
+      if (!$('#orConsent', h).checked) { out.textContent = 'Tick the box to confirm everyone on this list agreed to hear from you.'; toast('Tick the consent box above “Check and add” first.', true); $('#orConsent', h).focus(); return; }
       ev.target.disabled = true; out.textContent = 'Checking addresses… this can take up to a minute for a big list.';
       try {
         const { result: r } = await api('/api/admin/outreach/import', { method: 'POST', body: { text, source: $('#orSource', h).value, list: $('#orImpList', h).value, consent: true, checkDomains: $('#orMx', h).checked } });
