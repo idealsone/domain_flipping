@@ -143,7 +143,9 @@ def run(ctx, t):
     t.check("paying with wallet credit spends it", buy(boss, "job-hunt")[0] == 200 and boss.api("GET", "wallet")[1]["balancePaise"] == 0)
     # a lower monthly cap (Rs 200) so the test needs only 5 friends; the default is Rs 1,000
     db.q("insert or replace into site_settings(key,value_json,revision,created_at,updated_at) values('referrals','{\"monthlyCapPaise\":20000}',1,datetime('now'),datetime('now'))")
-    for n in range(1, 5): friend_paid(n, 9)
+    # 8 days ago, like friend 0 above: all five credits then unlock on the same day, so they fall in one calendar
+    # month whatever today's date is (the cap is per month, so splitting them over a month end earns more, correctly)
+    for n in range(1, 5): friend_paid(n, 8)
     s, w = boss.api("GET", "wallet")
     t.check("5 qualified friends reach the reward", w["milestone"]["count"] == 5, w["milestone"])
     t.check("no more than the monthly cap is earned, but every friend still counts", w["earnedPaise"] == 20000, w["earnedPaise"])
