@@ -1,9 +1,24 @@
 """Outreach: sending mailboxes on another domain, list import with checks, warm-up, send window, spacing,
 follow-ups from the same mailbox, tracked clicks, one-click unsubscribe, bounces, automatic stop on sign-up and auto-pause,
 the students and colleges lists, designed mail, the WhatsApp share link and the warm-up share of each day."""
-import email, json, re, urllib.parse
+import base64, email, io, json, re, urllib.parse, zipfile
 from lib.fake_smtp import FakeSmtp
 NAME = "Outreach mailboxes, warm-up and stop rules"
+
+
+def _xlsx(rows):
+    """A minimal Excel file: shared strings for text cells, as Excel writes them, with the sheet behind a workbook relationship."""
+    strings = sorted({c for r in rows for c in r}); idx = {v: i for i, v in enumerate(strings)}
+    esc = lambda x: x.replace("&", "&amp;").replace("<", "&lt;")
+    col = lambda i: chr(65 + i)
+    sheet = "".join(f'<row r="{n}">' + "".join(f'<c r="{col(i)}{n}" t="s"><v>{idx[c]}</v></c>' for i, c in enumerate(r) if c != "") + "</row>" for n, r in enumerate(rows, 1))
+    b = io.BytesIO(); z = zipfile.ZipFile(b, "w")
+    z.writestr("[Content_Types].xml", '<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"/>')
+    z.writestr("xl/workbook.xml", '<workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"><sheets><sheet name="Leads" sheetId="1" r:id="rId7"/></sheets></workbook>')
+    z.writestr("xl/_rels/workbook.xml.rels", '<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId7" Type="worksheet" Target="worksheets/leads.xml"/></Relationships>')
+    z.writestr("xl/sharedStrings.xml", '<sst xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">' + "".join(f"<si><t>{esc(v)}</t></si>" for v in strings) + "</sst>")
+    z.writestr("xl/worksheets/leads.xml", f'<worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"><sheetData>{sheet}</sheetData></worksheet>')
+    z.close(); return base64.b64encode(b.getvalue()).decode()
 
 
 def _mail(m):
@@ -183,13 +198,33 @@ def _run(ctx, t, db, smtp):
     db.q("update outreach_contacts set created_at='2001-01-01' where email='tpo1@abc.edu.in'")
     stu = "email,name\n" + "".join(f"s{i}@example.com,Student {i}\n" for i in range(1, 7))
     o.api("POST", "admin/outreach/import", {"text": stu, "list": "students", "consent": True, "checkDomains": False})
+    xl = "Email ID\tCandidate Name\nxl1@example.com\tMeera Shah\nxl2@example.com\tArjun Rao\n"
+    s, d = o.api("POST", "admin/outreach/import", {"text": xl, "list": "students", "source": "Excel paste", "consent": True, "checkDomains": False})
+    t.check("rows pasted from Excel (tab-separated, 'Candidate Name' column) import with their names", s == 200 and d["result"]["added"] == 2 and db.q("select name from outreach_contacts where email='xl1@example.com'") == [("Meera Shah",)], (s, str(d)[:200]))
+    s, d = o.api("POST", "admin/outreach/import", {"text": "email;name\nsemi1@example.com;Kavya\n", "list": "students", "consent": True, "checkDomains": False})
+    t.check("semicolon-separated rows import too", s == 200 and d["result"]["added"] == 1, (s, str(d)[:200]))
+    sheet = _xlsx([["Candidate Name", "", "Email ID"], ["Nisha Verma", "", "xlsx1@example.com"], ["R & D Team", "", "xlsx2@example.com"]])
+    s, d = o.api("POST", "admin/outreach/import", {"sheet": sheet, "list": "students", "source": "leads.xlsx", "consent": True, "checkDomains": False})
+    t.check("an Excel .xlsx file imports from its first sheet, columns found by their headings", s == 200 and d["result"]["added"] == 2 and db.q("select name from outreach_contacts where email='xlsx1@example.com'") == [("Nisha Verma",)] and db.q("select name from outreach_contacts where email='xlsx2@example.com'") == [("R & D Team",)], (s, str(d)[:200]))
+    sheet = _xlsx([["Final year students 2026"], ["S No", "Student Name", "Father Name", "Email-ID", "Branch"], ["1", "Asha Patil", "Mohan", "sn1@example.com", "CSE"], ["2", "Vikram S", "Suresh", "sn2@example.com", "ECE"]])
+    s, d = o.api("POST", "admin/outreach/import", {"sheet": sheet, "list": "students", "source": "class.xlsx", "consent": True, "checkDomains": False})
+    t.check("a sheet with a title row, an S No column and an 'Email-ID' heading imports every row with names", s == 200 and d["result"]["added"] == 2 and d["result"]["invalid"] == 0 and db.q("select name from outreach_contacts where email='sn1@example.com'") == [("Asha Patil",)], (s, str(d)[:300]))
+    s, d = o.api("POST", "admin/outreach/import", {"text": "S No\tFull Name\tContact\n1\tRavi Kumar\tsn3@example.com\n2\tPriya N\tsn4@example.com\n", "list": "students", "consent": True, "checkDomains": False})
+    t.check("without an email heading, the column holding the addresses is found by itself", s == 200 and d["result"]["added"] == 2 and db.q("select name from outreach_contacts where email='sn3@example.com'") == [("Ravi Kumar",)], (s, str(d)[:300]))
+    s, d = o.api("POST", "admin/outreach/import", {"sheet": base64.b64encode(b"not a spreadsheet").decode(), "list": "students", "consent": True})
+    t.check("a file that is not an Excel workbook is refused with a plain message", s == 422 and "Excel file could not be read" in str(d), (s, d))
+    db.q("delete from outreach_contacts where email in ('xl1@example.com','xl2@example.com','semi1@example.com','xlsx1@example.com','xlsx2@example.com','sn1@example.com','sn2@example.com','sn3@example.com','sn4@example.com')")
     t.check("contacts can be filtered by list", o.api("GET", "admin/outreach/contacts?list=colleges")[1]["total"] == 1)
+    t.check("a bad send-from alias is refused", o.api("POST", "admin/outreach/settings", dict(cfg(True, students), lists={"students": {"design": "plain", "from": "not-an-address", "steps": students}, "colleges": colleges}))[0] == 422)
+    t.check("an alias on another domain than the mailbox falls back to the mailbox", __import__("json").loads(ctx.inst.artisan("tinker", "--execute", "echo json_encode(App\\Services\\Outreach::fromFor((object) ['email' => 'priya@cvtara.in'], ['from' => 'x@other.example']));").stdout.strip() or '""') == "priya@cvtara.in")
     t.check("a bad warm-up address is refused", o.api("POST", "admin/outreach/settings", cfg(True, students, seeds=["not-an-address"]))[0] == 422)
     seeds = ["seed1@warmup.example", "seed2@warmup.example"]
     s, d = o.api("POST", "admin/outreach/settings", cfg(True, students, seeds=seeds, design="card"))
     t.check("owner saves both lists, the warm-up share and warm-up addresses", s == 200 and d["config"]["warmup"] == {"share": 40, "seeds": seeds} and d["config"]["lists"]["students"]["design"] == "card", (s, str(d)[:200]))
     s, d = o.api("POST", "admin/outreach/preview", {"subject": colleges["steps"][0]["subject"], "body": colleges["steps"][0]["body"], "list": "colleges", "design": "card"})
-    t.check("the colleges preview fills the officer's name and college, and returns the designed HTML", s == 200 and "ABC College of Engineering" in d["subject"] and d["text"].startswith("Hello Ramesh,") and "<table" in d["html"], d.get("subject"))
+    t.check("the colleges preview fills the officer's name and college, and returns the designed HTML", s == 200 and "ABC College of Engineering" in d["subject"] and "\n\nHello Ramesh," in d["text"] and "<table" in d["html"], d.get("subject"))
+    s, d = o.api("POST", "admin/outreach/preview", {"subject": students[0]["subject"], "body": students[0]["body"], "list": "students", "design": "plain"})
+    t.check("the plain look shows the how-it-works steps as a list and leaves the small print out", s == 200 and "- Add your resume" in d["text"] and "[small" not in d["text"] and "[steps" not in d["text"] and "[small" not in d["html"], d.get("text", "")[:300])
 
     n0 = len(smtp.messages)
     for hr in range(10):
@@ -205,11 +240,13 @@ def _run(ctx, t, db, smtp):
     t.check("the send log marks warm-up notes", db.q("select count(*) from outreach_sends where kind='warmup' and to_email in (?, ?)", *seeds)[0][0] == 4)
     tm = [m for m in camp if m["to"] == ["tpo1@abc.edu.in"]]
     msg, text, html = _mail(tm[0]) if tm else (None, "", "")
-    t.check("the placement officer gets the colleges sequence, personalised", tm and msg["Subject"] == "Placement support for ABC College of Engineering students" and text.startswith("Hello Ramesh,"), tm and msg["Subject"])
-    t.check("the colleges list keeps its plain, personal look", tm and "<table" not in html)
+    t.check("the placement officer gets the colleges sequence, personalised", tm and msg["Subject"] == "Free ATS resume check for ABC College of Engineering students" and "Hello Ramesh," in text and "Free ATS resume checks for ABC College of Engineering" in text, tm and msg["Subject"])
+    t.check("placement cells get the campaign look: navy header, green button, small print under it", tm and "For placement cells" in html and "#059669" in html and "See what your students get" in html and "reply to this email for the batch link" in html and "[small" not in html)
+    t.check("colleges send from the placements@ alias of the same mailbox, with unsubscribe to that alias", tm and "placements@cvtara.in" in msg["From"] and "mailto:placements@cvtara.in" in (msg["List-Unsubscribe"] or ""), tm and msg["From"])
     sm = [m for m in camp if m["to"][0].startswith("s")]
     msg, text, html = _mail(sm[0])
-    t.check("students get the designed mail: heading, bullet list and a button", "<h1" in html and "&#10003;" in html and "background:#1557d2" in html and "Check my resume: http" in text and 'name="color-scheme"' in html, html[:200])
+    t.check("students saved without an alias send from the mailbox itself", "warm@cvtara.in" in msg["From"], msg["From"])
+    t.check("students get the designed mail: heading, bullet list and a button", "<h1" in html and "&#10003;" in html and "background:#1557d2" in html and "Check my resume free: http" in text and 'name="color-scheme"' in html, html[:200])
     s, d = o.api("GET", "admin/outreach")
     t.check("the overview counts each list and the warm-up mix", d["byList"]["colleges"]["reached"] == 1 and d["byList"]["students"]["reached"] >= 5 and d["mix30"]["warmup"] == 4, (d.get("byList"), d.get("mix30")))
 
@@ -219,3 +256,10 @@ def _run(ctx, t, db, smtp):
     s, h, b = ctx.client().raw("GET", share.split("127.0.0.1:" + str(ctx.inst.port))[-1])
     loc = urllib.parse.unquote(h.get("Location", ""))
     t.check("the share link opens WhatsApp with the free ATS check and counts the share", s in (301, 302) and loc.startswith("https://wa.me/?text=") and "/ats-checker/?utm_source=outreach&utm_medium=share" in loc and db.q("select shares, clicks from outreach_contacts where id=?", sid1)[0] == (1, 0), (s, loc))
+    old = json.load(open(__import__("os").path.join(__import__("os").path.dirname(__file__), "..", "fixtures", "outreach_old_defaults.json")))
+    edited = [dict(old["colleges"][0], subject="My own subject for {{college}}")] + old["colleges"][1:]
+    s, d = o.api("POST", "admin/outreach/settings", {"enabled": False, "windowStart": 9, "windowEnd": 19, "footer": "", "warmup": {"share": 40, "seeds": []},
+                                                      "lists": {"students": {"design": "card", "steps": old["students"]}, "colleges": {"design": "plain", "steps": edited}}})
+    lists = o.api("GET", "admin/outreach")[1]["config"]["lists"]
+    t.check("a list saved word for word on the earlier recommended mails moves to the new ones", s == 200 and lists["students"]["steps"][1]["subject"] == "{{name}}, one quick placement tip" and "tara_line" not in json.dumps(lists["students"]), (s, lists["students"]["steps"][1]["subject"]))
+    t.check("a list the owner edited keeps the owner's mails", lists["colleges"]["steps"][0]["subject"] == "My own subject for {{college}}", lists["colleges"]["steps"][0]["subject"])

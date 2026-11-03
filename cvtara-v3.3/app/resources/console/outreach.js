@@ -10,30 +10,30 @@
   const when = s => { if (!s) return '—'; const d = parse(s); return d.toLocaleDateString('en-IN', { day: 'numeric', month: 'short' }) + ' ' + d.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' }); };
   const pct = (a, b) => b ? (Math.round(a / b * 1000) / 10) + '%' : '—';
   const inr = p => '₹' + Math.round(Number(p || 0) / 100).toLocaleString('en-IN');
-  let D = null, CFG = null, CUR = 'students';
+  let D = null, CFG = null, CUR = 'students', SEQOPEN = false;
   const steps0 = () => CFG.lists[CUR].steps;
 
   /* Ready-made sequences. Short personal subject, one main link, a real reason to click, a polite follow-up.
      The recommended sequence for each list comes from the server (D.defaults), so there is one copy of it. */
   const LIB = {
-    fresher: { name: 'Freshers: first job', steps: [
-      { subject: '{{name}}, is your resume getting replies?', delayDays: 0, body: "Hi {{name}},\n\nMost freshers send the same resume to every job, and applicant tracking systems filter it out before a person reads it.\n\nCVTara checks your resume against a job description and shows the exact keywords you are missing, then helps you fix them in a few minutes.\n\nTry it on one job you want: {{ats_url}}\n\n{{sender_name}}" },
-      { subject: 'Re: is your resume getting replies?', delayDays: 3, body: "Hi {{name}},\n\nQuick follow-up. If you have a job posting open right now, paste it into CVTara and you will see your match score in under a minute.\n\n{{ats_url}}\n\nNo pressure if the timing is wrong." },
-      { subject: 'last note from me', delayDays: 5, body: "Hi {{name}},\n\nI won't keep writing. If a cleaner, ATS-friendly resume would help with your job search, CVTara has a guided template library with designs made for freshers. Building and checking cost nothing; a clean download starts at {{from_price}}, paid once.\n\n{{site_url}}\n\nAll the best with your applications." } ] },
-    experienced: { name: 'Experienced: next role', steps: [
-      { subject: '{{name}}, one resume per job takes 5 minutes now', delayDays: 0, body: "Hi {{name}},\n\nWhen you are applying for a new role, tailoring your resume to each posting makes a real difference, but it takes time.\n\nCVTara keeps one main resume and makes a tailored version for each job, with a cover letter to match, so each application takes minutes.\n\nHave a look: {{site_url}}\n\n{{sender_name}}" },
-      { subject: 'Re: one resume per job', delayDays: 4, body: "Hi {{name}},\n\nFollowing up in case this got buried. You can check how well your current resume matches a job you like before you apply:\n\n{{ats_url}}\n\nIf you're not looking right now, feel free to ignore this." } ] },
-    ats: { name: 'Free ATS check', steps: [
-      { subject: 'your resume vs. the job description', delayDays: 0, body: "Hi {{name}},\n\nDo you know how your resume scores against the jobs you apply for?\n\nCVTara compares the two and shows your match score, the missing keywords and what to change. The first check costs nothing.\n\nRun yours here: {{ats_url}}\n\n{{sender_name}}" },
-      { subject: 'Re: your resume vs. the job description', delayDays: 3, body: "Hi {{name}},\n\nJust bumping this up. It takes under a minute: paste a job posting, pick your resume, see the score.\n\n{{ats_url}}" } ] },
-    festival: { name: 'Festival offer (uses the offer live in Offers & festivals)', steps: [
-      { subject: '{{name}}, festive prices on CVTara resumes', delayDays: 0, body: "Hi {{name}},\n\nFor the festive season CVTara has an offer on: {{offer_line}}\n\nIt covers ATS-friendly resume templates, a tailored version for each job and matching cover letters, paid once with no auto-renewal.\n\nSee the packages: {{plans_url}}\n\n{{sender_name}}" },
-      { subject: 'Re: festive prices', delayDays: 3, body: "Hi {{name}},\n\nA short reminder about the festive offer: {{offer_line}}\n\n{{plans_url}}\n\nWishing you and your family a happy festival." } ] }
+    fresher: { name: "Freshers: first job", steps: [
+      { subject: "{{name}}, is your resume getting replies?", delayDays: 0, body: "# Is your resume getting replies?\nHi {{name}},\n\nMost freshers send the same resume to every job, and screening software (ATS) filters it out before a recruiter reads it.\n\nCVTara checks your resume against a job description, shows the exact keywords you are missing and helps you fix them in a few minutes.\n\n[button: Check my resume free | {{ats_url}}]\n\nBest wishes,\n{{sender_name}}" },
+      { subject: "Re: is your resume getting replies?", delayDays: 3, body: "Hi {{name}},\n\nA quick follow-up. If you have a job posting open right now, paste it into CVTara and see your match score in under a minute.\n\n[button: See my match score | {{ats_url}}]\n\nNo pressure if the timing is wrong.\n\n{{sender_name}}" },
+      { subject: "{{name}}, one last note about your resume", delayDays: 5, body: "Hi {{name}},\n\nI won't keep writing. If a cleaner, ATS-friendly resume would help your job search, CVTara has a guided template library with designs made for freshers. Building and checking are free; a clean download starts at {{from_price}}, paid once.\n\n[button: Build my resume free | {{site_url}}]\n\nAll the best with your applications,\n{{sender_name}}" } ] },
+    experienced: { name: "Experienced: next role", steps: [
+      { subject: "{{name}}, a tailored resume for every job, in minutes", delayDays: 0, body: "# A tailored resume for every job\nHi {{name}},\n\nWhen you apply for a new role, tailoring your resume to each posting makes a real difference, but it takes time.\n\nCVTara keeps one main resume and makes a tailored version for each job, with a matching cover letter, so each application takes minutes.\n\n[button: Try it free | {{site_url}}]\n\nBest regards,\n{{sender_name}}" },
+      { subject: "Re: a tailored resume for every job", delayDays: 4, body: "Hi {{name}},\n\nFollowing up in case this got buried. You can check how well your current resume matches a job you like before you apply.\n\n[button: Check my resume free | {{ats_url}}]\n\nIf you are not looking right now, feel free to ignore this.\n\n{{sender_name}}" } ] },
+    ats: { name: "Free ATS check", steps: [
+      { subject: "{{name}}, your resume vs. the job description", delayDays: 0, body: "# How does your resume score?\nHi {{name}},\n\nDo you know how your resume scores against the jobs you apply for?\n\nCVTara compares the two and shows:\n- your match score\n- the keywords you are missing\n- what to change before you apply\n\n[button: Run my free check | {{ats_url}}]\n\n{{sender_name}}" },
+      { subject: "Re: your resume vs. the job description", delayDays: 3, body: "Hi {{name}},\n\nJust bringing this to the top of your inbox. It takes under a minute: paste a job posting, add your resume and see the score.\n\n[button: Run my free check | {{ats_url}}]\n\n{{sender_name}}" } ] },
+    festival: { name: "Festival offer (uses the offer live in Offers & festivals)", steps: [
+      { subject: "{{name}}, festive prices on CVTara resumes", delayDays: 0, body: "# Festive prices on CVTara\nHi {{name}},\n\nFor the festive season CVTara has an offer on ATS-friendly resumes, tailored versions for each job and matching cover letters, paid once with no auto-renewal.\n\n[offer]\n\n[button: See the packages | {{plans_url}}]\n\nWarm wishes,\n{{sender_name}}" },
+      { subject: "Re: festive prices on CVTara resumes", delayDays: 3, body: "Hi {{name}},\n\nA short reminder: the festive offer ends soon.\n\n[offer]\n\n[button: See the packages | {{plans_url}}]\n\nWishing you and your family a happy festival,\n{{sender_name}}" } ] }
   };
   const LIB_COLLEGES = {
-    session: { name: 'Free resume session for the batch', steps: [
-      { subject: 'A free resume session for {{college}}', delayDays: 0, body: "Hello {{name}},\n\nI'm from CVTara, a resume platform built by an HR team in Bengaluru. Before this placement season we are running free 30-minute online sessions for final-year students on writing a resume that passes company screening software (ATS).\n\nFor {{college}} it would include:\n- a live session for the batch, online, at a time that suits you\n- a free ATS resume check for every student\n- a short checklist you can share on your placement group\n\nWould you like a slot for {{college}}? Just reply with a convenient week.\n\n{{sender_name}}" },
-      { subject: 'Re: A free resume session for {{college}}', delayDays: 5, body: "Hello {{name}},\n\nFollowing up in case my note got buried. The students can already use the free check here: {{ats_url}}\n\nIf a session would help, a one-line reply with a week is all I need.\n\n{{sender_name}}" } ] }
+    session: { name: "Free resume session for the batch", steps: [
+      { subject: "A free resume session for {{college}}", delayDays: 0, body: "Hello {{name}},\n\nI'm writing from CVTara, an Indian resume platform for freshers. Before this placement season we are running free 30-minute online sessions for final-year students on writing a resume that clears company screening software (ATS).\n\nFor {{college}} it would include:\n- a live online session for the batch, at a time that suits you\n- a free ATS resume check for every student\n- a short checklist you can share on your placement group\n\nWould you like a slot for {{college}}? Just reply with a convenient week.\n\nWarm regards,\n{{sender_name}}" },
+      { subject: "Re: A free resume session for {{college}}", delayDays: 5, body: "Hello {{name}},\n\nFollowing up in case my note got buried. Your students can already use the free check:\n\n[button: Free ATS resume check | {{ats_url}}]\n\nIf a session would help, a one-line reply with a week is all I need.\n\nWarm regards,\n{{sender_name}}" } ] }
   };
   const lib = () => CUR === 'colleges' ? { recommended: { name: 'Recommended: free ATS check for students', steps: D.defaults.colleges.steps }, ...LIB_COLLEGES } : { recommended: { name: 'Recommended: placement season (designed)', steps: D.defaults.students.steps }, ...LIB };
 
@@ -78,11 +78,12 @@
           <td style="white-space:nowrap"><button class="button secondary small" data-act="test">Send test</button> <button class="button secondary small" data-act="edit">Edit</button> <button class="button secondary small" data-act="${s.enabled ? 'pause' : 'resume'}">${s.enabled ? 'Pause' : 'Resume'}</button> <button class="button secondary small" data-act="more" aria-label="More actions">⋯</button></td></tr>`).join('') : '<tr><td colspan="6">No mailboxes yet. Add the mailboxes you created on your sending domain.</td></tr>'}</tbody></table></div></section>
 
       <section class="panel panel-pad" data-nokit><h3 style="margin-top:0">Mails in each sequence</h3>
+        <details id="orSeq" ${SEQOPEN ? 'open' : ''} style="border:1px solid var(--line,#e2e8f0);border-radius:10px;padding:0 12px;margin-bottom:8px"><summary style="cursor:pointer;font-weight:700;padding:10px 0">Show and edit the mails <small class="muted" style="font-weight:400">· ${Object.entries(D.lists).map(([k, l]) => `${E(l)}: ${((CFG.lists[k] || {}).steps || []).length} mails`).join(' · ')}</small></summary>
         <div role="tablist" id="orTabs" style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px">${Object.entries(D.lists).map(([k, l]) => `<button role="tab" class="button small ${k === CUR ? 'primary' : 'secondary'}" data-list="${k}" aria-selected="${k === CUR}">${E(l)}</button>`).join('')}</div>
-        <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;margin-bottom:8px"><label class="ops-f">Start from a template<select id="orLib"></select></label><label class="ops-f">Look<select id="orDesign"><option value="card">Designed: light card with a button</option><option value="plain">Plain: a personal note</option></select></label></div>
-        <p class="muted" style="margin:0 0 12px"><small>Placeholders: {{name}} first name · {{college}} · {{designation}} · {{city}} · {{ats_url}} free ATS check · {{site_url}} home page · {{plans_url}} plans · {{share_url}} send to a friend on WhatsApp · {{sender_name}} · {{from_price}} lowest package price · {{offer_line}} the offer live now (empty when none, and the line is left out). Prices and offers come from Pricing and Offers & festivals, so mails never show an old price. Formatting: start with "# Heading", use "- " for bullets, and put [button: Label | {{ats_url}}] on its own line. Links are tracked.</small></p>
+        <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;margin-bottom:8px"><label class="ops-f">Start from a template<select id="orLib"></select></label><label class="ops-f">Send from (alias of the mailbox)<input id="orFrom" type="email" placeholder="campus@cvtara.in" style="min-width:220px"></label><label class="ops-f">Look<select id="orDesign"><option value="campaign">Campaign: colour header and big button</option><option value="card">Designed: light card with a button</option><option value="plain">Plain: a personal note</option></select></label></div>
+        <p class="muted" style="margin:0 0 12px"><small>Placeholders: {{name}} first name · {{college}} · {{designation}} · {{city}} · {{ats_url}} free ATS check · {{site_url}} home page · {{plans_url}} plans · {{share_url}} send to a friend on WhatsApp · {{sender_name}} · {{from_price}} lowest package price · {{offer_line}} the offer live now (empty when none, and the line is left out). Prices and offers come from Pricing and Offers & festivals, so mails never show an old price. Formatting: start with "# Heading", use "- " for bullets, put [button: Label | {{ats_url}}] on its own line, [small: Free · takes a minute] right under it for the small print, and [steps: First | Second | Third] for a how-it-works row. Links are tracked.</small></p>
         <div id="orSteps"></div>
-        <div style="display:flex;gap:8px;flex-wrap:wrap;margin:6px 0 16px"><button class="button secondary small" id="orAddStep">+ Add follow-up</button></div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;margin:6px 0 16px"><button class="button secondary small" id="orAddStep">+ Add follow-up</button></div></details>
         <h3 style="margin:20px 0 6px">Warm-up</h3>
         <p class="muted" style="margin:0 0 10px">Part of each mailbox's daily amount goes to short, link-free notes to your own addresses, mixed in with the campaign. That keeps each mailbox's history healthy. When no one is waiting to be mailed, warm-up uses the whole day. Open and reply to a few of these notes now and then; that is what mail providers notice.</p>
         <div style="display:flex;gap:12px;flex-wrap:wrap;align-items:flex-start">
@@ -101,7 +102,8 @@
       <section class="panel panel-pad" data-nokit><h3 style="margin-top:0">Add contacts</h3>
         <p class="muted" style="margin-top:0">Paste or upload a CSV with an <b>email</b> column and, if you have them, <b>name</b>, <b>college</b>, <b>designation</b> and <b>city</b> columns (for placement officers, put the officer's name in <b>name</b>). Up to 20,000 rows at a time. Add each college as its own source, so you can stop one list without touching the others. Bad addresses, system addresses, domains that cannot receive mail, duplicates, existing CVTara users and anyone who unsubscribed or bounced before are left out.</p>
         <div style="display:grid;gap:10px">
-          <label class="ops-f">CSV file<input type="file" id="orFile" accept=".csv,.txt,text/csv,text/plain"></label>
+          <div style="display:flex;gap:12px;flex-wrap:wrap;align-items:flex-end"><label class="ops-f grow">CSV or Excel (.xlsx) file<input type="file" id="orFile" accept=".csv,.txt,.xlsx,text/csv,text/plain,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"></label><button type="button" class="button secondary small" id="orSample">⬇ Download blank sheet</button></div>
+          <p class="muted" style="margin:0"><small>Fill the blank sheet in Excel or Google Sheets (one person per row, keep the first row as it is), save it as .xlsx or CSV and upload it here. Extra columns such as S No are ignored.</small></p>
           <label class="ops-f">…or paste rows<textarea id="orText" rows="5" placeholder="email,name,college,designation,city&#10;tpo@abc.edu.in,Ramesh Kumar,ABC College of Engineering,Training and Placement Officer,Mysuru"></textarea></label>
           <div style="display:flex;gap:12px;flex-wrap:wrap;align-items:flex-end"><label class="ops-f">Add to list<select id="orImpList">${Object.entries(D.lists).map(([k, l]) => `<option value="${k}" ${k === CUR ? 'selected' : ''}>${E(l)}</option>`).join('')}</select></label><label class="ops-f grow">Where these came from<input id="orSource" maxlength="120" placeholder="e.g. ABC College placement cell sign-ups, Oct 2026"></label>
           <label style="display:flex;gap:8px;align-items:center"><input type="checkbox" id="orMx" checked> Check that each domain can receive mail</label></div>
@@ -126,6 +128,7 @@
     const box = $('#orSteps', h), STEPS = steps0();
     $('#orLib', h).innerHTML = '<option value="">Choose…</option>' + Object.entries(lib()).map(([k, v]) => `<option value="${k}">${E(v.name)} (${v.steps.length} mails)</option>`).join('');
     $('#orDesign', h).value = CFG.lists[CUR].design;
+    $('#orFrom', h).value = CFG.lists[CUR].from || '';
     h.querySelectorAll('#orTabs [data-list]').forEach(b => { const on = b.dataset.list === CUR; b.classList.toggle('primary', on); b.classList.toggle('secondary', !on); b.setAttribute('aria-selected', String(on)); });
     box.innerHTML = STEPS.map((s, i) => `<fieldset class="panel panel-pad" style="margin:0 0 10px;border:1px solid var(--line,#e2e8f0)"><legend style="font-weight:700;padding:0 6px">${i === 0 ? 'First mail' : 'Follow-up ' + i}</legend>
       <div style="display:flex;gap:10px;flex-wrap:wrap"><label class="ops-f grow">Subject<input data-k="subject" data-i="${i}" maxlength="160" value="${E(s.subject)}"></label>${i ? `<label class="ops-f">Days after the previous mail<input type="number" min="1" max="60" data-k="delayDays" data-i="${i}" value="${Number(s.delayDays) || 3}" style="width:90px"></label>` : ''}</div>
@@ -150,6 +153,7 @@
     const msg = $('#orMsg', h);
     $('#orTabs', h).onclick = e => { const b = e.target.closest('[data-list]'); if (b) { CUR = b.dataset.list; steps(h); } };
     $('#orDesign', h).onchange = e => { CFG.lists[CUR].design = e.target.value; };
+    $('#orFrom', h).oninput = e => { CFG.lists[CUR].from = e.target.value.trim(); };
     $('#orLib', h).onchange = e => { const t = lib()[e.target.value]; if (!t) return; if (!confirm(`Replace the current ${D.lists[CUR]} mails with "${t.name}"? Nothing is saved until you press Save.`)) { e.target.value = ''; return; } CFG.lists[CUR].steps = JSON.parse(JSON.stringify(t.steps)); steps(h); };
     $('#orAddStep', h).onclick = () => { const S = steps0(); if (S.length < 4) { S.push({ subject: 'Re: ' + (S[S.length - 1].subject || ''), body: (CUR === 'colleges' ? 'Hello' : 'Hi') + ' {{name}},\n\n', delayDays: 3 }); steps(h); } };
     $('#orSave', h).onclick = async () => {
@@ -167,17 +171,33 @@
       if (act === 'test') { const to = prompt('Send a test mail to:', ''); if (to === null) return; b.disabled = true; try { const r = await api('/api/admin/outreach/senders', { method: 'POST', body: { action: 'test', id: s.id, to: to || null, list: CUR } }); toast(r.message); } catch (x) { toast(err(x), true); } b.disabled = false; return; }
       try { await api('/api/admin/outreach/senders', { method: 'POST', body: { action: act, id: s.id } }); toast(act === 'pause' ? 'Mailbox paused' : 'Mailbox resumed'); outreach(); } catch (x) { toast(err(x), true); }
     };
-    $('#orFile', h).onchange = async e => { const f = e.target.files[0]; if (!f) return; if (f.size > 3e6) { toast('That file is over 3 MB. Split it into smaller files.', true); return; } $('#orText', h).value = await f.text(); if (!$('#orSource', h).value) $('#orSource', h).value = f.name; };
+    $('#orSeq', h).ontoggle = e => { SEQOPEN = e.target.open; };
+    $('#orSample', h).onclick = () => {
+      const l = $('#orImpList', h).value, cols = l === 'colleges' ? 'email,name,college,designation,city' : 'email,name,college,city';
+      download(`cvtara-${l}-contacts.csv`, '\ufeff' + cols + '\r\n', 'text/csv');
+    };
+    let SHEET = null;
+    $('#orFile', h).onchange = async e => {
+      const f = e.target.files[0]; SHEET = null; if (!f) return;
+      if (/\.(xls|ods|numbers)$/i.test(f.name)) { e.target.value = ''; $('#orImportRes', h).textContent = 'Save this sheet as Excel .xlsx or as CSV, then choose that file.'; toast('Use an .xlsx or .csv file.', true); return; }
+      if (f.size > 8e6) { toast('That file is over 8 MB. Split it into smaller files.', true); e.target.value = ''; return; }
+      if (/\.xlsx$/i.test(f.name)) {
+        // Sent as is; the server reads the first sheet. Up to 20,000 rows, same columns as a CSV.
+        const b = new Uint8Array(await f.arrayBuffer()); let bin = ''; for (let k = 0; k < b.length; k += 0x8000) bin += String.fromCharCode.apply(null, b.subarray(k, k + 0x8000));
+        SHEET = btoa(bin); $('#orText', h).value = ''; $('#orImportRes', h).textContent = `Excel file ready: ${f.name}. The first sheet is used.`;
+      } else { if (f.size > 3e6) { toast('That file is over 3 MB. Split it into smaller files.', true); return; } $('#orText', h).value = await f.text(); }
+      if (!$('#orSource', h).value) $('#orSource', h).value = f.name;
+    };
     $('#orImport', h).onclick = async ev => {
       const out = $('#orImportRes', h), text = $('#orText', h).value.trim();
-      if (!text) { out.textContent = 'Choose a file or paste some rows first.'; return; }
-      if (!$('#orConsent', h).checked) { out.textContent = 'Tick the box to confirm everyone on this list agreed to hear from you.'; return; }
+      if (!text && !SHEET) { out.textContent = 'Choose a file or paste some rows first.'; return; }
+      if (!$('#orConsent', h).checked) { out.textContent = 'Tick the box to confirm everyone on this list agreed to hear from you.'; toast('Tick the consent box above “Check and add” first.', true); $('#orConsent', h).focus(); return; }
       ev.target.disabled = true; out.textContent = 'Checking addresses… this can take up to a minute for a big list.';
       try {
-        const { result: r } = await api('/api/admin/outreach/import', { method: 'POST', body: { text, source: $('#orSource', h).value, list: $('#orImpList', h).value, consent: true, checkDomains: $('#orMx', h).checked } });
+        const { result: r } = await api('/api/admin/outreach/import', { method: 'POST', body: { ...(SHEET && !text ? { sheet: SHEET } : { text }), source: $('#orSource', h).value, list: $('#orImpList', h).value, consent: true, checkDomains: $('#orMx', h).checked } });
         const row = (l, n) => n ? `<li>${E(l)}: <b>${n.toLocaleString('en-IN')}</b></li>` : '';
         out.innerHTML = `<div class="panel panel-pad" style="background:#f0fdf4"><b>${r.added.toLocaleString('en-IN')} added</b> of ${r.received.toLocaleString('en-IN')} rows.<ul style="margin:8px 0 0;padding-left:18px">${row('Not a valid address', r.invalid)}${row('System addresses (no-reply, postmaster…)', r.role)}${row('Domain cannot receive mail', r.noMail)}${row('Duplicates in this file', r.duplicate)}${row('Already in your list', r.existing)}${row('Already CVTara users', r.users)}${row('Unsubscribed or bounced before', r.suppressed)}</ul>${r.samples.length ? `<details style="margin-top:8px"><summary>Examples left out</summary><ul>${r.samples.map(x => `<li>${E(x.email)} — ${E(x.reason)}</li>`).join('')}</ul></details>` : ''}</div>`;
-        $('#orText', h).value = ''; $('#orFile', h).value = ''; D = null; setTimeout(() => outreach().then(() => { const o = $('#orImportRes'); if (o) o.innerHTML = out.innerHTML; }), 50);
+        $('#orText', h).value = ''; $('#orFile', h).value = ''; SHEET = null; D = null; setTimeout(() => outreach().then(() => { const o = $('#orImportRes'); if (o) o.innerHTML = out.innerHTML; }), 50);
       } catch (x) { out.textContent = err(x); }
       ev.target.disabled = false;
     };

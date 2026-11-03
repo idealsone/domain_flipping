@@ -19,6 +19,8 @@ use Illuminate\Support\Str;
  * - Right before each send the address is checked again: a CVTara account, an unsubscribe or a bounce stops it for good.
  * - A mailbox pauses itself after repeated failures or too many bounces; the others carry on.
  * - Two lists, each with its own sequence: students (job seekers) and colleges (placement officers).
+ *   Each list can send from its own alias of the mailbox (campus@ for students, placements@ for colleges), so one
+ *   mailbox and one daily limit serve both; an alias on another domain than the mailbox is ignored.
  * - Part of each mailbox's daily amount (40% by default) goes to short warm-up notes to the owner's own addresses,
  *   so the mailbox keeps a steady, healthy history. With nothing else to send, warm-up may use the whole day.
  */
@@ -60,18 +62,28 @@ class Outreach
             'footer' => '',
             'warmup' => ['share' => 40, 'seeds' => []],
             'lists' => [
-                'students' => ['design' => 'card', 'steps' => [
-                    ['subject' => '{{name}}, will your resume get shortlisted?', 'delayDays' => 0, 'body' => "# Will your resume get shortlisted?\n[preheader: A one-minute check shows the keywords your resume is missing for any job.]\nHi {{name}},\n\nMany companies that hire freshers screen resumes with software (an ATS) before anyone reads them. If your resume does not use the words the job asks for, it can be passed over in seconds.\n\nCVTara checks your resume against any job description, at no cost, and shows you:\n- your match score for that job\n- the keywords you are missing\n- what to fix before you apply\n\n[button: Check my resume | {{ats_url}}]\n\nIt takes about a minute, and placement season is a good time to fix it.\n\n{{sender_name}}"],
-                    ['subject' => 'Re: will your resume get shortlisted?', 'delayDays' => 3, 'body' => "Hi {{name}},\n\nA quick placement tip: send a slightly different resume for each role. Same facts, but the words that role asks for.\n\nCVTara keeps one primary resume and makes a tailored version for each job in a click, with fresher designs from the guided template library and a matching cover letter.\n\n{{tara_line}}\n\n[button: Make my job-ready resume | {{site_url}}]\n\nFriends applying too? Send them the check on WhatsApp: {{share_url}}"],
-                    ['subject' => 'last note from me, {{name}}', 'delayDays' => 5, 'body' => "# Your resume, ready before the next interview\nHi {{name}},\n\nThis is my last mail about it. Building, editing and checking your resume on CVTara costs nothing. You pay only when you download a clean copy, from {{from_price}}, paid once with no auto-renewal and a full refund within 7 days if you have not used it.\n\n{{offer_line}}\n\n[button: See the packages | {{plans_url}}]\n\nAll the best for your placements.\n\n{{sender_name}}"],
+                'students' => ['design' => 'campaign', 'from' => 'campus@cvtara.in', 'steps' => [
+                    ['subject' => '{{name}}, will your resume get shortlisted?', 'delayDays' => 0, 'body' => "# Will your resume get shortlisted?\n[preheader: A free one-minute check shows what your resume is missing for the job you want.]\nHi {{name}},\n\nMost companies that hire freshers now screen resumes with software (an ATS) before a recruiter reads them. If your resume misses the words the job asks for, it can be filtered out in seconds.\n\nCVTara's free ATS check compares your resume with any job description and shows you:\n- your match score for that job\n- the exact keywords you are missing\n- what to fix before you apply\n\n[steps: Add your resume | Paste the job description | Get your score and fixes]\n\n[button: Check my resume free | {{ats_url}}]\n[small: Free · takes about a minute · nothing to install]\n\nAll the best for placement season,\n{{sender_name}}"],
+                    ['subject' => '{{name}}, one quick placement tip', 'delayDays' => 3, 'body' => "# One resume, tailored to every job\n[preheader: Same facts, the right words for each role, ready in a click.]\nHi {{name}},\n\nA quick placement tip: recruiters shortlist resumes that match the role. Sending the same resume everywhere is one of the most common reasons freshers hear nothing back.\n\nWith CVTara you build one resume and get:\n- a tailored version for each job, in one click\n- clean, ATS-friendly designs made for freshers\n- a matching cover letter for every application\n\n[button: Build my resume free | {{site_url}}]\n[small: Building and editing are free. Pay only if you download.]\n\n[button: Friends applying too? Share the free check on WhatsApp | {{share_url}}]\n\n{{sender_name}}"],
+                    ['subject' => '{{name}}, your resume before the next interview', 'delayDays' => 5, 'body' => "# Your resume, ready before the next interview\n[preheader: Build and check for free. Pay only when you download, from {{from_price}}.]\nHi {{name}},\n\nThis is my last mail about it, so here is everything in one place:\n- building, editing and ATS checks on CVTara are free\n- you pay once, only to download a clean copy, from {{from_price}}\n- no auto-renewal, and a full refund within 7 days if you have not used it\n\n[offer]\n\n[button: See the packages | {{plans_url}}]\n[small: One-time payment · 7-day refund if unused]\n\nAll the best for your placements,\n{{sender_name}}"],
                 ]],
-                'colleges' => ['design' => 'plain', 'steps' => [
-                    ['subject' => 'Placement support for {{college}} students', 'delayDays' => 0, 'body' => "Hello {{name}},\n\nI'm writing from CVTara, a resume platform built by an HR team in Bengaluru. You will know how many capable students at {{college}} lose out at the resume shortlist stage.\n\nWe would like to give {{college}}'s final-year students our ATS resume check this placement season, at no cost:\n- each student sees how their resume scores against real job descriptions\n- they get the missing keywords and fixes in minutes\n- you share one link with the batch, with nothing to install\n\nShall I send you the link and a short note you can forward to students? A reply to this email is enough.\n\n{{sender_name}}"],
-                    ['subject' => 'Re: Placement support for {{college}} students', 'delayDays' => 4, 'body' => "Hello {{name}},\n\nFollowing up on my note. Here is the link your students can use straight away: {{ats_url}}\n\nIf it helps, we can also run a 30-minute online session for the batch on writing a resume that passes ATS screening, at no cost to the college.\n\nWould a date in the next two weeks suit you? A one-line reply is enough.\n\n{{sender_name}}"],
-                    ['subject' => 'Re: Placement support for {{college}} students', 'delayDays' => 7, 'body' => "Hello {{name}},\n\nI don't want to fill your inbox, so this is my last note. If the ATS check or a resume session would help {{college}}'s students this season, just reply and I'll set it up.\n\nYou can also forward the check to your students on WhatsApp: {{share_url}}\n\n{{sender_name}}"],
+                'colleges' => ['design' => 'campaign', 'from' => 'placements@cvtara.in', 'steps' => [
+                    ['subject' => 'Free ATS resume check for {{college}} students', 'delayDays' => 0, 'body' => "# Free ATS resume checks for {{college}}\n[preheader: Help your final-year students get past resume screening this placement season, at no cost.]\nHello {{name}},\n\nI'm writing from CVTara, an Indian resume platform for freshers. Many capable students lose out at the shortlist stage because their resume is not written for the screening software (ATS) that most companies now use.\n\nThis placement season we would like to offer {{college}}'s final-year students our ATS resume check, free of cost:\n- each student sees how their resume scores against a real job description\n- they get the missing keywords and clear fixes in minutes\n- you share one link with the batch, with nothing to install or pay\n\n[button: See what your students get | {{ats_url}}]\n[small: Free for your college · or simply reply to this email for the batch link]\n\nWarm regards,\n{{sender_name}}"],
+                    ['subject' => 'Re: Free ATS resume check for {{college}} students', 'delayDays' => 4, 'body' => "# A free resume session for your batch\n[preheader: The ATS check is ready to share, and we can add a free 30-minute online session.]\nHello {{name}},\n\nFollowing up on my earlier note. Your students can start using the check right away, and if it helps, we can also run a free 30-minute online session for the batch on writing a resume that clears ATS screening.\n\n[steps: Share one link with the batch | Students check their resumes | Optional live session]\n\n[button: Open the free ATS check | {{ats_url}}]\n[small: Would a date in the next two weeks suit you? Just reply with a day.]\n\nWarm regards,\n{{sender_name}}"],
+                    ['subject' => 'Re: Free ATS resume check for {{college}} students', 'delayDays' => 7, 'body' => "# Last note from me\n[preheader: If the free ATS check would help your students, one reply is all it takes.]\nHello {{name}},\n\nI don't want to crowd your inbox, so this is my last note. If the free ATS check or a resume session would help {{college}}'s students this season, simply reply and we will set it up.\n\n[button: Share the check on WhatsApp | {{share_url}}]\n[small: Forward it to your placement group in one tap]\n\nThank you for all you do for your students.\n\nWarm regards,\n{{sender_name}}"],
                 ]],
             ],
         ];
+    }
+
+    /** Earlier recommended sequences (see fingerprint()), replaced by the current ones unless the owner edited them. */
+    public const DESIGNS = ['campaign', 'card', 'plain'];
+
+    private const OLD_DEFAULTS = ['students' => ['0612dc5de71940f0ee2ecee4dfc65a46'], 'colleges' => ['54d0eb010703dd1f863a475a8bdf2d68']];
+
+    public static function fingerprint(array $steps): string
+    {
+        return md5(implode("\x1f", array_map(fn ($s) => trim((string) ($s['subject'] ?? ''))."\x1e".trim(str_replace("\r", '', (string) ($s['body'] ?? ''))), $steps)));
     }
 
     public static function config(): array
@@ -87,7 +99,13 @@ class Outreach
         foreach ($d['lists'] as $k => $def) {
             $l = array_merge($def, (array) ($savedLists[$k] ?? []));
             $l['steps'] = array_values(array_slice((array) $l['steps'], 0, 4)) ?: $def['steps'];
-            $l['design'] = in_array($l['design'], ['card', 'plain'], true) ? $l['design'] : $def['design'];
+            // A list still on an earlier recommended sequence, word for word, moves to the current one; edited mails are kept.
+            if (in_array(self::fingerprint($l['steps']), self::OLD_DEFAULTS[$k] ?? [], true)) {
+                $l['steps'] = $def['steps'];
+                $l['design'] = $def['design'];
+            }
+            $l['design'] = in_array($l['design'], self::DESIGNS, true) ? $l['design'] : $def['design'];
+            $l['from'] = mb_strtolower(trim((string) ($l['from'] ?? '')));
             $c['lists'][$k] = $l;
         }
 
@@ -294,10 +312,11 @@ class Outreach
     public static function deliver(object $s, string $to, array $mail): void
     {
         self::mailer($s)->send([], [], function ($m) use ($s, $to, $mail) {
-            $m->from($s->email, $s->from_name ?: null)->to($to)->subject($mail['subject'])->text($mail['text'])->html($mail['html']);
+            $from = $mail['from'] ?? $s->email;
+            $m->from($from, $s->from_name ?: null)->to($to)->subject($mail['subject'])->text($mail['text'])->html($mail['html']);
             $h = $m->getSymfonyMessage()->getHeaders();
             if (! empty($mail['unsubscribe'])) {
-                $h->addTextHeader('List-Unsubscribe', '<'.$mail['unsubscribe'].'>, <mailto:'.$s->email.'?subject=Unsubscribe>');
+                $h->addTextHeader('List-Unsubscribe', '<'.$mail['unsubscribe'].'>, <mailto:'.$from.'?subject=Unsubscribe>');
                 $h->addTextHeader('List-Unsubscribe-Post', 'List-Unsubscribe=One-Click');
             }
         });
@@ -359,15 +378,112 @@ class Outreach
         return URL::signedRoute('outreach.click', ['contact' => $contactId, 'step' => $step, 'to' => $to]);
     }
 
+    /** The address a list sends from: its alias when that alias is on the mailbox's own domain, otherwise the mailbox itself. */
+    public static function fromFor(object $s, array $list): string
+    {
+        $alias = mb_strtolower(trim((string) ($list['from'] ?? '')));
+        $domain = fn ($e) => mb_strtolower((string) substr(strrchr($e, '@'), 1));
+
+        return $alias !== '' && filter_var($alias, FILTER_VALIDATE_EMAIL) && $domain($alias) === $domain($s->email) ? $alias : $s->email;
+    }
+
     public static function listOf(array $c, object $ct): array
     {
         return $c['lists'][$ct->list ?? 'students'] ?? $c['lists']['students'];
     }
 
-    /** @return array{subject:string,text:string,html:string,unsubscribe:string} */
+    /** @return array{subject:string,text:string,html:string,unsubscribe:string,from:string} */
+    /**
+     * The campaign look: a coloured header with the headline, then the message, a "how it works" row and one big button
+     * in a highlighted panel. Students get bright blue with an orange button; placement cells a calmer navy with green.
+     *
+     * @return array{0:string,1:string} html, text (without the signature and footer)
+     */
+    public static function campaign(array $parsed, string $list, string $subject, string $signature): array
+    {
+        $c = MailLayout::C;
+        $f = MailLayout::FONT;
+        $e = fn ($x) => htmlspecialchars((string) $x, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
+        $tpo = $list === 'colleges';
+        $t = $tpo
+            ? ['from' => '#0b2545', 'to' => '#1557d2', 'eyebrow' => 'For placement cells', 'btnFrom' => '#059669', 'btnTo' => '#047857', 'btn' => '#059669', 'panel' => '#ecfdf5', 'panelLine' => '#a7f3d0', 'num' => '#0b2545']
+            : ['from' => '#1557d2', 'to' => '#6d28d9', 'eyebrow' => 'For students & freshers', 'btnFrom' => '#f97316', 'btnTo' => '#ea580c', 'btn' => '#f97316', 'panel' => '#fff7ed', 'panelLine' => '#fed7aa', 'num' => '#1557d2'];
+        $site = rtrim((string) config('app.url'), '/');
+        $p = 'margin:0 0 18px;font-family:'.$f.';font-size:16px;line-height:1.65;color:'.$c['text'];
+        $html = '';
+        $text = '';
+        $btnSeen = false;
+        $blocks = $parsed['blocks'];
+        foreach ($blocks as $i => [$k, $v]) {
+            if ($k === 'p' && preg_match('/^\[small:\s*(.*?)\s*\]$/is', trim($v))) {
+                continue; // drawn under the button
+            }
+            if ($k === 'p' && preg_match('/^\[steps:\s*(.*?)\s*\]$/is', trim($v), $m)) {
+                $items = array_values(array_filter(array_map('trim', explode('|', $m[1])), fn ($x) => $x !== ''));
+                $w = (int) floor(100 / max(1, count($items)));
+                $cells = '';
+                foreach ($items as $n => $it) {
+                    $cells .= '<td width="'.$w.'%" valign="top" align="center" style="padding:0 6px"><div style="width:34px;height:34px;line-height:34px;margin:0 auto 8px;border-radius:50%;background:'.$t['num'].';color:#ffffff;font-family:'.$f.';font-size:15px;font-weight:800;text-align:center">'.($n + 1).'</div><div class="cv-txt" style="font-family:'.$f.';font-size:14px;line-height:1.45;font-weight:600;color:'.$c['ink'].'">'.$e($it).'</div></td>';
+                    $text .= ($n + 1).'. '.$it."\n";
+                }
+                $html .= '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" class="cv-tint" bgcolor="#f8fafc" style="margin:4px 0 24px;background:#f8fafc;border:1px solid '.$c['line'].';border-radius:14px;border-collapse:separate"><tr><td style="padding:18px 8px 16px"><p class="cv-mut" style="margin:0 0 14px;text-align:center;font-family:'.$f.';font-size:12px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:'.$c['muted'].'">How it works</p><table role="presentation" width="100%" cellpadding="0" cellspacing="0"><tr>'.$cells.'</tr></table></td></tr></table>';
+                $text .= "\n";
+
+                continue;
+            }
+            if ($k === 'btn') {
+                [$label, $url] = $v;
+                $text .= $label.': '.$url."\n\n";
+                if ($btnSeen) {
+                    $html .= '<p style="margin:0 0 20px;font-family:'.$f.';font-size:16px;text-align:center"><a href="'.$e($url).'" target="_blank" class="cv-acc" style="color:'.$c['accent'].';font-weight:700;text-decoration:none">'.$e($label).' &rarr;</a></p>';
+
+                    continue;
+                }
+                $btnSeen = true;
+                $small = '';
+                $next = $blocks[$i + 1] ?? null;
+                if ($next && $next[0] === 'p' && preg_match('/^\[small:\s*(.*?)\s*\]$/is', trim($next[1]), $m)) {
+                    $small = $m[1];
+                    $text .= $small."\n\n";
+                }
+                $html .= '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" class="cv-warm" bgcolor="'.$t['panel'].'" style="margin:6px 0 26px;background:'.$t['panel'].';border:1px solid '.$t['panelLine'].';border-radius:16px;border-collapse:separate"><tr><td align="center" style="padding:24px 18px 20px">'
+                    .'<table role="presentation" cellpadding="0" cellspacing="0" class="cv-btn" style="margin:0 auto"><tr><td align="center" bgcolor="'.$t['btn'].'" style="border-radius:999px;background:'.$t['btn'].';background-image:linear-gradient(135deg,'.$t['btnFrom'].','.$t['btnTo'].');box-shadow:0 6px 16px rgba(15,23,42,.18)"><a href="'.$e($url).'" target="_blank" style="display:inline-block;padding:17px 36px;font-family:'.$f.';font-size:18px;line-height:1.2;font-weight:800;color:#ffffff;text-decoration:none;border-radius:999px">'.$e($label).'&nbsp;&rarr;</a></td></tr></table>'
+                    .($small !== '' ? '<p class="cv-mut" style="margin:12px 0 0;font-family:'.$f.';font-size:13px;line-height:1.5;color:'.$c['muted'].'">'.$e($small).'</p>' : '')
+                    .'</td></tr></table>';
+
+                continue;
+            }
+            $part = MailLayout::content(['blocks' => [[$k, $v]]] + $parsed, 'light');
+            $html .= $part['html'];
+            $text .= $part['text'];
+        }
+        $pre = $parsed['preheader'] !== '' ? '<div style="display:none;font-size:1px;line-height:1px;max-height:0;max-width:0;opacity:0;overflow:hidden;mso-hide:all">'.$e($parsed['preheader']).str_repeat('&#847;&zwnj;&nbsp;', 40).'</div>' : '';
+        $logo = '<img src="'.$e($site.'/assets/brand/cvtara-mail-mark.png').'" width="28" height="28" alt="" style="display:inline-block;width:28px;height:28px;border:0;vertical-align:middle;margin:0 8px 0 0;border-radius:7px;background:#ffffff">'
+            .'<span style="vertical-align:middle;font-family:'.$f.';font-size:20px;font-weight:800;letter-spacing:-.02em;color:#ffffff">CVTara</span>';
+        $hero = '<tr><td class="cv-px" bgcolor="'.$t['from'].'" style="background:'.$t['from'].';background-image:linear-gradient(135deg,'.$t['from'].' 0%,'.$t['to'].' 100%);border-radius:16px 16px 0 0;padding:26px 36px 30px">'
+            .'<p style="margin:0 0 22px">'.$logo.'</p>'
+            .'<p style="margin:0 0 12px"><span style="display:inline-block;padding:5px 12px;border-radius:999px;background:rgba(255,255,255,.16);border:1px solid rgba(255,255,255,.28);font-family:'.$f.';font-size:12px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:#ffffff">'.$e($t['eyebrow']).'</span></p>'
+            .($parsed['headline'] !== '' ? '<h1 class="cv-h1" style="margin:0;font-family:'.$f.';font-size:28px;line-height:1.22;font-weight:800;letter-spacing:-.015em;color:#ffffff">'.$e($parsed['headline']).'</h1>' : '')
+            .($parsed['preheader'] !== '' ? '<p style="margin:10px 0 0;font-family:'.$f.';font-size:16px;line-height:1.55;color:#dbe6ff">'.$e($parsed['preheader']).'</p>' : '')
+            .'</td></tr>';
+        $style = '<style>:root{color-scheme:light dark;supported-color-schemes:light dark}body,table,td,a{-webkit-text-size-adjust:100%;-ms-text-size-adjust:100%}table{border-collapse:collapse}img{border:0;outline:none}'
+            .'@media (max-width:620px){.cv-wrap{width:100%!important}.cv-px{padding-left:22px!important;padding-right:22px!important}.cv-h1{font-size:24px!important}.cv-btn{width:100%!important}.cv-btn td,.cv-btn a{display:block!important;text-align:center!important}}'
+            .'@media (prefers-color-scheme:dark){.cv-bg{background:#0b1120!important}.cv-card{background:#111827!important;border-color:#273449!important}.cv-ink{color:#f8fafc!important}.cv-txt{color:#d5dbe5!important}.cv-mut{color:#9aa6b8!important}.cv-acc{color:#8db4ff!important}.cv-tint{background:#16213a!important;border-color:#2c3d63!important}.cv-warm{background:#1f2a1f!important;border-color:#3b4a3b!important}}'
+            .'[data-ogsc] .cv-ink{color:#f8fafc!important}[data-ogsc] .cv-txt{color:#d5dbe5!important}[data-ogsc] .cv-mut{color:#9aa6b8!important}[data-ogsb] .cv-bg{background:#0b1120!important}[data-ogsb] .cv-card{background:#111827!important}</style>';
+        $doc = '<!doctype html><html lang="en" xmlns="http://www.w3.org/1999/xhtml"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta http-equiv="X-UA-Compatible" content="IE=edge"><meta name="x-apple-disable-message-reformatting"><meta name="format-detection" content="telephone=no,address=no,email=no,date=no"><meta name="color-scheme" content="light dark"><meta name="supported-color-schemes" content="light dark"><title>'.$e($subject).'</title>'.$style.'</head>'
+            .'<body class="cv-bg" style="margin:0;padding:0;width:100%;background:#eef2f9">'.$pre
+            .'<table role="presentation" width="100%" cellpadding="0" cellspacing="0" class="cv-bg" bgcolor="#eef2f9" style="background:#eef2f9"><tr><td align="center" style="padding:24px 12px 32px">'
+            .'<table role="presentation" width="600" cellpadding="0" cellspacing="0" class="cv-wrap cv-card" bgcolor="#ffffff" style="width:600px;max-width:600px;border-collapse:separate;background:#ffffff;border:1px solid '.$c['line'].';border-radius:16px">'
+            .$hero.'<tr><td class="cv-px" style="padding:30px 36px 30px">'.$html.$signature.'</td></tr></table>'
+            .'</td></tr></table></body></html>';
+
+        return [$doc, rtrim($text)];
+    }
+
     public static function render(array $step, object $ct, object $s, array $c, ?string $design = null): array
     {
         $list = $ct->list ?? 'students';
+        $from = self::fromFor($s, (array) ($c['lists'][$list] ?? []));
         $design ??= self::listOf($c, $ct)['design'];
         // "Dr. Ramesh Kumar" → "Ramesh": greet by first name without the title.
         $first = trim(explode(' ', trim(preg_replace('/^((dr|prof|mr|mrs|ms|miss|shri|sri|smt)\.?\s+)+/i', '', trim((string) $ct->name))))[0] ?? '');
@@ -385,6 +501,13 @@ class Outreach
         // The body is "{{sender_name}}"-signed in most templates; avoid printing the name twice.
         if ($s->from_name && str_ends_with($body, $s->from_name)) {
             $sign = trim((string) ($c['footer'] ?? ''));
+        }
+
+        // Outreach-only lines: "[steps: A | B | C]" (a numbered how-it-works row) and "[small: text]" (small print under the main button).
+        // The campaign look draws them; the other looks show the steps as a list and leave the small print out.
+        if ($design !== 'campaign') {
+            $body = preg_replace_callback('/^\[steps:\s*(.*?)\s*\]$/mi', fn ($m) => implode("\n", array_map(fn ($x) => '- '.trim($x), array_filter(explode('|', $m[1]), fn ($x) => trim($x) !== ''))), $body);
+            $body = preg_replace('/^\[small:.*\]\R?/mi', '', $body);
         }
 
         // Same template text as account mail ("# Heading", "- " bullets, "[button: Label | link]", "[offer]" ...).
@@ -425,7 +548,10 @@ class Outreach
         $f = MailLayout::FONT;
         $foot = '<p class="cv-mut" style="margin:22px 0 0;font-family:'.$f.';font-size:12px;line-height:1.6;color:'.$c['muted'].'">'.e($postal).'<br>Don\'t want these emails? <a href="'.e($unsub).'" class="cv-mut" style="color:'.$c['muted'].'">Unsubscribe</a>.</p>';
         $signHtml = $sign !== '' ? '<p class="cv-txt" style="margin:18px 0 0;font-family:'.$f.';font-size:15px;line-height:1.6;color:'.$c['text'].'">'.nl2br(e($sign), false).'</p>' : '';
-        if ($card) {
+        if ($design === 'campaign') {
+            [$html, $ctext] = self::campaign($parsed, $list, $subject, $signHtml.$foot);
+            $text = ($head !== '' ? $head."\n\n" : '').$ctext.($sign !== '' ? "\n\n".$sign : '')."\n\n--\n".$postal."\nDon't want these emails? Unsubscribe: ".$unsub."\n";
+        } elseif ($card) {
             // The light card: small logo and wordmark, no colour band or other images, so it reads like a note rather than a newsletter.
             $html = MailLayout::page(['subject' => $subject, 'preheader' => $parsed['preheader'], 'headline' => $head, 'content' => $html, 'signature' => $signHtml.$foot, 'footer' => '', 'variant' => 'light']);
         } else {
@@ -433,7 +559,7 @@ class Outreach
                 .$html.$signHtml.$foot.'</body></html>';
         }
 
-        return ['subject' => $subject, 'text' => $text, 'html' => $html, 'unsubscribe' => $unsub];
+        return ['subject' => $subject, 'text' => $text, 'html' => $html, 'unsubscribe' => $unsub, 'from' => $from];
     }
 
     // ---------------------------------------------------------------- list import and clean-up
@@ -444,31 +570,184 @@ class Outreach
      *
      * @return array{received:int,added:int,invalid:int,role:int,noMail:int,duplicate:int,existing:int,users:int,suppressed:int,samples:array}
      */
-    public static function import(string $raw, string $source, bool $checkDomains = true, string $list = 'students'): array
+    /**
+     * The first worksheet of an Excel (.xlsx) file as tab-separated rows, ready for import(). Empty when the file cannot be read.
+     * Reads the sheet as a stream, so a 20,000-row file stays light.
+     */
+    public static function sheetText(string $bytes): string
     {
-        $lines = preg_split('/\r\n|\r|\n/', trim($raw));
-        $res = ['received' => 0, 'added' => 0, 'invalid' => 0, 'role' => 0, 'noMail' => 0, 'duplicate' => 0, 'existing' => 0, 'users' => 0, 'suppressed' => 0, 'samples' => []];
-        $list = isset(self::LISTS[$list]) ? $list : 'students';
+        if (! class_exists(\ZipArchive::class) || ! str_starts_with($bytes, "PK")) {
+            return '';
+        }
+        $tmp = tempnam(sys_get_temp_dir(), 'cvx');
+        file_put_contents($tmp, $bytes);
+        $zip = new \ZipArchive;
+        try {
+            if ($zip->open($tmp) !== true) {
+                return '';
+            }
+            $shared = [];
+            if (($xml = $zip->getFromName('xl/sharedStrings.xml')) !== false) {
+                $doc = @simplexml_load_string($xml);
+                foreach ($doc ? $doc->si : [] as $si) {
+                    $shared[] = isset($si->t) ? (string) $si->t : implode('', array_map('strval', $si->xpath('.//*[local-name()="t"]') ?: []));
+                }
+            }
+            // The first sheet in the workbook's order, through its relationship id; sheet1.xml if that cannot be read.
+            $path = 'xl/worksheets/sheet1.xml';
+            $wb = @simplexml_load_string((string) $zip->getFromName('xl/workbook.xml'));
+            $rels = @simplexml_load_string((string) $zip->getFromName('xl/_rels/workbook.xml.rels'));
+            if ($wb && $rels && isset($wb->sheets->sheet[0])) {
+                $rid = (string) ($wb->sheets->sheet[0]->attributes('http://schemas.openxmlformats.org/officeDocument/2006/relationships')['id'] ?? '');
+                foreach ($rels->Relationship as $rel) {
+                    if ((string) $rel['Id'] === $rid) {
+                        $target = ltrim((string) $rel['Target'], '/');
+                        $path = str_starts_with($target, 'xl/') ? $target : 'xl/'.$target;
+                    }
+                }
+            }
+            $sheet = $zip->getFromName($path);
+            if ($sheet === false) {
+                return '';
+            }
+            $r = new \XMLReader;
+            $r->XML($sheet);
+            $out = [];
+            $row = null;
+            while ($r->read() && count($out) <= self::MAX_IMPORT + 1) {
+                if ($r->nodeType === \XMLReader::ELEMENT && $r->localName === 'row') {
+                    $row = [];
+                } elseif ($r->nodeType === \XMLReader::END_ELEMENT && $r->localName === 'row') {
+                    if ($row && implode('', $row) !== '') {
+                        ksort($row);
+                        $out[] = implode("\t", array_replace(array_fill(0, max(array_keys($row)) + 1, ''), $row));
+                    }
+                    $row = null;
+                } elseif ($row !== null && $r->nodeType === \XMLReader::ELEMENT && $r->localName === 'c') {
+                    $type = (string) $r->getAttribute('t');
+                    $col = 0;
+                    foreach (str_split(preg_replace('/[^A-Z]/', '', strtoupper((string) $r->getAttribute('r')))) as $ch) {
+                        $col = $col * 26 + ord($ch) - 64;
+                    }
+                    $cell = new \SimpleXMLElement($r->readOuterXml());
+                    $val = $type === 'inlineStr' ? implode('', array_map('strval', $cell->xpath('.//*[local-name()="t"]') ?: [])) : (string) ($cell->v ?? '');
+                    if ($type === 's') {
+                        $val = $shared[(int) $val] ?? '';
+                    }
+                    $row[max(0, $col - 1)] = trim(str_replace(["\t", "\r", "\n"], ' ', $val));
+                }
+            }
+
+            return implode("\n", $out);
+        } finally {
+            $zip->close();
+            @unlink($tmp);
+        }
+    }
+
+    /** The column separator of an import: tab, semicolon or comma, whichever the first row uses most. */
+    public static function separator(string $line): string
+    {
+        $n = ["\t" => substr_count($line, "\t"), ';' => substr_count($line, ';'), ',' => substr_count($line, ',')];
+        arsort($n);
+
+        return reset($n) > 0 ? (string) key($n) : ',';
+    }
+
+    /**
+     * Finds the columns of an import and how many leading lines to skip (title rows and the header row).
+     * Headers are matched loosely ("Email-ID", "Student E-mail", "Candidate Name"); without a usable
+     * header, the column that holds the most addresses is used, so a sheet that starts with "S No" still works.
+     */
+    public static function columns(array $top, string $sep): array
+    {
         $col = ['email' => 0, 'name' => 1, 'college' => false, 'designation' => false, 'city' => false];
-        $first = str_getcsv((string) ($lines[0] ?? ''), ',', '"', '');
-        $head = array_map(fn ($x) => preg_replace('/[^a-z ]/', '', mb_strtolower(trim((string) $x))), $first);
-        $aliases = ['email' => ['email', 'email id', 'email address', 'mail id', 'mail'], 'name' => ['name', 'first name', 'full name', 'contact name', 'tpo name', 'student name'],
-            'college' => ['college', 'college name', 'institute', 'institution', 'university'], 'designation' => ['designation', 'title', 'role', 'position'], 'city' => ['city', 'location', 'district']];
-        $pick = function ($names) use ($head) {
-            foreach ($names as $n) {
-                if (($i = array_search($n, $head, true)) !== false) {
+        $rows = array_map(fn ($l) => str_getcsv((string) $l, $sep, '"', ''), $top);
+        $isMail = fn ($v) => (bool) preg_match('/^[^@\s<>"\']+@[^@\s]+\.[a-z]{2,}$/i', trim((string) $v, " \t<>\"'"));
+        $norm = fn ($v) => preg_replace('/[^a-z]/', '', mb_strtolower((string) $v));
+        $find = function (array $head, array $exact, array $has, array $not = []) use ($norm) {
+            $h = array_map($norm, $head);
+            foreach ($exact as $n) {
+                if (($i = array_search($n, $h, true)) !== false) {
                     return $i;
+                }
+            }
+            foreach ($h as $i => $x) {
+                if ($x === '') {
+                    continue;
+                }
+                foreach ($has as $n) {
+                    if (str_contains($x, $n)) {
+                        foreach ($not as $bad) {
+                            if (str_contains($x, $bad)) {
+                                continue 3;
+                            }
+                        }
+
+                        return $i;
+                    }
                 }
             }
 
             return false;
         };
-        if ($pick($aliases['email']) !== false) {
-            foreach ($aliases as $k => $names) {
-                $col[$k] = $pick($names);
+        // A header row: one of the first rows that names an email column and holds no address itself.
+        foreach (array_slice($rows, 0, 10, true) as $r => $cells) {
+            if (array_filter($cells, $isMail)) {
+                break;
             }
-            array_shift($lines);
+            $e = $find($cells, ['email', 'emailid', 'emailaddress', 'mailid', 'mail', 'emailids', 'mailaddress'], ['email', 'mail']);
+            if ($e === false) {
+                continue;
+            }
+            $col['email'] = $e;
+            $col['name'] = $find($cells, ['name', 'firstname', 'fullname', 'contactname', 'tponame', 'studentname', 'candidatename', 'candidate', 'username', 'nameofthecandidate', 'nameofthestudent'], ['name'], ['college', 'institut', 'universit', 'company', 'father', 'mother', 'parent', 'school', 'branch', 'course', 'last', 'sur']);
+            $col['college'] = $find($cells, ['college', 'collegename', 'institute', 'institution', 'university', 'institutename'], ['college', 'institut', 'universit']);
+            $col['designation'] = $find($cells, ['designation', 'title', 'role', 'position', 'jobtitle'], ['designation', 'position']);
+            $col['city'] = $find($cells, ['city', 'location', 'district', 'town'], ['city', 'district']);
+
+            return [$col, $r + 1];
         }
+        // No usable header: take the column with the most addresses, and skip the lines above the first address.
+        $count = [];
+        $firstMail = null;
+        foreach ($rows as $r => $cells) {
+            foreach ($cells as $i => $v) {
+                if ($isMail($v)) {
+                    $count[$i] = ($count[$i] ?? 0) + 1;
+                    $firstMail ??= $r;
+                }
+            }
+        }
+        if (! $count) {
+            return [$col, 0];
+        }
+        arsort($count);
+        $col['email'] = (int) array_key_first($count);
+        $col['name'] = false;
+        $head = $firstMail > 0 ? $rows[$firstMail - 1] : [];
+        if ($head) {
+            $col['name'] = $find($head, ['name', 'fullname', 'studentname', 'candidatename'], ['name'], ['college', 'institut', 'universit', 'company', 'father', 'mother', 'parent']);
+            $col['college'] = $find($head, ['college', 'collegename', 'institute', 'university'], ['college', 'institut', 'universit']);
+            $col['designation'] = $find($head, ['designation', 'title', 'role', 'position'], ['designation', 'position']);
+            $col['city'] = $find($head, ['city', 'location', 'district'], ['city', 'district']);
+        }
+        if ($col['name'] === false && $col['email'] === 0) {
+            $col['name'] = 1;
+        }
+
+        return [$col, (int) $firstMail];
+    }
+
+    public static function import(string $raw, string $source, bool $checkDomains = true, string $list = 'students'): array
+    {
+        $lines = preg_split('/\r\n|\r|\n/', trim($raw));
+        $res = ['received' => 0, 'added' => 0, 'invalid' => 0, 'role' => 0, 'noMail' => 0, 'duplicate' => 0, 'existing' => 0, 'users' => 0, 'suppressed' => 0, 'samples' => []];
+        $list = isset(self::LISTS[$list]) ? $list : 'students';
+        // Rows copied from Excel or Google Sheets are tab-separated; some exports use semicolons.
+        $sep = self::separator(implode("\n", array_slice($lines, 0, 5)));
+        [$col, $skip] = self::columns(array_slice($lines, 0, 60), $sep);
+        $lines = array_slice($lines, $skip);
         $seen = [];
         $rows = [];
         $sample = function (string $why, string $e) use (&$res) {
@@ -484,7 +763,7 @@ class Outreach
             if ($res['received'] > self::MAX_IMPORT) {
                 break;
             }
-            $cells = str_getcsv($line, str_contains($line, ',') || ! str_contains($line, ';') ? ',' : ';', '"', '');
+            $cells = str_getcsv($line, $sep, '"', '');
             $email = mb_strtolower(trim((string) ($cells[$col['email']] ?? ''), " \t<>\"'"));
             $cell = fn ($k, $max) => $col[$k] === false ? '' : mb_substr(trim(preg_replace('/\s+/', ' ', strip_tags((string) ($cells[$col[$k]] ?? '')))), 0, $max);
             $name = $cell('name', 120);

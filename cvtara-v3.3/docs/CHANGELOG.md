@@ -1,3 +1,24 @@
+# CVTara v3.29.9 — Attractive outreach mails
+
+## 3.29.9
+- **Outreach mails, new "Campaign" look (now the default for both lists):** a coloured header with the CVTara mark, a small label, the headline and a one-line summary; a "How it works" row of three numbered steps; and one big rounded button in a highlighted panel with small print under it. Students get a blue-violet header with an orange button ("For students & freshers"); placement cells a calmer navy header with a green button ("For placement cells"). Works on phones and in dark mode, and passes the spam-style check. New template lines: `[steps: A | B | C]` and `[small: text]` under a button; the Designed and Plain looks show steps as a list and leave the small print out.
+- Both recommended sequences rewritten for it (headings, tick lists, one clear call to action per mail, the live offer as a highlighted box, short links instead of long addresses, proper sign-offs; the unverified "built by an HR team" line removed). The other ready-made templates got the same polish. A list still on the earlier recommended mails, word for word, moves to the new mails and the Campaign look by itself; a list the owner edited is kept as it is. No migration.
+
+# CVTara v3.29.8 — Outreach finds the email column in any sheet
+
+## 3.29.8
+- **Outreach › Add contacts:** the email column is found even when the sheet starts with a title row, has an S No column first, or names it "Email-ID", "Student E-mail" and similar. If no heading names it, the column holding the addresses is used. Before, such a sheet was read from the first column and every row came back as "Not a valid address". A **Download blank sheet** button gives the right columns for the chosen list. The mail editor now folds away under "Show and edit the mails", so the page is shorter. No migration.
+
+# CVTara v3.29.7 — Outreach import takes Excel files
+
+## 3.29.7
+- **Outreach › Add contacts:** Excel (.xlsx) files upload directly (first sheet, up to 20,000 rows, columns found by their headings). Rows copied from Excel or Google Sheets (tab-separated) and semicolon CSVs now import; before, they were all rejected as invalid addresses. A "Candidate name", "Student name" or "User name" column is read as the name. An old .xls file asks to be saved as .xlsx or CSV, and pressing Check and add without the consent box ticked shows a clear message. No migration.
+
+# CVTara v3.29.6 — Outreach sends from campus@ and placements@
+
+## 3.29.6
+- **Outreach:** each list can send from its own alias of the mailbox. Students get mail from campus@cvtara.in and placement cells from placements@cvtara.in by default (change it under Outreach › your lists › Send from). Replies and one-click unsubscribe use the same alias. Because every alias is the same mailbox, add the mailbox once: one daily limit covers both lists. An alias on another domain than the mailbox is ignored. No migration.
+
 # CVTara v3.29.5 — Growth page downloads
 
 ## 3.29.5

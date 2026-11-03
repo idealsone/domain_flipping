@@ -65,9 +65,9 @@ class OutreachAdminController extends Controller
             $v = $r->validate([
                 'enabled' => 'required|boolean', 'windowStart' => 'required|integer|min:0|max:23', 'windowEnd' => 'required|integer|min:1|max:24', 'footer' => 'nullable|string|max:400',
                 'warmup' => 'required|array', 'warmup.share' => 'required|integer|min:0|max:60', 'warmup.seeds' => 'present|array|max:'.Outreach::MAX_SEEDS, 'warmup.seeds.*' => 'email|max:190',
-                'lists' => 'required|array:'.implode(',', array_keys(Outreach::LISTS)), 'lists.*.design' => 'required|in:card,plain',
+                'lists' => 'required|array:'.implode(',', array_keys(Outreach::LISTS)), 'lists.*.design' => 'required|in:campaign,card,plain', 'lists.*.from' => 'nullable|email|max:190',
                 'lists.*.steps' => 'required|array|min:1|max:4', 'lists.*.steps.*.subject' => 'required|string|max:160', 'lists.*.steps.*.body' => 'required|string|max:5000', 'lists.*.steps.*.delayDays' => 'required|integer|min:0|max:60',
-            ], ['lists.*.steps.*.subject.required' => 'Every mail needs a subject.', 'lists.*.steps.*.body.required' => 'Every mail needs a message.', 'warmup.seeds.*.email' => 'Each warm-up address must be a valid email address.', 'warmup.seeds.max' => 'Use up to '.Outreach::MAX_SEEDS.' warm-up addresses.']);
+            ], ['lists.*.steps.*.subject.required' => 'Every mail needs a subject.', 'lists.*.steps.*.body.required' => 'Every mail needs a message.', 'warmup.seeds.*.email' => 'Each warm-up address must be a valid email address.', 'warmup.seeds.max' => 'Use up to '.Outreach::MAX_SEEDS.' warm-up addresses.', 'lists.*.from.email' => 'The send-from alias must be a valid email address.']);
             abort_unless($v['windowEnd'] > $v['windowStart'], 422, 'The send window must end after it starts.');
             abort_unless(count($v['lists']) === count(Outreach::LISTS), 422, 'Both lists need their mails.');
             $lists = [];
@@ -75,7 +75,7 @@ class OutreachAdminController extends Controller
                 foreach ($l['steps'] as $i => $st) {
                     abort_if($i > 0 && $st['delayDays'] < 1, 422, 'Follow-ups need at least 1 day after the previous mail.');
                 }
-                $lists[$k] = ['design' => $l['design'], 'steps' => array_map(fn ($st, $i) => ['subject' => trim($st['subject']), 'body' => trim(str_replace("\r", '', $st['body'])), 'delayDays' => $i === 0 ? 0 : (int) $st['delayDays']], $l['steps'], array_keys($l['steps']))];
+                $lists[$k] = ['design' => $l['design'], 'from' => mb_strtolower(trim((string) ($l['from'] ?? ''))), 'steps' => array_map(fn ($st, $i) => ['subject' => trim($st['subject']), 'body' => trim(str_replace("\r", '', $st['body'])), 'delayDays' => $i === 0 ? 0 : (int) $st['delayDays']], $l['steps'], array_keys($l['steps']))];
             }
             if ($v['enabled'] && ! (Outreach::config()['enabled'] ?? false)) {
                 AccountSecurity::requireRecent($r);
@@ -148,8 +148,13 @@ class OutreachAdminController extends Controller
         }
 
         if ($path === 'outreach/import') {
-            $v = $r->validate(['text' => 'required|string|max:3000000', 'source' => 'nullable|string|max:120', 'list' => 'nullable|in:'.implode(',', array_keys(Outreach::LISTS)), 'consent' => 'accepted', 'checkDomains' => 'nullable|boolean'], ['consent.accepted' => 'Confirm that everyone on this list agreed to hear from you.']);
+            $v = $r->validate(['text' => 'required_without:sheet|nullable|string|max:3000000', 'sheet' => 'nullable|string|max:12000000', 'source' => 'nullable|string|max:120', 'list' => 'nullable|in:'.implode(',', array_keys(Outreach::LISTS)), 'consent' => 'accepted', 'checkDomains' => 'nullable|boolean'], ['consent.accepted' => 'Confirm that everyone on this list agreed to hear from you.']);
             @set_time_limit(120);
+            if (! empty($v['sheet'])) {
+                // An Excel (.xlsx) file, sent as base64: its first sheet becomes tab-separated rows.
+                $v['text'] = Outreach::sheetText((string) base64_decode($v['sheet'], true));
+                abort_if($v['text'] === '', 422, 'That Excel file could not be read. Save it as .xlsx or CSV and try again.');
+            }
             $res = Outreach::import($v['text'], trim((string) ($v['source'] ?? '')) ?: 'Import '.now()->format('d M Y'), $r->boolean('checkDomains', true), $v['list'] ?? 'students');
             Settings::audit($id, 'outreach_imported', $res['added'].' added of '.$res['received']);
 
@@ -169,7 +174,7 @@ class OutreachAdminController extends Controller
             return $ok(['updated' => $n]);
         }
         if ($path === 'outreach/preview') {
-            $v = $r->validate(['subject' => 'required|string|max:160', 'body' => 'required|string|max:5000', 'name' => 'nullable|string|max:120', 'list' => 'nullable|in:'.implode(',', array_keys(Outreach::LISTS)), 'design' => 'nullable|in:card,plain']);
+            $v = $r->validate(['subject' => 'required|string|max:160', 'body' => 'required|string|max:5000', 'name' => 'nullable|string|max:120', 'list' => 'nullable|in:'.implode(',', array_keys(Outreach::LISTS)), 'design' => 'nullable|in:campaign,card,plain']);
             $sender = DB::table('outreach_senders')->orderBy('created_at')->first() ?: (object) ['email' => 'you@example.in', 'from_name' => 'Your name'];
             $list = $v['list'] ?? 'students';
             $sample = $list === 'colleges' ? ['name' => 'Dr. Ramesh Kumar', 'college' => 'ABC College of Engineering', 'designation' => 'Training and Placement Officer', 'city' => 'Mysuru'] : ['name' => 'Asha Rao', 'college' => 'ABC College of Engineering'];
