@@ -1,3 +1,10 @@
+# CVTara v3.31.1 — Clearer Free and Quick Download settings
+
+## 3.31.1
+- **Packages page, Free:** the Free card no longer shows "Resume downloads 1" and "Cover-letter downloads 1". Those numbers were never used: a free account has no download credits and cannot download a clean file (it is offered Quick Download or a plan). The card now says what Free gets (build, edit, preview with a watermark, and the daily free ATS checks) and shows only the daily checks setting. Saving sets Free's download counts to 0. The default is 0 as well.
+- **Packages page, Quick Download:** the "ATS scans (0 = unlimited)" box is replaced by a note: Quick Download has no scan allowance of its own, and buyers get the daily checks. The box had no effect for this plan.
+- No migration.
+
 # CVTara v3.31.0 — Plan items from the testing sheet
 
 ## 3.31.0
