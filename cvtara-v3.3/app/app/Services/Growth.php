@@ -61,7 +61,7 @@ class Growth
         $plans = $rows->groupBy(fn ($r) => str_starts_with($r->plan, 'addon-') ? 'add-ons' : $r->plan)->map(fn ($g) => ['count' => $g->count(), 'paise' => (int) $g->sum('amount_paise')])->all();
         $analytics = (bool) (Settings::get('integrations')['analytics'] ?? false);
         $visitors = $analytics ? $in(DB::table('page_views'))->distinct()->count('visitor_id') : null;
-        $sources = $analytics ? $in(DB::table('page_views'))->select('source', DB::raw('count(distinct visitor_id) as n'))->groupBy('source')->pluck('n', 'source')->map(fn ($n) => (int) $n)->all() : [];
+        $sources = $analytics ? $in(DB::table('page_views')->where('source', '!=', 'internal'))->select('source', DB::raw('count(distinct visitor_id) as n'))->groupBy('source')->pluck('n', 'source')->map(fn ($n) => (int) $n)->all() : [];
 
         return [
             'visitors' => $visitors,
