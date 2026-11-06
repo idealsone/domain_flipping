@@ -423,9 +423,20 @@ class SeoAgent
         }
         if (SearchConsole::ready() && \Illuminate\Support\Facades\Cache::add('seo-inspect', 1, 1800)) {
             $i = AgentLog::run('seo', 'inspect', fn () => SeoOps::inspect());
-            if (! isset($i['error'])) {
+            if (! isset($i['error']) && Lifecycle::level('seo') >= 3) {
                 AgentLog::run('seo', 'request-indexing', fn () => SeoOps::requestIndexing());
             }
+        }
+        // Once a day: crawler access audit (search and AI crawlers, private areas) and a re-check of published links.
+        if (\Illuminate\Support\Facades\Cache::add('seo-crawlers', 1, 86400)) {
+            AgentLog::run('seo', 'crawler-audit', function () {
+                $a = AiVisibility::audit();
+
+                return ['summary' => count($a['findings']) ? count($a['findings']).' crawler access problem(s): '.$a['findings'][0]['text'] : 'Search and AI crawlers can reach public pages; private areas are closed.'];
+            });
+        }
+        if (\Illuminate\Support\Facades\Cache::add('seo-links', 1, 86400) && DB::table('link_prospects')->where('publication_url', '!=', '')->exists()) {
+            AgentLog::run('seo', 'link-check', fn () => LinkCrm::verifyDue());
         }
     }
 
@@ -464,6 +475,19 @@ class SeoAgent
         $add('Sign-ups from Google/Bing', $k['organicSignups30d'].' (of '.$k['signupsWithSource30d'].' sign-ups with a known source)', 'last 30 days', 'CVTara accounts (visitors who allowed analytics)');
         $add('Revenue from those sign-ups (₹)', round($k['organicNetPaise30d'] / 100), 'last 30 days', 'CVTara orders, attributed by first visit');
         $add('Changes you approved (%)', $k['approvalRate'], 'last 90 days', 'SEO proposals');
+        $links = LinkCrm::summary();
+        if ($links['total']) {
+            $add('Published links to CVTara found live', $links['live'].' ('.$links['followLive'].' followed, '.$links['mentions'].' unlinked mentions)', 'latest check', 'Link register, checked on the page');
+            $add('Link follow-ups due', $links['dueToday'], 'today', 'Link register');
+        }
+        $ai = DB::table('ai_visibility_tests')->where('tested_on', '>=', now()->subDays(30)->toDateString());
+        if ((clone $ai)->exists()) {
+            $add('AI answer checks that mention CVTara', (clone $ai)->where('mentioned', true)->count().' of '.(clone $ai)->count(), 'last 30 days', 'AI answer checks entered in the console');
+        }
+        $audit = (array) Settings::get('aiCrawlerAudit', []);
+        if ($audit) {
+            $add('Crawler access problems', count($audit['findings'] ?? []), 'check of '.substr((string) ($audit['at'] ?? ''), 0, 10), 'Crawler access audit (robots.txt and page answers)');
+        }
 
         return [
             'status' => ! $s['auto'] ? 'paused' : (! $ready ? 'off' : 'running'),

@@ -195,7 +195,7 @@ class Growth
     {
         $since = now()->subDays($days);
         $paid = fn () => DB::table('purchases')->whereIn('status', ['paid', 'partially_refunded'])->where('provider', '!=', 'referral_reward');
-        $unpaid = DB::table('purchases')->where('status', 'created')->where('created_at', '>=', $since)->whereNotIn('owner_id', $paid()->where('created_at', '>=', $since)->select('owner_id'))->distinct()->count('owner_id');
+        $unpaid = DB::table('purchases')->whereIn('status', ['created', 'failed'])->where('created_at', '>=', $since)->whereNotIn('owner_id', $paid()->where('created_at', '>=', $since)->select('owner_id'))->distinct()->count('owner_id');
         $reminded = DB::table('mail_outbox')->where('trigger', 'abandoned_purchase')->where('status', 'sent')->where('created_at', '>=', $since)->select('owner_id', DB::raw('min(created_at) as first'))->groupBy('owner_id')->get();
         $recovered = 0;
         $recoveredPaise = 0;
@@ -501,9 +501,31 @@ class Growth
             'tasksPending' => DB::table('growth_experiments')->where('status', 'running')->count() + DB::table('growth_campaign_plans')->whereIn('status', ['planned', 'live'])->count(),
             'approvalsWaiting' => $wait,
             'spendMonthPaise' => (int) DB::table('ai_usage')->where('created_at', '>=', $now->copy()->startOfMonth()->utc())->where(fn ($w) => $w->where('purpose', 'like', 'growth%')->orWhere('purpose', 'like', 'marketing%'))->sum('cost_paise'),
-            'results' => $res,
+            'results' => array_merge($res, self::operatorResults()),
             'diagnosis' => array_slice($diag['findings'] ?? [], 0, 5),
             'actions' => ['pause' => 'POST /api/admin/growth/agents {agent: growth, auto: false}'],
         ];
+    }
+
+    /** Checkout recovery, journeys and referrals for the Business assistant (3.35.0). Only figures that exist. */
+    private static function operatorResults(): array
+    {
+        $out = [];
+        $c = Lifecycle::checkout(30)['kpis'];
+        if ($c['started']) {
+            $out[] = ['label' => 'Checkouts started / paid without help / recovered after a reminder', 'value' => $c['started'].' / '.$c['paidDirect'].' / '.$c['recovered'], 'period' => 'last 30 days', 'source' => 'Order ledger and gateway confirmations'];
+            $out[] = ['label' => 'Revenue recovered after payment reminders (₹)', 'value' => round($c['recoveredPaise'] / 100), 'period' => 'last 30 days', 'source' => 'Confirmed payments after a reminder (attributed)'];
+        }
+        foreach (Lifecycle::report(30)['journeys'] as $j) {
+            if ($j['sent']) {
+                $out[] = ['label' => 'Journey "'.$j['label'].'": sent / did it / bought', 'value' => $j['sent'].' / '.$j['didGoal'].' / '.$j['buyers'], 'period' => 'last 30 days', 'source' => 'Mail log and customer events'];
+            }
+        }
+        $r = Lifecycle::referrals(30);
+        if ($r['signups']) {
+            $out[] = ['label' => 'Referred sign-ups / paid referrals', 'value' => $r['signups'].' / '.$r['paidReferrals'], 'period' => 'last 30 days', 'source' => 'Referral records'];
+        }
+
+        return $out;
     }
 }

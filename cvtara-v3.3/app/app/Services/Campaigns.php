@@ -21,6 +21,15 @@ class Campaigns
         'customers_paid' => 'Customers with a plan that is active now',
         'customers_expired' => 'Customers whose plan has ended',
         'contacts' => 'Your imported contacts',
+        // Behaviour segments (3.35.0): worked out from what customers did, at the moment the campaign starts. Opted-in customers only.
+        'seg_inactive' => 'Behaviour: signed up, never made a resume or ran a check',
+        'seg_resume_no_ats' => 'Behaviour: made a resume, never ran an ATS check',
+        'seg_ats_no_purchase' => 'Behaviour: ran ATS checks, never bought',
+        'seg_pricing_visitor' => 'Behaviour: looked at checkout recently, did not buy',
+        'seg_first_paid' => 'Behaviour: first purchase in the last 30 days',
+        'seg_heavy' => 'Behaviour: 5+ ATS checks in 30 days',
+        'seg_expiring' => 'Behaviour: plan ends within 7 days',
+        'seg_happy' => 'Behaviour: left a 4 or 5 star review',
     ];
 
     /** mailboxCap: the sending mailbox's own limit for 24 hours (Hostinger Business Starter allows 1,000). */
@@ -59,6 +68,8 @@ class Campaigns
             $q->whereNotIn('u.id', DB::table('purchases')->whereNotNull('purchased_at')->where('provider', '!=', 'referral_reward')->select('owner_id'));
         } elseif ($aud === 'customers_paid') {
             $q->whereIn('u.id', self::paidPlans()->where('access_until', '>', now())->select('owner_id'));
+        } elseif (str_starts_with($aud, 'seg_')) {
+            $q->whereIn('u.id', CustomerEvents::segment(substr($aud, 4))->select('id'));
         } elseif ($aud === 'customers_expired') {
             $q->whereIn('u.id', self::paidPlans()->select('owner_id'))->whereNotIn('u.id', self::paidPlans()->where('access_until', '>', now())->select('owner_id'));
         }

@@ -229,7 +229,7 @@ class ContentController extends Controller
         if ($path === 'robots.txt') {
             // Sign-in, checkout and account pages are left crawlable on purpose: they answer noindex, and Google can only see that when it may fetch them.
             // Blocking them here is what Search Console reports as "Indexed, though blocked by robots.txt".
-            return response("User-agent: *\n".(Settings::get('seo')['searchIndexing'] ? "Disallow: /api/\nDisallow: /console/\nDisallow: /export/\nDisallow: /client-error\n" : "Disallow: /\n").'Sitemap: '.rtrim(Settings::get('seo')['siteUrl'] ?: config('app.url'), '/')."/sitemap.xml\n", 200, ['Content-Type' => 'text/plain']);
+            return response("User-agent: *\n".(Settings::get('seo')['searchIndexing'] ? "Disallow: /api/\nDisallow: /console/\nDisallow: /export/\nDisallow: /client-error\n".\App\Services\AiVisibility::robotsGroups() : "Disallow: /\n").'Sitemap: '.rtrim(Settings::get('seo')['siteUrl'] ?: config('app.url'), '/')."/sitemap.xml\n", 200, ['Content-Type' => 'text/plain']);
         }
         $aliases = ['resume-builder' => 'workspace.html?view=builder', 'cover-letter' => 'workspace.html?view=letter', 'resume-match' => 'workspace.html?view=match', 'admin' => 'admin.html', 'privacy-policy' => 'privacy.html', 'terms-and-conditions' => 'terms.html', 'about-us' => 'about.html', 'contact-us' => 'contact.html'];
         // Addresses people type or guess that have no page of their own: send them, and any links Google already holds, to the right page for good.

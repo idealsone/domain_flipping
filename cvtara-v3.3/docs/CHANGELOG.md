@@ -1,3 +1,44 @@
+# CVTara v3.35.0 — SEO Director and growth operator layer
+
+## 3.35.0
+Includes 3.34.0 (not deployed separately). Built from the owner's "SEO Director and Chief Growth and Revenue Manager" brief, reusing the existing services; only the missing parts were added.
+- **Attribution:**
+  - Visits from AI assistants are recognised from the referring site or `utm_source` and recorded as "AI assistants". This happens on the server, so the public script names no platform.
+  - The referring site of each visit and the signed-in account of a pricing visit are kept.
+  - Every order keeps the last outside arrival before checkout (last touch). First touch stays on the account.
+- **Failed payments:** a signed Razorpay `payment.failed` event marks the order failed. Nothing is granted, and a later successful payment on the same order still completes it. The first payment reminder for a failed payment can use a new "payment failed, no money taken" template (off by default).
+- **Customer event store:** about 18 kinds of action are copied every 30 minutes from the tables that already hold them, idempotently, with no resume text: sign-up, verification, resume, download, ATS check, cover letter, pricing visit, checkout, payment failed or paid, refund, chargeback, plan ended, referred sign-up, referred payment, support request, lifecycle mail and unsubscribe. A per-customer timeline shows them with first touch, segments and money paid.
+- **Behaviour segments (13):** new, inactive, resume without ATS check, ATS without purchase, pricing visitor, checkout abandoned, payment failed, first purchase, heavy user, expiring, expired, happy reviewer and referrer. Each shows how many people it holds and how many can be emailed. Eight of them are also Campaign audiences, for opted-in customers only.
+- **Journeys:** three behaviour mails (getting started, first ATS check, plan questions).
+  - They ship switched off. The owner switches each one on in Emails, and that is the approval.
+  - They go to opted-in people only, once each, with at most one marketing mail in 3 days and a daily cap per journey.
+  - A mail is dropped before sending if the person already did what it asks or bought.
+  - They run only while the growth agent is at level 3 or above.
+  - Results: sent, stopped, did it within 7 days, bought within 14 days. The existing automatic mails are listed alongside.
+- **Checkout recovery:** every checkout in the period is shown with its outcome: paid, recovered after a reminder, in progress, not finished, failed, refunded or chargeback. The page also shows reminders sent, recovered revenue, recovery rate and possible double payments. It has paging, filters and a CSV download. It is read-only and never marks anything paid.
+- **Referral activation:** eligible and invited customers, link clicks, referred sign-ups and paid referrals (kept apart), referred revenue, bonus paid and reversed, and top referrers. Flags for review cover many referred sign-ups in a day, mostly unverified referred accounts and repeated refunds on referred orders.
+- **Link register (SEO):**
+  - Each prospect site records how it was approached (ten earned-link methods), the contact and where the contact came from, relevance, quality, spam risk, score, status, follow-up date, pitch, reply, published page, link type, anchor and cost.
+  - The published page is opened and checked: live link with its rel, unlinked mention, link missing or page gone. Published links are re-checked weekly.
+  - Visits, sign-ups and buyers from each site are shown.
+  - A paid placement cannot be saved as a followed link, and obvious link-selling sites are marked high risk.
+  - Pitch drafts are personal notes for the owner to send.
+- **AI search checks:** a standard prompt list (editable), one record per platform, prompt and date, with model, region and conditions. Each record says whether CVTara was mentioned, recommended, accurate or linked, which page was cited, which competitors and sources appeared instead, and what was missing. The tab shows mention rates per platform, the latest result per prompt, checks that are due, and visits, sign-ups and buyers from AI assistants. Nothing is scraped; each check is an observation entered from the platform itself.
+- **Crawler access audit (daily):** robots.txt rules for Google, Bing and the AI search, user and training crawlers, and private areas kept closed. It also checks how the server answers each crawler and that private pages answer noindex. Training crawlers are a separate owner choice (allow or block), written into robots.txt. By default robots.txt is unchanged.
+- **Scorecard:**
+  - Confirmed collections, refunds, chargebacks, net, gateway fees (an estimate from the owner's rate, otherwise "not tracked"), AI spending, campaign and link costs, and contribution after variable costs.
+  - Repeat, referral, recovered and organic revenue.
+  - Paying and new customers, and variable cost per new customer.
+  - Revenue by source three ways (first touch, last touch, assisted), with no double counting.
+  - Each agent's tasks, failures, AI spending and cost per task.
+- **Autonomy levels 1-4 per agent** with a permission matrix. Level 5 actions are never automated: new pages, redirects, canonicals, deleting pages, prices, payment records, refunds and consent. The SEO agent asks for recrawls only at level 3 or above.
+- The Business assistant's agent status now includes checkout recovery, journeys, referrals, live links, AI answer checks and crawler problems.
+- Migration `2026_11_07_000002_growth_engine` adds the following. Run `php artisan migrate`.
+  - New tables: `customer_events`, `link_prospects` and `ai_visibility_tests`.
+  - `page_views.owner_id` and `page_views.ref_host`.
+  - `users.signup_ref_host`.
+  - `purchases.touch_source`, `purchases.touch_landing` and `purchases.touch_campaign`.
+
 # CVTara v3.34.0 — SEO and growth agents that work towards revenue
 
 ## 3.34.0

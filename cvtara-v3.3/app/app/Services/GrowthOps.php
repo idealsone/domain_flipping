@@ -433,6 +433,20 @@ class GrowthOps
     // ---------------------------------------------------------------- daily run
 
     /** Once a day after 8 AM India time: diagnose, re-measure experiments. Recorded in the agent log. */
+    /** Every cron minute: customer events every 30 minutes, journeys hourly. */
+    public static function work(): void
+    {
+        if (! self::settings()['auto']) {
+            return;
+        }
+        if (\Illuminate\Support\Facades\Cache::add('growth-events', 1, 1800)) {
+            AgentLog::run('growth', 'customer-events', fn () => CustomerEvents::sync());
+        }
+        if (\Illuminate\Support\Facades\Cache::add('growth-journeys', 1, 3600)) {
+            AgentLog::run('growth', 'journeys', fn () => Lifecycle::run());
+        }
+    }
+
     public static function run(?Carbon $now = null): array
     {
         $now = ($now ?? now())->copy()->tz(Growth::TZ);

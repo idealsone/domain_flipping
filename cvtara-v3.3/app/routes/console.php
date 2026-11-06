@@ -83,6 +83,7 @@ Artisan::command('cvtara:cron', function () {
     try {
         \App\Services\SeoAgent::work();
         \App\Services\GrowthOps::run();
+        \App\Services\GrowthOps::work();
     } catch (\Throwable $e) {
         \App\Services\ErrorLog::exception($e);
     }

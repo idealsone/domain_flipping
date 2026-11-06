@@ -440,6 +440,42 @@
       "delayHours": 0,
       "subject": "About your CVTara refund request",
       "body": "# About your refund request\nHi {{name}}, we could not approve your refund request.\n\nReason: {{reason}}\n\nIf you think this is a mistake, reply to this email with your order number and we will look again."
+    },
+    {
+      "id": "activation-1",
+      "name": "Getting started (signed up, no resume yet)",
+      "trigger": "activation_nudge",
+      "enabled": false,
+      "delayHours": 0,
+      "subject": "{{name}}, your first resume takes about 10 minutes",
+      "body": "# Start with the resume you already have\n[preheader: Upload it or start from a template. Both are free to build and preview.]\nHi {{name}}, you signed up for CVTara but have not made a resume yet. Here is the quickest way in:\n\n- Have an old resume? Upload the PDF or Word file and we fill in the builder for you\n- Starting fresh? Pick a template and fill one section at a time; your work saves as you type\n- Applying for a specific job? Paste the job description afterwards and run a free ATS check\n\n[button: Make my first resume | {{site_url}}/workspace.html?view=builder]\n\nBuilding and previewing are free. You only pay if you want clean downloads.\n\nIf something stopped you, reply and tell us. A real person reads every reply."
+    },
+    {
+      "id": "ats-1",
+      "name": "First ATS check (has a resume, never ran a check)",
+      "trigger": "ats_nudge",
+      "enabled": false,
+      "delayHours": 0,
+      "subject": "Check your resume against a real job, {{name}}",
+      "body": "# See what a job's screening software sees\n[preheader: Paste a job description and get the missing words and formatting problems in a minute.]\nHi {{name}}, your resume is saved in CVTara. Before you send it, try one free ATS check against a job you want:\n\n- Paste the job description, or the link to the job post\n- See which skills and words from the job are missing from your resume\n- Fix formatting that applicant tracking systems often misread\n\n[button: Run my ATS check | {{site_url}}/workspace.html?view=match]\n\nEvery job asks for different words, so a check per application is worth the minute it takes."
+    },
+    {
+      "id": "pricing-help",
+      "name": "Plan questions (looked at checkout, did not start paying)",
+      "trigger": "pricing_help",
+      "enabled": false,
+      "delayHours": 0,
+      "subject": "Which CVTara package fits you, {{name}}?",
+      "body": "# Picking the right package\n[preheader: A short comparison, so you pay only for what you need.]\nHi {{name}}, you looked at our packages recently. In case it helps you decide, here is what each one includes:\n\n[plans]\n\n- Paid once, no auto-renewal\n- Full refund within 7 days if you have not used anything from it\n- Building and previewing stay free whatever you choose\n\n[button: See the packages | {{site_url}}/checkout.html]\n\nNot sure which one? Reply with what you are applying for and we will tell you honestly, even if the answer is the free plan."
+    },
+    {
+      "id": "payment-failed",
+      "name": "Payment failed at the gateway (first reminder)",
+      "trigger": "abandoned_purchase",
+      "enabled": false,
+      "delayHours": 0,
+      "subject": "Your {{plan_name}} payment failed, {{name}}. No money was taken",
+      "body": "# The payment did not go through\n[preheader: Nothing was charged. You can try again safely with the same package.]\nHi {{name}}, the payment for {{plan_name}} ({{amount}}) was declined by the payment gateway, so nothing was charged and no package was added.\n\nThe usual reasons are a UPI app that timed out, a bank OTP that did not arrive, or a card that is not enabled for online payments. Trying again with UPI or another card usually works:\n\n[button: Try the payment again | {{checkout_url}}]\n\nIf money was taken from your account anyway, do not pay again. Reply to this mail with the time of the payment and we will check it with the gateway. Banks return failed payments automatically, usually within 5 to 7 working days."
     }
   ],
   "popup": {

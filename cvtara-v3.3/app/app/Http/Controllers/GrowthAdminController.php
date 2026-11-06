@@ -5,6 +5,11 @@ namespace App\Http\Controllers;
 use App\Services\AccountSecurity;
 use App\Services\AdminTable;
 use App\Services\AgentLog;
+use App\Services\AiVisibility;
+use App\Services\CustomerEvents;
+use App\Services\Lifecycle;
+use App\Services\LinkCrm;
+use App\Services\Scorecard;
 use App\Services\Growth;
 use App\Services\GrowthOps;
 use App\Services\SeoOps;
@@ -131,6 +136,46 @@ class GrowthAdminController extends Controller
         if ($path === 'growth/experiments' && $get) {
             return $ok(['rows' => GrowthOps::experiments()]);
         }
+        // ---- 3.35.0: customers and journeys, checkout recovery, referrals, links, AI search, scorecard
+        $days = in_array((int) $r->query('days', 30), [7, 30, 90], true) ? (int) $r->query('days', 30) : 30;
+        if ($path === 'growth/customers' && $get) {
+            return $ok(['days' => $days, 'events' => CustomerEvents::counts($days), 'segments' => CustomerEvents::segments(), 'journeys' => Lifecycle::report($days), 'referrals' => Lifecycle::referrals($days),
+                'lastSync' => DB::table('agent_runs')->where('agent', 'growth')->where('task', 'customer-events')->orderByDesc('id')->value('finished_at')]);
+        }
+        if ($path === 'growth/checkout' && $get) {
+            $c = Lifecycle::checkout($days);
+            $t = AdminTable::rows($r, $c['rows'], ['search' => ['email', 'plan'], 'sorts' => ['at' => 'at', 'amount' => 'amountPaise'], 'sort' => 'at', 'filters' => ['outcome' => 'outcome'],
+                'export' => ['title' => 'Checkout recovery', 'map' => fn ($rows) => array_map(fn ($x) => ['When' => $x['at'], 'Customer' => $x['email'], 'Package' => $x['plan'], 'Amount (₹)' => round($x['amountPaise'] / 100), 'Gateway' => $x['gateway'], 'Order status' => $x['status'], 'Outcome' => $x['outcome'], 'Reminders sent' => $x['reminders'], 'Source of the visit' => $x['source'] ?: 'unknown'], $rows)]]);
+
+            return $ok($t + ['kpis' => $c['kpis'], 'duplicates' => $c['duplicates'], 'note' => $c['note'], 'days' => $days]);
+        }
+        if ($path === 'growth/customer' && $get) {
+            $q = trim((string) $r->query('q', ''));
+            $id = ctype_digit($q) ? (int) $q : (int) DB::table('users')->where('email', mb_strtolower($q))->value('id');
+            abort_unless($id && ($t = CustomerEvents::timeline($id)), 404, 'No customer with that email.');
+
+            return $ok($t);
+        }
+        if ($path === 'growth/links' && $get) {
+            return $ok(['rows' => LinkCrm::rows(), 'summary' => LinkCrm::summary(), 'methods' => LinkCrm::METHODS, 'statuses' => LinkCrm::STATUSES]);
+        }
+        if ($path === 'growth/links/draft' && $get) {
+            $p = DB::table('link_prospects')->where('id', (string) $r->query('id'))->first();
+            abort_unless($p, 404);
+
+            return $ok(['text' => $p->pitch !== '' ? $p->pitch : LinkCrm::draft($p)]);
+        }
+        if ($path === 'growth/visibility' && $get) {
+            return $ok(AiVisibility::overview(in_array($days, [30, 90], true) ? $days : 90));
+        }
+        if ($path === 'growth/visibility/tests' && $get) {
+            return $ok(AdminTable::query($r, DB::table('ai_visibility_tests'), ['search' => ['prompt', 'competitors', 'cited_url', 'missing'], 'filters' => ['platform' => 'platform', 'mentioned' => fn ($q, $v) => $q->where('mentioned', $v === 'yes')], 'date' => 'tested_on', 'sorts' => ['tested_on' => 'tested_on'], 'key' => 'id',
+                'export' => ['title' => 'AI answer checks', 'map' => fn ($rows) => array_map(fn ($x) => ['Date' => $x['tested_on'], 'Platform' => AiVisibility::PLATFORMS[$x['platform']] ?? $x['platform'], 'Model / mode' => $x['model'], 'Region' => $x['region'], 'Prompt' => $x['prompt'], 'Mentioned' => $x['mentioned'] ? 'Yes' : 'No', 'Recommended' => $x['recommended'] ? 'Yes' : 'No',
+                    'Accurate' => $x['accurate'], 'Linked' => $x['linked'] ? 'Yes' : 'No', 'CVTara page cited' => $x['cited_url'], 'Competitors named' => $x['competitors'], 'Sources cited instead' => $x['sources'], 'Missing from CVTara' => $x['missing'], 'Conditions' => $x['conditions']], $rows)]]));
+        }
+        if ($path === 'growth/scorecard' && $get) {
+            return $ok(Scorecard::report($days) + ['lifecycle' => Lifecycle::settings(), 'costs' => ['gatewayFeePct' => Scorecard::feePct()]]);
+        }
         abort_unless($r->isMethod('POST'), 405);
         if ($path === 'growth/agents') {
             $v = $r->validate(['agent' => 'required|in:seo,growth', 'auto' => 'required|boolean']);
@@ -179,6 +224,88 @@ class GrowthAdminController extends Controller
             });
 
             return $ok($out);
+        }
+        if ($path === 'growth/link') {
+            $v = $r->validate(['id' => ['nullable', 'regex:/^[a-f0-9-]{36}$/'], 'domain' => 'nullable|string|max:190', 'url' => 'nullable|url|max:500', 'method' => 'required|in:'.implode(',', array_keys(LinkCrm::METHODS)), 'status' => 'required|in:'.implode(',', array_keys(LinkCrm::STATUSES)),
+                'contact_name' => 'nullable|string|max:120', 'contact_email' => 'nullable|email|max:190', 'contact_source' => 'nullable|string|max:200', 'relevance' => 'required|integer|min:0|max:5', 'quality' => 'required|integer|min:0|max:5', 'spam_risk' => 'required|in:unknown,low,medium,high',
+                'pitch' => 'nullable|string|max:2000', 'next_follow_up' => 'nullable|date', 'response' => 'nullable|string|max:1000', 'publication_url' => 'nullable|url|max:500', 'target_url' => 'nullable|string|max:300', 'link_attr' => 'nullable|in:,'.implode(',', LinkCrm::ATTRS),
+                'anchor' => 'nullable|string|max:200', 'cost_inr' => 'nullable|integer|min:0|max:10000000', 'notes' => 'nullable|string|max:1000']);
+            abort_if(trim((string) ($v['domain'] ?? '')) === '' && trim((string) ($v['url'] ?? '')) === '', 422, 'Enter the site address.');
+            $v['domain'] = (string) ($v['domain'] ?? '');
+            $v['url'] = (string) ($v['url'] ?? '');
+            $v['cost_inr'] = (int) ($v['cost_inr'] ?? 0);
+            $id = LinkCrm::save($v, $v['id'] ?? null);
+            Settings::audit($r->user()->id, 'link_prospect_saved', LinkCrm::domain($v['domain'] ?: $v['url']));
+
+            return $ok(['id' => $id, 'verify' => DB::table('link_prospects')->where('id', $id)->value('verify_note')]);
+        }
+        if ($path === 'growth/link/verify') {
+            $id = (string) $r->input('id');
+            abort_unless(DB::table('link_prospects')->where('id', $id)->exists(), 404);
+            $out = AgentLog::run('seo', 'link-check', fn () => LinkCrm::verify($id) + ['summary' => 'Checked one published link.']);
+
+            return $ok($out);
+        }
+        if ($path === 'growth/link/delete') {
+            abort_unless(DB::table('link_prospects')->where('id', (string) $r->input('id'))->delete(), 404);
+            Settings::audit($r->user()->id, 'link_prospect_deleted', (string) $r->input('id'));
+
+            return $ok();
+        }
+        if ($path === 'growth/visibility/test') {
+            $v = $r->validate(['id' => ['nullable', 'regex:/^[a-f0-9-]{36}$/'], 'tested_on' => 'required|date|before_or_equal:today', 'platform' => 'required|in:'.implode(',', array_keys(AiVisibility::PLATFORMS)), 'model' => 'nullable|string|max:80', 'region' => 'nullable|string|max:40',
+                'prompt' => 'required|string|max:300', 'mentioned' => 'required|boolean', 'recommended' => 'nullable|boolean', 'accurate' => 'nullable|in:,yes,partly,no', 'linked' => 'nullable|boolean', 'cited_url' => 'nullable|string|max:500', 'competitors' => 'nullable|string|max:500',
+                'sources' => 'nullable|string|max:1000', 'missing' => 'nullable|string|max:1000', 'excerpt' => 'nullable|string|max:5000', 'conditions' => 'nullable|string|max:300']);
+            abort_if(! $v['mentioned'] && (($v['recommended'] ?? false) || ($v['linked'] ?? false)), 422, 'An answer that does not mention CVTara cannot recommend or link it.');
+            $id = AiVisibility::saveTest($v, $v['id'] ?? null);
+            Settings::audit($r->user()->id, 'ai_visibility_test_saved', $v['platform']);
+
+            return $ok(['id' => $id]);
+        }
+        if ($path === 'growth/visibility/prompts') {
+            $v = $r->validate(['prompts' => 'required|array|min:1|max:40', 'prompts.*' => 'nullable|string|max:300']);
+            $list = AiVisibility::savePrompts($v['prompts']);
+            Settings::audit($r->user()->id, 'ai_prompts_saved', (string) count($list));
+
+            return $ok(['prompts' => $list]);
+        }
+        if ($path === 'growth/visibility/audit') {
+            $out = AgentLog::run('seo', 'crawler-audit', function () {
+                $a = AiVisibility::audit();
+
+                return ['summary' => count($a['findings']).' crawler access problem(s).'];
+            });
+
+            return $ok($out + ['audit' => Settings::get('aiCrawlerAudit', [])]);
+        }
+        if ($path === 'growth/visibility/policy') {
+            $v = $r->validate(['policy' => 'required|array', 'policy.*' => 'in:allow,block']);
+            $p = AiVisibility::savePolicy($v['policy']);
+            Settings::audit($r->user()->id, 'crawler_policy_saved', json_encode($p));
+
+            return $ok(['policy' => $p]);
+        }
+        if ($path === 'growth/levels') {
+            $v = $r->validate(['agent' => 'required|in:seo,growth', 'level' => 'required|integer|min:1|max:4']);
+            $l = Scorecard::saveLevel($v['agent'], (int) $v['level']);
+            Settings::audit($r->user()->id, 'agent_level_set', $v['agent'].' '.$v['level']);
+
+            return $ok(['levels' => $l]);
+        }
+        if ($path === 'growth/costs') {
+            $v = $r->validate(['gatewayFeePct' => 'nullable|numeric|min:0|max:10', 'dailyCap' => 'nullable|integer|min:0|max:1000']);
+            if (array_key_exists('gatewayFeePct', $v)) {
+                Settings::put('growthCosts', ['gatewayFeePct' => $v['gatewayFeePct'] === null ? null : round((float) $v['gatewayFeePct'], 2)]);
+            }
+            if (isset($v['dailyCap'])) {
+                Settings::put('lifecycle', ['dailyCap' => (int) $v['dailyCap']]);
+            }
+            Settings::audit($r->user()->id, 'growth_costs_saved', json_encode($v));
+
+            return $ok();
+        }
+        if ($path === 'growth/events/sync') {
+            return $ok(AgentLog::run('growth', 'customer-events', fn () => CustomerEvents::sync()));
         }
         if ($path === 'growth/campaign-plan') {
             $v = $r->validate(['id' => ['nullable', 'regex:/^[a-f0-9-]{36}$/'], 'name' => 'required|string|max:120', 'channel' => 'required|in:'.implode(',', array_keys(GrowthOps::CHANNELS)), 'status' => 'required|in:planned,live,done,stopped',

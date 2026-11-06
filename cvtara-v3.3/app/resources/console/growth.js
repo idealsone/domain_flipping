@@ -14,9 +14,12 @@
 
   // Tabs (3.34.0): Overview is this file; the SEO agent, growth agent and agent log tabs live in /console/agents.js, loaded on first use.
   let TAB = (new URLSearchParams(location.search).get('agent') || 'overview');
-  const TABS = { overview: 'Overview', seo: 'SEO agent', revenue: 'Growth agent', log: 'Agent log' };
+  const TABS = { overview: 'Overview', seo: 'SEO agent', reach: 'Links & AI search', revenue: 'Growth agent', customers: 'Customers & journeys', scorecard: 'Scorecard', log: 'Agent log' };
+  // 3.35.0: Links & AI search, Customers & journeys and Scorecard live in /console/operators.js.
+  const OPERATORS = ['reach', 'customers', 'scorecard'];
+  const load = (name, src) => window[name] ? Promise.resolve() : new Promise((ok, no) => { const s = document.createElement('script'); s.src = src; s.onload = ok; s.onerror = () => no(new Error('Could not load the agent pages. Refresh and try again.')); document.head.append(s); });
   function agentsJs() {
-    return window.CVTaraAgents ? Promise.resolve() : new Promise((ok, no) => { const s = document.createElement('script'); s.src = '/console/agents.js?v=3.34.0'; s.onload = ok; s.onerror = () => no(new Error('Could not load the agent pages. Refresh and try again.')); document.head.append(s); });
+    return OPERATORS.includes(TAB) ? load('CVTaraOperators', '/console/operators.js?v=3.35.0') : load('CVTaraAgents', '/console/agents.js?v=3.35.0');
   }
   async function growth() {
     const root = $('#admin-growth'); if (!root) return;
@@ -26,7 +29,7 @@
     }
     const h = $('#grBody', root);
     if (TAB !== 'overview') {
-      try { await agentsJs(); window.CVTaraAgents[TAB](h); } catch (e) { h.innerHTML = `<div class="panel panel-pad" role="alert">${E(err(e))}</div>`; }
+      try { await agentsJs(); (OPERATORS.includes(TAB) ? window.CVTaraOperators : window.CVTaraAgents)[TAB](h); } catch (e) { h.innerHTML = `<div class="panel panel-pad" role="alert">${E(err(e))}</div>`; }
       return;
     }
     if (!D) h.innerHTML = '<div class="ops-skel"></div>';
