@@ -46,6 +46,8 @@ def run(ctx, t):
     t.check("10 tailored resumes use 10 resume credits", ok == [200] * 10 and cr()["resumes"]["used"] == 10 and cr()["letters"]["used"] == 0, (ok, cr()))
     s, b = download("resume", vids[10]); t.check("the 11th resume download is blocked with a clear message", s == 422 and b"resume download credits" in b, (s, b))
     t.check("the same version in another format is free", download("resume", vids[0], "docx")[0] == 200 and cr()["resumes"]["used"] == 10)
+    s, hj = c.api("GET", "credits/history"); hist = hj.get("history", []) if s == 200 else []
+    t.check("credit history lists each charged download once, newest first, plus the free primary", s == 200 and sum(h["credits"] for h in hist) == 10 and [h for h in hist if h["what"].startswith("Primary")] and all(h["what"] == "Resume download" for h in hist if h["credits"]), hist[:3])
     t.check("cover-letter credits are untouched by resume downloads", cr()["letters"]["used"] == 0 and cr()["letters"]["remaining"] == 10)
     ok = [download("letter", lids[i])[0] for i in range(10)]
     t.check("10 cover letters use the 10 letter credits", ok == [200] * 10 and cr()["letters"]["used"] == 10, (ok, cr()))

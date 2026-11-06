@@ -52,7 +52,7 @@
     const rev = (d.reviews || []).slice(0, 6);
     // the section stays hidden until there is at least one approved review, so a new site never shows an empty wall
     if (!rev.length) return;
-    box.innerHTML = rev.map(r => `<article class="lp-review"><div class="stars" aria-label="${r.rating} out of 5">${'★'.repeat(r.rating)}${'☆'.repeat(5 - r.rating)}</div><p>“${E(r.content)}”</p><b>${E(r.display_name)}</b></article>`).join('');
+    box.innerHTML = rev.map(r => `<article class="lp-review"><div class="stars" aria-label="${r.rating} out of 5">${'★'.repeat(r.rating)}${'☆'.repeat(5 - r.rating)}</div><p>“${E(r.content)}”</p><b>${E(r.display_name)}</b>${r.designation || r.company ? `<small>${E([r.designation, r.company].filter(Boolean).join(', '))}</small>` : ''}${r.verified ? '<span class="lp-verified">✓ Verified buyer</span>' : ''}</article>`).join('');
     const sec = $('#reviews'); if (sec) sec.hidden = false;
   }).catch(() => { box.innerHTML = ''; });
   // owner-editable homepage copy (Owner console → Templates & site design)

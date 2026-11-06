@@ -135,3 +135,5 @@ html.dark body[data-page] .legal-shell a,html.dark .cover-letter-card em{color:#
 @media(max-width:760px){.footer-bottom span{display:block}.footer-bottom span+span{margin-top:6px}}
 /* Phones: the document preview always fits the screen width (100% cut the letter off on the right); Full preview is there for reading. */
 @media(max-width:600px){.letter-canvas-toolbar label,.studio-zoom label+select,#studioZoom{display:none}.letter-canvas,#resumeStudio .studio-preview-stage{overflow-x:hidden}}
+
+.lp-review small{display:block;color:var(--muted,#5b6b7f);font-size:13px;margin-top:2px}.lp-review .lp-verified{display:inline-block;margin-top:8px;padding:2px 9px;border-radius:10px;background:#e7f6ec;color:#17663a;font-size:12px;font-weight:600}

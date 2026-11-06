@@ -1,3 +1,14 @@
+# CVTara v3.31.0 — Plan items from the testing sheet
+
+## 3.31.0
+- **Owner console, Back button:** moving between console pages now adds a browser history step, so Back returns to the previous console page instead of leaving the console. Forward works too.
+- **Free plan grants:** Users › Manage subscription now lists every plan given from the console (plan, amount, dates, note, who gave it, whether it is still active). An active grant can be ended at once with "End now" (asks for a note and a fresh sign-in check); the end is written to the audit trail. ₹0 grants stay out of revenue and referrals, as before.
+- **Credits view:** Billing & Plans has a "Credit history" section listing the last 50 uses (resume, cover letter, ATS check, primary resume) with what each was for and how many credits it used, beside the balance and expiry. Only finished work uses a credit.
+- **Referrals:** unchanged, by the owner's choice: ₹50 wallet credit, no cash withdrawals.
+- **Reviews:** customers can add their job title and company (optional). Sending the same feedback twice is refused politely. The console shows job title and company, a "Verified buyer" badge (a real paid order on the account), "Possible duplicate (N)" when the same words were sent before, and "No public consent". Published reviews on the homepage show job title, company and the Verified buyer badge.
+- **AI spending report:** Reports & Export › AI spending gives one row per month, feature and model with requests, input and output tokens, cost in INR, cost per request and cost per paying customer that month; totals at the top; CSV, Excel and PDF downloads. Growth › AI spending links to it. Each customer feature is now recorded under its own name (Expert Review, ATS tailoring, Cover letters, Writing help in the editor); earlier requests show as "Customer features (before 3.31)". Paid customer features still keep working over the monthly cap.
+- Migration: `2026_11_06_000002_review_company_designation` (adds two optional columns to feedback).
+
 # CVTara v3.30.0 — Fixes from the testing sheet
 
 ## 3.30.0

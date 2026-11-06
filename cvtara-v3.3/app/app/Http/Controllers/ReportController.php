@@ -126,6 +126,9 @@ class ReportController extends Controller
                 ['key' => 'date', 'label' => 'Sent'], ['key' => 'name', 'label' => 'Name'], ['key' => 'email', 'label' => 'Email'], ['key' => 'plan', 'label' => 'Plan'], ['key' => 'area', 'label' => 'Area'], ['key' => 'kind', 'label' => 'Kind'], ['key' => 'page', 'label' => 'Page'], ['key' => 'rating', 'label' => 'Rating', 'num' => true], ['key' => 'message', 'label' => 'Message'], ['key' => 'status', 'label' => 'Status'], ['key' => 'resolved_at', 'label' => 'Resolved']]],
             'growth' => ['label' => 'Growth reports', 'filters' => ['status', 'from', 'to'], 'defaults' => ['day', 'slot', 'band', 'report'], 'columns' => [
                 ['key' => 'day', 'label' => 'Day'], ['key' => 'slot', 'label' => 'Report'], ['key' => 'band', 'label' => 'Status'], ['key' => 'report', 'label' => 'Report text'], ['key' => 'sent', 'label' => 'Written at']]],
+            'ai_spend' => ['label' => 'AI spending', 'filters' => ['q', 'from', 'to'], 'defaults' => ['month', 'feature', 'model', 'calls', 'input_tokens', 'output_tokens', 'cost_inr', 'per_paying_user_inr'], 'columns' => [
+                ['key' => 'month', 'label' => 'Month'], ['key' => 'feature', 'label' => 'Feature'], ['key' => 'model', 'label' => 'Model'], ['key' => 'calls', 'label' => 'Requests', 'num' => true], ['key' => 'input_tokens', 'label' => 'Input tokens', 'num' => true], ['key' => 'output_tokens', 'label' => 'Output tokens', 'num' => true],
+                ['key' => 'cost_inr', 'label' => 'Cost (INR)', 'num' => true], ['key' => 'avg_inr', 'label' => 'Cost per request (INR)', 'num' => true], ['key' => 'paying_users', 'label' => 'Paying customers that month', 'num' => true], ['key' => 'per_paying_user_inr', 'label' => 'Cost per paying customer (INR)', 'num' => true]]],
             'mail' => ['label' => 'Email queue', 'filters' => ['q', 'status', 'from', 'to'], 'defaults' => ['date', 'recipient', 'subject', 'trigger', 'status'], 'columns' => [
                 ['key' => 'date', 'label' => 'Created'], ['key' => 'recipient', 'label' => 'To'], ['key' => 'subject', 'label' => 'Subject'], ['key' => 'trigger', 'label' => 'Type'], ['key' => 'status', 'label' => 'Status'], ['key' => 'attempts', 'label' => 'Attempts', 'num' => true], ['key' => 'error', 'label' => 'Error'], ['key' => 'sent_at', 'label' => 'Sent']]],
         ];
@@ -179,7 +182,7 @@ class ReportController extends Controller
     }
 
     /** Data sets that are totals worked out per day / page / source rather than one row per record. */
-    private const SUMMARIES = ['daily', 'traffic', 'sources', 'activity'];
+    private const SUMMARIES = ['daily', 'traffic', 'sources', 'activity', 'ai_spend'];
 
     private function file(Request $r, string $set, string $format, array $columns, array $rows, int $total)
     {
@@ -188,6 +191,15 @@ class ReportController extends Controller
         $x->add($rows);
 
         return $x->finish(Export::notes($r, ['q' => 'Search', 'live' => 'Real money only', 'min' => 'Min ₹', 'max' => 'Max ₹']));
+    }
+
+    /** Plain names for what each AI request was for. */
+    private static function aiFeature(string $purpose): string
+    {
+        return [
+            'customer:expert_review' => 'Expert Review', 'customer:ats_tailor' => 'ATS tailoring', 'customer:cover_letter' => 'Cover letters', 'customer:writing_help' => 'Writing help in the editor',
+            'customer' => 'Customer features (before 3.31)', 'seo' => 'SEO agent',
+        ][$purpose] ?? ucfirst(str_replace(['customer:', '_', '-'], ['', ' ', ' '], $purpose ?: 'other'));
     }
 
     private function summaryReport(Request $r, string $set, array $meta, array $cols, string $format)
@@ -225,6 +237,32 @@ class ReportController extends Controller
             }
             $rows = $q->selectRaw($col.', COUNT(*) views, COUNT(DISTINCT visitor_id) visitors')->groupBy($col)->orderByDesc('views')->limit(self::MAX_EXPORT)->get()
                 ->map(fn ($x) => [$col => $x->$col, 'views' => (int) $x->views, 'visitors' => (int) $x->visitors])->all();
+        } elseif ($set === 'ai_spend') {
+            // one row per month, feature and model; months follow India time
+            $q = $range(DB::table('ai_usage'), 'created_at');
+            if ($term !== '') {
+                $q->where(fn ($w) => $w->where('purpose', 'like', $this->like($term))->orWhere('model', 'like', $this->like($term)));
+            }
+            $buyers = [];
+            foreach (self::realMoney(DB::table('purchases as p'))->whereIn('p.status', ['paid', 'partially_refunded', 'refunded'])->where('p.amount_paise', '>', 0)->where('p.created_at', '>=', Carbon::parse($from, 'Asia/Kolkata')->startOfMonth()->utc())->where('p.created_at', '<=', Carbon::parse($to, 'Asia/Kolkata')->endOfDay()->utc())->get(['p.owner_id', 'p.created_at']) as $p) {
+                $buyers[Carbon::parse($p->created_at)->tz($tz)->format('Y-m')][$p->owner_id] = true;
+            }
+            $agg = [];
+            foreach ($q->get(['purpose', 'model', 'input_tokens', 'output_tokens', 'cost_paise', 'created_at']) as $x) {
+                $m = Carbon::parse($x->created_at)->tz($tz)->format('Y-m');
+                $k = $m.'|'.$x->purpose.'|'.$x->model;
+                $agg[$k] ??= ['month' => $m, 'feature' => self::aiFeature((string) $x->purpose), 'model' => (string) $x->model, 'calls' => 0, 'input_tokens' => 0, 'output_tokens' => 0, 'paise' => 0];
+                $agg[$k]['calls']++;
+                $agg[$k]['input_tokens'] += (int) $x->input_tokens;
+                $agg[$k]['output_tokens'] += (int) $x->output_tokens;
+                $agg[$k]['paise'] += (int) $x->cost_paise;
+            }
+            uasort($agg, fn ($a, $b) => [$b['month'], $b['paise']] <=> [$a['month'], $a['paise']]);
+            foreach ($agg as $a) {
+                $n = count($buyers[$a['month']] ?? []);
+                $rows[] = ['month' => $a['month'], 'feature' => $a['feature'], 'model' => $a['model'], 'calls' => $a['calls'], 'input_tokens' => $a['input_tokens'], 'output_tokens' => $a['output_tokens'],
+                    'cost_inr' => (float) self::inr($a['paise']), 'avg_inr' => round($a['paise'] / max(1, $a['calls']) / 100, 2), 'paying_users' => $n, 'per_paying_user_inr' => $n ? round($a['paise'] / $n / 100, 2) : 0];
+            }
         } else {
             $q = $range(DB::table('activity_events'), 'created_at');
             if ($term !== '') {
@@ -241,6 +279,9 @@ class ReportController extends Controller
         $total = count($rows);
         $columns = array_values(array_filter(array_map(fn ($k) => collect($meta['columns'])->firstWhere('key', $k), $cols)));
         $sums = null;
+        if ($set === 'ai_spend') {
+            $sums = ['calls' => array_sum(array_column($rows, 'calls')), 'input_tokens' => array_sum(array_column($rows, 'input_tokens')), 'output_tokens' => array_sum(array_column($rows, 'output_tokens')), 'cost_inr' => round(array_sum(array_column($rows, 'cost_inr')), 2)];
+        }
         if ($set === 'daily') {
             foreach (array_filter($meta['columns'], fn ($c) => ! empty($c['num'])) as $c) {
                 $sums[$c['key']] = round(array_sum(array_column($rows, $c['key'])), 2);

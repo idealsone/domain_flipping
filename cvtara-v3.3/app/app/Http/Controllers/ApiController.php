@@ -127,7 +127,7 @@ class ApiController extends Controller
                 }
             }
 
-            return $ok(['content' => $content, 'reviews' => DB::table('feedback')->where('status', 'published')->where('consent', true)->get(['id', 'display_name', 'rating', 'content', 'created_at'])]);
+            return $ok(['content' => $content, 'reviews' => \App\Services\Reviews::published()]);
         }
         if ($path === 'traffic') {
             $cap('traffic', 60, 60, 'Too many requests. Please wait.');
@@ -264,6 +264,18 @@ class ApiController extends Controller
             $v = $r->validate(['task' => 'required|in:rewrite,translate,review_requirements', 'language' => 'required|in:English', 'text' => 'required|string|min:30|max:12000', 'context' => 'nullable|string|max:8000', 'consent' => 'accepted']);
 
             return $ok(['suggestion' => WritingAssistant::suggest($u, $v)]);
+        }
+        if ($path === 'credits/history' && $get) {
+            // What used each credit: clean downloads, ATS scans and the free primary resume, newest first.
+            $rows = DB::table('product_usage')->where('owner_id', $id)->whereIn('action', ['doc_resume', 'doc_letter', 'ats_scan', 'primary_free'])->orderByDesc('created_at')->limit(50)->get(['action', 'reference', 'created_at']);
+            $ids = $rows->map(fn ($x) => explode('|', (string) $x->reference)[0])->unique()->values()->all();
+            $names = DB::table('resume_drafts')->where('owner_id', $id)->whereIn('id', $ids)->pluck('title', 'id')->all() + DB::table('ats_scans')->where('owner_id', $id)->whereIn('id', $ids)->pluck('job_title', 'id')->all();
+            if (\Illuminate\Support\Facades\Schema::hasTable('cover_letter_drafts')) {
+                $names += DB::table('cover_letter_drafts')->where('owner_id', $id)->whereIn('id', $ids)->pluck('title', 'id')->all();
+            }
+            $what = ['doc_resume' => 'Resume download', 'doc_letter' => 'Cover-letter download', 'ats_scan' => 'ATS scan', 'primary_free' => 'Primary resume (free once)'];
+
+            return $ok(['history' => $rows->map(fn ($x) => ['what' => $what[$x->action], 'item' => (string) ($names[explode('|', (string) $x->reference)[0]] ?? ''), 'credits' => $x->action === 'primary_free' ? 0 : 1, 'at' => $x->created_at])->all(), 'credits' => Credits::status($id)]);
         }
         if ($path === 'allowance') {
             $a = Settings::access($id);
@@ -541,9 +553,14 @@ class ApiController extends Controller
             return $ok(['reviews' => DB::table('feedback')->where('owner_id', $id)->orderByDesc('created_at')->limit(10)->get()]);
         }
         if ($path === 'feedback' && $r->isMethod('POST')) {
-            $v = $r->validate(['displayName' => 'required|string|max:100', 'rating' => 'required|integer|min:1|max:5', 'content' => 'required|string|min:10|max:2000', 'consent' => 'required|boolean']);
+            $v = $r->validate(['displayName' => 'required|string|max:100', 'company' => 'nullable|string|max:120', 'designation' => 'nullable|string|max:120', 'rating' => 'required|integer|min:1|max:5', 'content' => 'required|string|min:10|max:2000', 'consent' => 'required|boolean']);
             abort_if(DB::table('feedback')->where('owner_id', $id)->count() >= 10, 422);
-            DB::table('feedback')->insert(['id' => (string) Str::uuid(), 'owner_id' => $id, 'display_name' => $v['displayName'], 'rating' => $v['rating'], 'content' => $v['content'], 'consent' => $v['consent'], 'consented_at' => $v['consent'] ? now() : null, 'created_at' => now(), 'updated_at' => now()]);
+            // The same words sent twice by one account are one review.
+            $norm = fn ($t) => preg_replace('/[^a-z0-9]+/', '', mb_strtolower((string) $t));
+            if (DB::table('feedback')->where('owner_id', $id)->get(['content'])->contains(fn ($x) => $norm($x->content) === $norm($v['content']))) {
+                throw ValidationException::withMessages(['content' => 'You have already sent this feedback. Thank you!']);
+            }
+            DB::table('feedback')->insert(['id' => (string) Str::uuid(), 'owner_id' => $id, 'display_name' => $v['displayName'], 'company' => trim((string) ($v['company'] ?? '')), 'designation' => trim((string) ($v['designation'] ?? '')), 'rating' => $v['rating'], 'content' => $v['content'], 'consent' => $v['consent'], 'consented_at' => $v['consent'] ? now() : null, 'created_at' => now(), 'updated_at' => now()]);
 
             return $ok();
         }

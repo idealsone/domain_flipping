@@ -150,7 +150,7 @@ class TaraAI
         @set_time_limit(120); // shared hosting often stops PHP at 30-60 seconds; a suggestion can take longer
         $prompt = $task[1]."\n\n<text>\n".$d['text']."\n</text>".(trim((string) ($d['context'] ?? '')) !== '' ? "\n\n<job>\n".$d['context']."\n</job>" : '');
         try {
-            $text = self::ask(self::SYSTEM, $prompt, 4000 + $task[2] * 2);
+            $text = self::ask(self::SYSTEM, $prompt, 4000 + $task[2] * 2, 50, 'customer:writing_help');
             Settings::audit($u->id, 'tara_ai_suggestion', $d['task']);
 
             return $text;

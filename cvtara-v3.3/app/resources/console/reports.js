@@ -93,7 +93,7 @@
   scan();
 
   /* ---------- Reports & Export view ---------- */
-  const STATUS = { orders: ['paid', 'pending', 'created', 'refunded', 'partially_refunded', 'disputed'], users: ['paid', 'normal', 'blocked', 'owner'], withdrawals: ['requested', 'processing', 'paid', 'rejected'], errors: ['open', 'error', 'warning', 'info'], mail: ['queued', 'sent', 'failed'], scans: ['done', 'void', 'reserved'], commissions: [], reviews: ['pending', 'published', 'hidden'], support: ['open', 'new', 'seen', 'working', 'resolved', 'closed'], growth: ['midday', 'evening', 'weekly'], daily: [], traffic: [], sources: [], activity: [] };
+  const STATUS = { orders: ['paid', 'pending', 'created', 'refunded', 'partially_refunded', 'disputed'], users: ['paid', 'normal', 'blocked', 'owner'], withdrawals: ['requested', 'processing', 'paid', 'rejected'], errors: ['open', 'error', 'warning', 'info'], mail: ['queued', 'sent', 'failed'], scans: ['done', 'void', 'reserved'], commissions: [], reviews: ['pending', 'published', 'hidden'], support: ['open', 'new', 'seen', 'working', 'resolved', 'closed'], growth: ['midday', 'evening', 'weekly'], daily: [], traffic: [], sources: [], activity: [], ai_spend: [] };
   const STATUS_LABEL = { refunded: 'Reversed by bank', partially_refunded: 'Partly reversed', normal: 'Normal users', paid: 'Paid', open: 'Open (unresolved)', midday: '2 PM report', evening: '7 PM report', weekly: 'Weekly SEO report' };
   const PRESETS = 'cvtara-report-presets';
   const loadPresets = () => { try { return JSON.parse(localStorage.getItem(PRESETS) || '[]'); } catch (e) { return []; } };
@@ -168,10 +168,11 @@
       K.pager($('#rpager', h), d, (p, per) => { R.page = p; R.per = per; run(h); });
       const s = d.sums, f = n => '₹' + Number(n).toLocaleString('en-IN', { maximumFractionDigits: 0 });
       const n = v => Number(v || 0).toLocaleString('en-IN');
+      if (d.dataset === 'ai_spend' && s) { $('#rkpi', h).innerHTML = `<div class="kpi"><span>${E(d.range.from)} to ${E(d.range.to)}</span><b>${f(s.cost_inr)}</b></div><div class="kpi"><span>Requests</span><b>${n(s.calls)}</b></div><div class="kpi"><span>Input tokens</span><b>${n(s.input_tokens)}</b></div><div class="kpi"><span>Output tokens</span><b>${n(s.output_tokens)}</b></div>`; return; }
       if (d.dataset === 'daily' && s) { $('#rkpi', h).innerHTML = `<div class="kpi"><span>${E(d.range.from)} to ${E(d.range.to)}</span><b>${n(d.total)} days</b></div><div class="kpi"><span>Sign-ups</span><b>${n(s.signups)}</b></div><div class="kpi"><span>Paid orders</span><b>${n(s.orders)}</b></div><div class="kpi"><span>Net</span><b>${f(s.net_inr)}</b></div>`; return; }
       $('#rkpi', h).innerHTML = (d.range ? `<div class="kpi"><span>Period</span><b style="font-size:1rem">${E(d.range.from)} to ${E(d.range.to)}</b></div>` : '') + `<div class="kpi"><span>Rows</span><b>${d.total.toLocaleString('en-IN')}</b></div>` + (s ? `<div class="kpi"><span>Billed</span><b>${f(s.amount_inr)}</b></div><div class="kpi"><span>Reversed by bank</span><b>${f(s.reversed_inr)}</b></div><div class="kpi"><span>Net</span><b>${f(s.net_inr)}</b></div>` : '');
     } catch (e) { tbl.innerHTML = `<tbody><tr><td role="alert">${E(err(e))}</td></tr></tbody>`; }
   }
   K.openReport = (preset) => { Object.assign(R, { q: '', status: 'all', plan: 'all', provider: 'all', from: '', to: '', min: '', max: '', live: '', sort: '', page: 1, columns: null }, preset || {}); K.open('reports'); const b = $('.side-nav [data-admin-view="reports"]'); if (b) b.click(); };
-  K.register('reports', reports, ['📊', 'Reports & Export', 'Every report in one place: daily summary, orders, users, traffic, activity, reviews, support, growth, referrals, ATS checks, errors and email. Pick dates and filters, then download CSV, Excel or PDF.']);
+  K.register('reports', reports, ['📊', 'Reports & Export', 'Every report in one place: daily summary, orders, users, traffic, activity, reviews, support, growth, referrals, ATS checks, errors, email and AI spending. Pick dates and filters, then download CSV, Excel or PDF.']);
 })();

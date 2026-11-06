@@ -45,8 +45,8 @@
         <section class="panel panel-pad"><h3 style="margin-top:0">AI spending this month</h3>
           <p style="margin-top:0"><b>${inr(B.spentPaise)}</b> ${B.capPaise ? 'of ' + inr(B.capPaise) + ' cap' + (B.pct === null ? '' : ' (' + B.pct + '%)') : 'spent (no limit set; monitoring only)'}</p>
           <div class="ops-bar" style="height:8px;border-radius:4px;background:var(--line,#e5e7eb);overflow:hidden"><div style="height:100%;width:${Math.min(100, B.pct || 0)}%;background:${B.pct >= 90 ? '#dc2626' : B.pct >= 75 ? '#d97706' : '#16a34a'}"></div></div>
-          <p class="muted">${Object.entries(B.byPurpose).map(([k, v]) => `${E(k === 'customer' ? 'Customer add-ons' : k)}: ${inr(v.paise)} (${n(v.calls)} requests)`).join(' · ') || 'No requests yet this month.'}</p>
-          <p class="muted" style="margin-bottom:0">Alerts at 50%, 75% and 90% go to the Error Log and the reports. At 100% growth tasks stop; paid customer add-ons keep working. Cost is worked out from the token prices below, so keep them in line with your AI provider's pricing page.</p></section>
+          <p class="muted">${Object.entries(B.byPurpose).map(([k, v]) => `${E(k === 'customer' ? 'Customer features' : k.replace(/^customer:/, '').replace(/_/g, ' '))}: ${inr(v.paise)} (${n(v.calls)} requests)`).join(' · ') || 'No requests yet this month.'}</p>
+          <p class="muted" style="margin-bottom:0">Alerts at 50%, 75% and 90% go to the Error Log and the reports. At 100% growth tasks stop; paid customer add-ons keep working. Cost is worked out from the token prices below, so keep them in line with your AI provider's pricing page. <button type="button" class="button small secondary" id="gwAiReport">Monthly report by feature and model</button></p></section>
         <section class="panel panel-pad" data-nokit><h3 style="margin-top:0">Colleges with the most users</h3>
           <p class="muted" style="margin-top:0">Totals of users who agreed to emails, read from their resumes. Use it to choose which placement cells to contact first. It never shows who the students are.</p>
           ${D.colleges.length ? `<table class="ad-table"><tbody>${D.colleges.map(c => `<tr><td>${E(c.college)}</td><td>${n(c.users)}</td></tr>`).join('')}</tbody></table>` : '<p class="muted">Nothing yet.</p>'}</section>
@@ -64,6 +64,7 @@
     K.wireDownload(grBar, fmt => K.exportUrl('/api/admin/growth/reports', { slot: R.slot, band: R.band, from: R.from, to: R.to }, fmt));
     $('#grNow', h).onclick = async () => { try { const hr = new Date(Date.now() + 5.5 * 3600e3).getUTCHours(); await api('/api/admin/growth/report-now', { method: 'POST', body: { slot: D.settings.reportEvery === 'daily' ? (hr >= 19 ? 'evening' : 'midday') : 'weekly' } }); toast('Report saved and emailed'); R.page = 1; reports(h); } catch (x) { toast(err(x)); } };
     $('#grSet', h).onclick = settings;
+    $('#gwAiReport', h).onclick = () => { const d = new Date(Date.now() + 5.5 * 3600e3), y = d.getUTCFullYear(), m = d.getUTCMonth(); K.openReport({ dataset: 'ai_spend', from: new Date(Date.UTC(y, m - 5, 1)).toISOString().slice(0, 10), to: d.toISOString().slice(0, 10) }); };
     reports(h); seo(h);
   }
 

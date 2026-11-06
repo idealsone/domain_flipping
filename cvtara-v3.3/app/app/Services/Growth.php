@@ -247,7 +247,7 @@ class Growth
     /** Growth tasks (not customer add-ons) may call the AI provider only while this month's spending is under the cap. */
     public static function aiAllowed(string $purpose): bool
     {
-        return $purpose === 'customer' || ! self::budget()['stopped'];
+        return str_starts_with($purpose, 'customer') || ! self::budget()['stopped']; // customer:<feature> requests are paid for
     }
 
     /** Yesterday's numbers are stored once a day so the year plan has history that never changes. */

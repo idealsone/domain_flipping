@@ -117,7 +117,7 @@ class ExpertReview
         }
         @set_time_limit(300); // a full review can take a few minutes on shared hosting
         try {
-            $review = TaraAI::ask(self::SYSTEM, self::TASK."\n\n<profile>\n".$resume['profile']."\n</profile>\n\n<resume>\n".$resume['text']."\n</resume>", 16000, 240);
+            $review = TaraAI::ask(self::SYSTEM, self::TASK."\n\n<profile>\n".$resume['profile']."\n</profile>\n\n<resume>\n".$resume['text']."\n</resume>", 16000, 240, 'customer:expert_review');
         } catch (\Throwable $e) {
             $why = TaraAI::failure($e);
             $tries = $o->review_attempts + 1;
