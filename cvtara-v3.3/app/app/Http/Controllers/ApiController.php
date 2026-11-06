@@ -132,11 +132,17 @@ class ApiController extends Controller
         if ($path === 'traffic') {
             $cap('traffic', 60, 60, 'Too many requests. Please wait.');
             if (($d['consent'] ?? false) && Settings::get('integrations')['analytics']) {
-                $p = $r->validate(['path' => ['required','regex:#^/[a-zA-Z0-9/_.-]*$#','not_regex:#\.\.#','max:200'], 'source' => 'required|in:direct,google,bing,social,referral']);
+                $p = $r->validate(['path' => ['required','regex:#^/[a-zA-Z0-9/_.-]*$#','not_regex:#\.\.#','max:200'], 'source' => 'required|in:direct,google,bing,social,referral,internal', 'campaign' => ['nullable', 'regex:/^[a-zA-Z0-9_.-]{1,60}$/'],
+                    'ref' => ['nullable', 'regex:/^[a-z0-9.-]{1,120}$/i'], 'utm' => ['nullable', 'regex:/^[a-zA-Z0-9_.-]{1,60}$/']]);
+                $campaign = $p['campaign'] ?? null;
+                $host = isset($p['ref']) && $p['source'] !== 'internal' ? preg_replace('/^www\./', '', mb_strtolower($p['ref'])) : null;
+                $p['source'] = \App\Services\Attribution::classify($p['source'], $host, $p['utm'] ?? null);
+                unset($p['campaign'], $p['ref'], $p['utm']);
                 if (! preg_match('/admin|workspace|setup/', $p['path'])) {
+                    \App\Services\Attribution::touch($r, $p['path'], $p['source'], $campaign, $host);
                     $visitor = hash('sha256', $r->session()->getId());
                     if (! DB::table('page_views')->where('visitor_id', $visitor)->where('path', $p['path'])->where('created_at', '>', now()->subMinute())->exists()) {
-                        DB::table('page_views')->insert([...$p, 'visitor_id' => $visitor, 'created_at' => now(), 'updated_at' => now()]);
+                        DB::table('page_views')->insert([...$p, 'visitor_id' => $visitor, 'owner_id' => $r->user()?->id, 'ref_host' => $host, 'created_at' => now(), 'updated_at' => now()]);
                     }
                 }
             }

@@ -24,7 +24,7 @@ def run(ctx, t):
 
     # ---- audiences: only people who said yes; free, paid and ended plans ----
     s, g = o.api("GET", "admin/campaigns")
-    t.check("the owner sees the campaign page with audiences, limits and real counts", s == 200 and {a["key"] for a in g["audiences"]} == {"customers_all", "customers_free", "customers_paid", "customers_expired", "contacts"} and g["settings"] == {"batchSize": 20, "dailyCap": 300, "mailboxCap": 1000}, (s, str(g)[:200]))
+    t.check("the owner sees the campaign page with audiences, limits and real counts", s == 200 and {a["key"] for a in g["audiences"] if not a["key"].startswith("seg_")} == {"customers_all", "customers_free", "customers_paid", "customers_expired", "contacts"} and {a["key"] for a in g["audiences"] if a["key"].startswith("seg_")} >= {"seg_inactive", "seg_resume_no_ats"} and g["settings"] == {"batchSize": 20, "dailyCap": 300, "mailboxCap": 1000}, (s, str(g)[:200]))
     before = g["counts"]
     for e in ("cm-yes@test.local", "cm-yes2@test.local", "cm-ended@test.local", "cm-no@test.local"): ctx.client().register(e)
     db.q("update profiles set marketing_consent=1 where owner_id in (?,?,?)", uid("cm-yes@test.local"), uid("cm-yes2@test.local"), uid("cm-ended@test.local"))

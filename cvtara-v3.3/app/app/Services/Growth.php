@@ -61,7 +61,7 @@ class Growth
         $plans = $rows->groupBy(fn ($r) => str_starts_with($r->plan, 'addon-') ? 'add-ons' : $r->plan)->map(fn ($g) => ['count' => $g->count(), 'paise' => (int) $g->sum('amount_paise')])->all();
         $analytics = (bool) (Settings::get('integrations')['analytics'] ?? false);
         $visitors = $analytics ? $in(DB::table('page_views'))->distinct()->count('visitor_id') : null;
-        $sources = $analytics ? $in(DB::table('page_views'))->select('source', DB::raw('count(distinct visitor_id) as n'))->groupBy('source')->pluck('n', 'source')->map(fn ($n) => (int) $n)->all() : [];
+        $sources = $analytics ? $in(DB::table('page_views')->where('source', '!=', 'internal'))->select('source', DB::raw('count(distinct visitor_id) as n'))->groupBy('source')->pluck('n', 'source')->map(fn ($n) => (int) $n)->all() : [];
 
         return [
             'visitors' => $visitors,
@@ -195,7 +195,7 @@ class Growth
     {
         $since = now()->subDays($days);
         $paid = fn () => DB::table('purchases')->whereIn('status', ['paid', 'partially_refunded'])->where('provider', '!=', 'referral_reward');
-        $unpaid = DB::table('purchases')->where('status', 'created')->where('created_at', '>=', $since)->whereNotIn('owner_id', $paid()->where('created_at', '>=', $since)->select('owner_id'))->distinct()->count('owner_id');
+        $unpaid = DB::table('purchases')->whereIn('status', ['created', 'failed'])->where('created_at', '>=', $since)->whereNotIn('owner_id', $paid()->where('created_at', '>=', $since)->select('owner_id'))->distinct()->count('owner_id');
         $reminded = DB::table('mail_outbox')->where('trigger', 'abandoned_purchase')->where('status', 'sent')->where('created_at', '>=', $since)->select('owner_id', DB::raw('min(created_at) as first'))->groupBy('owner_id')->get();
         $recovered = 0;
         $recoveredPaise = 0;
@@ -458,5 +458,74 @@ class Growth
         }
 
         return $done;
+    }
+
+    /** For the Business assistant: what the growth agent is doing and what it achieved, from real data only. */
+    public static function agentStatus(): array
+    {
+        $on = GrowthOps::settings()['auto'];
+        $now = now()->tz(self::TZ);
+        $run = (array) Settings::get('growthOpsRun', []);
+        $next = $now->copy()->setTime(8, 0);
+        if (($run['day'] ?? '') === $now->toDateString() || $now->hour >= 9) {
+            $next->addDay();
+        }
+        $c = AgentLog::counts('growth');
+        $last = AgentLog::last('growth');
+        $k = GrowthOps::kpis(30);
+        $diag = (array) Settings::get('growthDiagnosis', []);
+        $inr = fn ($p) => $p === null ? null : round($p / 100);
+        $res = [];
+        foreach ([['Sign-ups', $k['registrations']], ['Activated (resume or ATS check)', $k['activated']], ['Free to paid (%)', $k['freeToPaid']], ['Paid orders', $k['transactions']],
+            ['Confirmed revenue after refunds (₹)', $inr($k['confirmedNetPaise'])], ['Average order (₹)', $inr($k['aovPaise'])], ['Repeat purchases', $k['repeatPurchases']], ['Add-on and repeat-customer revenue (₹)', $inr($k['upsellPaise'])],
+            ['Attributed revenue from registered campaigns (₹, not confirmed cause)', $inr($k['attributedNetPaise'])], ['Campaign costs entered (₹)', $k['campaignCostInr']], ['Refund rate (%)', $k['refundRate']], ['Outreach click rate (%)', $k['outreachClickRate']]] as [$l, $v]) {
+            if ($v !== null) {
+                $res[] = ['label' => $l, 'value' => $v, 'period' => 'last 30 days', 'source' => str_contains($l, 'Outreach') ? 'Outreach log' : 'CVTara orders and accounts'];
+            }
+        }
+        if ($diag) {
+            $res[] = ['label' => 'Top revenue problem found', 'value' => $diag['findings'][0]['finding'] ?? 'none', 'period' => 'last 30 days', 'source' => 'Growth agent diagnosis, '.substr((string) $diag['at'], 0, 10)];
+        }
+        $wait = [];
+        foreach (DB::table('growth_experiments')->where('status', 'finished')->where('decision', '')->limit(10)->get(['id', 'title']) as $e) {
+            $wait[] = ['id' => $e->id, 'kind' => 'experiment_decision', 'title' => 'Decide on finished experiment: '.$e->title, 'link' => '/admin.html?tab=growth'];
+        }
+        foreach (DB::table('email_campaigns')->whereIn('status', ['draft', 'scheduled'])->limit(10)->get(['id', 'name', 'status']) as $e) {
+            $wait[] = ['id' => $e->id, 'kind' => 'email_campaign', 'title' => ucfirst($e->status).' email campaign: '.$e->name, 'link' => '/admin.html?tab=campaigns'];
+        }
+
+        return [
+            'status' => $on ? 'running' : 'paused', 'failing' => AgentLog::failing('growth'),
+            'lastRun' => AgentLog::iso($last?->finished_at ?? ($run['at'] ?? null)), 'nextRun' => $on ? $next->toIso8601String() : null,
+            'tasksDone7d' => $c['ok'], 'tasksFailed7d' => $c['failed'],
+            'tasksPending' => DB::table('growth_experiments')->where('status', 'running')->count() + DB::table('growth_campaign_plans')->whereIn('status', ['planned', 'live'])->count(),
+            'approvalsWaiting' => $wait,
+            'spendMonthPaise' => (int) DB::table('ai_usage')->where('created_at', '>=', $now->copy()->startOfMonth()->utc())->where(fn ($w) => $w->where('purpose', 'like', 'growth%')->orWhere('purpose', 'like', 'marketing%'))->sum('cost_paise'),
+            'results' => array_merge($res, self::operatorResults()),
+            'diagnosis' => array_slice($diag['findings'] ?? [], 0, 5),
+            'actions' => ['pause' => 'POST /api/admin/growth/agents {agent: growth, auto: false}'],
+        ];
+    }
+
+    /** Checkout recovery, journeys and referrals for the Business assistant (3.35.0). Only figures that exist. */
+    private static function operatorResults(): array
+    {
+        $out = [];
+        $c = Lifecycle::checkout(30)['kpis'];
+        if ($c['started']) {
+            $out[] = ['label' => 'Checkouts started / paid without help / recovered after a reminder', 'value' => $c['started'].' / '.$c['paidDirect'].' / '.$c['recovered'], 'period' => 'last 30 days', 'source' => 'Order ledger and gateway confirmations'];
+            $out[] = ['label' => 'Revenue recovered after payment reminders (₹)', 'value' => round($c['recoveredPaise'] / 100), 'period' => 'last 30 days', 'source' => 'Confirmed payments after a reminder (attributed)'];
+        }
+        foreach (Lifecycle::report(30)['journeys'] as $j) {
+            if ($j['sent']) {
+                $out[] = ['label' => 'Journey "'.$j['label'].'": sent / did it / bought', 'value' => $j['sent'].' / '.$j['didGoal'].' / '.$j['buyers'], 'period' => 'last 30 days', 'source' => 'Mail log and customer events'];
+            }
+        }
+        $r = Lifecycle::referrals(30);
+        if ($r['signups']) {
+            $out[] = ['label' => 'Referred sign-ups / paid referrals', 'value' => $r['signups'].' / '.$r['paidReferrals'], 'period' => 'last 30 days', 'source' => 'Referral records'];
+        }
+
+        return $out;
     }
 }

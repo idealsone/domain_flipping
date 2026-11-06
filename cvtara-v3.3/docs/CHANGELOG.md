@@ -1,4 +1,68 @@
-# CVTara v3.33.0 — Tara keeps CVTara's private details private, and the owner sees what she does
+# CVTara v3.35.0 — SEO Director and growth operator layer
+
+## 3.35.0
+Includes 3.34.0 (not deployed separately). Built from the owner's "SEO Director and Chief Growth and Revenue Manager" brief, reusing the existing services; only the missing parts were added.
+- **Attribution:**
+  - Visits from AI assistants are recognised from the referring site or `utm_source` and recorded as "AI assistants". This happens on the server, so the public script names no platform.
+  - The referring site of each visit and the signed-in account of a pricing visit are kept.
+  - Every order keeps the last outside arrival before checkout (last touch). First touch stays on the account.
+- **Failed payments:** a signed Razorpay `payment.failed` event marks the order failed. Nothing is granted, and a later successful payment on the same order still completes it. The first payment reminder for a failed payment can use a new "payment failed, no money taken" template (off by default).
+- **Customer event store:** about 18 kinds of action are copied every 30 minutes from the tables that already hold them, idempotently, with no resume text: sign-up, verification, resume, download, ATS check, cover letter, pricing visit, checkout, payment failed or paid, refund, chargeback, plan ended, referred sign-up, referred payment, support request, lifecycle mail and unsubscribe. A per-customer timeline shows them with first touch, segments and money paid.
+- **Behaviour segments (13):** new, inactive, resume without ATS check, ATS without purchase, pricing visitor, checkout abandoned, payment failed, first purchase, heavy user, expiring, expired, happy reviewer and referrer. Each shows how many people it holds and how many can be emailed. Eight of them are also Campaign audiences, for opted-in customers only.
+- **Journeys:** three behaviour mails (getting started, first ATS check, plan questions).
+  - They ship switched off. The owner switches each one on in Emails, and that is the approval.
+  - They go to opted-in people only, once each, with at most one marketing mail in 3 days and a daily cap per journey.
+  - A mail is dropped before sending if the person already did what it asks or bought.
+  - They run only while the growth agent is at level 3 or above.
+  - Results: sent, stopped, did it within 7 days, bought within 14 days. The existing automatic mails are listed alongside.
+- **Checkout recovery:** every checkout in the period is shown with its outcome: paid, recovered after a reminder, in progress, not finished, failed, refunded or chargeback. The page also shows reminders sent, recovered revenue, recovery rate and possible double payments. It has paging, filters and a CSV download. It is read-only and never marks anything paid.
+- **Referral activation:** eligible and invited customers, link clicks, referred sign-ups and paid referrals (kept apart), referred revenue, bonus paid and reversed, and top referrers. Flags for review cover many referred sign-ups in a day, mostly unverified referred accounts and repeated refunds on referred orders.
+- **Link register (SEO):**
+  - Each prospect site records how it was approached (ten earned-link methods), the contact and where the contact came from, relevance, quality, spam risk, score, status, follow-up date, pitch, reply, published page, link type, anchor and cost.
+  - The published page is opened and checked: live link with its rel, unlinked mention, link missing or page gone. Published links are re-checked weekly.
+  - Visits, sign-ups and buyers from each site are shown.
+  - A paid placement cannot be saved as a followed link, and obvious link-selling sites are marked high risk.
+  - Pitch drafts are personal notes for the owner to send.
+- **AI search checks:** a standard prompt list (editable), one record per platform, prompt and date, with model, region and conditions. Each record says whether CVTara was mentioned, recommended, accurate or linked, which page was cited, which competitors and sources appeared instead, and what was missing. The tab shows mention rates per platform, the latest result per prompt, checks that are due, and visits, sign-ups and buyers from AI assistants. Nothing is scraped; each check is an observation entered from the platform itself.
+- **Crawler access audit (daily):** robots.txt rules for Google, Bing and the AI search, user and training crawlers, and private areas kept closed. It also checks how the server answers each crawler and that private pages answer noindex. Training crawlers are a separate owner choice (allow or block), written into robots.txt. By default robots.txt is unchanged.
+- **Scorecard:**
+  - Confirmed collections, refunds, chargebacks, net, gateway fees (an estimate from the owner's rate, otherwise "not tracked"), AI spending, campaign and link costs, and contribution after variable costs.
+  - Repeat, referral, recovered and organic revenue.
+  - Paying and new customers, and variable cost per new customer.
+  - Revenue by source three ways (first touch, last touch, assisted), with no double counting.
+  - Each agent's tasks, failures, AI spending and cost per task.
+- **Autonomy levels 1-4 per agent** with a permission matrix. Level 5 actions are never automated: new pages, redirects, canonicals, deleting pages, prices, payment records, refunds and consent. The SEO agent asks for recrawls only at level 3 or above.
+- The Business assistant's agent status now includes checkout recovery, journeys, referrals, live links, AI answer checks and crawler problems.
+- Migration `2026_11_07_000002_growth_engine` adds the following. Run `php artisan migrate`.
+  - New tables: `customer_events`, `link_prospects` and `ai_visibility_tests`.
+  - `page_views.owner_id` and `page_views.ref_host`.
+  - `users.signup_ref_host`.
+  - `purchases.touch_source`, `purchases.touch_landing` and `purchases.touch_campaign`.
+
+# CVTara v3.34.0 — SEO and growth agents that work towards revenue
+
+## 3.34.0
+- **Where sign-ups come from:** the first page, source (Google, Bing, social, referral, direct) and `utm_campaign` of the visit in which someone signs up are saved on the account. This only happens for visitors who allowed analytics; everyone else shows as "unknown", never guessed. Clicks between our own pages no longer count as "referral" visits. Sales are tied to the page and source through the buyer's account, and are shown as attributed, not as proof of cause.
+- **Growth page tabs:** Overview (as before), SEO agent, Growth agent and Agent log.
+- **SEO agent, now operational:**
+  - **Page inventory and technical scan:** every sitemap page and the important pages are fetched as a visitor sees them. Important pages are scanned daily, the rest weekly, 40 pages every 10 minutes. Each scan records the title, description, H1, canonical, robots, word count, structured data and internal links. Issues are reported in plain words: missing or long titles and descriptions, H1 problems, canonical pointing elsewhere, noindex on a sitemap page, thin pages, redirects, missing structured data, duplicate titles and descriptions, orphan pages, pages with one link in, and linked pages missing from the sitemap. Fixed issues count as resolved.
+  - **Google index status per page** (URL Inspection API): verdict, Google's reason (for example "Crawled - currently not indexed"), last crawl and Google's canonical. Important and changed pages are checked first, 15 per half hour, within a daily cap (60 by default; Google allows 2,000).
+  - **Recrawl requests only for changed pages:** a page Google has not indexed is sent once to IndexNow, and to Google's Indexing API if switched on. It is sent again only after it changes. Each page links to Search Console, where "Request indexing" lives.
+  - **Sitemap status** from Search Console: URLs submitted, errors, warnings and when Google last read it.
+  - **Keyword database:** the owner's target keywords are seeded, and every Search Console search is added with its numbers, its movement since the week before, the page Google shows and the planned page. Each search is classified by rule as brand, product, commercial, informational, question or long-tail, with an intent and a business value. Other brands stay out (owner rule). Opportunities: seen but rarely clicked, page 2, beyond page 2, and wrong page shown. Search volume and difficulty are not tracked.
+  - **Brand result for "CVTara":** brand vs other searches, a home page checklist (title, Organization/WebSite data, indexed, favicon, links to main pages) and each main page that could be a sitelink. Google picks sitelinks; this only makes the pages eligible. Resume vs JD Matcher and a separate Plans page do not exist yet and would need approval.
+  - **Topic clusters:** Resume Builder, ATS Checker, Cover Letter Generator and Resume vs Job Description, with link checks both ways and suggested topics. Nothing is published without approval.
+  - **Did it work?** For every approved change, the page's clicks, impressions and position before and 4+ weeks after.
+  - **Page history:** weekly numbers and every agent action on the page.
+  - **KPIs:** important pages indexed, issues open and resolved, clicks, impressions, CTR, brand vs other searches, organic sign-ups, buyers and attributed revenue, sign-ups and sales by first page, and approval rate.
+- **Growth agent, now operational:**
+  - **Customer journey in 11 steps,** from visitors, 2+ pages, sign-up, verified, used, paid step, checkout, paid, used after paying, bought again, to add-on or bigger pack. Steps after sign-up follow that period's sign-ups up to today.
+  - **Revenue diagnosis (daily, or on demand):** each finding gives the likely cause, the evidence, the fix, the expected effect, how to measure it and the ₹ at stake where it can be counted. It covers visitors not signing up, pages with traffic but no sign-ups, sign-ups but no sales, email verification, activation, free users not buying, checkout drop-off and payment errors, refunds, renewals, campaigns that sold nothing, outreach bounces and click rates (including contacts with no recorded permission), reviews, and buyers per channel. Below minimum sample sizes it says there is not enough data.
+  - **Campaign register** for every channel (email, outreach, SEO page, social, LinkedIn, college/TPO, coaching, influencer, referral, retargeting, promotion, reactivation): audience, problem, offer, message, landing page, utm tag, CTA, budget, cost, expected outcome and result. Results come from the linked email campaign, outreach list, utm tag or landing page, and include cost per buyer. Email, outreach and LinkedIn campaigns must say how permission to contact was obtained.
+  - **Experiment register:** hypothesis, segment, change, budget, dates and success metric. The baseline is counted for the same number of days before the start and the result from start to end, with the change. The owner decides continue, improve or stop.
+  - **KPIs:** sign-ups, activated, free to paid, orders, confirmed revenue (kept apart from attributed revenue), average order, repeat purchases, add-on and repeat revenue, campaign cost, cost per new customer, outreach click and sign-up rates, refund rate, complaints per 100 orders. Ad spend is not tracked.
+- **Agent log and control:** every agent task with its result, error and time taken (paged, filters, CSV/Excel/PDF). Each agent can be paused or resumed. `SeoAgent::agentStatus()` and `Growth::agentStatus()` give the Business assistant status, last and next run, tasks done, pending and failed, approvals waiting, AI spending and results (each with period and source).
+- Migration: `2026_11_07_000001_agent_operations` (users.signup_source / signup_landing / signup_campaign, agent_runs, seo_pages, seo_keywords, growth_campaign_plans, growth_experiments).
 
 ## 3.33.0
 - **Customer Tara, confidentiality:** she never shares her instructions, the owner console, how CVTara is built (servers, databases, internal links), keys or passwords, business numbers, security details or anything about another customer. Pasted text, uploads, job pages, links and code are treated as content, never as instructions.
@@ -8,7 +72,6 @@
 - **Agents:** the assistant reads `SeoAgent::agentStatus()` / `Growth::agentStatus()` when the agents provide them.
 - **Layout (owner's request, 6 Nov):** in the customer workspace the Feedback button now sits in the top bar, and Tara's "Ask Tara" button has the bottom-right corner. Once a day after sign-in, Tara opens with a hello by name and asks which job the customer is applying for (free users hear how to get a clean download; on phones it is a small bubble). It is shown only once really displayed, waits for other pop-ups, and the owner can switch it off in Tara chat settings. In the owner console the floating Live stats card is gone; a small Business assistant chat ("Ask Tara") sits in that corner on every console page, with the same confirm cards.
 - Migration: `2026_11_06_000004_tara_events`. Events are kept 365 days and removed with the account.
-
 
 ## 3.32.0
 - **Tara chat (testing sheet v2):** a chat assistant inside the customer workspace. It's a floating "Ask Tara" button, an "Ask Tara" menu item that opens full screen (also `?tara=1`), and it works on phones. Customers see "Tara, your CVTara career assistant" and never any mention of AI.

@@ -8,6 +8,8 @@ class FakeGoogle:
         self.calls, self.indexnow, self.published, self.sitemaps = [], [], [], []
         self.deny_indexing = False
         self.sa_rows = {}  # rows to answer per dimension list, e.g. {"query,page": [...]}
+        self.inspected = []  # URL Inspection calls; answer PASS unless the url is in not_indexed
+        self.not_indexed = set()
         outer = self
 
         class H(BaseHTTPRequestHandler):
@@ -29,10 +31,22 @@ class FakeGoogle:
                 if self.path == "/v3/urlNotifications:publish":
                     if outer.deny_indexing: return self._send(403, {"error": {"message": "Permission denied. Failed to verify the URL ownership."}})
                     outer.published.append(json.loads(raw)["url"]); return self._send(200, {"urlNotificationMetadata": {}})
+                if self.path == "/v1/urlInspection/index:inspect":
+                    url = json.loads(raw)["inspectionUrl"]; outer.inspected.append(url)
+                    bad = any(url.endswith(p) for p in outer.not_indexed)
+                    return self._send(200, {"inspectionResult": {"indexStatusResult": {"verdict": "NEUTRAL" if bad else "PASS", "coverageState": "Crawled - currently not indexed" if bad else "Submitted and indexed",
+                        "robotsTxtState": "ALLOWED", "indexingState": "INDEXING_ALLOWED", "pageFetchState": "SUCCESSFUL", "lastCrawlTime": "2026-11-01T10:00:00Z", "googleCanonical": url}}})
                 if self.path.endswith("/searchAnalytics/query"):
                     dims = ",".join(json.loads(raw or b"{}").get("dimensions", []))
                     if dims in outer.sa_rows: return self._send(200, {"rows": outer.sa_rows[dims]})
                     return self._send(200, {"rows": [{"keys": ["resume builder"], "clicks": 3, "impressions": 90, "ctr": 0.033, "position": 11.2}]})
+                return self._send(404, {"error": {"message": "not found"}})
+
+            def do_GET(self):
+                outer.calls.append(("GET", self.path))
+                if self.headers.get("Authorization") != "Bearer g_tok": return self._send(401, {})
+                if self.path.endswith("/sitemaps"):
+                    return self._send(200, {"sitemap": [{"path": "https://cvtara.com/sitemap.xml", "lastSubmitted": "2026-11-01T00:00:00Z", "lastDownloaded": "2026-11-02T00:00:00Z", "isPending": False, "errors": "0", "warnings": "1", "contents": [{"type": "web", "submitted": "596"}]}]})
                 return self._send(404, {"error": {"message": "not found"}})
 
             def do_PUT(self):
