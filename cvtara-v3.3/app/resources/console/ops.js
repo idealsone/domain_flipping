@@ -141,7 +141,7 @@
     const paint = d => {
       $('#opsRvTabs').innerHTML = [['pending', 'Pending'], ['published', 'Published'], ['hidden', 'Hidden']].map(([k, l]) => `<button class="${tab === k ? 'on' : ''}" data-rt="${k}">${l} (${counts[k] || 0})</button>`).join('');
       pager($('#opsRvPg'), d, (p, n) => { page = p; per = n; load(); });
-      $('#opsRvList').innerHTML = list.map(r => `<article class="panel panel-pad ops-rv"><span class="av">${E(initials(r.display_name))}</span><div><b>${E(r.display_name)}</b> <small>${'★'.repeat(r.rating)}${'☆'.repeat(5 - r.rating)} · ${E(r.source === 'owner_verified' ? 'verified, with consent' : r.source === 'dummy' ? 'sample' : r.source)}</small><p>“${E(r.content)}”</p><div class="ops-rv-act">${r.status !== 'published' ? `<button class="button small ops-ok" data-rv="${r.id}" data-st="published">✓ Approve &amp; Publish</button>` : `<button class="button small secondary" data-rv="${r.id}" data-st="hidden">Unpublish</button>`}${r.status !== 'hidden' ? `<button class="button small ops-no" data-rv="${r.id}" data-st="hidden">✕ Reject</button>` : `<button class="button small secondary" data-rv="${r.id}" data-st="pending">Restore</button>`}</div></div></article>`).join('') || '<div class="panel panel-pad"><p>Nothing here.</p></div>';
+      $('#opsRvList').innerHTML = list.map(r => `<article class="panel panel-pad ops-rv"><span class="av">${E(initials(r.display_name))}</span><div><b>${E(r.display_name)}</b>${r.designation || r.company ? ` <small>${E([r.designation, r.company].filter(Boolean).join(', '))}</small>` : ''} <small>${'★'.repeat(r.rating)}${'☆'.repeat(5 - r.rating)} · ${E(r.source === 'owner_verified' ? 'verified, with consent' : r.source === 'dummy' ? 'sample' : r.source)}</small>${r.verifiedBuyer ? ' <span class="pill ok">Verified buyer</span>' : ''}${r.duplicates ? ` <span class="pill warn" title="The same words were sent ${r.duplicates} other time(s)">Possible duplicate (${r.duplicates})</span>` : ''}${r.consent ? '' : ' <span class="pill">No public consent</span>'}<p>“${E(r.content)}”</p><div class="ops-rv-act">${r.status !== 'published' ? `<button class="button small ops-ok" data-rv="${r.id}" data-st="published">✓ Approve &amp; Publish</button>` : `<button class="button small secondary" data-rv="${r.id}" data-st="hidden">Unpublish</button>`}${r.status !== 'hidden' ? `<button class="button small ops-no" data-rv="${r.id}" data-st="hidden">✕ Reject</button>` : `<button class="button small secondary" data-rv="${r.id}" data-st="pending">Restore</button>`}</div></div></article>`).join('') || '<div class="panel panel-pad"><p>Nothing here.</p></div>';
     };
     h.innerHTML = `<div class="pg-head"><h2>User Reviews</h2><p>Add, moderate and publish user reviews shown on the landing page</p></div>
       <section class="panel panel-pad"><h3>＋ Add New Review</h3><form id="opsRvForm" class="ops-form"><label>Full name<input name="name" required maxlength="100" placeholder="Priya Sharma"></label><label>Company &amp; role<input name="role" maxlength="100" placeholder="TCS · Software Engineer"></label><label>City<input name="city" maxlength="60" placeholder="Mumbai"></label><label>Star rating<select name="rating"><option value="5">★★★★★ 5 Stars</option><option value="4">★★★★ 4 Stars</option><option value="3">★★★ 3 Stars</option></select></label><label class="wide">Review text<textarea name="content" required minlength="10" maxlength="2000" rows="3" placeholder="Write the review feedback…"></textarea></label><label>Source<select name="source"><option value="dummy">Sample (cannot be published)</option><option value="verified">Verified customer (consent on file)</option></select></label><label>Customer account email<input name="customerEmail" type="email" placeholder="Required for verified reviews — a paying customer"></label><label>Consent reference<input name="consentReference" placeholder="Required for verified reviews — where consent is recorded"></label><div class="wide"><button class="button primary">Add Review</button> <span id="opsRvSt" role="status"></span></div></form></section>
@@ -162,18 +162,7 @@
     try { await load(); } catch (e) { $('#opsRvList').innerHTML = `<div class="panel panel-pad" role="alert">${E(e.message)}</div>`; }
   }
 
-  /* ---- Live stats card ---- */
-  async function live() {
-    if (document.hidden && $('#opsLive')) return;
-    if (!$('#opsLive')) { const c = document.createElement('aside'); c.id = 'opsLive'; c.className = 'ops-live'; c.innerHTML = '<header><span class="live-dot"></span> LIVE STATS <button type="button" aria-label="Collapse">⤢</button></header><div></div><footer></footer>'; document.body.appendChild(c); c.querySelector('button').onclick = () => { c.dataset.manual = '1'; c.classList.toggle('min'); }; }
-    try {
-      // One small cached request (five counts) instead of the user, order and dashboard lists every 30 seconds.
-      const d = await api('/api/admin/live'), now = new Date();
-      const rows = [['Active users', d.activeUsers], ['Resumes today', d.resumesToday], ['Revenue today', short(d.revenueTodayPaise)], ['ATS scans', d.scansToday], ['Signups today', d.signupsToday]];
-      $('#opsLive > div').innerHTML = rows.map(r => `<p><span>${r[0]}</span><b>${r[1]}</b></p>`).join('');
-      $('#opsLive footer').textContent = 'Updated ' + now.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' });
-    } catch (e) { /* keep last values */ }
-  }
+  // The floating live-stats card was removed (owner, 6 Nov 2026): the Business assistant chat sits in that corner instead.
 
   const render = { settings, errors, dashboard, desk };
 
@@ -353,7 +342,7 @@
   // A reload reopens the ?tab= page, including Settings pages that are reached from cards rather than the side menu.
   const boot = f => { let done = false; const go = () => { if (!done) { done = true; f(); } }; addEventListener('load', go); document.addEventListener('DOMContentLoaded', () => setTimeout(go, 2500)); };
   boot(() => setTimeout(() => { Object.keys(META).forEach(banner); settings(); const tab = new URLSearchParams(location.search).get('tab'); const nav = v => v && $('.side-nav [data-admin-view="' + CSS.escape(v) + '"]'); const sub = v => v && $('#admin-' + CSS.escape(v)) && $('[data-admin-view="' + CSS.escape(v) + '"]'); const first = nav(tab) || sub(tab) || nav('dashboard'); if (first) first.click(); document.body.classList.add('admin-ready'); const D = window.CVTARA_DATA; const cnt = (v, n) => { const el = $('.side-nav [data-admin-view="' + v + '"] .nav-count'); if (el && n) el.textContent = n; }; if (D) { cnt('resumelib', D.templates.length); cnt('letterlib', D.coverLetters.length); cnt('bloghub', (D.blog || []).length); }
-    Promise.resolve(dashboard()).catch(() => 0).finally(() => { live(); setInterval(live, 30000); }); }, 400));
+    Promise.resolve(dashboard()).catch(() => 0); }, 400));
   // banners must survive panels re-rendering themselves
   new MutationObserver(() => { const v = $('.admin-view.active'); if (v && !v.querySelector(':scope > .ops-banner')) banner(v.id.replace('admin-', '')); }).observe(document.body, { childList: true, subtree: true });
 })();

@@ -51,6 +51,9 @@ class AdminController extends Controller
         if (preg_match(WhatsNewAdminController::ROUTES, $path)) {
             return app(WhatsNewAdminController::class)->run($r, $path);
         }
+        if (preg_match(TaraAdminController::ROUTES, $path)) {
+            return app(TaraAdminController::class)->run($r, $path);
+        }
         if (preg_match(SupportAdminController::ROUTES, $path)) {
             return app(SupportAdminController::class)->run($r, $path);
         }
@@ -336,7 +339,7 @@ class AdminController extends Controller
                     'export' => ['title' => 'User reviews', 'map' => fn ($rows) => array_map(fn ($f) => ['date' => $f['created_at'], 'name' => $f['display_name'], 'rating' => (int) $f['rating'], 'review' => $f['content'], 'status' => $f['status'], 'source' => $f['source'], 'consent' => (bool) $f['consent'], 'consent_reference' => $f['consent_reference'] ?? '', 'account_email' => $f['email']], $rows)],
                 ]);
 
-                return $ok(['reviews' => $d['rows'], 'counts' => DB::table('feedback')->selectRaw('status,count(*) as count')->groupBy('status')->pluck('count', 'status')] + $d);
+                return $ok(['reviews' => \App\Services\Reviews::flag(array_map(fn ($x) => (array) $x, is_array($d['rows']) ? $d['rows'] : $d['rows']->all())), 'counts' => DB::table('feedback')->selectRaw('status,count(*) as count')->groupBy('status')->pluck('count', 'status')] + $d);
             }$r->validate(['id' => 'required|uuid', 'status' => 'required|in:pending,published,hidden']);
             $row = DB::table('feedback')->where('id', $r->id)->first();
             abort_unless($row, 404);

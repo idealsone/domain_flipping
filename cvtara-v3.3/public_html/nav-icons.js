@@ -41,7 +41,7 @@
     bloghub: 'pen', desk: 'star', reviews: 'star', pricing: 'rupee', settings: 'sliders', integrations: 'sliders', features: 'sliders', policies: 'scale',
     legal: 'scale', health: 'pulse', setup: 'pulse', seo: 'search', keywords: 'search', analytics: 'chart', push: 'bell',
     resumes: 'file', builder: 'pen', match: 'target', letter: 'mail', tracker: 'check', billing: 'rupee', referrals: 'gift', wallet: 'wallet',
-    'referral-history': 'history', account: 'user'
+    'referral-history': 'history', account: 'user', tara: 'chat', assistant: 'pulse'
   };
   const svg = d => `<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${d ? `<path d="${d}"/>` : '<circle cx="12" cy="12" r="2.5"/>'}</svg>`;
   const paint = root => root.querySelectorAll('[data-admin-view]>i,[data-workspace-view]>i,[data-ops-toggle]>i').forEach(i => {

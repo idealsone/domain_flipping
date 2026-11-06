@@ -24,7 +24,7 @@ class AccountEraser
     private const OWN = ['resume_drafts' => 'owner_id', 'cover_letter_drafts' => 'owner_id', 'applications' => 'owner_id', 'feedback' => 'owner_id', 'profiles' => 'owner_id',
         'payout_profiles' => 'owner_id', 'creator_applications' => 'owner_id', 'referral_identities' => 'owner_id', 'referral_rewards' => 'owner_id', 'product_usage' => 'owner_id',
         'mail_outbox' => 'owner_id', 'campaign_recipients' => 'owner_id', 'ats_scans' => 'owner_id', 'notifications' => 'owner_id', 'activity_events' => 'owner_id',
-        'referral_clicks' => 'referrer_id', 'sessions' => 'user_id'];
+        'referral_clicks' => 'referrer_id', 'sessions' => 'user_id', 'tara_messages' => 'owner_id', 'tara_tool_calls' => 'owner_id', 'tara_conversations' => 'owner_id', 'tara_events' => 'owner_id'];
 
     /** Money records that stay, re-pointed at the placeholder. */
     private const KEEP = ['purchases' => ['owner_id'], 'withdrawals' => ['owner_id'], 'referral_commissions' => ['referrer_id', 'buyer_id'], 'refund_requests' => ['owner_id'],
@@ -67,6 +67,9 @@ class AccountEraser
                 }
             }
             DB::table('error_logs')->where('user_id', $id)->update(['user_id' => null]);
+            if (Schema::hasColumn('ai_usage', 'owner_id')) {
+                DB::table('ai_usage')->where('owner_id', $id)->update(['owner_id' => null]); // the cost stays in the totals, without the person
+            }
             DB::table('users')->where('referred_by', $id)->update(['referred_by' => null]);
             DB::table('password_reset_tokens')->where('email', $user->email)->delete();
             if (Schema::hasTable('outreach_contacts')) {

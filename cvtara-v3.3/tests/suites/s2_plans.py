@@ -21,6 +21,11 @@ def run(ctx, t):
     t.check("credit packs exist but are off sale", all(plans.get(k, {}).get("sale") is False for k in ("addon-10", "addon-20", "addon-30")))
     t.check("only Free costs nothing, and it cannot be bought", [k for k, v in plans.items() if v.get("price") == 0] == ["free"] and plans["free"]["name"] == "Free")
     s, _ = c.api("POST", "checkout/quote", {"plan": "free"}); t.check("the free plan is not purchasable", s in (401, 419, 422), s)
+    t.check("Free carries no download credits", plans["free"].get("savedResumes") == 0 and plans["free"].get("savedLetters") == 0, plans["free"])
+    import os
+    ex = open(os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "app", "resources", "console", "extras.js"), encoding="utf8").read()
+    t.check("console explains Free cannot download a clean file and hides its download counts", "cannot download a clean file" in ex and "savedResumes: 0, savedLetters: 0" in ex)
+    t.check("console says Quick Download uses the daily checks, not a scan allowance", "Quick Download has no scan allowance of its own" in ex)
     u = ctx.client(); u.register("plans-a@test.local")
     for k in ("expert-review", "addon-10", "fresher-basic"):
         s, _ = u.api("POST", "checkout/quote", {"plan": k}); t.check(f"{k} cannot be bought while off sale", s == 422, s)

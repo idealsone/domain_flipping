@@ -33,3 +33,11 @@
     if (text.length < 40) home();
   }, 4000));
 })();
+// Push notifications were retired (3.25.1). A browser that still has the old OneSignal worker, or a stale cached page,
+// could show the old "allow notifications" prompt: remove any such worker on every page.
+try {
+  if ('serviceWorker' in navigator) navigator.serviceWorker.getRegistrations().then(rs => rs.forEach(r => {
+    const u = String((r.active || r.waiting || r.installing || {}).scriptURL || '');
+    if (/onesignal/i.test(u)) r.unregister();
+  })).catch(() => {});
+} catch (_) {}
