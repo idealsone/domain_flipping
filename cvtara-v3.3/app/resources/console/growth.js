@@ -12,8 +12,23 @@
   const R = { page: 1, per: 20, slot: 'all', band: 'all', from: '', to: '' };
   let D = null;
 
+  // Tabs (3.34.0): Overview is this file; the SEO agent, growth agent and agent log tabs live in /console/agents.js, loaded on first use.
+  let TAB = (new URLSearchParams(location.search).get('agent') || 'overview');
+  const TABS = { overview: 'Overview', seo: 'SEO agent', revenue: 'Growth agent', log: 'Agent log' };
+  function agentsJs() {
+    return window.CVTaraAgents ? Promise.resolve() : new Promise((ok, no) => { const s = document.createElement('script'); s.src = '/console/agents.js?v=3.34.0'; s.onload = ok; s.onerror = () => no(new Error('Could not load the agent pages. Refresh and try again.')); document.head.append(s); });
+  }
   async function growth() {
-    const h = $('#admin-growth'); if (!h) return;
+    const root = $('#admin-growth'); if (!root) return;
+    if (!$('#grTabs', root)) {
+      root.innerHTML = `<div class="pill-tabs" id="grTabs" role="tablist" style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px">${Object.entries(TABS).map(([k, l]) => `<button type="button" role="tab" class="button small ${k === TAB ? 'primary' : 'secondary'}" data-gtab="${k}" aria-selected="${k === TAB}">${E(l)}</button>`).join('')}</div><div id="grBody"></div>`;
+      root.querySelectorAll('[data-gtab]').forEach(b => { b.onclick = () => { TAB = b.dataset.gtab; root.querySelectorAll('[data-gtab]').forEach(x => { const on = x.dataset.gtab === TAB; x.classList.toggle('primary', on); x.classList.toggle('secondary', !on); x.setAttribute('aria-selected', String(on)); }); $('#grBody', root).innerHTML = ''; D = null; growth(); }; });
+    }
+    const h = $('#grBody', root);
+    if (TAB !== 'overview') {
+      try { await agentsJs(); window.CVTaraAgents[TAB](h); } catch (e) { h.innerHTML = `<div class="panel panel-pad" role="alert">${E(err(e))}</div>`; }
+      return;
+    }
     if (!D) h.innerHTML = '<div class="ops-skel"></div>';
     try { D = await api('/api/admin/growth'); } catch (e) { h.innerHTML = `<div class="panel panel-pad" role="alert">${E(err(e))}</div>`; return; }
     const M = D.month, m = M.metrics, b = BAND[M.band] || BAND.none, B = D.budget, st = D.stages;

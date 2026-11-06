@@ -459,4 +459,51 @@ class Growth
 
         return $done;
     }
+
+    /** For the Business assistant: what the growth agent is doing and what it achieved, from real data only. */
+    public static function agentStatus(): array
+    {
+        $on = GrowthOps::settings()['auto'];
+        $now = now()->tz(self::TZ);
+        $run = (array) Settings::get('growthOpsRun', []);
+        $next = $now->copy()->setTime(8, 0);
+        if (($run['day'] ?? '') === $now->toDateString() || $now->hour >= 9) {
+            $next->addDay();
+        }
+        $c = AgentLog::counts('growth');
+        $last = AgentLog::last('growth');
+        $k = GrowthOps::kpis(30);
+        $diag = (array) Settings::get('growthDiagnosis', []);
+        $inr = fn ($p) => $p === null ? null : round($p / 100);
+        $res = [];
+        foreach ([['Sign-ups', $k['registrations']], ['Activated (resume or ATS check)', $k['activated']], ['Free to paid (%)', $k['freeToPaid']], ['Paid orders', $k['transactions']],
+            ['Confirmed revenue after refunds (₹)', $inr($k['confirmedNetPaise'])], ['Average order (₹)', $inr($k['aovPaise'])], ['Repeat purchases', $k['repeatPurchases']], ['Add-on and repeat-customer revenue (₹)', $inr($k['upsellPaise'])],
+            ['Attributed revenue from registered campaigns (₹, not confirmed cause)', $inr($k['attributedNetPaise'])], ['Campaign costs entered (₹)', $k['campaignCostInr']], ['Refund rate (%)', $k['refundRate']], ['Outreach click rate (%)', $k['outreachClickRate']]] as [$l, $v]) {
+            if ($v !== null) {
+                $res[] = ['label' => $l, 'value' => $v, 'period' => 'last 30 days', 'source' => str_contains($l, 'Outreach') ? 'Outreach log' : 'CVTara orders and accounts'];
+            }
+        }
+        if ($diag) {
+            $res[] = ['label' => 'Top revenue problem found', 'value' => $diag['findings'][0]['finding'] ?? 'none', 'period' => 'last 30 days', 'source' => 'Growth agent diagnosis, '.substr((string) $diag['at'], 0, 10)];
+        }
+        $wait = [];
+        foreach (DB::table('growth_experiments')->where('status', 'finished')->where('decision', '')->limit(10)->get(['id', 'title']) as $e) {
+            $wait[] = ['id' => $e->id, 'kind' => 'experiment_decision', 'title' => 'Decide on finished experiment: '.$e->title, 'link' => '/admin.html?tab=growth'];
+        }
+        foreach (DB::table('email_campaigns')->whereIn('status', ['draft', 'scheduled'])->limit(10)->get(['id', 'name', 'status']) as $e) {
+            $wait[] = ['id' => $e->id, 'kind' => 'email_campaign', 'title' => ucfirst($e->status).' email campaign: '.$e->name, 'link' => '/admin.html?tab=campaigns'];
+        }
+
+        return [
+            'status' => $on ? 'running' : 'paused', 'failing' => AgentLog::failing('growth'),
+            'lastRun' => AgentLog::iso($last?->finished_at ?? ($run['at'] ?? null)), 'nextRun' => $on ? $next->toIso8601String() : null,
+            'tasksDone7d' => $c['ok'], 'tasksFailed7d' => $c['failed'],
+            'tasksPending' => DB::table('growth_experiments')->where('status', 'running')->count() + DB::table('growth_campaign_plans')->whereIn('status', ['planned', 'live'])->count(),
+            'approvalsWaiting' => $wait,
+            'spendMonthPaise' => (int) DB::table('ai_usage')->where('created_at', '>=', $now->copy()->startOfMonth()->utc())->where(fn ($w) => $w->where('purpose', 'like', 'growth%')->orWhere('purpose', 'like', 'marketing%'))->sum('cost_paise'),
+            'results' => $res,
+            'diagnosis' => array_slice($diag['findings'] ?? [], 0, 5),
+            'actions' => ['pause' => 'POST /api/admin/growth/agents {agent: growth, auto: false}'],
+        ];
+    }
 }

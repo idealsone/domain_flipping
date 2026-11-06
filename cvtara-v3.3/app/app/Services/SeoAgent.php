@@ -393,14 +393,89 @@ class SeoAgent
             return null;
         }
         Settings::put('seoAgentRun', ['day' => $day, 'at' => now()->toIso8601String()]);
-        try {
-            $pulled = self::pull();
-        } catch (\Symfony\Component\HttpKernel\Exception\HttpException $e) {
-            ErrorLog::record('warning', 'seo', 'SEO agent: '.$e->getMessage(), 'seo-agent:'.$day);
+        $pulled = AgentLog::run('seo', 'search-console', function () {
+            $p = self::pull();
 
-            return ['error' => $e->getMessage()];
+            return $p + ['summary' => 'Read '.($p['queries'] ?? 0).' searches and '.($p['pairs'] ?? 0).' search/page pairs from Search Console.'];
+        });
+        if (isset($pulled['error'])) {
+            return $pulled;
         }
+        $made = AgentLog::run('seo', 'propose', function () {
+            $m = self::propose();
 
-        return $pulled + self::propose();
+            return $m + ['summary' => 'Proposed '.$m['meta'].' title change(s) and '.$m['links'].' internal-link change(s) for your approval.'];
+        });
+        AgentLog::run('seo', 'keywords', fn () => SeoOps::syncKeywords());
+        AgentLog::run('seo', 'sitemaps', fn () => SeoOps::sitemaps());
+
+        return $pulled + $made;
+    }
+
+    /** Hourly work between the daily runs: scan a batch of pages, check Google's index status, ask for recrawls of changed pages. */
+    public static function work(): void
+    {
+        if (! self::settings()['auto']) {
+            return;
+        }
+        if (\Illuminate\Support\Facades\Cache::add('seo-scan', 1, 600)) {
+            AgentLog::run('seo', 'scan', fn () => SeoOps::scan());
+        }
+        if (SearchConsole::ready() && \Illuminate\Support\Facades\Cache::add('seo-inspect', 1, 1800)) {
+            $i = AgentLog::run('seo', 'inspect', fn () => SeoOps::inspect());
+            if (! isset($i['error'])) {
+                AgentLog::run('seo', 'request-indexing', fn () => SeoOps::requestIndexing());
+            }
+        }
+    }
+
+    /** For the Business assistant: what the SEO agent is doing and what it achieved, from real data only. */
+    public static function agentStatus(): array
+    {
+        $s = self::settings();
+        $ready = SearchConsole::ready();
+        $run = (array) Settings::get('seoAgentRun', []);
+        $now = now()->tz(Growth::TZ);
+        $next = $now->copy()->setTime(11, 0);
+        if (($run['day'] ?? '') === $now->toDateString() || $now->hour >= 12) {
+            $next->addDay();
+        }
+        while ($next->isSunday()) {
+            $next->addDay();
+        }
+        $c = AgentLog::counts('seo');
+        $last = AgentLog::last('seo');
+        $k = SeoOps::kpis();
+        $pending = DB::table('seo_proposals')->where('status', 'pending')->orderByDesc('impressions')->limit(20)->get(['id', 'kind', 'path', 'query']);
+        $per = $k['searchPeriod'] ?? 'last 4 weeks';
+        $res = [];
+        $add = function ($label, $value, $period, $source) use (&$res) {
+            if ($value !== null) {
+                $res[] = compact('label', 'value', 'period', 'source');
+            }
+        };
+        $add('Google clicks', $k['clicks'], $per, 'Google Search Console');
+        $add('Google impressions', $k['impressions'], $per, 'Google Search Console');
+        $add('Click rate (%)', $k['ctr'], $per, 'Google Search Console');
+        $add('Searches for CVTara by name: impressions', $k['brandImpressions'], $per, 'Google Search Console');
+        $add('Important pages indexed by Google', $k['importantIndexed'] !== null ? $k['importantIndexed'].' of '.$k['importantInspected'].' checked' : null, 'latest check', 'Google URL Inspection');
+        $add('Technical issues open', $k['issuesOpen'], 'latest scan', 'CVTara page scan');
+        $add('Technical issues resolved', $k['issuesResolved30d'], 'last 30 days', 'CVTara page scan');
+        $add('Sign-ups from Google/Bing', $k['organicSignups30d'].' (of '.$k['signupsWithSource30d'].' sign-ups with a known source)', 'last 30 days', 'CVTara accounts (visitors who allowed analytics)');
+        $add('Revenue from those sign-ups (₹)', round($k['organicNetPaise30d'] / 100), 'last 30 days', 'CVTara orders, attributed by first visit');
+        $add('Changes you approved (%)', $k['approvalRate'], 'last 90 days', 'SEO proposals');
+
+        return [
+            'status' => ! $s['auto'] ? 'paused' : (! $ready ? 'off' : 'running'),
+            'failing' => AgentLog::failing('seo'),
+            'lastRun' => AgentLog::iso($last?->finished_at ?? ($run['at'] ?? null)),
+            'nextRun' => $s['auto'] && $ready ? $next->toIso8601String() : null,
+            'tasksDone7d' => $c['ok'], 'tasksFailed7d' => $c['failed'],
+            'tasksPending' => DB::table('seo_pages')->whereNull('scanned_at')->count() + max(0, count(SeoOps::inventory()) - DB::table('seo_pages')->count()),
+            'approvalsWaiting' => $pending->map(fn ($p) => ['id' => $p->id, 'kind' => 'seo_'.$p->kind, 'title' => ($p->kind === 'meta' ? 'New title and description for ' : 'Internal links to ').$p->path.($p->query ? ' ("'.$p->query.'")' : ''), 'link' => '/admin.html?tab=growth'])->all(),
+            'spendMonthPaise' => (int) DB::table('ai_usage')->where('purpose', 'seo')->where('created_at', '>=', $now->copy()->startOfMonth()->utc())->sum('cost_paise'),
+            'results' => $res,
+            'actions' => ['approve' => 'POST /api/admin/growth/seo/decide {id, action: approve|reject|undo}', 'pause' => 'POST /api/admin/growth/agents {agent: seo, auto: false}'],
+        ];
     }
 }

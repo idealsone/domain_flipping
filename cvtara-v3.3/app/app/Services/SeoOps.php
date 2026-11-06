@@ -107,20 +107,16 @@ class SeoOps
         }
         arsort($due);
         $done = 0;
-        $resolved = [];
         foreach (array_slice(array_keys($due), 0, $limit) as $path) {
-            $resolved = array_merge($resolved, self::scanOne($path, $inv[$path]));
+            self::scanOne($path, $inv[$path]);
             $done++;
-        }
-        if ($resolved) {
-            Settings::put('seoResolved', array_slice(array_merge($resolved, (array) Settings::get('seoResolved', [])), 0, 400));
         }
         $left = max(0, count($due) - $done);
 
         return ['summary' => "Scanned $done page(s)".($left ? ", $left still due" : '').'.', 'scanned' => $done, 'due' => $left, 'skipped' => $done === 0];
     }
 
-    /** Fetches one page as a visitor would and records what search engines read on it. Returns issues that went away. */
+    /** Fetches one page as a visitor would and records what search engines read on it. Returns the issue codes that went away (kept for the KPIs). */
     public static function scanOne(string $path, bool $important = false): array
     {
         $old = DB::table('seo_pages')->where('path', $path)->first();
@@ -154,9 +150,13 @@ class SeoOps
             $row['created_at'] = now();
         }
         DB::table('seo_pages')->updateOrInsert(['path' => $path], $row);
-        $gone = $old ? array_diff_key((array) json_decode((string) $old->issues_json, true), $issues) : [];
+        $gone = $old ? array_keys(array_diff_key((array) json_decode((string) $old->issues_json, true), $issues)) : [];
+        if ($gone) {
+            $new = array_map(fn ($code) => ['path' => $path, 'issue' => $code, 'at' => now()->toIso8601String()], $gone);
+            Settings::put('seoResolved', array_slice(array_merge($new, (array) Settings::get('seoResolved', [])), 0, 400));
+        }
 
-        return array_map(fn ($code) => ['path' => $path, 'issue' => $code, 'at' => now()->toIso8601String()], array_keys($gone));
+        return $gone;
     }
 
     private static function section(string $path): string
