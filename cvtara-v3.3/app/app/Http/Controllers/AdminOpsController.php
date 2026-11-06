@@ -133,10 +133,10 @@ class AdminOpsController extends Controller
             $cur = Settings::get('legal');
             $d = Settings::defaults()['legal'];
             $email = $cur['supportEmail'] ?: 'support@cvtara.com';
-            $city = trim(explode("\n", $cur['address'] ?: 'CVTara, Bangalore, Karnataka, India')[0]);
+            $city = trim(explode("\n", $cur['address'] ?: 'IndiQube Park, Domlur 1st Stage, Bengaluru, Karnataka 560071')[0]);
             $out = [];
             foreach (['about', 'terms', 'privacy', 'refund'] as $k) {
-                $out[$k] = str_replace(['support@cvtara.com', 'CVTara, Bangalore, Karnataka, India'], [$email, $city], $d[$k]);
+                $out[$k] = str_replace(['support@cvtara.com', 'CVTara, Bangalore, Karnataka, India', 'IndiQube Park, Domlur 1st Stage, Bengaluru, Karnataka 560071'], [$email, $city, $city], $d[$k]);
             }
 
             return $ok(['policies' => $out]);

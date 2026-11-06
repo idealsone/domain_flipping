@@ -89,5 +89,5 @@
   }
 
   window.CVTaraPlans = { mount, load, inr, short };
-  document.querySelectorAll('[data-plans]').forEach(el => mount(el, { mode: el.dataset.plans || 'landing', current: el.dataset.current || null }));
+  document.querySelectorAll('[data-plans]').forEach(el => mount(el, { mode: el.dataset.plans || 'landing', current: el.dataset.current || null, addons: el.dataset.addons !== 'hide' }));
 })();

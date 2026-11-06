@@ -1,3 +1,16 @@
+# CVTara v3.30.0 — Fixes from the testing sheet
+
+## 3.30.0
+- **Resume upload, "?" instead of bullets:** bullets a PDF font could not map ("?" or "�" at the start of a line), emoji and symbol bullets (✔ ➤ ★ 🏆), and dash bullets now import as normal bullets, one per line. A "?" standing in for an apostrophe ("Amazon?s") becomes "’" again. Dash bullets no longer glue a project's lines into one long line (that line was then dropped). "Awards & Volunteering" and "Trainings or Certifications" are read as their own sections. Cover letters built from such a resume no longer copy section headings or "?" into the letter. Re-upload an affected resume to get the clean version.
+- **ATS Match, own resume uploaded as the job:** when the job text is clearly a resume (contact details at the top, resume headings, none of a job posting's words), the check stops with "This looks like a resume, not a job posting…" and no scan is used. Testers who did this got their own name, "University" and "CGPA" back as missing keywords. "University", "College", "CGPA", "LinkedIn", "GitHub" and "Sample" are no longer counted as job keywords.
+- **Homepage pricing:** the add-ons (Expert Review, Profile Boost) are no longer shown under the homepage plans. They stay on Billing & Plans and at checkout.
+- **Footer:** a new row under the link columns with Contact, Secure payments (Razorpay, and PhonePe once it is switched on), Follow CVTara (LinkedIn, Instagram, Facebook, X) and "Proudly built in India" with the flag. This fills the empty space next to Contact. Social links are editable in Owner console › Footer, policies & contact.
+- **Contact details:** address IndiQube Park, Domlur 1st Stage, Bengaluru, Karnataka 560071; support hours Monday–Friday, 10:00 AM–6:00 PM IST; the old phone number removed (the Call us card hides when no number is set). The migration changes only values still equal to the old defaults. Email footers use the new address when no postal address is set under Integrations › Email.
+- **Phones:** the resume and cover-letter preview always fits the screen width (the 100% option cut the letter off on the right); the zoom choice is hidden on phones.
+- **Recent-activity notices** no longer appear inside the dashboard/editor or at checkout.
+- **Old notification prompt:** every page now removes any leftover OneSignal service worker, and the old OneSignal worker file names unregister themselves.
+- Migration: `2026_11_06_000001_contact_details_from_testing_sheet` (settings only).
+
 # CVTara v3.29.9 — Attractive outreach mails
 
 ## 3.29.9

@@ -111,3 +111,27 @@ body[data-page=seo] .sp-shell :is(h1,h2){font-family:var(--cv-serif);font-weight
 /* Night mode: blue text links lifted so they stay readable on dark panels */
 :where(html.dark,html[data-theme=dark]) :is(.tp-all,.b2-go,.sp-shell a:not([class]),main a:not([class]),.calculator-result>span){color:#8fb0ff}
 html.dark body[data-page] .legal-shell a,html.dark .cover-letter-card em{color:#8fb0ff}
+/* Footer band (3.30.0): contact, secure payments, social links and "Proudly built in India" fill the row under the link columns. */
+.footer-extra{display:grid;grid-template-columns:1.4fr 1.1fr 1fr 1.2fr;gap:28px;padding:26px 0 28px;border-top:1px solid rgba(255,255,255,.1)}
+.footer-extra>div{display:grid;align-content:start;gap:8px;min-width:0}
+.footer-extra b{color:#eef3ff;font-size:17px;margin-bottom:4px}
+.footer-extra span,.footer-extra small,.footer-extra a{color:#91a1bf;font-size:14px;line-height:1.6;overflow-wrap:anywhere}
+.footer-extra a:hover{color:#fff}
+.pay-logos{display:flex;flex-wrap:wrap;gap:8px}
+.pay-chip{display:inline-flex;align-items:center;gap:7px;padding:7px 13px;border-radius:10px;background:#fff;color:#0b1b3f!important;font-weight:800;font-size:15px!important;letter-spacing:-.01em;line-height:1!important}
+.pay-chip i{font-style:normal;font-size:13px}
+.pay-razorpay i{color:#3395ff}
+.pay-phonepe{color:#5f259f!important}
+.pay-phonepe i{display:inline-grid;place-items:center;width:20px;height:20px;border-radius:50%;background:#5f259f;color:#fff;font-size:10px}
+.social-row{display:flex;flex-wrap:wrap;gap:10px}
+.social-row a{display:inline-grid;place-items:center;width:40px;height:40px;border-radius:12px;border:1px solid rgba(255,255,255,.16);color:#c9d5ee}
+.social-row a:hover{background:rgba(255,255,255,.08);color:#fff}
+.footer-india{grid-template-columns:auto 1fr;align-items:center;gap:14px!important;padding:14px 16px;border-radius:16px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);align-self:start}
+.footer-india>div{display:grid;gap:2px}
+.footer-india b{margin:0;font-size:16px}
+.india-flag{display:block;border-radius:3px;box-shadow:0 0 0 1px rgba(255,255,255,.25)}
+@media(max-width:1000px){.footer-extra{grid-template-columns:1fr 1fr}}
+@media(max-width:560px){.footer-extra{grid-template-columns:1fr;gap:22px}.social-row a{width:44px;height:44px}}
+@media(max-width:760px){.footer-bottom span{display:block}.footer-bottom span+span{margin-top:6px}}
+/* Phones: the document preview always fits the screen width (100% cut the letter off on the right); Full preview is there for reading. */
+@media(max-width:600px){.letter-canvas-toolbar label,.studio-zoom label+select,#studioZoom{display:none}.letter-canvas,#resumeStudio .studio-preview-stage{overflow-x:hidden}}

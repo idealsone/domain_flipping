@@ -46,6 +46,10 @@ class Settings
                 }
             }
         }
+        if ($key === 'legal' && is_array($value)) {
+            // Fields added after the row was saved (social links) come from the defaults until the owner edits them.
+            $value += self::defaults()['legal'];
+        }
         if ($key === 'seo' && is_array($value)) {
             // A saved row can predate the prefilled page text, or hold blanks. Empty fields fall back to the defaults,
             // so the owner console and the live pages always show a title, description and keywords.

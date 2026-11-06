@@ -54,7 +54,7 @@ class ApiController extends Controller
                 $plans[$k]['limitReached'] = true;
             }
 
-            return $ok(['brand' => $d['brand'], 'growth' => $d['growth'], 'plans' => $plans]);
+            return $ok(['brand' => $d['brand'], 'growth' => $d['growth'], 'plans' => $plans, 'gateways' => array_column(\App\Services\Payments::publicGateways(), 'id')]);
         }
         if ($path === 'public-config') {
             return $ok(['settings' => array_merge(['heroTitle' => 'Your next resume starts with your real experience.', 'heroDescription' => 'Choose a design. Tell your story. Prepare a focused application.', 'primaryCTA' => 'Build my resume', 'secondaryCTA' => 'Check my resume', 'accent' => '#1557d2'], array_diff_key(Settings::get('public', []), array_flip(['pushEnabled', 'oneSignalAppId', 'pushDelay', 'pushMessage'])))]);

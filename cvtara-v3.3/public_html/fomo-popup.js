@@ -2,7 +2,7 @@
   'use strict';
   // Recent-activity notices. They show real things only: buyers who chose to be named (first name and city), and live counts.
   const page = document.body?.dataset.page;
-  if (!document.body || ['admin', 'setup'].includes(page) || /[?&]nofomo/.test(location.search)) return;
+  if (!document.body || ['admin', 'setup', 'workspace', 'checkout'].includes(page) || /[?&]nofomo/.test(location.search)) return;
   const KEY = 'cvtara-fomo';
   let st = {};
   try { st = JSON.parse(sessionStorage.getItem(KEY) || '{}'); } catch { /* ignore */ }
