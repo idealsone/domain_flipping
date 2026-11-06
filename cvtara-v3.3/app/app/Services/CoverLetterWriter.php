@@ -467,9 +467,10 @@ class CoverLetterWriter
     {
         $out = [];
         $cur = '';
-        foreach (preg_split('/\R/u', $t) ?: [] as $l) {
+        foreach (preg_split('/\R/u', TextClean::text($t)) ?: [] as $l) {
             $s = self::strip($l);
-            if ($s === '') {
+            // Empty lines and section headings left inside the text ("TRAININGS OR CERTIFICATIONS") are not achievements.
+            if ($s === '' || (preg_match('/^[\p{Lu}\d &\/,\-–]+$/u', $s) && str_word_count($s) <= 6)) {
                 continue;
             }
             $isNew = (bool) preg_match('/^\s*[•●▪◦·*\-–]/u', $l) || $cur === '' || (preg_match('/[.!?;]$/', $cur) && preg_match('/^[A-Z]/', $s));
@@ -499,7 +500,8 @@ class CoverLetterWriter
 
     private static function strip(string $l): string
     {
-        return trim((string) preg_replace('/^[\s\x{200B}\x{FEFF}•●▪◦·*\-–]+/u', '', $l));
+        // TextClean turns "?", emoji and symbol bullets (left by fonts a PDF could not map) into "• " first.
+        return trim((string) preg_replace('/^[\s\x{200B}\x{FEFF}•●▪◦·*\-–]+/u', '', TextClean::line($l)));
     }
 
     private static function line(mixed $s): string

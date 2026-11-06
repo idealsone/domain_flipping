@@ -364,7 +364,7 @@ class AtsEngine
             'method' => 'Deterministic analysis of the two texts you supplied. Related-term groups and action context identify evidence candidates. Unclassified requirements and eligibility need your review. No web research, employer ATS access, credential verification or hiring prediction is performed.'];
     }
 
-    private const KW_STOP = 'the a an and or of for to in on at by with as from be is are was were have has this that your our you we will must should required requires requirements about into over under their they them his her its it who whom which what when where while also able ability across all any can could may might more most other some such than then there these those through using use used within without would work working works role roles job jobs team teams candidate candidates company looking join skills skill strong good great excellent knowledge experience experienced years year plus etc including include includes ensure ensuring manage managing responsible responsibilities responsibility preferred nice have having bonus apply application applications position opportunity opportunities benefits offer offers hybrid remote office full time part employee employees environment business new help support provide providing well one two three first based related relevant like both each every per via day days month months week weeks need needs needed make making get getting take taking high level highly ideal best build write present develop design deliver create lead drive own maintain participate collaborate communicate perform conduct identify improve analyse analyze understand deep proven track record seeking hire hiring description overview type location employment extensive desired profile monitor track coordinate address prepare thrive possess seamless smooth regular periodic overall key ideally minimum maximum significant advantage willingness frequent fast paced growth across title senior junior fresher freshers immediate joiner joiners interested share resume email phone whatsapp lpa ctc inr salary stipend india indian bengaluru bangalore mumbai delhi ncr noida gurgaon gurugram hyderabad chennai pune kolkata ahmedabad jaipur lucknow kochi chandigarh indore coimbatore nagpur maharashtra karnataka telangana tamil nadu uttar pradesh haryana gujarat kerala west bengal rajasthan';
+    private const KW_STOP = 'the a an and or of for to in on at by with as from be is are was were have has this that your our you we will must should required requires requirements about into over under their they them his her its it who whom which what when where while also able ability across all any can could may might more most other some such than then there these those through using use used within without would work working works role roles job jobs team teams candidate candidates company looking join skills skill strong good great excellent knowledge experience experienced years year plus etc including include includes ensure ensuring manage managing responsible responsibilities responsibility preferred nice have having bonus apply application applications position opportunity opportunities benefits offer offers hybrid remote office full time part employee employees environment business new help support provide providing well one two three first based related relevant like both each every per via day days month months week weeks need needs needed make making get getting take taking high level highly ideal best build write present develop design deliver create lead drive own maintain participate collaborate communicate perform conduct identify improve analyse analyze understand deep proven track record seeking hire hiring description overview type location employment extensive desired profile monitor track coordinate address prepare thrive possess seamless smooth regular periodic overall key ideally minimum maximum significant advantage willingness frequent fast paced growth across title senior junior fresher freshers immediate joiner joiners interested share resume email phone whatsapp lpa ctc inr salary stipend university universities college colleges institute cgpa sgpa gpa percentage linkedin github sample india indian bengaluru bangalore mumbai delhi ncr noida gurgaon gurugram hyderabad chennai pune kolkata ahmedabad jaipur lucknow kochi chandigarh indore coimbatore nagpur maharashtra karnataka telangana tamil nadu uttar pradesh haryana gujarat kerala west bengal rajasthan';
 
     /** Posting details that are not skills: location, pay, shift, how to apply. */
     private const META_LINE = '/^\s*(?:[•*\-–]\s*)?(?:job |work )?(?:location|salary|ctc|pay|package|compensation|stipend|job type|employment type|work mode|work from|shift|timings?|working days|notice period|openings|vacancies|no\.? of (?:positions|openings)|posted|date posted|apply|how to apply|contact|contact person|phone|mobile|email|whatsapp|interested candidates|industry|department|functional area|role category)\b/iu';
@@ -574,6 +574,27 @@ class AtsEngine
     }
 
     /** One call for the whole report. */
+    /**
+     * True when the "job" text is somebody's resume: contact details at the top, resume section headings
+     * (Summary, Education, Projects…) and none of the words a job posting uses (responsibilities, requirements, we are looking).
+     * Testers uploaded their own resumes as the job and got names, "University" and "CGPA" back as missing keywords.
+     */
+    public static function looksLikeResume(string $jobText): bool
+    {
+        $lines = array_values(array_filter(array_map('trim', preg_split('/\n/u', $jobText) ?: []), fn ($l) => $l !== ''));
+        $top = implode(' ', array_slice($lines, 0, 8));
+        $contact = (preg_match('/[A-Z0-9._%+\-]+@[A-Z0-9.\-]+\.[A-Z]{2,}/i', $top) ? 1 : 0) + (preg_match('/(?:\+?91[\s\-]?)?[6-9]\d{4}[\s\-]?\d{5}\b|\+\d[\d\s\-]{8,14}\d/', $top) ? 1 : 0) + (preg_match('/linked\s?in|github/i', $top) ? 1 : 0);
+        $headings = 0;
+        foreach ($lines as $l) {
+            if (mb_strlen($l) <= 40 && preg_match('/^(?:professional |career )?(?:summary|profile|objective|education(?:al qualifications?)?|academic (?:details|background)|projects?|academic projects|certifications?|trainings?(?: (?:or|and|&) certifications?)?|achievements|awards?(?: .{0,20})?|internships?|work experience|professional experience|technical skills|skills|hobbies|languages(?: known)?|declaration|personal details)\s*:?$/iu', $l)) {
+                $headings++;
+            }
+        }
+        $jobWords = preg_match_all('/\b(?:responsibilit(?:y|ies)|requirements?|qualifications? required|we are (?:looking|hiring|seeking)|we\'re (?:looking|hiring)|you will|you\'ll|the candidate|candidates? (?:should|must)|job (?:description|summary|type)|what you(?:\'ll| will) do|who you are|apply now|must have|nice to have|years of experience required|ctc|salary)\b/iu', $jobText);
+
+        return $contact >= 1 && $headings >= 3 && $jobWords <= 1;
+    }
+
     public static function report(array $resumeData, string $jobText, string $title = ''): array
     {
         $text = self::clean(self::resumeText($resumeData));
@@ -582,6 +603,9 @@ class AtsEngine
         $title = self::jobTitle($jobText);
         if (mb_strlen($text) < 60) {
             throw new \InvalidArgumentException('This resume has too little content to check. Add your experience and skills in the builder, then try again.');
+        }
+        if (self::looksLikeResume($jobText)) {
+            throw new \InvalidArgumentException('This looks like a resume, not a job posting. In step 2, add the job you want to apply for (its description or link); your own resume is picked in step 1. No scan was used.');
         }
         $result = self::analyse($text, $jobText);
         $kw = self::keywords($text, $jobText, $title);

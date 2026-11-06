@@ -13,9 +13,9 @@ class ResumeImport
         'education' => 'education(?:al)?(?: (?:& |and )?(?:qualifications?|training))?|academic (?:background|qualifications?)|qualifications?',
         'skills' => 'technical skills|key skills|core (?:skills|competencies)|skills(?: (?:& |and )?(?:tools|expertise|competencies))?|competencies|areas of expertise|tools(?: (?:& |and )?technologies)?',
         'projects' => 'personal projects|academic projects|key projects|projects?',
-        'certifications' => 'certifications?(?: (?:& |and )?(?:licen[sc]es|courses))?|licen[sc]es|courses|training|professional development',
+        'certifications' => 'certifications?(?: (?:& |and |or )?(?:licen[sc]es|courses|trainings?))?|trainings?(?: (?:& |and |or )?certifications?)?|licen[sc]es|courses|professional development',
         'languages' => 'languages?(?: known)?',
-        'awards' => 'awards?(?: (?:& |and )?(?:honou?rs|achievements))?|achievements|honou?rs|accomplishments|volunteering|extra.?curricular(?: activities)?|activities',
+        'awards' => 'awards?(?: (?:& |and )?(?:honou?rs|achievements|recognitions?|volunteering))?|achievements(?: (?:& |and )?awards)?|honou?rs|accomplishments|volunteer(?:ing)?(?: (?:experience|work))?|extra.?curricular(?: activities)?|activities',
         'contact' => 'contact(?: (?:details|information|info|me))?|personal (?:details|information|info)',
     ];
 
@@ -37,6 +37,8 @@ class ResumeImport
     public static function parse(string $text, string $template, string $fileName = '', bool $paragraphs = false): array
     {
         $text = str_replace(["\r\n", "\r", "\u{00A0}", "\u{2022}", "\u{25AA}", "\u{25CF}", "\u{2023}", "\u{F0B7}", "\u{F0A7}", "\u{2043}"], ["\n", "\n", ' ', '•', '•', '•', '•', '•', '•', '•'], $text);
+        // Symbol, emoji, dash and unmapped "?" bullets become "• "; a "?" standing in for an apostrophe becomes one again.
+        $text = TextClean::text($text);
         $text = preg_replace('/[^\P{C}\n\t]+/u', '', $text) ?? $text;
         // With $paragraphs (text from the PDF reader, which adds a blank line where the gap between lines is wider than usual), a blank line marks a paragraph break.
         $lines = [];
