@@ -38,6 +38,7 @@
           <label>Spending limit a month (₹, 0 = none)<input name="monthlySpendInr" type="number" min="0" value="${E(s.monthlySpendInr)}"></label>
           <label>Recent messages Tara reads (older ones are summarised)<input name="historyMessages" type="number" min="4" max="60" value="${E(s.historyMessages)}"></label>
           <label>Actions per answer (most)<input name="maxSteps" type="number" min="1" max="8" value="${E(s.maxSteps)}"></label>
+          <label class="wide" style="display:flex;gap:8px;align-items:center"><input type="checkbox" name="greet" ${s.greet ? 'checked' : ''}> Open the chat once a day after sign-in with a hello by name and a question (a small bubble on phones)</label>
           <label class="wide" style="display:flex;gap:8px;align-items:center"><input type="checkbox" name="nudges" ${s.nudges ? 'checked' : ''}> Show the "next step" card on every customer's dashboard (works even while chat is off)</label>
           <label>Smallest group shown in "people from your college / company" (keeps people anonymous)<input name="peerMin" type="number" min="2" max="100" value="${E(s.peerMin)}"></label>
           <label class="wide" style="display:flex;gap:8px;align-items:center"><input type="checkbox" name="suggestions" ${s.suggestions ? 'checked' : ''}> Show suggested questions when a chat starts</label>
@@ -58,7 +59,7 @@
     f.onsubmit = async e => {
       e.preventDefault(); const stEl = $('#taSt', h);
       const num = k => Number(f[k].value || 0);
-      const body = { enabled: f.enabled.checked, model: f.model.value.trim(), instructions: f.instructions.value, handoff: f.handoff.value.trim(), suggestions: f.suggestions.checked, nudges: f.nudges.checked, peerMin: num('peerMin'),
+      const body = { enabled: f.enabled.checked, model: f.model.value.trim(), instructions: f.instructions.value, handoff: f.handoff.value.trim(), suggestions: f.suggestions.checked, nudges: f.nudges.checked, greet: f.greet.checked, peerMin: num('peerMin'),
         freeDaily: num('freeDaily'), paidDaily: num('paidDaily'), siteDaily: num('siteDaily'), dailySpendInr: num('dailySpendInr'), monthlySpendInr: num('monthlySpendInr'), maxTokens: num('maxTokens'), historyMessages: num('historyMessages'), maxSteps: num('maxSteps'),
         tools: [...f.querySelectorAll('[data-tool]')].filter(x => x.checked).map(x => x.dataset.tool) };
       try { await api('/api/admin/tara/settings', { method: 'POST', body }); stEl.textContent = 'Saved.'; toast('Tara settings saved'); D = null; tara(h); } catch (x) { stEl.textContent = err(x); }

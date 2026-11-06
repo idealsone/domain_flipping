@@ -229,5 +229,64 @@
     } catch (e) { tbl.innerHTML = `<tbody><tr><td role="alert">${E(err(e))}</td></tr></tbody>`; }
   }
 
+  /* A small Business assistant chat in the bottom-right corner of every console page (where Live stats used to be).
+     Same answers, same cards: nothing changes until Confirm. Hidden on the Business assistant page itself. */
+  let dconv = null, dbusy = false;
+  function dock() {
+    if (document.getElementById('tbDock')) return;
+    if (!document.getElementById('tbCss')) { const c = document.createElement('style'); c.id = 'tbCss'; c.textContent = css; document.head.append(c); }
+    const st = document.createElement('style');
+    st.textContent = `#tbDock{position:fixed;right:20px;bottom:20px;z-index:3900;font-size:14px}
+    #tbDock .tbd-fab{display:flex;align-items:center;gap:8px;padding:10px 16px;border:0;border-radius:999px;background:#0f172a;color:#fff;font:600 14px/1 inherit;cursor:pointer;box-shadow:0 8px 28px rgba(0,0,0,.3)}
+    #tbDock .tbd-panel{width:min(400px,calc(100vw - 24px));height:min(560px,calc(100vh - 40px));display:flex;flex-direction:column;background:var(--paper,#fff);color:var(--ink,#0f172a);border:1px solid var(--line,#e2e8f0);border-radius:16px;box-shadow:0 12px 40px rgba(15,23,42,.3);overflow:hidden}
+    #tbDock .tbd-panel[hidden]{display:none}#tbDock.open .tbd-fab{display:none}
+    #tbDock header{display:flex;align-items:center;gap:8px;padding:10px 12px;background:#0f172a;color:#fff}#tbDock header b{flex:1}
+    #tbDock header button{background:none;border:0;color:#cbd5e1;font-size:16px;cursor:pointer;padding:2px 6px}
+    #tbDock .tb-log{max-height:none;min-height:0}
+    body.tb-on-assistant #tbDock{display:none}
+    @media(max-width:600px){#tbDock{right:12px;bottom:12px}#tbDock .tbd-fab b{display:none}}`;
+    document.head.append(st);
+    const w = document.createElement('div'); w.id = 'tbDock';
+    w.innerHTML = `<button type="button" class="tbd-fab" aria-controls="tbdPanel"><span aria-hidden="true">🧭</span><b>Ask Tara</b></button>
+      <section class="tbd-panel" id="tbdPanel" role="dialog" aria-label="Business assistant" hidden>
+        <header><span aria-hidden="true">🧭</span><b>Business assistant</b><button type="button" data-d="new" title="New chat" aria-label="New chat">＋</button><button type="button" data-d="page" title="Open the full page" aria-label="Open the full page">⤢</button><button type="button" data-d="close" title="Close" aria-label="Close">✕</button></header>
+        <div class="tb-log" id="tbdLog"></div>
+        <div class="tb-chips" id="tbdChips"></div>
+        <form class="tb-in"><textarea id="tbdText" rows="2" maxlength="8000" placeholder="Ask about revenue, customers, agents…"></textarea><button class="button primary small">Ask</button></form>
+      </section>`;
+    document.body.append(w);
+    const panel = $('#tbdPanel'), log = $('#tbdLog'), ta = $('#tbdText');
+    const hi = () => { log.innerHTML = bubble({ role: 'assistant', content: 'Hi! Ask me about today\'s revenue, customers, AI spending, the SEO and growth agents, or what to do first today. Changes come as cards for your Confirm.' });
+      $('#tbdChips').innerHTML = ['What should I prioritise today?', 'Give me today\'s business briefing', 'Why is revenue not growing?', 'How is Tara doing with customers this week?'].map(x => `<button type="button" data-q="${E(x)}">${E(x)}</button>`).join(''); $('#tbdChips').hidden = false; };
+    const show = on => { panel.hidden = !on; w.classList.toggle('open', on); if (on) { if (!log.children.length) hi(); ta.focus(); } };
+    w.addEventListener('click', e => {
+      if (e.target.closest('.tbd-fab')) return show(true);
+      const d = e.target.closest('[data-d]'); const q = e.target.closest('[data-q]');
+      if (q) return dsend(q.dataset.q);
+      if (!d) return;
+      if (d.dataset.d === 'close') show(false);
+      else if (d.dataset.d === 'new') { dconv = null; hi(); }
+      else if (d.dataset.d === 'page') { show(false); const b = document.querySelector('[data-admin-view="assistant"]'); if (b) b.click(); else location.href = '/admin.html?tab=assistant'; }
+    });
+    ta.addEventListener('keydown', e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); dsend(ta.value); } });
+    $('form', w).onsubmit = e => { e.preventDefault(); dsend(ta.value); };
+    async function dsend(text) {
+      text = String(text || '').trim(); if (!text || dbusy) return;
+      dbusy = true; ta.value = ''; $('#tbdChips').hidden = true;
+      if (!dconv) log.innerHTML = '';
+      log.insertAdjacentHTML('beforeend', bubble({ role: 'user', content: text }) + '<div class="tb-msg ta tb-wait" id="tbdWait">Looking it up in CVTara\'s records…</div>'); log.scrollTop = log.scrollHeight;
+      try {
+        const d = await api('/api/admin/tara/owner/message', { method: 'POST', body: { text, conversationId: dconv } });
+        $('#tbdWait')?.remove(); dconv = d.conversationId;
+        log.insertAdjacentHTML('beforeend', bubble(d.message)); wireCards(log); log.scrollTop = log.scrollHeight;
+      } catch (e) { $('#tbdWait')?.remove(); log.insertAdjacentHTML('beforeend', `<div class="tb-msg ta" role="alert">${E(err(e))}</div>`); ta.value = text; }
+      dbusy = false;
+    }
+    // Hidden while the full Business assistant page is open
+    const watch = () => document.body.classList.toggle('tb-on-assistant', !!document.querySelector('#admin-assistant.active'));
+    new MutationObserver(watch).observe(document.getElementById('admin-assistant') || document.body, { attributes: true, attributeFilter: ['class'] }); watch();
+  }
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', dock); else dock();
+
   K.register('assistant', assistant, ['🧭', 'Business assistant', 'Ask about revenue, customers, AI costs, agents and problems; changes wait for your Confirm.']);
 })();

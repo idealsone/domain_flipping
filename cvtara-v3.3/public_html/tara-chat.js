@@ -81,7 +81,7 @@
 
   function welcome() {
     $('.tara-log', box).innerHTML = '';
-    bubble('assistant', S.welcome);
+    bubble('assistant', S.greeting || S.welcome);
     $('.tara-chips', box).innerHTML = (S.suggestions || []).map(s => `<button type="button" data-chip="${E(s)}">${E(s)}</button>`).join('');
   }
 
@@ -175,6 +175,23 @@
     });
   }
 
+  // Once a day after sign-in, Tara says hello by name and asks what the customer is working on (a small bubble on phones).
+  function greet() {
+    const key = 'cvtara-tara-hi-' + new Date().toISOString().slice(0, 10);
+    try { if (localStorage.getItem(key)) return; } catch (e) { return; }
+    let tries = 0;
+    const go = () => {
+      if (!box || !$('#taraPanel').hidden) return;
+      if (document.querySelector('.ad-modal, [role=dialog][aria-modal=true]:not([hidden])')) { if (++tries < 6) setTimeout(go, 4000); return; } // wait for another pop-up to close
+      try { localStorage.setItem(key, '1'); } catch (e) { /* storage blocked */ } // counted only once it is really shown
+      if (window.matchMedia('(max-width: 600px)').matches) {
+        const b = document.createElement('button'); b.type = 'button'; b.className = 'tara-peek'; b.textContent = S.greeting.split('. ')[0] + '. Tap to chat.';
+        b.onclick = () => { b.remove(); toggle(true); }; box.append(b); setTimeout(() => b.remove(), 15000);
+      } else toggle(true);
+    };
+    setTimeout(go, 2500);
+  }
+
   async function start() {
     try { S = (await api('/api/tara/status')).tara; } catch (e) { return; }
     if (!S) return;
@@ -182,6 +199,7 @@
       shell();
       credits(S.credits, S.left);
       if (new URLSearchParams(location.search).get('tara') === '1') toggle(true, true);
+      else if (S.greet) greet();
     }
     if (S.nudges) nudge();
   }

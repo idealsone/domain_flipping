@@ -162,18 +162,7 @@
     try { await load(); } catch (e) { $('#opsRvList').innerHTML = `<div class="panel panel-pad" role="alert">${E(e.message)}</div>`; }
   }
 
-  /* ---- Live stats card ---- */
-  async function live() {
-    if (document.hidden && $('#opsLive')) return;
-    if (!$('#opsLive')) { const c = document.createElement('aside'); c.id = 'opsLive'; c.className = 'ops-live'; c.innerHTML = '<header><span class="live-dot"></span> LIVE STATS <button type="button" aria-label="Collapse">⤢</button></header><div></div><footer></footer>'; document.body.appendChild(c); c.querySelector('button').onclick = () => { c.dataset.manual = '1'; c.classList.toggle('min'); }; }
-    try {
-      // One small cached request (five counts) instead of the user, order and dashboard lists every 30 seconds.
-      const d = await api('/api/admin/live'), now = new Date();
-      const rows = [['Active users', d.activeUsers], ['Resumes today', d.resumesToday], ['Revenue today', short(d.revenueTodayPaise)], ['ATS scans', d.scansToday], ['Signups today', d.signupsToday]];
-      $('#opsLive > div').innerHTML = rows.map(r => `<p><span>${r[0]}</span><b>${r[1]}</b></p>`).join('');
-      $('#opsLive footer').textContent = 'Updated ' + now.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' });
-    } catch (e) { /* keep last values */ }
-  }
+  // The floating live-stats card was removed (owner, 6 Nov 2026): the Business assistant chat sits in that corner instead.
 
   const render = { settings, errors, dashboard, desk };
 
@@ -353,7 +342,7 @@
   // A reload reopens the ?tab= page, including Settings pages that are reached from cards rather than the side menu.
   const boot = f => { let done = false; const go = () => { if (!done) { done = true; f(); } }; addEventListener('load', go); document.addEventListener('DOMContentLoaded', () => setTimeout(go, 2500)); };
   boot(() => setTimeout(() => { Object.keys(META).forEach(banner); settings(); const tab = new URLSearchParams(location.search).get('tab'); const nav = v => v && $('.side-nav [data-admin-view="' + CSS.escape(v) + '"]'); const sub = v => v && $('#admin-' + CSS.escape(v)) && $('[data-admin-view="' + CSS.escape(v) + '"]'); const first = nav(tab) || sub(tab) || nav('dashboard'); if (first) first.click(); document.body.classList.add('admin-ready'); const D = window.CVTARA_DATA; const cnt = (v, n) => { const el = $('.side-nav [data-admin-view="' + v + '"] .nav-count'); if (el && n) el.textContent = n; }; if (D) { cnt('resumelib', D.templates.length); cnt('letterlib', D.coverLetters.length); cnt('bloghub', (D.blog || []).length); }
-    Promise.resolve(dashboard()).catch(() => 0).finally(() => { live(); setInterval(live, 30000); }); }, 400));
+    Promise.resolve(dashboard()).catch(() => 0); }, 400));
   // banners must survive panels re-rendering themselves
   new MutationObserver(() => { const v = $('.admin-view.active'); if (v && !v.querySelector(':scope > .ops-banner')) banner(v.id.replace('admin-', '')); }).observe(document.body, { childList: true, subtree: true });
 })();

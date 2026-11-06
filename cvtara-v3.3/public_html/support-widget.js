@@ -28,6 +28,9 @@
   root.dataset.side = side();
   document.body.append(root);
   const fab = root.querySelector('#cvSupOpen'), panel = root.querySelector('#cvSupPanel');
+  // In the workspace the button sits in the top bar (Tara's chat has the bottom-right corner).
+  const bar = document.querySelector('.workspace-top .top-actions');
+  if (bar) { fab.classList.add('in-top'); bar.prepend(fab); }
 
   function form() {
     panel.innerHTML = `<header><div><h2 id="cvSupTitle">We need your feedback</h2><p>Tell us what is working, what is not, or what you would like to see.</p></div><div class="cv-sup-tools"><button type="button" class="cv-sup-x" data-flip aria-label="Move the feedback panel to the other side" title="Move to the other side">⇄</button><button type="button" class="cv-sup-x" data-close aria-label="Close feedback">×</button></div></header>

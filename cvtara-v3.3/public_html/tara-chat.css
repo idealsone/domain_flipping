@@ -1,6 +1,6 @@
 /* Tara chat: floating button above the feedback button, a side panel, and a full-screen mode. Works in dark mode and on phones. */
 #cvTara{font-family:inherit}
-.tara-fab{position:fixed;right:18px;bottom:76px;z-index:901;display:flex;align-items:center;gap:8px;padding:9px 16px 9px 9px;border:0;border-radius:999px;background:#0f2a5c;color:#fff;font:600 14px/1 inherit;cursor:pointer;box-shadow:0 8px 24px rgba(15,23,42,.28);transition:transform .15s}
+.tara-fab{position:fixed;right:18px;bottom:18px;z-index:901;display:flex;align-items:center;gap:8px;padding:9px 16px 9px 9px;border:0;border-radius:999px;background:#0f2a5c;color:#fff;font:600 14px/1 inherit;cursor:pointer;box-shadow:0 8px 24px rgba(15,23,42,.28);transition:transform .15s}
 .tara-fab:hover{transform:translateY(-2px)}.tara-fab b{font-weight:600}
 #cvTara.open .tara-fab{display:none}
 .tara-dot{display:inline-grid;place-items:center;width:30px;height:30px;border-radius:50%;background:linear-gradient(135deg,#ff8a3d,#ff5f6d);color:#fff;font-weight:700;font-size:15px;flex:none}
@@ -38,7 +38,7 @@
 .tara-link{border:0;background:none;color:#1557d2;cursor:pointer;font:inherit;font-size:12px;text-decoration:underline}
 .tara-sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
 html.dark .tara-msg.her{background:#1e293b}html.dark .tara-fab{background:#1e3a8a}
-@media(max-width:600px){.tara-panel{left:0;right:0;top:0;bottom:0;width:auto;height:auto;border-radius:0;border:0}.tara-fab{bottom:72px;right:12px}}
+@media(max-width:600px){.tara-panel{left:0;right:0;top:0;bottom:0;width:auto;height:auto;border-radius:0;border:0}.tara-fab{bottom:12px;right:12px}}
 @media print{#cvTara{display:none}}
 /* dashboard "next step" card */
 .tara-nudge{position:relative;display:flex;gap:14px;align-items:flex-start;margin:0 0 18px;padding:18px 48px 18px 18px;border:1px solid var(--line,#e2e8f0);border-left:4px solid #ff6f4f;border-radius:14px;background:var(--paper,#fff);box-shadow:0 6px 20px rgba(15,23,42,.06)}
@@ -49,3 +49,6 @@ html.dark .tara-msg.her{background:#1e293b}html.dark .tara-fab{background:#1e3a8
 .tn-proof{margin:6px 0 0;padding-left:18px;font-size:13px;color:var(--muted,#475569)}.tn-proof li{margin:2px 0}
 .tn-x{position:absolute;top:12px;right:12px}
 @media(max-width:600px){.tara-nudge{padding:14px 44px 14px 14px}.tara-nudge .tara-dot{display:none}}
+
+.tara-peek{position:fixed;right:12px;bottom:66px;z-index:901;max-width:260px;padding:10px 14px;border:0;border-radius:14px 14px 4px 14px;background:#fff;color:#0f172a;font:500 13px/1.4 inherit;text-align:left;box-shadow:0 8px 24px rgba(15,23,42,.25);cursor:pointer}
+html.dark .tara-peek{background:#1e293b;color:#e2e8f0}

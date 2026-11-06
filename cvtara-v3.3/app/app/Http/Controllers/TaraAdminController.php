@@ -47,14 +47,14 @@ class TaraAdminController extends Controller
                 'freeDaily' => 'required|integer|min:0|max:500', 'paidDaily' => 'required|integer|min:0|max:2000', 'siteDaily' => 'required|integer|min:0|max:200000',
                 'dailySpendInr' => 'required|integer|min:0|max:1000000', 'monthlySpendInr' => 'required|integer|min:0|max:10000000', 'maxTokens' => 'required|integer|min:300|max:4000',
                 'historyMessages' => 'required|integer|min:4|max:60', 'maxSteps' => 'required|integer|min:1|max:8', 'tools' => 'present|array', 'tools.*' => 'string|in:'.implode(',', array_keys(TaraChat::TOOLS)),
-                'handoff' => 'required|string|min:10|max:400', 'suggestions' => 'required|boolean', 'nudges' => 'sometimes|boolean', 'peerMin' => 'sometimes|integer|min:2|max:100',
+                'handoff' => 'required|string|min:10|max:400', 'suggestions' => 'required|boolean', 'nudges' => 'sometimes|boolean', 'greet' => 'sometimes|boolean', 'peerMin' => 'sometimes|integer|min:2|max:100',
             ]);
             $v['model'] = (string) ($v['model'] ?? '');
             $v['instructions'] = (string) ($v['instructions'] ?? '');
             abort_if($v['enabled'] && ! TaraAI::enabled(), 422, 'Add the Claude API key and switch AI on in Settings → Integrations → AI first.');
             abort_if($v['enabled'] && ! $v['tools'], 422, 'Leave at least one action on, or Tara cannot look anything up.');
             abort_if(preg_match('/\b(AI|artificial intelligence|Claude|Anthropic|GPT|chatbot)\b/i', $v['handoff']), 422, 'The hand-off message is shown to customers: leave out AI and provider names.');
-            Settings::put('tara', $v + array_intersect_key(TaraChat::settings(), ['nudges' => 1, 'peerMin' => 1]));
+            Settings::put('tara', $v + array_intersect_key(TaraChat::settings(), ['nudges' => 1, 'peerMin' => 1, 'greet' => 1]));
             Settings::audit($uid, 'tara_settings_saved', $v['enabled'] ? 'on' : 'off');
 
             return $ok(['settings' => TaraChat::settings()]);

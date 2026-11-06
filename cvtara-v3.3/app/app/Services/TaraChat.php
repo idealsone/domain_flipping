@@ -26,7 +26,7 @@ class TaraChat
         'enabled' => false, 'model' => '', 'instructions' => '', 'freeDaily' => 10, 'paidDaily' => 60, 'siteDaily' => 2000,
         'dailySpendInr' => 300, 'monthlySpendInr' => 5000, 'maxTokens' => 1500, 'historyMessages' => 16, 'maxSteps' => 5,
         'tools' => [], 'handoff' => 'I have passed this to the CVTara support team. They reply by email, usually within one working day.',
-        'suggestions' => true, 'nudges' => true, 'peerMin' => 3,
+        'suggestions' => true, 'nudges' => true, 'peerMin' => 3, 'greet' => true,
     ];
 
     /** Version of the customer rules below; saved with every answer so a change of behaviour can be traced. */
@@ -109,8 +109,15 @@ class TaraChat
         $on = self::enabled();
         $limit = self::limit($u->id);
 
-        return ['enabled' => $on, 'nudges' => (bool) self::settings()['nudges'], 'name' => 'Tara', 'welcome' => self::WELCOME, 'left' => $on ? max(0, $limit - self::usedToday($u->id)) : 0, 'limit' => $limit,
-            'credits' => Credits::status($u->id), 'suggestions' => self::settings()['suggestions'] ? ['Check my resume against a job', 'Write a cover letter', 'How many credits do I have?', 'Help me prepare for an interview', 'Write a recruiter email', 'I have a payment problem'] : []];
+        $first = Str::before(trim((string) $u->name), ' ');
+        $paid = Settings::access($u->id)['paid'];
+        $greeting = 'Hi'.($first !== '' ? ' '.$first : '').'! I\'m Tara, your CVTara career assistant. '.($paid
+            ? 'Which job are you applying for next? Paste the link or the job description and I\'ll check your resume against it and help you tailor it.'
+            : 'Which job are you applying for right now? Paste the link or the job description and I\'ll check your resume against it for free, then show you the quickest way to a clean, watermark-free download.');
+
+        return ['enabled' => $on, 'nudges' => (bool) self::settings()['nudges'], 'name' => 'Tara', 'welcome' => self::WELCOME, 'greeting' => $greeting, 'greet' => (bool) self::settings()['greet'], 'paid' => $paid, 'left' => $on ? max(0, $limit - self::usedToday($u->id)) : 0, 'limit' => $limit,
+            'credits' => Credits::status($u->id), 'suggestions' => self::settings()['suggestions'] ? ($paid ? ['Check my resume against a job', 'Write a cover letter', 'How many credits do I have?', 'Help me prepare for an interview', 'Write a recruiter email', 'I have a payment problem']
+                : ['Check my resume against a job', 'Which package suits me?', 'Improve my resume', 'Write a cover letter', 'Help me prepare for an interview', 'I have a payment problem']) : []];
     }
 
     /** One customer message in, Tara's answer out. The message and the answer are both saved to the conversation. */
