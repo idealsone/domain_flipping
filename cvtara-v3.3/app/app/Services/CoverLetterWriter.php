@@ -87,7 +87,7 @@ class CoverLetterWriter
             .'The four paragraphs together should be 250 to 350 words. Do not include the greeting, the sign-off or the person\'s name.'
             ."\n\n<resume>\n".mb_substr($resumeText, 0, 12000)."\n</resume>\n\n<job>\nRole: ".$job['role']."\nCompany: ".$job['company']."\n".mb_substr($job['text'], 0, 8000)."\n</job>";
         try {
-            $raw = TaraAI::ask(self::SYSTEM, $prompt, 6000, 55, 'customer:cover_letter');
+            $raw = TaraAI::ask(self::SYSTEM, $prompt, 6000, 55, 'customer:cover_letter', $u->id);
             $a = strpos($raw, '{');
             $b = strrpos($raw, '}');
             $j = $a !== false && $b > $a ? json_decode(substr($raw, $a, $b - $a + 1), true) : null;

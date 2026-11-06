@@ -73,7 +73,7 @@ class TaraAI
 
     /** One request to Claude with the owner's key and model. Returns the text, or throws (refusal, empty answer, API error, or
      * the monthly cap for growth tasks). Every answer's tokens are counted on the Growth page; $purpose names who asked. */
-    public static function ask(string $system, string $prompt, int $maxTokens, int $timeout = 50, string $purpose = 'customer'): string
+    public static function ask(string $system, string $prompt, int $maxTokens, int $timeout = 50, string $purpose = 'customer', ?int $ownerId = null): string
     {
         if (! Growth::aiAllowed($purpose)) {
             throw new \RuntimeException('budget');
@@ -89,7 +89,7 @@ class TaraAI
             betas: ['server-side-fallback-2026-07-01'],
         );
         try {
-            Growth::recordAi($purpose, (string) ($m->model ?? ''), (int) ($m->usage->inputTokens ?? 0), (int) ($m->usage->outputTokens ?? 0));
+            Growth::recordAi($purpose, (string) ($m->model ?? ''), (int) ($m->usage->inputTokens ?? 0), (int) ($m->usage->outputTokens ?? 0), $ownerId);
         } catch (\Throwable $e) {
             ErrorLog::exception($e); // counting must never cost the customer their answer
         }

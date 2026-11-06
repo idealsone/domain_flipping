@@ -197,7 +197,7 @@ class ReportController extends Controller
     private static function aiFeature(string $purpose): string
     {
         return [
-            'customer:expert_review' => 'Expert Review', 'customer:ats_tailor' => 'ATS tailoring', 'customer:cover_letter' => 'Cover letters', 'customer:writing_help' => 'Writing help in the editor',
+            'customer:expert_review' => 'Expert Review', 'customer:ats_tailor' => 'ATS tailoring', 'customer:cover_letter' => 'Cover letters', 'customer:writing_help' => 'Writing help in the editor', 'customer:tara_chat' => 'Tara chat', 'owner:tara' => 'Business assistant (owner)',
             'customer' => 'Customer features (before 3.31)', 'seo' => 'SEO agent',
         ][$purpose] ?? ucfirst(str_replace(['customer:', '_', '-'], ['', ' ', ' '], $purpose ?: 'other'));
     }

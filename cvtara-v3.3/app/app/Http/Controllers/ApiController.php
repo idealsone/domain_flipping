@@ -265,6 +265,9 @@ class ApiController extends Controller
 
             return $ok(['suggestion' => WritingAssistant::suggest($u, $v)]);
         }
+        if (str_starts_with($path, 'tara/')) {
+            return $this->tara($r, substr($path, 5));
+        }
         if ($path === 'credits/history' && $get) {
             // What used each credit: clean downloads, ATS scans and the free primary resume, newest first.
             $rows = DB::table('product_usage')->where('owner_id', $id)->whereIn('action', ['doc_resume', 'doc_letter', 'ats_scan', 'primary_free'])->orderByDesc('created_at')->limit(50)->get(['action', 'reference', 'created_at']);
@@ -672,7 +675,7 @@ class ApiController extends Controller
             return $x;
         }, $list);
 
-        return ['generatedAt' => now()->toIso8601String(), 'account' => ['name' => $u->name, 'email' => $u->email, 'createdAt' => $u->created_at, 'referralCode' => $u->referral_code], 'profile' => (array) DB::table('profiles')->where('owner_id', $id)->first(), 'resumes' => $decode($rows('resume_drafts')), 'coverLetters' => $decode($rows('cover_letter_drafts')), 'applications' => $rows('applications'), 'purchases' => $rows('purchases', ['id', 'plan', 'amount_paise', 'refunded_paise', 'currency', 'status', 'coupon_code', 'purchased_at', 'access_until']), 'reviews' => $rows('feedback', ['display_name', 'rating', 'content', 'status', 'created_at']), 'referralCommissions' => DB::table('referral_commissions')->where('referrer_id', $id)->get(['amount_paise', 'rate_bps', 'created_at'])->map(fn ($x) => (array) $x)->all(), 'withdrawals' => $rows('withdrawals', ['amount_paise', 'destination_masked', 'status', 'reference', 'created_at']), 'payoutProfile' => (array) DB::table('payout_profiles')->where('owner_id', $id)->first(['status', 'destination_masked']), 'creatorApplication' => (array) DB::table('creator_applications')->where('owner_id', $id)->first(['status', 'audience', 'rate_bps', 'created_at']), 'refundRequests' => $rows('refund_requests', ['purchase_id', 'status', 'amount_paise', 'reason', 'note', 'created_at']), 'walletTransactions' => $rows('wallet_transactions', ['kind', 'amount_paise', 'note', 'earned_at', 'expires_at', 'created_at']), 'serviceOrders' => $rows('service_orders', ['service', 'status', 'note', 'created_at', 'delivered_at']), 'atsChecks' => $rows('ats_scans', ['id', 'source', 'job_url', 'job_title', 'company', 'score', 'result_json', 'status', 'created_at']), 'activity' => DB::table('activity_events')->where('owner_id', $id)->orderByDesc('created_at')->limit(500)->get(['event', 'reference', 'created_at'])->map(fn ($x) => (array) $x)->all()];
+        return ['generatedAt' => now()->toIso8601String(), 'account' => ['name' => $u->name, 'email' => $u->email, 'createdAt' => $u->created_at, 'referralCode' => $u->referral_code], 'profile' => (array) DB::table('profiles')->where('owner_id', $id)->first(), 'resumes' => $decode($rows('resume_drafts')), 'coverLetters' => $decode($rows('cover_letter_drafts')), 'applications' => $rows('applications'), 'taraChats' => DB::table('tara_messages')->where('owner_id', $id)->where('content', '!=', '')->orderBy('created_at')->get(['conversation_id', 'role', 'content', 'created_at'])->map(fn ($x) => (array) $x)->all(), 'purchases' => $rows('purchases', ['id', 'plan', 'amount_paise', 'refunded_paise', 'currency', 'status', 'coupon_code', 'purchased_at', 'access_until']), 'reviews' => $rows('feedback', ['display_name', 'rating', 'content', 'status', 'created_at']), 'referralCommissions' => DB::table('referral_commissions')->where('referrer_id', $id)->get(['amount_paise', 'rate_bps', 'created_at'])->map(fn ($x) => (array) $x)->all(), 'withdrawals' => $rows('withdrawals', ['amount_paise', 'destination_masked', 'status', 'reference', 'created_at']), 'payoutProfile' => (array) DB::table('payout_profiles')->where('owner_id', $id)->first(['status', 'destination_masked']), 'creatorApplication' => (array) DB::table('creator_applications')->where('owner_id', $id)->first(['status', 'audience', 'rate_bps', 'created_at']), 'refundRequests' => $rows('refund_requests', ['purchase_id', 'status', 'amount_paise', 'reason', 'note', 'created_at']), 'walletTransactions' => $rows('wallet_transactions', ['kind', 'amount_paise', 'note', 'earned_at', 'expires_at', 'created_at']), 'serviceOrders' => $rows('service_orders', ['service', 'status', 'note', 'created_at', 'delivered_at']), 'atsChecks' => $rows('ats_scans', ['id', 'source', 'job_url', 'job_title', 'company', 'score', 'result_json', 'status', 'created_at']), 'activity' => DB::table('activity_events')->where('owner_id', $id)->orderByDesc('created_at')->limit(500)->get(['event', 'reference', 'created_at'])->map(fn ($x) => (array) $x)->all()];
     }
 
     // The account and everything in it is removed for good. Money records stay for accounting, detached from the person (AccountEraser).
@@ -704,6 +707,49 @@ class ApiController extends Controller
         }
 
         return null;
+    }
+
+    /** Tara chat for the signed-in customer: status, send a message, past conversations, rate an answer, delete a conversation. */
+    private function tara(Request $r, string $path)
+    {
+        $u = $r->user();
+        $ok = fn ($a = []) => response()->json(['ok' => true, ...$a]);
+        if ($path === 'status' && $r->isMethod('GET')) {
+            return $ok(['tara' => \App\Services\TaraChat::status($u)]);
+        }
+        if ($path === 'nudge' && $r->isMethod('GET')) {
+            return $ok(['nudge' => \App\Services\TaraChat::nudge($u)]);
+        }
+        if ($path === 'message' && $r->isMethod('POST')) {
+            $v = $r->validate(['conversationId' => ['nullable', 'regex:/^[a-f0-9-]{36}$/'], 'text' => 'required|string|max:6000']);
+            \App\Services\EmailVerification::guard($u);
+
+            return $ok(\App\Services\TaraChat::send($u, $v['conversationId'] ?? null, $v['text']));
+        }
+        if ($path === 'conversations' && $r->isMethod('GET')) {
+            return $ok(['conversations' => DB::table('tara_conversations')->where('owner_id', $u->id)->where('mode', 'customer')->where('status', '!=', 'deleted')->orderByDesc('last_at')->limit(30)->get(['id', 'title', 'messages', 'last_at'])]);
+        }
+        if (preg_match('#^conversations/([a-f0-9-]{36})$#', $path, $m) && $r->isMethod('GET')) {
+            $c = DB::table('tara_conversations')->where('id', $m[1])->where('owner_id', $u->id)->where('mode', 'customer')->where('status', '!=', 'deleted')->first(['id', 'title']);
+            abort_unless($c, 404);
+            $msgs = DB::table('tara_messages')->where('conversation_id', $c->id)->where('owner_id', $u->id)->orderBy('created_at')->limit(200)->get(['id', 'role', 'content', 'meta_json', 'rating', 'created_at']);
+
+            return $ok(['conversation' => $c, 'messages' => $msgs->map(fn ($x) => ['id' => $x->id, 'role' => $x->role, 'content' => $x->content, 'links' => json_decode((string) $x->meta_json, true)['links'] ?? [], 'rating' => $x->rating, 'at' => $x->created_at])]);
+        }
+        if (preg_match('#^conversations/([a-f0-9-]{36})/delete$#', $path, $m) && $r->isMethod('POST')) {
+            $n = DB::table('tara_conversations')->where('id', $m[1])->where('owner_id', $u->id)->where('mode', 'customer')->update(['status' => 'deleted', 'title' => '', 'summary' => null, 'updated_at' => now()]);
+            abort_unless($n, 404);
+            DB::table('tara_messages')->where('conversation_id', $m[1])->where('owner_id', $u->id)->where('mode', 'customer')->update(['content' => '', 'meta_json' => null]); // the words are wiped; counts stay for usage limits
+
+            return $ok();
+        }
+        if ($path === 'rate' && $r->isMethod('POST')) {
+            $v = $r->validate(['messageId' => ['required', 'regex:/^[a-f0-9-]{36}$/'], 'rating' => 'required|in:1,-1']);
+            abort_unless(DB::table('tara_messages')->where('id', $v['messageId'])->where('owner_id', $u->id)->where('mode', 'customer')->where('role', 'assistant')->update(['rating' => (int) $v['rating']]), 404);
+
+            return $ok();
+        }
+        abort(404);
     }
 
     private function documents(Request $r, string $type, ?string $doc)
