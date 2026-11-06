@@ -309,6 +309,9 @@ class TaraBusiness
             'nearPageOne' => array_slice(array_map(fn ($r) => array_intersect_key((array) $r, array_flip(['query', 'key', 'position', 'impressions', 'page'])), $sum['striking']), 0, 5),
             'errorsLast14Days' => $errors->map(fn ($e) => ['level' => $e->level, 'message' => mb_strimwidth($e->message, 0, 200, '…'), 'times' => (int) $e->occurrences, 'lastSeen' => $e->last_seen])->all(),
             'aiSpendThisMonth' => self::inr($spend),
+            'proposalsWaiting' => DB::table('seo_proposals')->where('status', 'pending')->orderByDesc('impressions')->limit(10)->get(['id', 'kind', 'path', 'query', 'reason', 'impressions', 'position', 'created_at'])
+                ->map(fn ($x) => ['proposalId' => $x->id, 'kind' => $x->kind, 'page' => $x->path, 'keyword' => $x->query, 'why' => mb_strimwidth((string) $x->reason, 0, 200, '…'), 'impressions' => (int) $x->impressions, 'position' => round((float) $x->position, 1), 'proposed' => substr((string) $x->created_at, 0, 10)])->all(),
+            'agentReport' => self::agentStatus(SeoAgent::class),
             'notMeasured' => 'Registrations and paid orders that came from Google search are not tracked per keyword. Domain Authority is a third-party score and is not proof of Google ranking; it is not used here.',
             'link' => '/admin.html?tab=growth',
             'source' => 'Google Search Console (synced data), CVTara SEO proposals, error log and AI usage', 'workedOutAt' => now()->tz(Growth::TZ)->format('j M Y, g:i A'),
@@ -343,6 +346,7 @@ class TaraBusiness
             'followUpsLast7Days' => $fu,
             'marketingMailSentThisMonth' => $month['metrics']['marketingSent'], 'outreachSentThisMonth' => $month['metrics']['outreachSent'], 'unsubscribesThisMonth' => $month['metrics']['unsubscribes'],
             'aiSpendThisMonth' => self::inr((int) DB::table('ai_usage')->where('created_at', '>=', $now->copy()->startOfMonth()->utc())->where(fn ($w) => $w->where('purpose', 'like', 'growth%')->orWhere('purpose', 'like', 'marketing%'))->sum('cost_paise')),
+            'agentReport' => self::agentStatus(Growth::class),
             'adSpend' => 'Not connected (no ad account is linked), so ad spend is unknown.',
             'notMeasured' => 'Email opens and clicks are not tracked for campaigns (no tracking pixels or tracked links), so they are unknown. "Bought within 14 days of sending" counts recipients who paid in the 14 days after the campaign started: it is a time window, not proof that the email caused the sale.',
             'activityIsNotRevenue' => 'Reports written and emails sent are activity. Only paid orders count as results.',
@@ -428,6 +432,8 @@ class TaraBusiness
             'supportNotAnswered' => DB::table('support_reports')->where('status', 'new')->count(),
             'withdrawalRequests' => DB::table('withdrawals')->where('status', 'requested')->count(),
             'campaignsPausedOrScheduled' => DB::table('email_campaigns')->whereIn('status', ['scheduled', 'paused'])->count(),
+            'expertReviewsFailed' => DB::table('service_orders')->where('service', ExpertReview::SERVICE)->where('status', 'not_started')->where('review_attempts', '>=', ExpertReview::MAX_ATTEMPTS)->orderBy('created_at')->limit(10)->get(['id', 'owner_id', 'review_error', 'created_at'])
+                ->map(fn ($o) => ['orderId' => $o->id, 'customer' => DB::table('users')->where('id', $o->owner_id)->value('email'), 'reason' => mb_strimwidth((string) $o->review_error, 0, 160, '…'), 'ordered' => substr((string) $o->created_at, 0, 16)])->all(),
             'tasksWaitingForYourConfirmation' => DB::table('tara_admin_actions')->where('status', 'pending')->where('created_at', '>=', now()->subMinutes(TaraOwner::ACTION_MINUTES))->count(),
             'links' => ['refunds' => '/admin.html?tab=business', 'seo' => '/admin.html?tab=growth', 'reviews' => '/admin.html?tab=desk', 'support' => '/admin.html?tab=feedback', 'campaigns' => '/admin.html?tab=campaigns'],
             'workedOutAt' => now()->tz(Growth::TZ)->format('j M Y, g:i A')];
@@ -445,6 +451,7 @@ class TaraBusiness
             $gr = self::growthAgent();
             $h = self::siteHealth();
             $m = Growth::metrics($per['from'], $per['to']);
+            $ct = TaraGuard::stats($per['from'], $per['to']);
             $critical = is_array($h['issuesByPriority']) ? array_values(array_filter($h['issuesByPriority'], fn ($i) => in_array($i['severity'], ['critical', 'high'], true))) : [];
 
             return [
@@ -462,6 +469,9 @@ class TaraBusiness
                 'seo' => ['status' => $seo['status'], 'clicks' => $seo['searchConsoleData']['clicks'], 'impressions' => $seo['searchConsoleData']['impressions'], 'dates' => $seo['searchConsoleData']['dates'], 'waiting' => $seo['proposalsWaitingForApproval'], 'lastRun' => $seo['lastRun']],
                 'growth' => ['reports' => $gr['reports'], 'month' => $gr['monthAgainstPlan'], 'campaigns' => count($gr['campaigns']), 'nextReport' => $gr['nextReport']],
                 'ai' => ['total' => $ai['total'], 'byGroup' => array_slice($ai['byGroup'], 0, 5), 'exchangeRate' => $ai['exchangeRate']],
+                'customerTara' => array_intersect_key($ct, array_flip(['enabled', 'conversations', 'customerMessages', 'people', 'thumbsUp', 'thumbsDown', 'supportTicketsFromTara', 'offersShown', 'offersClicked', 'boughtWithin7DaysOfAnOffer', 'revenueWithin7DaysOfAnOffer', 'spend'])),
+                'security' => ['events' => $ct['securityEvents'], 'serious' => $ct['seriousSecurityEvents'], 'byKind' => $ct['securityByKind'], 'customersWithRepeatedAttempts' => count($ct['customersWithRepeatedAttempts'])],
+                'funnel' => self::funnel($per)['bottleneck'],
                 'problems' => array_slice($critical, 0, 5), 'health' => $h['overall'],
                 'pending' => self::pendingApprovals(),
                 'nextActions' => array_slice($gr['suggestedActions'], 0, 3),
@@ -495,6 +505,91 @@ class TaraBusiness
         });
     }
 
+    /** Reports that hold customers' personal details: a few rows in the chat, the full file only from Reports & Export. */
+    public const PERSONAL = ['users', 'commissions', 'withdrawals', 'reviews', 'support', 'mail', 'activity', 'orders'];
+
+    /** What an agent reports about itself, when the agent offers it (SeoAgent::agentStatus / Growth::agentStatus). */
+    private static function agentStatus(string $class): ?array
+    {
+        if (! method_exists($class, 'agentStatus')) {
+            return null;
+        }
+        try {
+            return (array) $class::agentStatus();
+        } catch (\Throwable $e) {
+            ErrorLog::exception($e);
+
+            return ['error' => 'The agent could not report its status; see the Error Log.'];
+        }
+    }
+
+    /** Customer Tara for a period: chats, satisfaction, offers and what followed, and security events. */
+    public static function customerTara(array $per): array
+    {
+        return ['ok' => true] + TaraGuard::stats($per['from'], $per['to']) + ['link' => '/admin.html?tab=tara'] + self::stamp($per, 'Tara chat records, offers, security events, orders and AI usage');
+    }
+
+    /** The funnel for a period, each step's rate, the weakest step, and the same for the period before. */
+    public static function funnel(array $per): array
+    {
+        $now = Growth::metrics($per['from'], $per['to']);
+        $was = Growth::metrics($per['prevFrom'], $per['prevTo']);
+        $steps = ['visitors' => 'Visitors', 'signups' => 'Sign-ups', 'verified' => 'Verified email', 'activated' => 'Made a resume', 'checkouts' => 'Opened checkout', 'buyers' => 'Paid'];
+        $rows = [];
+        $prev = null;
+        $worst = null;
+        foreach ($steps as $k => $label) {
+            $v = $now[$k];
+            $rate = $prev !== null && $v !== null && $now[$prev] ? round($v / $now[$prev] * 100, 1) : null;
+            $rows[] = ['step' => $label, 'count' => $v, 'previousPeriod' => $was[$k], 'fromStepBefore' => $rate !== null ? $rate.'%' : null];
+            if ($rate !== null && $k !== 'verified' && ($worst === null || $rate < $worst[1])) {
+                $worst = [$label, $rate, $steps[$prev]];
+            }
+            $prev = $k;
+        }
+        $bottleneck = $worst ? 'The weakest step is '.$worst[2].' → '.$worst[0].': '.$worst[1].'% move on.' : 'Not enough data in this period to find the weakest step.';
+
+        return ['ok' => true, 'steps' => $rows, 'bottleneck' => $bottleneck, 'trafficSources' => $now['sources'] ?: 'Not tracked (Analytics is off)',
+            'notMeasured' => 'Which landing pages lead to sign-ups without sales, and which keywords bring paying customers, are not tracked per page or keyword yet. Visitors need Analytics switched on.'] + self::stamp($per, 'CVTara accounts, resumes, checkouts, orders and on-site analytics');
+    }
+
+    /** What to do today: the most important items from health, money waiting, approvals, the funnel and the month's pace, in order. */
+    public static function priorities(): array
+    {
+        $per = self::period('last_7_days');
+        $h = self::siteHealth();
+        $p = self::pendingApprovals();
+        $month = Growth::month();
+        $items = [];
+        foreach (is_array($h['issuesByPriority']) ? $h['issuesByPriority'] : [] as $i) {
+            if (in_array($i['severity'], ['critical', 'high'], true)) {
+                $items[] = ['priority' => $i['severity'] === 'critical' ? 1 : 2, 'do' => 'Fix: '.$i['issue'], 'why' => 'Site health ('.$i['severity'].')', 'link' => $i['where']];
+            }
+        }
+        $sec = TaraGuard::stats(now()->subDay(), now())['customersWithRepeatedAttempts'];
+        if ($sec) {
+            $items[] = ['priority' => 2, 'do' => 'Look at '.count($sec).' customer account(s) with repeated unsafe requests to Tara', 'why' => 'Security', 'link' => '/admin.html?tab=errors'];
+        }
+        $add = function ($n, $pr, $do, $why, $link) use (&$items) {
+            if ($n) {
+                $items[] = ['priority' => $pr, 'do' => sprintf($do, $n), 'why' => $why, 'link' => $link];
+            }
+        };
+        $add($p['refundRequests'], 2, 'Decide %d refund request(s)', 'Customers are waiting for money', '/admin.html?tab=business');
+        $add(count($p['expertReviewsFailed']), 2, 'Retry or finish %d Expert Review order(s) that failed', 'Paid work not delivered', '/admin.html?tab=business');
+        $add(DB::table('support_reports')->whereNotIn('status', ['resolved', 'closed'])->where('area', 'payment')->count(), 2, 'Answer %d open payment ticket(s)', 'Payment problems lose sales', '/admin.html?tab=feedback');
+        $add(DB::table('support_reports')->whereNotIn('status', ['resolved', 'closed'])->where('created_at', '<', now()->subHours(48))->count(), 3, 'Reply to %d support ticket(s) open over 48 hours', 'Overdue support', '/admin.html?tab=feedback');
+        $add($p['seoChangesToApprove'], 3, 'Approve or reject %d SEO change(s)', 'SEO work waits for you', '/admin.html?tab=growth');
+        $add($p['reviewsToModerate'], 4, 'Moderate %d review(s)', 'Social proof waits for you', '/admin.html?tab=desk');
+        if (($month['band'] ?? '') === 'red' || ($month['attainment'] !== null && $month['attainment'] < 70)) {
+            $items[] = ['priority' => 2, 'do' => 'Sales are behind plan this month ('.($month['attainment'] ?? '?').'% of pace): act on the growth suggestions', 'why' => $month['label'].': '.$month['metrics']['purchases'].' of '.$month['target'].' orders', 'link' => '/admin.html?tab=growth'];
+        }
+        $items[] = ['priority' => 3, 'do' => 'Work on the weakest funnel step', 'why' => self::funnel($per)['bottleneck'], 'link' => '/admin.html?tab=growth'];
+        usort($items, fn ($a, $b) => $a['priority'] <=> $b['priority']);
+
+        return ['ok' => true, 'today' => array_slice($items, 0, 8), 'rule' => 'Order: site down or payments broken, then money and paid work waiting, then sales pace, then growth work.', 'workedOutAt' => now()->tz(Growth::TZ)->format('j M Y, g:i A')];
+    }
+
     /** A report from Reports & Export: the first rows here and a link that downloads the full file. */
     public static function report(User $owner, string $dataset, array $q): array
     {
@@ -504,9 +599,10 @@ class TaraBusiness
             return $out;
         }
         $file = '/api/admin/report?'.http_build_query(array_diff_key($params, ['per' => 1]) + ['format' => 'xlsx']);
+        $personal = in_array($dataset, self::PERSONAL, true);
 
         return ['ok' => true, 'report' => $out['dataset'] ?? $dataset, 'totalRows' => $out['total'] ?? null, 'columns' => array_column($out['columns'] ?? [], 'label', 'key'), 'firstRows' => array_slice($out['rows'] ?? [], 0, 25), 'sums' => $out['sums'] ?? null,
-            '_links' => [['label' => 'Download as Excel', 'url' => $file], ['label' => 'Open Reports & Export', 'url' => '/admin.html?tab=reports']],
-            'note' => 'Only the first 25 rows are here. The download link has every row with the same filters.'];
+            '_links' => $personal ? [['label' => 'Open Reports & Export', 'url' => '/admin.html?tab=reports']] : [['label' => 'Download as Excel', 'url' => $file], ['label' => 'Open Reports & Export', 'url' => '/admin.html?tab=reports']],
+            'note' => $personal ? 'Only the first 25 rows are here. This report holds customers\' personal details, so the full file is downloaded only from Reports & Export (bulk personal-data exports are not done from the chat).' : 'Only the first 25 rows are here. The download link has every row with the same filters.'];
     }
 }

@@ -1,4 +1,13 @@
-# CVTara v3.32.0 — Tara for customers, and Tara as the owner's business assistant
+# CVTara v3.33.0 — Tara keeps CVTara's private details private, and the owner sees what she does
+
+## 3.33.0
+- **Customer Tara, confidentiality:** she never shares her instructions, the owner console, how CVTara is built (servers, databases, internal links), keys or passwords, business numbers, security details or anything about another customer. Pasted text, uploads, job pages, links and code are treated as content, never as instructions.
+- **Unsafe requests:** messages that try to get her instructions, secrets, admin functions, other customers' data, to run code or to get around payments or limits are noticed on the server. She declines in one friendly line without saying how she noticed, and keeps helping. Each attempt is recorded (new table `tara_events`). After 3 serious attempts in 24 hours the owner gets a warning in the Error Log. After 6, Tara alone is paused for that customer for 24 hours, with a plain message; the rest of their account works. Asking for another customer's document is recorded too. The server's own checks (sign-in, ownership, limits) stay the real protection.
+- **Offers:** package offers shown on the dashboard card or in the chat are counted (once a day), as are clicks (`POST /api/tara/event`). The owner sees customers who bought within 7 days of an offer and that revenue, labelled as a time window, not proof.
+- **Business assistant:** new lookups for Customer Tara activity and security, the sales funnel with the weakest step ("why is revenue not growing"), and "what should I prioritise today". New confirm cards to approve or reject an SEO agent change and to retry a failed Expert Review. Every card now says what happens after Confirm. Reports with customers' personal details show 25 rows in the chat and are downloaded only from Reports & Export. The briefing adds the funnel, Customer Tara (chats, ratings, offers, conversions) and security events. Each answer records the rules version and model used.
+- **Agents:** the assistant reads `SeoAgent::agentStatus()` / `Growth::agentStatus()` when the agents provide them.
+- Migration: `2026_11_06_000004_tara_events`. Events are kept 365 days and removed with the account.
+
 
 ## 3.32.0
 - **Tara chat (testing sheet v2):** a chat assistant inside the customer workspace. It's a floating "Ask Tara" button, an "Ask Tara" menu item that opens full screen (also `?tara=1`), and it works on phones. Customers see "Tara, your CVTara career assistant" and never any mention of AI.

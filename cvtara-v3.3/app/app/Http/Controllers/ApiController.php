@@ -743,6 +743,14 @@ class ApiController extends Controller
 
             return $ok();
         }
+        if ($path === 'event' && $r->isMethod('POST')) {
+            $v = $r->validate(['kind' => 'required|in:offer_clicked', 'plan' => ['nullable', 'string', 'max:60', 'regex:/^[a-z0-9_-]*$/'], 'source' => 'required|in:dashboard,chat']);
+            abort_if(\Illuminate\Support\Facades\RateLimiter::tooManyAttempts('tara-event:'.$u->id, 20), 429);
+            \Illuminate\Support\Facades\RateLimiter::hit('tara-event:'.$u->id, 3600);
+            \App\Services\TaraGuard::offer($u->id, $v['kind'], $v['plan'] ?? null, $v['source']);
+
+            return $ok();
+        }
         if ($path === 'rate' && $r->isMethod('POST')) {
             $v = $r->validate(['messageId' => ['required', 'regex:/^[a-f0-9-]{36}$/'], 'rating' => 'required|in:1,-1']);
             abort_unless(DB::table('tara_messages')->where('id', $v['messageId'])->where('owner_id', $u->id)->where('mode', 'customer')->where('role', 'assistant')->update(['rating' => (int) $v['rating']]), 404);

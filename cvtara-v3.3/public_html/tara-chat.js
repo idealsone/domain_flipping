@@ -27,6 +27,9 @@
   };
   const PAGE = { billing: 'Billing & Plans', match: 'ATS Match', letter: 'Cover Letters', builder: 'Resume Builder', resumes: 'My Resumes', tracker: 'Applications', account: 'My account', dashboard: 'Dashboard', wallet: 'My Wallet', referrals: 'Refer & Earn' };
   let S = null, conv = null, busy = false, box = null;
+  // A click on a package offer is counted (so the owner can see which offers help); it never holds up the page change.
+  const track = (plan, source) => { try { fetch('/api/tara/event', { method: 'POST', keepalive: true, credentials: 'same-origin', headers: { Accept: 'application/json', 'Content-Type': 'application/json', 'X-CVTara-Request': '1', 'X-CSRF-TOKEN': $('meta[name=csrf-token]')?.content || '' }, body: JSON.stringify({ kind: 'offer_clicked', plan: plan || null, source }) }).catch(() => {}); } catch (e) { /* ignore */ } };
+  const offerLink = a => { const h = a && a.getAttribute('href') || ''; if (!/^\/(checkout\.html|workspace\.html\?view=billing)/.test(h)) return null; const m = h.match(/[?&]plan=([a-z0-9_-]+)/); return m ? m[1] : ''; };
 
   function shell() {
     box = document.createElement('div');
@@ -49,6 +52,7 @@
       </section>`;
     document.body.append(box);
     box.addEventListener('click', onClick);
+    box.addEventListener('click', e => { const a = e.target.closest('.tara-log a'); const p = offerLink(a); if (p !== null) track(p, 'chat'); });
     const ta = $('#taraIn', box);
     ta.addEventListener('input', () => { ta.style.height = 'auto'; ta.style.height = Math.min(160, ta.scrollHeight) + 'px'; });
     ta.addEventListener('keydown', e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send(ta.value); } });
@@ -149,9 +153,10 @@
   // The dashboard "next step" card: real numbers only, one-click actions, a package only when it fits. Hidden for the day once closed.
   async function nudge() {
     const host = document.getElementById('view-dashboard'); if (!host) return;
-    let n; try { n = (await api('/api/tara/nudge')).nudge; } catch (e) { return; }
     const key = 'cvtara-nudge-' + new Date().toISOString().slice(0, 10);
-    try { if (!n || localStorage.getItem(key)) return; } catch (e) { if (!n) return; }
+    try { if (localStorage.getItem(key)) return; } catch (e) { /* storage blocked */ }
+    let n; try { n = (await api('/api/tara/nudge')).nudge; } catch (e) { return; }
+    if (!n) return;
     const c = document.createElement('section');
     c.className = 'tara-nudge'; c.setAttribute('aria-label', 'Your next step');
     c.innerHTML = `<span class="tara-dot" aria-hidden="true">T</span><div class="tn-body"><small>${E(n.greeting)}</small><h3>${E(n.title)}</h3><p>${E(n.line)}</p>
@@ -161,6 +166,7 @@
       <button type="button" class="tara-ic tn-x" aria-label="Hide for today" title="Hide for today">✕</button>`;
     host.prepend(c);
     c.addEventListener('click', e => {
+      if (e.target.closest('.tn-offer a') && n.offer) track(n.offer.plan, 'dashboard');
       if (e.target.closest('.tn-x')) { c.remove(); try { localStorage.setItem(key, '1'); } catch (x) { /* storage blocked */ } return; }
       const b = e.target.closest('[data-n]'); if (!b) return;
       const x = n.actions[Number(b.dataset.n)];

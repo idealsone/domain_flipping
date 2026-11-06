@@ -109,7 +109,7 @@ def run(ctx, t):
         o.api("POST", "admin/tara/owner/message", {"conversationId": cid, "text": "find biz-a"}); r = tr_json()
         m = (r.get("matches") or [{}])[0]
         t.check("one customer's account shows package, orders, credits and open tickets", m.get("email") == "biz-a@test.local" and m.get("orders") and m.get("openSupportTickets") == 1 and "credits" in m, str(m)[:300])
-        for tool, key in [("seo_agent", "status"), ("growth_agent", "activityIsNotRevenue"), ("site_health", "issuesByPriority"), ("credit_usage", "creditsUsed"), ("pending_approvals", "supportNotAnswered"), ("referrals_reviews_support", "support")]:
+        for tool, key in [("seo_agent", "status"), ("growth_agent", "activityIsNotRevenue"), ("site_health", "issuesByPriority"), ("credit_usage", "creditsUsed"), ("pending_approvals", "expertReviewsFailed"), ("customer_tara_activity", "securityByKind"), ("funnel", "bottleneck"), ("today_priorities", "today"), ("referrals_reviews_support", "support")]:
             SCRIPT[:] = [("tool", tool, {}), ("text", "ok")]
             o.api("POST", "admin/tara/owner/message", {"conversationId": cid, "text": tool}); r = tr_json()
             t.check(f"the {tool.replace('_', ' ')} lookup works", r.get("ok") is True and key in r, str(r)[:300])
@@ -117,9 +117,13 @@ def run(ctx, t):
         t.check("the support report shows overdue tickets with their ids", r["support"]["overdue"] == 1 and r["support"]["oldestOpen"][0]["ticketId"] == "bbbbbbbb-0000-0000-0000-000000000001", r.get("support"))
         SCRIPT[:] = [("tool", "run_report", {"dataset": "orders"}), ("text", "ok")]
         s, j = o.api("POST", "admin/tara/owner/message", {"conversationId": cid, "text": "orders report"}); r = tr_json()
-        t.check("a report from Reports & Export comes back with rows and a download link", r.get("ok") and r.get("totalRows", 0) >= 1 and any("format=xlsx" in l["url"] for l in j["message"]["links"]), (str(r)[:300], j["message"].get("links")))
+        t.check("a personal-data report comes back with rows but no bulk download from the chat", r.get("ok") and r.get("totalRows", 0) >= 1 and not any("format=xlsx" in l["url"] for l in j["message"]["links"]) and "Reports & Export" in r.get("note", ""), (str(r)[:300], j["message"].get("links")))
+        SCRIPT[:] = [("tool", "run_report", {"dataset": "daily"}), ("text", "ok")]
+        s, j = o.api("POST", "admin/tara/owner/message", {"conversationId": cid, "text": "daily report"}); r = tr_json()
+        t.check("a non-personal report comes back with a download link", r.get("ok") and any("format=xlsx" in l["url"] for l in j["message"]["links"]), (str(r)[:300], j["message"].get("links")))
 
         # 3. actions: proposed only, run after Confirm, with before/after and audit
+        db.q("delete from cache where key like '%tara-owner:%'")  # the 20-a-minute question limit; this test asks quickly
         SCRIPT[:] = [("tool", "propose_action", {"action": "grant_plan", "params": {"email": "biz-b@test.local", "plan": "job-hunt", "days": 30, "note": "college partner thank-you", "sendEmail": False}, "reason": "owner asked"}), ("text", "Ready for your Confirm.")]
         before = db.q("select count(*) from purchases where owner_id=?", bid)[0][0]
         s, j = o.api("POST", "admin/tara/owner/message", {"conversationId": cid, "text": "Give biz-b Job Hunt for 30 days free"})
@@ -127,6 +131,8 @@ def run(ctx, t):
         t.check("a change comes back as a card waiting for Confirm, and nothing is changed yet", s == 200 and len(cards) == 1 and cards[0]["status"] == "pending" and "complimentary" in cards[0]["summary"] and db.q("select count(*) from purchases where owner_id=?", bid)[0][0] == before, str(cards)[:300])
         aid = cards[0]["id"] if cards else ""
         t.check("the card shows the values now", cards and cards[0]["before"]["currentPackage"].startswith("Pro"), cards)
+        t.check("the card says what happens after Confirm", cards and "What happens:" in cards[0]["summary"], cards)
+        t.check("the answer records the rules version and model used", "owner-2026" in (db.q("select meta_json from tara_messages where mode='owner' and role='assistant' order by created_at desc limit 1")[0][0] or ""))
         t.check("a customer cannot confirm the owner's action", u.api("POST", "admin/tara/owner/actions/confirm", {"id": aid})[0] == 403)
         s, j = o.api("POST", "admin/tara/owner/actions/confirm", {"id": aid})
         t.check("Confirm runs it through the normal console action", s == 200 and j["card"]["status"] == "done" and db.q("select count(*) from purchases where owner_id=? and plan='job-hunt' and provider='manual' and amount_paise=0", bid)[0][0] == 1, (s, str(j)[:300]))
@@ -137,6 +143,14 @@ def run(ctx, t):
         SCRIPT[:] = [("tool", "propose_action", {"action": "ai_monthly_cap", "params": {"inr": 2500}}), ("text", "Ready.")]
         s, j = o.api("POST", "admin/tara/owner/message", {"conversationId": cid, "text": "Set the AI cap to 2500"}); assert s == 200, (s, str(j)[:300]); c2 = j["message"]["cards"][0]["id"]
         t.check("a cancelled card changes nothing", o.api("POST", "admin/tara/owner/actions/cancel", {"id": c2})[0] == 200 and o.api("POST", "admin/tara/owner/actions/confirm", {"id": c2})[0] == 422)
+        db.q("insert into seo_proposals (id, kind, path, query, status, data_json, before_json, reason, impressions, clicks, position, created_at, updated_at) values ('cccccccc-0000-0000-0000-000000000001', 'meta', '/zz-missing', 'kw', 'pending', '{\"title\":\"New title\",\"description\":\"d\"}', '{}', 'test', 10, 0, 12, datetime('now'), datetime('now'))")
+        SCRIPT[:] = [("tool", "propose_action", {"action": "seo_proposal", "params": {"proposalId": "cccccccc-0000-0000-0000-000000000001", "decision": "reject"}}), ("text", "Ready.")]
+        s, j = o.api("POST", "admin/tara/owner/message", {"conversationId": cid, "text": "reject that SEO change"}); cs = (j.get("message") or {}).get("cards") or [{}]
+        s2, j2 = o.api("POST", "admin/tara/owner/actions/confirm", {"id": cs[0].get("id", "")})
+        t.check("an SEO change can be rejected from a card", s2 == 200 and db.q("select status from seo_proposals where id='cccccccc-0000-0000-0000-000000000001'")[0][0] == "rejected", (s, s2, str(j2)[:200]))
+        SCRIPT[:] = [("tool", "propose_action", {"action": "retry_review", "params": {"orderId": "dddddddd-0000-0000-0000-000000000009"}}), ("text", "Not found.")]
+        o.api("POST", "admin/tara/owner/message", {"conversationId": cid, "text": "retry review"}); r = tr_json()
+        t.check("an Expert Review retry needs a real waiting order", r.get("ok") is False and "pending_approvals" in r.get("error", ""), r)
         SCRIPT[:] = [("tool", "propose_action", {"action": "delete_user", "params": {"email": "biz-a@test.local"}}), ("text", "That must be done on the Users page.")]
         o.api("POST", "admin/tara/owner/message", {"conversationId": cid, "text": "delete biz-a"}); r = tr_json()
         t.check("restricted actions are not available to the assistant", r.get("ok") is False and "console page" in r.get("error", "") and db.q("select count(*) from users where id=?", uid)[0][0] == 1, r)
@@ -153,7 +167,7 @@ def run(ctx, t):
         t.check("an owner chat reopens with its cards and their current status", s == 200 and any(c["status"] == "done" for m in j["messages"] for c in m["cards"]) and any("Done:" in m["content"] for m in j["messages"]))
         t.check("a customer cannot open the owner's chat through their own Tara", u.api("GET", f"tara/conversations/{cid}")[0] == 404)
         s, j = o.api("GET", "admin/tara/owner/actions?status=done")
-        t.check("the actions record lists done actions and downloads", s == 200 and j["total"] == 1 and o.raw("GET", "/api/admin/tara/owner/actions?export=csv")[0] == 200)
+        t.check("the actions record lists done actions and downloads", s == 200 and j["total"] == 2 and o.raw("GET", "/api/admin/tara/owner/actions?export=csv")[0] == 200)
         s, h, page = o.page("/admin.html")
         t.check("the console has a Business assistant page for owners only", 'data-admin-view="assistant"' in page and 'id="admin-assistant"' in page and o.raw("GET", "/console/assistant.js")[0] == 200 and u.raw("GET", "/console/assistant.js")[0] in (403, 404))
         s, j = o.api("POST", "admin/tara/owner/settings", {"model": "", "instructions": "Compare with last week.", "monthlySpendInr": 0, "maxTokens": 2500, "historyMessages": 20, "maxSteps": 8})
