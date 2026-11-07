@@ -13,7 +13,6 @@ use App\Services\Payments;
 use App\Services\ReferralRewards;
 use App\Services\Referrals;
 use App\Services\Settings;
-use App\Services\WritingAssistant;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
@@ -267,9 +266,8 @@ class ApiController extends Controller
 
                 return $ok(['suggestion' => \App\Services\TaraAI::suggest($u, $v), 'left' => \App\Services\TaraAI::left($u)]);
             }
-            $v = $r->validate(['task' => 'required|in:rewrite,translate,review_requirements', 'language' => 'required|in:English', 'text' => 'required|string|min:30|max:12000', 'context' => 'nullable|string|max:8000', 'consent' => 'accepted']);
-
-            return $ok(['suggestion' => WritingAssistant::suggest($u, $v)]);
+            // One approved writing service only (3.36.0): the old second-provider path was removed.
+            abort(422, 'CVTara team writing help is not switched on yet. Your editor works as usual.');
         }
         if (str_starts_with($path, 'tara/')) {
             return $this->tara($r, substr($path, 5));

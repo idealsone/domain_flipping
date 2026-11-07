@@ -16,6 +16,7 @@ return Application::configure(basePath: dirname(__DIR__))
         if ($proxies = env('TRUSTED_PROXIES')) {
             $m->trustProxies(at: $proxies === '*' ? '*' : array_map('trim', explode(',', $proxies)));
         }
+        $m->prepend(\App\Http\Middleware\RequestId::class);
         $m->append(SecurityHeaders::class);
         $m->redirectGuestsTo('/login');
         $m->web(prepend: [\App\Http\Middleware\ServeCachedPage::class], append: [OwnerMaintenance::class, \Illuminate\Routing\Middleware\ThrottleRequests::class.':pages']);
@@ -64,7 +65,7 @@ return Application::configure(basePath: dirname(__DIR__))
 
             return response()->json(['ok' => false, 'error' => $owner
                 ? 'Server error: '.mb_substr(class_basename($x).': '.$x->getMessage(), 0, 300).' ('.basename($x->getFile()).':'.$x->getLine().'). It is also in the Error Log.'
-                : 'Something went wrong on our side. Please try again in a minute.'], 500);
+                : 'Something went wrong on our side. Please try again in a minute. If it keeps happening, quote reference '.\App\Http\Middleware\RequestId::current().' to support.', 'requestId' => \App\Http\Middleware\RequestId::current()], 500);
         });
         $e->render(function (\Throwable $x, Request $r) {
             if ($r->is('api/*') || ! $r->isMethod('GET') || $x instanceof ValidationException || $x instanceof \Illuminate\Auth\AuthenticationException || $x instanceof \Illuminate\Http\Exceptions\HttpResponseException) {

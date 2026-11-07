@@ -1,4 +1,11 @@
-# CVTara v3.35.0 — SEO Director and growth operator layer
+# CVTara v3.36.0 — V2 foundations: clean-up and error references
+
+## 3.36.0
+First release of the V2 plan (`/mnt/project-files/v2-discovery/`). No database change.
+- **Error references:** every request gets a random 12-character reference, sent back in the `X-Request-Id` header. A reference sent by the browser is ignored. Every Error Log entry keeps the reference of the request that caused it, and a repeated error keeps the latest one. When something fails, customers see "quote reference XXXX to support". The owner can paste that reference into the Error Log search to find the exact entry.
+- **One approved writing service:** the old second writing-provider path (`WritingAssistant`, the "standard" writing service and its API-key field) is removed. Writing help now runs only through the CVTara team service.
+- Test suite `s45_v2_foundations`.
+
 
 ## 3.35.0
 Includes 3.34.0 (not deployed separately). Built from the owner's "SEO Director and Chief Growth and Revenue Manager" brief, reusing the existing services; only the missing parts were added.
