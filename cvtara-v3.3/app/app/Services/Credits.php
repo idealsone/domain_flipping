@@ -27,6 +27,17 @@ class Credits
         if ($a['paid'] && $a['purchase']) {
             $l = json_decode((string) $a['purchase']->limits_json, true) ?: [];
             $out[] = ['id' => $a['purchase']->id, 'type' => 'plan', 'until' => $a['purchase']->access_until, 'resume' => (int) ($l['savedResumes'] ?? 0), 'letter' => (int) ($l['savedLetters'] ?? 0), 'scan' => self::scanCap($l, (string) $a['purchase']->plan), 'one' => ! empty($l['oneResume'])];
+            // Another package still running (for example a Quick Download bought while an older plan of the same level was active)
+            // keeps its own credits: they are used after the main plan's, so nothing the customer paid for is lost.
+            // A renewal of the same package is not stacked: it already takes over from the running one.
+            $others = DB::table('purchases')->where('owner_id', $uid)->where('id', '!=', $a['purchase']->id)->where('plan', '!=', $a['purchase']->plan)->where('plan', 'not like', 'addon-%')->whereIn('status', ['paid', 'partially_refunded'])->where('access_until', '>', now())->orderBy('access_until')->get();
+            foreach ($others as $r) {
+                $l = json_decode((string) $r->limits_json, true) ?: [];
+                if (($l['type'] ?? 'plan') !== 'plan') {
+                    continue;
+                }
+                $out[] = ['id' => $r->id, 'type' => 'plan', 'until' => $r->access_until, 'resume' => (int) ($l['savedResumes'] ?? 0), 'letter' => (int) ($l['savedLetters'] ?? 0), 'scan' => self::scanCap($l, (string) $r->plan), 'one' => ! empty($l['oneResume'])];
+            }
             $rows = DB::table('purchases')->where('owner_id', $uid)->where('plan', 'like', 'addon-%')->whereIn('status', ['paid', 'partially_refunded'])->where('access_until', '>', now())->orderBy('access_until')->get();
             foreach ($rows as $r) {
                 $l = json_decode((string) $r->limits_json, true) ?: [];

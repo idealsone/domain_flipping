@@ -192,8 +192,8 @@ class Settings
 
     /**
      * The name a customer sees for their current package. A paid purchase must never read "Free":
-     * use the package's current name, then the name stored on the purchase itself (a package the
-     * owner later renamed, retired or that came from an older price list), then a readable key.
+     * use the package's current name, then the name stored on the purchase itself (a package
+     * from an older price list), then the package that replaced it, then a readable key.
      */
     public static function planLabel(array $access): string
     {
@@ -203,13 +203,16 @@ class Settings
         }
         $key = (string) ($access['plan'] ?? '');
         $stored = $access['purchase'] ? ((json_decode((string) $access['purchase']->limits_json, true) ?: [])['name'] ?? '') : '';
-        foreach ([$key, self::planAlias($key)] as $k) {
-            if ($k !== 'free' && ! empty($plans[$k]['name'])) {
-                return (string) $plans[$k]['name'];
-            }
+        if ($key !== 'free' && ! empty($plans[$key]['name'])) {
+            return (string) $plans[$key]['name'];
         }
+        // An older package (for example Fresher Basic from before the 3.16 price list) keeps the name it was bought under.
         if (is_string($stored) && trim($stored) !== '' && strcasecmp(trim($stored), 'Free') !== 0) {
             return trim($stored);
+        }
+        $alias = self::planAlias($key);
+        if ($alias !== $key && ! empty($plans[$alias]['name'])) {
+            return (string) $plans[$alias]['name'];
         }
 
         return $key !== '' && $key !== 'free' ? ucwords(str_replace(['-', '_'], ' ', $key)) : 'Paid plan';
