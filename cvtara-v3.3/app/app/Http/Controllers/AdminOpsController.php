@@ -144,7 +144,7 @@ class AdminOpsController extends Controller
         if ($path === 'health/history') {
             abort_unless($get, 405);
 
-            return $ok(['history' => Settings::get('healthHistory', []), 'today' => Health::snapshot()]);
+            return $ok(['history' => Settings::get('healthHistory', []), 'today' => Health::snapshot(), 'ai' => \App\Services\AiGateway::health()]);
         }
         if ($path === 'health/run') {
             abort_unless($r->isMethod('POST'), 405);

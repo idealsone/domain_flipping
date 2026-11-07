@@ -39,6 +39,8 @@ class Health
             'mailQueueMoving' => ! (Settings::get('integrations')['email'] ?? false) || ! DB::table('mail_outbox')->whereIn('status', ['queued', 'failed'])->where('attempts', '<', 5)->where('due_at', '<', now()->subMinutes(10))->whereNotIn('trigger', EmailRenderer::MARKETING)->exists(),
             'paymentsConfigured' => (bool) Payments::gateways($providers['payments'] ?? []),
             'debugOff' => ! config('app.debug'),
+            // Writing help, Tara and the Business assistant: not failing over the last 24 hours (only checked while AI is on).
+            'aiService' => ! TaraAI::enabled() || $check(fn () => AiGateway::health()['status'] !== 'failing'),
         ];
         $metrics = [
             'users' => DB::table('users')->count(),

@@ -1,4 +1,14 @@
-# CVTara v3.37.0 — V2: staff roles, audit log and authenticator sign-in
+# CVTara v3.38.0 — V2: one AI gateway and AI health
+
+## 3.38.0
+Third V2 release. **Database change:** run `php artisan migrate --force` (new columns on `ai_usage`: `status`, `latency_ms`, `request_id`, `error`; nothing existing changes).
+- **One path to Claude (`App\Services\AiGateway`):** writing help, customer Tara, the Business assistant, Expert Review / Profile Boost, ATS tailoring, cover letters and the SEO agent all go through it. Nothing else creates a Claude client (a test checks this).
+- **Real time limits:** the Claude SDK does not enforce its `timeout` option, so until now a stuck AI request could hold a PHP worker until the server killed it. The gateway gives every request an HTTP client with a hard time limit (per assistant in `config/ai.php`; writing help 50 s, chats 60 s, ATS tailoring 150 s, SEO 40 s).
+- **Model in one place:** the owner's model setting, else `config/ai.php` (`AI_DEFAULT_MODEL`). The model name no longer sits in the code.
+- **Every request recorded:** successful or not, with outcome (ok, declined, empty, busy, could not be reached, key refused, error), time taken and the request reference. Requests that never got an answer cost nothing.
+- **AI health (Setup & health):** last 24 hours overall and per assistant: requests, success rate, time within which 95% answered, last problem. A new health check "AI service working". Once an hour the cron writes one Error Log warning (repeats count up) when fewer than 80% of at least 20 requests succeeded; a refused key is reported at once. Customers keep seeing plain "try again" messages.
+- Test suite `s47_ai_gateway` (fake Claude returning 500, 429, 401, empty and a slow answer).
+
 
 ## 3.37.0
 Second V2 release. **Database change:** run `php artisan migrate --force` (new tables `user_roles`, `audit_logs`; new columns `users.totp_secret`, `totp_enabled_at`, `totp_last_step`). Nothing existing is changed.

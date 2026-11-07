@@ -208,7 +208,7 @@ class TaraChat
 
     public static function model(array $s): string
     {
-        return trim((string) ($s['model'] ?? '')) ?: ((TaraAI::config()['model'] ?? '') ?: TaraAI::MODEL);
+        return AiGateway::model($s['model'] ?? '');
     }
 
     /** The recent messages of a conversation in the shape the AI service expects (starting with the person, roles alternating). */
@@ -243,7 +243,7 @@ class TaraChat
         $links = [];
         $cards = [];
         for ($step = 0; $step < max(1, $maxSteps); $step++) {
-            $m = self::client()->beta->messages->create(
+            $m = AiGateway::send($purpose, $uid, fn ($c) => $c->beta->messages->create(
                 model: $model,
                 maxTokens: max(300, min(4000, $maxTokens)),
                 system: $system,
@@ -252,12 +252,7 @@ class TaraChat
                 outputConfig: ['effort' => 'low'],
                 fallbacks: 'default',
                 betas: ['server-side-fallback-2026-07-01'],
-            );
-            try {
-                Growth::recordAi($purpose, (string) ($m->model ?? ''), (int) ($m->usage->inputTokens ?? 0), (int) ($m->usage->outputTokens ?? 0), $uid);
-            } catch (\Throwable $e) {
-                ErrorLog::exception($e);
-            }
+            ));
             if ($m->stopReason === 'refusal') {
                 return [$refusal, $links, $cards];
             }
@@ -284,6 +279,7 @@ class TaraChat
             if (! $results) {
                 $text = trim($text);
                 if ($text === '') {
+                    AiGateway::markEmpty();
                     throw new \RuntimeException('empty');
                 }
 
@@ -325,13 +321,6 @@ class TaraChat
             .'the same version in another format is free; an edited version needs a new credit; the first primary resume after a first purchase is free once. '
             .'Refunds: within '.Refunds::DAYS.' days if the package is unused, once per customer. Support email: '.($l['email'] ?? 'support@cvtara.com').'; hours: '.($l['hours'] ?? 'Monday–Friday, 10:00 AM–6:00 PM IST').'. '
             .'Pages: My resumes /workspace.html?view=resumes, Builder /workspace.html?view=builder, ATS Match /workspace.html?view=match, Cover letters /workspace.html?view=letter, Billing & plans /workspace.html?view=billing, Job tracker /workspace.html?view=tracker, Profile and account /workspace.html?view=account. Upload an existing resume from My resumes ("Upload resume").';
-    }
-
-    public static function client(): \Anthropic\Client
-    {
-        $o = env('CLAUDE_API_BASE');
-
-        return new \Anthropic\Client(apiKey: (string) (TaraAI::config()['claudeApiKey'] ?? ''), baseUrl: $o && config('app.env') !== 'production' ? rtrim($o, '/') : 'https://api.anthropic.com', requestOptions: ['timeout' => 60, 'maxRetries' => 1]);
     }
 
     private static function toolDefs(array $on): array

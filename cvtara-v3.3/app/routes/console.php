@@ -66,6 +66,11 @@ Artisan::command('cvtara:cron', function () {
         }
     }
     try {
+        \App\Services\AiGateway::watch(); // hourly: a failing AI service goes to the Error Log
+    } catch (\Throwable $e) {
+        \App\Services\ErrorLog::exception($e);
+    }
+    try {
         \App\Services\Health::run();
     } catch (\Throwable $e) {
         \App\Services\ErrorLog::exception($e);
