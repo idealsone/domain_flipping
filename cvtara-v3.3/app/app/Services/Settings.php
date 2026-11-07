@@ -101,7 +101,7 @@ class Settings
         return [
             'free' => ['type' => 'plan', 'name' => 'Free', 'audience' => 'all', 'tagline' => 'Build, edit and preview with a light watermark. Pay only when you download.', 'price' => 0, 'mrp' => 0, 'accessDays' => 0, 'savedResumes' => 0, 'savedLetters' => 0, 'atsScans' => null, 'dailyMatches' => 3, 'exports' => 0, 'rank' => 0, 'perks' => [], 'popular' => false, 'bestValue' => false, 'referral' => false, 'sale' => false],
             'quick' => $mk('Quick Download', 'Download one finished resume without the watermark', 99, 7, 1, 0, 0, 1, ['1 resume as clean PDF and Word', 'Edit and re-download that resume as often as you like for 7 days', '3 free ATS checks a day'], ['oneResume' => true, 'dailyMatches' => 3]),
-            'job-hunt' => $mk('Job Hunt', 'Tailor your resume and a cover letter for each job you apply to', 299, 30, 5, 5, 20, 2, ['5 tailored resumes and 5 cover letters', '20 ATS Match scans with a gap report', 'Application tracker with reminders'], ['popular' => true]),
+            'job-hunt' => $mk('Job Hunt', 'Tailor your resume and a cover letter for each job you apply to', 299, 30, 10, 10, 20, 2, ['10 tailored resumes and 10 cover letters', '20 ATS Match scans with a gap report', 'Application tracker with reminders'], ['popular' => true]),
             'pro' => $mk('Pro', 'For a longer search across many jobs', 599, 90, 20, 20, 60, 3, ['20 tailored resumes and 20 cover letters', '60 ATS Match scans with a gap report', 'Application tracker with reminders'], ['bestValue' => true]),
             'complete-kit' => $mk('Complete Job Kit', 'Pro, plus a Tara Expert Review and a LinkedIn and Naukri profile rewrite', 1299, 90, 20, 20, 60, 3, ['Everything in Pro', 'Tara Expert Review of your resume', 'Profile Boost for LinkedIn and Naukri'], ['mrp' => 1797, 'includes' => ['expert-review', 'profile-boost'], 'sale' => false]),
         ] + self::serviceDefaults() + self::addonDefaults();
@@ -188,6 +188,34 @@ class Settings
         $limits['savedLetters'] += $extra['letters'];
 
         return ['plan' => $best[1]->plan, 'paid' => true, 'limits' => $limits, 'accessUntil' => $best[1]->access_until, 'purchase' => $best[1], 'extras' => $extra];
+    }
+
+    /**
+     * The name a customer sees for their current package. A paid purchase must never read "Free":
+     * use the package's current name, then the name stored on the purchase itself (a package
+     * from an older price list), then the package that replaced it, then a readable key.
+     */
+    public static function planLabel(array $access): string
+    {
+        $plans = self::plans();
+        if (empty($access['paid'])) {
+            return (string) ($plans['free']['name'] ?? 'Free');
+        }
+        $key = (string) ($access['plan'] ?? '');
+        $stored = $access['purchase'] ? ((json_decode((string) $access['purchase']->limits_json, true) ?: [])['name'] ?? '') : '';
+        if ($key !== 'free' && ! empty($plans[$key]['name'])) {
+            return (string) $plans[$key]['name'];
+        }
+        // An older package (for example Fresher Basic from before the 3.16 price list) keeps the name it was bought under.
+        if (is_string($stored) && trim($stored) !== '' && strcasecmp(trim($stored), 'Free') !== 0) {
+            return trim($stored);
+        }
+        $alias = self::planAlias($key);
+        if ($alias !== $key && ! empty($plans[$alias]['name'])) {
+            return (string) $plans[$alias]['name'];
+        }
+
+        return $key !== '' && $key !== 'free' ? ucwords(str_replace(['-', '_'], ' ', $key)) : 'Paid plan';
     }
 
     // The strongest active purchase wins. A partial refund keeps access; a full refund or dispute removes it.

@@ -1,4 +1,17 @@
-# CVTara v3.35.0 — SEO Director and growth operator layer
+# CVTara v3.35.2 — Job Hunt gives 10 resumes and 10 cover letters
+
+## 3.35.2
+- **Job Hunt (₹299, 30 days)** now gives 10 tailored resumes and 10 cover letters (was 5 and 5); 20 ATS scans are unchanged. Owner decision, 7 Nov 2026.
+- A migration updates the saved price list where Job Hunt still held 5 and 5 (and its "5 tailored resumes and 5 cover letters" card line), and gives customers on a running Job Hunt the same 10 and 10.
+- The Quick Download upgrade messages and the purchase email sample say 10 and 10.
+
+
+## 3.35.1
+- **Billing showed "Free" for a paid customer:** the package name was looked up only by the order's package key in today's price list, and fell back to "Free" when the key was not there. A paid plan now shows its current package name, then an older key's replacement (for example an old Fresher plan reads Job Hunt), then the name saved on the order, and never "Free". The same fallback is used in the Business assistant's package names.
+- **A second package no longer goes unused:** when a customer buys a package (for example Quick Download) while a different package of the same level is still running, its credits are now added after the running plan's instead of being hidden until that plan ends. Renewals of the same package work as before.
+- **Privacy policy:** a saved privacy policy holding the old analytics-consent sentences is updated by a migration; other owner wording is untouched.
+- **No analytics consent box:** the "Allow optional analytics" box is removed and Google Analytics is no longer loaded. Page visits and their sources are counted on CVTara's own server for every visitor (no third-party tools, no tracking cookies, no IP address stored). Privacy policy section 5 and the owner console's analytics switch text describe this.
+
 
 ## 3.35.0
 Includes 3.34.0 (not deployed separately). Built from the owner's "SEO Director and Chief Growth and Revenue Manager" brief, reusing the existing services; only the missing parts were added.

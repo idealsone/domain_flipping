@@ -293,10 +293,10 @@ class ApiController extends Controller
             $exports = $pid ? DB::table('product_usage')->where('owner_id', $id)->where('action', 'export')->where('reference', 'like', $pid.':%')->count() : 0;
             $cs = Credits::status($id);
             $scans = $a['paid'] ? $cs['scans']['used'] : DB::table('ats_scans')->where('owner_id', $id)->where('status', '!=', 'void')->count();
-            $plans = Settings::plans();
+            $planName = Settings::planLabel($a);
             unset($a['purchase']);
 
-            return $ok([...$a, 'emailVerified' => ! \App\Services\EmailVerification::required($r->user()), 'jobLinks' => (bool) (((array) Settings::get('speed', []))['jobLinks'] ?? false), 'planName' => $plans[$a['plan']]['name'] ?? 'Free', 'daysLeft' => $a['accessUntil'] ? max(0, (int) ceil((strtotime($a['accessUntil']) - time()) / 86400)) : 0, 'credits' => $cs, 'caps' => ['resumes' => (int) $l['savedResumes'] + 1, 'letters' => (int) $l['savedLetters'], 'atsScans' => $cs['scans']['total'], 'exports' => null], 'used' => ['exports' => $exports, 'savedResumes' => DB::table('resume_drafts')->where('owner_id', $id)->count(), 'savedLetters' => DB::table('cover_letter_drafts')->where('owner_id', $id)->count(), 'atsScans' => $scans, 'dailyMatches' => DB::table('ats_scans')->where('owner_id', $id)->where('status', '!=', 'void')->whereDate('created_at', today())->count()]]);
+            return $ok([...$a, 'emailVerified' => ! \App\Services\EmailVerification::required($r->user()), 'jobLinks' => (bool) (((array) Settings::get('speed', []))['jobLinks'] ?? false), 'planName' => $planName, 'daysLeft' => $a['accessUntil'] ? max(0, (int) ceil((strtotime($a['accessUntil']) - time()) / 86400)) : 0, 'credits' => $cs, 'caps' => ['resumes' => (int) $l['savedResumes'] + 1, 'letters' => (int) $l['savedLetters'], 'atsScans' => $cs['scans']['total'], 'exports' => null], 'used' => ['exports' => $exports, 'savedResumes' => DB::table('resume_drafts')->where('owner_id', $id)->count(), 'savedLetters' => DB::table('cover_letter_drafts')->where('owner_id', $id)->count(), 'atsScans' => $scans, 'dailyMatches' => DB::table('ats_scans')->where('owner_id', $id)->where('status', '!=', 'void')->whereDate('created_at', today())->count()]]);
         }
         if ($path === 'resumes/import') {
             abort_unless($r->isMethod('POST'), 405);
@@ -613,7 +613,7 @@ class ApiController extends Controller
                 throw ValidationException::withMessages(['limit' => 'A free account keeps one resume. Choose a plan to create job-tailored versions and download.']);
             }
             if (! empty($acc['limits']['oneResume'])) {
-                throw ValidationException::withMessages(['limit' => 'Quick Download covers one resume. Job Hunt adds 5 tailored resumes and 5 cover letters, one for each job.']);
+                throw ValidationException::withMessages(['limit' => 'Quick Download covers one resume. Job Hunt adds 10 tailored resumes and 10 cover letters, one for each job.']);
             }
             if (DB::table('resume_drafts')->where('owner_id', $id)->count() >= Settings::get('features')['builder']['limit']) {
                 throw ValidationException::withMessages(['limit' => 'You have reached the saved resume limit for your plan. Edit an existing resume, or choose a plan with more room.']);
