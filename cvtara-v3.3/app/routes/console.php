@@ -26,6 +26,14 @@ Artisan::command('cvtara:cron', function () {
     if (\Illuminate\Support\Facades\Cache::add('retention-run', 1, 86400)) {
         \App\Services\Retention::run();
     }
+    // The audit log's hash chain is checked once a day; a break goes to the Error Log (3.37.0).
+    if (\Illuminate\Support\Facades\Cache::add('audit-verify', 1, 86400)) {
+        try {
+            \App\Services\Audit::verify();
+        } catch (\Throwable $e) {
+            \App\Services\ErrorLog::exception($e);
+        }
+    }
     if (\Illuminate\Support\Facades\Cache::add('backup-run', 1, 86400)) {
         try {
             \App\Services\Backup::run();

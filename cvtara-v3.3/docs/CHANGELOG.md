@@ -1,4 +1,17 @@
-# CVTara v3.36.0 — V2 foundations: clean-up and error references
+# CVTara v3.37.0 — V2: staff roles, audit log and authenticator sign-in
+
+## 3.37.0
+Second V2 release. **Database change:** run `php artisan migrate --force` (new tables `user_roles`, `audit_logs`; new columns `users.totp_secret`, `totp_enabled_at`, `totp_last_step`). Nothing existing is changed.
+- **Staff roles (Owner console > Settings > Team & security):** the owner adds a person by email with one of seven roles: Admin, Support Manager, Support Agent, SEO Manager, Growth Manager, Content Editor, Finance Manager. A new person gets an email link to set their own password. Their open sessions end when the role changes, so it applies at once.
+  - Every `/api/admin/...` call is checked on the server against `config/permissions.php` **before** any controller runs. A path not listed there is owner only, so a new console page is never open to staff by accident.
+  - Owner only, whatever the role: keys and providers, prices and plans, business switches, setup, roles, the business assistant, deletes and blocks, agent levels and costs, clearing the Error Log and the audit log.
+  - Staff cannot change the owner's or another staff member's account.
+  - Staff sign in at the private console address only; `/login` refuses console accounts. The console menu hides the parts a role cannot use.
+  - Emergency switch: `ROLES_ENFORCE=off` in `.env` turns every staff role off (the owner keeps full access).
+- **Audit log:** every console change (and every refused or failed one) is recorded with who, which role, what, settings before and after, IP and the request reference. Secrets are masked. There is no way to edit or delete an entry from CVTara. Each entry is chained to the one before by a hash; a daily check (and the "Check the log is intact" button) reports a broken chain in the Error Log.
+- **Authenticator app:** the owner and each staff member can switch on Google Authenticator, Microsoft Authenticator or Authy. Console sign-in then asks for the app's 6-digit code instead of an emailed one. The key is stored encrypted and each code works only once.
+- Test suite `s46_roles` (62 checks, including a live-mode sign-in), plus a browser check of the console signed in as each role.
+
 
 ## 3.36.0
 First release of the V2 plan (`/mnt/project-files/v2-discovery/`). No database change.

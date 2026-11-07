@@ -16,7 +16,7 @@ class AffiliateAdminController extends Controller
 {
     public function run(Request $r, string $path)
     {
-        abort_unless($r->user()?->is_admin && ! $r->user()->blocked, 403);
+        abort_unless(\App\Services\Access::can($r->user(), 'referrals.manage'), 403);
         $ok = fn ($d = []) => response()->json(['ok' => true, ...$d]);
         $admin = $r->user();
         $get = $r->isMethod('GET');

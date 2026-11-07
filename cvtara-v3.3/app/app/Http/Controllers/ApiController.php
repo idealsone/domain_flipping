@@ -152,9 +152,33 @@ class ApiController extends Controller
         abort_if($u->blocked, 403);
         DB::table('profiles')->insertOrIgnore(['owner_id' => $id, 'name' => $u->name, 'created_at' => now(), 'updated_at' => now()]);
         if (str_starts_with($path, 'admin/')) {
-            abort_unless($u->is_admin, 403);
+            $adminPath = substr($path, 6);
+            // 3.37.0: owner = everything; staff only what their role allows (config/permissions.php); unknown = owner only.
+            \App\Services\Access::need($r, $adminPath);
+            if ($adminPath === 'me' && $get) {
+                return $ok(['role' => \App\Services\Access::role($u), 'roleName' => \App\Services\Access::isOwner($u) ? 'Owner' : (config('permissions.roles')[\App\Services\Access::role($u)]['name'] ?? ''), 'permissions' => \App\Services\Access::permissions($u), 'modules' => array_values(array_filter(array_keys(config('permissions.modules')), fn ($m) => \App\Services\Access::moduleAllowed($u, $m))), 'authenticator' => \App\Services\Totp::enabled($u)]);
+            }
+            if (str_starts_with($adminPath, 'team') || str_starts_with($adminPath, 'audit')) {
+                return app(TeamAdminController::class)->run($r, $adminPath);
+            }
+            if ($get) {
+                return app(AdminController::class)->run($r, $adminPath);
+            }
+            // Every console change goes to the append-only audit log, with settings before and after.
+            $before = \App\Services\Audit::before($adminPath);
+            try {
+                $resp = app(AdminController::class)->run($r, $adminPath);
+            } catch (\Throwable $e) {
+                $code = $e instanceof \Symfony\Component\HttpKernel\Exception\HttpExceptionInterface ? $e->getStatusCode() : ($e instanceof ValidationException ? 422 : 500);
+                \App\Services\Audit::afterWrite($r, $adminPath, $before, $code);
+                throw $e;
+            }
+            \App\Services\Audit::afterWrite($r, $adminPath, $before, method_exists($resp, 'getStatusCode') ? $resp->getStatusCode() : 200);
 
-            return app(AdminController::class)->run($r, substr($path, 6));
+            return $resp;
+        }
+        if (str_starts_with($path, 'security/totp/')) {
+            return app(TeamAdminController::class)->totp($r, substr($path, 14));
         }
         if ($path === 'referral-rewards' && $get) {
             return $ok(ReferralRewards::status($u));
@@ -200,7 +224,7 @@ class ApiController extends Controller
             $p = DB::table('profiles')->where('owner_id', $id)->first();
             $p->email = $u->email;
 
-            return $ok(['profile' => $p, 'isOwner' => (bool) $u->is_admin, 'isPaid' => (bool) (Settings::access($id)['paid'] ?? false) || (bool) $u->is_admin, 'user' => ['id' => $id, 'email' => $u->email]]);
+            return $ok(['profile' => $p, 'isOwner' => \App\Services\Access::isStaff($u), 'consoleRole' => \App\Services\Access::role($u), 'isPaid' => (bool) (Settings::access($id)['paid'] ?? false) || (bool) $u->is_admin, 'user' => ['id' => $id, 'email' => $u->email]]);
         }
         if ($path === 'profile') {
             $v = $r->validate(['name' => 'required|string|max:120', 'phone' => 'nullable|string|max:40', 'language' => 'sometimes|in:en', 'experienceLevel' => 'required|in:fresher,experienced', 'profession' => 'required|string|max:120', 'category' => 'required|in:Technology,HR & Recruitment,Sales & Marketing,Finance,Operations,Education,Healthcare,Design,Other', 'experienceYears' => 'required|integer|min:0|max:60', 'city' => 'nullable|string|max:120', 'marketingConsent' => 'required|boolean']);

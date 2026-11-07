@@ -50,7 +50,7 @@ class AccountSecurity
     /** Owners get one code per working hour so a run of saves asks once; customers (payout details, withdrawals) keep 10 minutes. */
     public static function window(Request $r): int
     {
-        return $r->user()->is_admin ? 3600 : 600;
+        return \App\Services\Access::isStaff($r->user()) ? 3600 : 600;
     }
 
     public static function requireRecent(Request $r): void

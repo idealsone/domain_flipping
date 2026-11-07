@@ -265,7 +265,7 @@ class ContentController extends Controller
         }
         $admin = str_starts_with($path, 'admin');
         if ($admin || $path === 'workspace.html') {
-            if ($admin && (! $r->user() || $r->user()->blocked || ! $r->user()->is_admin)) {
+            if ($admin && (! $r->user() || $r->user()->blocked || ! \App\Services\Access::isStaff($r->user()))) {
                 return redirect('/'); // owner pages are invisible to everyone else
             }
             if (! $r->user()) {

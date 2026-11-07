@@ -24,6 +24,9 @@
   async function growth() {
     const root = $('#admin-growth'); if (!root) return;
     if (!$('#grTabs', root)) {
+      // Staff without growth numbers (SEO Manager, Content Editor) see only the SEO tabs.
+      const who = window.CVTaraWho ? await window.CVTaraWho.catch(() => null) : null;
+      if (who && !who.can('growth.view')) { for (const k of ['overview', 'revenue', 'customers', 'scorecard']) delete TABS[k]; if (!TABS[TAB]) TAB = 'seo'; }
       root.innerHTML = `<div class="pill-tabs" id="grTabs" role="tablist" style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px">${Object.entries(TABS).map(([k, l]) => `<button type="button" role="tab" class="button small ${k === TAB ? 'primary' : 'secondary'}" data-gtab="${k}" aria-selected="${k === TAB}">${E(l)}</button>`).join('')}</div><div id="grBody"></div>`;
       root.querySelectorAll('[data-gtab]').forEach(b => { b.onclick = () => { TAB = b.dataset.gtab; root.querySelectorAll('[data-gtab]').forEach(x => { const on = x.dataset.gtab === TAB; x.classList.toggle('primary', on); x.classList.toggle('secondary', !on); x.setAttribute('aria-selected', String(on)); }); $('#grBody', root).innerHTML = ''; D = null; growth(); }; });
     }
