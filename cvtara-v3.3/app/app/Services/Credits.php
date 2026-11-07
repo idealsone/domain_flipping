@@ -9,7 +9,7 @@ use Illuminate\Validation\ValidationException;
 /**
  * Download credits. Saving a draft is free; the first clean (watermark-free) download of a tailored resume or a cover letter
  * uses one credit of its own kind. Resume and cover-letter credits are separate pools:
- *   plan:   e.g. Job Hunt = 5 resume downloads + 5 cover-letter downloads (plus one primary resume free for life, given once after a first purchase, never again on renewals)
+ *   plan:   e.g. Job Hunt = 10 resume downloads + 10 cover-letter downloads (plus one primary resume free for life, given once after a first purchase, never again on renewals)
  *   add-on: e.g. +10 resume downloads + 10 cover-letter downloads, valid until the subscription it was bought on ends (and follows it into a renewal).
  * Downloading the same version again (another format) is free; an edited version is a new document and uses a new credit.
  * Quick Download is the exception: its one credit is bound to one resume, so edits and re-downloads of that resume stay free for 7 days,
@@ -194,7 +194,7 @@ class Credits
             }
         }
         if ($pools && $pools[0]['one']) {
-            throw ValidationException::withMessages(['limit' => $kind === 'resume' ? 'Quick Download covers one resume, and it is already used on another resume. Job Hunt adds 5 tailored resumes and 5 cover letters.' : 'Quick Download does not include cover letters. Job Hunt adds 5 cover letters and 5 tailored resumes.']);
+            throw ValidationException::withMessages(['limit' => $kind === 'resume' ? 'Quick Download covers one resume, and it is already used on another resume. Job Hunt adds 10 tailored resumes and 10 cover letters.' : 'Quick Download does not include cover letters. Job Hunt adds 10 cover letters and 10 tailored resumes.']);
         }
         throw ValidationException::withMessages(['limit' => self::outOf($kind === 'resume' ? 'resume download credits' : 'cover-letter download credits')]);
     }
