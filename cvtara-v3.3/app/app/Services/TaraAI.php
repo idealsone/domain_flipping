@@ -2,7 +2,6 @@
 
 namespace App\Services;
 
-use Anthropic\Client;
 use Anthropic\Core\Exceptions\APIConnectionException;
 use Anthropic\Core\Exceptions\APIStatusException;
 use Anthropic\Core\Exceptions\RateLimitException;
@@ -14,8 +13,6 @@ use Illuminate\Validation\ValidationException;
 /** Tara AI: writing help in the builders, powered by Claude. Off until the owner switches AI on and saves a Claude API key. */
 class TaraAI
 {
-    public const MODEL = 'claude-opus-5-5';
-
     public const FREE_DAILY = 3;
 
     public const PAID_DAILY = 20;
@@ -63,36 +60,22 @@ class TaraAI
         return ['enabled' => self::enabled(), 'left' => self::enabled() ? self::left($u) : 0, 'tasks' => array_map(fn ($t) => $t[0], self::TASKS)];
     }
 
-    /** The address of the Claude API. Tests may point it at a local stand-in, but never on a production site. */
-    private static function client(string $key, int $timeout = 50): Client
-    {
-        $o = env('CLAUDE_API_BASE');
-
-        return new Client(apiKey: $key, baseUrl: $o && config('app.env') !== 'production' ? rtrim($o, '/') : 'https://api.anthropic.com', requestOptions: ['timeout' => $timeout, 'maxRetries' => 0]);
-    }
-
     /** One request to Claude with the owner's key and model. Returns the text, or throws (refusal, empty answer, API error, or
      * the monthly cap for growth tasks). Every answer's tokens are counted on the Growth page; $purpose names who asked. */
-    public static function ask(string $system, string $prompt, int $maxTokens, int $timeout = 50, string $purpose = 'customer', ?int $ownerId = null): string
+    public static function ask(string $system, string $prompt, int $maxTokens, ?int $timeout = null, string $purpose = 'customer', ?int $ownerId = null): string
     {
         if (! Growth::aiAllowed($purpose)) {
             throw new \RuntimeException('budget');
         }
-        $p = self::config();
-        $m = self::client((string) ($p['claudeApiKey'] ?? ''), $timeout)->beta->messages->create(
-            model: $p['model'] ?? '' ?: self::MODEL,
+        $m = AiGateway::send($purpose, $ownerId, fn ($c) => $c->beta->messages->create(
+            model: AiGateway::model(),
             maxTokens: $maxTokens,
             system: $system,
             messages: [['role' => 'user', 'content' => $prompt]],
             outputConfig: ['effort' => 'medium'],
             fallbacks: 'default',
             betas: ['server-side-fallback-2026-07-01'],
-        );
-        try {
-            Growth::recordAi($purpose, (string) ($m->model ?? ''), (int) ($m->usage->inputTokens ?? 0), (int) ($m->usage->outputTokens ?? 0), $ownerId);
-        } catch (\Throwable $e) {
-            ErrorLog::exception($e); // counting must never cost the customer their answer
-        }
+        ), $timeout);
         if ($m->stopReason === 'refusal') {
             throw new \RuntimeException('refusal');
         }
@@ -103,6 +86,7 @@ class TaraAI
             }
         }
         if (trim($text) === '') {
+            AiGateway::markEmpty();
             throw new \RuntimeException('empty');
         }
 
@@ -113,8 +97,6 @@ class TaraAI
     public static function failure(\Throwable $e): string
     {
         if ($e instanceof APIStatusException && in_array($e->status ?? 0, [401, 403], true)) {
-            ErrorLog::record('error', 'ai', 'The Claude API key was refused. Check it in Owner console → Settings → Integrations → AI.');
-
             return 'The Claude API key was refused. Check it in Settings → Integrations → AI.';
         }
 
@@ -150,7 +132,7 @@ class TaraAI
         @set_time_limit(120); // shared hosting often stops PHP at 30-60 seconds; a suggestion can take longer
         $prompt = $task[1]."\n\n<text>\n".$d['text']."\n</text>".(trim((string) ($d['context'] ?? '')) !== '' ? "\n\n<job>\n".$d['context']."\n</job>" : '');
         try {
-            $text = self::ask(self::SYSTEM, $prompt, 4000 + $task[2] * 2, 50, 'customer:writing_help');
+            $text = self::ask(self::SYSTEM, $prompt, 4000 + $task[2] * 2, null, 'customer:writing_help');
             Settings::audit($u->id, 'tara_ai_suggestion', $d['task']);
 
             return $text;

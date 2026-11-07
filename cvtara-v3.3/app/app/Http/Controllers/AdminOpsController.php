@@ -144,7 +144,7 @@ class AdminOpsController extends Controller
         if ($path === 'health/history') {
             abort_unless($get, 405);
 
-            return $ok(['history' => Settings::get('healthHistory', []), 'today' => Health::snapshot()]);
+            return $ok(['history' => Settings::get('healthHistory', []), 'today' => Health::snapshot(), 'ai' => \App\Services\AiGateway::health()]);
         }
         if ($path === 'health/run') {
             abort_unless($r->isMethod('POST'), 405);
@@ -290,7 +290,9 @@ class AdminOpsController extends Controller
             $q->whereNull('resolved_at');
         }
         if (($term = trim((string) $r->query('q', ''))) !== '') {
-            $q->where('message', 'like', '%'.addcslashes($term, '%_\\').'%');
+            // A customer's error reference (request id, 3.36.0) finds its entry too.
+            $like = '%'.addcslashes($term, '%_\\').'%';
+            $q->where(fn ($w) => $w->where('message', 'like', $like)->orWhere('context', 'like', $like));
         }
         $rows = $q->orderByDesc('last_seen')->limit($limit)->get()->map(fn ($e) => (array) $e + ['resolved' => $e->resolved_at ? 'yes' : 'no'])->all();
         // failed e-mail jobs are errors too — surface them without duplicating storage

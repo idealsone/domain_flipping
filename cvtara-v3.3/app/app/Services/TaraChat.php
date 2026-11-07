@@ -208,7 +208,7 @@ class TaraChat
 
     public static function model(array $s): string
     {
-        return trim((string) ($s['model'] ?? '')) ?: ((TaraAI::config()['model'] ?? '') ?: TaraAI::MODEL);
+        return AiGateway::model($s['model'] ?? '');
     }
 
     /** The recent messages of a conversation in the shape the AI service expects (starting with the person, roles alternating). */
@@ -243,7 +243,7 @@ class TaraChat
         $links = [];
         $cards = [];
         for ($step = 0; $step < max(1, $maxSteps); $step++) {
-            $m = self::client()->beta->messages->create(
+            $m = AiGateway::send($purpose, $uid, fn ($c) => $c->beta->messages->create(
                 model: $model,
                 maxTokens: max(300, min(4000, $maxTokens)),
                 system: $system,
@@ -252,12 +252,7 @@ class TaraChat
                 outputConfig: ['effort' => 'low'],
                 fallbacks: 'default',
                 betas: ['server-side-fallback-2026-07-01'],
-            );
-            try {
-                Growth::recordAi($purpose, (string) ($m->model ?? ''), (int) ($m->usage->inputTokens ?? 0), (int) ($m->usage->outputTokens ?? 0), $uid);
-            } catch (\Throwable $e) {
-                ErrorLog::exception($e);
-            }
+            ));
             if ($m->stopReason === 'refusal') {
                 return [$refusal, $links, $cards];
             }
@@ -284,6 +279,7 @@ class TaraChat
             if (! $results) {
                 $text = trim($text);
                 if ($text === '') {
+                    AiGateway::markEmpty();
                     throw new \RuntimeException('empty');
                 }
 
@@ -325,13 +321,6 @@ class TaraChat
             .'the same version in another format is free; an edited version needs a new credit; the first primary resume after a first purchase is free once. '
             .'Refunds: within '.Refunds::DAYS.' days if the package is unused, once per customer. Support email: '.($l['email'] ?? 'support@cvtara.com').'; hours: '.($l['hours'] ?? 'Monday–Friday, 10:00 AM–6:00 PM IST').'. '
             .'Pages: My resumes /workspace.html?view=resumes, Builder /workspace.html?view=builder, ATS Match /workspace.html?view=match, Cover letters /workspace.html?view=letter, Billing & plans /workspace.html?view=billing, Job tracker /workspace.html?view=tracker, Profile and account /workspace.html?view=account. Upload an existing resume from My resumes ("Upload resume").';
-    }
-
-    public static function client(): \Anthropic\Client
-    {
-        $o = env('CLAUDE_API_BASE');
-
-        return new \Anthropic\Client(apiKey: (string) (TaraAI::config()['claudeApiKey'] ?? ''), baseUrl: $o && config('app.env') !== 'production' ? rtrim($o, '/') : 'https://api.anthropic.com', requestOptions: ['timeout' => 60, 'maxRetries' => 1]);
     }
 
     private static function toolDefs(array $on): array
@@ -605,8 +594,9 @@ class TaraChat
         $f = resource_path('frontend/customer-guide.html');
         $h = is_file($f) ? (string) file_get_contents($f) : '';
         $h = preg_replace('#<(script|style)[^>]*>.*?</\1>#si', '', $h);
+        $h = preg_replace('#<div class="vslot"[^>]*>.*?</div>|<section class="g" id="versions">.*?</section>|<header.*?</header>|<footer.*?</footer>#si', '', (string) $h); // 3.46.0: video slots and history are not answers
 
-        return mb_substr(trim(preg_replace('/\s+/', ' ', html_entity_decode(strip_tags((string) $h), ENT_QUOTES | ENT_HTML5, 'UTF-8'))), 0, 12000);
+        return mb_substr(trim(preg_replace('/\s+/', ' ', html_entity_decode(strip_tags((string) $h), ENT_QUOTES | ENT_HTML5, 'UTF-8'))), 0, 16000);
     }
 
     /**
@@ -641,6 +631,24 @@ class TaraChat
             $title = $last->score !== null ? 'Your match for '.$job.': '.$last->score.'%' : 'Your last check: '.$job;
             $line = $f['paid'] ? 'Make a version of your resume for this job and write the cover letter, both in one click.' : 'A tailored resume and cover letter for this job usually lift the match. Build them now; you pay only to download a clean copy.';
             $actions = [['label' => 'Tailor my resume for this job', 'url' => '/workspace.html?view=builder&draft='.$last->resume_id.'&fix='.$last->id], ['label' => 'Write the cover letter', 'url' => '/workspace.html?view=letter&write=1&resume='.$last->resume_id.'&scan='.$last->id]];
+        }
+        // 3.41.0: a failed payment, an ended plan or a fresh application comes before the usual next step.
+        $failed = DB::table('purchases')->where('owner_id', $u->id)->where('status', 'failed')->where('updated_at', '>', now()->subDays(3))->orderByDesc('updated_at')->first(['plan', 'updated_at']);
+        $paidSince = $failed ? DB::table('purchases')->where('owner_id', $u->id)->whereIn('status', ['paid', 'partially_refunded'])->where('purchased_at', '>', $failed->updated_at)->exists() : true;
+        $ended = ! $f['paid'] ? DB::table('purchases')->where('owner_id', $u->id)->whereIn('status', ['paid', 'partially_refunded'])->where('plan', 'not like', 'addon%')->where('access_until', '<=', now())->where('access_until', '>', now()->subDays(30))->orderByDesc('access_until')->first(['plan', 'access_until']) : null;
+        $applied = DB::table('applications')->where('owner_id', $u->id)->where('stage', 'applied')->whereNull('follow_up')->where('updated_at', '>', now()->subDays(14))->orderByDesc('updated_at')->first(['company', 'role']);
+        if ($failed && ! $paidSince) {
+            $title = 'Your payment did not go through';
+            $line = 'No money was taken for a failed payment; if your bank shows a debit, it is returned automatically. You can try again, or tell us and we will help.';
+            $actions = [['label' => 'Try the payment again', 'url' => '/checkout.html?plan='.rawurlencode((string) $failed->plan)], ['label' => 'Contact support', 'url' => '/workspace.html?support=new']];
+        } elseif ($ended) {
+            $title = 'Your '.(string) ($plans[$ended->plan]['name'] ?? 'plan').' has ended';
+            $line = 'Your resumes and letters are still here. Renew to download clean copies and tailor new versions again. There is no automatic renewal.';
+            $actions = [['label' => 'See renewal options', 'url' => '/workspace.html?view=billing']];
+        } elseif ($applied && $primary && $last) {
+            $title = 'Track your application to '.$applied->company;
+            $line = 'Add a follow-up date for the '.$applied->role.' role and we will remind you when it is time to follow up.';
+            $actions = [['label' => 'Open my applications', 'url' => '/workspace.html?view=tracker'], ['label' => 'Tailor for another job', 'url' => '/workspace.html?view=match']];
         }
         $offer = null;
         if (! $f['paid'] && $primary) {

@@ -35,6 +35,8 @@ class FakeRazorpay:
             def do_GET(self):
                 outer.calls.append(("GET", self.path, {}))
                 if not self._auth(): return self._send(401, {})
+                if self.path.split("?")[0] == "/payments":  # list (3.43.0 reconciliation); the date filter is not applied here
+                    return self._send(200, {"entity": "collection", "count": len(outer.payments), "items": list(outer.payments.values())})
                 parts = self.path.strip("/").split("/")
                 if parts[0] == "payments" and len(parts) == 2 and parts[1] in outer.payments: return self._send(200, outer.payments[parts[1]])
                 self._send(404, {"error": {"description": "not found"}})

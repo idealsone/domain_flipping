@@ -230,11 +230,11 @@ class Growth
     }
 
     /** Called after every AI request. Customer add-ons are paid for, so they are counted but never stopped by the cap. */
-    public static function recordAi(string $purpose, string $model, int $in, int $out, ?int $ownerId = null): void
+    public static function recordAi(string $purpose, string $model, int $in, int $out, ?int $ownerId = null, array $extra = []): void
     {
         $s = self::settings();
         $usd = ($in * (float) $s['inputUsdPerM'] + $out * (float) $s['outputUsdPerM']) / 1e6;
-        DB::table('ai_usage')->insert(['purpose' => mb_substr($purpose, 0, 40), 'model' => mb_substr($model, 0, 60), 'input_tokens' => $in, 'output_tokens' => $out, 'cost_paise' => (int) ceil($usd * (float) $s['usdInr'] * 100), 'created_at' => now()] + ($ownerId ? ['owner_id' => $ownerId] : []));
+        DB::table('ai_usage')->insert(['purpose' => mb_substr($purpose, 0, 40), 'model' => mb_substr($model, 0, 60), 'input_tokens' => $in, 'output_tokens' => $out, 'cost_paise' => (int) ceil($usd * (float) $s['usdInr'] * 100), 'created_at' => now()] + ($ownerId ? ['owner_id' => $ownerId] : []) + $extra);
         $b = self::budget();
         foreach ([90, 75, 50] as $step) {
             if ($b['pct'] !== null && $b['pct'] >= $step) {

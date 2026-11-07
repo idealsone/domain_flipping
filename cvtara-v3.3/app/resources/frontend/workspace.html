@@ -25,19 +25,23 @@
 </a>
 <nav class="side-nav">
 <button class="active" data-workspace-view="dashboard"><i>⌂</i>Dashboard</button>
+<div class="nav-group">My career workspace</div>
 <button data-workspace-view="resumes"><i>👑</i>My Resumes</button>
-<button data-workspace-view="builder"><i>▤</i>Resume Builder</button>
-<button data-workspace-view="match"><i>◎</i>ATS Match</button>
 <button data-workspace-view="letter"><i>✦</i>Cover Letters</button>
 <button data-workspace-view="tracker"><i>▦</i>Applications</button>
-<div class="nav-group">Plans</div>
+<div class="nav-group">Create &amp; improve</div>
+<button data-workspace-view="builder"><i>▤</i>Resume Builder</button>
+<button data-workspace-view="match"><i>◎</i>ATS Match</button>
+<button type="button" data-assist style="display:none"><i aria-hidden="true">✧</i>Career assistance</button>
+<div class="nav-group">My account</div>
 <button data-workspace-view="billing"><i>₹</i>Billing &amp; Plans</button>
-<div class="nav-group">Referral programme</div>
+<button data-workspace-view="account"><i>●</i>Account &amp; downloads</button>
 <button data-workspace-view="referrals"><i aria-hidden="true">↗</i>Refer &amp; Earn</button>
 <button data-workspace-view="wallet"><i aria-hidden="true">◍</i>My Wallet</button>
 <button data-workspace-view="referral-history"><i aria-hidden="true">≡</i>Referral history</button>
-<div class="nav-group">Account</div>
-<button data-workspace-view="account"><i>●</i>Account &amp; purchases</button>
+<div class="nav-group">Help &amp; support</div>
+<button type="button" data-support-mine><i aria-hidden="true">✉</i>Support requests</button>
+<a href="/customer-guide.html" class="side-link"><i aria-hidden="true">?</i>Help centre</a>
 <button data-workspace-view="feedback"><i>☺</i>Share feedback</button>
 </nav>
 <div class="side-plan">
@@ -57,6 +61,7 @@
 </div>
 <div class="top-actions">
 <button class="icon-button" data-theme>◐</button>
+<a class="icon-button" id="ctxHelp" href="/customer-guide.html" target="_blank" rel="noopener" title="Help for this page" aria-label="Help for this page" style="display:inline-grid;place-items:center;text-decoration:none;font-weight:800">?</a>
 <button class="button secondary small" data-workspace-view="account">My account</button>
 
 </div>
@@ -293,5 +298,6 @@
 <script src="/profile-onboarding.js"></script>
 <script src="/cover-letter-studio.js"></script>
 <script src="/product-roadmap.js"></script>
-<script src="/referral-dashboard.js" defer></script><script src="/nav-icons.js" defer></script><script src="/business-ui.js" defer></script><script src="/plans-ui.js" defer></script><script src="/workspace-ui.js" defer></script><script src="/primary-resume.js" defer></script><script src="/writing-check.js" defer></script><script src="/tara-help.js" defer></script><script src="/ats-flow.js" defer></script><script src="/job-fix.js" defer></script><script src="/fomo-popup.js" defer></script></body>
+<script src="/referral-dashboard.js" defer></script><script src="/nav-icons.js" defer></script><script src="/business-ui.js" defer></script><script src="/plans-ui.js" defer></script><script src="/workspace-ui.js" defer></script><script src="/primary-resume.js" defer></script><script src="/writing-check.js" defer></script><script src="/tara-help.js" defer></script><script src="/ats-flow.js" defer></script><script src="/job-fix.js" defer></script><script src="/fomo-popup.js" defer></script><script src="/context-help.js" defer></script>
+</body>
 </html>
