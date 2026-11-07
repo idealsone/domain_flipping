@@ -190,6 +190,34 @@ class Settings
         return ['plan' => $best[1]->plan, 'paid' => true, 'limits' => $limits, 'accessUntil' => $best[1]->access_until, 'purchase' => $best[1], 'extras' => $extra];
     }
 
+    /**
+     * The name a customer sees for their current package. A paid purchase must never read "Free":
+     * use the package's current name, then the name stored on the purchase itself (a package
+     * from an older price list), then the package that replaced it, then a readable key.
+     */
+    public static function planLabel(array $access): string
+    {
+        $plans = self::plans();
+        if (empty($access['paid'])) {
+            return (string) ($plans['free']['name'] ?? 'Free');
+        }
+        $key = (string) ($access['plan'] ?? '');
+        $stored = $access['purchase'] ? ((json_decode((string) $access['purchase']->limits_json, true) ?: [])['name'] ?? '') : '';
+        if ($key !== 'free' && ! empty($plans[$key]['name'])) {
+            return (string) $plans[$key]['name'];
+        }
+        // An older package (for example Fresher Basic from before the 3.16 price list) keeps the name it was bought under.
+        if (is_string($stored) && trim($stored) !== '' && strcasecmp(trim($stored), 'Free') !== 0) {
+            return trim($stored);
+        }
+        $alias = self::planAlias($key);
+        if ($alias !== $key && ! empty($plans[$alias]['name'])) {
+            return (string) $plans[$alias]['name'];
+        }
+
+        return $key !== '' && $key !== 'free' ? ucwords(str_replace(['-', '_'], ' ', $key)) : 'Paid plan';
+    }
+
     // The strongest active purchase wins. A partial refund keeps access; a full refund or dispute removes it.
     public static function access(int $user): array
     {

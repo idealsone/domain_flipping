@@ -19,6 +19,12 @@ First release of the V2 plan (`/mnt/project-files/v2-discovery/`). No database c
 - **One approved writing service:** the old second writing-provider path (`WritingAssistant`, the "standard" writing service and its API-key field) is removed. Writing help now runs only through the CVTara team service.
 - Test suite `s45_v2_foundations`.
 
+## 3.35.1
+- **Billing showed "Free" for a paid customer:** the package name was looked up only by the order's package key in today's price list, and fell back to "Free" when the key was not there. A paid plan now shows its current package name, then an older key's replacement (for example an old Fresher plan reads Job Hunt), then the name saved on the order, and never "Free". The same fallback is used in the Business assistant's package names.
+- **A second package no longer goes unused:** when a customer buys a package (for example Quick Download) while a different package of the same level is still running, its credits are now added after the running plan's instead of being hidden until that plan ends. Renewals of the same package work as before.
+- **Privacy policy:** a saved privacy policy holding the old analytics-consent sentences is updated by a migration; other owner wording is untouched.
+- **No analytics consent box:** the "Allow optional analytics" box is removed and Google Analytics is no longer loaded. Page visits and their sources are counted on CVTara's own server for every visitor (no third-party tools, no tracking cookies, no IP address stored). Privacy policy section 5 and the owner console's analytics switch text describe this.
+
 
 ## 3.35.0
 Includes 3.34.0 (not deployed separately). Built from the owner's "SEO Director and Chief Growth and Revenue Manager" brief, reusing the existing services; only the missing parts were added.

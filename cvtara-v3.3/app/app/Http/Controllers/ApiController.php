@@ -315,10 +315,10 @@ class ApiController extends Controller
             $exports = $pid ? DB::table('product_usage')->where('owner_id', $id)->where('action', 'export')->where('reference', 'like', $pid.':%')->count() : 0;
             $cs = Credits::status($id);
             $scans = $a['paid'] ? $cs['scans']['used'] : DB::table('ats_scans')->where('owner_id', $id)->where('status', '!=', 'void')->count();
-            $plans = Settings::plans();
+            $planName = Settings::planLabel($a);
             unset($a['purchase']);
 
-            return $ok([...$a, 'emailVerified' => ! \App\Services\EmailVerification::required($r->user()), 'jobLinks' => (bool) (((array) Settings::get('speed', []))['jobLinks'] ?? false), 'planName' => $plans[$a['plan']]['name'] ?? 'Free', 'daysLeft' => $a['accessUntil'] ? max(0, (int) ceil((strtotime($a['accessUntil']) - time()) / 86400)) : 0, 'credits' => $cs, 'caps' => ['resumes' => (int) $l['savedResumes'] + 1, 'letters' => (int) $l['savedLetters'], 'atsScans' => $cs['scans']['total'], 'exports' => null], 'used' => ['exports' => $exports, 'savedResumes' => DB::table('resume_drafts')->where('owner_id', $id)->count(), 'savedLetters' => DB::table('cover_letter_drafts')->where('owner_id', $id)->count(), 'atsScans' => $scans, 'dailyMatches' => DB::table('ats_scans')->where('owner_id', $id)->where('status', '!=', 'void')->whereDate('created_at', today())->count()]]);
+            return $ok([...$a, 'emailVerified' => ! \App\Services\EmailVerification::required($r->user()), 'jobLinks' => (bool) (((array) Settings::get('speed', []))['jobLinks'] ?? false), 'planName' => $planName, 'daysLeft' => $a['accessUntil'] ? max(0, (int) ceil((strtotime($a['accessUntil']) - time()) / 86400)) : 0, 'credits' => $cs, 'caps' => ['resumes' => (int) $l['savedResumes'] + 1, 'letters' => (int) $l['savedLetters'], 'atsScans' => $cs['scans']['total'], 'exports' => null], 'used' => ['exports' => $exports, 'savedResumes' => DB::table('resume_drafts')->where('owner_id', $id)->count(), 'savedLetters' => DB::table('cover_letter_drafts')->where('owner_id', $id)->count(), 'atsScans' => $scans, 'dailyMatches' => DB::table('ats_scans')->where('owner_id', $id)->where('status', '!=', 'void')->whereDate('created_at', today())->count()]]);
         }
         if ($path === 'resumes/import') {
             abort_unless($r->isMethod('POST'), 405);
