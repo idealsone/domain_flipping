@@ -720,7 +720,7 @@ class ApiController extends Controller
                 throw ValidationException::withMessages(['limit' => 'A free account keeps one resume. Choose a plan to create job-tailored versions and download.']);
             }
             if (! empty($acc['limits']['oneResume'])) {
-                throw ValidationException::withMessages(['limit' => 'Quick Download covers one resume. Job Hunt adds 5 tailored resumes and 5 cover letters, one for each job.']);
+                throw ValidationException::withMessages(['limit' => 'Quick Download covers one resume. Job Hunt adds 10 tailored resumes and 10 cover letters, one for each job.']);
             }
             if (DB::table('resume_drafts')->where('owner_id', $id)->count() >= Settings::get('features')['builder']['limit']) {
                 throw ValidationException::withMessages(['limit' => 'You have reached the saved resume limit for your plan. Edit an existing resume, or choose a plan with more room.']);

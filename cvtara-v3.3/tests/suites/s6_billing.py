@@ -27,7 +27,7 @@ def run(ctx, t):
     plan_end2 = db.q(q1, uid("bill-a@test.local"), "job-hunt")[0][0]; add_end2 = db.q(q1, uid("bill-a@test.local"), "addon-10")[0][0]
     t.check("after an early renewal the add-on moves to the end of the renewed plan", plan_end2 > plan_end and add_end2 == plan_end2, (plan_end2, add_end2))
     k = a.api("GET", "allowance")[1]["credits"]
-    t.check("after plan + add-on + renewal the add-on credits are still there", k["resumes"]["total"] == 15 and k["letters"]["total"] == 15 and k["addOns"]["resumes"] == 10, k)
+    t.check("after plan + add-on + renewal the add-on credits are still there", k["resumes"]["total"] == 20 and k["letters"]["total"] == 20 and k["addOns"]["resumes"] == 10, k)
 
     # F-03: coupon limits
     s, j = o.api("GET", "admin/business-controls"); bc = j["data"]

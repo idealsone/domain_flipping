@@ -92,6 +92,11 @@ First release of the V2 plan (`/mnt/project-files/v2-discovery/`). No database c
 - **One approved writing service:** the old second writing-provider path (`WritingAssistant`, the "standard" writing service and its API-key field) is removed. Writing help now runs only through the CVTara team service.
 - Test suite `s45_v2_foundations`.
 
+## 3.35.2
+- **Job Hunt (₹299, 30 days)** now gives 10 tailored resumes and 10 cover letters (was 5 and 5); 20 ATS scans are unchanged. Owner decision, 7 Nov 2026.
+- A migration updates the saved price list where Job Hunt still held 5 and 5 (and its "5 tailored resumes and 5 cover letters" card line), and gives customers on a running Job Hunt the same 10 and 10.
+- The Quick Download upgrade messages and the purchase email sample say 10 and 10.
+
 ## 3.35.1
 - **Billing showed "Free" for a paid customer:** the package name was looked up only by the order's package key in today's price list, and fell back to "Free" when the key was not there. A paid plan now shows its current package name, then an older key's replacement (for example an old Fresher plan reads Job Hunt), then the name saved on the order, and never "Free". The same fallback is used in the Business assistant's package names.
 - **A second package no longer goes unused:** when a customer buys a package (for example Quick Download) while a different package of the same level is still running, its credits are now added after the running plan's instead of being hidden until that plan ends. Renewals of the same package work as before.
