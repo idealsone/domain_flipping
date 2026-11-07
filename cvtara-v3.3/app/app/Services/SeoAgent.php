@@ -408,6 +408,8 @@ class SeoAgent
         });
         AgentLog::run('seo', 'keywords', fn () => SeoOps::syncKeywords());
         AgentLog::run('seo', 'sitemaps', fn () => SeoOps::sitemaps());
+        // 3.42.0: findings become tasks a person approves, works and verifies.
+        AgentLog::run('seo', 'tasks', fn () => ['summary' => AgentTasks::fromSeoFindings(SeoOps::siteFindings(), DB::table('seo_proposals')->where('status', 'pending')->count()).' new task(s).']);
 
         return $pulled + $made;
     }

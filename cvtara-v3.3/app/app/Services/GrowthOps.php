@@ -457,8 +457,9 @@ class GrowthOps
         $d = AgentLog::run('growth', 'diagnose', function () {
             $d = self::diagnose();
             Settings::put('growthDiagnosis', ['at' => now()->toIso8601String(), 'findings' => $d['findings'], 'biggestDrop' => $d['biggestDrop']]);
+            $tasks = AgentTasks::fromGrowthFindings($d['findings']); // 3.42.0
 
-            return ['summary' => count($d['findings']).' finding(s); top: '.($d['findings'][0]['finding'] ?? 'none').'.'];
+            return ['summary' => count($d['findings']).' finding(s), '.$tasks.' new task(s); top: '.($d['findings'][0]['finding'] ?? 'none').'.'];
         });
         $e = AgentLog::run('growth', 'experiments', fn () => self::refreshExperiments());
 

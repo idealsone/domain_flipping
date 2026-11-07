@@ -54,6 +54,9 @@ class AdminController extends Controller
         if (preg_match(TaraAdminController::ROUTES, $path)) {
             return app(TaraAdminController::class)->run($r, $path);
         }
+        if (preg_match(ApprovalsAdminController::ROUTES, $path)) {
+            return app(ApprovalsAdminController::class)->run($r, $path);
+        }
         if (preg_match(FindAdminController::ROUTES, $path)) {
             return app(FindAdminController::class)->run($r, $path);
         }

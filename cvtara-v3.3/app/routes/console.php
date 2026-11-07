@@ -28,6 +28,10 @@ Artisan::command('cvtara:cron', function () {
         if (\Illuminate\Support\Facades\Schema::hasTable('service_requests')) {
             \App\Services\ServiceRequests::runDue(1);
         }
+        // 3.42.0: approved / in-progress tasks past their due date are marked Overdue (once an hour).
+        if (\Illuminate\Support\Facades\Cache::add('tasks-overdue', 1, 3600)) {
+            \App\Services\AgentTasks::overdue();
+        }
     } catch (\Throwable $e) {
         \App\Services\ErrorLog::exception($e);
     }

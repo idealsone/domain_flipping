@@ -1,4 +1,13 @@
-# CVTara v3.41.0 — V2: customer dashboard and resume + cover letter service
+# CVTara v3.42.0 — V2: Approval Centre and agent tasks
+
+## 3.42.0
+Seventh V2 release. **Database change:** run `php artisan migrate --force` (new tables `approval_events`, `ai_tasks`, `ai_task_events`, `ai_task_evidence`; new column `agent_runs.task_id`). Nothing existing changes.
+- **Approvals & tasks** (console menu, with a count of what is waiting): one list of everything waiting for a decision, from SEO changes, refunds, Business assistant actions and agent / team tasks. Each item shows its ID, who submitted it, the agent, the action, why, cost, impact, risk, the proposed change (before and after) and the evidence. Items waiting more than 48 hours are flagged.
+  - Each kind is decided by its own existing code, so every rule still applies (an SEO change goes live through the SEO agent, a refund through the refund checks, an assistant action through its confirm step).
+  - Permission per kind in `config/approvals.php`: SEO changes and SEO tasks need SEO approve, refunds need refund rights (with a fresh sign-in check), Growth tasks need Growth approve, assistant actions and team tasks are owner only. Staff see only what they may decide. Rejecting needs a reason. Every decision is stored (Decided tab) and in the audit log.
+- **Tasks** with a real lifecycle: Draft, Submitted, Under review, Approved, In progress, Completed, Verified, plus Rejected, Blocked, Overdue, Failed, Cancelled. Rules are in the server: nobody approves or verifies a task they created; Verified needs at least one piece of evidence (a link, a number or a note) and a reviewer other than the person who did the work; Blocked, Failed and Cancelled need a reason; every move is kept in the task's history. A task can only be given to someone who works in that area.
+- **Agents create tasks:** the Growth agent's daily high and medium findings, and the SEO agent's site findings (duplicate titles, pages nothing links to, changes waiting) become submitted tasks, one open task per finding. The cron marks approved or in-progress tasks past their due date as Overdue (hourly).
+- Test suite `s51_approvals` (52 checks), plus a browser check.
 
 ## 3.41.0
 Sixth V2 release. **Database change:** run `php artisan migrate --force` (new tables `service_requests`, `service_request_events`; new column `profiles.career_goal`). Nothing existing changes.

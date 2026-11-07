@@ -59,7 +59,7 @@ return [
         'content' => 'content.edit', 'publish' => 'content.edit', 'whatsnew' => 'content.edit', 'extras' => 'content.edit',
         'growth' => 'growth.view|seo.view', 'agents' => 'growth.view|seo.view', 'operators' => 'growth.view',
         'campaigns' => 'growth.view', 'outreach' => 'growth.view', 'promos' => 'growth.view',
-        'refunds' => 'orders.view', 'referral' => 'referrals.manage', 'speed' => 'ops.view', 'team' => 'owner', 'command' => 'staff',
+        'refunds' => 'orders.view', 'referral' => 'referrals.manage', 'speed' => 'ops.view', 'team' => 'owner', 'command' => 'staff', 'approvals' => 'staff',
     ],
 
     'routes' => [
@@ -74,6 +74,11 @@ return [
         ['GET', '#^dashboard$#', 'overview.view'],
         // Ctrl+K search: every console role may search; the answer holds only the kinds the role can see.
         ['GET', '#^find$#', 'staff'],
+        // 3.42.0 Approval Centre and tasks: every item is checked again against its own permission inside.
+        ['GET', '#^approvals$#', 'staff'],
+        ['POST', '#^approvals/decide$#', 'staff'],
+        ['GET', '#^tasks(/[a-f0-9-]{36})?$#', 'seo.view|growth.view'],
+        ['POST', '#^tasks(/[a-f0-9-]{36}/(move|evidence))?$#', 'seo.draft|growth.draft|seo.approve|growth.approve'],
 
         // Owner only: keys, prices, business switches, setup, roles, the business assistant, deletes and blocks.
         ['*', '#^(settings|providers|plans|business-controls|setup/.*|team(/.*)?|tara(/.*)?|users/(block|delete)|refunds/settings|services/settings|referrals/settings|campaigns/settings|outreach/(settings|senders)|speed/(save|test-reader)|report/fresh-start|media|indexing/settings|growth/(settings|costs|levels)|errors/clear|audit(/.*)?)$#', 'owner'],
