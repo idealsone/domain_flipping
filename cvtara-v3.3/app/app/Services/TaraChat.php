@@ -594,8 +594,9 @@ class TaraChat
         $f = resource_path('frontend/customer-guide.html');
         $h = is_file($f) ? (string) file_get_contents($f) : '';
         $h = preg_replace('#<(script|style)[^>]*>.*?</\1>#si', '', $h);
+        $h = preg_replace('#<div class="vslot"[^>]*>.*?</div>|<section class="g" id="versions">.*?</section>|<header.*?</header>|<footer.*?</footer>#si', '', (string) $h); // 3.46.0: video slots and history are not answers
 
-        return mb_substr(trim(preg_replace('/\s+/', ' ', html_entity_decode(strip_tags((string) $h), ENT_QUOTES | ENT_HTML5, 'UTF-8'))), 0, 12000);
+        return mb_substr(trim(preg_replace('/\s+/', ' ', html_entity_decode(strip_tags((string) $h), ENT_QUOTES | ENT_HTML5, 'UTF-8'))), 0, 16000);
     }
 
     /**

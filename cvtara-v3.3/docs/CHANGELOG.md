@@ -1,4 +1,13 @@
-# CVTara v3.45.0 — V2: more approvable SEO changes and content versions
+# CVTara v3.46.0 — V2: guides and help centre
+
+## 3.46.0
+Eleventh V2 release. No database change.
+- **Customer guide rewritten in 16 chapters** (registration, dashboard, resume creation, upload, improvement, ATS matching, cover letters, the combined resume and cover-letter service, applications, Ask Tara, CVTara team services, plans and billing, downloads, referrals, account, help and support). The package grid now shows the packages really on sale (the old one filtered on fresher / experienced and showed nothing); outdated plan names, scan counts and the "No-Refund" footer link are gone. No mention of AI.
+- **Owner guide rewritten in 21 chapters** for the V2 console (login and security, dashboard, Command Centre, customers, orders and payments with reconciliation, libraries, templates, offers, referrals, communications, reports, support, assisted customer access, AI assistants, SEO Control Centre, Workforce Management, growth, Approval Centre, integrations, security and backups, troubleshooting).
+- Both guides: search, a last-reviewed date, a guide version and version history, and a slot for a short video in every chapter (videos are an owner content task).
+- **"?" help button** in the top bar of the owner console and the customer workspace opens the guide chapter for the page on screen.
+- Tara's product guide reads the new customer guide (without the video slots and history).
+- Test suite `s55_guides` (32 checks), plus a browser check (desktop and phone).
 
 ## 3.45.0
 Tenth V2 release. **Database change:** run `php artisan migrate --force` (new table `seo_content_versions`; new columns `seo_proposals.created_by`, `seo_proposals.task_id`, `seo_pages.reviewed_at`, `seo_pages.reviewed_by`). Nothing existing changes.
