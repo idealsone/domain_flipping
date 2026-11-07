@@ -85,7 +85,7 @@ class TaraBusiness
 
     public static function planName(string $k): string
     {
-        $p = Settings::plans()[$k] ?? null;
+        $p = Settings::plans()[$k] ?? Settings::plans()[Settings::planAlias($k)] ?? null;
 
         return $p ? (string) ($p['name'] ?? $k).(isset($p['price']) && $p['price'] ? ' (₹'.$p['price'].')' : '') : $k;
     }
