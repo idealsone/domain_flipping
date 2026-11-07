@@ -5,6 +5,7 @@
   const { $, E, api, parse, modal, toast } = K;
   const err = e => (e && e.message) || 'Something went wrong.';
   const F = { status: 'open', area: 'all', kind: 'all', q: '', page: 1 };
+  K.openSupport = q => { Object.assign(F, { q, status: 'all', page: 1 }); K.open('feedback'); }; // from Ctrl+K search
   const STATUS = { new: 'New', seen: 'Seen', working: 'In progress', resolved: 'Resolved', closed: 'Closed' };
   const tone = s => s === 'new' ? 'bad' : s === 'resolved' || s === 'closed' ? 'ok' : 'mid';
   const when = s => { const d = parse(s); return d.toLocaleDateString('en-IN', { day: 'numeric', month: 'short' }) + ' ' + d.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' }); };

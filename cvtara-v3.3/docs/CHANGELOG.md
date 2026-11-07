@@ -1,4 +1,15 @@
-# CVTara v3.38.0 — V2: one AI gateway and AI health
+# CVTara v3.39.0 — V2: grouped console menu and Ctrl+K search
+
+## 3.39.0
+Fourth V2 release. No database change.
+- **Grouped side menu:** Overview and Business assistant stay at the top. Everything else sits in five groups (Customers & orders, Content & pages, Growth & marketing, Money & plans, System) that open and close. The choice is remembered in this browser. The page you are on is never hidden inside a closed group. Groups a staff role cannot use are hidden. The menu is regrouped in the browser from the existing buttons, so every page and link works as before.
+- **Ctrl+K (⌘K on Mac) or the Search button:** go to any menu or Settings page, and search customers (name, email), orders (number, payment reference, email) and support requests.
+  - New read-only endpoint `GET /api/admin/find?q=`. It returns at most 5 of each kind, and only the kinds the person's role may see. A Content Editor gets no customer data, and a Finance Manager gets orders only.
+  - Choosing a customer opens Users filtered to them. Choosing an order opens its details, and choosing a support request opens the Support Inbox filtered to that person.
+  - The owner can hand a question to the Business assistant: it is typed into the assistant's box, never sent by itself, so any change still waits for Confirm.
+  - Recent pages and ☆ favourites are kept in this browser.
+- Test suite `s48_command`, plus a browser check (owner, all staff roles, phone width).
+
 
 ## 3.38.0
 Third V2 release. **Database change:** run `php artisan migrate --force` (new columns on `ai_usage`: `status`, `latency_ms`, `request_id`, `error`; nothing existing changes).

@@ -58,7 +58,7 @@ return [
         'content' => 'content.edit', 'publish' => 'content.edit', 'whatsnew' => 'content.edit', 'extras' => 'content.edit',
         'growth' => 'growth.view|seo.view', 'agents' => 'growth.view|seo.view', 'operators' => 'growth.view',
         'campaigns' => 'growth.view', 'outreach' => 'growth.view', 'promos' => 'growth.view',
-        'refunds' => 'orders.view', 'referral' => 'referrals.manage', 'speed' => 'ops.view', 'team' => 'owner',
+        'refunds' => 'orders.view', 'referral' => 'referrals.manage', 'speed' => 'ops.view', 'team' => 'owner', 'command' => 'staff',
     ],
 
     'routes' => [
@@ -71,6 +71,8 @@ return [
         ['GET', '#^content/(seo|blog|library|features|legal|site)$#', 'content.edit|seo.view'],
         ['GET', '#^growth/agents$#', 'growth.view|seo.view'],  // agent on/off status only
         ['GET', '#^dashboard$#', 'overview.view'],
+        // Ctrl+K search: every console role may search; the answer holds only the kinds the role can see.
+        ['GET', '#^find$#', 'staff'],
 
         // Owner only: keys, prices, business switches, setup, roles, the business assistant, deletes and blocks.
         ['*', '#^(settings|providers|plans|business-controls|setup/.*|team(/.*)?|tara(/.*)?|users/(block|delete)|refunds/settings|services/settings|referrals/settings|campaigns/settings|outreach/(settings|senders)|speed/(save|test-reader)|report/fresh-start|media|indexing/settings|growth/(settings|costs|levels)|errors/clear|audit(/.*)?)$#', 'owner'],
