@@ -23,18 +23,21 @@ Artisan::command('cvtara:cron', function () {
     };
     $mail = $send();
     MailAutomation::reminders();
-    // 3.41.0: finish resume + cover letter requests whose customer left the page (a few each minute).
-    try {
-        if (\Illuminate\Support\Facades\Schema::hasTable('service_requests')) {
-            \App\Services\ServiceRequests::runDue(1);
+    // 3.41.0-3.43.0 jobs, each on its own so one failure never stops the others (failures go to the Error Log).
+    $safe = function (callable $f) {
+        try {
+            $f();
+        } catch (\Throwable $e) {
+            \App\Services\ErrorLog::exception($e);
         }
-        // 3.42.0: approved / in-progress tasks past their due date are marked Overdue (once an hour).
-        if (\Illuminate\Support\Facades\Cache::add('tasks-overdue', 1, 3600)) {
-            \App\Services\AgentTasks::overdue();
-        }
-    } catch (\Throwable $e) {
-        \App\Services\ErrorLog::exception($e);
-    }
+    };
+    // finish resume + cover letter requests whose customer left the page (one each minute)
+    $safe(fn () => \Illuminate\Support\Facades\Schema::hasTable('service_requests') && \App\Services\ServiceRequests::runDue(1));
+    // approved / in-progress tasks past their due date are marked Overdue (once an hour)
+    $safe(fn () => \Illuminate\Support\Facades\Cache::add('tasks-overdue', 1, 3600) && \App\Services\AgentTasks::overdue());
+    // owner alerts once an hour (each written once a day), and the daily payment reconciliation after 6 AM India time
+    $safe(fn () => \Illuminate\Support\Facades\Cache::add('metrics-alerts', 1, 3600) && \App\Services\Metrics::alerts(true));
+    $safe(fn () => \Illuminate\Support\Facades\Schema::hasTable('payment_reconciliation_records') && \App\Services\Reconcile::due());
     if (\Illuminate\Support\Facades\Cache::add('retention-run', 1, 86400)) {
         \App\Services\Retention::run();
     }
@@ -290,3 +293,10 @@ Artisan::command('cvtara:prebuild', function () {
     $r = \App\Services\PageCache::build();
     $this->info('Pre-built '.$r['built'].' public pages'.($r['skipped'] ? '; could not build: '.implode(', ', $r['skipped']) : '').'.');
 })->purpose('Render every public page to a ready-made file so visitors are served without the database');
+
+// 3.43.0: docs/METRICS.md is generated from App\Services\Metrics::DEFS so the definitions match the code.
+Artisan::command('cvtara:metrics-doc {path?}', function (?string $path = null) {
+    $path ??= is_dir(base_path('../docs')) ? base_path('../docs/METRICS.md') : storage_path('app/METRICS.md');
+    file_put_contents($path, \App\Services\Metrics::markdown());
+    $this->info('Wrote '.$path);
+})->purpose('Write the metric definitions page from the code');

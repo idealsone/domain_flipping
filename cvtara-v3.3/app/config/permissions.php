@@ -59,7 +59,7 @@ return [
         'content' => 'content.edit', 'publish' => 'content.edit', 'whatsnew' => 'content.edit', 'extras' => 'content.edit',
         'growth' => 'growth.view|seo.view', 'agents' => 'growth.view|seo.view', 'operators' => 'growth.view',
         'campaigns' => 'growth.view', 'outreach' => 'growth.view', 'promos' => 'growth.view',
-        'refunds' => 'orders.view', 'referral' => 'referrals.manage', 'speed' => 'ops.view', 'team' => 'owner', 'command' => 'staff', 'approvals' => 'staff',
+        'refunds' => 'orders.view', 'referral' => 'referrals.manage', 'speed' => 'ops.view', 'team' => 'owner', 'command' => 'staff', 'approvals' => 'staff', 'metrics' => 'overview.view',
     ],
 
     'routes' => [
@@ -74,6 +74,9 @@ return [
         ['GET', '#^dashboard$#', 'overview.view'],
         // Ctrl+K search: every console role may search; the answer holds only the kinds the role can see.
         ['GET', '#^find$#', 'staff'],
+        // 3.43.0 executive numbers and payment reconciliation (running it and resolving are owner only: no rule).
+        ['GET', '#^metrics$#', 'overview.view'],
+        ['GET', '#^reconciliation$#', 'orders.view'],
         // 3.42.0 Approval Centre and tasks: every item is checked again against its own permission inside.
         ['GET', '#^approvals$#', 'staff'],
         ['POST', '#^approvals/decide$#', 'staff'],

@@ -1,4 +1,13 @@
-# CVTara v3.42.0 — V2: Approval Centre and agent tasks
+# CVTara v3.43.0 — V2: business numbers, owner alerts and payment reconciliation
+
+## 3.43.0
+Eighth V2 release. **Database change:** run `php artisan migrate --force` (new table `payment_reconciliation_records`). Nothing existing changes.
+- **One set of business numbers (`App\Services\Metrics`):** registrations, verified sign-ups, paying customers, first-time buyers, paid orders, gross collections, refunds, net revenue, payment success rate, refund requests, resumes built, ATS scans, cover letters, organic and marketing visitors, support backlog, AI service success, approvals waiting, open and overdue tasks. Each has a written definition next to the code that counts it; `docs/METRICS.md` is generated from the same list (`php artisan cvtara:metrics-doc`) and a test checks they match. Money and customer counts use the same function as the reports and the Business assistant, so a period gives the same numbers everywhere.
+- **Overview → Business numbers:** today, 7, 30 or 90 days, the time the numbers were worked out, and "not tracked" (never 0) when something is not measured, such as visitors while site analytics is off. Each tile says how it is counted.
+- **Owner alerts** on the Overview and, once a day each, in the Error Log: many failed payments, AI service failing, approvals waiting more than 48 hours, overdue tasks, payment mismatches, and campaign spend with no paying customer in 30 days.
+- **Daily payment reconciliation** (after 6 AM India time, for the day before): captured Razorpay payments are compared with CVTara's orders (paid at Razorpay but not recorded, recorded but not captured, amounts differ) and PhonePe orders still open are checked with PhonePe. Each mismatch is stored once and written to the Error Log; the owner marks it checked with a note (Overview → Payment reconciliation). Nothing is charged, refunded or granted by it. Finance can see it; only the owner can run it or mark items checked.
+- The cron's newer jobs (3.41-3.43) now each run on their own, so one failure never stops the others.
+- Test suite `s52_metrics` (39 checks), plus a browser check.
 
 ## 3.42.0
 Seventh V2 release. **Database change:** run `php artisan migrate --force` (new tables `approval_events`, `ai_tasks`, `ai_task_events`, `ai_task_evidence`; new column `agent_runs.task_id`). Nothing existing changes.
