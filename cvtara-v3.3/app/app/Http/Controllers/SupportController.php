@@ -83,7 +83,9 @@ class SupportController extends Controller
         RateLimiter::hit($key, 3600);
         Settings::audit($u->id, 'support_report', $id);
 
-        return response()->json(['ok' => true, 'id' => substr($id, 0, 8), 'message' => 'Thank you — your feedback reached our team.']);
+        \App\Services\SupportCentre::stamp($id);
+
+        return response()->json(['ok' => true, 'id' => substr($id, 0, 8), 'reference' => \App\Services\SupportCentre::ref($id), 'message' => 'Thank you — your feedback reached our team. You can follow it under My requests.']);
     }
 
     /** The public Contact page. Anyone can write; the message lands in the same owner inbox as feedback. */
@@ -126,7 +128,9 @@ class SupportController extends Controller
             RateLimiter::hit($k, 3600);
         }
 
-        return response()->json(['ok' => true, 'id' => strtoupper(substr($id, 0, 8)), 'message' => 'Thank you. Your message reached our team.']);
+        \App\Services\SupportCentre::stamp($id);
+
+        return response()->json(['ok' => true, 'id' => strtoupper(substr($id, 0, 8)), 'reference' => \App\Services\SupportCentre::ref($id), 'message' => 'Thank you. Your message reached our team.']);
     }
 
     private function bytes(string $v): int

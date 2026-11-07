@@ -33,7 +33,7 @@
   if (bar) { fab.classList.add('in-top'); bar.prepend(fab); }
 
   function form() {
-    panel.innerHTML = `<header><div><h2 id="cvSupTitle">We need your feedback</h2><p>Tell us what is working, what is not, or what you would like to see.</p></div><div class="cv-sup-tools"><button type="button" class="cv-sup-x" data-flip aria-label="Move the feedback panel to the other side" title="Move to the other side">⇄</button><button type="button" class="cv-sup-x" data-close aria-label="Close feedback">×</button></div></header>
+    panel.innerHTML = `<header><div><h2 id="cvSupTitle">We need your feedback</h2><p>Tell us what is working, what is not, or what you would like to see.</p></div><div class="cv-sup-tools"><button type="button" class="cv-sup-x" data-mine aria-label="My requests and replies" title="My requests and replies" style="width:auto;padding:0 10px;font-size:13px">My requests</button><button type="button" class="cv-sup-x" data-flip aria-label="Move the feedback panel to the other side" title="Move to the other side">⇄</button><button type="button" class="cv-sup-x" data-close aria-label="Close feedback">×</button></div></header>
 <form novalidate>
 <label class="cv-sup-f"><span>What is this about?</span><select name="area">${Object.entries(areas).map(([k, l]) => `<option value="${k}">${E(l)}</option>`).join('')}</select></label>
 <div class="cv-sup-f"><span>Type</span><div class="cv-sup-kinds" role="radiogroup" aria-label="Type of feedback">${Object.entries(kinds).map(([k, l]) => `<button type="button" role="radio" aria-checked="${k === st.kind}" data-kind="${k}">${E(l)}</button>`).join('')}</div></div>
@@ -51,7 +51,32 @@
 
   function thanks() {
     panel.innerHTML = `<header><div><h2 id="cvSupTitle">Thank you!</h2></div><button type="button" class="cv-sup-x" data-close aria-label="Close feedback">×</button></header>
-<div class="cv-sup-thanks"><p>Your feedback reached our team${st.done ? ' (reference <b>#' + E(st.done) + '</b>)' : ''}. We read every message and use it to make CVTara better.</p><button type="button" class="cv-sup-send" data-again>Send another</button></div>`;
+<div class="cv-sup-thanks"><p>Your feedback reached our team${st.done ? ' (reference <b>#' + E(st.done) + '</b>)' : ''}. We read every message and use it to make CVTara better.</p><button type="button" class="cv-sup-send" data-again>Send another</button> <button type="button" class="cv-sup-send" data-mine style="background:transparent;color:inherit;border:1px solid currentColor">See my requests</button></div>`;
+  }
+
+  // 3.40.0: the customer's own requests with the CVTara team's replies, and a reply box for each.
+  const STATUS = { new: 'Received', seen: 'Received', working: 'Being handled', resolved: 'Resolved', closed: 'Closed' };
+  const when = s => { const d = new Date(String(s).replace(' ', 'T') + (/Z|[+-]\d\d:?\d\d$/.test(s) ? '' : 'Z')); return isNaN(d) ? '' : d.toLocaleString('en-IN', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }); };
+  async function mine(openId) {
+    panel.innerHTML = `<header><div><h2 id="cvSupTitle">My requests</h2><p>Your messages to the CVTara team and our replies.</p></div><div class="cv-sup-tools"><button type="button" class="cv-sup-x" data-again aria-label="Write a new message" title="New message" style="width:auto;padding:0 10px;font-size:13px">New message</button><button type="button" class="cv-sup-x" data-close aria-label="Close">×</button></div></header><div class="cv-sup-mine"><p>Loading…</p></div>`;
+    const box = panel.querySelector('.cv-sup-mine');
+    let j; try { const r = await fetch('/api/support/mine', { credentials: 'same-origin', headers: { Accept: 'application/json' } }); j = await r.json(); if (!r.ok) throw Error(j.error || 'Could not load your requests.'); } catch (e) { box.innerHTML = `<p class="cv-sup-status bad">${E(e.message)}</p>`; return; }
+    box.innerHTML = j.tickets.length ? j.tickets.map(t => `<details class="cv-sup-ticket" data-id="${E(t.id)}" ${t.id === openId || (!openId && t === j.tickets[0]) ? 'open' : ''} style="border:1px solid rgba(100,116,139,.35);border-radius:10px;padding:8px 10px;margin:0 0 8px">
+      <summary style="cursor:pointer"><b>${E(t.reference)}</b> · ${E(STATUS[t.status] || t.status)} · <small>${E(when(t.at))}</small><br><small>${E(String(t.message).slice(0, 90))}</small></summary>
+      <div style="margin-top:8px;display:grid;gap:6px"><div style="white-space:pre-wrap;font-size:14px"><small>You wrote</small><br>${E(t.message)}</div>
+      ${t.messages.map(m => `<div style="padding:6px 8px;border-radius:8px;${m.from === 'customer' ? 'border:1px solid rgba(100,116,139,.3)' : 'background:rgba(37,99,235,.08)'}"><small>${E(m.author)} · ${E(when(m.at))}</small><div style="white-space:pre-wrap">${E(m.body)}</div></div>`).join('')}
+      <form class="cv-sup-reply" data-reply="${E(t.id)}" style="display:grid;gap:6px"><textarea name="body" rows="2" maxlength="5000" placeholder="Write a reply…" required></textarea><button type="submit" class="cv-sup-send">Send reply</button><p class="cv-sup-status" role="status"></p></form></div></details>`).join('') : '<p>You have not sent us anything yet. Use “New message” to ask a question or report a problem.</p>';
+  }
+  async function reply(f) {
+    const body = f.body.value.trim(), say2 = (m, bad) => { const x = f.querySelector('.cv-sup-status'); x.textContent = m; x.classList.toggle('bad', !!bad); };
+    if (body.length < 2) { say2('Write a reply first.', true); return; }
+    const btn = f.querySelector('button'); btn.disabled = true; say2('Sending…');
+    try {
+      const r = await fetch('/api/support/mine/' + encodeURIComponent(f.dataset.reply) + '/reply', { method: 'POST', credentials: 'same-origin', headers: { Accept: 'application/json', 'Content-Type': 'application/json', 'X-CSRF-TOKEN': await window.CVTaraCSRF() }, body: JSON.stringify({ body }) });
+      let j = {}; try { j = await r.json(); } catch { /* not JSON */ }
+      if (!r.ok) throw Error(j.error || j.message || 'Could not send your reply. Please try again.');
+      mine(f.dataset.reply);
+    } catch (e) { say2(e.message, true); btn.disabled = false; }
   }
 
   const bytes = n => n > 1048576 ? (n / 1048576).toFixed(1) + ' MB' : Math.max(1, Math.round(n / 1024)) + ' KB';
@@ -115,6 +140,7 @@
     if (e.target.closest('[data-close]')) return close();
     if (e.target.closest('[data-flip]')) { try { localStorage.setItem('cvtara-feedback-side', side() === 'left' ? 'right' : 'left'); } catch { /* keep the current side */ } root.dataset.side = side(); return; }
     if (e.target.closest('[data-again]')) { st.done = null; form(); return; }
+    if (e.target.closest('[data-mine]')) { mine(); return; }
     const k = e.target.closest('[data-kind]'); if (k) { st.kind = k.dataset.kind; panel.querySelectorAll('[data-kind]').forEach(b => b.setAttribute('aria-checked', String(b === k))); return; }
     const s = e.target.closest('[data-star]'); if (s) { st.rating = st.rating === +s.dataset.star ? 0 : +s.dataset.star; panel.querySelectorAll('[data-star]').forEach(b => { const on = +b.dataset.star <= st.rating; b.setAttribute('aria-checked', String(+b.dataset.star === st.rating)); b.classList.toggle('on', on); }); return; }
     const rm = e.target.closest('[data-rm]'); if (rm) { const [x] = st.files.splice(+rm.dataset.rm, 1); if (x) URL.revokeObjectURL(x.url); thumbs(); return; }
@@ -122,5 +148,7 @@
   });
   panel.addEventListener('change', e => { if (e.target.id === 'cvSupFiles') { addFiles([...e.target.files]); e.target.value = ''; } });
   panel.addEventListener('input', e => { if (e.target.name === 'message') panel.querySelector('#cvSupCount').textContent = e.target.value.length + ' / 4000'; });
-  panel.addEventListener('submit', e => { if (e.target.matches('form')) submit(e); });
+  panel.addEventListener('submit', e => { if (e.target.matches('form[data-reply]')) { e.preventDefault(); reply(e.target); return; } if (e.target.matches('form')) submit(e); });
+  // The email about a reply links to ?support=mine: open the list straight away.
+  if (new URLSearchParams(location.search).get('support') === 'mine') { open(); mine(); }
 })();

@@ -476,6 +476,15 @@
       "delayHours": 0,
       "subject": "Your {{plan_name}} payment failed, {{name}}. No money was taken",
       "body": "# The payment did not go through\n[preheader: Nothing was charged. You can try again safely with the same package.]\nHi {{name}}, the payment for {{plan_name}} ({{amount}}) was declined by the payment gateway, so nothing was charged and no package was added.\n\nThe usual reasons are a UPI app that timed out, a bank OTP that did not arrive, or a card that is not enabled for online payments. Trying again with UPI or another card usually works:\n\n[button: Try the payment again | {{checkout_url}}]\n\nIf money was taken from your account anyway, do not pay again. Reply to this mail with the time of the payment and we will check it with the gateway. Banks return failed payments automatically, usually within 5 to 7 working days."
+    },
+    {
+      "id": "support-reply",
+      "name": "Support reply",
+      "trigger": "support_reply",
+      "enabled": true,
+      "delayHours": 0,
+      "subject": "We replied to your request {{ticket_ref}}",
+      "body": "# We replied to your request\n[preheader: The CVTara team answered your request {{ticket_ref}}.]\nHi {{name}},\n\nThe CVTara team replied to your request {{ticket_ref}}:\n\n{{reply}}\n\n[button: Read and reply | {{ticket_url}}]\n\nYou can also reply from Feedback → My requests in your account."
     }
   ],
   "popup": {

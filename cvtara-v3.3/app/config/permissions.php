@@ -22,6 +22,7 @@ return [
         'services.manage' => 'Work the Expert Review / Profile Boost queue',
         'support.view' => 'Read support tickets',
         'support.manage' => 'Answer, assign and close support tickets',
+        'customers.view_as' => 'Open a read-only view of a customer\'s account from a support ticket (30 minutes, every page logged)',
         'content.edit' => 'Edit site content, guides, reviews, What\'s new and templates',
         'seo.view' => 'See SEO pages, keywords and the SEO agent',
         'seo.draft' => 'Run SEO scans and record keywords and link prospects',
@@ -37,9 +38,9 @@ return [
 
     'roles' => [
         'admin' => ['name' => 'Admin', 'about' => 'Day-to-day operations. No keys, prices, deletes, roles or business assistant.',
-            'can' => ['overview.view', 'customers.view', 'customers.manage', 'orders.view', 'orders.refund', 'services.manage', 'support.view', 'support.manage', 'content.edit', 'seo.view', 'seo.draft', 'seo.approve', 'growth.view', 'growth.draft', 'growth.approve', 'reports.view', 'ops.view', 'ops.manage', 'referrals.manage']],
+            'can' => ['overview.view', 'customers.view', 'customers.manage', 'customers.view_as', 'orders.view', 'orders.refund', 'services.manage', 'support.view', 'support.manage', 'content.edit', 'seo.view', 'seo.draft', 'seo.approve', 'growth.view', 'growth.draft', 'growth.approve', 'reports.view', 'ops.view', 'ops.manage', 'referrals.manage']],
         'support_manager' => ['name' => 'Support Manager', 'about' => 'Runs support: all tickets, customer lookups, orders, Expert Review queue.',
-            'can' => ['overview.view', 'customers.view', 'orders.view', 'services.manage', 'support.view', 'support.manage', 'ops.view']],
+            'can' => ['overview.view', 'customers.view', 'customers.view_as', 'orders.view', 'services.manage', 'support.view', 'support.manage', 'ops.view']],
         'support_agent' => ['name' => 'Support Agent', 'about' => 'Answers support tickets and looks up customers.',
             'can' => ['customers.view', 'support.view', 'support.manage']],
         'seo_manager' => ['name' => 'SEO Manager', 'about' => 'SEO research, scans and drafts. Changes still need an Admin or the owner to approve.',
@@ -86,6 +87,11 @@ return [
         ['GET', '#^services(/[0-9a-f-]{36})?$#', 'services.manage'],
         ['POST', '#^services/[0-9a-f-]{36}/(review|resend|retry)$#', 'services.manage'],
 
+        ['GET', '#^support/team$#', 'support.manage'],
+        ['POST', '#^support/new$#', 'support.manage'],
+        ['GET', '#^support/users/\d+$#', 'customers.view'],
+        ['POST', '#^support/view/sessions/[a-f0-9-]{36}/end$#', 'owner'],
+        ['*', '#^support/view/(start|end|sessions)$#', 'customers.view_as'],
         ['GET', '#^support(/summary|/[a-f0-9-]{36}|/file/[a-f0-9-]{36})?$#', 'support.view'],
         ['POST', '#^support/[a-f0-9-]{36}$#', 'support.manage'],
 

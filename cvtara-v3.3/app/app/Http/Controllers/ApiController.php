@@ -148,6 +148,11 @@ class ApiController extends Controller
 
             return $ok();
         }
+        // 3.40.0: a staff member with a read-only customer view open is answered as that customer for allowed reads only.
+        if ($u && ($viewed = \App\Services\SupportView::swap($r, $path))) {
+            $u = $viewed;
+            $id = $u->id;
+        }
         abort_unless($u, 401);
         abort_if($u->blocked, 403);
         DB::table('profiles')->insertOrIgnore(['owner_id' => $id, 'name' => $u->name, 'created_at' => now(), 'updated_at' => now()]);
@@ -179,6 +184,28 @@ class ApiController extends Controller
         }
         if (str_starts_with($path, 'security/totp/')) {
             return app(TeamAdminController::class)->totp($r, substr($path, 14));
+        }
+        // 3.40.0 Support Centre: the customer's own tickets and replies; the staff member's read-only view controls.
+        if ($path === 'support/mine' && $get) {
+            return $ok(['tickets' => \App\Services\SupportCentre::mine($u)]);
+        }
+        if (preg_match('#^support/mine/([a-f0-9-]{36})/reply$#', $path, $m) && $r->isMethod('POST')) {
+            $cap('support-reply', 20, 3600, 'You have sent several replies. Please wait a while before sending another.');
+            $v = $r->validate(['body' => 'required|string|min:2|max:5000']);
+            $t = DB::table('support_reports')->where('id', $m[1])->where('owner_id', $id)->first();
+            abort_unless($t, 404);
+            \App\Services\SupportCentre::add($t->id, $id, 'customer', $v['body']);
+            DB::table('support_reports')->where('id', $t->id)->update(['last_customer_at' => now(), 'updated_at' => now()] + (in_array($t->status, ['resolved', 'closed'], true) ? ['status' => 'new', 'resolved_at' => null] : []));
+
+            return $ok(['tickets' => \App\Services\SupportCentre::mine($u)]);
+        }
+        if ($path === 'support-view' && $get) {
+            return $ok(\App\Services\SupportView::status($r));
+        }
+        if ($path === 'support-view/end' && $r->isMethod('POST')) {
+            \App\Services\SupportView::end($r);
+
+            return $ok(['active' => false]);
         }
         if ($path === 'referral-rewards' && $get) {
             return $ok(ReferralRewards::status($u));

@@ -1,4 +1,14 @@
-# CVTara v3.39.0 — V2: grouped console menu and Ctrl+K search
+# CVTara v3.40.0 — V2: Support Centre and read-only customer view
+
+## 3.40.0
+Fifth V2 release. **Database change:** run `php artisan migrate --force` (new columns on `support_reports`: `reference`, `priority`, `channel`, `assigned_to`, `first_response_at`, `last_customer_at`; new tables `support_ticket_messages`, `support_sessions`, `support_session_events`). Existing owner notes become each ticket's first internal note; nothing existing is removed.
+- **Ticket conversations:** every request gets a reference (S-XXXXXX). Staff reply to the customer (sent by email as "CVTara team", template `support-reply`, editable under Emails) or add internal notes the customer never sees. First response time is recorded. Priority (low, normal, high, urgent) and "Handled by" (only people who can answer tickets). Owner-only delete.
+- **Staff open tickets** for a customer who phoned or wrote in (channel "staff").
+- **Support profile:** plan, orders, document counts, recent activity, errors and tickets for one customer, without document text, passwords or payout details.
+- **Customers see their requests:** "My requests" in the Feedback panel shows each request with the team's replies and a reply box (20 replies an hour). The reply email links straight to it.
+- **Read-only customer view:** Support Managers and admins (new permission `customers.view_as`) can open a customer's workspace from a ticket, with a written reason and a fresh sign-in check, for 30 minutes. The server answers only listed reads (profile, resumes, letters, applications, scans, purchases, notifications); every change, download, payout, wallet, referral and security page is refused. Every request is logged; the ticket gets a note and the audit log an entry. The view ends on Exit, after 30 minutes, when the owner ends it (Support Inbox > Customer view log), or at once when the staff member loses the permission. A banner shows whose account is open and the time left.
+- Test suite `s49_support` (54 checks), plus a browser check of the customer panel and the view banner.
+
 
 ## 3.39.0
 Fourth V2 release. No database change.

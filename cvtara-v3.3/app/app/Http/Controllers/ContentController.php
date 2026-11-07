@@ -515,6 +515,7 @@ class ContentController extends Controller
         }
         if ($path === 'workspace.html') {
             $scripts .= '<script src="/support-widget.js" defer></script>';
+            $scripts .= '<script src="/support-view.js" defer></script>';
             $scripts .= '<script src="/tara-chat.js" defer></script>';
         }
         $html = str_replace('</body>', $scripts.'</body>', $html);

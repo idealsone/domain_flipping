@@ -92,7 +92,7 @@ def run(ctx, t):
     s, _ = send(cust, {**BASE, "message": "<script>alert('x')</script> markup in the message"}); lst = o.api("GET", "admin/support")[1]["rows"]
     t.check("markup in a message is kept as plain text for the inbox to escape", s == 200 and any("<script>" in r["message"] for r in lst))
     js = open(os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "app", "resources", "console", "feedback.js"), encoding="utf8").read()
-    t.check("the inbox page escapes everything it prints", "E(r.message)" in js and "E(r.admin_note" in js and "innerHTML" in js)
+    t.check("the inbox page escapes everything it prints", "E(r.message)" in js and "E(x.body)" in js and "E(x.author)" in js and "innerHTML" in js)
 
     # report rate limit (10 an hour per customer)
     more = ctx.client(); more.register("sup-b@test.local"); codes = [send(more, {**BASE, "message": f"Report number {i} about the tracker page."})[0] for i in range(12)]
