@@ -1,4 +1,13 @@
-# CVTara v3.44.0 — V2: SEO page record and audit history
+# CVTara v3.45.0 — V2: more approvable SEO changes and content versions
+
+## 3.45.0
+Tenth V2 release. **Database change:** run `php artisan migrate --force` (new table `seo_content_versions`; new columns `seo_proposals.created_by`, `seo_proposals.task_id`, `seo_pages.reviewed_at`, `seo_pages.reviewed_by`). Nothing existing changes.
+- **More kinds of SEO change to approve:** besides titles, descriptions and internal links, a new main heading (H1), extra FAQ questions (also added to the FAQ structured data), structured data (Article, or SoftwareApplication for the free tools only, built from the page's own heading and description, author "CVTara team") and content briefs. Only the ready-made SEO pages can be changed.
+- **Drafting:** SEO Managers, Admins and the owner draft from a page's record (Propose a change). Drafts are cleaned of markup and refused if they mention AI, other brands or promises. A different person with SEO approve rights decides in Approvals & tasks (the owner excepted); the review shows the before and after in plain lists.
+- **Content versions:** every change that goes live is kept with its before and after, who applied it and when, and can be undone in one click. About a minute after it goes live (or is undone) the live page is fetched and checked; the result (Seen live / Not live) shows on the page record, and on the SEO task's evidence when the draft was linked to a task.
+- **Content briefs:** the SEO agent drafts up to two a day for topics missing from the topic groups, each once. An approved brief becomes an approved writing task; it changes no page.
+- **Editorial review line** on SEO pages ("Written by the CVTara team"), and "Reviewed by the CVTara team on <date>" (also on guides) only after a person presses "I reviewed this page today". No invented authors or dates.
+- Test suite `s54_seo_changes` (50 checks), plus a browser check (desktop and phone).
 
 ## 3.44.0
 Ninth V2 release. **Database change:** run `php artisan migrate --force` (new table `seo_page_audits`; new columns on `seo_pages`). Nothing existing changes.

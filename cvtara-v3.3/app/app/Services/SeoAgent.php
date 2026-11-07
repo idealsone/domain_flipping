@@ -333,18 +333,35 @@ class SeoAgent
         }
     }
 
-    public static function decide(string $id, string $action): object
+    public static function decide(string $id, string $action, ?\App\Models\User $by = null): object
     {
         $p = DB::table('seo_proposals')->where('id', $id)->first();
         abort_unless($p, 404);
+        // 3.45.0: nobody approves a change they drafted themselves (the owner excepted, as everywhere else).
+        abort_if($action === 'approve' && $by && ($p->created_by ?? null) !== null && (int) $p->created_by === $by->id && ! Access::isOwner($by), 403, 'Someone else has to approve a change you drafted.');
         $o = self::overrides();
         $data = json_decode($p->data_json, true);
         $touched = [$p->path];
         if ($action === 'approve') {
             abort_unless($p->status === 'pending', 422, 'This change was already decided.');
             abort_unless(SeoPages::owns(ltrim($p->path, '/')) && SeoPages::find($p->path), 422, 'This page no longer exists, so the change cannot go live.');
-            if ($p->kind === 'meta') {
+            if ($p->kind === 'brief') { // a brief changes no page: it becomes an approved writing task for the SEO area
+                $task = AgentTasks::create(null, ['agent' => 'seo', 'title' => 'Write: '.$data['topic'], 'priority' => 'normal', 'fingerprint' => 'brief:'.$p->id,
+                    'detail' => "Content brief approved in the Approval Centre.\nTarget search: ".($data['keyword'] ?: '—')."\nTopic group: ".($data['cluster'] ?: '—')."\nOutline:\n- ".implode("\n- ", $data['outline'] ?: ['—'])."\nNotes: ".$data['notes']."\nWhy: ".$p->reason]);
+                if ($by) {
+                    AgentTasks::decide($by, $task, 'approved', 'Brief approved');
+                }
+                DB::table('seo_proposals')->where('id', $id)->update(['task_id' => $task]);
+                $touched = [];
+            } elseif ($p->kind === 'meta') {
                 $o[$p->path] = array_merge($o[$p->path] ?? [], ['title' => $data['title'], 'description' => $data['description'], 'metaId' => $p->id]);
+            } elseif ($p->kind === 'h1') {
+                $o[$p->path] = array_merge($o[$p->path] ?? [], ['h1' => $data['h1'], 'h1Id' => $p->id]);
+            } elseif ($p->kind === 'faq') {
+                $o[$p->path]['faq'] = array_merge($o[$p->path]['faq'] ?? [], array_map(fn ($i) => [$i[0], $i[1], $p->id], $data['items']));
+            } elseif ($p->kind === 'schema') {
+                $o[$p->path]['schema'] = array_values(array_filter($o[$p->path]['schema'] ?? [], fn ($x) => $x[0] !== $data['type']));
+                $o[$p->path]['schema'][] = [$data['type'], $p->id, now()->toDateString()];
             } else {
                 foreach ($data['from'] as $src) {
                     $links = array_values(array_filter($o[$src]['links'] ?? [], fn ($l) => $l[0] !== $p->path));
@@ -359,10 +376,17 @@ class SeoAgent
             $status = 'rejected';
         } else {
             abort_unless($p->status === 'approved', 422, 'Only a live change can be undone.');
+            abort_if($p->kind === 'brief', 422, 'A brief is undone by cancelling its task.');
             if ($p->kind === 'meta') {
                 if (($o[$p->path]['metaId'] ?? null) === $p->id) {
                     unset($o[$p->path]['title'], $o[$p->path]['description'], $o[$p->path]['metaId']);
                 }
+            } elseif ($p->kind === 'h1') {
+                if (($o[$p->path]['h1Id'] ?? null) === $p->id) {
+                    unset($o[$p->path]['h1'], $o[$p->path]['h1Id']);
+                }
+            } elseif (in_array($p->kind, ['faq', 'schema'], true)) {
+                $o[$p->path][$p->kind] = array_values(array_filter($o[$p->path][$p->kind] ?? [], fn ($x) => ($x[$p->kind === 'faq' ? 2 : 1] ?? '') !== $p->id));
             } else {
                 foreach ($o as $src => $v) {
                     if (! empty($v['links'])) {
@@ -371,12 +395,18 @@ class SeoAgent
                     }
                 }
             }
-            $o = array_filter($o, fn ($v) => ! empty($v['title']) || ! empty($v['links']));
+            $o = array_filter($o, fn ($v) => ! empty($v['title']) || ! empty($v['links']) || ! empty($v['h1']) || ! empty($v['faq']) || ! empty($v['schema']));
             $status = 'reverted';
         }
         Settings::put('seoOverrides', $o);
         DB::table('seo_proposals')->where('id', $id)->update(['status' => $status, 'decided_at' => now(), 'updated_at' => now()]);
         self::forget(array_unique($touched));
+        // 3.45.0: each change that goes live (or is undone) is a content version, checked on the live page a minute later.
+        if ($status === 'approved') {
+            SeoContent::recordApply($p, $by);
+        } elseif ($status === 'reverted') {
+            SeoContent::recordUndo($p, $by);
+        }
 
         return DB::table('seo_proposals')->where('id', $id)->first();
     }
@@ -407,6 +437,9 @@ class SeoAgent
             return $m + ['summary' => 'Proposed '.$m['meta'].' title change(s) and '.$m['links'].' internal-link change(s) for your approval.'];
         });
         AgentLog::run('seo', 'keywords', fn () => SeoOps::syncKeywords());
+        if (\Illuminate\Support\Facades\Schema::hasColumn('seo_proposals', 'created_by')) { // 3.45.0: content briefs for missing topics
+            AgentLog::run('seo', 'briefs', fn () => ['summary' => SeoContent::autoBriefs().' content brief(s) drafted for your approval.']);
+        }
         AgentLog::run('seo', 'sitemaps', fn () => SeoOps::sitemaps());
         // 3.42.0: findings become tasks a person approves, works and verifies.
         AgentLog::run('seo', 'tasks', fn () => ['summary' => AgentTasks::fromSeoFindings(SeoOps::siteFindings(), DB::table('seo_proposals')->where('status', 'pending')->count()).' new task(s).']);
@@ -436,6 +469,10 @@ class SeoAgent
 
                 return ['summary' => count($a['findings']) ? count($a['findings']).' crawler access problem(s): '.$a['findings'][0]['text'] : 'Search and AI crawlers can reach public pages; private areas are closed.'];
             });
+        }
+        // 3.45.0: check approved and undone changes on the live page.
+        if (SeoContent::ready() && \Illuminate\Support\Facades\Cache::add('seo-verify', 1, 240) && DB::table('seo_content_versions')->where('verify_status', 'pending')->exists()) {
+            AgentLog::run('seo', 'verify-changes', fn () => SeoContent::verifyDue());
         }
         // 3.44.0: once a day, the full checklist audit (the link graph changes as pages are scanned) and, with a key, Core Web Vitals.
         if (! Traffic::busy() && \Illuminate\Support\Facades\Cache::add('seo-audit', 1, 86400)) {

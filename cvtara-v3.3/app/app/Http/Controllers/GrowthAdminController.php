@@ -63,10 +63,11 @@ class GrowthAdminController extends Controller
                     $d = (array) ($x['data'] ?? []);
                     $b = (array) ($x['before'] ?? []);
 
-                    return ['Proposed' => $x['createdAt'], 'Kind' => $x['kind'] === 'meta' ? 'Title and description' : 'Internal link', 'Page' => $x['path'], 'Search' => $x['query'], 'Status' => ucfirst((string) $x['status']),
+                    return ['Proposed' => $x['createdAt'], 'Kind' => \App\Services\SeoContent::KINDS[$x['kind']] ?? $x['kind'], 'Page' => $x['path'], 'Search' => $x['query'], 'Status' => ucfirst((string) $x['status']),
                         'Why' => $x['reason'], 'Impressions' => (int) $x['impressions'], 'Position' => (float) $x['position'],
                         'Now' => $x['kind'] === 'meta' ? trim(($b['title'] ?? '').' / '.($b['description'] ?? ''), ' /') : '',
-                        'Change' => $x['kind'] === 'meta' ? trim(($d['title'] ?? '').' / '.($d['description'] ?? ''), ' /') : 'Link "'.($d['label'] ?? '').'" on '.implode(', ', $d['from'] ?? []),
+                        'Change' => match ($x['kind']) { 'meta' => trim(($d['title'] ?? '').' / '.($d['description'] ?? ''), ' /'), 'h1' => (string) ($d['h1'] ?? ''), 'faq' => implode(' | ', array_map(fn ($i) => $i[0], $d['items'] ?? [])),
+                            'schema' => (string) ($d['type'] ?? ''), 'brief' => (string) ($d['topic'] ?? ''), default => 'Link "'.($d['label'] ?? '').'" on '.implode(', ', $d['from'] ?? []) },
                         'Decided' => $x['decidedAt']];
                 }, $rows)],
             ], fn ($p) => ['id' => $p->id, 'kind' => $p->kind, 'path' => $p->path, 'query' => $p->query, 'status' => $p->status, 'reason' => $p->reason, 'impressions' => (int) $p->impressions, 'position' => (float) $p->position,
@@ -118,6 +119,11 @@ class GrowthAdminController extends Controller
             $p = (string) $r->query('path', '/');
 
             return $ok(SeoOps::history($p) + SeoAudit::page($p)); // 3.44.0: record, checklist and audit history
+        }
+        if ($path === 'growth/seo/versions' && $get) {
+            $p = $r->query('path');
+
+            return $ok(['rows' => \App\Services\SeoContent::versions(is_string($p) && $p !== '' ? $p : null), 'kinds' => \App\Services\SeoContent::KINDS, 'schemaTypes' => \App\Services\SeoContent::SCHEMA_TYPES]);
         }
         if ($path === 'growth/seo/audit-lists' && $get) {
             return $ok(SeoAudit::lists());
@@ -239,6 +245,29 @@ class GrowthAdminController extends Controller
             SeoAudit::run(DB::table('seo_pages')->where('important', true)->pluck('path')->all());
 
             return $ok($out);
+        }
+        // 3.45.0 drafted changes, content versions and editorial review.
+        if ($path === 'growth/seo/draft') {
+            $v = $r->validate(['kind' => 'required|in:'.implode(',', array_keys(\App\Services\SeoContent::KINDS)), 'path' => ['nullable', 'string', 'max:255', 'regex:#^/[a-zA-Z0-9/_.\-]*$#'], 'data' => 'required|array',
+                'reason' => 'required|string|min:10|max:2000', 'taskId' => 'nullable|uuid']);
+            abort_unless(\Illuminate\Support\Facades\RateLimiter::attempt('seo-draft:'.$r->user()->id, 30, fn () => true, 3600), 429, 'Thirty drafts an hour at most.');
+            if (! empty($v['taskId'])) {
+                abort_unless(DB::table('ai_tasks')->where('id', $v['taskId'])->where('agent', 'seo')->exists(), 422, 'That is not an SEO task.');
+            }
+
+            return $ok(['id' => \App\Services\SeoContent::propose($r->user(), $v['kind'], (string) ($v['path'] ?? ''), $v['data'], $v['reason'], $v['taskId'] ?? null)]);
+        }
+        if (preg_match('#^growth/seo/versions/(\d+)/verify$#', $path, $m)) {
+            abort_unless(\Illuminate\Support\Facades\RateLimiter::attempt('seo-verify:'.$r->user()->id, 20, fn () => true, 60), 429, 'Twenty checks a minute at most.');
+            $x = \App\Services\SeoContent::verify((int) $m[1]);
+
+            return $ok(['status' => $x->verify_status, 'note' => $x->verify_note]);
+        }
+        if ($path === 'growth/seo/page/reviewed') {
+            $p = (string) $r->validate(['path' => ['required', 'string', 'max:255', 'regex:#^/[a-zA-Z0-9/_.\-]*$#']])['path'];
+            \App\Services\SeoContent::markReviewed($r->user(), $p);
+
+            return $ok(SeoAudit::page($p));
         }
         if ($path === 'growth/seo/keyword') {
             $v = $r->validate(['keyword' => 'required|string|min:2|max:190', 'target' => ['nullable', 'regex:#^/[a-zA-Z0-9/_.-]*$#', 'max:255'], 'notes' => 'nullable|string|max:300']);
@@ -378,7 +407,7 @@ class GrowthAdminController extends Controller
         }
         if ($path === 'growth/seo/decide') {
             $v = $r->validate(['id' => ['required', 'regex:/^[a-f0-9-]{36}$/'], 'action' => 'required|in:approve,reject,undo']);
-            $p = SeoAgent::decide($v['id'], $v['action']);
+            $p = SeoAgent::decide($v['id'], $v['action'], $r->user());
             Settings::audit($r->user()->id, 'seo_change_'.$v['action'], $p->kind.' '.$p->path);
 
             return $ok(['status' => $p->status]);

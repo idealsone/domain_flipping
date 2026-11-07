@@ -19,7 +19,7 @@
   const OPERATORS = ['reach', 'customers', 'scorecard'];
   const load = (name, src) => window[name] ? Promise.resolve() : new Promise((ok, no) => { const s = document.createElement('script'); s.src = src; s.onload = ok; s.onerror = () => no(new Error('Could not load the agent pages. Refresh and try again.')); document.head.append(s); });
   function agentsJs() {
-    return OPERATORS.includes(TAB) ? load('CVTaraOperators', '/console/operators.js?v=3.35.0') : load('CVTaraAgents', '/console/agents.js?v=3.44.0');
+    return OPERATORS.includes(TAB) ? load('CVTaraOperators', '/console/operators.js?v=3.35.0') : load('CVTaraAgents', '/console/agents.js?v=3.45.0');
   }
   async function growth() {
     const root = $('#admin-growth'); if (!root) return;
@@ -89,7 +89,7 @@
     reports(h); seo(h);
   }
 
-  const KIND = { meta: 'New title and description', links: 'Links from related pages' };
+  const KIND = { meta: 'New title and description', links: 'Links from related pages', h1: 'New main heading', faq: 'More FAQ questions', schema: 'Structured data', brief: 'Content brief' };
   const ST = { pending: ['Waiting for you', 'mid'], approved: ['Live', 'ok'], rejected: ['Rejected', ''], reverted: ['Undone', ''] };
   const P = { page: 1, per: 20, status: 'pending', kind: 'all', from: '', to: '' };
   async function seo(h) {
@@ -158,8 +158,12 @@
       l.innerHTML = d.rows.length ? d.rows.map(p => `<div class="panel panel-pad" style="margin-bottom:8px"><div style="display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap"><b>${E(KIND[p.kind] || p.kind)} · <a href="${E(p.path)}" target="_blank" rel="noopener">${E(p.path)}</a></b><span class="pill ${(ST[p.status] || ['', ''])[1]}">${E((ST[p.status] || [p.status])[0])}</span></div>
         <p class="muted" style="margin:6px 0">${E(p.reason)}</p>
         ${p.kind === 'meta' ? `<table class="ad-table"><tbody><tr><th>Now</th><td>${E(p.before.title)}<br><small>${E(p.before.description)}</small></td></tr><tr><th>Proposed</th><td><b>${E(p.data.title)}</b><br><small>${E(p.data.description)}</small></td></tr></tbody></table>`
+          : p.kind === 'h1' ? `<table class="ad-table"><tbody><tr><th>Now</th><td>${E(p.before.h1)}</td></tr><tr><th>Proposed</th><td><b>${E(p.data.h1)}</b></td></tr></tbody></table>`
+          : p.kind === 'faq' ? `<ul style="margin:0;padding-left:18px">${p.data.items.map(i => `<li><b>${E(i[0])}</b><br><small>${E(i[1])}</small></li>`).join('')}</ul>`
+          : p.kind === 'schema' ? `<p style="margin:6px 0">Add <b>${E(p.data.type)}</b> structured data, built from the page's own heading and description.</p>`
+          : p.kind === 'brief' ? `<p style="margin:6px 0"><b>${E(p.data.topic)}</b>${p.data.keyword ? ` · search: ${E(p.data.keyword)}` : ''}</p><ul style="margin:0;padding-left:18px">${(p.data.outline || []).map(h => `<li>${E(h)}</li>`).join('')}</ul>`
           : `<p style="margin:6px 0">Add a link "<b>${E(p.data.label)}</b>" on:</p><ul style="margin:0;padding-left:18px">${p.data.from.map(f => `<li><a href="${E(f)}" target="_blank" rel="noopener">${E(f)}</a></li>`).join('')}</ul>`}
-        <div style="margin-top:8px">${p.status === 'pending' ? `<button class="button primary small" data-a="approve" data-id="${E(p.id)}">Approve</button> <button class="button secondary small" data-a="reject" data-id="${E(p.id)}">Reject</button>` : p.status === 'approved' ? `<button class="button secondary small" data-a="undo" data-id="${E(p.id)}">Undo</button>` : ''}</div></div>`).join('') : '<p class="muted">No proposals here.</p>';
+        <div style="margin-top:8px">${p.status === 'pending' ? `<button class="button primary small" data-a="approve" data-id="${E(p.id)}">Approve</button> <button class="button secondary small" data-a="reject" data-id="${E(p.id)}">Reject</button>` : p.status === 'approved' && p.kind !== 'brief' ? `<button class="button secondary small" data-a="undo" data-id="${E(p.id)}">Undo</button>` : ''}</div></div>`).join('') : '<p class="muted">No proposals here.</p>';
       l.querySelectorAll('button[data-a]').forEach(b => { b.onclick = async () => { b.disabled = true; try { await api('/api/admin/growth/seo/decide', { method: 'POST', body: { id: b.dataset.id, action: b.dataset.a } }); toast(b.dataset.a === 'approve' ? 'Live. Search engines are told within the hour.' : b.dataset.a === 'undo' ? 'Undone' : 'Rejected'); proposals(box); } catch (x) { toast(err(x)); b.disabled = false; } }; });
       K.pager($('#spP', box), d, (p, per) => { P.page = p; P.per = per; proposals(box); });
     } catch (e) { l.innerHTML = `<p role="alert">${E(err(e))}</p>`; }

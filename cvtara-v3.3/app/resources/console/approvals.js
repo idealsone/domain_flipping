@@ -29,7 +29,10 @@
     h.innerHTML = `<div class="panel" style="overflow:auto"><table class="ad-table"><thead><tr><th>Kind</th><th>What</th><th>Submitted by</th><th>Cost</th><th>Waiting since</th><th></th></tr></thead><tbody>${A.items.map((x, i) => `<tr><td>${E(x.categoryLabel)}</td><td>${E(x.action)}</td><td>${E(x.submittedBy)}</td><td>${E(x.cost)}</td><td>${E(when(x.createdAt))}${x.waitingLong ? ' <b style="color:#b45309">· over 48 h</b>' : ''}</td><td><button type="button" class="button secondary small" data-ap-open="${i}">Review</button></td></tr>`).join('')}</tbody></table></div>`;
     h.querySelectorAll('[data-ap-open]').forEach(b => b.onclick = () => review(A.items[+b.dataset.apOpen]));
   }
-  const json = v => v == null ? '' : `<pre style="white-space:pre-wrap;margin:0;font-size:12.5px">${E(typeof v === 'string' ? v : JSON.stringify(v, null, 2))}</pre>`;
+  // 3.45.0: a readable before / after (FAQ questions, outlines and link lists as lists, not raw JSON).
+  const LBL = { title: 'Title', description: 'Description', h1: 'Main heading', items: 'Questions', type: 'Structured data', types: 'Structured data now', count: 'Questions now', label: 'Link text', from: 'Linked from', topic: 'Topic', keyword: 'Target search', outline: 'Outline', notes: 'Notes', cluster: 'Topic group' };
+  const val = v => Array.isArray(v) ? (v.length ? `<ul style="margin:2px 0;padding-left:18px">${v.map(x => `<li>${Array.isArray(x) ? `<b>${E(x[0])}</b><br><small>${E(x[1] || '')}</small>` : E(typeof x === 'object' ? JSON.stringify(x) : x)}</li>`).join('')}</ul>` : '<span class="muted">none</span>') : E(v === '' ? '—' : typeof v === 'object' && v ? JSON.stringify(v) : v);
+  const json = v => v == null ? '' : typeof v === 'string' ? `<p style="margin:0">${E(v)}</p>` : `<dl style="margin:0;font-size:13px">${Object.entries(v).filter(([k]) => k !== 'by').map(([k, x]) => `<dt class="muted" style="font-size:12px">${E(LBL[k] || k)}</dt><dd style="margin:0 0 6px">${val(x)}</dd>`).join('') || '<span class="muted">—</span>'}</dl>`;
   function review(x) {
     const m = modal(x.categoryLabel + ': review', `<div style="display:grid;gap:10px">
       <p style="margin:0"><b>${E(x.action)}</b></p>

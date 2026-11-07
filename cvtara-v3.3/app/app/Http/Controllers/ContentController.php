@@ -357,6 +357,9 @@ class ContentController extends Controller
             $minutes = max(1, (int) ceil($words / 200));
             $kind = $isCalc ? 'Calculator' : 'Guide';
             $meta = 'By <b>'.e($post['author'] ?? 'CVTara Editorial Team').'</b> · '.$minutes.' min read · '.$kind.(! empty($post['category']) ? ' · '.e($post['category']) : '');
+            if ($rev = \App\Services\SeoContent::reviewedAt('/'.($isCalc ? 'calculators' : 'guides').'/'.$slug.'/')) { // 3.45.0: only a review a person recorded
+                $meta .= ' · Reviewed '.e(\Carbon\Carbon::parse($rev)->tz('Asia/Kolkata')->format('j M Y'));
+            }
             $html = preg_replace('#(<p class="article-meta" id="articleMeta">).*?(</p>)#s', '$1'.addcslashes($meta, '\\$').'$2', $html, 1);
             if ($isCalc) {
                 array_unshift($toc, ['tool', 'Use the calculator']);

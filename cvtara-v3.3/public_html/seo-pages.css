@@ -86,3 +86,4 @@ html.dark .article-explore a{color:#8EA0F2}
 @media (max-width:900px){.sp-hero{grid-template-columns:1fr;padding:22px}.sp-hero-img{max-width:440px}.sp-layout{grid-template-columns:1fr;gap:8px}.sp-toc{position:static}.sp-section h2{font-size:24px}}
 @media (max-width:520px){.sp-shell{width:calc(100% - 32px)}.sp-doc{padding:18px}.sp-actions .sp-cta,.sp-actions .sp-secondary{width:100%;justify-content:center}}
 @media (prefers-reduced-motion:reduce){.sp-cta,.sp-card{transition:none}.sp-cta:hover,.sp-card:hover{transform:none}}
+.sp-editorial{margin:18px 0 0;padding:10px 14px;border-left:3px solid var(--sp-border);color:var(--sp-muted,#5b6472);font-size:14px}.sp-editorial a{color:var(--sp-primary)}

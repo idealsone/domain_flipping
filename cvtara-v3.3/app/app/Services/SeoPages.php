@@ -160,6 +160,12 @@ class SeoPages
                 if ($links = array_values(array_filter($o['links'] ?? [], fn ($l) => $l[0] !== $page['path'] && self::owns(ltrim($l[0], '/'))))) {
                     $page['related'][] = ['Popular with job seekers', array_map(fn ($l) => [$l[0], $l[1]], $links)];
                 }
+                // 3.45.0: an approved heading, extra FAQ questions and structured data.
+                $page['h1'] = $o['h1'] ?? $page['h1'];
+                foreach ($o['faq'] ?? [] as $f) {
+                    $page['faq'][] = [$f[0], $f[1]];
+                }
+                $page['extraSchema'] = array_map(fn ($x) => ['type' => $x[0], 'since' => $x[2] ?? null], $o['schema'] ?? []);
             }
             $page['title'] = self::fit($page['title'], 50);
             $page['description'] = self::fit($page['description'], 155);
@@ -168,6 +174,7 @@ class SeoPages
             $page['related'][] = ['Tools', [['/ats-checker/', 'Free ATS resume check'], ['/#pricing', 'Plans and pricing'], ['/templates.html', 'Template gallery'], ['/register', 'Build my resume free']]];
             // tools and word lists are not template pages: their first button is their own action, not "Use this template"
             $page['picker'] = in_array($s[0], ['ats-checker', 'resume-words'], true) ? '' : self::pickerLink($s);
+            $page['reviewedAt'] = SeoContent::reviewedAt($page['path']); // 3.45.0: shown only when a person really reviewed it
         }
 
         return $page;
@@ -925,6 +932,16 @@ class SeoPages
             $page['mainEntity'] = ['@type' => 'ItemList', 'numberOfItems' => count($p['itemList']), 'itemListElement' => array_map(fn ($x, $i) => ['@type' => 'ListItem', 'position' => $i + 1, 'url' => $base.$x[0], 'name' => $x[1]], $p['itemList'], array_keys($p['itemList']))];
         }
         $ld[] = $page;
+        foreach ($p['extraSchema'] ?? [] as $x) { // 3.45.0: approved structured data, built only from the page's own content
+            if ($x['type'] === 'Article') {
+                $ld[] = ['@context' => 'https://schema.org', '@type' => 'Article', 'headline' => mb_substr($p['h1'], 0, 110), 'description' => $p['description'], 'mainEntityOfPage' => $base.$p['path'], 'image' => $base.$p['image'][0], 'inLanguage' => 'en-IN',
+                    'author' => ['@type' => 'Organization', 'name' => 'CVTara team', 'url' => $base.'/about.html'], 'publisher' => ['@type' => 'Organization', 'name' => 'CVTara', 'logo' => ['@type' => 'ImageObject', 'url' => $base.'/assets/brand/cvtara-logo.webp']],
+                    'dateModified' => substr((string) ($p['reviewedAt'] ?? $x['since'] ?? now()->toDateString()), 0, 10)];
+            } elseif ($x['type'] === 'SoftwareApplication') {
+                $ld[] = ['@context' => 'https://schema.org', '@type' => 'SoftwareApplication', 'name' => $p['h1'], 'description' => $p['description'], 'url' => $base.$p['path'], 'applicationCategory' => 'BusinessApplication', 'operatingSystem' => 'Web browser',
+                    'offers' => ['@type' => 'Offer', 'price' => '0', 'priceCurrency' => 'INR', 'description' => 'Free to build and preview; paid options for downloads']];
+            }
+        }
 
         return $ld;
     }

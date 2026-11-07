@@ -283,7 +283,8 @@ class SeoAudit
             'altCoverage' => (int) $p->images ? (int) round(((int) $p->images - (int) $p->images_no_alt) / (int) $p->images * 100) : null, 'linksIn' => (int) $p->links_in, 'cta' => $p->cta,
             'contentStatus' => $p->content_status, 'auditScore' => $p->audit_score === null ? null : (int) $p->audit_score, 'auditStatus' => $p->audit_status, 'auditedAt' => $p->audited_at,
             'assignedAgent' => $p->assigned_agent, 'note' => $p->record_note, 'editedBy' => $p->record_by ? DB::table('users')->where('id', $p->record_by)->value('name') : null, 'editedAt' => $p->record_at,
-            'cwv' => json_decode((string) $p->cwv_json, true), 'cwvAt' => $p->cwv_at],
+            'cwv' => json_decode((string) $p->cwv_json, true), 'cwvAt' => $p->cwv_at,
+            'reviewedAt' => $p->reviewed_at ?? null, 'reviewedBy' => ! empty($p->reviewed_by) ? DB::table('users')->where('id', $p->reviewed_by)->value('name') : null, 'editable' => SeoPages::owns(ltrim($path, '/')) && SeoPages::find($path) !== null],
             'checks' => $a->first() ? json_decode((string) $a->first()->checks_json, true) : [],
             'audits' => $a->map(fn ($x) => ['id' => $x->id, 'at' => $x->created_at, 'score' => (int) $x->score, 'status' => $x->status, 'failed' => (int) $x->failed, 'warnings' => (int) $x->warnings, 'source' => $x->source])->all(),
             'options' => ['pageTypes' => self::PAGE_TYPES, 'intents' => self::INTENTS, 'contentStatuses' => self::CONTENT_STATUSES, 'agents' => self::AGENTS]];

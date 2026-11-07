@@ -107,8 +107,8 @@ return [
 
         ['*', '#^(content/(legal|features|library|blog|emails|popup|site)|reviews|feedback/add|whats-new(/save)?|legal/generate|email/preview)$#', 'content.edit'],
 
-        ['GET', '#^(seo|page-audit|site-urls|search/rows|indexing|growth/seo(/(proposals|tracked|overview|pages|page|keywords|audit-lists))?|growth/links|growth/visibility(/tests)?|growth/agents/log)$#', 'seo.view'],
-        ['POST', '#^(growth/seo/(scan|inspect|keyword|audit|web-vitals|page/(record|audit))|growth/link(/verify|/delete)?|growth/links/draft|growth/visibility/(test|prompts|audit))$#', 'seo.draft'],
+        ['GET', '#^(seo|page-audit|site-urls|search/rows|indexing|growth/seo(/(proposals|tracked|overview|pages|page|keywords|audit-lists|versions))?|growth/links|growth/visibility(/tests)?|growth/agents/log)$#', 'seo.view'],
+        ['POST', '#^(growth/seo/(scan|inspect|keyword|audit|web-vitals|draft|versions/\d+/verify|page/(record|audit|reviewed))|growth/link(/verify|/delete)?|growth/links/draft|growth/visibility/(test|prompts|audit))$#', 'seo.draft'],
         ['POST', '#^(growth/seo/(decide|run|settings)|growth/visibility/policy|indexing/(submit|sitemap)|search/(import|sync)|content/seo)$#', 'seo.approve'],
 
         ['GET', '#^(growth|growth/reports|growth/report|growth/revenue|growth/campaign-plans|growth/experiments|growth/customers|growth/checkout|growth/customer|growth/scorecard|growth/agents|campaigns|campaigns/(count|contacts|preview)|outreach|outreach/(contacts|export|preview)|promos|promos/employers)$#', 'growth.view'],

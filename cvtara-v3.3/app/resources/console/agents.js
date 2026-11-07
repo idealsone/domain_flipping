@@ -159,6 +159,8 @@
           <label>Looked after by<select name="assignedAgent">${opt(O.agents, R.assignedAgent)}</select></label>
           <label class="wide">Note<input name="note" maxlength="500" value="${E(R.note)}"></label>
           <div class="wide"><button class="button primary small">Save record</button> <span role="status" id="prSt" class="muted">${R.editedBy ? 'Last changed by ' + E(R.editedBy) + ' · ' + E(when(R.editedAt)) : 'Type and keyword are filled in by the agent until someone saves.'}</span></div></form>
+        <p>Editorial review: <b>${R.reviewedAt ? 'Reviewed by ' + E(R.reviewedBy || 'the team') + ' · ' + E(when(R.reviewedAt)) : 'Not reviewed yet'}</b> <button type="button" class="button secondary small" id="prRev">I reviewed this page today</button>${R.editable ? ' <button type="button" class="button secondary small" id="prDraft">Propose a change</button>' : ' <small class="muted">(changes can be proposed only for the ready-made SEO pages)</small>'}</p>
+        <div id="prVer"></div>
         <p>Main call to action: <b>${E(R.cta || 'none found')}</b> · Links in: <b>${n(R.linksIn)}</b> · Images: <b>${n(R.images)}</b>${R.altCoverage !== null ? ` (ALT text on ${R.altCoverage}%)` : ''} · Core Web Vitals: <b>${R.cwv && R.cwv.status === 'ok' ? `LCP ${Math.round(R.cwv.lcp / 100) / 10} s, INP ${R.cwv.inp} ms, CLS ${R.cwv.cls}` : 'not tracked'}</b></p>
         ${R.outline.length ? `<details><summary>Headings on the page (${R.outline.length})</summary><ul style="margin:6px 0">${R.outline.map(o => `<li style="margin-left:${o[0] === 'h3' ? 18 : 0}px"><small class="muted">${E(o[0].toUpperCase())}</small> ${E(o[1])}</li>`).join('')}</ul></details>` : ''}
         <h4>Checklist (latest audit)</h4>${table(['Check', 'Result', 'Detail'], d.checks.map(c => `<tr><td>${E(c.label)}</td><td><span class="pill ${RES[c.result][0]}">${RES[c.result][1]}</span></td><td><small>${E(c.detail)}</small></td></tr>`), 'Not audited yet. Press "Scan and audit this page now".')}
@@ -172,10 +174,56 @@
         try { const r = await api('/api/admin/growth/seo/page/record', { method: 'POST', body: { path, pageType: f.pageType.value, intent: f.intent.value || null, primaryKeyword: f.primaryKeyword.value.trim(), secondaryKeywords: f.secondaryKeywords.value.split(',').map(x => x.trim()).filter(Boolean).slice(0, 10), contentStatus: f.contentStatus.value, assignedAgent: f.assignedAgent.value, note: f.note.value.trim() } });
           Object.assign(d, r); toast('Saved'); draw(); } catch (x) { st.textContent = err(x); }
       };
+      const rv = $('#prRev', m.el);
+      if (rv) rv.onclick = async () => { rv.disabled = true; try { Object.assign(d, await api('/api/admin/growth/seo/page/reviewed', { method: 'POST', body: { path } })); toast('Marked reviewed. The page now shows today\'s review date.'); draw(); } catch (x) { toast(err(x)); rv.disabled = false; } };
+      const dr = $('#prDraft', m.el); if (dr) dr.onclick = () => draft(path, d);
+      versions(path, $('#prVer', m.el));
       const c = $('#prCheck', m.el);
       if (c) c.onclick = async () => { c.disabled = true; c.textContent = 'Checking…'; try { const r = await api('/api/admin/growth/seo/page/audit', { method: 'POST', body: { path } }); Object.assign(d, r); toast('Audited'); draw(); } catch (x) { toast(err(x)); c.disabled = false; c.textContent = 'Scan and audit this page now'; } };
     };
     draw();
+  }
+
+  // 3.45.0: content versions of a page (each approved change, its live check and one-click undo).
+  const VS = { pending: ['mid', 'Checking soon'], live: ['ok', 'Seen live'], not_live: ['bad', 'Not live'], failed: ['bad', 'Check failed'] };
+  async function versions(path, box) {
+    if (!box) return;
+    let j; try { j = await api('/api/admin/growth/seo/versions?path=' + encodeURIComponent(path)); } catch (e) { box.innerHTML = `<p role="alert">${E(err(e))}</p>`; return; }
+    if (!j.rows.length) { box.innerHTML = ''; return; }
+    const show = v => !v ? '—' : v.title ? E(v.title) : v.h1 ? E(v.h1) : v.items ? v.items.map(i => E(i[0])).join('<br>') : v.type ? E(v.type) : v.from ? 'Link "' + E(v.label) + '" on ' + v.from.map(E).join(', ') : v.types ? E(v.types.join(', ')) : v.count !== undefined ? v.count + ' question(s)' : '—';
+    box.innerHTML = `<h4>Content versions</h4>${table(['When', 'Change', 'Before', 'After', 'Live check', ''], j.rows.map(v => `<tr><td>${E(when(v.appliedAt))}<br><small class="muted">${E(v.appliedBy)}</small></td><td>${E(v.kindLabel)}${v.revertedAt ? `<br><small class="muted">undone ${E(when(v.revertedAt))}${v.revertedBy ? ' by ' + E(v.revertedBy) : ''}</small>` : ''}</td><td><small>${show(v.before)}</small></td><td><small>${show(v.after)}</small></td>
+      <td><span class="pill ${(VS[v.verifyStatus] || ['', ''])[0]}">${E((VS[v.verifyStatus] || ['', v.verifyStatus])[1])}</span>${v.verifyNote ? `<br><small>${E(v.verifyNote)}</small>` : ''}</td>
+      <td style="white-space:nowrap"><button type="button" class="button secondary small" data-vchk="${v.id}">Check now</button>${v.canUndo ? ` <button type="button" class="button secondary small" data-vundo="${E(v.proposalId)}">Undo</button>` : ''}</td></tr>`), '')}`;
+    box.querySelectorAll('[data-vchk]').forEach(b => b.onclick = async () => { b.disabled = true; try { const r = await api(`/api/admin/growth/seo/versions/${b.dataset.vchk}/verify`, { method: 'POST', body: {} }); toast(r.note); versions(path, box); } catch (x) { toast(err(x)); b.disabled = false; } });
+    box.querySelectorAll('[data-vundo]').forEach(b => b.onclick = async () => { if (!confirm('Undo this change on the live page?')) return; b.disabled = true; try { await api('/api/admin/growth/seo/decide', { method: 'POST', body: { id: b.dataset.vundo, action: 'undo' } }); toast('Undone. The live page is checked again in a minute.'); versions(path, box); } catch (x) { toast(err(x)); b.disabled = false; } });
+  }
+
+  // 3.45.0: draft a change for approval. Someone else with approve rights decides it in Approvals & tasks.
+  async function draft(path, d) {
+    const R = d.record || {};
+    let K2; try { K2 = await api('/api/admin/growth/seo/versions?path=' + encodeURIComponent(path)); } catch (e) { toast(err(e)); return; }
+    const m = modal('Propose a change: ' + path, `<form class="ops-form" id="dfF"><label class="wide">What to change<select name="kind">${Object.entries(K2.kinds).map(([k, l]) => `<option value="${k}">${E(l)}</option>`).join('')}</select></label>
+      <div class="wide" id="dfFields"></div><label class="wide">Why this helps (shown to the approver)<textarea name="reason" rows="2" minlength="10" maxlength="2000" required></textarea></label>
+      <div class="wide"><button class="button primary small">Send for approval</button> <span role="status" id="dfSt" class="muted"></span></div></form>`);
+    const f = $('#dfF', m.el), box = $('#dfFields', m.el);
+    const p = d.page || {};
+    const fields = {
+      meta: `<label>New title<input name="title" maxlength="70" value="${E(p.title || '')}"></label><label>New description<textarea name="description" rows="2" maxlength="170">${E(p.description || '')}</textarea></label>`,
+      h1: `<label>New main heading<input name="h1" maxlength="90" value="${E(p.h1 || '')}"></label>`,
+      faq: [1, 2, 3].map(i => `<label>Question ${i}${i > 1 ? ' (optional)' : ''}<input name="q${i}" maxlength="160"></label><label>Answer ${i}<textarea name="a${i}" rows="2" maxlength="600"></textarea></label>`).join(''),
+      schema: `<label>Structured data<select name="type">${Object.entries(K2.schemaTypes).map(([k, l]) => `<option value="${k}">${E(l)}</option>`).join('')}</select></label>`,
+      links: `<label>Link text<input name="label" maxlength="70"></label><label>Add the link on these pages (one address per line)<textarea name="from" rows="3" placeholder="/resume-examples/it-software/"></textarea></label>`,
+      brief: `<label>Topic<input name="topic" maxlength="120"></label><label>Target search<input name="keyword" maxlength="120" value="${E(R.primaryKeyword || '')}"></label><label>Outline (one heading per line)<textarea name="outline" rows="4"></textarea></label><label>Notes for the writer<textarea name="notes" rows="2" maxlength="1000"></textarea></label>`,
+    };
+    const pick = () => { box.innerHTML = `<div style="display:grid;gap:8px">${fields[f.kind.value]}</div>`; };
+    f.kind.onchange = pick; pick();
+    f.onsubmit = async e => {
+      e.preventDefault(); const k = f.kind.value, g = n => (f.elements[n] ? f.elements[n].value.trim() : '');
+      const data = k === 'meta' ? { title: g('title'), description: g('description') } : k === 'h1' ? { h1: g('h1') } : k === 'faq' ? { items: [1, 2, 3].map(i => [g('q' + i), g('a' + i)]).filter(x => x[0] || x[1]) }
+        : k === 'schema' ? { type: g('type') } : k === 'links' ? { label: g('label'), from: g('from').split(/\s+/).filter(Boolean) } : { topic: g('topic'), keyword: g('keyword'), outline: g('outline').split('\n').map(x => x.trim()).filter(Boolean), notes: g('notes') };
+      const st = $('#dfSt', m.el); st.textContent = 'Sending…';
+      try { await api('/api/admin/growth/seo/draft', { method: 'POST', body: { kind: k, path, data, reason: f.reason.value.trim() } }); toast('Sent for approval'); m.close(); } catch (x) { st.textContent = err(x); }
+    };
   }
 
   async function keywords(h) {

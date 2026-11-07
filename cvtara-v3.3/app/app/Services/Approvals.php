@@ -35,12 +35,22 @@ class Approvals
         $item = fn (string $cat, string $id, array $f) => $f + ['category' => $cat, 'categoryLabel' => self::categories()[$cat]['label'], 'id' => $id,
             'stepUp' => (bool) self::categories()[$cat]['stepUp'], 'waitingLong' => isset($f['createdAt']) && strtotime((string) $f['createdAt']) < time() - $hours * 3600];
         if (self::canDecide($u, 'seo') && Schema::hasTable('seo_proposals')) {
-            foreach (DB::table('seo_proposals')->where('status', 'pending')->orderByDesc('created_at')->limit(100)->get() as $p) {
+            $mine = Schema::hasColumn('seo_proposals', 'created_by');
+            foreach (DB::table('seo_proposals as p')->when($mine, fn ($q) => $q->leftJoin('users as c', 'c.id', '=', 'p.created_by'))->where('p.status', 'pending')->orderByDesc('p.created_at')->limit(100)
+                ->get($mine ? ['p.*', 'c.name as creator'] : ['p.*']) as $p) {
+                if ($mine && $p->created_by && (int) $p->created_by === $u->id && ! Access::isOwner($u)) {
+                    continue; // 3.45.0: someone else approves your draft
+                }
                 $d = json_decode((string) $p->data_json, true) ?: [];
                 $b = json_decode((string) $p->before_json, true) ?: [];
-                $out[] = $item('seo', $p->id, ['submittedBy' => 'SEO agent', 'agent' => 'SEO', 'action' => $p->kind === 'meta' ? 'Change the title and description of '.$p->path : 'Add an internal link to '.$p->path,
-                    'justification' => (string) $p->reason, 'cost' => 'None', 'impact' => $p->impressions ? $p->impressions.' Google impressions in 28 days, position '.round((float) $p->position, 1) : 'Not measured yet',
-                    'risk' => 'Low: can be undone from SEO with one click', 'changes' => ['before' => $b, 'after' => $d], 'evidence' => array_values(array_filter([$p->query ? 'Search: '.$p->query : null])), 'createdAt' => (string) $p->created_at]);
+                $action = match ($p->kind) {
+                    'meta' => 'Change the title and description of '.$p->path, 'h1' => 'Change the main heading of '.$p->path, 'faq' => 'Add '.count($d['items'] ?? []).' FAQ question(s) to '.$p->path,
+                    'schema' => 'Add '.($d['type'] ?? '').' structured data to '.$p->path, 'brief' => 'Approve a content brief: '.($d['topic'] ?? ''), default => 'Add an internal link to '.$p->path,
+                };
+                $out[] = $item('seo', $p->id, ['submittedBy' => ($p->creator ?? null) ?: 'SEO agent', 'agent' => 'SEO', 'action' => $action, 'kind' => $p->kind,
+                    'justification' => (string) $p->reason, 'cost' => $p->kind === 'brief' ? 'Writing time for the content team' : 'None', 'impact' => $p->impressions ? $p->impressions.' Google impressions in 28 days, position '.round((float) $p->position, 1) : 'Not measured yet',
+                    'risk' => $p->kind === 'brief' ? 'None until the guide is written and approved' : 'Low: can be undone from SEO with one click; checked on the live page after it goes live',
+                    'changes' => ['before' => $b, 'after' => $d], 'evidence' => array_values(array_filter([$p->query ? 'Search: '.$p->query : null])), 'createdAt' => (string) $p->created_at]);
             }
         }
         if (self::canDecide($u, 'refund')) {
@@ -93,7 +103,7 @@ class Approvals
         }
         $summary = '';
         if ($category === 'seo') {
-            $p = SeoAgent::decide($id, $decision);
+            $p = SeoAgent::decide($id, $decision, $u);
             $status = $p->status;
             $summary = $p->kind.' '.$p->path;
         } elseif ($category === 'refund') {
