@@ -116,7 +116,9 @@ def run(ctx, t):
 
     # Audit log
     n0 = db.q("select count(*) from audit_logs")[0][0]
-    s, j = o.api("POST", "admin/providers", {"service": "payments", "values": {"provider": "razorpay", "mode": "test", "razorpayKeyId": "rzp_test_AUDIT1", "razorpayKeySecret": "SUPERSECRETVALUE123", "razorpayWebhookSecret": "WHSECRETVALUE"}})
+    # (writing-check service, so the payment setup later suites rely on is left alone)
+    s, j = o.api("POST", "admin/providers", {"service": "grammar", "values": {"url": "https://lt.example.test", "username": "audit@test.local", "premiumApiKey": "SUPERSECRETVALUE123"}})
+    t.check("the test provider save worked", s == 200, f"{s} {str(j)[:160]}")
     row = db.q("select action, actor_role, before_json, after_json, request_id, hash, prev_hash from audit_logs order by id desc limit 1")[0]
     t.check("a console change is written to the audit log with the role and request reference", db.q("select count(*) from audit_logs")[0][0] > n0 and row[0] == "console:providers" and row[1] == "owner" and len(row[4]) == 12, row[:2])
     blob = (row[2] or "") + (row[3] or "")
