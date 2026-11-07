@@ -1,4 +1,18 @@
-# CVTara v3.40.0 — V2: Support Centre and read-only customer view
+# CVTara v3.41.0 — V2: customer dashboard and resume + cover letter service
+
+## 3.41.0
+Sixth V2 release. **Database change:** run `php artisan migrate --force` (new tables `service_requests`, `service_request_events`; new column `profiles.career_goal`). Nothing existing changes.
+- **"What would you like CVTara to help you with?"** on the customer dashboard: create a resume, improve my resume (upload), create a cover letter, resume + cover letter for a job, check ATS compatibility, get career assistance (Tara, shown only when Tara is on) and track applications. Each opens the existing tool.
+- **Resume + cover letter for one job:** the customer picks a saved resume and a job (an earlier ATS check, or a pasted job that goes through the normal ATS check and its scan allowance). The CVTara team tailors the resume and writes the letter, then the server checks that both agree (name, email, company, role, no figure that is not in the resume), checks formatting and the ATS match, and shows a preview.
+  - **Real progress tracker:** Information received, Resume generation, Cover-letter generation, Quality checks, ATS checks, Preview ready, Payment pending, Payment confirmed, Download available. Each step is a stored event with its time; nothing is animated. One step runs per call while the page is open, and the cron finishes a request the customer left (one per minute, after 90 seconds without activity). A lock stops a step running twice.
+  - **Payment:** a free account sees the order summary (what is delivered, the plans that include resumes and letters, price, validity, one-time payment with no automatic renewal) and pays through the normal checkout. Nothing is saved before payment. Once a payment is verified, or straight away on a plan that covers it, the customer saves both: a new job version of the resume (or, by choice, the tailored text into the resume they started from) and the cover letter, through the normal save rules. Downloads then use the plan's credits as usual.
+  - **Failures:** a failed step is stored with a plain message, the writing suggestion it used is given back, and the customer can try again (up to 6 runs). At most 5 requests a day, one running at a time.
+- **Grouped customer menu:** My career workspace, Create & improve (with Career assistance when Tara is on), My account, Help & support (Support requests, Help centre, Share feedback). No page was duplicated.
+- **Downloads** in Account: every clean download with its document and version.
+- **Career goal** asked once on the dashboard (first job, new job, career change, growth, abroad, exploring; optional target role), saved to the profile.
+- **New dashboard next steps:** a failed payment (retry or contact support), a plan that ended in the last 30 days (renewal options), a fresh application without a follow-up date (track it).
+- Account deletion now also removes ticket conversations (3.40.0) and these requests; staff view logs stay, detached from the person. The data export includes support requests and these requests.
+- Test suite `s50_service` (54 checks), plus a browser check (desktop and phone).
 
 ## 3.40.0
 Fifth V2 release. **Database change:** run `php artisan migrate --force` (new columns on `support_reports`: `reference`, `priority`, `channel`, `assigned_to`, `first_response_at`, `last_customer_at`; new tables `support_ticket_messages`, `support_sessions`, `support_session_events`). Existing owner notes become each ticket's first internal note; nothing existing is removed.

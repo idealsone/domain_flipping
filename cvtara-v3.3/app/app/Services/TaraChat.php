@@ -631,6 +631,24 @@ class TaraChat
             $line = $f['paid'] ? 'Make a version of your resume for this job and write the cover letter, both in one click.' : 'A tailored resume and cover letter for this job usually lift the match. Build them now; you pay only to download a clean copy.';
             $actions = [['label' => 'Tailor my resume for this job', 'url' => '/workspace.html?view=builder&draft='.$last->resume_id.'&fix='.$last->id], ['label' => 'Write the cover letter', 'url' => '/workspace.html?view=letter&write=1&resume='.$last->resume_id.'&scan='.$last->id]];
         }
+        // 3.41.0: a failed payment, an ended plan or a fresh application comes before the usual next step.
+        $failed = DB::table('purchases')->where('owner_id', $u->id)->where('status', 'failed')->where('updated_at', '>', now()->subDays(3))->orderByDesc('updated_at')->first(['plan', 'updated_at']);
+        $paidSince = $failed ? DB::table('purchases')->where('owner_id', $u->id)->whereIn('status', ['paid', 'partially_refunded'])->where('purchased_at', '>', $failed->updated_at)->exists() : true;
+        $ended = ! $f['paid'] ? DB::table('purchases')->where('owner_id', $u->id)->whereIn('status', ['paid', 'partially_refunded'])->where('plan', 'not like', 'addon%')->where('access_until', '<=', now())->where('access_until', '>', now()->subDays(30))->orderByDesc('access_until')->first(['plan', 'access_until']) : null;
+        $applied = DB::table('applications')->where('owner_id', $u->id)->where('stage', 'applied')->whereNull('follow_up')->where('updated_at', '>', now()->subDays(14))->orderByDesc('updated_at')->first(['company', 'role']);
+        if ($failed && ! $paidSince) {
+            $title = 'Your payment did not go through';
+            $line = 'No money was taken for a failed payment; if your bank shows a debit, it is returned automatically. You can try again, or tell us and we will help.';
+            $actions = [['label' => 'Try the payment again', 'url' => '/checkout.html?plan='.rawurlencode((string) $failed->plan)], ['label' => 'Contact support', 'url' => '/workspace.html?support=new']];
+        } elseif ($ended) {
+            $title = 'Your '.(string) ($plans[$ended->plan]['name'] ?? 'plan').' has ended';
+            $line = 'Your resumes and letters are still here. Renew to download clean copies and tailor new versions again. There is no automatic renewal.';
+            $actions = [['label' => 'See renewal options', 'url' => '/workspace.html?view=billing']];
+        } elseif ($applied && $primary && $last) {
+            $title = 'Track your application to '.$applied->company;
+            $line = 'Add a follow-up date for the '.$applied->role.' role and we will remind you when it is time to follow up.';
+            $actions = [['label' => 'Open my applications', 'url' => '/workspace.html?view=tracker'], ['label' => 'Tailor for another job', 'url' => '/workspace.html?view=match']];
+        }
         $offer = null;
         if (! $f['paid'] && $primary) {
             $key = ($f['atsChecks'] >= 2 || $f['resumes'] >= 2) && in_array('job-hunt', $onSale, true) ? 'job-hunt' : (in_array('quick', $onSale, true) ? 'quick' : ($onSale[0] ?? null));

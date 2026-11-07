@@ -51,6 +51,16 @@ class AccountEraser
             $files = DB::table('support_attachments')->whereIn('report_id', $reports)->pluck('path')->all();
             DB::table('support_attachments')->whereIn('report_id', $reports)->delete();
             DB::table('support_reports')->whereIn('id', $reports)->delete();
+            // 3.40.0 ticket conversations go with their tickets; staff view logs stay as access records, detached from the person.
+            if (Schema::hasTable('support_ticket_messages')) {
+                DB::table('support_ticket_messages')->whereIn('ticket_id', $reports)->delete();
+                DB::table('support_sessions')->where('customer_id', $id)->update(['customer_id' => $keep, 'ticket_id' => null, 'updated_at' => now()]);
+            }
+            // 3.41.0 resume + cover letter requests hold resume and letter text.
+            if (Schema::hasTable('service_requests')) {
+                DB::table('service_request_events')->whereIn('request_id', DB::table('service_requests')->where('owner_id', $id)->pluck('id'))->delete();
+                DB::table('service_requests')->where('owner_id', $id)->delete();
+            }
             foreach (self::OWN as $table => $col) {
                 if (Schema::hasTable($table)) {
                     DB::table($table)->where($col, $id)->delete();

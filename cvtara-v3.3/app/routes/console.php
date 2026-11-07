@@ -23,6 +23,14 @@ Artisan::command('cvtara:cron', function () {
     };
     $mail = $send();
     MailAutomation::reminders();
+    // 3.41.0: finish resume + cover letter requests whose customer left the page (a few each minute).
+    try {
+        if (\Illuminate\Support\Facades\Schema::hasTable('service_requests')) {
+            \App\Services\ServiceRequests::runDue(1);
+        }
+    } catch (\Throwable $e) {
+        \App\Services\ErrorLog::exception($e);
+    }
     if (\Illuminate\Support\Facades\Cache::add('retention-run', 1, 86400)) {
         \App\Services\Retention::run();
     }

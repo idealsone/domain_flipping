@@ -150,5 +150,8 @@
   panel.addEventListener('input', e => { if (e.target.name === 'message') panel.querySelector('#cvSupCount').textContent = e.target.value.length + ' / 4000'; });
   panel.addEventListener('submit', e => { if (e.target.matches('form[data-reply]')) { e.preventDefault(); reply(e.target); return; } if (e.target.matches('form')) submit(e); });
   // The email about a reply links to ?support=mine: open the list straight away.
-  if (new URLSearchParams(location.search).get('support') === 'mine') { open(); mine(); }
+  window.CVTaraSupport = { mine: () => { open(); mine(); }, open };
+  document.addEventListener('click', e => { if (e.target.closest('[data-support-mine]')) { e.preventDefault(); open(); mine(); } });
+  const sq = new URLSearchParams(location.search).get('support');
+  if (sq === 'mine') { open(); mine(); } else if (sq === 'new') open();
 })();

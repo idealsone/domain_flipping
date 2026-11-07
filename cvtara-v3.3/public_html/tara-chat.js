@@ -58,6 +58,8 @@
     ta.addEventListener('keydown', e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send(ta.value); } });
     $('.tara-form', box).addEventListener('submit', e => { e.preventDefault(); send(ta.value); });
     document.addEventListener('keydown', e => { if (e.key === 'Escape' && !$('#taraPanel').hidden) toggle(false); });
+    // 3.41.0: the dashboard's "Get career assistance" opens this chat (with a question when given).
+    window.CVTaraAssist = q => { toggle(true); if (q) send(q); };
     document.addEventListener('cvtara-resume-saved', () => { if (!$('#taraPanel').hidden) { note('Your resume was uploaded. Ask me to check it, or to compare it with a job.'); $('#taraIn').value = 'I just uploaded my resume. Can you check it?'; } });
     // "Ask Tara" in the workspace menu
     const nav = document.querySelector('.side-nav');

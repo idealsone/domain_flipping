@@ -199,6 +199,64 @@ class ApiController extends Controller
 
             return $ok(['tickets' => \App\Services\SupportCentre::mine($u)]);
         }
+        // 3.41.0 Combined resume + cover letter service, downloads list and career goal.
+        if ($path === 'service-requests' && $get) {
+            return $ok(['requests' => \App\Services\ServiceRequests::mine($u)]);
+        }
+        if ($path === 'service-requests' && $r->isMethod('POST')) {
+            \App\Services\EmailVerification::guard($u);
+            $cap('service-request', 10, 3600, 'Please wait a while before starting another request.');
+            $v = $r->validate(['resumeId' => ['required', 'regex:/^[a-f0-9-]{36}$/'], 'scanId' => ['nullable', 'regex:/^[a-f0-9-]{36}$/'], 'jobText' => 'required_without:scanId|nullable|string|max:40000', 'role' => 'nullable|string|max:160', 'company' => 'nullable|string|max:160', 'letterTemplate' => 'nullable|string|max:120']);
+            if (! empty($v['letterTemplate'])) {
+                $cat = json_decode(file_get_contents(resource_path('data/catalog.json')), true);
+                abort_unless(collect($cat['coverLetters'])->contains('slug', $v['letterTemplate']), 422, 'Choose one of the cover letter designs.');
+            }
+
+            return $ok(['request' => \App\Services\ServiceRequests::create($u, $v)]);
+        }
+        if (preg_match('#^service-requests/([a-f0-9-]{36})(?:/(run|retry|save))?$#', $path, $m)) {
+            $act = $m[2] ?? '';
+            if ($act === '') {
+                abort_unless($get, 405);
+
+                return $ok(['request' => \App\Services\ServiceRequests::show($u, $m[1])]);
+            }
+            abort_unless($r->isMethod('POST'), 405);
+            $cap('service-run', 60, 60, 'Please wait a moment.');
+            if ($act === 'save') {
+                $v = $r->validate(['mode' => 'nullable|in:version,update']);
+
+                return $ok(['request' => \App\Services\ServiceRequests::save($u, $m[1], $v['mode'] ?? 'version')]);
+            }
+
+            return $ok(['request' => $act === 'run' ? \App\Services\ServiceRequests::advance($u, $m[1]) : \App\Services\ServiceRequests::retry($u, $m[1])]);
+        }
+        if ($path === 'downloads' && $get) {
+            $rows = DB::table('product_usage')->where('owner_id', $id)->whereIn('action', ['doc_resume', 'doc_letter'])->orderByDesc('created_at')->limit(100)->get(['action', 'reference', 'created_at']);
+            $ids = $rows->map(fn ($x) => explode('|', (string) $x->reference)[0])->unique()->values();
+            $titles = DB::table('resume_drafts')->where('owner_id', $id)->whereIn('id', $ids)->pluck('title', 'id')->union(DB::table('cover_letter_drafts')->where('owner_id', $id)->whereIn('id', $ids)->pluck('title', 'id'));
+
+            return $ok(['downloads' => $rows->map(function ($x) use ($titles) {
+                [$doc, $rev] = array_pad(explode('|', (string) $x->reference), 2, '');
+
+                return ['kind' => $x->action === 'doc_resume' ? 'resume' : 'letter', 'id' => $doc, 'version' => (int) $rev, 'title' => (string) ($titles[$doc] ?? 'Removed document'), 'exists' => isset($titles[$doc]), 'at' => (string) $x->created_at];
+            })->values()]);
+        }
+        if ($path === 'profile/goal' && $r->isMethod('POST')) {
+            $v = $r->validate(['goal' => 'required|in:first_job,new_job,switch_career,promotion,abroad,exploring', 'role' => 'nullable|string|max:120']);
+            $set = ['career_goal' => $v['goal'], 'updated_at' => now()];
+            if (trim((string) ($v['role'] ?? '')) !== '' && \Illuminate\Support\Facades\Schema::hasColumn('profiles', 'target_role')) {
+                $set['target_role'] = trim($v['role']);
+            }
+            if (! DB::table('profiles')->where('owner_id', $id)->exists()) {
+                DB::table('profiles')->insert(['owner_id' => $id, 'created_at' => now()] + $set);
+            } else {
+                DB::table('profiles')->where('owner_id', $id)->update($set);
+            }
+            Settings::audit($id, 'career_goal_set', $v['goal']);
+
+            return $ok();
+        }
         if ($path === 'support-view' && $get) {
             return $ok(\App\Services\SupportView::status($r));
         }
@@ -730,7 +788,9 @@ class ApiController extends Controller
             return $x;
         }, $list);
 
-        return ['generatedAt' => now()->toIso8601String(), 'account' => ['name' => $u->name, 'email' => $u->email, 'createdAt' => $u->created_at, 'referralCode' => $u->referral_code], 'profile' => (array) DB::table('profiles')->where('owner_id', $id)->first(), 'resumes' => $decode($rows('resume_drafts')), 'coverLetters' => $decode($rows('cover_letter_drafts')), 'applications' => $rows('applications'), 'taraChats' => DB::table('tara_messages')->where('owner_id', $id)->where('content', '!=', '')->orderBy('created_at')->get(['conversation_id', 'role', 'content', 'created_at'])->map(fn ($x) => (array) $x)->all(), 'purchases' => $rows('purchases', ['id', 'plan', 'amount_paise', 'refunded_paise', 'currency', 'status', 'coupon_code', 'purchased_at', 'access_until']), 'reviews' => $rows('feedback', ['display_name', 'rating', 'content', 'status', 'created_at']), 'referralCommissions' => DB::table('referral_commissions')->where('referrer_id', $id)->get(['amount_paise', 'rate_bps', 'created_at'])->map(fn ($x) => (array) $x)->all(), 'withdrawals' => $rows('withdrawals', ['amount_paise', 'destination_masked', 'status', 'reference', 'created_at']), 'payoutProfile' => (array) DB::table('payout_profiles')->where('owner_id', $id)->first(['status', 'destination_masked']), 'creatorApplication' => (array) DB::table('creator_applications')->where('owner_id', $id)->first(['status', 'audience', 'rate_bps', 'created_at']), 'refundRequests' => $rows('refund_requests', ['purchase_id', 'status', 'amount_paise', 'reason', 'note', 'created_at']), 'walletTransactions' => $rows('wallet_transactions', ['kind', 'amount_paise', 'note', 'earned_at', 'expires_at', 'created_at']), 'serviceOrders' => $rows('service_orders', ['service', 'status', 'note', 'created_at', 'delivered_at']), 'atsChecks' => $rows('ats_scans', ['id', 'source', 'job_url', 'job_title', 'company', 'score', 'result_json', 'status', 'created_at']), 'activity' => DB::table('activity_events')->where('owner_id', $id)->orderByDesc('created_at')->limit(500)->get(['event', 'reference', 'created_at'])->map(fn ($x) => (array) $x)->all()];
+        return ['generatedAt' => now()->toIso8601String(), 'account' => ['name' => $u->name, 'email' => $u->email, 'createdAt' => $u->created_at, 'referralCode' => $u->referral_code], 'profile' => (array) DB::table('profiles')->where('owner_id', $id)->first(), 'resumes' => $decode($rows('resume_drafts')), 'coverLetters' => $decode($rows('cover_letter_drafts')), 'applications' => $rows('applications'), 'taraChats' => DB::table('tara_messages')->where('owner_id', $id)->where('content', '!=', '')->orderBy('created_at')->get(['conversation_id', 'role', 'content', 'created_at'])->map(fn ($x) => (array) $x)->all(), 'purchases' => $rows('purchases', ['id', 'plan', 'amount_paise', 'refunded_paise', 'currency', 'status', 'coupon_code', 'purchased_at', 'access_until']), 'reviews' => $rows('feedback', ['display_name', 'rating', 'content', 'status', 'created_at']), 'referralCommissions' => DB::table('referral_commissions')->where('referrer_id', $id)->get(['amount_paise', 'rate_bps', 'created_at'])->map(fn ($x) => (array) $x)->all(), 'withdrawals' => $rows('withdrawals', ['amount_paise', 'destination_masked', 'status', 'reference', 'created_at']), 'payoutProfile' => (array) DB::table('payout_profiles')->where('owner_id', $id)->first(['status', 'destination_masked']), 'creatorApplication' => (array) DB::table('creator_applications')->where('owner_id', $id)->first(['status', 'audience', 'rate_bps', 'created_at']), 'refundRequests' => $rows('refund_requests', ['purchase_id', 'status', 'amount_paise', 'reason', 'note', 'created_at']), 'walletTransactions' => $rows('wallet_transactions', ['kind', 'amount_paise', 'note', 'earned_at', 'expires_at', 'created_at']), 'serviceOrders' => $rows('service_orders', ['service', 'status', 'note', 'created_at', 'delivered_at']), 'atsChecks' => $rows('ats_scans', ['id', 'source', 'job_url', 'job_title', 'company', 'score', 'result_json', 'status', 'created_at']), 'activity' => DB::table('activity_events')->where('owner_id', $id)->orderByDesc('created_at')->limit(500)->get(['event', 'reference', 'created_at'])->map(fn ($x) => (array) $x)->all(),
+            'supportRequests' => \App\Services\SupportCentre::mine($u),
+            'resumeAndLetterRequests' => \Illuminate\Support\Facades\Schema::hasTable('service_requests') ? DB::table('service_requests')->where('owner_id', $id)->get(['id', 'status', 'scan_id', 'output_json', 'created_at'])->map(fn ($x) => ['output' => json_decode((string) $x->output_json, true)] + array_diff_key((array) $x, ['output_json' => 1]))->all() : []];
     }
 
     // The account and everything in it is removed for good. Money records stay for accounting, detached from the person (AccountEraser).
