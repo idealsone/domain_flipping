@@ -92,6 +92,9 @@ class SeoOps
     public static function scan(?int $limit = null): array
     {
         $limit ??= self::settings()['scanPerRun'];
+        if (Traffic::busy()) { // 3.44.0: the site's own visitors come first
+            return ['summary' => 'The site is busy right now, so the scan waits for a quieter moment.', 'scanned' => 0, 'due' => null, 'skipped' => true];
+        }
         $inv = self::inventory();
         $known = DB::table('seo_pages')->pluck('scanned_at', 'path')->all();
         foreach (array_diff_key($known, $inv) as $gone => $_) {
@@ -112,8 +115,9 @@ class SeoOps
             $done++;
         }
         $left = max(0, count($due) - $done);
+        $audit = $done ? SeoAudit::run(array_slice(array_keys($due), 0, $limit)) : null; // 3.44.0: score what was just read
 
-        return ['summary' => "Scanned $done page(s)".($left ? ", $left still due" : '').'.', 'scanned' => $done, 'due' => $left, 'skipped' => $done === 0];
+        return ['summary' => "Scanned $done page(s)".($left ? ", $left still due" : '').'.'.($audit && ! isset($audit['skipped']) ? ' '.$audit['summary'] : ''), 'scanned' => $done, 'due' => $left, 'skipped' => $done === 0];
     }
 
     /** Fetches one page as a visitor would and records what search engines read on it. Returns the issue codes that went away (kept for the KPIs). */
@@ -142,8 +146,11 @@ class SeoOps
         if (! $old || $old->fingerprint !== $fp) {
             $row['changed_at'] = now();
         }
-        foreach (['links_json', 'schema_json'] as $k) {
+        foreach (['links_json', 'schema_json', 'outline_json', 'signals_json'] as $k) {
             $row[$k] = json_encode($row[$k] ?? []);
+        }
+        if (! \Illuminate\Support\Facades\Schema::hasColumn('seo_pages', 'page_type')) { // before the 3.44.0 migration has run
+            $row = array_diff_key($row, array_flip(['outline_json', 'images', 'images_no_alt', 'cta', 'signals_json']));
         }
         $row['issues_json'] = json_encode($issues);
         if (! $old) {
@@ -205,6 +212,34 @@ class SeoOps
             };
             $walk($j);
         }
+        $outline = [];
+        foreach ($x->query('//h2|//h3') as $h) {
+            $t = trim(preg_replace('/\s+/u', ' ', (string) $h->textContent));
+            if ($t !== '' && count($outline) < 60) {
+                $outline[] = [strtolower($h->nodeName), mb_substr($t, 0, 160)];
+            }
+        }
+        $imgs = $x->query('//img');
+        $noAlt = 0;
+        foreach ($imgs as $im) {
+            if (! $im->hasAttribute('alt') || ($im->getAttribute('alt') === '' && $im->getAttribute('role') !== 'presentation' && $im->getAttribute('aria-hidden') !== 'true')) {
+                $noAlt++;
+            }
+        }
+        $cta = '';
+        foreach ($x->query('//a[@href]|//button') as $a) {
+            $href = (string) ($a instanceof \DOMElement ? $a->getAttribute('href') : '');
+            $cls = (string) ($a instanceof \DOMElement ? $a->getAttribute('class') : '');
+            if (preg_match('#^(https?://[^/]+)?/(register|workspace|login|pricing|packages)(\.html)?([/?\#]|$)#', $href) || preg_match('/\b(primary|cta)\b/', $cls)) {
+                $cta = mb_substr(trim(preg_replace('/\s+/u', ' ', (string) $a->textContent)), 0, 120).($href !== '' ? ' → '.mb_substr($href, 0, 70) : '');
+                if (trim((string) $a->textContent) !== '') {
+                    break;
+                }
+            }
+        }
+        $signals = ['viewport' => $x->query('//meta[@name="viewport"]')->length > 0, 'hreflang' => $x->query('//link[@rel="alternate"][@hreflang]')->length,
+            'breadcrumbNav' => $x->query('//nav[contains(translate(@aria-label,"BREADCRUMB","breadcrumb"),"breadcrumb")]|//*[contains(@class,"breadcrumb")]')->length > 0,
+            'pagination' => $x->query('//link[@rel="next"]|//link[@rel="prev"]')->length, 'https' => str_starts_with($attr('//link[@rel="canonical"]', 'href'), 'https://')];
         foreach ($x->query('//script|//style|//noscript|//template') as $n) {
             $n->parentNode->removeChild($n);
         }
@@ -215,7 +250,8 @@ class SeoOps
         return ['title' => mb_substr($text('//title'), 0, 300), 'description' => mb_substr($attr('//meta[@name="description"]', 'content'), 0, 500),
             'h1' => mb_substr(trim(preg_replace('/\s+/u', ' ', (string) ($h1s->item(0)?->textContent ?? ''))), 0, 300), 'h1_count' => min(255, $h1s->length),
             'canonical' => mb_substr($canon, 0, 300), 'robots' => mb_substr(trim($attr('//meta[@name="robots"]', 'content').($xRobots !== '' ? ' '.$xRobots : '')), 0, 120),
-            'words' => $words, 'links_json' => array_keys($links), 'schema_json' => array_keys($types)];
+            'words' => $words, 'links_json' => array_keys($links), 'schema_json' => array_keys($types),
+            'outline_json' => $outline, 'images' => min(65535, $imgs->length), 'images_no_alt' => min(65535, $noAlt), 'cta' => $cta, 'signals_json' => $signals];
     }
 
     /** Plain-language issues on one page. Canonical and noindex problems are reported for the owner to decide, never changed by the agent. */
@@ -572,7 +608,8 @@ class SeoOps
                 'verdict' => $r->verdict, 'coverage' => $r->coverage, 'googleCanonical' => $r->google_canonical, 'lastCrawl' => $r->last_crawl_at, 'inspectedAt' => $r->inspected_at, 'inspectError' => $r->inspect_error, 'indexRequestedAt' => $r->index_requested_at,
                 'impressions' => $g ? (int) $g->impressions : 0, 'clicks' => $g ? (int) $g->clicks : 0, 'ctr' => $g ? (float) $g->ctr : 0.0, 'position' => $g ? (float) $g->position : null,
                 'impressionsChange' => $g && $pv ? (int) $g->impressions - (int) $pv->impressions : null, 'positionChange' => $g && $pv ? round((float) $pv->position - (float) $g->position, 1) : null, 'queries' => $q,
-                'actions' => (int) ($actions[$r->path] ?? 0), 'inspectLink' => self::inspectLink($r->path)];
+                'actions' => (int) ($actions[$r->path] ?? 0), 'inspectLink' => self::inspectLink($r->path),
+                'auditScore' => isset($r->audit_score) ? (int) $r->audit_score : null, 'auditStatus' => (string) ($r->audit_status ?? ''), 'pageType' => (string) ($r->page_type ?? ''), 'contentStatus' => (string) ($r->content_status ?? '')];
         })->all();
     }
 

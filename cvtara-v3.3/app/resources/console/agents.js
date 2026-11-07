@@ -12,7 +12,7 @@
   const SEV = { high: 'bad', medium: 'mid', low: '', info: 'ok' };
   const kpi = (label, value, sub = '') => `<div class="kpi"><small>${E(label)}</small><b${/^Not (tracked|checked yet)$/.test(String(value)) ? ' style="font-size:1.1rem"' : ''}>${value}</b><small>${sub}</small></div>`;
   const table = (head, rows, empty) => rows.length ? `<div style="overflow:auto"><table class="ad-table"><thead><tr>${head.map(h => `<th>${E(h)}</th>`).join('')}</tr></thead><tbody>${rows.join('')}</tbody></table></div>` : `<p class="muted">${E(empty)}</p>`;
-  const P = { page: 1, per: 20, q: '', issues: 'all', index: 'all', important: 'all', sort: 'impressions' };
+  const P = { page: 1, per: 20, q: '', issues: 'all', index: 'all', important: 'all', audit: 'all', sort: 'impressions' };
   const KW = { page: 1, per: 20, q: '', kind: 'all', band: 'all', sort: 'impressions' };
   const LG = { page: 1, per: 20, agent: 'all', status: 'all' };
 
@@ -64,14 +64,17 @@
           <select id="pgIssues"><option value="all">Issues: any</option><option value="yes">With issues</option><option value="no">No issues</option></select>
           <select id="pgIndex"><option value="all">Google: any</option><option value="yes">Indexed</option><option value="no">Not indexed</option><option value="unchecked">Not checked yet</option></select>
           <select id="pgImp"><option value="all">All pages</option><option value="yes">Important only</option></select>
-          <select id="pgSort"><option value="impressions">Most impressions</option><option value="clicks">Most clicks</option><option value="issues">Most issues</option><option value="linksIn">Fewest links in</option><option value="path">Address</option></select>
+          <select id="pgAudit"><option value="all">Audit: any</option><option value="poor">Poor</option><option value="needs_work">Needs work</option><option value="good">Good</option><option value="none">Not audited yet</option></select>
+          <select id="pgSort"><option value="impressions">Most impressions</option><option value="clicks">Most clicks</option><option value="issues">Most issues</option><option value="linksIn">Fewest links in</option><option value="score">Lowest audit score</option><option value="path">Address</option></select>
           <a class="button secondary small" id="pgCsv" href="#">Download CSV</a></div>
         <div id="pgT"><div class="ops-skel"></div></div><div class="ops-pager" id="pgP"></div></section>
       <div class="ops-two">
         <section class="panel panel-pad" data-nokit><h3 style="margin-top:0">Site-wide</h3>
           <p>Duplicate titles: <b>${O.site.duplicateTitles.length}</b> · Duplicate descriptions: <b>${O.site.duplicateDescriptions.length}</b> · Orphan pages (no links in): <b>${O.site.orphans === null ? '—' : O.site.orphans.length}</b> · Pages with only one link in: <b>${O.site.weaklyLinked === null ? '—' : O.site.weaklyLinked}</b></p>
           ${O.site.linkedButNotInSitemap.length ? `<p>Linked from the site but missing from the sitemap:</p><ul>${O.site.linkedButNotInSitemap.slice(0, 15).map(p => `<li><code>${E(p)}</code></li>`).join('')}</ul>` : '<p class="muted">Every linked content page is in the sitemap.</p>'}
-          ${O.site.orphans && O.site.orphans.length ? `<p>Orphan pages:</p><ul>${O.site.orphans.slice(0, 15).map(p => `<li><code>${E(p)}</code></li>`).join('')}</ul>` : ''}</section>
+          ${O.site.orphans && O.site.orphans.length ? `<p>Orphan pages:</p><ul>${O.site.orphans.slice(0, 15).map(p => `<li><code>${E(p)}</code></li>`).join('')}</ul>` : ''}
+          <div id="agLists"><div class="ops-skel"></div></div>
+          <p><button class="button secondary small" id="agAudit">Run the full audit now</button> <button class="button secondary small" id="agCwv">Measure Core Web Vitals</button></p></section>
         <section class="panel panel-pad" data-nokit><h3 style="margin-top:0">Sitemaps in Search Console</h3>
           ${sm.length ? table(['Sitemap', 'URLs', 'Errors', 'Warnings', 'Google read it'], sm.map(m => `<tr><td>${E(m.path)}</td><td>${n(m.submitted)}</td><td>${n(m.errors)}</td><td>${n(m.warnings)}</td><td>${E(when(m.lastDownloaded))}${m.pending ? ' (pending)' : ''}</td></tr>`), '') : '<p class="muted">Not read yet: the agent reads it on its daily run once Search Console is connected.</p>'}</section>
       </div>
@@ -95,41 +98,84 @@
     $('#agSeoToggle', h).onclick = () => toggle('seo', s.status === 'paused', () => seo(h));
     $('#agScan', h).onclick = async e => { e.target.disabled = true; try { const r = await api('/api/admin/growth/seo/scan', { method: 'POST', body: {} }); toast(r.summary || 'Done'); seo(h); } catch (x) { toast(err(x)); e.target.disabled = false; } };
     $('#agInspect', h).onclick = async e => { e.target.disabled = true; try { const r = await api('/api/admin/growth/seo/inspect', { method: 'POST', body: {} }); toast(r.summary || 'Done'); seo(h); } catch (x) { toast(err(x)); e.target.disabled = false; } };
-    ['Issues', 'Index', 'Imp', 'Sort'].forEach(id => { const el = $('#pg' + id, h); const key = { Issues: 'issues', Index: 'index', Imp: 'important', Sort: 'sort' }[id]; el.value = P[key]; el.onchange = () => { P[key] = el.value; P.page = 1; pages(h); }; });
+    ['Issues', 'Index', 'Imp', 'Audit', 'Sort'].forEach(id => { const el = $('#pg' + id, h); const key = { Issues: 'issues', Index: 'index', Imp: 'important', Audit: 'audit', Sort: 'sort' }[id]; el.value = P[key]; el.onchange = () => { P[key] = el.value; P.page = 1; pages(h); }; });
     $('#pgQ', h).onchange = e => { P.q = e.target.value.trim(); P.page = 1; pages(h); };
     ['Kind', 'Band'].forEach(id => { const el = $('#kw' + id, h); const key = id.toLowerCase(); el.value = KW[key]; el.onchange = () => { KW[key] = el.value; KW.page = 1; keywords(h); }; });
     $('#kwQ', h).onchange = e => { KW.q = e.target.value.trim(); KW.page = 1; keywords(h); };
     $('#kwAdd', h).onclick = () => addKeyword(h);
-    pages(h); keywords(h);
+    const run = (btn, url) => { btn.onclick = async () => { btn.disabled = true; try { const r = await api(url, { method: 'POST', body: {} }); toast(r.summary || 'Done'); seo(h); } catch (x) { toast(err(x)); btn.disabled = false; } }; };
+    run($('#agAudit', h), '/api/admin/growth/seo/audit'); run($('#agCwv', h), '/api/admin/growth/seo/web-vitals');
+    pages(h); keywords(h); lists(h);
+  }
+
+  // 3.44.0: the audit lists (orphans, sitemap gaps, noindex in the sitemap, broken links).
+  async function lists(h) {
+    const box = $('#agLists', h); if (!box) return;
+    try {
+      const L = await api('/api/admin/growth/seo/audit-lists');
+      const ul = (a, f) => `<ul>${a.slice(0, 15).map(f).join('')}</ul>${a.length > 15 ? `<p class="muted">and ${a.length - 15} more</p>` : ''}`;
+      box.innerHTML = `<p>In the sitemap but marked noindex: <b>${L.noindexInSitemap.length}</b> · Broken pages linked from the site: <b>${L.broken.length}</b></p>
+        ${L.noindexInSitemap.length ? '<p>Noindex pages in the sitemap (remove them from the sitemap or the noindex):</p>' + ul(L.noindexInSitemap, p => `<li><code>${E(p)}</code></li>`) : ''}
+        ${L.broken.length ? '<p>Broken pages and where they are linked from:</p>' + ul(L.broken, b => `<li><code>${E(b.path)}</code> (HTTP ${b.status || 'no answer'})${b.linkedFrom.length ? ' from ' + b.linkedFrom.slice(0, 3).map(f => `<code>${E(f)}</code>`).join(', ') : ''}</li>`) : ''}`;
+    } catch (e) { box.innerHTML = `<p role="alert">${E(err(e))}</p>`; }
   }
 
   function qs(o, keys) { const q = new URLSearchParams({ page: String(o.page), per: String(o.per) }); keys.forEach(k => { if (o[k] && o[k] !== 'all') q.set(k, o[k]); }); return q; }
 
   async function pages(h) {
     const box = $('#pgT', h); if (!box) return;
-    const q = qs(P, ['q', 'issues', 'index', 'important', 'sort']); if (P.sort === 'linksIn' || P.sort === 'path') q.set('dir', 'asc');
+    const q = qs(P, ['q', 'issues', 'index', 'important', 'audit', 'sort']); if (P.sort === 'linksIn' || P.sort === 'path' || P.sort === 'score') q.set('dir', 'asc');
     $('#pgCsv', h).href = '/api/admin/growth/seo/pages?' + q + '&export=csv';
     try {
       const d = await api('/api/admin/growth/seo/pages?' + q);
-      box.innerHTML = table(['Page', 'Google', 'Impr.', 'Clicks', 'Pos.', 'Links in', 'Issues', ''], d.rows.map(r => `<tr><td><code>${E(r.path)}</code>${r.important ? ' <span class="pill">important</span>' : ''}<br><small class="muted">${E(r.title)}</small></td>
+      box.innerHTML = table(['Page', 'Audit', 'Google', 'Impr.', 'Clicks', 'Pos.', 'Links in', 'Issues', ''], d.rows.map(r => `<tr><td><code>${E(r.path)}</code>${r.important ? ' <span class="pill">important</span>' : ''}<br><small class="muted">${E(r.title)}</small></td>
+        <td>${score(r.auditScore, r.auditStatus)}</td>
         <td>${r.verdict === 'PASS' ? '<span class="pill ok">Indexed</span>' : r.verdict ? `<span class="pill bad">${E(r.coverage || r.verdict)}</span>` : r.inspectError ? `<span class="pill mid" title="${E(r.inspectError)}">check failed</span>` : '<span class="muted">not checked</span>'}</td>
         <td>${n(r.impressions)}${r.impressionsChange !== null ? `<br><small class="muted">${r.impressionsChange >= 0 ? '+' : ''}${n(r.impressionsChange)}</small>` : ''}</td><td>${n(r.clicks)}</td><td>${r.position === null ? '—' : r.position}</td><td>${n(r.linksIn)}</td>
         <td>${r.issueCount ? `<ul style="margin:0;padding-left:16px">${Object.values(r.issues).slice(0, 4).map(i => `<li><small>${E(i)}</small></li>`).join('')}</ul>` : '<span class="pill ok">none</span>'}</td>
-        <td><button class="button secondary small" data-path="${E(r.path)}">History</button></td></tr>`), 'No pages scanned yet. Press "Scan pages now", or wait for the agent (it scans 40 pages every 10 minutes).');
+        <td><button class="button secondary small" data-path="${E(r.path)}">Record</button></td></tr>`), 'No pages scanned yet. Press "Scan pages now", or wait for the agent (it scans 40 pages every 10 minutes).');
       box.querySelectorAll('button[data-path]').forEach(b => { b.onclick = () => history(b.dataset.path); });
       K.pager($('#pgP', h), d, (p, per) => { P.page = p; P.per = per; pages(h); });
     } catch (e) { box.innerHTML = `<p role="alert">${E(err(e))}</p>`; }
   }
 
+  const ST = { good: ['ok', 'Good'], needs_work: ['mid', 'Needs work'], poor: ['bad', 'Poor'] };
+  const score = (v, st) => v === null || v === undefined ? '<span class="muted">not audited</span>' : `<span class="pill ${(ST[st] || ['', ''])[0]}">${v} · ${E((ST[st] || ['', st])[1])}</span>`;
+  const RES = { pass: ['ok', 'Pass'], warn: ['mid', 'Check'], fail: ['bad', 'Fail'], na: ['', 'n/a'] };
+
+  // 3.44.0: one page's record (what it is for), its checklist, its audit history, Google numbers and agent actions.
   async function history(path) {
-    try {
-      const d = await api('/api/admin/growth/seo/page?path=' + encodeURIComponent(path));
-      const p = d.page || {};
-      modal('Page history: ' + path, `<p>Google: <b>${E(p.coverage || p.verdict || 'not checked yet')}</b>${p.last_crawl_at ? ' · last crawled ' + E(when(p.last_crawl_at)) : ''}${p.google_canonical ? ' · Google\'s canonical: <code>' + E(p.google_canonical) + '</code>' : ''}${p.index_requested_at ? ' · recrawl asked ' + E(when(p.index_requested_at)) : ''}</p>
-        <p><a href="${E(d.inspectLink)}" target="_blank" rel="noopener">Open in Search Console (Request indexing is there)</a></p>
+    let d; try { d = await api('/api/admin/growth/seo/page?path=' + encodeURIComponent(path)); } catch (e) { toast(err(e)); return; }
+    const m = modal('Page record: ' + path, '', { wide: true });
+    const draw = () => {
+      const p = d.page || {}, R = d.record, O = d.options || {};
+      const opt = (map, v) => Object.entries(map).map(([k, l]) => `<option value="${E(k)}"${k === v ? ' selected' : ''}>${E(l)}</option>`).join('');
+      m.body.innerHTML = `${R ? `<p>Audit: ${score(R.auditScore, R.auditStatus)}${R.auditedAt ? ' · ' + E(when(R.auditedAt)) : ''} <button type="button" class="button secondary small" id="prCheck">Scan and audit this page now</button></p>
+        <form class="ops-form" id="prF"><label>Page type<select name="pageType">${opt(O.pageTypes, R.pageType)}</select></label>
+          <label>Search intent<select name="intent"><option value="">Not set</option>${opt(Object.fromEntries(O.intents.map(i => [i, i[0].toUpperCase() + i.slice(1)])), R.intent)}</select></label>
+          <label>Primary keyword<input name="primaryKeyword" maxlength="190" value="${E(R.primaryKeyword)}"></label>
+          <label>Secondary keywords (comma separated)<input name="secondaryKeywords" maxlength="900" value="${E(R.secondaryKeywords.join(', '))}"></label>
+          <label>Content status<select name="contentStatus">${opt(O.contentStatuses, R.contentStatus)}</select></label>
+          <label>Looked after by<select name="assignedAgent">${opt(O.agents, R.assignedAgent)}</select></label>
+          <label class="wide">Note<input name="note" maxlength="500" value="${E(R.note)}"></label>
+          <div class="wide"><button class="button primary small">Save record</button> <span role="status" id="prSt" class="muted">${R.editedBy ? 'Last changed by ' + E(R.editedBy) + ' · ' + E(when(R.editedAt)) : 'Type and keyword are filled in by the agent until someone saves.'}</span></div></form>
+        <p>Main call to action: <b>${E(R.cta || 'none found')}</b> · Links in: <b>${n(R.linksIn)}</b> · Images: <b>${n(R.images)}</b>${R.altCoverage !== null ? ` (ALT text on ${R.altCoverage}%)` : ''} · Core Web Vitals: <b>${R.cwv && R.cwv.status === 'ok' ? `LCP ${Math.round(R.cwv.lcp / 100) / 10} s, INP ${R.cwv.inp} ms, CLS ${R.cwv.cls}` : 'not tracked'}</b></p>
+        ${R.outline.length ? `<details><summary>Headings on the page (${R.outline.length})</summary><ul style="margin:6px 0">${R.outline.map(o => `<li style="margin-left:${o[0] === 'h3' ? 18 : 0}px"><small class="muted">${E(o[0].toUpperCase())}</small> ${E(o[1])}</li>`).join('')}</ul></details>` : ''}
+        <h4>Checklist (latest audit)</h4>${table(['Check', 'Result', 'Detail'], d.checks.map(c => `<tr><td>${E(c.label)}</td><td><span class="pill ${RES[c.result][0]}">${RES[c.result][1]}</span></td><td><small>${E(c.detail)}</small></td></tr>`), 'Not audited yet. Press "Scan and audit this page now".')}
+        <h4>Audit history</h4>${table(['When', 'Score', 'Failed', 'To check', 'Run by'], d.audits.map(a => `<tr><td>${E(when(a.at))}</td><td>${score(a.score, a.status)}</td><td>${a.failed}</td><td>${a.warnings}</td><td>${a.source === 'manual' ? 'A person' : 'The agent'}</td></tr>`), 'No audits yet.')}` : '<p class="muted">This page has not been scanned yet.</p>'}
+        <p>Google: <b>${E(p.coverage || p.verdict || 'not checked yet')}</b>${p.last_crawl_at ? ' · last crawled ' + E(when(p.last_crawl_at)) : ''}${p.google_canonical ? ' · Google\'s canonical: <code>' + E(p.google_canonical) + '</code>' : ''}${p.index_requested_at ? ' · recrawl asked ' + E(when(p.index_requested_at)) : ''} · <a href="${E(d.inspectLink)}" target="_blank" rel="noopener">Open in Search Console</a></p>
         <h4>Week by week (each week = the 4 weeks before it)</h4>${table(['Week', 'Impressions', 'Clicks', 'Clicked %', 'Position'], d.weeks.map(w => `<tr><td>${E(w.week)}</td><td>${n(w.impressions)}</td><td>${n(w.clicks)}</td><td>${Math.round(w.ctr * 1000) / 10}%</td><td>${w.position}</td></tr>`), 'No Search Console numbers for this page yet.')}
-        <h4>Agent actions</h4>${table(['Proposed', 'Change', 'Status', 'Why'], d.actions.map(a => `<tr><td>${E(when(a.created_at))}</td><td>${a.kind === 'meta' ? 'Title and description' : 'Internal links'}</td><td>${E(a.status)}</td><td><small>${E(a.reason)}</small></td></tr>`), 'None yet.')}`);
-    } catch (e) { toast(err(e)); }
+        <h4>Agent actions</h4>${table(['Proposed', 'Change', 'Status', 'Why'], d.actions.map(a => `<tr><td>${E(when(a.created_at))}</td><td>${a.kind === 'meta' ? 'Title and description' : 'Internal links'}</td><td>${E(a.status)}</td><td><small>${E(a.reason)}</small></td></tr>`), 'None yet.')}`;
+      const f = $('#prF', m.el);
+      if (f) f.onsubmit = async e => {
+        e.preventDefault(); const st = $('#prSt', m.el); st.textContent = 'Saving…';
+        try { const r = await api('/api/admin/growth/seo/page/record', { method: 'POST', body: { path, pageType: f.pageType.value, intent: f.intent.value || null, primaryKeyword: f.primaryKeyword.value.trim(), secondaryKeywords: f.secondaryKeywords.value.split(',').map(x => x.trim()).filter(Boolean).slice(0, 10), contentStatus: f.contentStatus.value, assignedAgent: f.assignedAgent.value, note: f.note.value.trim() } });
+          Object.assign(d, r); toast('Saved'); draw(); } catch (x) { st.textContent = err(x); }
+      };
+      const c = $('#prCheck', m.el);
+      if (c) c.onclick = async () => { c.disabled = true; c.textContent = 'Checking…'; try { const r = await api('/api/admin/growth/seo/page/audit', { method: 'POST', body: { path } }); Object.assign(d, r); toast('Audited'); draw(); } catch (x) { toast(err(x)); c.disabled = false; c.textContent = 'Scan and audit this page now'; } };
+    };
+    draw();
   }
 
   async function keywords(h) {

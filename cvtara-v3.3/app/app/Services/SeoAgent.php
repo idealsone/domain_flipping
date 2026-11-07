@@ -437,6 +437,13 @@ class SeoAgent
                 return ['summary' => count($a['findings']) ? count($a['findings']).' crawler access problem(s): '.$a['findings'][0]['text'] : 'Search and AI crawlers can reach public pages; private areas are closed.'];
             });
         }
+        // 3.44.0: once a day, the full checklist audit (the link graph changes as pages are scanned) and, with a key, Core Web Vitals.
+        if (! Traffic::busy() && \Illuminate\Support\Facades\Cache::add('seo-audit', 1, 86400)) {
+            AgentLog::run('seo', 'audit', fn () => SeoAudit::run());
+        }
+        if (SeoAudit::cruxKey() !== '' && ! Traffic::busy() && \Illuminate\Support\Facades\Cache::add('seo-cwv', 1, 86400)) {
+            AgentLog::run('seo', 'web-vitals', fn () => SeoAudit::cwv());
+        }
         if (\Illuminate\Support\Facades\Cache::add('seo-links', 1, 86400) && DB::table('link_prospects')->where('publication_url', '!=', '')->exists()) {
             AgentLog::run('seo', 'link-check', fn () => LinkCrm::verifyDue());
         }

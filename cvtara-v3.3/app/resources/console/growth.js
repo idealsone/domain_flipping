@@ -19,7 +19,7 @@
   const OPERATORS = ['reach', 'customers', 'scorecard'];
   const load = (name, src) => window[name] ? Promise.resolve() : new Promise((ok, no) => { const s = document.createElement('script'); s.src = src; s.onload = ok; s.onerror = () => no(new Error('Could not load the agent pages. Refresh and try again.')); document.head.append(s); });
   function agentsJs() {
-    return OPERATORS.includes(TAB) ? load('CVTaraOperators', '/console/operators.js?v=3.35.0') : load('CVTaraAgents', '/console/agents.js?v=3.35.0');
+    return OPERATORS.includes(TAB) ? load('CVTaraOperators', '/console/operators.js?v=3.35.0') : load('CVTaraAgents', '/console/agents.js?v=3.44.0');
   }
   async function growth() {
     const root = $('#admin-growth'); if (!root) return;

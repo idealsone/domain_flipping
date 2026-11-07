@@ -10,6 +10,7 @@ class FakeGoogle:
         self.sa_rows = {}  # rows to answer per dimension list, e.g. {"query,page": [...]}
         self.inspected = []  # URL Inspection calls; answer PASS unless the url is in not_indexed
         self.not_indexed = set()
+        self.crux, self.crux_calls = {}, []  # path -> (lcp ms, inp ms, cls)
         outer = self
 
         class H(BaseHTTPRequestHandler):
@@ -25,6 +26,13 @@ class FakeGoogle:
                 raw = self._body(); outer.calls.append(("POST", self.path))
                 if self.path == "/token":
                     return self._send(200, {"access_token": "g_tok", "expires_in": 3600})
+                if self.path.startswith("/v1/records:queryRecord"):  # Chrome UX Report (3.44.0): key in the query string, no OAuth
+                    b = json.loads(raw or b"{}"); outer.crux_calls.append(b.get("url"))
+                    if "key=crux-test" not in self.path: return self._send(400, {"error": {"message": "API key not valid"}})
+                    m = outer.crux.get("/" + b.get("url", "").split("://", 1)[-1].split("/", 1)[-1])  # by path
+                    if not m: return self._send(404, {"error": {"message": "chrome ux report data not found"}})
+                    lcp, inp, cls = m
+                    return self._send(200, {"record": {"metrics": {"largest_contentful_paint": {"percentiles": {"p75": lcp}}, "interaction_to_next_paint": {"percentiles": {"p75": inp}}, "cumulative_layout_shift": {"percentiles": {"p75": str(cls)}}}}})
                 if self.path == "/indexnow":
                     outer.indexnow.append(json.loads(raw)); return self._send(202, {})
                 if self.headers.get("Authorization") != "Bearer g_tok": return self._send(401, {"error": {"message": "no token"}})

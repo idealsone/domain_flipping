@@ -1,4 +1,14 @@
-# CVTara v3.43.0 — V2: business numbers, owner alerts and payment reconciliation
+# CVTara v3.44.0 — V2: SEO page record and audit history
+
+## 3.44.0
+Ninth V2 release. **Database change:** run `php artisan migrate --force` (new table `seo_page_audits`; new columns on `seo_pages`). Nothing existing changes.
+- **Page record** (Growth → SEO → Pages → Record): what each page is for (page type, primary and secondary keywords, search intent, content status, who looks after it, a note) and what the scan read from it (H2/H3 outline, images and ALT text coverage, links in, main call to action). Type and keyword are filled in by rule and from Search Console until a person saves them; the agent never overwrites a saved record. Saving needs SEO draft rights and is in the audit log.
+- **Checklist audit (24 checks, spec 10.5)** after every scan and once a day for all pages: HTTP status, redirects, HTTPS, canonical, robots.txt, noindex, sitemap, crawlability, title, description, H1, outline, duplicates, internal links, links in (orphans), broken links, structured data, breadcrumbs, mobile viewport, image ALT text, content readable without JavaScript, hreflang, pagination and Core Web Vitals. Each page gets a score (0-100) and Good / Needs work / Poor; a failed indexing check always means Poor. Checks that do not apply are left out of the score.
+- **Audit history:** a dated row whenever the result changes (and at least weekly), plus every check a person starts ("Scan and audit this page now"). The page list can be filtered by audit result and sorted by lowest score.
+- **Site lists:** orphan pages, pages linked from the site but missing from the sitemap, sitemap pages marked noindex, and broken pages with the pages that link to them.
+- **Core Web Vitals** only from the Chrome UX Report (real Chrome visitors on phones), for the important pages, weekly. Add the optional key in Integrations → Analytics; without it, or without enough visitors, they show "not tracked", never a number. The key is stored encrypted and never shown back.
+- Scans and the daily audit wait while the site is in busy mode; a one-page check is limited to 10 a minute, the full audit and the vitals check to once every 5 minutes.
+- Test suite `s53_seo_audit` (48 checks), plus a browser check (desktop and phone).
 
 ## 3.43.0
 Eighth V2 release. **Database change:** run `php artisan migrate --force` (new table `payment_reconciliation_records`). Nothing existing changes.
