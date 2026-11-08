@@ -7,7 +7,7 @@ use Illuminate\Http\Request;
 
 class SecurityHeaders
 {
-    public const CSP = "base-uri 'self'; object-src 'none'; frame-ancestors 'self'; form-action 'self'; script-src 'self' 'unsafe-inline' blob: https://checkout.razorpay.com https://*.razorpay.com https://*.onesignal.com https://www.googletagmanager.com https://www.google-analytics.com; worker-src 'self' blob: https://*.onesignal.com";
+    public const CSP = "base-uri 'self'; object-src 'none'; frame-ancestors 'self'; form-action 'self'; script-src 'self' 'unsafe-inline' blob: https://checkout.razorpay.com https://*.razorpay.com https://www.googletagmanager.com https://www.google-analytics.com; worker-src 'self' blob:";
 
     public function handle(Request $r, Closure $next)
     {

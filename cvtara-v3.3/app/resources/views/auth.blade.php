@@ -3,7 +3,7 @@
 /* Sign-in and sign-up use the same type, colours and buttons as the home page */
 body{min-height:100vh;margin:0;background:radial-gradient(1100px 520px at 85% -10%,rgba(79,70,229,.16),transparent 60%),radial-gradient(900px 420px at -10% 10%,rgba(21,87,210,.13),transparent 60%),var(--bg,#f8fafc);color:var(--ink,#0f172a)}
 .au{min-height:100vh;display:grid;grid-template-columns:minmax(380px,.9fr) 1.1fr}
-.au-side{position:relative;overflow:hidden;background:linear-gradient(150deg,#1e1b4b,#312e81 60%,#3730a3);color:#fff;padding:44px clamp(32px,5vw,72px);display:flex;flex-direction:column;justify-content:center;gap:26px}
+.au-side{position:relative;overflow:hidden;background:#16233f;color:#fff;padding:44px clamp(32px,5vw,72px);display:flex;flex-direction:column;justify-content:center;gap:26px}
 .au-side:before{content:"";position:absolute;right:-120px;top:-120px;width:360px;height:360px;border-radius:50%;background:radial-gradient(circle,rgba(129,140,248,.35),transparent 70%)}
 .au-side>*{position:relative}
 .au-side .brand{display:inline-flex;align-items:center;gap:10px;color:#fff;text-decoration:none}.au-side .brand b{color:#fff;font-size:22px;letter-spacing:-.01em}
@@ -39,7 +39,7 @@ body{min-height:100vh;margin:0;background:radial-gradient(1100px 520px at 85% -1
 .au-pw button:hover{background:rgba(21,87,210,.08)}
 .au-card .terms{display:flex;gap:10px;align-items:flex-start;font-weight:500;font-size:13.5px;color:var(--muted,#475569);margin:2px 0 4px}
 .au-card .terms input{margin-top:3px;width:17px;height:17px;accent-color:#1557d2}
-.au-go{width:100%;height:50px;border:0;border-radius:12px;background:linear-gradient(135deg,#1557d2,#4f46e5);color:#fff;font:inherit;font-weight:800;font-size:16px;cursor:pointer;margin-top:8px;box-shadow:0 10px 24px rgba(21,87,210,.28);transition:transform .15s,box-shadow .15s}
+.au-go{width:100%;height:50px;border:0;border-radius:12px;background:#1f4fd1;color:#fff;font:inherit;font-weight:700;font-size:16px;cursor:pointer;margin-top:8px;box-shadow:none;transition:transform .15s,box-shadow .15s}
 .au-go:hover{transform:translateY(-1px);box-shadow:0 14px 28px rgba(21,87,210,.34)}
 .au-card a{color:#1557d2;font-weight:700;text-decoration:none}.au-card a:hover{text-decoration:underline}
 .au-links{margin:18px 0 0;display:flex;justify-content:space-between;gap:10px 14px;flex-wrap:wrap;font-size:14px;color:var(--muted,#64748b)}
@@ -72,7 +72,7 @@ html.dark .au-theme{background:#1a1f2e;border-color:#2d3748;color:#f1f5f9}
 <ul class="au-trust"><li>Free to start, no card</li><li>Pay once, no auto-renewal</li><li>Download or delete your data anytime</li></ul></aside>
 <main class="au-main"><div class="au-card {{$isReg?'au-wide':''}}">
 <h1>{{['owner'=>'Owner sign in','login'=>'Welcome back','register'=>'Create your account','forgot-password'=>'Reset your password','reset-password'=>'Choose a new password','verify'=>'Check your email'][$mode]}}</h1>
-<p class="sub">{{['owner'=>'Sign in to the owner console.','login'=>'Sign in to your CVTara workspace.','register'=>'It takes under a minute. No card needed.','forgot-password'=>'We’ll send a reset link to your email.','reset-password'=>'Use at least 12 characters.','verify'=>'We sent a 6-digit code to '.$email.'. It expires in 15 minutes.'][$mode]}}</p>
+<p class="sub">{{['owner'=>'Sign in to the owner console.','login'=>'Sign in to your CVTara workspace.','register'=>'It takes under a minute. No card needed.','forgot-password'=>'We’ll send a reset link to your email.','reset-password'=>'Use at least 12 characters.','verify'=>($ownerStep??false)?'We emailed a 6-digit sign-in code to the owner address. It expires in 15 minutes.':'We sent a 6-digit code to '.$email.'. It expires in 15 minutes.'][$mode]}}</p>
 @if(session('status'))<p class="ok" role="status">{{session('status')}}</p>@endif
 @php($inline=in_array($mode,['register','verify','reset-password']))
 @if($inline && $errors->any())<p class="error" role="alert">Please fix the highlighted fields below.</p>@endif
@@ -92,7 +92,8 @@ html.dark .au-theme{background:#1a1f2e;border-color:#2d3748;color:#f1f5f9}
 </div>
 @endif
 <button class="au-go">{{['owner'=>'Sign in','login'=>'Sign in','register'=>'Create my account','forgot-password'=>'Send reset link','reset-password'=>'Save password','verify'=>'Confirm email'][$mode]}}</button></form>
-@if($mode==='verify')<form method="post" action="/verify-email/resend" style="margin-top:12px">@csrf @if(request('next'))<input type="hidden" name="next" value="{{ request('next') }}">@endif<button class="au-ghost" type="submit">Send me a new code</button></form><p class="au-note">Not in your inbox? Check spam or promotions. The email comes from support@cvtara.com.</p>@endif
+@if($ownerStep??false)<p class="au-note">No email? Check spam, or <a href="/{{ request()->path() }}?restart=1">sign in again</a> for a new code.</p>@endif
+@if($mode==='verify' && !($ownerStep??false))<form method="post" action="/verify-email/resend" style="margin-top:12px">@csrf @if(request('next'))<input type="hidden" name="next" value="{{ request('next') }}">@endif<button class="au-ghost" type="submit">Send me a new code</button></form><p class="au-note">Not in your inbox? Check spam or promotions. The email comes from support@cvtara.com.</p>@endif
 @if($isReg)<p class="au-note">Build, preview and run ATS checks free first. Pay only when you download, with a 7-day refund if unused.</p>@endif
 <p class="au-links" @if(in_array($mode,['owner','verify'])) hidden @endif>@if($mode==='register')<span>Already have an account? <a href="/login">Sign in</a></span>@elseif($mode==='login')<span>New to CVTara? <a href="/register">Create an account</a></span><a href="/forgot-password">Forgot password?</a>@else<a href="/login">Back to sign in</a>@endif</p>
 </div></main></div><button type="button" class="au-theme" id="auTheme" aria-label="Switch between light and night mode"></button><script>(function(){var b=document.getElementById("auTheme"),r=document.documentElement;function paint(){b.textContent=r.classList.contains("dark")?"☀":"☾"}b.onclick=function(){var d=!r.classList.contains("dark");r.classList.toggle("dark",d);r.style.colorScheme=d?"dark":"light";r.setAttribute("data-theme",d?"dark":"light");try{localStorage.setItem("cvtara-theme",d?"dark":"light")}catch(e){}paint()};paint();var f=document.getElementById("auForm"),p1=document.getElementById("auPw"),p2=document.getElementById("auPw2"),hint=document.getElementById("auPwHint"),mt=document.getElementById("auMatch");

@@ -57,7 +57,7 @@
   // A "Clear cache" button in the top bar of every owner page: drops the ready-made pages and rebuilds them, then reloads this page fresh.
   function cacheButton() {
     const bar = document.querySelector('.admin-top .top-actions'); if (!bar || document.getElementById('clearCacheBtn')) return;
-    const b = document.createElement('button'); b.type = 'button'; b.id = 'clearCacheBtn'; b.className = 'button primary'; b.textContent = 'Clear cache'; b.title = 'Clear stored pages and rebuild the site so your latest changes show';
+    const b = document.createElement('button'); b.type = 'button'; b.id = 'clearCacheBtn'; b.className = 'button secondary'; b.textContent = 'Clear cache'; b.title = 'Clear stored pages and rebuild the site so your latest changes show';
     b.onclick = async () => {
       b.disabled = true; b.textContent = 'Clearing…';
       try { const d = await post('/api/admin/speed/refresh', {}); toast('Cache cleared · ' + d.result.built + ' pages rebuilt'); b.textContent = 'Done ✓'; setTimeout(() => { alert('Cache cleared and ' + d.result.built + ' pages rebuilt.\n\nTo see the change as a visitor: press Ctrl+Shift+R in the browser, or open the site in a private window.\nIf it still looks old after a minute, also clear the Hostinger cache (hPanel > Websites > Dashboard > Cache Manager > Purge all).'); location.reload(); }, 400); }

@@ -6,6 +6,8 @@ NAME = "Owner console lists, one page at a time"
 
 def run(ctx, t):
     if not ctx.preview: return
+    ops = open(ctx.app + "/resources/console/ops.js", encoding="utf-8").read()
+    t.check("a reload reopens a Settings sub-page (?tab=integrations), not the dashboard", "const first = nav(tab) || sub(tab) || nav('dashboard')" in ops)
     db = ctx.db(); o = ctx.client(); o.raw("GET", "/preview/go/admin"); o.page("/admin.html")
     for i in range(45):
         db.q("insert into users (name, email, password, created_at, updated_at) values (?, ?, 'x', ?, ?)", f"Pager Person {i:02d}", f"pager-{i:02d}@test.local", f"2026-09-{1 + i % 28:02d} 10:00:00", "2026-09-01 10:00:00")

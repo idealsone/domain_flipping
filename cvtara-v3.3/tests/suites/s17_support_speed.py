@@ -105,7 +105,7 @@ def run(ctx, t):
     stored = open(os.path.join(ipub, "_pages", "index.html"), encoding="utf8").read()
     t.check("the stored copy carries nothing that belongs to one visitor", 'name="csrf-token" content=""' in stored and 'name="cvtara-user" content="guest"' in stored)
     fresh = ctx.client(); s, h, b = fresh.raw("GET", "/")
-    t.check("a visitor without a cookie gets the ready-made page and no session is started", s == 200 and "Build free. Pay only when you download.".encode() in b and not any(k.lower() == "set-cookie" for k in h), (s, [k for k in h if k.lower() == "set-cookie"]))
+    t.check("a visitor without a cookie gets the ready-made page and no session is started", s == 200 and "Free to build. Pay when you download.".encode() in b and not any(k.lower() == "set-cookie" for k in h), (s, [k for k in h if k.lower() == "set-cookie"]))
     s, h2, _ = fresh.raw("GET", "/", None, {"If-None-Match": h.get("ETag", "")}); t.check("browsers can re-check a page cheaply (304)", s == 304, s)
     t.check("security headers are still sent with ready-made pages", "script-src" in h.get("Content-Security-Policy", "") and h.get("X-Content-Type-Options") == "nosniff")
     s, _, b = cust.raw("GET", "/"); page = b.decode("utf8", "ignore")

@@ -3,14 +3,20 @@
 namespace App\Http\Controllers;
 
 use App\Models\User;
+use App\Services\AccountEraser;
 use App\Services\AccountSecurity;
 use App\Services\AdminTable;
 use App\Services\BusinessControls;
+use App\Services\Campaigns;
+use App\Services\EmailRenderer;
 use App\Services\FastIndex;
+use App\Services\JobReader;
 use App\Services\MailAutomation;
+use App\Services\PhonePe;
 use App\Services\SearchConsole;
 use App\Services\Settings;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
@@ -36,13 +42,19 @@ class AdminController extends Controller
         if (preg_match(PromoAdminController::ROUTES, $path)) {
             return app(PromoAdminController::class)->run($r, $path);
         }
+        if (preg_match(GrowthAdminController::ROUTES, $path)) {
+            return app(GrowthAdminController::class)->run($r, $path);
+        }
         if (preg_match(OutreachAdminController::ROUTES, $path)) {
             return app(OutreachAdminController::class)->run($r, $path);
+        }
+        if (preg_match(WhatsNewAdminController::ROUTES, $path)) {
+            return app(WhatsNewAdminController::class)->run($r, $path);
         }
         if (preg_match(SupportAdminController::ROUTES, $path)) {
             return app(SupportAdminController::class)->run($r, $path);
         }
-        if (preg_match('#^report(/meta|/kpis)?$#', $path)) {
+        if (preg_match('#^report(/meta|/kpis|/fresh-start)?$#', $path)) {
             return app(ReportController::class)->run($r, $path);
         }
         if (preg_match(AdminOpsController::ROUTES, $path)) {
@@ -57,8 +69,8 @@ class AdminController extends Controller
         if (preg_match('#^content/(legal|features|library|blog|integrations|emails|seo|popup|site)$#', $path, $m)) {
             $key = $m[1];
             if ($get) {
-                return $ok(['data' => $key === 'emails' ? \App\Services\MailAutomation::upgradeTemplates((array) Settings::get($key)) : Settings::get($key), 'revision' => Settings::revision($key), 'connections' => ['payments' => ! empty(Settings::providers()['payments']), 'email' => ! empty(Settings::providers()['email']), 'ai' => ! empty(Settings::providers()['ai']), 'grammar' => ! empty(Settings::providers()['grammar'])]]);
-            }if (in_array($key, ['integrations', 'emails', 'legal', 'site'], true)) {
+                return $ok(['data' => $key === 'emails' ? MailAutomation::upgradeTemplates((array) Settings::get($key)) : Settings::get($key), 'revision' => Settings::revision($key), 'connections' => ['payments' => ! empty(Settings::providers()['payments']), 'email' => ! empty(Settings::providers()['email']), 'ai' => ! empty(Settings::providers()['ai']), 'grammar' => ! empty(Settings::providers()['grammar'])]]);
+            }if ($key === 'integrations') { // payment and email provider switches; plain page and email text saves need no code
                 AccountSecurity::requireRecent($r);
             }$r->validate(['data' => 'present|array', 'revision' => 'required|integer']);
             abort_if(strlen(json_encode($r->data)) > 4000000, 413);
@@ -89,14 +101,15 @@ class AdminController extends Controller
         if ($path === 'settings') {
             if ($get) {
                 return $ok(['settings' => Settings::get('public', [])]);
-            }$v = $r->validate(['heroTitle' => 'sometimes|string|max:200', 'heroDescription' => 'sometimes|string|max:1000', 'primaryCTA' => 'sometimes|string|max:80', 'secondaryCTA' => 'sometimes|string|max:80', 'accent' => 'sometimes|regex:/^#[a-fA-F0-9]{6}$/', 'pushEnabled' => 'sometimes|boolean', 'oneSignalAppId' => 'nullable|uuid', 'pushDelay' => 'sometimes|integer|min:0|max:300', 'pushMessage' => 'sometimes|string|max:500']);
-            Settings::put('public', array_merge(Settings::get('public', []), $v));
+            }$v = $r->validate(['heroTitle' => 'sometimes|string|max:200', 'heroDescription' => 'sometimes|string|max:1000', 'primaryCTA' => 'sometimes|string|max:80', 'secondaryCTA' => 'sometimes|string|max:80', 'accent' => 'sometimes|regex:/^#[a-fA-F0-9]{6}$/']);
+            Settings::put('public', array_diff_key(array_merge(Settings::get('public', []), $v), array_flip(['pushEnabled', 'oneSignalAppId', 'pushDelay', 'pushMessage'])));
 
             return $ok(['settings' => Settings::get('public')]);
         }
         if ($path === 'providers') {
             $p = Settings::providers();
-            $fields = ['jobreader' => ['enabled', 'provider', 'scrapingbeeApiKey', 'zenrowsApiKey', 'customUrlTemplate', 'customApiKey', 'dailyLimit'], 'payments' => ['provider', 'mode', 'razorpayKeyId', 'razorpayKeySecret', 'razorpayWebhookSecret', 'phonepeMode', 'phonepeClientId', 'phonepeClientVersion', 'phonepeClientSecret', 'phonepeWebhookUsername', 'phonepeWebhookPassword'], 'email' => ['provider', 'resendApiKey', 'smtpHost', 'smtpPort', 'smtpUser', 'smtpPassword', 'fromEmail', 'fromName', 'replyTo', 'postalAddress'], 'ai' => ['provider', 'claudeApiKey', 'model', 'dailyLimit', 'writerApiKey'], 'grammar' => ['url', 'username', 'premiumApiKey'], 'analytics' => ['measurementId', 'searchConsoleProperty', 'searchConsoleServiceAccount'], 'push' => ['oneSignalAppId', 'oneSignalRestApiKey']];
+            unset($p['push']);
+            $fields = ['jobreader' => ['enabled', 'provider', 'scrapingbeeApiKey', 'zenrowsApiKey', 'customUrlTemplate', 'customApiKey', 'dailyLimit'], 'payments' => ['provider', 'mode', 'razorpayKeyId', 'razorpayKeySecret', 'razorpayWebhookSecret', 'phonepeMode', 'phonepeClientId', 'phonepeClientVersion', 'phonepeClientSecret', 'phonepeWebhookUsername', 'phonepeWebhookPassword'], 'email' => ['provider', 'resendApiKey', 'smtpHost', 'smtpPort', 'smtpUser', 'smtpPassword', 'fromEmail', 'fromName', 'replyTo', 'postalAddress'], 'ai' => ['provider', 'claudeApiKey', 'model', 'dailyLimit', 'writerApiKey'], 'grammar' => ['url', 'username', 'premiumApiKey'], 'analytics' => ['measurementId', 'searchConsoleProperty', 'searchConsoleServiceAccount']];
             $secret = fn ($k) => preg_match('/Secret|ApiKey|Password|ServiceAccount|AuthToken/', $k);
             if ($get) {
                 foreach ($p as &$service) {
@@ -114,7 +127,7 @@ class AdminController extends Controller
                 validator($r->values, ['provider' => 'sometimes|in:claude,standard', 'model' => 'nullable|string|max:80|regex:/^[a-z0-9.\-]*$/', 'dailyLimit' => 'nullable|integer|min:0|max:100000'])->validate();
             }
             if ($r->service === 'jobreader') {
-                validator($r->values, ['enabled' => 'required|in:true,false', 'provider' => 'required|in:'.implode(',', \App\Services\JobReader::PROVIDERS), 'dailyLimit' => 'nullable|integer|min:1|max:100000', 'customUrlTemplate' => 'nullable|string|max:600'])->validate();
+                validator($r->values, ['enabled' => 'required|in:true,false', 'provider' => 'required|in:'.implode(',', JobReader::PROVIDERS), 'dailyLimit' => 'nullable|integer|min:1|max:100000', 'customUrlTemplate' => 'nullable|string|max:600'])->validate();
                 if (($r->values['customUrlTemplate'] ?? '') !== '' && ! str_contains($r->values['customUrlTemplate'], '{url}')) {
                     abort(422, 'The custom address must contain {url} where the job link goes.');
                 }
@@ -146,10 +159,10 @@ class AdminController extends Controller
                     abort_unless(! empty($pay['razorpayKeyId']) && ! empty($pay['razorpayKeySecret']), 422, 'Enter the Razorpay Key ID and Key secret.');
                 }
                 if (in_array($choice, ['phonepe', 'both'], true)) {
-                    abort_unless(\App\Services\PhonePe::configured($pay), 422, 'Enter the PhonePe Client ID and Client secret.');
+                    abort_unless(PhonePe::configured($pay), 422, 'Enter the PhonePe Client ID and Client secret.');
                     abort_unless(! empty($pay['phonepeWebhookUsername']) && ! empty($pay['phonepeWebhookPassword']), 422, 'Enter the PhonePe webhook username and password you set in the PhonePe dashboard.');
                     try {
-                        \App\Services\PhonePe::token($pay, true);
+                        PhonePe::token($pay, true);
                     } catch (\Throwable $e) {
                         abort(422, 'PhonePe did not accept these credentials. Check the Client ID, Client version, Client secret and the Test/Live mode.');
                     }
@@ -200,13 +213,18 @@ class AdminController extends Controller
                 'sorts' => ['date' => 'p.created_at', 'amount' => 'p.amount_paise', 'status' => 'p.status', 'plan' => 'p.plan'],
                 'sort' => 'date',
                 'key' => 'p.id',
+                'export' => ['title' => 'Purchases', 'map' => fn ($rows) => array_map(fn ($p) => [
+                    'order' => 'ORD-'.strtoupper(substr((string) $p['id'], 0, 6)), 'date' => $p['created_at'], 'customer' => $p['name'], 'email' => $p['email'], 'plan' => $p['plan'],
+                    'amount_paise' => $p['amount_paise'], 'discount_paise' => $p['discount_paise'] ?? 0, 'refunded_paise' => $p['refunded_paise'] ?? 0, 'net_paise' => (int) $p['amount_paise'] - (int) ($p['refunded_paise'] ?? 0),
+                    'coupon' => $p['coupon_code'] ?? '', 'status' => $p['status'], 'provider' => $p['provider'], 'reference' => ($p['payment_reference'] ?? '') ?: ($p['provider_order_id'] ?? ''), 'real_money' => (bool) ($p['is_live'] ?? false), 'access_until' => $p['access_until'] ?? '',
+                ], $rows)],
             ]);
 
             return $ok(['purchases' => $d['rows']] + $d);
         }
         if ($path === 'users') {
             // Only the requested page of accounts and four cheap counts: the heavy activity statistics live in 'dashboard'.
-            $uq = DB::table('users')->where('email', '!=', \App\Services\AccountEraser::PLACEHOLDER);
+            $uq = DB::table('users')->where('email', '!=', AccountEraser::PLACEHOLDER);
             $live = fn () => DB::table('purchases')->whereIn('status', ['paid', 'partially_refunded'])->where('access_until', '>', now())->where('provider', '!=', 'referral_reward')->select('owner_id');
             $ever = fn () => DB::table('purchases')->whereNotNull('purchased_at')->select('owner_id');
             $d = AdminTable::query($r, $uq->select(['id', 'name', 'email', 'created_at', 'blocked', 'is_admin']), [
@@ -228,6 +246,7 @@ class AdminController extends Controller
                 'sorts' => ['joined' => 'created_at', 'name' => 'name', 'email' => 'email'],
                 'sort' => 'joined',
                 'key' => 'id',
+                'export' => ['title' => 'Users', 'labels' => ['f' => 'Show'], 'map' => fn ($rows) => $this->usersForExport($rows)],
             ]);
             $ids = array_map(fn ($u) => $u->id, $d['rows']);
             $profiles = DB::table('profiles')->whereIn('owner_id', $ids)->get()->keyBy('owner_id');
@@ -237,7 +256,7 @@ class AdminController extends Controller
             $everPaid = DB::table('purchases')->whereIn('owner_id', $ids)->whereNotNull('purchased_at')->distinct()->pluck('owner_id')->flip();
             $acc = Settings::accessMany($ids);
             $users = array_map(fn ($u) => [...(array) ($profiles[$u->id] ?? []), 'owner_id' => (string) $u->id, 'email' => $u->email, 'name' => $u->name, 'created_at' => $u->created_at, 'blocked' => (bool) $u->blocked, 'isAdmin' => (bool) $u->is_admin, 'paid' => $acc[$u->id]['paid'], 'ever_paid' => isset($everPaid[$u->id]), 'last_plan' => $acc[$u->id]['plan'], 'accessUntil' => $acc[$u->id]['accessUntil'], 'resumes' => $resumeCounts[$u->id] ?? 0, 'applications' => $appCounts[$u->id] ?? 0], $d['rows']);
-            $kpis = \Illuminate\Support\Facades\Cache::remember('admin-user-kpis', 20, function () {
+            $kpis = Cache::remember('admin-user-kpis', 20, function () {
                 $all = User::count();
                 $paid = DB::table('purchases')->where('provider', '!=', 'referral_reward')->whereIn('status', ['paid', 'partially_refunded'])->where('access_until', '>', now())->distinct('owner_id')->count('owner_id');
 
@@ -249,7 +268,7 @@ class AdminController extends Controller
         if (in_array($path, ['overview', 'dashboard'])) {
             $days = in_array((int) $r->query('days', 30), [1, 7, 30, 90]) ? (int) $r->query('days', 30) : 30;
             // Several console panels ask for these numbers when the console opens; one computation serves them all.
-            $data = \Illuminate\Support\Facades\Cache::remember('admin-dashboard-'.$days, 30, function () use ($days) {
+            $data = Cache::remember('admin-dashboard-'.$days, 30, function () use ($days) {
                 $activity = DB::table('activity_events as a')->leftJoin('users as u', 'a.owner_id', '=', 'u.id')->where('a.created_at', '>=', now()->subDays($days))->orderByDesc('a.created_at')->limit(20)->get(['a.*', 'u.name', 'u.email']);
                 $events = DB::table('activity_events')->where('created_at', '>=', now()->subDays($days))->selectRaw('event,count(*) as count')->groupBy('event')->get();
                 $paid = DB::table('purchases')->where('provider', '!=', 'referral_reward')->whereIn('status', ['paid', 'partially_refunded'])->where('access_until', '>', now())->distinct('owner_id')->count('owner_id');
@@ -271,11 +290,11 @@ class AdminController extends Controller
         }
         if ($path === 'live') {
             // The "Live stats" card refreshes every 30 seconds: five indexed counts, shared by every open console tab.
-            return $ok(\Illuminate\Support\Facades\Cache::remember('admin-live', 20, function () {
+            return $ok(Cache::remember('admin-live', 20, function () {
                 $day = now()->startOfDay();
                 $ev = fn ($like) => DB::table('activity_events')->where('created_at', '>=', $day)->where('event', 'like', $like)->count();
 
-                return ['activeUsers' => DB::table('activity_events')->where('created_at', '>=', now()->subDay())->whereNotNull('owner_id')->distinct('owner_id')->count('owner_id'), 'resumesToday' => $ev('%resume%'), 'revenueTodayPaise' => (int) DB::table('purchases')->where('created_at', '>=', $day)->where('provider', '!=', 'referral_reward')->whereIn('status', ['paid', 'partially_refunded', 'refunded'])->sum(DB::raw('amount_paise - refunded_paise')), 'scansToday' => DB::table('activity_events')->where('created_at', '>=', $day)->where(fn ($w) => $w->where('event', 'like', '%compared%')->orWhere('event', 'like', '%ats%'))->count(), 'signupsToday' => User::where('created_at', '>=', $day)->count(), 'totalUsers' => User::count()];
+                return ['activeUsers' => DB::table('activity_events')->where('created_at', '>=', now()->subDay())->whereNotNull('owner_id')->distinct('owner_id')->count('owner_id'), 'resumesToday' => $ev('%resume%'), 'revenueTodayPaise' => (int) Settings::sinceStart(DB::table('purchases'), 'created_at')->where('created_at', '>=', $day)->when(! config('app.preview'), fn ($q) => $q->where('is_live', true)->where('provider', '!=', 'demo'))->where('provider', '!=', 'referral_reward')->whereIn('status', ['paid', 'partially_refunded', 'refunded'])->sum(DB::raw('amount_paise - refunded_paise')), 'scansToday' => DB::table('activity_events')->where('created_at', '>=', $day)->where(fn ($w) => $w->where('event', 'like', '%compared%')->orWhere('event', 'like', '%ats%'))->count(), 'signupsToday' => User::where('created_at', '>=', $day)->count(), 'totalUsers' => User::count()];
             }));
         }
         if ($path === 'users/block') {
@@ -314,6 +333,7 @@ class AdminController extends Controller
                     'sorts' => ['date' => 'f.created_at', 'rating' => 'f.rating', 'name' => 'f.display_name'],
                     'sort' => 'date',
                     'key' => 'f.id',
+                    'export' => ['title' => 'User reviews', 'map' => fn ($rows) => array_map(fn ($f) => ['date' => $f['created_at'], 'name' => $f['display_name'], 'rating' => (int) $f['rating'], 'review' => $f['content'], 'status' => $f['status'], 'source' => $f['source'], 'consent' => (bool) $f['consent'], 'consent_reference' => $f['consent_reference'] ?? '', 'account_email' => $f['email']], $rows)],
                 ]);
 
                 return $ok(['reviews' => $d['rows'], 'counts' => DB::table('feedback')->selectRaw('status,count(*) as count')->groupBy('status')->pluck('count', 'status')] + $d);
@@ -347,6 +367,7 @@ class AdminController extends Controller
                 'sorts' => ['date' => 'created_at', 'status' => 'status', 'to' => 'recipient'],
                 'sort' => 'date',
                 'key' => 'id',
+                'export' => ['title' => 'Email queue', 'labels' => ['trigger' => 'Type']],
             ]);
 
             return $ok(['jobs' => $d['rows'], 'counts' => DB::table('mail_outbox')->selectRaw('status,count(*) as count')->groupBy('status')->pluck('count', 'status'), 'delivery' => 'Configured SMTP / Resend', 'scheduler' => 'Hostinger cron processes queued jobs.', 'heartbeat' => Settings::get('cronHeartbeat')] + $d);
@@ -355,11 +376,11 @@ class AdminController extends Controller
             abort_unless($r->isMethod('POST'), 405);
             $v = $r->validate(['subject' => 'required|string|max:180', 'body' => 'required|string|max:20000', 'trigger' => 'nullable|string|max:60']);
 
-            return $ok(['html' => \App\Services\EmailRenderer::render($v['subject'], $v['body'], \App\Services\EmailRenderer::isMarketing((string) ($v['trigger'] ?? '')), $r->user()->id)['html']]);
+            return $ok(['html' => EmailRenderer::render($v['subject'], $v['body'], EmailRenderer::isMarketing((string) ($v['trigger'] ?? '')), $r->user()->id)['html']]);
         }
         if ($path === 'email/process') {
             MailAutomation::reminders();
-            \App\Services\Campaigns::run();
+            Campaigns::run();
 
             return $ok(MailAutomation::process());
         }
@@ -379,7 +400,7 @@ class AdminController extends Controller
         }
         if ($path === 'page-audit') {
             // Hundreds of programmatic pages: the checklist is worked out once a minute and sent one page of rows at a time.
-            $rows = \Illuminate\Support\Facades\Cache::remember('admin-page-audit', 60, fn () => array_map(fn ($p) => array_intersect_key($p, array_flip(['path', 'title', 'primary', 'titleHits', 'descriptionHits', 'headingHits', 'bodyHits', 'altHits', 'wordCount', 'score'])) + ['section' => preg_match('#^/([a-z0-9-]+)/#', $p['path'], $m) ? $m[1] : 'main'], app(ContentController::class)->audit()));
+            $rows = Cache::remember('admin-page-audit', 60, fn () => array_map(fn ($p) => array_intersect_key($p, array_flip(['path', 'title', 'primary', 'titleHits', 'descriptionHits', 'headingHits', 'bodyHits', 'altHits', 'wordCount', 'score'])) + ['section' => preg_match('#^/([a-z0-9-]+)/#', $p['path'], $m) ? $m[1] : 'main'], app(ContentController::class)->audit()));
             $d = AdminTable::rows($r, $rows, [
                 'search' => ['title', 'path', 'primary'],
                 'filters' => ['section' => 'section', 'score' => fn ($p, $v) => match ($v) {
@@ -391,6 +412,7 @@ class AdminController extends Controller
                 'sorts' => ['page' => 'title', 'path' => 'path', 'words' => 'wordCount', 'score' => 'score', 'body' => 'bodyHits'],
                 'sort' => 'path',
                 'dir' => 'asc',
+                'export' => ['title' => 'SEO page audit', 'columns' => ['path' => 'Page', 'title' => 'Title', 'section' => 'Section', 'primary' => 'Focus keyword', 'score' => 'Score', 'wordCount' => 'Words', 'titleHits' => 'In title', 'descriptionHits' => 'In description', 'headingHits' => 'In headings', 'bodyHits' => 'In body', 'altHits' => 'In image text']],
             ]);
 
             $sections = array_count_values(array_column($rows, 'section'));
@@ -405,6 +427,7 @@ class AdminController extends Controller
                 'search' => ['key'],
                 'sorts' => ['key' => 'key', 'clicks' => 'clicks', 'impressions' => 'impressions', 'ctr' => 'ctr', 'position' => 'position'],
                 'sort' => 'clicks',
+                'export' => ['title' => 'Search Console '.($dim === 'page' ? 'pages' : 'queries').(isset($data['startDate']) ? ' '.$data['startDate'].' to '.($data['endDate'] ?? '') : ''), 'columns' => ['key' => $dim === 'page' ? 'Page' : 'Search query', 'clicks' => 'Clicks', 'impressions' => 'Impressions', 'ctr' => 'CTR', 'position' => 'Average position']],
             ]);
 
             return $ok($d);
@@ -470,21 +493,21 @@ class AdminController extends Controller
             }validator($d, ['watermarkText' => 'required|string|max:100'])->validate();
         }
         if ($k === 'integrations') {
-            validator($d, array_fill_keys(['payments', 'email', 'ai', 'analytics', 'push'], 'required|boolean') + ['grammar' => 'sometimes|boolean'])->validate();
+            validator($d, array_fill_keys(['payments', 'email', 'ai', 'analytics'], 'required|boolean') + ['grammar' => 'sometimes|boolean'])->validate();
         }
         if ($k === 'popup') {
             validator($d, ['enabled' => 'required|boolean', 'delaySeconds' => 'required|integer|min:0|max:600', 'showSeconds' => 'required|integer|min:3|max:30', 'gapSeconds' => 'required|integer|min:3|max:120', 'useLiveActivity' => 'required|boolean', 'custom' => 'present|array|max:20', 'custom.*.title' => 'nullable|string|max:60', 'custom.*.text' => 'required|string|max:200', 'custom.*.icon' => 'nullable|string|max:8', 'custom.*.enabled' => 'required|boolean'])->validate();
-            \Illuminate\Support\Facades\Cache::forget('public-activity');
+            Cache::forget('public-activity');
         }
         if ($k === 'site') {
-            validator($d, ['announce' => 'nullable|string|max:300', 'announceLink' => 'nullable|string|max:300', 'heroPill' => 'nullable|string|max:120', 'heroTitle' => 'required|string|max:200', 'heroRoles' => 'required|array|min:1|max:12', 'heroRoles.*' => 'string|max:60', 'heroLead' => 'required|string|max:600', 'ctaPrimary' => 'required|string|max:60', 'ctaSecondary' => 'required|string|max:60', 'ctaFinalTitle' => 'nullable|string|max:200', 'ctaFinalText' => 'nullable|string|max:400', 'pages' => 'present|array', 'pages.*.title' => 'nullable|string|max:180', 'pages.*.description' => 'nullable|string|max:400', 'pages.*.keywords' => 'nullable|string|max:400'])->validate();
+            validator($d, ['announce' => 'nullable|string|max:300', 'announceLink' => 'nullable|string|max:300', 'heroPill' => 'nullable|string|max:120', 'heroTitle' => 'required|string|max:200', 'heroRoles' => 'present|array|max:12', 'heroRoles.*' => 'string|max:60', 'heroLead' => 'required|string|max:600', 'ctaPrimary' => 'required|string|max:60', 'ctaSecondary' => 'required|string|max:60', 'ctaFinalTitle' => 'nullable|string|max:200', 'ctaFinalText' => 'nullable|string|max:400', 'pages' => 'present|array', 'pages.*.title' => 'nullable|string|max:180', 'pages.*.description' => 'nullable|string|max:400', 'pages.*.keywords' => 'nullable|string|max:400'])->validate();
         }
         if ($k === 'seo') {
             validator($d, ['sitemapEnabled' => 'required|boolean', 'searchIndexing' => 'required|boolean', 'siteUrl' => 'nullable|url:https|max:255', 'pages' => 'present|array'])->validate();
         }
         if ($k === 'emails') {
             foreach ($d as $t) {
-                validator($t, ['id' => 'required|string|max:80', 'subject' => 'required|string|max:180', 'body' => 'required|string|max:20000', 'enabled' => 'required|boolean', 'trigger' => 'required|in:profile_created,password_reset,resume_saved,purchase_verified,abandoned_purchase,blog_published,access_expiring,access_expiring_7,access_expiring_4,access_expiring_1,followup_due,application_status,download_locked,email_verification,refund_requested,refund_processed,refund_rejected,expert_review_delivered,nurture,monthly_digest,manual', 'delayHours' => 'required|integer|min:0|max:720'])->validate();
+                validator($t, ['id' => 'required|string|max:80', 'subject' => 'required|string|max:180', 'body' => 'required|string|max:20000', 'enabled' => 'required|boolean', 'trigger' => 'required|in:profile_created,password_reset,resume_saved,purchase_verified,abandoned_purchase,blog_published,access_expiring,access_expiring_7,access_expiring_4,access_expiring_1,followup_due,application_status,download_locked,email_verification,refund_requested,refund_processed,refund_rejected,expert_review_delivered,nurture,referral_invite,plan_ended,monthly_digest,manual', 'delayHours' => 'required|integer|min:0|max:720'])->validate();
             }
         }
         if ($k === 'legal') {
@@ -495,5 +518,28 @@ class AdminController extends Controller
         if ($k === 'library') {
             validator($d, ['templates' => 'present|array|max:150', 'letters' => 'present|array|max:150'])->validate();
         }
+    }
+
+    /** Users export: the columns the Users page shows, filled in for a whole batch at once. */
+    private function usersForExport(array $rows): array
+    {
+        $ids = array_map(fn ($u) => $u['id'], $rows);
+        $profiles = DB::table('profiles')->whereIn('owner_id', $ids)->get(['owner_id', 'phone', 'city', 'experience_level', 'profession'])->keyBy('owner_id');
+        $counts = fn ($t) => DB::table($t)->whereIn('owner_id', $ids)->groupBy('owner_id')->selectRaw('owner_id, count(*) c')->pluck('c', 'owner_id');
+        $resumes = $counts('resume_drafts');
+        $apps = $counts('applications');
+        $everPaid = DB::table('purchases')->whereIn('owner_id', $ids)->whereNotNull('purchased_at')->distinct()->pluck('owner_id')->flip();
+        $acc = $ids ? Settings::accessMany($ids) : [];
+        $plans = Settings::plans();
+
+        return array_map(function ($u) use ($profiles, $resumes, $apps, $everPaid, $acc, $plans) {
+            $a = $acc[$u['id']] ?? ['paid' => false, 'plan' => null, 'accessUntil' => null];
+            $p = $profiles[$u['id']] ?? null;
+            $plan = $a['plan'] ? ($plans[$a['plan']]['name'] ?? $a['plan']) : '';
+
+            return ['id' => (int) $u['id'], 'name' => $u['name'], 'email' => $u['email'], 'phone' => $p->phone ?? '', 'city' => $p->city ?? '', 'experience_level' => $p->experience_level ?? '', 'profession' => $p->profession ?? '',
+                'joined' => $u['created_at'], 'subscription' => $a['paid'] ? $plan : (isset($everPaid[$u['id']]) ? 'Expired'.($plan ? ' ('.$plan.')' : '') : 'Normal user'), 'access_until' => $a['paid'] ? $a['accessUntil'] : '',
+                'status' => $u['blocked'] ? 'Blocked' : ($u['is_admin'] ? 'Owner' : 'Active'), 'resumes' => (int) ($resumes[$u['id']] ?? 0), 'applications' => (int) ($apps[$u['id']] ?? 0)];
+        }, $rows);
     }
 }

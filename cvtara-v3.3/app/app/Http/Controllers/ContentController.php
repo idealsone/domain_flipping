@@ -97,11 +97,44 @@ class ContentController extends Controller
      * scripted footer shows (the script replaces it), and the guide lists on the blog and guides pages are filled with
      * every published guide and calculator, which the script then redraws with filters.
      */
+    /** /llms.txt: a plain summary of the site and its main pages for answer engines and AI assistants that read it (llmstxt.org format). */
+    private function llms(): string
+    {
+        $base = rtrim(Settings::get('seo')['siteUrl'] ?: config('app.url'), '/');
+        $plans = collect(Settings::plans())->filter(fn ($p) => ($p['type'] ?? '') === 'plan' && ($p['price'] ?? 0) > 0 && ($p['sale'] ?? true) !== false)
+            ->map(fn ($p) => '- '.$p['name'].': ₹'.number_format((float) $p['price']).', paid once, no auto-renewal')->values()->all();
+        $L = ['# CVTara', '', '> CVTara is a resume and cover letter builder for job seekers in India, made by an HR team in Bangalore. People build an ATS-friendly resume from templates, check it against a job post, write a matching cover letter and download a clean PDF. Building and editing is free; people pay once, from ₹99, when they download.', '',
+            '## Tools', "- [Free resume builder]($base/resume-builder/): build and edit a resume free with ATS-friendly templates", "- [Free ATS resume checker and resume score]($base/ats-checker/): how well applicant tracking systems read a resume and how it matches a job post",
+            "- [Cover letter generator]($base/cover-letter-generator/): a short letter from your saved resume and the job post", "- [Resume templates]($base/resume-templates/)", '',
+            '## Examples and guides'];
+        foreach (\App\Services\SeoPages::HUBS as $h) {
+            $L[] = "- [{$h[1]}]($base{$h[0]})";
+        }
+        $L[] = "- [How to write a cover letter]($base/cover-letter-examples/how-to-write/)";
+        $L[] = "- [Career guides and salary calculators]($base/guides.html)";
+        $L[] = '';
+        $L[] = '## Calculators';
+        $catalog = json_decode(file_get_contents(resource_path('data/catalog.json')), true);
+        $custom = Settings::get('blog');
+        foreach ($catalog['blog'] as $p) {
+            $p = array_merge($p, $custom[$p['slug']] ?? []);
+            if (($p['type'] ?? '') === 'Calculator' && ($p['published'] ?? true) !== false) {
+                $L[] = "- [{$p['title']}]($base/calculators/{$p['slug']}/): ".($p['description'] ?? '');
+            }
+        }
+        if ($plans) {
+            array_push($L, '', '## Plans', ...$plans);
+        }
+        array_push($L, '', '## Company', "- [About]($base/about.html)", "- [Contact]($base/contact.html): support@cvtara.com", "- [Refund policy]($base/refund.html): 7-day refund if a plan is unused", "- [Privacy policy]($base/privacy.html)", '');
+
+        return implode("\n", $L);
+    }
+
     private function serverLinks(string $path, string $html): string
     {
         $hubs = array_merge(\App\Services\SeoPages::HUBS, [['/templates.html', 'Template gallery'], ['/cover-letters.html', 'Cover letter designs'], ['/blog.html', 'Career blog'], ['/guides.html', 'Guides and calculators'], ['/#pricing', 'Pricing'], ['/about.html', 'About us'], ['/contact.html', 'Contact'], ['/privacy.html', 'Privacy policy'], ['/terms.html', 'Terms'], ['/refund.html', 'Refund policy']]);
         $nav = '<nav class="footer-links" aria-label="Site links"><ul>'.implode('', array_map(fn ($l) => '<li><a href="'.e($l[0]).'">'.e($l[1]).'</a></li>', $hubs)).'</ul></nav>';
-        $html = preg_replace('#<div data-footer></div>#', '<div data-footer>'.addcslashes($nav, '\\$').'</div>', $html, 1);
+        $html = preg_replace('#<div data-footer>\s*</div>#', '<div data-footer>'.addcslashes($nav, '\\$').'</div>', $html, 1);
         if (in_array($path, ['blog.html', 'guides.html'], true)) {
             $catalog = json_decode(file_get_contents(resource_path('data/catalog.json')), true);
             $custom = Settings::get('blog');
@@ -190,6 +223,9 @@ class ContentController extends Controller
         if (preg_match('/^[a-f0-9]{32}\.txt$/', $path) && $path === \App\Services\FastIndex::state()['key'].'.txt') {
             return response(substr($path, 0, 32), 200, ['Content-Type' => 'text/plain; charset=utf-8']);
         }
+        if ($path === 'llms.txt') {
+            return response($this->llms(), 200, ['Content-Type' => 'text/plain; charset=utf-8', 'Cache-Control' => 'public, max-age=3600']);
+        }
         if ($path === 'robots.txt') {
             // Sign-in, checkout and account pages are left crawlable on purpose: they answer noindex, and Google can only see that when it may fetch them.
             // Blocking them here is what Search Console reports as "Indexed, though blocked by robots.txt".
@@ -200,6 +236,10 @@ class ContentController extends Controller
         $moved = ['guides' => 'guides.html', 'calculators' => 'guides.html', 'blog' => 'blog.html', 'pricing' => '#pricing', 'pricing.html' => '#pricing', 'plans' => '#pricing', 'templates' => 'templates.html', 'cover-letters' => 'cover-letters.html', 'about' => 'about.html', 'contact' => 'contact.html', 'privacy' => 'privacy.html', 'terms' => 'terms.html', 'refund' => 'refund.html', 'refund-policy' => 'refund.html'];
         if (isset($moved[$path])) {
             return redirect('/'.$moved[$path], 301);
+        }
+        // /resume-builder/ is the free resume builder's landing page for visitors and search engines; signed-in customers go straight to the builder.
+        if ($path === 'resume-builder' && ! $r->user()) {
+            unset($aliases['resume-builder']);
         }
         if (isset($aliases[$path])) {
             return redirect(! $r->user() && str_starts_with($aliases[$path], 'workspace.html') ? '/register' : '/'.$aliases[$path]);
@@ -357,6 +397,10 @@ class ContentController extends Controller
         $uri = '/'.$path;
         $custom = $seo['pages'][$uri] ?? [];
         $title = $custom['title'] ?? $post['title'] ?? $seoPage['title'] ?? null;
+        // Calculators are searched as "<name> calculator India": say so in the title when the owner has not written one.
+        if (! isset($custom['title']) && ($post['type'] ?? '') === 'Calculator' && $title && ! str_contains($title, 'India') && mb_strlen($title) <= 39) {
+            $title .= ' for India';
+        }
         $description = $custom['description'] ?? $post['description'] ?? $seoPage['description'] ?? null;
         if ($title) {
             $html = preg_replace('#<title>.*?</title>#s', '<title>'.e($title).' | CVTara</title>', $html);
@@ -367,8 +411,10 @@ class ContentController extends Controller
         $index = $seo['searchIndexing'] && ! $admin && ! in_array($path, ['workspace.html', 'checkout.html']);
         $follow = $index; // a programmatic page held back from search results still passes its links on
         $index = $index && ($seoPage['index'] ?? true);
-        // Fonts load in parallel with the page's own styles (not chained behind them); the code font only where code is shown.
-        $fonts = '<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800'.($admin || in_array($path, ['workspace.html', 'admin-guide.html', 'customer-guide.html'], true) ? '&family=JetBrains+Mono:wght@400;600' : '').'&display=swap">';
+        // Fonts never hold up the first paint: a render-blocking link to Google Fonts left the whole page white for as long as
+        // fonts.googleapis.com was slow or blocked (mobile data, office networks). The page draws in the system font and swaps when the font arrives.
+        $fontUrl = 'https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800'.($admin || in_array($path, ['workspace.html', 'admin-guide.html', 'customer-guide.html'], true) ? '&family=JetBrains+Mono:wght@400;600' : '').(($post || $seoPage) ? '&family=Plus+Jakarta+Sans:wght@600;700' : '').(! $admin && $path !== 'workspace.html' ? '&family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,600;1,9..144,600' : '').'&display=swap';
+        $fonts = '<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link rel="stylesheet" href="'.$fontUrl.'" media="print" onload="this.media=\'all\'"><noscript><link rel="stylesheet" href="'.$fontUrl.'"></noscript>';
         $head = '<script>(function(){try{var t=localStorage.getItem("cvtara-theme");if(t==="dark"||(!t&&window.matchMedia&&matchMedia("(prefers-color-scheme: dark)").matches)){var r=document.documentElement;r.classList.add("dark");r.setAttribute("data-theme","dark");r.style.colorScheme="dark"}}catch(e){}})()</script><link rel="canonical" href="'.e($siteBase.$uri).'"><meta name="robots" content="'.($index ? 'index,follow' : ($follow ? 'noindex,follow' : 'noindex,nofollow')).'"><meta name="csrf-token" content="'.e(csrf_token()).'"><meta name="cvtara-user" content="'.e((string) ($r->user()?->id ?? 'guest')).'">'.$fonts.'<link rel="stylesheet" href="/launch.css"><link rel="stylesheet" href="/experience.css"><link rel="stylesheet" href="/cvtara-ui.css"><link rel="stylesheet" href="/cvtara-ds.css"><link rel="stylesheet" href="/site-polish.css"><script src="/error-report.js" defer></script><script src="/crash-guard.js" defer></script>';
         if ($path === 'workspace.html') {
             $head .= '<script src="/preview-guard.js" defer></script>';
@@ -416,6 +462,10 @@ class ContentController extends Controller
             $schema['publisher']['logo'] = ['@type' => 'ImageObject', 'url' => $siteBase.'/assets/brand/cvtara-logo.webp'];
             $schema['articleSection'] = $post['category'] ?? 'Career';
             $ld = [$schema, ['@context' => 'https://schema.org', '@type' => 'BreadcrumbList', 'itemListElement' => [['@type' => 'ListItem', 'position' => 1, 'name' => 'Home', 'item' => $siteBase.'/'], ['@type' => 'ListItem', 'position' => 2, 'name' => 'Blog', 'item' => $siteBase.'/blog.html'], ['@type' => 'ListItem', 'position' => 3, 'name' => $post['title'], 'item' => $siteBase.$uri]]]];
+            if (($post['type'] ?? '') === 'Calculator') {
+                // A free tool that runs in the browser: lets search engines and answer engines show it as a calculator, not only an article.
+                $ld[] = ['@context' => 'https://schema.org', '@type' => 'WebApplication', 'name' => $post['title'], 'url' => $siteBase.$uri, 'description' => $post['description'], 'applicationCategory' => 'FinanceApplication', 'operatingSystem' => 'Any (runs in the browser)', 'inLanguage' => 'en-IN', 'isAccessibleForFree' => true, 'offers' => ['@type' => 'Offer', 'price' => '0', 'priceCurrency' => 'INR'], 'publisher' => ['@type' => 'Organization', 'name' => 'CVTara', 'url' => $siteBase.'/']];
+            }
             if (! empty($postFaq)) {
                 $ld[] = ['@context' => 'https://schema.org', '@type' => 'FAQPage', 'mainEntity' => array_map(fn ($q) => ['@type' => 'Question', 'name' => $q[0], 'acceptedAnswer' => ['@type' => 'Answer', 'text' => $q[1]]], $postFaq)];
             }
@@ -426,6 +476,19 @@ class ContentController extends Controller
         if ($path === 'blog.html') {
             $items = collect(Settings::get('blog'))->filter(fn ($p) => $p['published'] ?? false)->map(fn ($p, $k) => ['@type' => 'ListItem', 'position' => 0, 'url' => $siteBase.(($p['type'] ?? '') === 'Calculator' ? '/calculators/' : '/guides/').$k.'/', 'name' => $p['title']])->values()->take(60)->map(fn ($x, $i) => ['position' => $i + 1] + $x)->all();
             $head .= '<script type="application/ld+json">'.json_encode(['@context' => 'https://schema.org', '@type' => 'CollectionPage', 'name' => 'CVTara career blog, guides and calculators', 'url' => $siteBase.'/blog.html', 'mainEntity' => ['@type' => 'ItemList', 'itemListElement' => $items]], JSON_HEX_TAG | JSON_HEX_AMP | JSON_UNESCAPED_SLASHES).'</script>';
+        }
+        // Every main page says what it is and where it sits, so search results can show it with its trail.
+        $pageType = ['templates.html' => ['CollectionPage', 'Resume templates'], 'cover-letters.html' => ['CollectionPage', 'Cover letter examples'], 'guides.html' => ['CollectionPage', 'Career guides and calculators'],
+            'about.html' => ['AboutPage', 'About'], 'contact.html' => ['ContactPage', 'Contact'], 'privacy.html' => ['WebPage', 'Privacy policy'], 'terms.html' => ['WebPage', 'Terms'], 'refund.html' => ['WebPage', 'Refund policy']][$path] ?? null;
+        if ($pageType) {
+            $ld = [['@context' => 'https://schema.org', '@type' => $pageType[0], 'name' => $pageTitle, 'description' => $pageDescription, 'url' => $siteBase.'/'.$path, 'inLanguage' => 'en-IN', 'isPartOf' => ['@type' => 'WebSite', 'name' => 'CVTara', 'url' => $siteBase.'/']],
+                ['@context' => 'https://schema.org', '@type' => 'BreadcrumbList', 'itemListElement' => [['@type' => 'ListItem', 'position' => 1, 'name' => 'Home', 'item' => $siteBase.'/'], ['@type' => 'ListItem', 'position' => 2, 'name' => $pageType[1], 'item' => $siteBase.'/'.$path]]]];
+            if ($path === 'contact.html') {
+                $ld[0]['mainEntity'] = ['@type' => 'Organization', 'name' => 'CVTara', 'url' => $siteBase.'/', 'email' => 'support@cvtara.com', 'contactPoint' => ['@type' => 'ContactPoint', 'contactType' => 'customer support', 'email' => 'support@cvtara.com', 'areaServed' => 'IN', 'availableLanguage' => 'English']];
+            }
+            foreach ($ld as $block) {
+                $head .= '<script type="application/ld+json">'.json_encode($block, JSON_HEX_TAG | JSON_HEX_AMP | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE).'</script>';
+            }
         }
         if (! $admin && $path !== 'workspace.html') {
             $html = $this->serverLinks($path, $html);
