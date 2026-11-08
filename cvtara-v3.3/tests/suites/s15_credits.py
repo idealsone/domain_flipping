@@ -17,6 +17,7 @@ def letter(n):
 def run(ctx, t):
     if not ctx.preview: return
     db = ctx.db(); c = ctx.client(); c.register("credit-a@test.local")
+    db.q("insert or replace into site_settings(key,value_json,revision,created_at,updated_at) values('plans',?,1,datetime('now'),datetime('now'))", __import__('json').dumps({"addon-10": {"sale": True}, "job-hunt": {"savedResumes": 10, "savedLetters": 10}}))  # credit packs are off sale by default
     def buy(plan):
         s, j = c.api("POST", "checkout/start", {"plan": plan})
         return c.api("POST", "checkout/verify", {"provider": "demo", "orderId": j["orderId"]})[0] if s == 200 else s
@@ -25,8 +26,8 @@ def run(ctx, t):
         s, h, b = c.raw("POST", f"/export/{kind}/{doc}/{fmt}", {"clean": clean}, {"Accept": "application/json", "X-CSRF-TOKEN": c.csrf or ""})
         return s, b[:200]
 
-    t.check("buy Fresher Basic", buy("fresher-basic") == 200)
-    t.check("Fresher Basic = 10 resume + 10 cover-letter downloads (separate)", cr()["resumes"]["total"] == 10 and cr()["letters"]["total"] == 10 and cr()["resumes"]["used"] == 0, cr())
+    t.check("buy Job Hunt", buy("job-hunt") == 200)
+    t.check("Job Hunt = 10 resume + 10 cover-letter downloads (separate)", cr()["resumes"]["total"] == 10 and cr()["letters"]["total"] == 10 and cr()["resumes"]["used"] == 0, cr())
     s, j = c.api("POST", "resumes", {"data": resume("Primary")}); pid = j["id"]
     vids = []
     for i in range(12):
@@ -60,8 +61,8 @@ def run(ctx, t):
     t.check("the edited resume and an 11th resume can now be downloaded", download("resume", vids[0])[0] == 200 and download("resume", vids[10])[0] == 200 and cr()["resumes"]["used"] == 12)
     t.check("a letter can be downloaded again after the add-on", download("letter", lids[10])[0] == 200 and cr()["letters"]["used"] == 11)
     q = "select access_until from purchases where owner_id=(select id from users where email='credit-a@test.local') and plan=? order by access_until desc"
-    t.check("add-on credits end when the subscription ends", db.q(q, "addon-10")[0][0] == db.q(q, "fresher-basic")[0][0])
-    t.check("plan renewal keeps unused add-on credits", buy("fresher-basic") == 200 and cr()["addOns"]["resumes"] + cr()["addOns"]["letters"] > 0, cr())
+    t.check("add-on credits end when the subscription ends", db.q(q, "addon-10")[0][0] == db.q(q, "job-hunt")[0][0])
+    t.check("plan renewal keeps unused add-on credits", buy("job-hunt") == 200 and cr()["addOns"]["resumes"] + cr()["addOns"]["letters"] > 0, cr())
     s, g = c.api("GET", f"resumes/{pid}"); d = g["resume"]["data"]; d["summary"] = "primary edited"
     c.api("POST", "resumes", {"data": d, "id": pid, "revision": g["resume"]["revision"]}); before = cr()["resumes"]["used"]
     t.check("after a renewal the primary resume is not free again (an edited primary uses a credit)", download("resume", pid)[0] == 200 and cr()["resumes"]["used"] == before + 1, (before, cr()))
@@ -75,3 +76,4 @@ def run(ctx, t):
     sl, jl = f.api("POST", "letters", {"data": letter(1)}); sl2, jl2 = f.api("POST", "letters", {"data": letter(2)})
     t.check("a free account gets exactly one cover letter", sl == 200 and sl2 == 422, (sl, sl2))
     t.check("a free account cannot create a tailored version", f.api("POST", f"resumes/{j['id']}/variant", {"company": "X", "role": "Y", "jobDescription": "z"})[0] == 422)
+    db.q("delete from site_settings where key='plans'")

@@ -1,7 +1,6 @@
 <?php
 
 use App\Models\User;
-use App\Services\CashfreePayouts;
 use App\Services\MailAutomation;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\DB;
@@ -11,6 +10,17 @@ use Illuminate\Support\Str;
 
 Artisan::command('cvtara:cron', function () {
     \App\Services\Settings::put('cronHeartbeat', ['at' => now()->toIso8601String()]);
+    // Mail that is already due goes first, so the daily backup or a slow scan never delays it.
+    $send = function () {
+        try {
+            return MailAutomation::process();
+        } catch (\Throwable $e) {
+            \App\Services\ErrorLog::exception($e);
+
+            return ['sent' => 0, 'processed' => 0, 'error' => 'mail run failed; see Error Log'];
+        }
+    };
+    $mail = $send();
     MailAutomation::reminders();
     if (\Illuminate\Support\Facades\Cache::add('retention-run', 1, 86400)) {
         \App\Services\Retention::run();
@@ -22,13 +32,40 @@ Artisan::command('cvtara:cron', function () {
             \App\Services\ErrorLog::exception($e);
         }
     }
+    // Application status reminders were only sent by cvtara:remind, which the host cron never runs. Check hourly here instead.
+    if (\Illuminate\Support\Facades\Cache::add('remind-run', 1, 3600)) {
+        try {
+            \App\Services\Tracker::remind();
+        } catch (\Throwable $e) {
+            \App\Services\ErrorLog::exception($e);
+        }
+    }
     try {
         \App\Services\Health::run();
     } catch (\Throwable $e) {
         \App\Services\ErrorLog::exception($e);
     }
-    CashfreePayouts::reconcile();
-    $this->info(json_encode(MailAutomation::process()));
+    try {
+        \App\Services\Campaigns::run();
+    } catch (\Throwable $e) {
+        \App\Services\ErrorLog::exception($e);
+    }
+    // Tara Expert Review orders waiting for Tara AI: a few per run, so the run stays inside the host's time limit.
+    try {
+        \App\Services\ExpertReview::run();
+    } catch (\Throwable $e) {
+        \App\Services\ErrorLog::exception($e);
+    }
+    // Then what this run queued (reminders, a campaign batch). Account mail goes before outreach, so slow outreach
+    // mailboxes can never delay it.
+    $again = $send();
+    $mail = ['sent' => ($mail['sent'] ?? 0) + ($again['sent'] ?? 0), 'processed' => ($mail['processed'] ?? 0) + ($again['processed'] ?? 0)] + $again + $mail;
+    try {
+        \App\Services\Outreach::process();
+    } catch (\Throwable $e) {
+        \App\Services\ErrorLog::exception($e);
+    }
+    $this->info(json_encode($mail));
 })->purpose('Process due mail and record cron health');
 Artisan::command('cvtara:remind', function () {
     $this->info('Status reminders sent: '.\App\Services\Tracker::remind());
@@ -39,6 +76,18 @@ Artisan::command('cvtara:mail-preview {dir}', function (string $dir) {
         if ($m = MailAutomation::preview($t['id'])) {
             file_put_contents($dir.'/'.$t['id'].'.html', $m['html']);
             file_put_contents($dir.'/'.$t['id'].'.txt', $m['subject']."\n\n".$m['text']);
+        }
+    }
+    // Outreach (separate mailboxes): every mail of both lists, with a sample contact and mailbox.
+    $c = \App\Services\Outreach::config();
+    $sender = (object) ['id' => '00000000-0000-4000-8000-000000000000', 'email' => 'priya@cvtara.in', 'from_name' => 'Priya from CVTara'];
+    foreach ($c['lists'] as $list => $l) {
+        $ct = (object) ['id' => '00000000-0000-4000-8000-000000000001', 'email' => 'sample@example.com', 'name' => $list === 'colleges' ? 'Dr. Ramesh Kumar' : 'Asha Rao', 'list' => $list, 'college' => 'ABC College of Engineering', 'designation' => 'Training and Placement Officer', 'city' => 'Mysuru', 'step' => 0];
+        foreach ($l['steps'] as $i => $step) {
+            $ct->step = $i;
+            $m = \App\Services\Outreach::render($step, $ct, $sender, $c);
+            file_put_contents($dir.'/outreach-'.$list.'-'.($i + 1).'.html', $m['html']);
+            file_put_contents($dir.'/outreach-'.$list.'-'.($i + 1).'.txt', $m['subject']."\n\n".$m['text']);
         }
     }
     $this->info('Wrote '.count(glob($dir.'/*.html')).' email previews to '.$dir);
@@ -68,7 +117,7 @@ Artisan::command('cvtara:demo', function () {
     $pw = config('app.demo_password');
     $mk = function ($email, $name, $admin = false, $level = 'fresher') use ($pw) {
         $u = User::firstOrCreate(['email' => $email], ['name' => $name, 'password' => Hash::make($pw)]);
-        $u->forceFill(['is_admin' => $admin, 'email_verified_at' => now(), 'referral_code' => $u->referral_code ?: Str::random(16)])->save();
+        $u->forceFill(['is_admin' => $admin, 'email_verified_at' => now(), 'referral_code' => $u->referral_code ?: \App\Services\Referrals::makeCode((string) $u->name)])->save();
         DB::table('profiles')->updateOrInsert(['owner_id' => $u->id], ['name' => $name, 'experience_level' => $level, 'profession' => $admin ? 'Owner' : 'Data Analyst', 'category' => 'Technology', 'onboarding_done' => true, 'marketing_consent' => true, 'created_at' => now(), 'updated_at' => now()]);
 
         return $u;
@@ -84,7 +133,7 @@ Artisan::command('cvtara:demo', function () {
     \App\Services\Settings::put('integrations', array_merge(\App\Services\Settings::get('integrations'), ['payments' => true]));
     $owner = $mk('owner@cvtara.test', 'Demo Owner', true);
     $demo = $mk('demo@cvtara.test', 'Demo Customer');
-    $buy($demo, 'fresher-pro', 4);
+    $buy($demo, 'pro', 4);
     if (! DB::table('resume_drafts')->where('owner_id', $demo->id)->exists()) {
         $pid = (string) Str::uuid();
         $ins = fn ($id, $title, $co, $role, $primary, $parent) => DB::table('resume_drafts')->insert(['id' => $id, 'owner_id' => $demo->id, 'title' => $title, 'template' => 'suite-prism', 'company' => $co, 'role' => $role, 'content_json' => json_encode($doc($title, $role)), 'revision' => 1, 'is_primary' => $primary, 'parent_id' => $parent, 'job_description' => $primary ? null : 'Sample job description for '.$role, 'created_at' => now()->subDays(3), 'updated_at' => now()->subDays(1)]);
@@ -96,7 +145,7 @@ Artisan::command('cvtara:demo', function () {
             DB::table('ats_scans')->insert(['id' => (string) Str::uuid(), 'owner_id' => $demo->id, 'resume_id' => $pid, 'source' => 'text', 'job_url' => '', 'job_title' => $jt, 'company' => $jc, 'job_text' => $jx, 'score' => $rep['score'], 'result_json' => json_encode($rep + ['details' => []]), 'status' => 'done', 'created_at' => now()->subHours($hrs), 'updated_at' => now()->subHours($hrs)]);
         }
         foreach ([['ats-match', 'bug', 'The keyword list shows a skill as missing even though it is in my resume summary.', 3, 'new', 2], ['downloads', 'question', 'If I edit my resume after downloading, does the next download use another credit?', null, 'seen', 20], ['website', 'idea', 'Please add a Hindi version of the site. Many friends would use it.', 4, 'working', 40], ['billing', 'praise', 'Checkout was quick and the plan details were clear. Thank you!', 5, 'resolved', 90]] as [$ar, $kd, $msg, $rt, $stt, $hrs]) {
-            DB::table('support_reports')->insert(['id' => (string) Str::uuid(), 'owner_id' => $demo->id, 'name' => $demo->name, 'email' => $demo->email, 'area' => $ar, 'kind' => $kd, 'page' => '/workspace.html', 'message' => $msg, 'rating' => $rt, 'status' => $stt, 'plan' => 'Fresher Pro', 'viewport' => '1366x768', 'user_agent' => 'Demo browser', 'resolved_at' => $stt === 'resolved' ? now()->subHours($hrs - 5) : null, 'created_at' => now()->subHours($hrs), 'updated_at' => now()->subHours($hrs)]);
+            DB::table('support_reports')->insert(['id' => (string) Str::uuid(), 'owner_id' => $demo->id, 'name' => $demo->name, 'email' => $demo->email, 'area' => $ar, 'kind' => $kd, 'page' => '/workspace.html', 'message' => $msg, 'rating' => $rt, 'status' => $stt, 'plan' => 'Pro', 'viewport' => '1366x768', 'user_agent' => 'Demo browser', 'resolved_at' => $stt === 'resolved' ? now()->subHours($hrs - 5) : null, 'created_at' => now()->subHours($hrs), 'updated_at' => now()->subHours($hrs)]);
         }
         $ins((string) Str::uuid(), 'Business Analyst · Acme', 'Acme', 'Business Analyst', false, $pid);
         $ins((string) Str::uuid(), 'Data Analyst · Globex', 'Globex', 'Data Analyst', false, $pid);
@@ -112,15 +161,15 @@ Artisan::command('cvtara:demo', function () {
         $bc = (array) \App\Services\Settings::get('business_controls', []);
         $bc['coupons'] = [['code' => 'DIWALI25', 'type' => 'percent', 'value' => 25, 'plans' => $paid, 'expiresAt' => '', 'enabled' => true, 'maxUses' => 0, 'perUser' => 1], ['code' => 'EARLY100', 'type' => 'flat', 'value' => 100, 'plans' => $paid, 'expiresAt' => '', 'enabled' => true, 'maxUses' => 200, 'perUser' => 1]];
         \App\Services\Settings::put('business_controls', $bc);
-        $mk = fn ($name, $tpl, $theme, $head, $sub, $badge, $code, $mode, $extra = []) => array_merge(['id' => (string) Str::uuid(), 'mode' => $mode, 'name' => $name, 'template' => $tpl, 'theme' => $theme, 'heading' => $head, 'subheading' => $sub, 'body' => '', 'badge' => $badge, 'cta' => 'Claim this offer', 'couponCode' => $code, 'planKey' => '', 'imageUrl' => '', 'startsAt' => '', 'endsAt' => '', 'countdown' => true, 'banner' => true, 'popup' => true, 'popupDelay' => 20, 'exit' => true, 'idle' => true, 'idleSeconds' => 45, 'exitHeading' => 'Wait, your offer is still here', 'exitText' => 'Claim it before you go. It applies automatically at checkout.', 'idleHeading' => 'Still thinking? This offer is waiting', 'idleText' => 'Take a minute: your coupon is ready.', 'pages' => 'all', 'frequencyHours' => 12, 'priority' => 0], $extra);
+        $mk = fn ($name, $tpl, $theme, $head, $sub, $badge, $code, $mode, $extra = []) => array_merge(['id' => (string) Str::uuid(), 'mode' => $mode, 'name' => $name, 'template' => $tpl, 'theme' => $theme, 'heading' => $head, 'subheading' => $sub, 'body' => '', 'badge' => $badge, 'cta' => 'Claim this offer', 'couponCode' => $code, 'planKey' => '', 'imageUrl' => '', 'startsAt' => '', 'endsAt' => '', 'banner' => true, 'popup' => true, 'popupDelay' => 20, 'exit' => true, 'idle' => true, 'idleSeconds' => 45, 'exitHeading' => 'Wait, your offer is still here', 'exitText' => 'Claim it before you go. It applies automatically at checkout.', 'idleHeading' => 'Still thinking? This offer is waiting', 'idleText' => 'Take a minute: your coupon is ready.', 'pages' => 'all', 'frequencyHours' => 12, 'priority' => 0], $extra);
         \App\Services\Promos::put([
             $mk('Diwali '.date('Y'), 'diwali', 'diwali', 'Diwali Dhamaka {{year}}', 'Light up your career. Festive prices on every plan.', 'FESTIVE OFFER', 'DIWALI25', 'live', ['endsAt' => date('Y-m-d', strtotime('+5 days')).'T23:59']),
             $mk('Early-bird', 'earlybird', 'earlybird', 'Early-bird price for early starters', 'Get the lowest price of the season, then keep it.', 'EARLY BIRD', 'EARLY100', 'off'),
-            $mk('Flash sale', 'flash', 'flash', '24-hour flash sale', 'This price disappears when the timer ends.', 'FLASH SALE', 'DIWALI25', 'off'),
+            $mk('Flash sale', 'flash', 'flash', 'Flash sale', 'A short-run discount on every plan.', 'FLASH SALE', 'DIWALI25', 'off'),
         ]);
     }
     $names = ['Aarav Mehta', 'Diya Nair', 'Kabir Shah', 'Ishita Rao', 'Rohan Das', 'Meera Iyer', 'Vihaan Gupta', 'Anaya Singh', 'Arjun Verma', 'Saanvi Reddy', 'Kiran Patel', 'Neha Joshi'];
-    $plans = ['fresher-basic', 'fresher-standard', 'pro-basic', 'pro-standard', 'pro-pro', 'fresher-pro'];
+    $plans = ['quick', 'job-hunt', 'pro', 'job-hunt', 'quick', 'pro'];
     foreach ($names as $i => $n) {
         $u = $mk(strtolower(str_replace(' ', '.', $n)).'@demo.cvtara.test', $n, false, $i % 3 === 0 ? 'experienced' : 'fresher');
         DB::table('users')->where('id', $u->id)->update(['created_at' => now()->subDays($i + 1)]);
@@ -145,8 +194,8 @@ Artisan::command('cvtara:demo', function () {
     }
     $someone = User::where('email', 'saanvi.reddy@demo.cvtara.test')->first();
     if ($someone && ! DB::table('purchases')->where('owner_id', $someone->id)->exists()) {
-        $p = \App\Services\Settings::plans()['fresher-basic'];
-        DB::table('purchases')->insert(['id' => (string) Str::uuid(), 'owner_id' => $someone->id, 'plan' => 'fresher-basic', 'amount_paise' => $p['price'] * 100, 'refunded_paise' => $p['price'] * 100, 'provider' => 'demo', 'status' => 'refunded', 'is_live' => false, 'payment_reference' => 'demo_refunded', 'limits_json' => json_encode($p), 'access_days' => $p['accessDays'], 'purchased_at' => now()->subDays(9), 'access_until' => now()->subDays(1), 'created_at' => now()->subDays(9), 'updated_at' => now()->subDays(6)]);
+        $p = \App\Services\Settings::plans()['job-hunt'];
+        DB::table('purchases')->insert(['id' => (string) Str::uuid(), 'owner_id' => $someone->id, 'plan' => 'job-hunt', 'amount_paise' => $p['price'] * 100, 'refunded_paise' => $p['price'] * 100, 'provider' => 'demo', 'status' => 'refunded', 'is_live' => false, 'payment_reference' => 'demo_refunded', 'limits_json' => json_encode($p), 'access_days' => $p['accessDays'], 'purchased_at' => now()->subDays(9), 'access_until' => now()->subDays(1), 'created_at' => now()->subDays(9), 'updated_at' => now()->subDays(6)]);
     }
     if (! DB::table('error_logs')->exists()) {
         \App\Services\ErrorLog::record('error', 'browser', '[sample] TypeError: Cannot read properties of undefined (reading \'name\')', 'workspace-ui.js:88', '/workspace.html');

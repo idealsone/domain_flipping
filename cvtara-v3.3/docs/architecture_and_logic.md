@@ -28,7 +28,7 @@ Scope: package `cvtara-v3.3` (BUILD_INFO.json says version 3.4.0, packaged 2026-
 
 ## 2. Route inventory
 
-Global notes: all routes sit in the `web` group (session + CSRF) except the Razorpay/Cashfree webhooks, which are CSRF-exempt and authenticated by HMAC signature. `GET /{path?}` is the last GET route and renders pages. The Cashfree webhook is registered after it (`app/routes/web.php:23,25`) but only GET is caught by the catch-all, so it still works.
+Global notes: all routes sit in the `web` group (session + CSRF) except the Razorpay webhook, which is CSRF-exempt and authenticated by HMAC signature. `GET /{path?}` is the last GET route and renders pages. Razorpay is the only payment gateway (3.19.0 removed Cashfree checkout and payouts).
 
 ### 2.1 `routes/web.php`
 
@@ -43,7 +43,6 @@ Global notes: all routes sit in the `web` group (session + CSRF) except the Razo
 | GET `/signin-with-chatgpt` | none | none | Redirect to `/login` (legacy) | `web.php:14` |
 | GET `/r/{code}` | none | `60/min` | Referral landing: 404 unless code belongs to an unblocked user; stores `session.referral` and a 30-day `cvtara_ref` cookie, records one `referral_clicks` row per session per day, redirects to `/register` | `web.php:15` |
 | POST `/webhooks/razorpay` | HMAC `X-Razorpay-Signature` | `120/min` | `Payments::webhook` (body limit 1 MB) | `web.php:16` |
-| POST `/webhooks/cashfree` | HMAC (timestamp + body, client secret) | `120/min` | Legacy `CashfreeCheckout::webhook` | `web.php:25` |
 | GET/POST/DELETE `/api/{path?}` | per path, see 2.2 | `API_RATE_LIMIT` (default 400)/min per user or IP | The JSON API | `web.php:17` |
 | POST `/export/{type}/{id}/{format}` | `auth` | `10/min` | PDF / DOCX / print-HTML export | `web.php:18` |
 | GET `/media/{file}` | public | none | Serves `media/<uuid>.webp` from the private `local` disk, `Cache-Control: public,max-age=86400` | `web.php:19` |
@@ -69,7 +68,7 @@ Guards at the top: GET is rejected (405) for `checkout/*`, `features/use`, `traf
 | `traffic` | POST | public | page-view record (needs `consent` true and analytics integration on; path regex; 1/min per visitor+path) | 91 |
 | `admin/*` | GET/POST | admin | delegates to `AdminController` | 107 |
 | `referral-rewards` | GET | user | milestone status | 112 |
-| `referral-rewards/send` / `check` / `claim` | POST | user | Twilio Verify SMS send / check / claim milestone 5 or 10 | 115-129 |
+| `referral-rewards/claim` | POST | user | Claim the 5-friend reward (one free Job Hunt month) | 115-129 |
 | `security/status` | any | user | `{verified, recent}` | 130 |
 | `security/send-code` / `verify-code` | POST | user | step-up code flow | 133-142 |
 | `referrals/creator` | POST | user | creator application (1-5 https links) | 143 |
@@ -85,7 +84,7 @@ Guards at the top: GET is rejected (405) for `checkout/*`, `features/use`, `traf
 | `applications`, `applications/{id}` | GET/POST/DELETE | user | tracker CRUD | 230-259 |
 | `purchases` | any | user | own purchases (200 latest) | 260 |
 | `checkout/quote` / `start` | POST | user | price quote / create order | 263-275 |
-| `checkout/verify` | POST | user | demo (preview only), Cashfree (legacy) or Razorpay signature verify | 276-293 |
+| `checkout/verify` | POST | user | demo (preview only) or Razorpay signature verify | 276-293 |
 | `referrals` | GET | user | dashboard payload; **creates `referral_code` on first read** | 294-310 |
 | `referrals/withdraw` | POST | user + step-up | request withdrawal | 311 |
 | `feedback` | GET / POST, `feedback/{id}/withdraw` POST | user | own reviews | 317-331 |
@@ -113,6 +112,7 @@ Step-up column: **yes** means `AccountSecurity::requireRecent` (fresh email code
 | `search/import`, `search/sync` | POST | no | Search Console rows (CSV import or API) | 254-265 |
 | anything starting `referrals` | GET / POST | see below | `AffiliateAdminController` | 34 |
 | anything starting `setup/` | GET / POST | see below | `SetupController` | 31 |
+| anything starting `campaigns` | GET / POST | `send`, `resume`, `settings`, `contacts/import` | `CampaignAdminController`: email campaigns (drafts, preview, test to owner, audience counts, contact import, do-not-mail list, pause / cancel) | 31 |
 | `users/(grant\|update\|revoke\|delete)`, `orders/{uuid}`, `errors`, `errors/clear`, `errors/download`, `site-urls`, `legal/generate`, `health/(history\|run)` | per `AdminOpsController::ROUTES` | below | `AdminOpsController` | 28 |
 
 **AdminOpsController** (`app/app/Http/Controllers/AdminOpsController.php`): GET `orders/{id}` (order detail + timeline), GET `errors` (filters, 300 rows + failed mails), GET `errors/download` (CSV/JSON, 5000 rows, formula characters stripped), POST `errors/clear` (resolve or delete, max 500 ids or all), GET `site-urls`, GET `legal/generate`, GET `health/history`, POST `health/run` (`:27-90`). Everything after line 92 is POST **and** step-up (`:92-93`): `users/grant` (manual purchase), `users/update`, `users/revoke`, `users/delete`.
@@ -184,15 +184,22 @@ Relationships are by `owner_id` / `*_id` columns; there are no Eloquent relation
 * `get($key)` reads `site_settings.value_json` or falls back to `resources/data/defaults.json`; every call is one DB query (no memoisation) and reads/decodes the defaults file when the row is missing (`:16-29`). For `blog` it additionally merges `resources/data/editorial-content.json` (314 KB, 68 posts): any post whose stored `body` is empty is replaced by the editorial one (`:20-26`).
 * `put($key,$data)` upserts JSON and sets `revision = previous + 1` (`:36-39`).
 * `providers()` decrypts the `providers` row with `Crypt` (`:41-46`).
-* **Plans**: defaults in code: `free` ("Normal user", price 0, 1 saved resume, 2 letters, 3 matches/day, 0 exports), six paid plans and three add-ons (`:48-68`). `plans()` deep-merges saved overrides over the defaults, restricted to known keys (`:75-88`).
+* **Plans**: defaults in code (`planDefaults()`): `free` ("Free", price 0, 1 saved resume, 2 letters, 3 matches/day, 0 exports), four packages, two services (`serviceDefaults()`) and three add-on packs (`addonDefaults()`). `plans()` deep-merges saved overrides over the defaults, restricted to known keys. Old keys (`fresher-*`, `pro-basic/standard/pro`) resolve through `planAlias()` so coupons and links keep working; old purchases keep their `limits_json` snapshot.
 
 | Key | Name | Price | MRP | Days | Resumes / letters | ATS scans | Rank | Flags |
 |---|---|---|---|---|---|---|---|---|
-| fresher-basic | Fresher Basic | 299 | 399 | 60 | 10 / 10 | 10 | 1 | |
-| fresher-standard | Fresher Standard | 399 | 549 | 60 | 20 / 20 | unlimited | 2 | popular |
-| fresher-pro | Fresher Pro | 499 | 699 | 90 | 30 / 30 | unlimited | 3 | referral |
-| pro-basic / pro-standard / pro-pro | Professional ... | 399 / 499 / 599 | 549 / 699 / 849 | 60 / 60 / 90 | 10 / 20 / 30 | 10 / unl. / unl. | 1 / 2 / 3 | popular on standard, referral on pro-pro |
-| addon-10 / 20 / 30 | Add-on packs | 149 / 249 / 399 | 0 | 0 | +10 / +20 / +30 each | n/a | 0 | type `addon` |
+| quick | Quick Download | 99 | | 7 | 1 resume (any revision), no letters | daily free checks | 1 | `oneResume`; price counts as upgrade credit within 7 days |
+| job-hunt | Job Hunt | 299 | | 30 | 5 / 5 | 20 | 2 | popular |
+| pro | Pro | 599 | | 90 | 20 / 20 | 60 | 3 | bestValue |
+| complete-kit | Complete Job Kit | 1,299 | 1,797 | 90 | 20 / 20 | 60 | 3 | includes expert-review + profile-boost; off sale by default |
+| expert-review / profile-boost | Services | 499 / 699 (399 / 599 with Job Hunt or Pro) | | | | | | type `service`, off sale by default, tracked in `service_orders`; expert-review is written automatically by Tara AI (`ExpertReview`), profile-boost by a person |
+| addon-10 / 20 / 30 | Add-on packs | 149 / 249 / 399 | 0 | 0 | +10 / +20 / +30 each | n/a | 0 | type `addon`, off sale by default |
+
+**Checkout order (`BusinessControls::quote`)**: list price, service discount with a plan, coupon, upgrade credit from an unused Quick Download, the friend's ₹50 first-purchase discount (never with the upgrade credit), then wallet credit; at least ₹1 is always paid.
+
+**Refunds (`Refunds.php`)**: one refund per customer, within 7 days, only while the purchase is unused (no clean download, ATS scan, tailored draft, started service or upgrade). Approve calls the gateway refund API (demo/manual are marked directly), then `settled()` returns spent wallet credit and cancels services not started.
+
+**Wallet referral (`Wallet.php`, mode `wallet`)**: only orders of `minQualifyingPaise` (₹299) or more count; the friend gets ₹50 off their first such order; the referrer gets ₹50 wallet credit once the friend's purchase is 7 days old and not refunded; credit expires after 90 days; ₹1,000 a month cap; 5 qualified friends unlock one free Job Hunt month. Same email inbox, browser, phone or payment reference counts as self-referral.
 
 `exports` = 4 x the resume count (add-ons: 4 x n). `dailyMatches` 100 for paid plans.
 
@@ -225,21 +232,26 @@ Relationships are by `owner_id` / `*_id` columns; there are no Eloquent relation
 * `balance($id)` (`:33-42`): earned = sum(amount - reversed); pending = same for rows with `available_at` in the future; paid and reserved from `withdrawals`; **available = earned - pending - paid - reserved**.
 * `reverse($purchase,$refunded)` sets `reversed = min(amount, floor(refunded x rate / 10000))` (monotonic) (`:61-69`); `restore` recomputes after a dispute is won (`:71-77`). A reversal after payout makes `available` negative; later commissions offset it.
 * `request($user,$data)` (`:79-105`): transaction under the user lock; requires programme on, verified email, an approved payout profile past its 48-hour `eligible_at`, no open withdrawal, `amount >= config.minimumPaise` and `<= available`; stores the decrypted destination re-encrypted on the withdrawal (`:93-100`), status `requested`, `due_at = now + 24h`.
-* `transition()` (`:107-125`): allowed `requested -> processing|rejected`, `processing -> paid|rejected`; Cashfree-provider rows cannot be changed manually; `processing` needs the review (`approved_at`); `paid` needs a reference of 6+ chars and non-negative balance; `rejected` needs a note; cannot act on own withdrawal; blocked beneficiaries only to `rejected`.
+* `transition()` (`:107-125`): allowed `requested -> processing|rejected`, `processing -> paid|rejected`; `processing` needs the review (`approved_at`); `paid` needs a reference of 6+ chars and non-negative balance; `rejected` needs a note; cannot act on own withdrawal; blocked beneficiaries only to `rejected`.
 
-`ReferralRewards` (Twilio Verify, milestone rewards, `ReferralRewards.php`): `enabled()` needs referrals on and Twilio verification configured (`:15-20`). `send` limits 3 per user per day, 10 per IP-hash per hour, 100 per day globally and rejects a phone hash already in `referral_identities` (`:35-45`); `check` allows 5 attempts per 10 min, records the identity (`verified`, or `held` for owner review when the same device cookie hash exists) (`:51-74`). `count($id)` = referred users that are unblocked, email-verified, phone-verified and have a live, unrefunded, non-free Razorpay/Cashfree purchase >= `minQualifyingPaise` (`:76-86`). `claim(5)` gives one clean resume export (`exports_remaining=1`); `claim(10)` inserts a zero-price `referral_reward` purchase of Standard (fresher-standard or pro-standard by profile) for `premiumDays`, only when the user has no active paid plan (`:93-114`).
+`ReferralRewards` (`ReferralRewards.php`): `enabled()` follows the referral switch. `count` is the number of friends whose purchase passed the 7-day refund window (see `Wallet`). `claim` gives one free Job Hunt month and one clean resume download when 5 friends qualify, once per customer, after any running plan ends. Phone verification (Twilio) was removed in 3.18.0; `referral_identities` is kept because `Wallet::selfReferral` still reads it.
 
 `AffiliateProfiles` stores payout details encrypted, HMAC hashes of the destination and PAN for duplicate flags, a 48-hour `eligible_at`, and resets status to `pending` on every change; blocks edits while a withdrawal is open (`AffiliateProfiles.php:25-53`). `approve` locks and sets the status with the reviewer's note (`:55-65`).
 
-`CashfreePayouts` (`CashfreePayouts.php`): production mode only; `send()` requires the payout policy record, reserves the provider transfer id **inside the transaction before** calling Cashfree, then calls `/transfers`; any failure leaves `UNKNOWN_VERIFY_BEFORE_RETRY` and the funds reserved (`:50-70`). `sync()` verifies transfer id and amount before marking `paid` (needs `SUCCESS/COMPLETED` + UTR) or `rejected` (`FAILED/REJECTED/REVERSED`) (`:72-100`); `reconcile()` (every cron run) syncs up to 10 withdrawals that are `processing` or paid in the last 30 days (`:102-120`).
+Withdrawals are paid by the owner outside the site (bank transfer or UPI) and recorded with `transition()`; there is no payout API.
 
-`CashfreeCheckout` is the legacy checkout; nothing calls its `start()`. It stays reachable through `checkout/verify` with `provider=cashfree`, the webhook route and admin provider fields (see risks file).
+`TaraAI` (`TaraAI.php`): writing help through the Claude API (`anthropic-ai/sdk`, default model `claude-opus-5-5`, server-side fallback on). Off unless `integrations.ai` is on and `providers.ai.claudeApiKey` is set. Seven tasks; 3 suggestions a day free, 20 on a paid plan, plus the owner's site-wide `dailyLimit` (default 300). A usage row is reserved in `product_usage` (action `ai`) before the call and removed if the call fails or is declined. Routes: GET `ai/status`, POST `ai/suggest` (consent required, 6 a minute per user). UI: `public_html/tara-ai.js`.
+
+`TaraAI::ask()` is the single Claude call (owner key and model, `CLAUDE_API_BASE` override outside production, effort medium, server-side fallback); `TaraAI::failure()` turns an exception into an owner-facing reason and logs a refused key. Suggestions and expert reviews both use them.
+
+`ExpertReview` (`ExpertReview.php`): automatic Tara Expert Review. Runs only when `ExpertReview::automatic()` (setting `serviceSettings.autoReview`, default true, and `TaraAI::enabled()`). Triggered by `Services::open()` (via `DB::afterCommit` + `app()->terminating`, so the payment transaction and the response are not held) and by `cvtara:cron` every minute (wrapped in try/catch with `ErrorLog::exception`). Each run: resets `in_review` orders claimed by Tara (`reviewer = 'tara'`) with no review for 15+ minutes; picks up to 3 `expert-review` orders that are `not_started`, `review_attempts < 3` and past `retry_at`; takes `Cache::lock('expert-review:<id>')`; claims with a conditional update `not_started -> in_review` (+1 attempt, `reviewer = 'tara'`); sends `AtsEngine::resumeText()` of the primary (else last edited) resume plus target role and experience level inside `<resume>`/`<profile>` tags, max 16k tokens, 240 s timeout; on success stores `review`, sets `delivered`, `note`, `delivered_at` (only if still `in_review` by Tara) and queues `expert_review_delivered` mail with `{{review}}`. On failure the order goes back to `not_started` with `review_error` and `retry_at = now + 10 x attempts` minutes; after the third failure it stays, `Services::queue()` returns `needs_owner = true`, and an `ai` warning is logged. A customer with no resume of at least 120 characters is not an attempt: `retry_at` moves an hour on. No `product_usage` row is written, so reviews never count against suggestion limits. Columns added to `service_orders` by `2026_10_24_000001_automatic_expert_review`: `review`, `reviewer`, `review_attempts`, `review_error`, `review_resume`, `retry_at`. Owner routes: GET `admin/services` (orders + settings), POST `admin/services/settings` (`autoReview`, step-up), `admin/services/{id}` (status, note, optional `review`; a delivered review is emailed), `admin/services/{id}/review` (edit), `/resend` (new mail reference), `/retry` (resets attempts). UI: `public_html/refunds-admin.js` (queue) and `workspace-activity.js` (customer view).
 
 ### 5.5 `MailAutomation` (`MailAutomation.php`)
 
 * **Queue**: `queue($user,$trigger,$ref,$vars,$essential)` loads the template for the trigger from `site_settings.emails` or defaults, returns if missing/disabled (unless `essential`, used for password reset), skips `blog_published` and `abandoned_purchase` when the user has no `marketing_consent` (`:14-27`), replaces `{{var}}` tokens and inserts into `mail_outbox` with `dedupe = sha256(userId:trigger:ref:templateId)` via `insertOrIgnore` (`:28-30`). Dedupe therefore is per user, trigger, reference and template.
 * **Process** (`:33-79`): guarded by a 5-minute cache lock; paused when `integrations.email` is false; configures SMTP or Resend from provider settings; marks `sending` rows older than 10 minutes as `failed`; cancels `security_verification` mails older than 10 minutes; picks up to 40 `queued|failed` rows with `attempts < 5` and `due_at <= now`, ordered security codes first, then receipts/reset/welcome, then the rest; sets `sending`, increments `attempts`, sends (Resend with `Idempotency-Key = job id`, or SMTP raw text). Success stores `sent` and replaces the body of security mails with a stub; failure stores a generic error and retries after `15 x attempts` minutes (1 minute for security codes) (`:48-72`).
 * **Reminders** (`:81-96`): `access_expiring` for paid non-add-on purchases ending within 7 days; `abandoned_purchase` for `created` purchases between 1 hour and 7 days old; `followup_due` for applications whose `follow_up` is today (ref includes the date); then writes `cronHeartbeat`.
+* **Campaigns** (`Campaigns.php`, migration `2026_10_23_000001`): owner-written one-off mail (trigger `campaign`, in `EmailRenderer::MARKETING`). Audiences: opted-in customers (all / never bought / active plan / plan ended) or `email_contacts` (imported with the owner's consent confirmation; addresses that belong to an account are left out so the account's own choice wins); `email_suppressions` is never mailed. Starting fixes `campaign_recipients`; each `cvtara:cron` run (`Campaigns::run`, before `process()`) hands at most `campaignSettings.batchSize` (default 20) to `mail_outbox` and stops at `dailyCap` (default 300, India day), re-checking consent and suppression per batch and again at send. `mail_outbox.campaign_id` / `contact_id` give the footer and `List-Unsubscribe` link: signed `/email/unsubscribe/{user}?c=` for customers, `/email/unsubscribe/c/{token}` for contacts (adds the address to the suppression list). Pause deletes queued rows and returns them to pending; cancel marks them cancelled. Report counts come from the recipient rows and outbox statuses.
 * Default templates (`resources/data/defaults.json`): welcome (profile_created), receipt (purchase_verified), expiry (24 h delay), follow-up, reset, download-locked are **on**; resume-saved, abandoned and blog-published are **off**.
 
 ### 5.6 `AccountSecurity` (step-up)
@@ -349,7 +361,7 @@ Account view -> "Your data" panel (`workspace-ui.js privacy()`): JSON download v
 | Blog editor and SEO files | bloghub | `admin-publish.js` | `content/blog`, `content/seo`, `media` |
 | Policies and URLs | policies | `admin-publish.js` | `content/legal`, `legal/generate`, `site-urls` |
 | Setup and health | health, setup | `admin-publish.js`, `admin-extras.js` | `health/history`, `health/run`, `setup/status|business|cache|email-test|payout-policy|reward-review` |
-| Referral ops (affiliates, creators, identity, withdrawals, Cashfree) | referral, commerce | `referral-center.js owner()` (the older `admin-ops.js referral()` is a read-only summary) | `referrals*` |
+| Referral ops (affiliates, creators, identity, withdrawals) | referral, commerce | `referral-center.js owner()` (the older `admin-ops.js referral()` is a read-only summary) | `referrals*` |
 | Reviews | desk / reviews | `admin-ops.js desk()` | `reviews`, `feedback/add` |
 | Pricing and add-ons | pricing | `admin-extras.js pricingPanel()` | `plans` |
 | Business controls (maintenance, referral rules, coupons) | business | `business-ui.js` | `business-controls` |

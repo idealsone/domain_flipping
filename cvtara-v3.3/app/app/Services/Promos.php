@@ -29,7 +29,7 @@ class Promos
         'flash' => ['#111827', '#dc2626', '#ffffff', '#fde047', '⚡'],
         'graduate' => ['#2258d6', '#0891b2', '#ffffff', '#bfdbfe', '🎓'],
         'appraisal' => ['#0f766e', '#2258d6', '#ffffff', '#99f6e4', '💼'],
-        'brand' => ['#1557d2', '#4f46e5', '#ffffff', '#fde047', '🚀'],
+        'brand' => ['#1557d2', '#2b3a8c', '#ffffff', '#fde047', '🚀'],
     ];
 
     /** Ready-made starting points. {{year}} is filled in when a campaign is created from a template. */
@@ -46,7 +46,7 @@ class Promos
         'newyear' => ['New Year', 'New year, new job. Start {{year}} with a strong resume', 'New-year price on every plan.', 'NEW YEAR OFFER', 'newyear'],
         'republic' => ['Republic / Independence Day', 'Freedom to choose your next job', 'A national-day price on every plan.', 'NATIONAL DAY OFFER', 'republic'],
         'earlybird' => ['Early-bird', 'Early-bird price for early starters', 'Get the lowest price of the season, then keep it.', 'EARLY BIRD', 'earlybird'],
-        'flash' => ['Flash sale', '24-hour flash sale', 'This price disappears when the timer ends.', 'FLASH SALE', 'flash'],
+        'flash' => ['Flash sale', 'Flash sale', 'A short-run discount on every plan.', 'FLASH SALE', 'flash'],
         'graduate' => ['Graduation season', 'Just graduated? Your first resume, ready today', 'A student-friendly price for your first job search.', 'FRESHER OFFER', 'graduate'],
         'appraisal' => ['Appraisal / hiring season', 'Hiring season is here. Be ready first', 'A special price while companies are hiring.', 'HIRING SEASON', 'appraisal'],
         'custom' => ['Blank offer', 'Special offer', 'A limited-time price on every plan.', 'OFFER', 'brand'],
@@ -137,9 +137,9 @@ class Promos
 
         return [
             'id' => $c['id'], 'badge' => $fill($c['badge'] ?? ''), 'heading' => $fill($c['heading'] ?? ''), 'subheading' => $fill($c['subheading'] ?? ''), 'body' => $fill($c['body'] ?? ''),
-            'cta' => $c['cta'] ?: 'Claim this offer', 'code' => strtoupper((string) ($c['couponCode'] ?? '')), 'discount' => self::discountLabel($coupon), 'plan' => $c['planKey'] ?? '',
-            'image' => $c['imageUrl'] ?? '', 'theme' => ['from' => $theme[0], 'to' => $theme[1], 'ink' => $theme[2], 'accent' => $theme[3], 'art' => $theme[4]],
-            'endsAt' => $to ? gmdate('c', $to) : null, 'countdown' => ! empty($c['countdown']) && $to,
+            'cta' => $c['cta'] ?: 'Claim this offer', 'code' => strtoupper((string) ($c['couponCode'] ?? '')), 'discount' => self::discountLabel($coupon), 'plan' => Settings::planAlias((string) ($c['planKey'] ?? '')),
+            'image' => $c['imageUrl'] ?? '', 'theme' => ['key' => isset(self::THEMES[$c['theme'] ?? '']) ? $c['theme'] : 'brand', 'from' => $theme[0], 'to' => $theme[1], 'ink' => $theme[2], 'accent' => $theme[3], 'art' => $theme[4]],
+            'endsAt' => $to ? gmdate('c', $to) : null,
             'triggers' => ['banner' => ! empty($c['banner']), 'popup' => ['enabled' => ! empty($c['popup']), 'delay' => (int) ($c['popupDelay'] ?? 20)], 'exit' => ! empty($c['exit']), 'idle' => ['enabled' => ! empty($c['idle']), 'seconds' => (int) ($c['idleSeconds'] ?? 45)]],
             'variants' => ['exit' => ['heading' => $fill($c['exitHeading'] ?? ''), 'text' => $fill($c['exitText'] ?? '')], 'idle' => ['heading' => $fill($c['idleHeading'] ?? ''), 'text' => $fill($c['idleText'] ?? '')]],
             'pages' => $c['pages'] ?? 'all', 'frequencyHours' => max(1, (int) ($c['frequencyHours'] ?? 12)),

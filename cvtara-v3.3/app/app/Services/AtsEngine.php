@@ -11,7 +11,7 @@ class AtsEngine
 {
     private const STOP = 'the a an and or of for to in on at by with as from be is are was were have has this that your our you we will must should required requirements experience knowledge skills ability strong excellent good work working team role candidate successful responsibilities responsibility';
 
-    private const ACTION = '/\b(built|developed|delivered|implemented|designed|created|led|managed|coordinated|screened|sourced|analysed|analyzed|improved|reduced|increased|maintained|automated|deployed|tested|prepared|supported|taught|mentored|conducted|launched|wrote|resolved|produced|reported)\b/iu';
+    private const ACTION = '/\b(built|builds|developed|delivered|implemented|designed|created|led|leads|managed|manages|coordinated|screened|sourced|analysed|analyzed|improved|reduced|increased|maintained|automated|deployed|tested|prepared|supported|taught|mentored|conducted|launched|wrote|resolved|produced|reported|own|owned|owns|drove|drives|grew|grows|partnered|partner|scaled|negotiated|acquired|expanded|restructured|redesigned|executed|exceeded|onboarded|oversaw|oversee|handled|trained|established|achieved|generated|optimised|optimized|streamlined|spearheaded|organised|organized|monitored|planned|identified|lifted|doubled|tripled|converted|consolidated|negotiate)\b/iu';
 
     private const HEADING = '/^(professional summary|summary|profile|experience|work experience|employment|education|qualifications|skills|technical skills|projects|certifications|languages|achievements)[:\s]*$/iu';
 
@@ -119,13 +119,114 @@ class AtsEngine
         return null;
     }
 
+    private const JOB_SECTION = '/^(role overview|the role|about the role|about this role|about the job|about you|job (description|summary|overview|responsibilities)|key responsibilities|responsibilities|duties|what you(\'| wi)ll do|requirements|qualifications|desired candidate profile|candidate profile|who you are|what we(\'re| are) looking for|key skills|skills|must have|nice to have|preferred|experience|eligibility|education)\b/iu';
+
+    /** Plain text as a reader sees it: entities decoded, odd spaces and zero-width marks removed. */
+    public static function clean(string $s): string
+    {
+        $s = html_entity_decode($s, ENT_QUOTES | ENT_HTML5, 'UTF-8');
+
+        return (string) preg_replace(['/[\x{200B}-\x{200D}\x{2060}\x{FEFF}]/u', '/[\x{00A0}\x{2007}\x{202F}]/u', "/\r\n?/"], ['', ' ', "\n"], $s);
+    }
+
+    private static function headingLike(string $line): bool
+    {
+        return mb_strlen($line) <= 70 && ! preg_match('/[.!;,]$/u', $line) && count(preg_split('/\s+/u', $line)) <= 8;
+    }
+
+    /**
+     * The part of a job posting that describes the job. "About the company", "Why join us" and benefits blocks are
+     * marketing text: they are left out so they are not scored as requirements or keywords.
+     */
+    public static function jobFocus(string $jobText): string
+    {
+        $out = [];
+        $skip = '';
+        foreach (preg_split('/\n/u', $jobText) as $raw) {
+            $line = self::trim((string) preg_replace('/^\s*(?:[•*\-–]\s*|[0-9]+[.)]\s+)/u', '', $raw));
+            $plain = (string) preg_replace('/[:?]+$/u', '', $line);
+            if ($line !== '' && self::headingLike($line)) {
+                if (preg_match('/^(about(?! (the|this) (role|job|position)| you)\b.*|why (join|work|us)\b.*|(our )?(benefits|perks)( (and|&) benefits)?|what we offer.*|who we are|our (story|mission|values|culture)|life at .*|equal opportunit.*)$/iu', $plain)) {
+                    $skip = preg_match('/^(about|who we are|our )/iu', $plain) ? 'about' : 'benefits';
+
+                    continue;
+                }
+                if ($skip !== '' && (preg_match(self::JOB_SECTION, $plain) || $skip === 'about')) {
+                    $skip = '';
+                }
+            }
+            if ($skip === '') {
+                $out[] = $raw;
+            }
+        }
+        $focus = trim(implode("\n", $out));
+
+        return mb_strlen($focus) >= 80 ? $focus : $jobText;
+    }
+
+    /** Words of the employer's own name ("About Acme Corp", "Company: Acme"), which a resume is not expected to contain. */
+    private static function companyWords(string $jobText): array
+    {
+        $names = [];
+        foreach (preg_split('/\n/u', $jobText) as $raw) {
+            $line = self::trim($raw);
+            if (preg_match('/^about\s+(?!the |this |you\b|us\b)(.{2,80}?)[:?]*$/iu', $line, $m) && self::headingLike($line)) {
+                $names[] = $m[1];
+            } elseif (preg_match('/^(?:company|organisation|organization|employer)\s*[:\-–]\s*(.{2,80})$/iu', $line, $m)) {
+                $names[] = $m[1];
+            }
+        }
+        $out = [];
+        foreach ($names as $n) {
+            preg_match_all('/[A-Za-z][A-Za-z0-9&]+/', $n, $m);
+            foreach ($m[0] as $w) {
+                if (strlen($w) > 1 && ! in_array(strtolower($w), ['the', 'and', 'pvt', 'ltd', 'private', 'limited', 'inc', 'llp', 'of', 'for'], true)) {
+                    $out[self::stem(strtolower($w))] = true;
+                }
+            }
+        }
+
+        return $out;
+    }
+
+    /** Best guess at the job title and employer from the posting itself, used to label a check when the boxes are left empty. */
+    public static function headline(string $jobText): array
+    {
+        $jobText = self::clean($jobText);
+        $line = self::jobTitle($jobText);
+        $parts = preg_split('/\s+(?:–|—|-|\||@|at)\s+/u', $line, 2);
+        $title = mb_strlen($parts[0] ?? '') <= 80 ? self::trim($parts[0] ?? '') : '';
+        $company = self::trim($parts[1] ?? '');
+        if ($company === '' && preg_match('/^about\s+(?!the |this |you\b|us\b)(.{2,80}?)[:?]*$/imu', $jobText, $m)) {
+            $company = self::trim($m[1]);
+        }
+
+        return [mb_substr($title, 0, 180), mb_substr($company, 0, 180)];
+    }
+
+    /** The posting's own title line, used to weight keywords. Typed fields do not change the score. */
+    public static function jobTitle(string $jobText): string
+    {
+        foreach (preg_split('/\n/u', $jobText) as $raw) {
+            $line = self::trim($raw);
+            if ($line === '' || preg_match('/^(job description|jd|job title|position|role)[:\s]*$/iu', $line)) {
+                continue;
+            }
+            $line = (string) preg_replace('/^(job title|position|role)\s*[:\-–]\s*/iu', '', $line);
+
+            return mb_strlen($line) <= 100 && ! preg_match('/[.!?;]$/u', $line) && count(preg_split('/\s+/u', $line)) <= 12 ? $line : '';
+        }
+
+        return '';
+    }
+
     public static function analyse(string $resumeText, string $jobText): array
     {
         if (mb_strlen($resumeText) > 120000 || mb_strlen($jobText) > 40000) {
             throw new \InvalidArgumentException('Use a resume under 120,000 characters and a job description under 40,000 characters.');
         }
         $resume = self::segments($resumeText);
-        $job = self::segments($jobText);
+        $job = self::segments(self::jobFocus($jobText));
         $requirements = [];
         foreach (self::catalog() as $c) {
             $source = self::find($job, fn ($r) => preg_match($c['re'], $r['text']) && ! self::negated($r['text'], $c['re']));
@@ -251,10 +352,12 @@ class AtsEngine
             'method' => 'Deterministic analysis of the two texts you supplied. Related-term groups and action context identify evidence candidates. Unclassified requirements and eligibility need your review. No web research, employer ATS access, credential verification or hiring prediction is performed.'];
     }
 
-    private const KW_STOP = 'the a an and or of for to in on at by with as from be is are was were have has this that your our you we will must should required requires requirements about into over under their they them his her its it who whom which what when where while also able ability across all any can could may might more most other some such than then there these those through using use used within without would work working works role roles job jobs team teams candidate candidates company looking join skills skill strong good great excellent knowledge experience experienced years year plus etc including include includes ensure ensuring manage managing responsible responsibilities responsibility preferred nice have having bonus apply application applications position opportunity opportunities benefits offer offers hybrid remote office full time part employee employees environment business new help support provide providing well one two three first based related relevant like both each every per via day days month months week weeks need needs needed make making get getting take taking high level highly ideal best build write present develop design deliver create lead drive own maintain participate collaborate communicate perform conduct identify improve analyse analyze understand deep proven track record seeking hire hiring';
+    private const KW_STOP = 'the a an and or of for to in on at by with as from be is are was were have has this that your our you we will must should required requires requirements about into over under their they them his her its it who whom which what when where while also able ability across all any can could may might more most other some such than then there these those through using use used within without would work working works role roles job jobs team teams candidate candidates company looking join skills skill strong good great excellent knowledge experience experienced years year plus etc including include includes ensure ensuring manage managing responsible responsibilities responsibility preferred nice have having bonus apply application applications position opportunity opportunities benefits offer offers hybrid remote office full time part employee employees environment business new help support provide providing well one two three first based related relevant like both each every per via day days month months week weeks need needs needed make making get getting take taking high level highly ideal best build write present develop design deliver create lead drive own maintain participate collaborate communicate perform conduct identify improve analyse analyze understand deep proven track record seeking hire hiring description overview type location employment extensive desired profile monitor track coordinate address prepare thrive possess seamless smooth regular periodic overall key ideally minimum maximum significant advantage willingness frequent fast paced growth across';
 
     private static function stem(string $w): string
     {
+        $w = (string) preg_replace('/(?<=[a-z]{3})(s|x|ch|sh)es$/', '$1', $w); // campuses → campus, so both forms meet
+
         return strlen($w) > 5 ? (string) preg_replace('/(ing|ed|es|ly|ions?|ment|s)$/', '', $w) : (string) preg_replace('/s$/', '', $w);
     }
 
@@ -277,6 +380,8 @@ class AtsEngine
         }
         $freq = [];
         $shown = [];
+        $employer = self::companyWords($jobText);
+        $jobText = self::jobFocus($jobText);
         $tl = mb_strtolower($title);
         preg_match_all($re, $jobText, $jm, PREG_OFFSET_CAPTURE);
         foreach ($jm[0] as [$raw, $byte]) {
@@ -288,6 +393,9 @@ class AtsEngine
             $starts = $before === '' || (bool) preg_match('/[.!?:\n]$/', $before);
             $named = (bool) preg_match('/[A-Z].*[A-Z]|[+#]/', $raw) || (preg_match('/^[A-Z][a-z]/', $raw) && ! $starts);
             $k = self::stem($w);
+            if (isset($employer[$k])) {
+                continue;
+            }
             $cur = $freq[$k] ?? ['n' => 0, 'bonus' => 0];
             $cur['n']++;
             if ($named) {
@@ -333,7 +441,8 @@ class AtsEngine
         foreach ($result['requirements'] as $x) {
             $w = $weight[$x['priority']] ?? 2;
             $total += $w;
-            $got += $w * ($credit[$x['status']] ?? 0);
+            // a requirement to review with related wording in the resume counts for more than one with nothing related
+            $got += $w * ($x['status'] === 'review' && ($x['evidence'] ?? '') !== '' ? 0.5 : ($credit[$x['status']] ?? 0));
         }
         $ev = $total ? $got / $total * 100 : null;
         if ($ev === null && $kw['pct'] === null) {
@@ -428,10 +537,19 @@ class AtsEngine
         return implode("\n", array_filter(array_map(fn ($x) => is_string($x) ? $x : (string) $x, $out), fn ($x) => trim($x) !== ''));
     }
 
+    /** Identifies the text a check reads, so two resumes with the same words can be told apart from two that differ. */
+    public static function fingerprint(array $resumeData): string
+    {
+        return sha1((string) preg_replace('/\s+/u', ' ', mb_strtolower(self::clean(self::resumeText($resumeData)))));
+    }
+
     /** One call for the whole report. */
     public static function report(array $resumeData, string $jobText, string $title = ''): array
     {
-        $text = self::resumeText($resumeData);
+        $text = self::clean(self::resumeText($resumeData));
+        $jobText = self::clean($jobText);
+        // the score depends only on the two texts: the optional title and company boxes do not move it
+        $title = self::jobTitle($jobText);
         if (mb_strlen($text) < 60) {
             throw new \InvalidArgumentException('This resume has too little content to check. Add your experience and skills in the builder, then try again.');
         }

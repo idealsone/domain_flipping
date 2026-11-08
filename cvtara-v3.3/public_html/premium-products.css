@@ -44,3 +44,16 @@
 @media(max-width:760px){.product-active .workspace-shell{display:block}}
 
 .application-roadmap-grid [hidden]{display:none!important}
+.letter-quick{background:var(--soft);border:1px solid var(--line);border-radius:12px;padding:20px;margin-bottom:24px}
+.letter-quick-head h3{margin:6px 0 6px;font-size:20px}
+.letter-quick-head p{margin:0 0 16px;color:var(--muted);font-size:14px;line-height:1.6;max-width:68ch}
+.letter-quick .letter-field{margin-bottom:14px}
+.letter-quick .letter-field>span small{font-weight:400;color:var(--muted);margin-left:6px}
+.letter-quick-actions{display:flex;flex-wrap:wrap;align-items:center;gap:10px 14px}
+.letter-quick-actions small{color:var(--muted);font-size:13px}
+.letter-quick-status{margin:12px 0 0;font-size:14px;line-height:1.6}
+.letter-quick-status:empty{display:none}
+.letter-quick-checks{margin:8px 0 0;padding-left:20px;font-size:13px;line-height:1.6;color:var(--muted)}
+.letter-quick-empty{margin:0 0 12px;font-size:14px}
+.letter-quick.is-compact .letter-quick-head p{display:none}
+.studio-letter-link{margin-left:8px}

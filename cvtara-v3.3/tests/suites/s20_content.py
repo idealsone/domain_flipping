@@ -43,7 +43,7 @@ def run(ctx, t):
     t.check("the home page compares CVTara with the usual alternatives in general terms and names no company", 'id="compare"' in home and "Typical resume builder" in home and "not statements about any named company" in home and "pay once, no auto-renewal" in home)
     t.check("the home page offers upload as well as templates", "Upload" in home and "Upload or start fresh" in home)
     t.check("customer reviews appear in one section only", home.count("lpReviews") == 1 and "What users say" not in home and "CUSTOMER FEEDBACK" not in home)
-    t.check("the FAQ is short and honest about payments and guarantees", home.count("<details") == 8 and "final and non-refundable" in home and "guarantee an interview" in home)
+    t.check("the FAQ is short and honest about payments and guarantees", home.count("<details") == 8 and "within 7 days of buying" in home and "guarantee an interview" in home)
     t.check("no placeholder or internal notes are shown to visitors", not re.search(r"replace with your facts|public launch|lorem ipsum", home, re.I))
     pv = rd("preview.js"); contact_html = ctx.client().page("/contact.html")[2]
     t.check("the footer lists Contact & support once", pv.count("Contact & support") == 1)
@@ -54,7 +54,13 @@ def run(ctx, t):
     pol = rd("site-polish.css")
     t.check("sample resume previews: readable sidebars, a neutral photo placeholder and a clear sample label", "minmax(112px,36%)" in pol and "ref-photo-placeholder" in pol and ".ref-sample" in pol and "display:flow-root" in pol)
     t.check("template names read as 'Prism layout', not internal 'suite-prism design'", "suite-" in rd("preview.js") and "layout</small>" in rd("preview.js") and "} design</small>" not in rd("preview.js"))
-    t.check("the referral section keeps one reward: 5 paying friends = free download + free month, and no 10-friend tier", "referral-offer" in home and "5</em> paying friends" in home and "1 month subscription, free" in home and "10</em> paying friends" not in home and "KEEP SHARING" not in home)
+    t.check("the referral section reads Give ₹50, get ₹50 with the 5-friend Job Hunt month and no 10-friend tier", "referral-offer" in home and "Give ₹50, get ₹50" in home and "1 Job Hunt month free" in home and "10</em> paying friends" not in home and "KEEP SHARING" not in home)
+    links = re.findall(r'<link rel="stylesheet" href="(/[^"]+)"', home.split("</head>")[0])
+    own = [l for l in links if not l.startswith("//")]
+    t.check("the home page loads its own styles as one combined file, with the home look in it", len(own) == 1 and own[0].startswith("/assets/bundle/") and "/* /home-v3.css */" in c.page(own[0].split("?")[0])[2], links)
+    t.check("the header menu stays at the top and a back-to-top button is offered", "[data-header]{position:sticky" in rd("site-polish.css") and 'id="toTop"' in rd("preview.js"))
+    t.check("the menu says Resume by Role and links the city and state pages", ">Resume by Role</a>" in rd("preview.js") and ">Examples</a>" not in rd("preview.js") and 'href="/resume-builder/india/"' in rd("preview.js"))
+    t.check("page data used by several scripts is fetched once per page", "'/api/public-content': 1" in rd("csrf-lazy.js"))
     t.check("the home page says plainly what is free and what a plan adds", 'id="get"' in home and "Free, no card" in home and "paid once" in home.lower())
     # blog
     s, _, blog = c.page("/blog.html")
@@ -76,7 +82,7 @@ def run(ctx, t):
     t.check("a calculator page is built the same way", s == 200 and "article-meta" in calc and "Calculator" in calc)
     # about, contact, hours
     s, _, about = c.page("/about.html")
-    t.check("About says who is behind CVTara, what it does and how it works", s == 200 and all(k in about for k in ("Who is behind it", "What you can do here", "How we work", "non-refundable", "support@cvtara.com")))
+    t.check("About says who is behind CVTara, what it does and how it works", s == 200 and all(k in about for k in ("Who is behind it", "What you can do here", "How we work", "within 7 days", "support@cvtara.com")))
     s, _, cont = c.page("/contact.html")
     t.check("Contact shows email, hours and address with a working form", s == 200 and "c2-card" in cont and "Monday–Saturday" in cont and 'id="contactForm"' in cont and 'name="attachment"' in cont)
     t.check("support hours read the same on every page", "Monday–Friday" not in cont + about + home)

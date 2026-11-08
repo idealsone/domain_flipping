@@ -204,6 +204,9 @@ class PageCache
                 $out[] = $path;
             }
         }
+        foreach (SeoPages::paths() as $path) {
+            $out[] = $path;
+        }
 
         return array_values(array_unique($out));
     }
@@ -211,7 +214,7 @@ class PageCache
     /** Renders every public page and stores it. Returns counts. */
     public static function build(): array
     {
-        @set_time_limit(180);
+        @set_time_limit(600);
         self::purge();
         self::prepareDir();
         @file_put_contents(self::root().'/.stamp', self::stamp().':');

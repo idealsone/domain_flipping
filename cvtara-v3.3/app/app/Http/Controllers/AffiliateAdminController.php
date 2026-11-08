@@ -5,7 +5,6 @@ namespace App\Http\Controllers;
 use App\Models\User;
 use App\Services\AccountSecurity;
 use App\Services\AffiliateProfiles;
-use App\Services\CashfreePayouts;
 use App\Services\Referrals;
 use App\Services\Settings;
 use Illuminate\Http\Request;
@@ -29,7 +28,7 @@ class AffiliateAdminController extends Controller
         AccountSecurity::requireRecent($r);
         if ($path === 'referrals/settings') {
             // One place for every referral rule (Owner console -> Referral Ops).
-            $d = $r->validate(['enabled' => 'required|boolean', 'requirePan' => 'required|boolean', 'holdDays' => 'required|integer|min:1|max:60', 'rateBps' => 'sometimes|integer|min:0|max:5000', 'tierRateBps' => 'sometimes|integer|min:0|max:5000', 'tierThreshold' => 'sometimes|integer|min:1|max:100000', 'minimumPaise' => 'sometimes|integer|min:100|max:100000000', 'payoutHours' => 'sometimes|integer|min:1|max:720', 'downloadThreshold' => 'sometimes|integer|min:1|max:10000', 'premiumThreshold' => 'sometimes|integer|min:2|max:10000', 'premiumDays' => 'sometimes|integer|min:1|max:365', 'minQualifyingPaise' => 'sometimes|integer|min:0|max:1000000', 'proOnly' => 'sometimes|boolean']);
+            $d = $r->validate(['enabled' => 'required|boolean', 'requirePan' => 'required|boolean', 'holdDays' => 'required|integer|min:1|max:60', 'rateBps' => 'sometimes|integer|min:0|max:5000', 'tierRateBps' => 'sometimes|integer|min:0|max:5000', 'tierThreshold' => 'sometimes|integer|min:1|max:100000', 'minimumPaise' => 'sometimes|integer|min:100|max:100000000', 'payoutHours' => 'sometimes|integer|min:1|max:720', 'downloadThreshold' => 'sometimes|integer|min:1|max:10000', 'premiumDays' => 'sometimes|integer|min:1|max:365', 'minQualifyingPaise' => 'sometimes|integer|min:0|max:1000000', 'proOnly' => 'sometimes|boolean', 'mode' => 'sometimes|in:wallet,commission', 'friendDiscountPaise' => 'sometimes|integer|min:0|max:100000', 'rewardPaise' => 'sometimes|integer|min:0|max:100000', 'qualifyDays' => 'sometimes|integer|min:0|max:60', 'walletDays' => 'sometimes|integer|min:7|max:730', 'monthlyCapPaise' => 'sometimes|integer|min:0|max:10000000']);
             $merged = [...Referrals::config(), ...$d];
             Settings::put('referrals', $merged);
             Settings::audit($admin->id, 'referral_rules_saved');
@@ -61,7 +60,7 @@ class AffiliateAdminController extends Controller
 
             return $ok();
         }
-        if (preg_match('#^referrals/withdrawals/([a-f0-9-]{36})(?:/(review|send|sync))?$#', $path, $m)) {
+        if (preg_match('#^referrals/withdrawals/([a-f0-9-]{36})(?:/(review))?$#', $path, $m)) {
             $w = DB::table('withdrawals')->where('id', $m[1])->first();
             abort_unless($w, 404);
             $action = $m[2] ?? '';
@@ -82,18 +81,6 @@ class AffiliateAdminController extends Controller
                     DB::table('withdrawals')->where('id', $w->id)->update(['approved_by' => $admin->id, 'approved_at' => now(), 'review_checklist_json' => json_encode($d), 'note' => $d['note'], 'updated_at' => now()]);
                     Settings::audit($admin->id, 'withdrawal_reviewed', $w->id);
                 });
-
-                return $ok();
-            }
-            if ($action === 'send') {
-                $r->validate(['confirmAmountPaise' => 'required|integer', 'confirmSend' => 'accepted']);
-                abort_unless($r->integer('confirmAmountPaise') === $w->amount_paise, 422);
-                CashfreePayouts::send($admin, $w->id);
-
-                return $ok();
-            }
-            if ($action === 'sync') {
-                CashfreePayouts::sync($w->id);
 
                 return $ok();
             }

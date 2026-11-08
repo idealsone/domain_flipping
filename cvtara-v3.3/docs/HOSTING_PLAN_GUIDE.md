@@ -42,7 +42,7 @@ After the first deploy, check with `curl -I https://cvtara.com/styles.css` and c
 | HTTPS certificate | free SSL (force HTTPS in hPanel) | HSTS header, secure cookies | "Full (strict)" mode |
 | Attack filtering / malware scans | account-level tools vary by plan — confirm in hPanel; I could not confirm Imunify360 or a WAF in the sources I found | request limits per address, sign-in lockout, script policy (CSP), noindex on private areas | DDoS protection, bot rules, rate-limit rules on `/api/*` and the sign-in addresses |
 | Private areas | — | owner pages and scripts hidden from everyone but the signed-in owner; owner sign-in only at the private addresses; setup link dead after install | optional: Cloudflare Access (free for a few users) in front of `/afsar` and `/sanaulla` |
-| Money safety | — | server confirms every payment with Cashfree, signed webhooks, step-up code for sensitive owner changes | — |
+| Money safety | — | server confirms every payment with Razorpay, signed webhooks, step-up code for sensitive owner changes | — |
 | Data safety | backups (above) | daily database backup, old logs pruned, payout details erased on account deletion | — |
 
 ## Limits to plan for

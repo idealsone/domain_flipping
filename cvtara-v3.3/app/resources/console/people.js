@@ -102,7 +102,7 @@
     m.body.querySelector('form').onsubmit = async ev => { ev.preventDefault(); const st = m.body.querySelector('.ops-st'); try { if (!(await ensureRecent())) return; await api('/api/admin/users/block', { method: 'POST', body: { userId: Number(u.owner_id), blocked: blocking, note: ev.target.note.value } }); toast(blocking ? 'User blocked' : 'User unblocked'); m.close(); people(); } catch (x) { st.textContent = err(x); } };
   }
   function deleteUser(u) {
-    const m = modal('Delete account', `<p>This permanently erases <b>${E(u.name)}</b>’s personal data, resumes, letters and applications. Purchase records stay for accounting but are detached from the person. <b>This cannot be undone.</b></p><form class="ops-form"><label class="wide">Type <b>DELETE</b> to confirm<input name="c" autocomplete="off" required></label><div class="wide"><button class="button ops-no">Delete permanently</button> <span class="ops-st" role="status"></span></div></form>`);
+    const m = modal('Delete account', `<p>This removes <b>${E(u.name)}</b>’s account from the server for good: sign-in, profile, resumes, letters, applications, ATS scans, support messages and screenshots. Payment and refund records stay for your accounts, filed under “Deleted customers” with no name or email. <b>This cannot be undone.</b></p><form class="ops-form"><label class="wide">Type <b>DELETE</b> to confirm<input name="c" autocomplete="off" required></label><div class="wide"><button class="button ops-no">Delete permanently</button> <span class="ops-st" role="status"></span></div></form>`);
     m.body.querySelector('form').onsubmit = async ev => { ev.preventDefault(); const st = m.body.querySelector('.ops-st'); if (ev.target.c.value !== 'DELETE') { st.textContent = 'Type DELETE exactly.'; return; } try { if (!(await ensureRecent())) return; await api('/api/admin/users/delete', { method: 'POST', body: { userId: Number(u.owner_id), confirm: 'DELETE' } }); toast('Account deleted'); m.close(); people(); } catch (x) { st.textContent = err(x); } };
   }
 
@@ -111,7 +111,7 @@
   async function orders() {
     const h = $('#admin-orders'); if (!h) return; h.innerHTML = '<div class="ops-skel"></div>';
     try {
-      const pl = await plans(), planOpts = Object.keys(pl).filter(k => k !== 'free').map(k => [k, planLabel(pl, k)]), provOpts = [['cashfree', 'Cashfree'], ['razorpay', 'Razorpay'], ['manual', 'Recorded by owner'], ['referral_reward', 'Referral reward'], ['demo', 'Demo']];
+      const pl = await plans(), planOpts = Object.keys(pl).filter(k => k !== 'free').map(k => [k, planLabel(pl, k)]), provOpts = [['razorpay', 'Razorpay'], ['manual', 'Recorded by owner'], ['referral_reward', 'Referral reward'], ['demo', 'Demo']];
       const sel = (id, label, opts, val) => `<label class="ops-f">${label}<select id="${id}"><option value="all">All</option>${opts.map(o => `<option value="${E(o[0])}" ${val === o[0] ? 'selected' : ''}>${E(o[1])}</option>`).join('')}</select></label>`;
       O.page = O.page || 1;
       h.innerHTML = `<div class="pg-head"><h2>All Orders</h2><p>Complete transaction history — every filter runs on the server, so nothing is cut off. Click any order for every detail.</p></div>

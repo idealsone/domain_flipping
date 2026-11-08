@@ -3,17 +3,18 @@
 Keep this file current. It records what the owner asked for, what was built, the rules behind it and what is still open, so any later session (or developer) can continue without asking again.
 
 ## Business
-- Product: CVTara resume + cover-letter builder with ATS Match, by an HR team in Bangalore. Domain cvtara.com, support@cvtara.com. English only. All payments final and non-refundable. No AI-authorship mentions anywhere. Hosting: Hostinger shared (Apache, PHP 8.3, MySQL/MariaDB).
+- Product: CVTara resume + cover-letter builder with ATS Match, by an HR team in Bangalore. Domain cvtara.com, support@cvtara.com. English only. Refund within 7 days if unused, once per customer. No AI-authorship mentions anywhere. Hosting: Hostinger shared (Apache, PHP 8.3, MySQL/MariaDB).
 - Private URLs: installer `/setup/afsar`; owner login `/afsar` and `/sanaulla`; owner console hidden from everyone else (redirects to home); site not indexed until the owner switches indexing on.
 - Payments: Cashfree primary (Razorpay optional). Payments are never paused by busy mode.
 
 ## Plans and limits (single formula for every plan)
-- Fresher Basic/Standard/Pro ₹299/399/499 and Professional Basic/Standard/Pro ₹399/499/599. Validity **30 / 60 / 90 days**. Plan downloads **10 / 20 / 30 resume + 10 / 20 / 30 cover-letter** (separate pools). ATS scans **20 / 40 / 60**. Add-ons ₹149/249/399 = +10/+20/+30 resume + cover-letter downloads and +20/+40/+60 scans; **valid until the subscription ends** and move to the end of the plan on an early renewal; used after plan credits.
+- Packages (3.16.0): Free; **Quick Download ₹99 / 7 days** (one resume, re-download free, price counts toward an upgrade); **Job Hunt ₹299 / 30 days** (5 resumes, 5 letters, 20 scans); **Pro ₹599 / 90 days** (20/20/60). Services Tara Expert Review ₹499 (₹399 with a plan) and Profile Boost ₹699 (₹599), Complete Job Kit ₹1,299 (worth ₹1,797): off sale until the owner switches them on. Add-on packs ₹149/249/399 also off sale by default; valid until the subscription ends.
 - Credits are used when a **clean download** happens (drafts and saving are free; same version in another format is free; an edited version needs a new credit). One primary resume download is free **once for life**, only after a first purchase. Credit notice popup after every download; downloaded jobs are added to Applications automatically (stage Saved, with credits used).
 - Free accounts: 1 resume + 1 cover letter, watermarked previews with copy/print protection, a few ATS checks a day, no clean downloads. Paid previews and downloads are clean. Screenshots cannot be fully blocked by any website (stated honestly in the guide).
 
 ## Customer features
-- Resume Builder (primary resume + job-tailored versions), Cover Letters (saved letters listed under the section), **ATS Match** (choose a saved resume from a dropdown — no upload; job by link / PDF-DOCX-text file / pasted text; server-side report with match estimate, keywords, gaps, job details; then choose tailored resume / cover letter / both), Applications tracker, Billing & Plans, Referral programme, My wallet, Account, Share feedback (testimonials), customer guide, **Feedback button** (signed-in customers only; right or left side; up to 5 screenshots of 2 MB; limit 10 reports an hour).
+- Resume Builder (primary resume + job-tailored versions), Cover Letters (saved letters listed under the section), **ATS Match** (choose a saved resume from a dropdown — no upload; job by link / PDF-DOCX-text file / pasted text; server-side report with match estimate, keywords, gaps, job details; then choose tailored resume / cover letter / both), Applications tracker, Billing & Plans, Referral programme ("Give ₹50, get ₹50" wallet: 7-day qualification, 90-day expiry, ₹1,000/month cap, 5 friends = free Job Hunt month), My wallet, Request refund (Billing), Account, Share feedback (testimonials), customer guide, **Feedback button** (signed-in customers only; right or left side; up to 5 screenshots of 2 MB; limit 10 reports an hour).
+- **Check my writing** (3.17.0) in both builders: rule-based weak words, tone and basic grammar from `resources/data/writing-rules.json`, on the server, free. Optional LanguageTool full check behind the GRAMMAR integration switch (off by default, 20 a day per customer, privacy policy names it).
 - Sidebar and page layout are identical on every view (no zoom/shift), including scrollbar space.
 
 ## Owner console
@@ -56,3 +57,20 @@ Defaults: 5 paying friends unlock one free resume download; 10 unlock 30 days of
 - 10 friends on the cheapest plan (Rs 299): Rs 2,990 collected (about Rs 2,534 before 18% GST). Reward value at list price Rs 399 to 499 is the worst-case cost, so 13% to 17% of money collected. With the 20% commission on top: about Rs 1,000 to 1,100, or 33% to 37% (40% to 43% of money before GST).
 - The same 10 friends buying with a 25% festival coupon (Rs 224 each): Rs 2,243 collected; commission Rs 449 plus reward Rs 399 to 499 gives 38% to 42% of money collected.
 - The cash cost of the reward itself is close to zero (it is access, not cash); the figures above are the revenue given up. Keep festival coupons at 25% or less and do not stack them with a high commission rate.
+
+## v3.15.0 decisions (programmatic SEO)
+
+- Programmatic pages live in `App\Services\SeoPages` + `resources/views/seo/page.blade.php` + `public_html/seo-pages.css`. Content is authored in `tools/seo/*.py` and compiled to `resources/data/seo-pages.json` by `tools/seo/build_seo_data.py` (it refuses unknown categories/roles and exclamation marks). Illustrations: `tools/seo/build_images.py` → `public_html/assets/seo/`.
+- URL patterns follow the owner's master prompt section 6.3; paths always end with "/" so `PageCache` and `.htaccess` can serve them. Brand keywords (competitors, Word, Google Docs, company names) are deliberately not targeted, so `/resume-templates/word/` and `/resume-templates/google-docs/` do not exist.
+- No salary figures until a sourced range exists. Place facts to check: `docs/SEO_VERIFY.md`.
+- Existing guides get breadcrumbs, an "Explore next" box and up to 3 contextual links (`ContentController::articleLinks`).
+
+## v3.20 SEO audit decisions
+
+- One address per page: programmatic pages and guides without the trailing slash 301 to the slash form (controller, page-cache middleware and `.htaccess`); `/resume/` and `/resume/{place}/` 301 to the matching `/resume-builder/` hub; `/resume-builder` sends guests straight to `/register`.
+- New hub `/resume-templates/` (was a redirect to the gallery). Hubs are linked from the scripted header/footer and from a server-rendered footer list (`ContentController::serverLinks`), so every page is reachable without JavaScript; the blog and guides pages are server-filled with every published guide.
+- Indexing rule: a city × role page is indexable only when it has a local note (curated Tier 1 roles, Tier 2 specialty, freshers notes). Others are `noindex,follow`, out of the sitemap and still linked. State government pages are held back the same way. `SeoPages::find()['index']` drives both the robots meta and the sitemap.
+- Writing rules: the main phrase sits in title, H1, lead and one heading; link lists use short names; titles never get cut (`pick()` chooses a wording that fits); descriptions are whole sentences.
+- `robots.txt` blocks `/preview$` and `/preview/` only (the old `/preview` rule also blocked `/preview.js`, which draws the header and footer).
+- The CTA area in `seo/page.blade.php` is two marked blocks (`SEO-CTA:hero`, `SEO-CTA:final`) fed by `$p['cta']`.
+- `tests/lib/seo_audit.py` crawls the site like a search engine without JavaScript; `s23` fails on non-200 links, redirects, orphans, density over 3%, near-duplicates over 60% and missing CTA/links. Run by hand: `cd tests && python3 -m lib.seo_audit http://127.0.0.1:PORT`.

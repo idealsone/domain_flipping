@@ -28,8 +28,14 @@ class AdminController extends Controller
         if (preg_match(SpeedAdminController::ROUTES, $path)) {
             return app(SpeedAdminController::class)->run($r, $path);
         }
+        if (preg_match(CampaignAdminController::ROUTES, $path)) {
+            return app(CampaignAdminController::class)->run($r, $path);
+        }
         if (preg_match(PromoAdminController::ROUTES, $path)) {
             return app(PromoAdminController::class)->run($r, $path);
+        }
+        if (preg_match(OutreachAdminController::ROUTES, $path)) {
+            return app(OutreachAdminController::class)->run($r, $path);
         }
         if (preg_match(SupportAdminController::ROUTES, $path)) {
             return app(SupportAdminController::class)->run($r, $path);
@@ -49,7 +55,7 @@ class AdminController extends Controller
         if (preg_match('#^content/(legal|features|library|blog|integrations|emails|seo|popup|site)$#', $path, $m)) {
             $key = $m[1];
             if ($get) {
-                return $ok(['data' => Settings::get($key), 'revision' => Settings::revision($key), 'connections' => ['payments' => ! empty(Settings::providers()['payments']), 'email' => ! empty(Settings::providers()['email']), 'ai' => ! empty(Settings::providers()['ai'])]]);
+                return $ok(['data' => $key === 'emails' ? \App\Services\MailAutomation::upgradeTemplates((array) Settings::get($key)) : Settings::get($key), 'revision' => Settings::revision($key), 'connections' => ['payments' => ! empty(Settings::providers()['payments']), 'email' => ! empty(Settings::providers()['email']), 'ai' => ! empty(Settings::providers()['ai']), 'grammar' => ! empty(Settings::providers()['grammar'])]]);
             }if (in_array($key, ['integrations', 'emails', 'legal', 'site'], true)) {
                 AccountSecurity::requireRecent($r);
             }$r->validate(['data' => 'present|array', 'revision' => 'required|integer']);
@@ -88,7 +94,7 @@ class AdminController extends Controller
         }
         if ($path === 'providers') {
             $p = Settings::providers();
-            $fields = ['verification' => ['enabled', 'twilioAccountSid', 'twilioAuthToken', 'twilioVerifyServiceSid'], 'payouts' => ['enabled', 'mode', 'cashfreeClientId', 'cashfreeClientSecret', 'cashfreePublicKey', 'maxTransferRupees', 'acceptanceConfirmed'], 'jobreader' => ['enabled', 'provider', 'scrapingbeeApiKey', 'zenrowsApiKey', 'customUrlTemplate', 'customApiKey', 'dailyLimit'], 'payments' => ['provider', 'mode', 'razorpayKeyId', 'razorpayKeySecret', 'razorpayWebhookSecret', 'cashfreeClientId', 'cashfreeClientSecret'], 'email' => ['provider', 'resendApiKey', 'smtpHost', 'smtpPort', 'smtpUser', 'smtpPassword', 'fromEmail', 'fromName', 'replyTo'], 'ai' => ['provider', 'writerApiKey', 'model'], 'analytics' => ['measurementId', 'searchConsoleProperty', 'searchConsoleServiceAccount'], 'push' => ['oneSignalAppId', 'oneSignalRestApiKey']];
+            $fields = ['jobreader' => ['enabled', 'provider', 'scrapingbeeApiKey', 'zenrowsApiKey', 'customUrlTemplate', 'customApiKey', 'dailyLimit'], 'payments' => ['provider', 'mode', 'razorpayKeyId', 'razorpayKeySecret', 'razorpayWebhookSecret'], 'email' => ['provider', 'resendApiKey', 'smtpHost', 'smtpPort', 'smtpUser', 'smtpPassword', 'fromEmail', 'fromName', 'replyTo', 'postalAddress'], 'ai' => ['provider', 'claudeApiKey', 'model', 'dailyLimit', 'writerApiKey'], 'grammar' => ['url', 'username', 'premiumApiKey'], 'analytics' => ['measurementId', 'searchConsoleProperty', 'searchConsoleServiceAccount'], 'push' => ['oneSignalAppId', 'oneSignalRestApiKey']];
             $secret = fn ($k) => preg_match('/Secret|ApiKey|Password|ServiceAccount|AuthToken/', $k);
             if ($get) {
                 foreach ($p as &$service) {
@@ -102,9 +108,8 @@ class AdminController extends Controller
                 return $ok(['providers' => $p, 'secureStorage' => true]);
             }AccountSecurity::requireRecent($r);
             $r->validate(['service' => 'required|in:'.implode(',', array_keys($fields)), 'values' => 'required|array']);
-            if ($r->service === 'verification') {
-                AccountSecurity::requireRecent($r);
-                validator($r->values, ['enabled' => 'required|in:true,false', 'twilioAccountSid' => 'sometimes|regex:/^AC[a-f0-9]{32}$/', 'twilioVerifyServiceSid' => 'sometimes|regex:/^VA[a-f0-9]{32}$/'])->validate();
+            if ($r->service === 'ai') {
+                validator($r->values, ['provider' => 'sometimes|in:claude,standard', 'model' => 'nullable|string|max:80|regex:/^[a-z0-9.\-]*$/', 'dailyLimit' => 'nullable|integer|min:0|max:100000'])->validate();
             }
             if ($r->service === 'jobreader') {
                 validator($r->values, ['enabled' => 'required|in:true,false', 'provider' => 'required|in:'.implode(',', \App\Services\JobReader::PROVIDERS), 'dailyLimit' => 'nullable|integer|min:1|max:100000', 'customUrlTemplate' => 'nullable|string|max:600'])->validate();
@@ -112,20 +117,12 @@ class AdminController extends Controller
                     abort(422, 'The custom address must contain {url} where the job link goes.');
                 }
             }
-            if ($r->service === 'payouts') {
-                AccountSecurity::requireRecent($r);
-                if (DB::table('withdrawals')->where('provider', 'cashfree')->where(function ($q) {
-                    $q->where('status', 'processing')->orWhere('paid_at', '>', now()->subDays(30));
-                })->exists()) {
-                    foreach (['cashfreeClientId', 'cashfreeClientSecret', 'cashfreePublicKey', 'mode'] as $key) {
-                        $incoming = $r->values[$key] ?? '';
-                        abort_if($incoming !== '' && $incoming !== ($p['payouts'][$key] ?? ''), 422, 'Reconcile outstanding Cashfree transfers before changing credentials or mode.');
-                    }
-                }validator($r->values, ['enabled' => 'required|in:true,false', 'mode' => 'required|in:sandbox,production', 'maxTransferRupees' => 'required|integer|min:1000|max:100000', 'acceptanceConfirmed' => 'required|in:true,false'])->validate();
-                abort_if(($r->values['enabled'] ?? 'false') === 'true' && ($r->values['acceptanceConfirmed'] ?? 'false') !== 'true', 422, 'Complete Cashfree activation and sandbox acceptance first.');
-            }foreach ($r->values as $k => $v) {
-                abort_unless(in_array($k, $fields[$r->service]) && is_string($v) && strlen($v) <= 12000, 422);
-                if (trim($v) !== '') {
+            if ($r->service === 'grammar') {
+                validator($r->values, ['url' => 'nullable|url:http,https|max:300', 'username' => 'nullable|string|max:190'])->validate();
+            }
+            foreach ($r->values as $k => $v) {
+                abort_unless(in_array($k, $fields[$r->service]) && ($v === null || (is_string($v) && strlen($v) <= 12000)), 422);
+                if (trim((string) $v) !== '') {
                     $p[$r->service][$k] = trim($v);
                 }
             }if ($r->service === 'jobreader' && ($p['jobreader']['enabled'] ?? 'false') === 'true') {
@@ -138,13 +135,13 @@ class AdminController extends Controller
                 };
                 abort_unless($ready, 422, 'Enter the key (or address) for the selected reading service first.');
             }if ($r->service === 'payments') {
-                abort_unless(in_array($p['payments']['provider'] ?? 'razorpay', ['razorpay', 'cashfree']), 422);
-            }if ($r->service === 'payments' && ($p['payments']['provider'] ?? '') === 'cashfree') {
-                abort_unless(! empty($p['payments']['cashfreeClientId']) && ! empty($p['payments']['cashfreeClientSecret']), 422, 'Enter the Cashfree App ID and Secret key.');
-            }if ($r->service === 'payments' && ($p['payments']['provider'] ?? '') === 'razorpay') {
                 abort_unless(! empty($p['payments']['razorpayKeyId']) && ! empty($p['payments']['razorpayKeySecret']), 422, 'Enter the Razorpay Key ID and Key secret.');
             }if (! empty($p['email']['fromEmail'])) {
                 abort_unless(filter_var($p['email']['fromEmail'], FILTER_VALIDATE_EMAIL), 422);
+            }if (! empty($p['email']['replyTo'])) {
+                abort_unless(filter_var($p['email']['replyTo'], FILTER_VALIDATE_EMAIL), 422, 'Enter a valid reply-to address.');
+            }if (isset($p['email']['postalAddress'])) {
+                abort_if(mb_strlen($p['email']['postalAddress']) > 200, 422, 'Keep the postal address under 200 characters.');
             }Settings::put('providers', Crypt::encryptString(json_encode($p)));
             Settings::audit($id, 'provider_settings_saved', $r->service);
 
@@ -162,13 +159,14 @@ class AdminController extends Controller
             if ($get) {
                 return $ok(['plans' => Settings::plans()]);
             }AccountSecurity::requireRecent($r);
-            $v = $r->validate(['plans' => 'required|array', 'plans.*.name' => 'required|string|max:120', 'plans.*.tagline' => 'nullable|string|max:200', 'plans.*.price' => 'required|integer|min:0|max:99999', 'plans.*.mrp' => 'nullable|integer|min:0|max:99999', 'plans.*.accessDays' => 'required|integer|min:0|max:3660', 'plans.*.savedResumes' => 'required|integer|min:0|max:500', 'plans.*.savedLetters' => 'required|integer|min:0|max:500', 'plans.*.atsScans' => 'nullable|integer|min:0|max:100000', 'plans.*.dailyMatches' => 'nullable|integer|min:0|max:1000', 'plans.*.exports' => 'nullable|integer|min:0|max:100000', 'plans.*.popular' => 'sometimes|boolean', 'plans.*.referral' => 'sometimes|boolean', 'plans.*.perks' => 'sometimes|array|max:12', 'plans.*.perks.*' => 'string|max:120', 'plans.*.audience' => 'sometimes|in:fresher,experienced,all']);
+            $v = $r->validate(['plans' => 'required|array', 'plans.*.name' => 'required|string|max:120', 'plans.*.tagline' => 'nullable|string|max:200', 'plans.*.price' => 'required|integer|min:0|max:99999', 'plans.*.mrp' => 'nullable|integer|min:0|max:99999', 'plans.*.accessDays' => 'required|integer|min:0|max:3660', 'plans.*.savedResumes' => 'required|integer|min:0|max:500', 'plans.*.savedLetters' => 'required|integer|min:0|max:500', 'plans.*.atsScans' => 'nullable|integer|min:0|max:100000', 'plans.*.dailyMatches' => 'nullable|integer|min:0|max:1000', 'plans.*.exports' => 'nullable|integer|min:0|max:100000', 'plans.*.popular' => 'sometimes|boolean', 'plans.*.referral' => 'sometimes|boolean', 'plans.*.bestValue' => 'sometimes|boolean', 'plans.*.sale' => 'sometimes|boolean', 'plans.*.planPrice' => 'nullable|integer|min:1|max:99999', 'plans.*.perks' => 'sometimes|array|max:12', 'plans.*.perks.*' => 'string|max:120', 'plans.*.audience' => 'sometimes|in:fresher,experienced,all']);
             $out = Settings::plans();
             foreach ($v['plans'] as $k => $in) {
                 abort_unless(isset($out[$k]), 422, 'Unknown plan.');
                 abort_if($out[$k]['type'] === 'plan' && $k !== 'free' && ($in['accessDays'] ?? 0) < 1, 422, 'Plans need at least 1 day of access.');
                 $in['atsScans'] = empty($in['atsScans']) ? null : (int) $in['atsScans'];
                 $in['mrp'] = (int) ($in['mrp'] ?? 0);
+                abort_if($k === 'free' && ! empty($in['sale']), 422, 'The free plan is not sold.');
                 $in['perks'] = array_values(array_filter(array_map('trim', $in['perks'] ?? $out[$k]['perks'])));
                 $out[$k] = array_merge($out[$k], array_intersect_key($in, $out[$k]));
             }Settings::put('plans', $out);
@@ -186,7 +184,7 @@ class AdminController extends Controller
             $page = max(1, (int) $r->query('page', 1));
             if ($path !== 'overview') {
                 $term = trim((string) $r->query('q', ''));
-                $uq = User::query();
+                $uq = User::query()->where('email', '!=', \App\Services\AccountEraser::PLACEHOLDER);
                 if ($term !== '') {
                     $like = '%'.addcslashes($term, '%_\\').'%';
                     $uq->where(fn ($w) => $w->where('email', 'like', $like)->orWhere('name', 'like', $like));
@@ -287,8 +285,15 @@ class AdminController extends Controller
         if ($path === 'email/jobs') {
             return $ok(['jobs' => DB::table('mail_outbox')->orderByDesc('created_at')->limit(200)->get(['id', 'recipient', 'trigger', 'subject', 'status', 'error', 'due_at', 'sent_at', 'attempts']), 'delivery' => 'Configured SMTP / Resend', 'scheduler' => 'Hostinger cron processes queued jobs.', 'heartbeat' => Settings::get('cronHeartbeat')]);
         }
+        if ($path === 'email/preview') {
+            abort_unless($r->isMethod('POST'), 405);
+            $v = $r->validate(['subject' => 'required|string|max:180', 'body' => 'required|string|max:20000', 'trigger' => 'nullable|string|max:60']);
+
+            return $ok(['html' => \App\Services\EmailRenderer::render($v['subject'], $v['body'], \App\Services\EmailRenderer::isMarketing((string) ($v['trigger'] ?? '')), $r->user()->id)['html']]);
+        }
         if ($path === 'email/process') {
             MailAutomation::reminders();
+            \App\Services\Campaigns::run();
 
             return $ok(MailAutomation::process());
         }
@@ -338,7 +343,7 @@ class AdminController extends Controller
             }validator($d, ['watermarkText' => 'required|string|max:100'])->validate();
         }
         if ($k === 'integrations') {
-            validator($d, array_fill_keys(['payments', 'email', 'ai', 'analytics', 'push'], 'required|boolean'))->validate();
+            validator($d, array_fill_keys(['payments', 'email', 'ai', 'analytics', 'push'], 'required|boolean') + ['grammar' => 'sometimes|boolean'])->validate();
         }
         if ($k === 'popup') {
             validator($d, ['enabled' => 'required|boolean', 'delaySeconds' => 'required|integer|min:0|max:600', 'showSeconds' => 'required|integer|min:3|max:30', 'gapSeconds' => 'required|integer|min:3|max:120', 'useLiveActivity' => 'required|boolean', 'custom' => 'present|array|max:20', 'custom.*.title' => 'nullable|string|max:60', 'custom.*.text' => 'required|string|max:200', 'custom.*.icon' => 'nullable|string|max:8', 'custom.*.enabled' => 'required|boolean'])->validate();
@@ -352,7 +357,7 @@ class AdminController extends Controller
         }
         if ($k === 'emails') {
             foreach ($d as $t) {
-                validator($t, ['id' => 'required|string|max:80', 'subject' => 'required|string|max:180', 'body' => 'required|string|max:20000', 'enabled' => 'required|boolean', 'trigger' => 'required|in:profile_created,password_reset,resume_saved,purchase_verified,abandoned_purchase,blog_published,access_expiring,access_expiring_7,access_expiring_4,access_expiring_1,followup_due,application_status,download_locked,email_verification,nurture,monthly_digest,manual', 'delayHours' => 'required|integer|min:0|max:720'])->validate();
+                validator($t, ['id' => 'required|string|max:80', 'subject' => 'required|string|max:180', 'body' => 'required|string|max:20000', 'enabled' => 'required|boolean', 'trigger' => 'required|in:profile_created,password_reset,resume_saved,purchase_verified,abandoned_purchase,blog_published,access_expiring,access_expiring_7,access_expiring_4,access_expiring_1,followup_due,application_status,download_locked,email_verification,refund_requested,refund_processed,refund_rejected,expert_review_delivered,nurture,monthly_digest,manual', 'delayHours' => 'required|integer|min:0|max:720'])->validate();
             }
         }
         if ($k === 'legal') {

@@ -12,7 +12,36 @@ class Referrals
 {
     public static function config(): array
     {
-        return array_merge(['enabled' => true, 'rateBps' => 2000, 'minimumPaise' => 100000, 'payoutHours' => 24, 'holdDays' => 7, 'tierThreshold' => 100, 'tierRateBps' => 3000, 'requirePan' => false, 'downloadThreshold' => 5, 'premiumThreshold' => 10, 'premiumDays' => 30, 'minQualifyingPaise' => 9900, 'proOnly' => true], Settings::get('referrals', []));
+        return array_merge(['enabled' => true, 'rateBps' => 2000, 'minimumPaise' => 100000, 'payoutHours' => 24, 'holdDays' => 7, 'tierThreshold' => 100, 'tierRateBps' => 3000, 'requirePan' => false, 'downloadThreshold' => 5, 'premiumDays' => 30, 'minQualifyingPaise' => 29900, 'proOnly' => true, 'mode' => 'wallet', 'friendDiscountPaise' => 5000, 'rewardPaise' => 5000, 'qualifyDays' => 7, 'walletDays' => 90, 'monthlyCapPaise' => 100000], Settings::get('referrals', []));
+    }
+
+    /**
+     * A readable, unique referral code made from the customer's first name and four digits, such as "priya-4821".
+     * Old random codes keep working through users.old_referral_code.
+     */
+    public static function makeCode(string $name): string
+    {
+        $first = Str::of(Str::ascii($name))->lower()->replaceMatches('/[^a-z0-9 ]+/', '')->trim()->explode(' ')->first(fn ($w) => preg_match('/[a-z]{2}/', $w)) ?? '';
+        $base = substr($first, 0, 14) ?: 'cvtara';
+        for ($i = 0; $i < 40; $i++) {
+            $code = $base.'-'.($i < 30 ? random_int(1000, 9999) : random_int(10000, 999999));
+            if (! self::owner($code)) {
+                return $code;
+            }
+        }
+
+        return $base.'-'.Str::lower(Str::random(8));
+    }
+
+    /** The account a referral link belongs to, by its current code or the random code it replaced. */
+    public static function owner(string $code): ?User
+    {
+        $code = trim($code);
+        if ($code === '' || strlen($code) > 24) {
+            return null;
+        }
+
+        return User::where('referral_code', strtolower($code))->first() ?? User::where('referral_code', $code)->first() ?? User::where('old_referral_code', $code)->first();
     }
 
     public static function successfulBuyers(int $id): int
@@ -44,7 +73,8 @@ class Referrals
     // Called only from verified payment processing, in its database transaction.
     public static function credit(object $p): void
     {
-        if (! $p->is_live || $p->status !== 'paid' || ! in_array($p->provider, ['razorpay', 'cashfree'], true) || ! self::config()['enabled']) {
+        // Cash commission is the older programme; the "Give ₹50, get ₹50" wallet replaced it. Balances already earned stay withdrawable.
+        if (self::config()['mode'] !== 'commission' || ! $p->is_live || $p->status !== 'paid' || ! in_array($p->provider, ['razorpay', 'cashfree'], true) || ! self::config()['enabled']) {
             return;
         }$buyer = User::find($p->owner_id);
         if (! $buyer?->referred_by || $buyer->referred_by === $buyer->id) {
@@ -120,9 +150,12 @@ class Referrals
             $allowed = ['requested' => ['processing', 'rejected'], 'processing' => ['paid', 'rejected']];
             if (! in_array($status, $allowed[$w->status] ?? [])) {
                 throw ValidationException::withMessages(['status' => 'This withdrawal has already changed. Refresh before continuing.']);
-            }if ($w->provider === 'cashfree') {
-                throw ValidationException::withMessages(['provider' => 'Use Cashfree status sync for this transfer. Manual status changes are blocked.']);
-            }if ($status === 'processing' && ! $w->approved_at) {
+            }
+            // A transfer started through the old payout service may have reached the bank; it can only be marked paid with its reference.
+            if ($status === 'rejected' && ! empty($w->provider_transfer_id) && trim($note) !== 'confirmed-not-sent') {
+                throw ValidationException::withMessages(['status' => 'This payout was sent through Cashfree. Check the Cashfree dashboard: if it went through, mark it paid with the UTR. If it failed, type confirmed-not-sent in the note to reject it.']);
+            }
+            if ($status === 'processing' && ! $w->approved_at) {
                 throw ValidationException::withMessages(['review' => 'Complete the identity, destination and fraud review first.']);
             }if ($status === 'paid') {
                 if ($reference !== '' && DB::table('withdrawals')->where('reference', $reference)->where('id', '!=', $id)->exists()) {

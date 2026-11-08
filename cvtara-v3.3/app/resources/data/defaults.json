@@ -5,63 +5,63 @@
     "siteUrl": "https://cvtara.com",
     "pages": {
       "/": {
-        "title": "Resume Builder India — primary resume + job-tailored versions",
-        "description": "Build one premium ATS-friendly primary resume, then create a tailored version and cover letter for every job description. Plans from ₹299, pay once.",
-        "keywords": "resume builder india, ats friendly resume builder, resume for freshers india, job description tailored resume, cover letter builder india",
+        "title": "Free Resume Builder India | ATS Resume Maker",
+        "description": "Build an ATS-friendly resume free in minutes. Pick a template, tailor it to each job and download a clean PDF or Word file. Plans from ₹99, pay once.",
+        "keywords": "free resume builder, resume builder india, resume maker, online resume builder, ats friendly resume, ai resume builder, create resume free, resume for freshers india, resume format",
         "includeInSitemap": true
       },
       "/templates.html": {
-        "title": "ATS-Friendly Resume Templates for India",
-        "description": "Browse professional, ATS-friendly resume templates by profession and layout. Preview the full design, adjust colours and fonts, and build your resume with editable sections.",
-        "keywords": "ats friendly resume templates, resume templates india, resume format for freshers, professional resume templates download",
+        "title": "Resume Templates India | Free ATS-Friendly Formats",
+        "description": "Choose from 120+ ATS-friendly resume templates for freshers and professionals in India. Preview the full design, change colours and fonts, then edit online.",
+        "keywords": "resume templates, resume template, free resume templates, ats friendly resume template, professional resume template, resume format for freshers, cv template, best resume templates",
         "includeInSitemap": true
       },
       "/cover-letters.html": {
-        "title": "Cover Letter Examples & Templates for India",
-        "description": "Explore coordinated cover-letter designs and complete examples, then write a tailored application letter with editable sections and your saved profile.",
-        "keywords": "cover letter examples india, cover letter format for freshers, job application cover letter template, cover letter for experienced professionals",
+        "title": "Cover Letter Examples & Templates | Write One Fast",
+        "description": "See complete cover letter examples and matching templates for freshers and professionals in India. Write a tailored job application letter in minutes.",
+        "keywords": "cover letter examples, cover letter template, how to write a cover letter, simple cover letter, job application letter, cover letter for freshers, cover letter format",
         "includeInSitemap": true
       },
       "/blog.html": {
-        "title": "Career Guides & Salary Calculators",
-        "description": "Practical guides and calculators for resumes, cover letters, interviews, salary and job search in India, written by an experienced HR team.",
-        "keywords": "career guides india, resume tips, interview questions india, salary calculator india, job search guide",
+        "title": "Career Blog India: Resume & Interview Tips",
+        "description": "Practical resume, cover letter, interview and job search guides for India, plus free salary and CTC calculators. Clear steps you can use today.",
+        "keywords": "resume tips, how to write a resume, resume format, interview tips india, job search tips, cv vs resume, career advice india, salary calculator india",
         "includeInSitemap": true
       },
       "/guides.html": {
-        "title": "Career Guides & Calculators",
-        "description": "CVTara guides and calculators for resumes, salaries, benefits, interviews and job-search decisions in India.",
-        "keywords": "career guides, resume guides, salary calculators, interview preparation guides india",
+        "title": "Career Guides & Free Salary Calculators India",
+        "description": "Free guides on resume writing, interviews and job offers, plus CTC, in-hand salary, gratuity and notice period calculators built for Indian job seekers.",
+        "keywords": "career guides, resume guides, ctc to in hand salary calculator, salary calculator india, gratuity calculator, notice period calculator, interview preparation guide",
         "includeInSitemap": true
       },
       "/about.html": {
-        "title": "About CVTara — an experienced HR team in Bangalore",
-        "description": "CVTara is a resume and cover-letter service by an experienced HR team in Bangalore, helping Indian job seekers build a primary resume and tailor it to every job.",
-        "keywords": "about cvtara, hr team bangalore resume service, resume writing service india",
+        "title": "About CVTara | Resume Builder Made in Bangalore",
+        "description": "CVTara is an India-first resume and cover letter builder made by an HR team in Bangalore. One primary resume, tailored for every job you apply to.",
+        "keywords": "about cvtara, resume builder made in india, hr team bangalore, indian resume builder, resume help for freshers",
         "includeInSitemap": true
       },
       "/contact.html": {
-        "title": "Contact & Support",
-        "description": "Contact CVTara at support@cvtara.com for account, payment, privacy and product support. Based in Bangalore, India.",
-        "keywords": "cvtara support, contact cvtara, resume service support",
+        "title": "Contact CVTara Support | Help With Your Resume",
+        "description": "Questions about your account, plan, payment or refund? Email support@cvtara.com. A real person on our Bangalore team reads and replies on working days.",
+        "keywords": "cvtara support, contact cvtara, resume builder help, refund help, payment help",
         "includeInSitemap": true
       },
       "/privacy.html": {
-        "title": "Privacy Policy",
-        "description": "How CVTara collects, uses and protects your personal data, your rights under Indian law and how to reach our grievance contact.",
-        "keywords": "cvtara privacy policy",
+        "title": "Privacy Policy | How CVTara Protects Your Data",
+        "description": "How CVTara collects, uses and protects your resume and personal data, which services process it, how long we keep it and your rights under Indian law.",
+        "keywords": "cvtara privacy policy, resume data privacy, personal data protection india, dpdp act",
         "includeInSitemap": true
       },
       "/terms.html": {
-        "title": "Terms & Conditions",
-        "description": "The terms that apply to using CVTara plans, add-on packs, resume tools and referral programme.",
-        "keywords": "cvtara terms and conditions",
+        "title": "Terms & Conditions | CVTara Resume Builder",
+        "description": "The terms for using CVTara: accounts, one-time plans, downloads, fair use, refunds and the rules that keep the resume builder safe for everyone.",
+        "keywords": "cvtara terms, resume builder terms and conditions, terms of service",
         "includeInSitemap": true
       },
       "/refund.html": {
-        "title": "No-Refund Policy",
-        "description": "All CVTara payments are final and non-refundable. Read the policy before you pay.",
-        "keywords": "cvtara no refund policy",
+        "title": "Refund Policy | 7-Day Refund If Unused | CVTara",
+        "description": "Changed your mind? Get a full refund within 7 days if you have not used your plan. See what counts as use, how to ask and when the money arrives.",
+        "keywords": "cvtara refund policy, 7 day refund, resume builder refund, money back",
         "includeInSitemap": true
       }
     }
@@ -74,10 +74,10 @@
     "phone": "",
     "address": "CVTara, Bangalore, Karnataka, India",
     "hours": "Monday–Saturday, 10:00–18:00 IST",
-    "privacy": "# Privacy Policy\n\nLast updated: 14 October 2026\n\nCVTara (\"we\", \"us\") respects your privacy. This policy explains what personal data we collect when you use cvtara.com, why we collect it, who we share it with and the choices you have. It is written to be consistent with India's Digital Personal Data Protection Act, 2023 and the Information Technology Act, 2000.\n\n## 1. Data we collect\n\n- **Account details:** name, email address, password (stored only as a secure hash) and, if you add it, phone number and city.\n- **Profile and document content:** your profession, experience level, resumes, cover letters, job descriptions you paste and applications you track.\n- **Purchase records:** plan, amount, date and payment reference. Card, UPI and bank details are handled by our payment partners (Cashfree and, where enabled, Razorpay) and are never stored by us.\n- **Usage and device data:** pages visited, features used and basic technical data, so we can run and improve the service. Optional analytics run only if you accept analytics cookies.\n- **Support messages:** what you send to support@cvtara.com or through the contact form, including any screenshot you attach.\n- **Optional recent-activity notice:** at checkout you may tick a box to let the site show your first name and city (nothing else) in a small “recently started” notice. It is off unless you tick it, and you can ask us to stop showing it at any time by writing to support@cvtara.com.\n\n## 2. Why we use your data\n\nWe use your data to create and secure your account, store and export your documents, process payments and give you access, send service emails (for example receipts, access reminders and password resets), provide support, prevent fraud and abuse, and improve CVTara. We send marketing emails only if you agree, and you can withdraw consent at any time.\n\n## 3. Who we share data with\n\nWe do not sell your personal data. We share it only with service providers who help us run CVTara, such as payment processing (Razorpay), email delivery, hosting and, where you choose to use them, phone verification and writing assistance. They may use the data only to provide their service to us. We may disclose data if required by law or to protect rights and safety.\n\n## 4. Your resume content\n\nYour resumes and letters are yours. We do not publish them and do not use them to train public models. Writing assistance, when you choose to use it, sends only the text you submit and the suggestions are shown to you for review.\n\n## 5. Retention\n\nWe keep your account and documents while your account is active. Purchase and tax records are retained as required by Indian law. When you delete your account, your personal data and documents are erased and purchase records are detached from your identity.\n\n## 6. Your rights\n\nYou can access and correct your information in your account, download a copy of your data, withdraw consent for optional processing, and delete your account from Account settings. You can also write to us to exercise any right under applicable law, including the right to nominate someone to act for you and the right to grievance redressal.\n\n## 7. Security\n\nWe use encrypted connections, hashed passwords, access controls and monitoring. No system is completely secure, so please use a strong, unique password.\n\n## 8. Children\n\nCVTara is for adults. We do not knowingly collect data from anyone under 18.\n\n## 9. Cookies\n\nWe use essential cookies for sign-in and security. Optional analytics cookies load only after you accept them.\n\n## 10. Grievance and contact\n\nFor privacy questions or complaints, write to our grievance contact at **support@cvtara.com** (CVTara, Bangalore, Karnataka, India). We aim to acknowledge requests within 72 hours and resolve them within 30 days.\n\n## 11. Changes\n\nIf we change this policy we will update the date above and, for material changes, notify you by email or in the product.\n\n## Cookies and device identifier\n\nCVTara sets a session cookie to keep you signed in and a long-lived random device identifier on sign-in pages to detect repeated or abusive sign-ups. It contains no personal details. If you accept analytics, Google Analytics may set its own identifiers. You can clear cookies in your browser at any time; some features may stop working.",
-    "terms": "# Terms & Conditions\n\nLast updated: 14 October 2026\n\nThese Terms & Conditions (\"Terms\") govern your use of CVTara (cvtara.com) and its resume, cover-letter, ATS-match and application-tracking tools. By creating an account or using the service you agree to them. If you do not agree, please do not use CVTara.\n\n## 1. About the service\n\nCVTara is operated from Bangalore, India by the CVTara team (\"CVTara\", \"we\", \"us\"). We provide software and guidance to help you prepare job applications. We are not a recruitment agency, we do not place candidates, and we do not guarantee interviews, offers, salary outcomes or ATS scores with any employer.\n\n## 2. Eligibility and accounts\n\nYou must be at least 18 years old and provide accurate information when you register. You are responsible for keeping your password confidential and for all activity under your account. Tell us immediately at support@cvtara.com if you suspect unauthorised use.\n\n## 3. Plans and payment\n\nAccess to downloads and plan features is provided through paid plans and add-on packs shown on our pricing page. Prices are in Indian rupees and are charged once for the stated access period. Plans do not renew automatically. Payments are processed by our payment partner (Razorpay); we never see or store your full card details. Access starts when payment is verified and ends when the access period ends. Add-on packs are available only while a plan is active and end when the plan ends.\n\n## 4. Your content\n\nYou own the resumes, cover letters and other content you create. You grant us a limited licence to store and process that content only to operate the service for you. You are responsible for the accuracy of what you submit and for making sure it does not infringe anyone else's rights. We do not claim ownership of your documents.\n\n## 5. Acceptable use\n\nDo not misuse the service: no unlawful, misleading or fraudulent content, no false claims about your experience or qualifications, no attempts to break or overload the platform, no scraping, no sharing paid access with others, and no abuse of referral or reward programmes. We may suspend or close accounts that break these rules.\n\n## 6. Referral programme\n\nIf the referral programme is available to you, rewards are subject to the rules shown in your account, including eligibility, holding periods and payout checks. We may reverse rewards linked to refunded, disputed or fraudulent purchases.\n\n## 7. Intellectual property\n\nThe CVTara name, logo, templates, software and guide content belong to CVTara or its licensors. Templates are licensed for creating your own documents, not for resale or redistribution.\n\n## 8. Availability and changes\n\nWe work to keep CVTara available but do not promise uninterrupted service. We may improve, change or retire features, and we will update these Terms when needed. Continued use after an update means you accept the updated Terms.\n\n## 9. Disclaimers and liability\n\nCVTara is provided \"as is\". Guidance and calculators are for general information and are not legal, tax or financial advice; please verify important decisions with a qualified professional or the official source. To the extent permitted by law, our total liability for any claim relating to the service is limited to the amount you paid for the plan in the 12 months before the claim, and we are not liable for indirect or consequential loss.\n\n## 10. No refunds\n\nAll payments are final and non-refundable, as set out in our No-Refund Policy.\n\n## 11. Governing law\n\nThese Terms are governed by the laws of India. Courts at Bengaluru, Karnataka have exclusive jurisdiction, subject to any rights you have as a consumer under applicable law.\n\n## 12. Contact\n\nCVTara, Bangalore, Karnataka, India. Email: support@cvtara.com",
-    "refund": "# No-Refund Policy\n\nLast updated: 15 October 2026\n\nCVTara plans and add-on packs are digital products. Access is delivered as soon as your payment is verified.\n\n## 1. All payments are final\n\n**Every payment made on CVTara is final and non-refundable.** Once you have paid, the amount is paid. We do not offer refunds, cancellations, exchanges, pro-rata credits or transfers to another account, whatever the reason, including change of mind, unused allowance, not getting interviews or a job, or not using the product.\n\n## 2. Please decide before you pay\n\nBefore you pay, check the plan, the number of resumes, cover letters and ATS checks, the access period and the price shown at checkout. By completing the payment you confirm that you have read this policy and accept it.\n\n## 3. What a payment gives you\n\nPlans are one-time purchases for a fixed period and do not renew automatically, so there is nothing to cancel. Add-on packs are tied to an active plan and end when that plan ends.\n\n## 4. Referral rewards\n\nRewards linked to a payment that is reversed by your bank or payment provider are reversed too.\n\n## 5. Questions\n\nFor help using your plan, write to **support@cvtara.com** from your registered email address. CVTara, Bangalore, Karnataka, India.",
-    "about": "# About CVTara\n\nCVTara helps Indian job seekers apply with confidence. We build resumes and cover letters that recruiting systems can read and people want to read, and we show you what each job asks for that your resume does not yet prove.\n\n## Who is behind it\n\nCVTara is built by an experienced HR team in Bangalore. We have spent years reading resumes, screening candidates and sitting on hiring panels. We built CVTara to give every job seeker the clarity that recruiters wish every application had.\n\n## What you can do here\n\n- **Start the easy way.** Upload the resume you already have (Word, PDF or text) or pick one of our ATS-friendly templates.\n- **Keep one primary resume.** It is your master copy. Edit it once, and create a tailored version for any job in one click.\n- **See what is missing.** Add the job as a PDF or text and get a full report of the requirements your resume does not yet cover, with what to fix.\n- **Write a matching cover letter.** Same story, same details, no blank page.\n- **Stay on top of every application.** Each resume you prepare goes into your tracker, with up to three friendly reminders to update its status.\n\n## How we work\n\n- **Truthful content.** CVTara never invents experience for you. You control every word and decide what to send.\n- **Plain pricing.** You pay once for the days shown. Plans never renew automatically. All payments are final and non-refundable, so you can build, preview and run a few checks free first.\n- **Honest results.** The ATS match is an estimate of how well your resume backs each requirement. It is not a real employer ATS result, and nobody can guarantee an interview.\n- **Your data stays yours.** We use it to run the service. We do not sell it. Read the [Privacy Policy](/privacy.html).\n\n## Where we are\n\nWe operate from Bangalore, Karnataka, India, and support job seekers across the country. Questions are answered by our own team at **support@cvtara.com**, Monday to Saturday, 10:00 to 18:00 IST. You can also use the [contact page](/contact.html).\n",
+    "privacy": "# Privacy Policy\n\nLast updated: 23 October 2026\n\nCVTara (\"we\", \"us\") respects your privacy. This policy explains what personal data we collect when you use cvtara.com, why we collect it, who we share it with and the choices you have. It is written to be consistent with India's Digital Personal Data Protection Act, 2023 and the Information Technology Act, 2000.\n\n## 1. Data we collect\n\n- **Account details:** name, email address, password (stored only as a secure hash) and, if you add it, phone number and city.\n- **Profile and document content:** your profession, experience level, resumes, cover letters, job descriptions you paste and applications you track.\n- **Purchase records:** plan, amount, date and payment reference. Card, UPI and bank details are handled by our payment partner (Razorpay) and are never stored by us.\n- **Usage and device data:** pages visited, features used and basic technical data, so we can run and improve the service. Optional analytics run only if you accept analytics cookies.\n- **Support messages:** what you send to support@cvtara.com or through the contact form, including any screenshot you attach.\n- **Optional recent-activity notice:** at checkout you may tick a box to let the site show your first name and city (nothing else) in a small “recently started” notice. It is off unless you tick it, and you can ask us to stop showing it at any time by writing to support@cvtara.com.\n\n## 2. Why we use your data\n\nWe use your data to create and secure your account, store and export your documents, process payments and give you access, send service emails (for example receipts, access reminders and password resets), provide support, prevent fraud and abuse, and improve CVTara. We send marketing emails only if you agree, and you can withdraw consent at any time.\n\n## 3. Who we share data with\n\nWe do not sell your personal data. We share it only with service providers who help us run CVTara, such as payment processing (Razorpay), email delivery, hosting and, when you choose to use them, CVTara team writing help, Tara Expert Review and Profile Boost (a text-processing provider) and the full grammar check (LanguageTool). They may use the data only to provide their service to us. We may disclose data if required by law or to protect rights and safety.\n\n## 4. Your resume content\n\nYour resumes and letters are yours. We do not publish them and do not use them to train public models. CVTara team writing help, when you choose to use it, sends only the text you paste or pick to our text-processing provider to prepare a suggestion. When you buy Tara Expert Review or Profile Boost, the text of your saved resume (your primary resume, or the one you edited last), your target role and the profile details you send us are processed by the same provider, so the CVTara team can prepare your review or profile; the result is stored with your order and emailed to you. Our provider does not use this text to train its models, and may process it outside India. Suggestions and reviews are shown to you for review and never change your documents on their own. The basic writing check runs on our own server and sends your text nowhere. The full grammar check, when it is switched on and you press it, sends the text of that document to LanguageTool to check it.\n\n## 5. Retention\n\nWe keep your account and documents while your account is active. Purchase and tax records are retained as required by Indian law. When you delete your account, your personal data and documents are erased and purchase records are detached from your identity.\n\n## 6. Your rights\n\nYou can access and correct your information in your account, download a copy of your data, withdraw consent for optional processing, and delete your account from Account settings. You can also write to us to exercise any right under applicable law, including the right to nominate someone to act for you and the right to grievance redressal.\n\n## 7. Security\n\nWe use encrypted connections, hashed passwords, access controls and monitoring. No system is completely secure, so please use a strong, unique password.\n\n## 8. Children\n\nCVTara is for adults. We do not knowingly collect data from anyone under 18.\n\n## 9. Cookies\n\nWe use essential cookies for sign-in and security. Optional analytics cookies load only after you accept them.\n\n## 10. Grievance and contact\n\nFor privacy questions or complaints, write to our grievance contact at **support@cvtara.com** (CVTara, Bangalore, Karnataka, India). We aim to acknowledge requests within 72 hours and resolve them within 30 days.\n\n## 11. Changes\n\nIf we change this policy we will update the date above and, for material changes, notify you by email or in the product.\n\n## Cookies and device identifier\n\nCVTara sets a session cookie to keep you signed in and a long-lived random device identifier on sign-in pages to detect repeated or abusive sign-ups. It contains no personal details. If you accept analytics, Google Analytics may set its own identifiers. You can clear cookies in your browser at any time; some features may stop working.",
+    "terms": "# Terms & Conditions\n\nLast updated: 14 October 2026\n\nThese Terms & Conditions (\"Terms\") govern your use of CVTara (cvtara.com) and its resume, cover-letter, ATS-match and application-tracking tools. By creating an account or using the service you agree to them. If you do not agree, please do not use CVTara.\n\n## 1. About the service\n\nCVTara is operated from Bangalore, India by the CVTara team (\"CVTara\", \"we\", \"us\"). We provide software and guidance to help you prepare job applications. We are not a recruitment agency, we do not place candidates, and we do not guarantee interviews, offers, salary outcomes or ATS scores with any employer.\n\n## 2. Eligibility and accounts\n\nYou must be at least 18 years old and provide accurate information when you register. You are responsible for keeping your password confidential and for all activity under your account. Tell us immediately at support@cvtara.com if you suspect unauthorised use.\n\n## 3. Plans and payment\n\nAccess to downloads and plan features is provided through paid plans and add-on packs shown on our pricing page. Prices are in Indian rupees and are charged once for the stated access period. Plans do not renew automatically. Payments are processed by our payment partner (Razorpay); we never see or store your full card details. Access starts when payment is verified and ends when the access period ends. Add-on packs are available only while a plan is active and end when the plan ends.\n\n## 4. Your content\n\nYou own the resumes, cover letters and other content you create. You grant us a limited licence to store and process that content only to operate the service for you. You are responsible for the accuracy of what you submit and for making sure it does not infringe anyone else's rights. We do not claim ownership of your documents.\n\n## 5. Acceptable use\n\nDo not misuse the service: no unlawful, misleading or fraudulent content, no false claims about your experience or qualifications, no attempts to break or overload the platform, no scraping, no sharing paid access with others, and no abuse of referral or reward programmes. We may suspend or close accounts that break these rules.\n\n## 6. Referral programme\n\nIf the referral programme is available to you, rewards are subject to the rules shown in your account, including eligibility, holding periods and payout checks. We may reverse rewards linked to refunded, disputed or fraudulent purchases.\n\n## 7. Intellectual property\n\nThe CVTara name, logo, templates, software and guide content belong to CVTara or its licensors. Templates are licensed for creating your own documents, not for resale or redistribution.\n\n## 8. Availability and changes\n\nWe work to keep CVTara available but do not promise uninterrupted service. We may improve, change or retire features, and we will update these Terms when needed. Continued use after an update means you accept the updated Terms.\n\n## 9. Disclaimers and liability\n\nCVTara is provided \"as is\". Guidance and calculators are for general information and are not legal, tax or financial advice; please verify important decisions with a qualified professional or the official source. To the extent permitted by law, our total liability for any claim relating to the service is limited to the amount you paid for the plan in the 12 months before the claim, and we are not liable for indirect or consequential loss.\n\n## 10. Refunds\n\nYou can get a full refund within 7 days of purchase if nothing paid for has been used, once per customer, as set out in our Refund Policy. After that, payments are final.\n\n## 11. Governing law\n\nThese Terms are governed by the laws of India. Courts at Bengaluru, Karnataka have exclusive jurisdiction, subject to any rights you have as a consumer under applicable law.\n\n## 12. Contact\n\nCVTara, Bangalore, Karnataka, India. Email: support@cvtara.com",
+    "refund": "# Refund Policy\n\nLast updated: 20 October 2026\n\nCVTara packages are paid once and never renew automatically. If you change your mind, you can get your money back within 7 days, as long as you have not used what you paid for.\n\n## 1. The 7-day refund\n\nYou get a **full refund** if you ask within **7 days of your purchase** and **nothing paid for has been used**. Used means any of these:\n\n- a clean (watermark-free) download of a resume or cover letter,\n- a paid ATS Match scan,\n- a tailored resume made with the package,\n- for Profile Boost, our team has started work on it,\n- for Tara Expert Review, the review has been written. The CVTara team starts on it soon after payment, so in practice it can be refunded only while it is still waiting to be written.\n\nBuilding, editing, saving and previewing with the watermark never count as use.\n\n## 2. Once per customer\n\nEach customer can get one refund. A Quick Download that was credited towards a Job Hunt or Pro upgrade cannot be refunded separately.\n\n## 3. How to ask\n\nOpen **Account → Purchase history** and press **Request refund** next to the order. The button only shows when the order can be refunded. You can also write to **support@cvtara.com** from your registered email address with your order number.\n\n## 4. When the money arrives\n\nApproved refunds go back to the original payment method (UPI, card or net banking). Banks usually take **5–7 working days** to show it. Access from the refunded package ends when the refund is processed. Wallet credit used on the order is returned to your wallet.\n\n## 5. When a refund is not possible\n\nAfter 7 days, or once something paid for has been used, the payment is final. We do not offer pro-rata refunds for unused days or credits.\n\n## 6. Referral rewards\n\nA referral reward is earned only after a friend's purchase passes this 7-day window without a refund. Rewards linked to a payment that is refunded, reversed or disputed do not count.\n\n## 7. Questions\n\nWrite to **support@cvtara.com**. CVTara, Bangalore, Karnataka, India.\n",
+    "about": "# About CVTara\n\nCVTara helps Indian job seekers apply with confidence. We build resumes and cover letters that recruiting systems can read and people want to read, and we show you what each job asks for that your resume does not yet prove.\n\n## Who is behind it\n\nCVTara is built by an experienced HR team in Bangalore. We have spent years reading resumes, screening candidates and sitting on hiring panels. We built CVTara to give every job seeker the clarity that recruiters wish every application had.\n\n## What you can do here\n\n- **Start the easy way.** Upload the resume you already have (Word, PDF or text) or pick one of our ATS-friendly templates.\n- **Keep one primary resume.** It is your master copy. Edit it once, and create a tailored version for any job in one click.\n- **See what is missing.** Add the job as a PDF or text and get a full report of the requirements your resume does not yet cover, with what to fix.\n- **Write a matching cover letter.** Same story, same details, no blank page.\n- **Stay on top of every application.** Each resume you prepare goes into your tracker, with up to three friendly reminders to update its status.\n\n## How we work\n\n- **Truthful content.** CVTara never invents experience for you. You control every word and decide what to send.\n- **Plain pricing.** You pay once for the days shown. Plans never renew automatically. If you change your mind within 7 days and have not used it, you get a full refund. You can also build, preview and run a few checks free first.\n- **Honest results.** The ATS match is an estimate of how well your resume backs each requirement. It is not a real employer ATS result, and nobody can guarantee an interview.\n- **Your data stays yours.** We use it to run the service. We do not sell it. Read the [Privacy Policy](/privacy.html).\n\n## Where we are\n\nWe operate from Bangalore, Karnataka, India, and support job seekers across the country. Questions are answered by our own team at **support@cvtara.com**, Monday to Saturday, 10:00 to 18:00 IST. You can also use the [contact page](/contact.html).\n",
     "contactIntro": "Questions about your account, a payment or a resume? Write to support@cvtara.com and our team will reply within 2 working days."
   },
   "integrations": {
@@ -86,6 +86,7 @@
     "ai": false,
     "analytics": false,
     "push": false,
+    "grammar": false,
     "measurementId": "",
     "aiPurpose": "Suggest clearer summaries and achievement wording using only the user’s supplied facts. The user reviews every suggestion."
   },
@@ -104,7 +105,7 @@
     "letter": {
       "enabled": true,
       "position": 3,
-      "limit": 26,
+      "limit": 56,
       "draftLimit": 500
     },
     "tracker": {
@@ -115,7 +116,7 @@
     "templates": {
       "enabled": true,
       "position": 5,
-      "limit": 91
+      "limit": 121
     },
     "blog": {
       "enabled": true,
@@ -137,7 +138,7 @@
       "enabled": true,
       "delayHours": 0,
       "subject": "Your CVTara verification code: {{code}}",
-      "body": "# Confirm your email\nHi {{name}},\n\nUse this code to confirm your email address on CVTara:\n\n[code: {{code}}]\n\nThe code works for 15 minutes. If you did not create a CVTara account, you can ignore this email and nothing will happen.\n\nFor your safety, never share this code with anyone. CVTara will never ask you for it."
+      "body": "# Confirm your email\n[preheader: Enter this code on CVTara to confirm your email address. It works for 15 minutes.]\nHi {{name}},\n\nEnter this code on CVTara to confirm your email address:\n\n[code: {{code}}]\n\nThe code works for 15 minutes. If you did not create a CVTara account, ignore this email and nothing will happen."
     },
     {
       "id": "welcome",
@@ -146,7 +147,7 @@
       "enabled": true,
       "delayHours": 0,
       "subject": "Welcome to CVTara, {{name}}",
-      "body": "# Welcome, {{name}}\nYour CVTara account is ready. Here is the quickest way to a resume that recruiters and applicant tracking systems can read:\n\n- Upload the resume you already have, or pick a design from the library\n- See your ATS-friendly score and what to improve\n- Add a job and see exactly what your resume is missing for it\n\n[button: Open my workspace | {{site_url}}/workspace.html?view=resumes]\nYou can build, preview and run a few ATS checks for free. Clean downloads without a watermark come with a plan, from {{from_price}}, paid once with no auto-renewal."
+      "body": "# Welcome to CVTara, {{name}}\n[preheader: Your account is ready. Here is the quickest way to a resume recruiters can read.]\nYour account is ready. Here is the quickest way to a resume that recruiters and applicant tracking systems can read:\n\n- Upload the resume you have, or start from the guided template library\n- See your ATS-friendly score and exactly what to improve\n- Add a job and see what your resume is missing for it\n\n[button: Open my workspace | {{site_url}}/workspace.html?view=resumes]\n\n{{tara_line}}\n\nBuilding, editing, previewing and a few ATS checks a day are free. You pay only when you want a clean download, from {{from_price}}, paid once with no auto-renewal."
     },
     {
       "id": "resume",
@@ -155,7 +156,7 @@
       "enabled": true,
       "delayHours": 1,
       "subject": "Your resume is saved, {{name}}. Here is what to do next",
-      "body": "# Your resume is saved\nHi {{name}}, your latest changes are safely stored in your account.\n\nThree things that make the biggest difference:\n\n- Run the ATS check against a job you want, and fix the requirements it shows as missing\n- Make a tailored version for that job with one click\n- Write the matching cover letter so both documents tell the same story\n\n[button: Continue in my workspace | {{site_url}}/workspace.html?view=resumes]\nFree accounts can preview everything. Clean PDF and Word downloads, and more ATS checks, come with a plan."
+      "body": "# Your resume is saved\n[preheader: Three steps that make the biggest difference before you apply.]\nHi {{name}}, your latest changes are safely stored in your account.\n\nThree things that make the biggest difference:\n\n- Run the ATS check against a job you want, and add the missing requirements you can honestly show\n- Make a tailored version for that job in one click\n- Write the matching cover letter so both tell the same story\n\n[button: Continue in my workspace | {{site_url}}/workspace.html?view=resumes]\n\n{{tara_line}}\n\nFree accounts can build and preview everything. Clean PDF and Word downloads start at {{from_price}}, paid once."
     },
     {
       "id": "purchase",
@@ -164,7 +165,16 @@
       "enabled": true,
       "delayHours": 0,
       "subject": "Your CVTara {{plan_name}} plan is active",
-      "body": "# Thank you, {{name}}\nYour {{plan_name}} plan is now active. This email is your receipt.\n\n- Plan: {{plan_name}}\n- Amount paid: {{amount}}\n- Valid until: {{access_until}}\n- Payment reference: {{payment_reference}}\n\nWhat you can do now:\n\n- Download your resumes and cover letters as clean PDF or Word files\n- Make up to {{resumes}} tailored resumes and {{letters}} cover letters\n- Run ATS checks and track every application\n\n[button: Open my workspace | {{site_url}}/workspace.html?view=resumes]\nAll payments are final and non-refundable. If anything looks wrong, write to support@cvtara.com with your payment reference and we will help."
+      "body": "# Thank you, {{name}}\n[preheader: Your {{plan_name}} plan is active. This email is your receipt.]\nYour {{plan_name}} plan is active now. This email is your receipt.\n\n- Plan: {{plan_name}}\n- Amount paid: {{amount}}\n- Valid until: {{access_until}}\n- Payment reference: {{payment_reference}}\n- Paid with: Razorpay\n\n[button: Open my workspace | {{site_url}}/workspace.html?view=resumes]\n\n## What you can do now\n- Download clean PDF and Word files without the watermark\n- Use up to {{resumes}} tailored resumes and {{letters}} cover letters\n- Run ATS Match scans and track every application\n\n[note: Paid once: this plan does not renew by itself. Changed your mind? Get a full refund within 7 days if you have not used the package: open Account and press Request refund.]\n\nIf anything looks wrong, reply to this email with your payment reference and we will help."
+    },
+    {
+      "id": "expert-review",
+      "name": "Tara Expert Review delivered",
+      "trigger": "expert_review_delivered",
+      "enabled": true,
+      "delayHours": 0,
+      "subject": "Your Tara Expert Review is ready, {{name}}",
+      "body": "# Your Tara Expert Review is ready\nHi {{name}}, here is the review of your resume. The CVTara team prepared it from the resume saved in your CVTara account. It is also saved in your account, so you can come back to it any time.\n\n{{review}}\n\n[button: Open my review | {{dashboard_url}}]\nCheck every rewritten line before you use it: keep only what is true for you. Questions about the review? Reply to this email or write to support@cvtara.com with your payment reference {{payment_reference}}."
     },
     {
       "id": "reset",
@@ -173,7 +183,7 @@
       "enabled": true,
       "delayHours": 0,
       "subject": "Reset your CVTara password",
-      "body": "# Reset your password\nHi {{name}},\n\nWe received a request to reset the password on your CVTara account. This link works once and expires in 60 minutes.\n\n[button: Choose a new password | {{reset_url}}]\n\nIf the button does not work, copy this link into your browser:\n{{reset_url}}\n\nIf you did not ask for this, ignore this email. Your password stays the same."
+      "body": "# Reset your password\n[preheader: This link works once and expires in 60 minutes.]\nHi {{name}},\n\nWe received a request to reset the password on your CVTara account. This link works once and expires in 60 minutes.\n\n[button: Choose a new password | {{reset_url}}]\n\nIf the button does not work, copy this link into your browser:\n{{reset_url}}\n\nIf you did not ask for this, ignore this email. Your password stays the same."
     },
     {
       "id": "download-locked",
@@ -181,8 +191,8 @@
       "trigger": "download_locked",
       "enabled": true,
       "delayHours": 0,
-      "subject": "Your resume is ready. One step to download it",
-      "body": "# Your resume is ready\nHi {{name}}, you asked to download your resume and it is ready.\n\nDownloads without a watermark are part of a CVTara plan. With a plan you can:\n\n- Download your primary resume, every tailored version and your cover letters as PDF or Word\n- Run ATS checks against real jobs and see what each one needs\n- Track every application, with reminders\n\n[button: Choose a plan | {{site_url}}/checkout.html]\nPlans start at {{from_price}}, paid once with no auto-renewal. Need help choosing? Reply to this email."
+      "subject": "Your resume is ready to download",
+      "body": "# Your resume is ready\n[preheader: Choose a package to download it as a clean PDF or Word file.]\nHi {{name}}, you asked to download your resume and it is ready.\n\nClean downloads without the watermark come with a package. Pick the one that fits your search:\n\n[plans]\n\n[offer]\n\n[button: Choose a package | {{checkout_url}}]\n\nNot sure which one? Reply to this email and a real person will help you choose."
     },
     {
       "id": "expiry7",
@@ -191,7 +201,7 @@
       "enabled": true,
       "delayHours": 0,
       "subject": "Your CVTara plan ends in 7 days",
-      "body": "# Your CVTara plan ends in 7 days\nHi {{name}},\n\nYour {{plan_name}} plan runs until {{access_until}}, which is one week away.\n\nAfter that date clean downloads stop. Your saved resumes and letters stay in your account and you can still edit them, but downloads will carry a watermark until you renew.\n\nRenewing early adds days to what you have left, so nothing is wasted.\n\n[button: Renew my plan | {{site_url}}/checkout.html]\nQuestions? Reply to this email or write to support@cvtara.com."
+      "body": "# Your plan ends in 7 days\n[preheader: Your {{plan_name}} plan runs until {{access_until}}. Your saved work stays safe either way.]\nHi {{name}},\n\nYour {{plan_name}} plan runs until {{access_until}}, one week from now.\n\nAfter that, clean downloads stop. Your resumes and letters stay saved in your account and you can keep editing them; downloads carry the watermark until you buy again.\n\nPlans are paid once and never renew by themselves. Buying the same plan before it ends adds the new days to the days you have left, so nothing is wasted.\n\n[offer]\n\n[button: Extend my plan | {{checkout_url}}]\n\nQuestions? Reply to this email."
     },
     {
       "id": "expiry4",
@@ -200,7 +210,7 @@
       "enabled": true,
       "delayHours": 0,
       "subject": "Your CVTara plan ends in 4 days",
-      "body": "# Your CVTara plan ends in 4 days\nHi {{name}},\n\nYour {{plan_name}} plan ends on {{access_until}}, in 4 days.\n\nAfter that date clean downloads stop. Your saved resumes and letters stay in your account and you can still edit them, but downloads will carry a watermark until you renew.\n\nRenewing early adds days to what you have left, so nothing is wasted.\n\n[button: Renew my plan | {{site_url}}/checkout.html]\nQuestions? Reply to this email or write to support@cvtara.com."
+      "body": "# Your plan ends in 4 days\n[preheader: Your {{plan_name}} plan ends on {{access_until}}. Your saved work stays safe either way.]\nHi {{name}},\n\nYour {{plan_name}} plan ends on {{access_until}}, in 4 days.\n\nAfter that, clean downloads stop. Your resumes and letters stay saved in your account and you can keep editing them; downloads carry the watermark until you buy again.\n\nBuying the same plan before it ends adds the new days to the days you have left.\n\n[offer]\n\n[button: Extend my plan | {{checkout_url}}]\n\nQuestions? Reply to this email."
     },
     {
       "id": "expiry1",
@@ -208,8 +218,8 @@
       "trigger": "access_expiring_1",
       "enabled": true,
       "delayHours": 0,
-      "subject": "Last day: your CVTara plan ends tomorrow",
-      "body": "# your CVTara plan ends tomorrow\nHi {{name}},\n\nYour {{plan_name}} plan ends on {{access_until}}, which is tomorrow.\n\nAfter that date clean downloads stop. Your saved resumes and letters stay in your account and you can still edit them, but downloads will carry a watermark until you renew.\n\nRenewing early adds days to what you have left, so nothing is wasted.\n\n[button: Renew my plan | {{site_url}}/checkout.html]\nQuestions? Reply to this email or write to support@cvtara.com."
+      "subject": "Your CVTara plan ends tomorrow",
+      "body": "# Your plan ends tomorrow\n[preheader: Your {{plan_name}} plan ends on {{access_until}}. Download anything you need today.]\nHi {{name}},\n\nYour {{plan_name}} plan ends on {{access_until}}, which is tomorrow. If you still need a clean copy of a resume or letter, download it today.\n\nYour work stays saved after that, and buying the same plan again picks up where you left off.\n\n[offer]\n\n[button: Extend my plan | {{checkout_url}}]\n\nQuestions? Reply to this email."
     },
     {
       "id": "expiry",
@@ -227,7 +237,7 @@
       "enabled": true,
       "delayHours": 0,
       "subject": "Time to follow up on your application",
-      "body": "# Follow up today\nHi {{name}}, you planned to follow up on an application today.\n\nA short, polite message to the recruiter or hiring manager often gets a reply. Mention the role, add one line on why you fit, and ask about the next step.\n\n[button: Open my tracker | {{site_url}}/workspace.html?view=tracker]"
+      "body": "# Follow up today\n[preheader: A short, polite follow-up often gets a reply.]\nHi {{name}}, you planned to follow up on an application today.\n\nA short, polite message to the recruiter or hiring manager often gets a reply. Mention the role, add one line on why you fit, and ask about the next step.\n\n[button: Open my tracker | {{site_url}}/workspace.html?view=tracker]"
     },
     {
       "id": "appstatus",
@@ -236,7 +246,7 @@
       "enabled": true,
       "delayHours": 0,
       "subject": "{{company}} · {{role}}: what is the status now? ({{n}} of 3)",
-      "body": "# Where does this application stand?\nHi {{name}}, you prepared your resume for {{role}} at {{company}}. It is marked \"{{status}}\" in your tracker.\n\n{{question}}\n\n[button: Update my tracker | {{site_url}}/workspace.html?view=tracker]\nThis is reminder {{n}} of 3 over about a month. After the third we will not remind you about this job again. You can also switch these reminders off in the tracker."
+      "body": "# Where does this application stand?\n[preheader: One tap keeps your tracker up to date.]\nHi {{name}}, you prepared your resume for {{role}} at {{company}}. It is marked \"{{status}}\" in your tracker.\n\n{{question}}\n\n[button: Update my tracker | {{site_url}}/workspace.html?view=tracker]\n\nThis is reminder {{n}} of 3 over about a month. After the third we will not remind you about this job again. You can also switch these reminders off in the tracker."
     },
     {
       "id": "abandoned",
@@ -245,7 +255,7 @@
       "enabled": true,
       "delayHours": 24,
       "subject": "Your CVTara plan is waiting, {{name}}",
-      "body": "# You were one step away\nHi {{name}}, you started choosing a CVTara plan but did not finish.\n\nYour resumes and letters are saved. A plan adds clean PDF and Word downloads, more ATS checks and the application tracker, paid once with no auto-renewal.\n\n[button: Finish choosing my plan | {{site_url}}/checkout.html]\nIf you had a question, reply to this email and a real person will answer."
+      "body": "# You were one step away\n[preheader: Your resumes are saved. Here are the packages, paid once with no auto-renewal.]\nHi {{name}}, you started choosing a package but did not finish. Your resumes and letters are saved.\n\n[plans]\n\n[offer]\n\n[button: Finish choosing | {{checkout_url}}]\n\nIf something stopped you, reply to this email and a real person will answer."
     },
     {
       "id": "nurture-1",
@@ -254,7 +264,7 @@
       "enabled": true,
       "delayHours": 0,
       "subject": "Three minutes to a stronger resume",
-      "body": "# Three minutes to a stronger resume\nHi {{name}},\n\nAlready have a resume? Upload it. CVTara reads it, fills the builder and shows an ATS-friendly score, so you start from what you have instead of a blank page.\n\n[button: Upload my resume | {{site_url}}/workspace.html?view=resumes]\nNot for you right now? You can unsubscribe with one click below. We will keep sending only account emails such as receipts and sign-in codes."
+      "body": "# Three minutes to a stronger resume\nHi {{name}},\n\nAlready have a resume? Upload it. CVTara reads it, fills the builder and shows an ATS-friendly score, so you start from what you have instead of a blank page.\n\n[button: Upload my resume | {{site_url}}/workspace.html?view=resumes]\n\nYou get these tips because you said yes to them. Unsubscribe with one click at the bottom; account emails such as receipts and sign-in codes will still reach you."
     },
     {
       "id": "nurture-2",
@@ -263,7 +273,7 @@
       "enabled": true,
       "delayHours": 0,
       "subject": "Is your resume speaking the job's language?",
-      "body": "# Is your resume speaking the job's language?\nHi {{name}},\n\nRecruiters and applicant tracking systems look for the words a job uses. The ATS check compares your resume with a job and lists the requirements it does not yet show.\n\n[button: Try the ATS check | {{site_url}}/workspace.html?view=match]\nNot for you right now? You can unsubscribe with one click below. We will keep sending only account emails such as receipts and sign-in codes."
+      "body": "# Is your resume speaking the job's language?\nHi {{name}},\n\nRecruiters and applicant tracking systems look for the words a job uses. The ATS check compares your resume with a job and lists the requirements it does not show yet.\n\n[button: Try the ATS check | {{site_url}}/workspace.html?view=match]\n\nYou get these tips because you said yes to them. Unsubscribe with one click at the bottom; account emails such as receipts and sign-in codes will still reach you."
     },
     {
       "id": "nurture-3",
@@ -272,7 +282,7 @@
       "enabled": true,
       "delayHours": 0,
       "subject": "One resume per job beats one for all",
-      "body": "# One resume per job beats one for all\nHi {{name}},\n\nKeep one strong primary resume, then make a tailored version for each job in a click. Same facts, the words that job cares about.\n\n[button: Build my primary resume | {{site_url}}/workspace.html?view=resumes]\nNot for you right now? You can unsubscribe with one click below. We will keep sending only account emails such as receipts and sign-in codes."
+      "body": "# One resume per job beats one for all\nHi {{name}},\n\nKeep one strong primary resume, then make a tailored version for each job in a click. Same facts, the words that job cares about.\n\n{{tara_line}}\n\n[button: Build my primary resume | {{site_url}}/workspace.html?view=resumes]\n\nYou get these tips because you said yes to them. Unsubscribe with one click at the bottom; account emails such as receipts and sign-in codes will still reach you."
     },
     {
       "id": "nurture-4",
@@ -281,7 +291,7 @@
       "enabled": true,
       "delayHours": 0,
       "subject": "Give your resume a cover letter that matches",
-      "body": "# Give your resume a cover letter that matches\nHi {{name}},\n\nA letter that tells the same story as your resume is easier for a recruiter to trust. Pick a design and write it from the details you already added.\n\n[button: Write a cover letter | {{site_url}}/workspace.html?view=letter]\nNot for you right now? You can unsubscribe with one click below. We will keep sending only account emails such as receipts and sign-in codes."
+      "body": "# A cover letter that matches your resume\nHi {{name}},\n\nA letter that tells the same story as your resume is easier for a recruiter to trust. Pick a design and write it from the details you already added.\n\n[button: Write a cover letter | {{site_url}}/workspace.html?view=letter]\n\nYou get these tips because you said yes to them. Unsubscribe with one click at the bottom; account emails such as receipts and sign-in codes will still reach you."
     },
     {
       "id": "nurture-5",
@@ -290,7 +300,7 @@
       "enabled": true,
       "delayHours": 0,
       "subject": "Make the first ten seconds count",
-      "body": "# Make the first ten seconds count\nHi {{name}},\n\nRecruiters scan quickly. Short bullets that start with a verb and carry a number are read first. Open your resume and check each bullet answers: what did you do, and what changed?\n\n[button: Review my resume | {{site_url}}/workspace.html?view=resumes]\nNot for you right now? You can unsubscribe with one click below. We will keep sending only account emails such as receipts and sign-in codes."
+      "body": "# Make the first ten seconds count\nHi {{name}},\n\nRecruiters scan quickly. Short bullets that start with a verb and carry a number are read first. Open your resume and check that each bullet answers: what did you do, and what changed?\n\n{{tara_line}}\n\n[button: Review my resume | {{site_url}}/workspace.html?view=resumes]\n\nYou get these tips because you said yes to them. Unsubscribe with one click at the bottom; account emails such as receipts and sign-in codes will still reach you."
     },
     {
       "id": "nurture-6",
@@ -299,7 +309,7 @@
       "enabled": true,
       "delayHours": 0,
       "subject": "Keep track of every application",
-      "body": "# Keep track of every application\nHi {{name}},\n\nEach resume you prepare for a job goes into your tracker automatically, with gentle reminders to update its status. No spreadsheet needed.\n\n[button: Open my tracker | {{site_url}}/workspace.html?view=tracker]\nNot for you right now? You can unsubscribe with one click below. We will keep sending only account emails such as receipts and sign-in codes."
+      "body": "# Keep track of every application\nHi {{name}},\n\nEach resume you prepare for a job goes into your tracker, with gentle reminders to update its status. No spreadsheet needed.\n\n[button: Open my tracker | {{site_url}}/workspace.html?view=tracker]\n\nYou get these tips because you said yes to them. Unsubscribe with one click at the bottom; account emails such as receipts and sign-in codes will still reach you."
     },
     {
       "id": "nurture-7",
@@ -308,7 +318,7 @@
       "enabled": true,
       "delayHours": 0,
       "subject": "Changing roles? Show transferable skills",
-      "body": "# Changing roles? Show transferable skills\nHi {{name}},\n\nMoving to a new role or industry? Put the skills the new job asks for near the top, backed by real examples from your past work. The ATS check shows which are missing.\n\n[button: Tailor for a new role | {{site_url}}/workspace.html?view=match]\nNot for you right now? You can unsubscribe with one click below. We will keep sending only account emails such as receipts and sign-in codes."
+      "body": "# Changing roles? Show transferable skills\nHi {{name}},\n\nMoving to a new role or industry? Put the skills the new job asks for near the top, backed by real examples from your past work. The ATS check shows which are missing.\n\n[button: Tailor for a new role | {{site_url}}/workspace.html?view=match]\n\nYou get these tips because you said yes to them. Unsubscribe with one click at the bottom; account emails such as receipts and sign-in codes will still reach you."
     },
     {
       "id": "nurture-8",
@@ -317,7 +327,7 @@
       "enabled": true,
       "delayHours": 0,
       "subject": "Fresher? Lead with projects and skills",
-      "body": "# Fresher? Lead with projects and skills\nHi {{name}},\n\nNo work history yet is fine. Put projects, internships and skills first, with one clear result for each. The fresher designs are built for exactly this.\n\n[button: See fresher designs | {{site_url}}/templates.html]\nNot for you right now? You can unsubscribe with one click below. We will keep sending only account emails such as receipts and sign-in codes."
+      "body": "# Fresher? Lead with projects and skills\nHi {{name}},\n\nNo work history yet is fine. Put projects, internships and skills first, with one clear result for each. The guided template library shows which designs suit freshers and why.\n\n[button: Browse the template library | {{site_url}}/templates.html]\n\nYou get these tips because you said yes to them. Unsubscribe with one click at the bottom; account emails such as receipts and sign-in codes will still reach you."
     },
     {
       "id": "nurture-9",
@@ -326,7 +336,7 @@
       "enabled": true,
       "delayHours": 0,
       "subject": "Six months on: time for a resume refresh",
-      "body": "# Six months on: time for a resume refresh\nHi {{name}},\n\nNew project, new skill, new certificate? A resume that is a few months old often hides your best recent work. Update your primary resume once and every version benefits.\n\n[button: Update my resume | {{site_url}}/workspace.html?view=resumes]\nNot for you right now? You can unsubscribe with one click below. We will keep sending only account emails such as receipts and sign-in codes."
+      "body": "# Six months on: time for a resume refresh\nHi {{name}},\n\nNew project, new skill, new certificate? A resume that is a few months old often hides your best recent work. Update your primary resume once and every version benefits.\n\n{{expert_line}}\n\n[button: Update my resume | {{site_url}}/workspace.html?view=resumes]\n\nYou get these tips because you said yes to them. Unsubscribe with one click at the bottom; account emails such as receipts and sign-in codes will still reach you."
     },
     {
       "id": "nurture-10",
@@ -334,8 +344,8 @@
       "trigger": "nurture",
       "enabled": true,
       "delayHours": 0,
-      "subject": "What a plan adds, in plain words",
-      "body": "# What a plan adds, in plain words\nHi {{name}},\n\nFree accounts can build, preview and run a few ATS checks. A plan adds clean PDF and Word downloads, more ATS checks, tailored resumes, cover letters and the tracker. Plans start at {{from_price}}, paid once, no auto-renewal.\n\n[button: See the plans | {{site_url}}/checkout.html]\nNot for you right now? You can unsubscribe with one click below. We will keep sending only account emails such as receipts and sign-in codes."
+      "subject": "What each CVTara package includes",
+      "body": "# What each package includes, in plain words\nHi {{name}},\n\nBuilding, editing, previewing and a few ATS checks a day stay free. When you are ready to apply, pick the package that fits your search:\n\n[plans]\n\n[offer]\n\n[button: See the packages | {{checkout_url}}]\n\nYou get these tips because you said yes to them. Unsubscribe with one click at the bottom; account emails such as receipts and sign-in codes will still reach you."
     },
     {
       "id": "nurture-11",
@@ -343,8 +353,8 @@
       "trigger": "nurture",
       "enabled": true,
       "delayHours": 0,
-      "subject": "Refer 5 friends, get a free month",
-      "body": "# Refer 5 friends, get a free month\nHi {{name}},\n\nKnow someone job hunting? When 5 friends you refer sign up, confirm their email and buy a plan, you unlock one free resume download and one month of subscription, free. Your link and your progress are in your workspace.\n\n[button: Open my referral page | {{site_url}}/workspace.html?view=referrals]\nNot for you right now? You can unsubscribe with one click below. We will keep sending only account emails such as receipts and sign-in codes."
+      "subject": "Give {{referral_discount}}, get {{referral_reward}}: share CVTara with a friend",
+      "body": "# Give {{referral_discount}}, get {{referral_reward}}\nHi {{name}},\n\nKnow someone who is job hunting? Share your referral link. Your friend gets {{referral_discount}} off their first package of {{referral_min}} or more (Job Hunt or Pro), and you get {{referral_reward}} wallet credit for your own purchase once their order passes the 7-day refund window.\n\n[button: Get my referral link | {{site_url}}/workspace.html?view=referrals]\n\nCredit is spent at checkout and is not paid out as cash. Quick Download orders do not count.\n\nYou get these tips because you said yes to them. Unsubscribe with one click at the bottom; account emails such as receipts and sign-in codes will still reach you."
     },
     {
       "id": "nurture-12",
@@ -353,7 +363,7 @@
       "enabled": true,
       "delayHours": 0,
       "subject": "A year on: pick up where you left off",
-      "body": "# A year on: pick up where you left off\nHi {{name}},\n\nYour resumes and letters are still saved in your account. If you are job hunting again, a plan gives you clean downloads and ATS checks from {{from_price}}, paid once.\n\n[button: Open my workspace | {{site_url}}/workspace.html?view=resumes]\nNot for you right now? You can unsubscribe with one click below. We will keep sending only account emails such as receipts and sign-in codes."
+      "body": "# A year on: pick up where you left off\nHi {{name}},\n\nYour resumes and letters are still saved in your account. If you are job hunting again, start with a fresh ATS check against the job you want.\n\n[offer]\n\n[button: Open my workspace | {{site_url}}/workspace.html?view=resumes]\n\nClean downloads start at {{from_price}}, paid once with no auto-renewal.\n\nYou get these tips because you said yes to them. Unsubscribe with one click at the bottom; account emails such as receipts and sign-in codes will still reach you."
     },
     {
       "id": "digest",
@@ -362,7 +372,7 @@
       "enabled": true,
       "delayHours": 0,
       "subject": "Career guide of the month: {{blog_title}}",
-      "body": "# This month's guide\nHi {{name}}, here is one guide we think is worth your time this month:\n\n## {{blog_title}}\n{{blog_summary}}\n\n[button: Read the guide | {{blog_url}}]\n\nWe send one guide a month, different for different readers. Unsubscribe any time with one click below."
+      "body": "# This month's guide\n[preheader: {{blog_summary}}]\nHi {{name}}, here is one guide we think is worth your time this month:\n\n## {{blog_title}}\n{{blog_summary}}\n\n[button: Read the guide | {{blog_url}}]\n\nWe send one guide a month, different for different readers. Unsubscribe any time with one click below."
     },
     {
       "id": "blog",
@@ -371,7 +381,34 @@
       "enabled": false,
       "delayHours": 0,
       "subject": "New guide: {{blog_title}}",
-      "body": "Hi {{name}},\nRead our latest guide: {{blog_url}}"
+      "body": "# New on the CVTara blog\nHi {{name}},\n\n## {{blog_title}}\n\n[button: Read the guide | {{blog_url}}]\n\nYou get these tips because you said yes to them. Unsubscribe with one click at the bottom; account emails such as receipts and sign-in codes will still reach you."
+    },
+    {
+      "id": "refund-requested",
+      "name": "Refund requested",
+      "trigger": "refund_requested",
+      "enabled": true,
+      "delayHours": 0,
+      "subject": "We received your refund request for {{order}}",
+      "body": "# Refund request received\n[preheader: We check the order, then refund it to your original payment method.]\nHi {{name}}, we received your request to refund order {{order}} ({{amount}}).\n\nWe check that nothing from the order has been used, then refund the money through Razorpay to your original payment method. You will get another email when it is done. Banks usually take 5 to 7 working days to show it.\n\nIf you did not ask for this, reply to this email."
+    },
+    {
+      "id": "refund-processed",
+      "name": "Refund sent",
+      "trigger": "refund_processed",
+      "enabled": true,
+      "delayHours": 0,
+      "subject": "Your refund of {{amount}} is on its way",
+      "body": "# Your refund is on its way\n[preheader: Banks usually take 5 to 7 working days to show it.]\nHi {{name}}, we have refunded {{amount}} for order {{order}} to your original payment method through Razorpay. Banks usually take 5 to 7 working days to show it.\n\nAccess from this order has ended. Your saved resumes and cover letters stay in your account, and you can still build and preview for free.\n\n[button: Open my workspace | {{site_url}}/workspace.html]"
+    },
+    {
+      "id": "refund-rejected",
+      "name": "Refund declined",
+      "trigger": "refund_rejected",
+      "enabled": true,
+      "delayHours": 0,
+      "subject": "About your CVTara refund request",
+      "body": "# About your refund request\nHi {{name}}, we could not approve your refund request.\n\nReason: {{reason}}\n\nIf you think this is a mistake, reply to this email with your order number and we will look again."
     }
   ],
   "popup": {

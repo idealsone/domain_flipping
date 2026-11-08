@@ -30,7 +30,7 @@ body{min-height:100vh;margin:0;background:radial-gradient(1100px 520px at 85% -1
 .au-card .sub{margin:0 0 18px;color:var(--muted,#64748b);font-size:15px}
 .au-grid{display:grid;grid-template-columns:1fr 1fr;gap:0 16px}
 .au-grid .full{grid-column:1/-1}
-.au-card label{display:grid;gap:6px;margin:0 0 14px;font-weight:700;font-size:13px;color:var(--ink,#334155)}
+.au-card label{display:grid;align-content:start;gap:6px;margin:0 0 14px;font-weight:700;font-size:13px;color:var(--ink,#334155)}
 .au-card label small{display:inline;font-weight:500;color:var(--muted,#64748b);font-size:12px}
 .au-card input:not([type=checkbox]),.au-card select{width:100%;height:46px;padding:0 13px;border:1.5px solid var(--line,#d6deea);border-radius:11px;box-sizing:border-box;font:inherit;font-weight:500;background:var(--paper,#fff);color:var(--ink,#0f172a);transition:border-color .15s,box-shadow .15s}
 .au-card input:focus,.au-card select:focus{outline:none;border-color:#1557d2;box-shadow:0 0 0 3px rgba(21,87,210,.16)}
@@ -93,7 +93,7 @@ html.dark .au-theme{background:#1a1f2e;border-color:#2d3748;color:#f1f5f9}
 @endif
 <button class="au-go">{{['owner'=>'Sign in','login'=>'Sign in','register'=>'Create my account','forgot-password'=>'Send reset link','reset-password'=>'Save password','verify'=>'Confirm email'][$mode]}}</button></form>
 @if($mode==='verify')<form method="post" action="/verify-email/resend" style="margin-top:12px">@csrf @if(request('next'))<input type="hidden" name="next" value="{{ request('next') }}">@endif<button class="au-ghost" type="submit">Send me a new code</button></form><p class="au-note">Not in your inbox? Check spam or promotions. The email comes from support@cvtara.com.</p>@endif
-@if($isReg)<p class="au-note">All payments are final and non-refundable. Build, preview and run ATS checks free first.</p>@endif
+@if($isReg)<p class="au-note">Build, preview and run ATS checks free first. Pay only when you download, with a 7-day refund if unused.</p>@endif
 <p class="au-links" @if(in_array($mode,['owner','verify'])) hidden @endif>@if($mode==='register')<span>Already have an account? <a href="/login">Sign in</a></span>@elseif($mode==='login')<span>New to CVTara? <a href="/register">Create an account</a></span><a href="/forgot-password">Forgot password?</a>@else<a href="/login">Back to sign in</a>@endif</p>
 </div></main></div><button type="button" class="au-theme" id="auTheme" aria-label="Switch between light and night mode"></button><script>(function(){var b=document.getElementById("auTheme"),r=document.documentElement;function paint(){b.textContent=r.classList.contains("dark")?"☀":"☾"}b.onclick=function(){var d=!r.classList.contains("dark");r.classList.toggle("dark",d);r.style.colorScheme=d?"dark":"light";r.setAttribute("data-theme",d?"dark":"light");try{localStorage.setItem("cvtara-theme",d?"dark":"light")}catch(e){}paint()};paint();var f=document.getElementById("auForm"),p1=document.getElementById("auPw"),p2=document.getElementById("auPw2"),hint=document.getElementById("auPwHint"),mt=document.getElementById("auMatch");
 function chk(){if(!p1||!hint)return true;var v=p1.value,ok=v.length>=12;if(v.length){hint.textContent=ok?"Good length ✓":"Add "+(12-v.length)+" more character"+((12-v.length)===1?"":"s")+" (12 or more)";hint.className="fh "+(ok?"ok":"no")}else{hint.textContent="";hint.className="fh"}

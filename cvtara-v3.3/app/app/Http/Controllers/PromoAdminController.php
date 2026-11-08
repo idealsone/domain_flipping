@@ -37,7 +37,7 @@ class PromoAdminController extends Controller
                 'id' => ['nullable', 'regex:/^[a-f0-9-]{36}$/'], 'name' => 'required|string|max:80', 'template' => 'nullable|string|max:30', 'theme' => 'required|in:'.implode(',', array_keys(Promos::THEMES)),
                 'heading' => 'required|string|max:120', 'subheading' => 'nullable|string|max:240', 'body' => 'nullable|string|max:500', 'badge' => 'nullable|string|max:40', 'cta' => 'nullable|string|max:40',
                 'couponCode' => 'nullable|string|max:30|regex:/^[A-Za-z0-9_-]*$/', 'planKey' => 'nullable|string|max:60', 'imageUrl' => ['nullable', 'string', 'max:300', 'regex:#^(https://|/media/[a-f0-9-]{36}\.webp$)#'],
-                'startsAt' => ['nullable', 'regex:/^\d{4}-\d{2}-\d{2}(T\d{2}:\d{2})?$/'], 'endsAt' => ['nullable', 'regex:/^\d{4}-\d{2}-\d{2}(T\d{2}:\d{2})?$/'], 'countdown' => 'boolean',
+                'startsAt' => ['nullable', 'regex:/^\d{4}-\d{2}-\d{2}(T\d{2}:\d{2})?$/'], 'endsAt' => ['nullable', 'regex:/^\d{4}-\d{2}-\d{2}(T\d{2}:\d{2})?$/'],
                 'banner' => 'boolean', 'popup' => 'boolean', 'popupDelay' => 'integer|min:3|max:600', 'exit' => 'boolean', 'idle' => 'boolean', 'idleSeconds' => 'integer|min:10|max:600',
                 'exitHeading' => 'nullable|string|max:120', 'exitText' => 'nullable|string|max:240', 'idleHeading' => 'nullable|string|max:120', 'idleText' => 'nullable|string|max:240',
                 'pages' => 'required|in:all,home,home-pricing', 'frequencyHours' => 'integer|min:1|max:720', 'priority' => 'integer|min:0|max:100',

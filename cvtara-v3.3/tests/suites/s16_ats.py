@@ -63,6 +63,7 @@ def run(ctx, t):
     threading.Thread(target=srv.serve_forever, daemon=True).start(); base = f"http://127.0.0.1:{port}"
     try:
         db = ctx.db(); c = ctx.client(); c.register("ats-a@test.local")
+        db.q("insert or replace into site_settings(key,value_json,revision,created_at,updated_at) values('plans',?,1,datetime('now'),datetime('now'))", __import__('json').dumps({"addon-10": {"sale": True}}))  # credit packs are off sale by default
         def buy(plan):
             s, j = c.api("POST", "checkout/start", {"plan": plan})
             return c.api("POST", "checkout/verify", {"provider": "demo", "orderId": j["orderId"]})[0] if s == 200 else s
@@ -81,8 +82,8 @@ def run(ctx, t):
 
         # free account: a few checks a day, no scan pool
         t.check("a free account can run a check from pasted text", scan(text=TEXT)[0] == 200)
-        t.check("buy Fresher Basic", buy("fresher-basic") == 200)
-        k = scans(); t.check("Fresher Basic includes 20 ATS scans", k["total"] == 20 and k["remaining"] == 20, k)
+        t.check("buy Job Hunt", buy("job-hunt") == 200)
+        k = scans(); t.check("Job Hunt includes 20 ATS scans", k["total"] == 20 and k["remaining"] == 20, k)
 
         s, j = scan(text=TEXT); sid = j.get("scanId"); rep = j.get("report", {})
         t.check("a scan reserves 1 scan and the server returns the full report", s == 200 and sid and scans()["used"] == 1 and {"score", "keywords", "gaps", "result"} <= set(rep), (s, str(j)[:200]))
@@ -135,12 +136,28 @@ def run(ctx, t):
         t.check("a tailored resume can be built from a saved check (job text and link come from the server)", s == 200 and c.api("GET", f"resumes/{v['id']}")[1]["resume"]["jobUrl"] == base + "/ld" and "LinkedIn Recruiter" in c.api("GET", f"resumes/{v['id']}")[1]["resume"]["jobDescription"])
         t.check("someone else's check cannot be used to build", other.api("POST", f"resumes/{jo['id']}/variant", {"company": "X", "role": "Y", "scanId": lid})[0] == 422)
 
+        # the score depends only on the resume and the job text: the optional boxes and repeat runs do not move it
+        a1 = scan(text=TEXT)[1]; a2 = scan(text=TEXT, title="Recruiter", company="Someone")[1]; a3 = scan(text=TEXT)[1]
+        t.check("the same resume and job always give the same score, whatever is typed in the title and company boxes", a1["report"]["score"] == a2["report"]["score"] == a3["report"]["score"], (a1["report"]["score"], a2["report"]["score"], a3["report"]["score"]))
+        s, j = scan(text="Program Director – Acme Learning\nAbout Acme Learning\nAcme Learning builds Python tools for schools and Kubernetes clusters for universities across India.\nKey Responsibilities\nLead campus operations across multiple campuses and manage faculty onboarding.\nPrepare MIS reports for senior leadership and drive process improvement.")
+        t.check("an empty title and company are filled in from the posting's first line", s == 200 and j["title"] == "Program Director" and j["company"] == "Acme Learning", (s, j.get("title"), j.get("company")))
+        names = [x["name"] for x in j["report"]["result"]["requirements"]]
+        t.check("the employer's own 'About us' text is not scored as requirements", "Python" not in names and "Containers" not in names and "Operations management" in names, names)
+        t.check("the employer's name is not a missing keyword", not [k for k in j["report"]["keywords"]["missing"] if k.lower() in ("acme", "learning")], j["report"]["keywords"])
+        s, j = scan(text=TEXT); t.check("a check says which resume it read", j.get("resumeTitle") == "Primary" and j.get("sameContent") is None, (j.get("resumeTitle"), j.get("sameContent")))
+        s, j = c.api("POST", "ats/scan", {"resumeId": v["id"], "source": "text", "text": TEXT})
+        t.check("an unchanged tailored copy is flagged, so the same score is explained", s == 200 and (j.get("sameContent") or {}).get("kind") == "unchanged_copy" and j["report"]["score"] == a1["report"]["score"], (s, j.get("sameContent")))
+        t.check("the history names the resume of each check", any(x.get("resumeTitle") == "TA Specialist · Acme Corp" for x in c.api("GET", "ats/scans")[1]["scans"]))
+        t.check("a saved check returns its job text for re-checking", "applicant tracking system" in (c.api("GET", f"ats/scans/{j['scanId']}")[1]["scan"].get("jobText") or ""))
+        ws = open(os.path.join(ctx.app, "resources/frontend/workspace.html"), encoding="utf8").read()
+        t.check("the workspace loads the fix-for-this-job panel and the report offers both one-click actions", "/job-fix.js" in ws and all(k in flow for k in ("data-ats-fix", "data-ats-letter", "data-ats-retry", "view=letter&write=1")))
+
         # the plan limit is enforced and an add-on adds scans
         left = scans()["remaining"]; ok = 0
         for _ in range(left):
             if scan(text=TEXT)[0] == 200: ok += 1
         t.check("the scans in the plan can all be used", ok == left and scans()["remaining"] == 0, (ok, left, scans()))
-        s, j = scan(text=TEXT); t.check("the next check is blocked with an add-on message", s == 422 and "ATS scans are used" in str(j), (s, str(j)[:160]))
+        s, j = scan(text=TEXT); t.check("the next check is blocked with an add-on message", s == 422 and "ATS scans on this plan are used" in str(j) and "add-on" in str(j), (s, str(j)[:160]))
         t.check("buy the +10 resumes & +10 cover letters add-on", buy("addon-10") == 200)
         k = scans(); t.check("the add-on adds 20 scans (2 per resume credit)", k["total"] == 40 and k["remaining"] == 20, k)
         t.check("scans work again after the add-on", scan(text=TEXT)[0] == 200 and scans()["remaining"] == 19)
@@ -186,3 +203,4 @@ def run(ctx, t):
         s, j = o.api("GET", "admin/report?dataset=scans&per=10&status=done"); t.check("the ATS report filters by status", s == 200 and all(r["status"] == "done" for r in j["rows"]))
     finally:
         srv.shutdown()
+        ctx.db().q("delete from site_settings where key='plans'")

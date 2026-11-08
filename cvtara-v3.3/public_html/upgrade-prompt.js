@@ -27,16 +27,23 @@
   const style = document.createElement('style'); style.textContent = css; document.head.append(style);
 
   const copy = {
-    download: { tag: 'Clean download', title: 'Unlock clean downloads with a plan', lead: 'You can build, preview and save for free. Downloads without a watermark come with a plan.', steps: ['Choose a plan (paid once, no auto-renewal)', 'Download clean PDF and Word files that are ready to send', 'Then run the ATS check against the job you want'] },
-    ats: { tag: 'ATS check', title: 'A plan is needed to run more ATS checks', lead: 'Free accounts get a few checks. To check your resume against more jobs and see exactly what each one needs, pick a plan first.', steps: ['Choose a plan (paid once, no auto-renewal)', 'Run ATS checks against the jobs you are applying for', 'Fix the missing requirements and download a clean copy'] },
+    download: { tag: 'Clean download', title: 'Your resume is ready to download', lead: 'Building, saving and previewing stay free. Pick how you want the watermark-free PDF and Word files.', choices: true, steps: [] },
+    ats: { tag: 'ATS check', title: 'Run more ATS Match scans with Job Hunt', lead: 'Free accounts get 3 checks a day. Job Hunt adds 20 ATS Match scans with a gap report for each job.', steps: ['Choose Job Hunt or Pro (paid once, no auto-renewal)', 'Run ATS checks against the jobs you are applying for', 'Fix the missing requirements and download a clean copy'] },
     verify: { tag: 'Confirm your email', title: 'Confirm your email to continue', lead: 'We sent a 6-digit code to your email. It takes a minute and keeps your account safe.', steps: ['Open the email from CVTara (check spam once)', 'Enter the 6-digit code', 'Come back and carry on where you stopped'], cta: ['Enter my code', '/verify-email'] },
   };
   function show(kind) {
     const c = copy[kind] || copy.download;
+    if (c.choices && !window.CVTaraBusiness?.plans) {
+      fetch('/api/business-public', { headers: { Accept: 'application/json' }, credentials: 'same-origin' }).then(r => r.json()).then(d => { window.CVTaraBusiness = d; show(kind); }).catch(() => { window.CVTaraBusiness = { plans: {} }; show(kind); });
+      return;
+    }
     let d = document.getElementById('cvUp');
     if (!d) { d = document.createElement('dialog'); d.id = 'cvUp'; d.setAttribute('aria-labelledby', 'cvUpT'); document.body.append(d); }
     const cta = c.cta || ['See plans', '/checkout.html'];
-    d.innerHTML = `<div class="up-top"><span>${E(c.tag)}</span><h2 id="cvUpT">${E(c.title)}</h2></div><div class="up-body"><p>${E(c.lead)}</p><ol>${c.steps.map(s => `<li>${E(s)}</li>`).join('')}</ol><div class="up-cta"><a class="up-main" href="${E(cta[1])}">${E(cta[0])}</a><button type="button" data-x>Not now</button></div><small>All payments are final and non-refundable. Your saved work stays in your account either way.</small></div>`;
+    const inr = n => '₹' + Number(n || 0).toLocaleString('en-IN');
+    const pl = window.CVTaraBusiness?.plans || {}, quick = pl.quick, hunt = pl['job-hunt'];
+    const choices = c.choices && quick && hunt && quick.sale !== false && hunt.sale !== false ? `<div class="cv-up-choices"><a href="/checkout.html?plan=quick"><span>Download this resume</span><b>${inr(quick.price)}</b><span>Clean PDF + Word, edit and re-download for ${E(quick.accessDays)} days</span></a><a class="pop" href="/checkout.html?plan=job-hunt"><em>Most popular</em><span>Job Hunt</span><b>${inr(hunt.price)}</b><span>${E(hunt.savedResumes)} tailored resumes, ${E(hunt.savedLetters)} cover letters, ${E(hunt.atsScans)} ATS Match scans · ≈ ${inr(Math.round(hunt.price / hunt.accessDays))}/day</span></a></div>` : '';
+    d.innerHTML = `<div class="up-top"><span>${E(c.tag)}</span><h2 id="cvUpT">${E(c.title)}</h2></div><div class="up-body"><p>${E(c.lead)}</p>${choices}${c.steps.length ? `<ol>${c.steps.map(s => `<li>${E(s)}</li>`).join('')}</ol>` : ''}<div class="up-cta">${choices ? '' : `<a class="up-main" href="${E(cta[1])}">${E(cta[0])}</a>`}<button type="button" data-x>Not now</button></div><small>7-day refund if unused · Pay once, no auto-renewal · UPI, cards and net banking. Your saved work stays in your account either way.</small></div>`;
     d.querySelector('[data-x]').onclick = () => d.close();
     document.querySelectorAll('dialog[open]').forEach(o => { if (o !== d && o.id === 'exportDialog') o.close(); });
     if (!d.open) d.showModal();

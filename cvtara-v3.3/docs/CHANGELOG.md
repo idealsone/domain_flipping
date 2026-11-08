@@ -1,4 +1,100 @@
-# CVTara v3.14.4 — Clear cache button, Dashboard after sign-up
+# CVTara v3.22.1 — Pricing and referral rules, small fixes, landing spacing
+
+## 3.22.1
+- **Pricing (#23):** the home page says plans start at ₹99 everywhere (the "A plan, paid once" card said ₹299). Only packages count for "Give ₹50, get ₹50": Job Hunt (₹299), Pro (₹599) and up. Quick Download (₹99) and the add-on services (₹499, ₹699) get no referral discount and never earn credit.
+- **Carry-over fixes (#16, 3.21.1):** OneSignal App ID from the push panel, plain password-reset wording, branded mailer preview. On the 3.22.0 download dialog, free accounts no longer get a "uses 1 credit" warning on the reward-download link, a 402 offers "Download for ₹99" and "See plans", and a blank print tab is closed on error.
+- **Home page spacing (#17):** no empty bands between sections.
+- **Owner mailer (#3):** templates added in later releases show up, and every email type is labelled.
+- No migrations. Rebuild the ready-made pages after updating.
+
+# CVTara v3.22.0 — CVTara team wording, daily limit on services
+
+## 3.22.0
+- **CVTara team:** customers see Tara Expert Review, Profile Boost, the writing help, ATS "Fix my resume" and the cover-letter writer as work by the CVTara team. No page, email, policy or message names AI or the provider. The owner console keeps its internal wording.
+- **Daily limit:** each paid service can be ordered 3 times per customer per day, then it is hidden for that customer until tomorrow.
+- The workspace script `tara-ai.js` is now `tara-help.js`.
+- Includes the live fixes from PRs #18 (indexing), #20 (ATS match), #21 (resume import) and #22 (cover letters). Run `php artisan migrate --force` and rebuild all pages after uploading.
+
+# CVTara v3.21.0 — Resume upload, readable referral links, new landing page, owner console fixes
+
+## 3.21.0 (workspace)
+- **Resume upload (My Resumes):** the file is read first; if a free account already has its one resume, the customer can put the upload into that resume ("Use this file instead") or see plans. Paid accounts at their limit pick which resume to replace.
+- **Readable referral links:** first name plus digits (e.g. `/r/priya-4821`). Old codes are kept in `old_referral_code`, so links already shared keep working.
+- **Dashboard plan card** ("Your plan: Free" with Upgrade) replaces the empty ring; template thumbnails no longer split long names; the workspace menu button sits beside the page title on phones and tablets.
+
+## 3.21.0 (landing page and speed)
+- **Fixed header** that stays on screen while scrolling, and a back-to-top button. Menu: "Examples" is now "Resume by Role"; new "By City" link.
+- **Faster public pages:** head stylesheets are joined into one cached file (`assets/bundle/`), public data is fetched once per page instead of five times, Google Fonts load from a head link. Home page: 51 → 33 requests, about 1.15 MB → 0.64 MB.
+- **New home page design** (`home-v3.css`): new hero with a fading role word, proof cards, a "what you get" grid and rounded referral and closing cards. Owner platform guide restyled like the customer guide, with search.
+
+## 3.21.0 (owner console)
+- **Search text:** blank saved page titles, descriptions and keywords fall back to the defaults; the 10 main page defaults are rewritten around the non-branded keyword plan.
+- **Blog & SEO** lists the ~508 built-in job, city and state pages next to the posts, with a type filter and search.
+- **Referral Ops** edits the live wallet rules (give ₹50, get ₹50); the unused cash-commission fields fold away.
+- **Pricing** tabs follow the packages (Packages, Services, Add-ons, Free) and show whether Tara Expert Review is on sale.
+- **Delete user is now permanent:** the account and its content are removed; purchases, refunds and wallet records move to one "Deleted customers" placeholder with personal details erased. Accounts that earlier deletes only anonymised are removed by the migration. Run `php artisan migrate --force` after uploading.
+
+# CVTara v3.20.0 — Guided template library, automatic Tara Expert Review, SEO audit, new email design
+
+## 3.20.0 (mail)
+- **One email design for every mail** (`MailLayout`): wordmark, a white 600px card with a thin brand line, one clear button, a preview line, a plain-text copy, a footer with the reason, the support address, your postal address (new field: Integrations → Email → Postal address) and, on marketing mail only, Unsubscribe. Table layout and inline styles for Gmail, Outlook and phone apps; full width on phones; readable in dark mode. Receipts show a details table; package lists and offers are drawn from Pricing and Offers & festivals.
+- **All templates rewritten for the current product:** Free, Quick Download ₹99, Job Hunt ₹299 (30 days), Pro ₹599 (90 days), paid once with no auto-renewal, 7-day refund if unused, Razorpay. The referral nudge is now "Give ₹50, get ₹50" on packages of ₹299 and up (it is skipped while the wallet referral is off). Tara AI and Tara Expert Review lines appear only while those are switched on. New placeholders: `[plans]`, `[offer]`, `[note: …]`, `[preheader: …]`, `{{checkout_url}}`, `{{offer_line}}`, `{{tara_line}}`, `{{expert_line}}`, `{{referral_reward}}`. The offer is read when the mail is sent, so an ended offer is never mailed. Saved templates that still had the old ready-made wording get the new wording; your own edits are kept.
+- **On time:** sign-up codes, security codes and password resets are sent inside the request that creates them, never behind campaigns or the next cron run (the cron retries a minute later if the provider is down). The cron now sends due mail first (before the daily backup and scans) and again after queuing new mail; each pass sends at most 40 mails and stops after 45 seconds so the next minute starts on time. Rows are claimed atomically, so an instant send and a cron run never send the same mail twice.
+- **Mailbox limit:** new "Mailbox limit per 24 hours" (default 1,000, Hostinger Business Starter) in Email campaigns → Sending limits. Tips and campaigns pause 100 short of it, so codes and receipts always go out.
+- **Inbox placement:** From is your sender address, Reply-To your reply address, Message-ID on your own domain, Feedback-ID for Gmail Postmaster Tools, one-click List-Unsubscribe on marketing mail only. Setup & health now checks that the From address is on your domain, that the postal address is filled in and that account mail is not stuck. `tools/mail_lint.py` scores every template (subject wording, capitals, text-to-link balance, shorteners, images, size, unsubscribe).
+- **Outreach (cvtara.in mailboxes) is now part of 3.20** (it had been built on an older version and never merged): up to 5 mailboxes, each with its own warm-up (first-day amount + daily step, up to its cap), send window, spacing that varies between 70 and 100% of the even gap, warm-up share to your own addresses, stop on sign-up, unsubscribe and bounce, auto-pause after 3 failures or 10% bounces. Its templates use the live lowest price and offer, links point to the public ATS checker, and the designed card uses the shared design. Run `php artisan migrate` after uploading.
+
+## 3.20.0 (Tara Expert Review)
+
+- **Tara Expert Review is now written automatically by Tara AI.** When an order opens (right after payment) and on every minute cron, up to 3 waiting orders are picked up, marked In review, written by Tara AI from the customer's primary resume (or the one edited last), stored on the order, marked Delivered and emailed (new "Tara Expert Review delivered" template). The review has a fixed structure: overall verdict, section-by-section feedback, ATS issues, a rewritten summary, 3 to 5 rewritten bullets and a fix list in priority order. The customer reads it under Account → Purchase history. It never uses the customer's daily Tara AI suggestions or the site-wide suggestion cap.
+- **Owner control.** Refunds & services has a new "Automatic expert reviews" switch (on by default; it only works while Tara AI is set up and switched on, otherwise orders wait as before). In the reviewer queue the owner can view, edit and resend any review, write one by hand (it is emailed when marked delivered) and ask Tara AI to try again.
+- **Failures are retried, then handed to the owner.** A failed or declined attempt goes back to Not started (so the order stays refundable) and is retried after 10, then 20 minutes; after 3 attempts it stays in the queue flagged "Needs you" with the reason, and a warning goes to the error log. A per-order lock and a conditional claim mean two cron runs never write the same review; an attempt cut off half-way is put back after 15 minutes.
+- **Honest copy.** Tara Expert Review no longer promises "a working recruiter within 48 working hours": the plan text, checkout line, dashboard, refund policy and privacy policy now say Tara AI writes it from the saved resume. Saved plan text that still had the old default wording is updated by the migration. Run `php artisan migrate` after uploading.
+
+# CVTara v3.19.0 — Razorpay only, Tara AI and email campaigns
+
+## 3.19.0
+- **Razorpay is the only payment gateway.** Cashfree checkout, its webhook and Cashfree Payouts are removed. Checkout no longer asks for a mobile number. Referral cash withdrawals are paid by the owner by hand and marked paid with the bank or UPI reference. Signup stays email-only with a 6-digit email code.
+- **Tara AI writing help, powered by Claude.** A "Tara AI" button in the workspace offers seven tasks: improve clarity, turn duties into achievement bullets, write a profile summary, tailor to a job, draft a cover letter, check against a job and practise interview questions. Off until the owner saves a Claude API key (Settings → Integrations → AI) and switches AI on. Free accounts get 3 suggestions a day, plans 20, with a site-wide daily cap (default 300) to keep the Claude bill in check. Only the text the customer picks is sent, after they tick consent; a failed or declined request does not use up a suggestion; a wrong key is logged for the owner. The privacy policy names Anthropic.
+- **Email campaigns (Owner console → Email campaigns).** Send newsletters and offers to customers who agreed to marketing email (all, never bought, plan active, plan ended) or to imported contacts (CSV with a permission tick, repeats merged). Branded preview, test send to yourself, live recipient count, send now or schedule in India time, pause, resume and cancel, and a report of sent, failed and unsubscribed. Sends through the existing mailer and cron, 20 a minute and 300 a day by default. Every campaign email has a one-click unsubscribe; unsubscribed contacts go on a do-not-mail list. Run `php artisan migrate` after uploading.
+- **Application status reminders now actually go out.** They were only sent by a command the host cron never ran; the regular cron now sends them every hour.
+
+# CVTara v3.18.0 — Clearer, more trustworthy pages and less unused code
+
+## 3.18.0
+- **Plainer trust points:** the footer now says "Secure payment by Razorpay · 7-day refund if unused · No auto-renewal" instead of technical badges. Checkout explains that card and UPI details are entered only in Razorpay's window.
+- **Home page:** removed the leftover "all payments final" line (the 7-day refund applies), the "under 15 minutes" claim and the vague "70%+" stat (replaced with the 7-day refund). The ATS note names the current scan counts (Job Hunt 20, Pro 60). The employer list no longer claims what customers do.
+- **Privacy policy:** names Razorpay as the payment processor and drops phone verification.
+- **Removed unused code:** the old phone verification for referral rewards (Twilio settings, send/check endpoints, held-review panel and launch-check line), the unused 10-friend reward setting, the unlinked guide.js script and an audit script for the removed feature.
+
+## 3.17.0
+- **Check my writing** in the resume and cover-letter builders. One click lists suggestions in three groups, each with the line it is about and words to try:
+  - **Stronger writing:** weak openings such as "responsible for", "helped" and "worked on"; buzzwords such as "hard-working" and "team player"; bullets with no number or result; long bullets and sentences; "I" and "my" in a resume; three or more bullets starting with the same verb; Indian-English phrases that read oddly to many recruiters ("revert back", "do the needful", "Myself Asha").
+  - **Tone:** unsure or negative wording ("tried to", "unfortunately", "just") and, in cover letters, casual or pushy lines ("Hey", "hire me", "ASAP").
+  - **Grammar & spelling:** common misspellings, repeated words, double spaces, a lowercase "i", sentences that start in lowercase, spaces around punctuation and "!!".
+- The check runs on CVTara's own server from a word list (`resources/data/writing-rules.json`), costs nothing and sends text nowhere. It never changes the document.
+- **Optional full grammar check (LanguageTool):** a new GRAMMAR switch under Integrations, off by default. When on, customers see a "Full grammar check" button that sends that document's text to LanguageTool (the free public service, a Premium key or your own server). Limit 20 a day per customer; a failed check is not counted.
+- Privacy Policy text names LanguageTool and says the basic check sends nothing.
+
+## 3.16.0
+- **New packages:** Free, Quick Download ₹99 for 7 days (one resume, edit and re-download it as often as you like), Job Hunt ₹299 for 30 days (5 resumes, 5 cover letters, 20 ATS scans) and Pro ₹599 for 90 days (20/20/60). Plan cards show the price per day, "Most popular" and "Best value". Old plans keep working for customers who bought them; old plan links and coupons map to the new plans.
+- **Upgrade credit:** a Quick Download bought in the last 7 days and not refunded counts toward Job Hunt or Pro.
+- **Services:** Tara Expert Review ₹499 (₹399 with Job Hunt or Pro), Profile Boost ₹699 (₹599 with a plan) and the Complete Job Kit ₹1,299 (worth ₹1,797). They are off sale until the owner switches them on in Pricing; orders show up in a new reviewer queue.
+- **7-day refund if unused**, once per customer: "Request refund" in Billing, an owner queue to approve or decline (with optional auto-approve), gateway refunds for Cashfree and Razorpay, and three new emails. Refund Policy, Terms and About text updated; saved copies that still said "non-refundable" are replaced automatically.
+- **Give ₹50, get ₹50:** on orders of ₹299 or more (Job Hunt, Pro or bigger), the friend gets ₹50 off their first such order and the referrer gets ₹50 wallet credit once that purchase is 7 days old. A ₹99 Quick Download earns neither. Saved referral settings below ₹299 are raised to ₹299. Credit lasts 90 days, at most ₹1,000 a month, and can be used at checkout. 5 qualified friends unlock a free Job Hunt month. Same inbox, browser, phone or payment counts as self-referral. Earlier cash commission stays withdrawable.
+- **Paywall:** the download dialog offers two choices, Quick Download or Job Hunt.
+- Checkout shows each discount line and "You pay".
+- **Offers:** the countdown timer is gone. The offer pop-up opens 20 seconds into a visit instead; saved offers are switched to this automatically.
+- Add-on packs are off sale by default (switch on in Pricing).
+
+## 3.15.0
+- **508 new server-rendered SEO pages** built from `resources/data/seo-pages.json` (source and generator in `tools/seo/`): resume examples by field and role (`/resume-examples/{field}/{role}/`), template styles (`/resume-templates/{style}/`), cover-letter examples by field, interview questions by role, India / state / city resume guides (`/resume-builder/...`), city × role pages (`/resume/{city}/{role}/`), state government-jobs pages, resume word swaps (`/resume-words/{word}/`) and an ATS checker landing page.
+- Every page has a title under 60 characters ending "| CVTara", a meta description under 155, one H1, visible breadcrumbs, an "On this page" list, an illustration with alt text, a filled sample, 4–5 FAQs, BreadcrumbList + FAQPage + WebPage JSON-LD (no LocalBusiness), one amber "Build my resume free" button and links to the ATS checker and pricing.
+- **Interlinking:** India → state → city → city × role; city × role → role example, interview page and the same role in two other cities; role → field, interview, cover letter and city pages; every page → existing guides on the topic.
+- **Keyword targeting:** pages follow the patterns that drive competitor traffic (role resume examples, templates, cover letters, interview questions, resume words) with all brand terms removed. Full keyword list in the project files (`seo-keywords/`).
+- **The 68 existing guides and calculators:** visible breadcrumbs, an "Explore next" box into the new hubs, and up to 3 contextual links on first mention of key phrases. The browser no longer adds a second, generic FAQPage block on top of the server's own.
+- Ready-made page cache and Apache rules cover the new paths; the sitemap lists them. Place facts to check before indexing are in `docs/SEO_VERIFY.md`. No salary figures are published.
+- Tests: `tests/suites/s23_seo_pages.py` crawls every new page and every internal link.
 
 ## 3.14.4
 - **Owner console: "Clear cache" button** in the top bar of every owner page and in Speed & traffic ("Clear cache & refresh site"). One click removes the stored pages, clears compiled views and cached settings, rebuilds every public page and reloads the page fresh.

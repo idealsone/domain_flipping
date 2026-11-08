@@ -22,4 +22,5 @@ def run(ctx, t):
     t.check("reset link is built from APP_URL, not the Host header", bool(link) and "evil.example" not in link[0], link[:1])
     cust = ctx.client(); cust.login("sec1@test.local", "TestPassw0rd!!x")
     for p in ("/workspace.html", "/templates.html"):
-        s, _, html = cust.page(p); t.check(f"{p} loads the shared owner-console.css for customers", s == 200 and "owner-console.css" in html)
+        s, _, html = cust.page(p); bundle = re.search(r'href="(/assets/bundle/[a-f0-9]+\.css)', html)  # public pages join their stylesheets into one file
+        t.check(f"{p} loads the shared owner-console.css for customers", s == 200 and ("owner-console.css" in html or bool(bundle and "/* /owner-console.css */" in cust.page(bundle.group(1))[2])))

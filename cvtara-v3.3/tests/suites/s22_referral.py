@@ -1,4 +1,4 @@
-"""Referral reward: 5 paying friends = one free resume download plus one month of subscription. One reward only, claimed once."""
+"""Referral reward: 5 qualified friends (paid, kept for 7 days) = one free resume download plus a free Job Hunt month. One reward only, claimed once."""
 import json, uuid
 NAME = "Referral reward (5 paying friends)"
 
@@ -8,6 +8,12 @@ def run(ctx, t):
     r = ctx.client(); r.register("ref-boss@test.local")
     uid = db.q("select id from users where email='ref-boss@test.local'")[0][0]
     code = db.q("select referral_code from users where id=?", uid)[0][0]
+    import re
+    t.check("the referral link is the first name plus numbers, not a random string", bool(re.fullmatch(r"test-\d{4,6}", code or "")), code)
+    t.check("the readable link opens sign-up", r.raw("GET", "/r/" + code)[0] == 302 and ctx.client().raw("GET", "/r/" + code)[1].get("Location", "").endswith("/register"))
+    t.check("two people with the same first name get different links", code != db.q("select referral_code from users where email='ref-boss2@test.local'")[0][0] if ctx.client().register("ref-boss2@test.local") else False)
+    db.q("update users set old_referral_code='OldRandomCode1234' where id=?", uid)
+    t.check("a random link shared before the change still works", ctx.client().raw("GET", "/r/OldRandomCode1234")[0] == 302 and ctx.client().raw("GET", "/r/NoSuchCode000000")[0] == 404)
     s, st = r.api("GET", "referral-rewards")
     t.check("the reward is on and needs 5 paying friends", s == 200 and st.get("enabled") is True and st["rules"]["downloadThreshold"] == 5, (s, str(st)[:200]))
     t.check("there is no second 10-friend tier in the rules the page uses", "10" not in str(st["rules"].get("downloadThreshold")) and st["rules"].get("downloadThreshold") == 5)
@@ -16,8 +22,8 @@ def run(ctx, t):
         c = ctx.client(); em = f"ref-f{n}@test.local"; c.register(em, ref=code)
         fid = db.q("select id from users where email=?", em)[0][0]
         if pay:
-            db.q("insert into purchases(id,owner_id,plan,amount_paise,status,provider,payment_reference,is_live,limits_json,access_days,purchased_at,access_until,created_at,updated_at) values(?,?,?,?,?,?,?,?,?,?,datetime('now'),datetime('now','+60 days'),datetime('now'),datetime('now'))",
-                 str(uuid.uuid4()), fid, "fresher-standard", 39900, "paid", "cashfree", "ref-pay-" + str(n), 1, "{}", 60)
+            db.q("insert into purchases(id,owner_id,plan,amount_paise,status,provider,payment_reference,is_live,limits_json,access_days,purchased_at,access_until,created_at,updated_at) values(?,?,?,?,?,?,?,?,?,?,datetime('now','-8 days'),datetime('now','+22 days'),datetime('now','-8 days'),datetime('now','-8 days'))",
+                 str(uuid.uuid4()), fid, "job-hunt", 29900, "paid", "razorpay", "ref-pay-" + str(n), 1, "{}", 30)
         return fid
     for n in range(4): friend(n)
     friend(90, pay=False)  # signed up but never paid: does not count
@@ -33,4 +39,4 @@ def run(ctx, t):
     t.check("one month of subscription is added", len(p) == 1 and p[0][1] == 30 and p[0][2] == "paid", p)
     s, a = r.api("GET", "allowance"); t.check("the customer now has plan access", a.get("paid") is True, str(a)[:120])
     s, j = r.api("POST", "referral-rewards/claim", {"milestone": 5}); t.check("the reward can only be claimed once", s == 409, s)
-    t.check("phone verification is no longer needed", r.api("POST", "referral-rewards/send", {"phone": "9876543210"})[0] in (404, 405))
+    t.check("phone verification is no longer needed", all(r.api("POST", "referral-rewards/" + p, {"phone": "9876543210", "code": "123456"})[0] == 404 for p in ("send", "check")))

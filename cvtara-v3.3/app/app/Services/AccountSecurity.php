@@ -19,7 +19,9 @@ class AccountSecurity
         RateLimiter::hit($key, 900);
         $code = (string) random_int(100000, 999999);
         $r->session()->put('security_challenge', ['hash' => Hash::make($code), 'until' => now()->timestamp + 600, 'attempts' => 0, 'user' => $r->user()->id]);
-        DB::table('mail_outbox')->insert(['id' => (string) Str::uuid(), 'dedupe' => (string) Str::uuid(), 'owner_id' => $r->user()->id, 'trigger' => 'security_verification', 'recipient' => $r->user()->email, 'subject' => 'Your CVTara security code', 'body' => "Your CVTara verification code is $code. It expires in 10 minutes. Do not share this code or your password. If you did not request it, review your account security.", 'due_at' => now(), 'created_at' => now(), 'updated_at' => now()]);
+        $id = (string) Str::uuid();
+        DB::table('mail_outbox')->insert(['id' => $id, 'dedupe' => (string) Str::uuid(), 'owner_id' => $r->user()->id, 'trigger' => 'security_verification', 'recipient' => $r->user()->email, 'subject' => 'Your CVTara security code', 'body' => "# Confirm it's you\n[preheader: Enter this code in CVTara to finish the change. It works for 10 minutes.]\nUse this code to confirm a change to your CVTara account:\n\n[code: $code]\n\nThe code works for 10 minutes. If you did not ask for it, change your password and write to support@cvtara.com.", 'due_at' => now(), 'created_at' => now(), 'updated_at' => now()]);
+        MailAutomation::sendNow($id);
         Settings::audit($r->user()->id, 'security_code_requested');
     }
 
