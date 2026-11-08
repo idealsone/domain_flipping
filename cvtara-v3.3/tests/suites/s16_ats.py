@@ -128,6 +128,8 @@ def run(ctx, t):
         used = scans()["used"]
         s, j = scan("link", url="not a url"); t.check("a malformed link is refused", s == 422)
         s, j = scan(text="too short"); t.check("a too-short job description is refused", s == 422 and scans()["used"] == used)
+        own = "Kaustav Kumar Sinha Ray\nBengaluru, India | +91 74559 83720\nkaustav@example.com\nLinkedIn | GitHub\n\nSUMMARY\nData Analyst with experience working with structured datasets, preparing reports and finding trends.\nSKILLS\nPython, SQL, Excel, Power BI\nPROJECTS\nSales dashboard in Power BI\nEDUCATION\nBachelor of Computer Applications 2021-2024\nGLA University, Mathura\nCGPA: 7.1/10\nCERTIFICATIONS\nGoogle Data Analytics"
+        s, j = scan(text=own); t.check("a resume uploaded as the job is refused with a clear message and uses no scan", s == 422 and "looks like a resume" in str(j) and scans()["used"] == used, (s, str(j)[:200]))
         s, j = c.api("POST", "ats/scan", {"resumeId": "00000000-0000-0000-0000-000000000000", "source": "text", "text": TEXT}); t.check("an unknown resume is refused", s == 422)
         other = ctx.client(); other.register("ats-b@test.local"); so, jo = other.api("POST", "resumes", {"data": resume("Theirs")})
         s, j = c.api("POST", "ats/scan", {"resumeId": jo["id"], "source": "text", "text": TEXT}); t.check("another person's resume cannot be used", s == 422)

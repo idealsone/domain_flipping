@@ -20,6 +20,10 @@ class Retention
         $n['atsVoid'] = DB::table('ats_scans')->whereIn('status', ['void', 'reserved'])->where('created_at', '<', now()->subDays(7))->delete();
         $n['atsOld'] = DB::table('ats_scans')->where('created_at', '<', now()->subDays(365))->delete();
         $n['passwordTokens'] = DB::table('password_reset_tokens')->where('created_at', '<', now()->subDay())->delete();
+        // Tara chats: the words are kept for 180 days, then wiped (the count stays for the owner's usage numbers)
+        $n['taraChats'] = DB::table('tara_messages')->where('created_at', '<', now()->subDays(180))->where('content', '!=', '')->update(['content' => '', 'meta_json' => null]);
+        $n['taraTools'] = DB::table('tara_tool_calls')->where('created_at', '<', now()->subDays(180))->delete();
+        $n['taraEvents'] = \Illuminate\Support\Facades\Schema::hasTable('tara_events') ? DB::table('tara_events')->where('created_at', '<', now()->subDays(365))->delete() : 0;
 
         return $n;
     }

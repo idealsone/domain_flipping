@@ -53,6 +53,15 @@ def run(ctx, t):
     r = db.q("select amount_paise, is_live from purchases where owner_id=? and provider='manual'", did)[0]
     t.check("a grant without an amount records zero revenue", r[0] == 0 and not r[1], r)
     t.check("user has access after grant", d.api("GET", "allowance")[1].get("plan") == "pro")
+    s, g = o.api("GET", f"admin/users/grants?userId={did}")
+    gr = (g.get("grants") or [{}])[0]
+    t.check("the grants list shows the complimentary plan, its reason and who gave it", s == 200 and gr.get("complimentary") and gr.get("note") == "complimentary" and gr.get("grantedBy") and gr.get("active"), g)
+    s, j = o.api("POST", "admin/users/grant-revoke", {"purchaseId": gr.get("id"), "note": "ended early"})
+    s2, g2 = o.api("GET", f"admin/users/grants?userId={did}")
+    t.check("one grant can be ended on its own, with the reason kept", s == 200 and not g2["grants"][0]["active"] and g2["grants"][0]["revokeNote"] == "ended early" and d.api("GET", "allowance")[1].get("plan") != "pro", (j, g2))
+    t.check("an ended grant cannot be ended twice", o.api("POST", "admin/users/grant-revoke", {"purchaseId": gr.get("id"), "note": "again"})[0] == 422)
+    t.check("a customer cannot read the grants list", d.api("GET", f"admin/users/grants?userId={did}")[0] in (401, 403, 404))
+    o.api("POST", "admin/users/grant", {"userId": did, "plan": "pro", "note": "complimentary again", "sendEmail": False})
     s, j = o.api("POST", "admin/users/revoke", {"userId": did, "note": "test revoke"}); t.check("revoke works", s == 200, j)
     r = db.q("select status, refunded_paise from purchases where owner_id=? and provider='manual'", did)[0]
     t.check("revoke does not invent a refund", r[1] == 0 and r[0] == "paid", r)

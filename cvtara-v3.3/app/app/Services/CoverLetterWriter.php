@@ -87,7 +87,7 @@ class CoverLetterWriter
             .'The four paragraphs together should be 250 to 350 words. Do not include the greeting, the sign-off or the person\'s name.'
             ."\n\n<resume>\n".mb_substr($resumeText, 0, 12000)."\n</resume>\n\n<job>\nRole: ".$job['role']."\nCompany: ".$job['company']."\n".mb_substr($job['text'], 0, 8000)."\n</job>";
         try {
-            $raw = TaraAI::ask(self::SYSTEM, $prompt, 6000, 55);
+            $raw = TaraAI::ask(self::SYSTEM, $prompt, 6000, 55, 'customer:cover_letter', $u->id);
             $a = strpos($raw, '{');
             $b = strrpos($raw, '}');
             $j = $a !== false && $b > $a ? json_decode(substr($raw, $a, $b - $a + 1), true) : null;
@@ -467,9 +467,10 @@ class CoverLetterWriter
     {
         $out = [];
         $cur = '';
-        foreach (preg_split('/\R/u', $t) ?: [] as $l) {
+        foreach (preg_split('/\R/u', TextClean::text($t)) ?: [] as $l) {
             $s = self::strip($l);
-            if ($s === '') {
+            // Empty lines and section headings left inside the text ("TRAININGS OR CERTIFICATIONS") are not achievements.
+            if ($s === '' || (preg_match('/^[\p{Lu}\d &\/,\-–]+$/u', $s) && str_word_count($s) <= 6)) {
                 continue;
             }
             $isNew = (bool) preg_match('/^\s*[•●▪◦·*\-–]/u', $l) || $cur === '' || (preg_match('/[.!?;]$/', $cur) && preg_match('/^[A-Z]/', $s));
@@ -499,7 +500,8 @@ class CoverLetterWriter
 
     private static function strip(string $l): string
     {
-        return trim((string) preg_replace('/^[\s\x{200B}\x{FEFF}•●▪◦·*\-–]+/u', '', $l));
+        // TextClean turns "?", emoji and symbol bullets (left by fonts a PDF could not map) into "• " first.
+        return trim((string) preg_replace('/^[\s\x{200B}\x{FEFF}•●▪◦·*\-–]+/u', '', TextClean::line($l)));
     }
 
     private static function line(mixed $s): string

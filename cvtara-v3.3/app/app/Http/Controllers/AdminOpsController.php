@@ -19,7 +19,7 @@ use Illuminate\Support\Str;
 /** Owner-only operations: user management, order detail, error log, site URLs and daily health. */
 class AdminOpsController extends Controller
 {
-    public const ROUTES = '#^(refunds(/settings|/[0-9a-f-]{36}/(approve|reject))?|services(/settings|/[0-9a-f-]{36}(/(review|resend|retry))?)?|users/(grant|update|revoke|delete)|orders/[0-9a-f-]{36}|errors(/clear|/download)?|site-urls|legal/generate|health/(history|run))$#';
+    public const ROUTES = '#^(refunds(/settings|/[0-9a-f-]{36}/(approve|reject))?|services(/settings|/[0-9a-f-]{36}(/(review|resend|retry))?)?|users/(grant|grants|grant-revoke|update|revoke|delete)|orders/[0-9a-f-]{36}|errors(/clear|/download)?|site-urls|legal/generate|health/(history|run))$#';
 
     public function run(Request $r, string $path)
     {
@@ -133,10 +133,10 @@ class AdminOpsController extends Controller
             $cur = Settings::get('legal');
             $d = Settings::defaults()['legal'];
             $email = $cur['supportEmail'] ?: 'support@cvtara.com';
-            $city = trim(explode("\n", $cur['address'] ?: 'CVTara, Bangalore, Karnataka, India')[0]);
+            $city = trim(explode("\n", $cur['address'] ?: 'IndiQube Park, Domlur 1st Stage, Bengaluru, Karnataka 560071')[0]);
             $out = [];
             foreach (['about', 'terms', 'privacy', 'refund'] as $k) {
-                $out[$k] = str_replace(['support@cvtara.com', 'CVTara, Bangalore, Karnataka, India'], [$email, $city], $d[$k]);
+                $out[$k] = str_replace(['support@cvtara.com', 'CVTara, Bangalore, Karnataka, India', 'IndiQube Park, Domlur 1st Stage, Bengaluru, Karnataka 560071'], [$email, $city, $city], $d[$k]);
             }
 
             return $ok(['policies' => $out]);
@@ -152,8 +152,41 @@ class AdminOpsController extends Controller
             return $ok(['snapshot' => Health::run(true), 'history' => Settings::get('healthHistory', [])]);
         }
 
+        if ($path === 'users/grants') {
+            // Complimentary and manual plans given from the console: what, when, until when, how much was received, why and by whom.
+            abort_unless($get, 405);
+            $uid = $r->integer('userId');
+            $notes = DB::table('activity_events as a')->leftJoin('users as u', 'u.id', '=', 'a.owner_id')->whereIn('a.event', ['manual_grant', 'manual_grant_revoked'])->where(function ($q) use ($uid) {
+                foreach (DB::table('purchases')->where('owner_id', $uid)->where('provider', 'manual')->pluck('id') as $pid) {
+                    $q->orWhere('a.reference', 'like', $pid.':%');
+                }
+            })->orderBy('a.created_at')->get(['a.event', 'a.reference', 'a.created_at', 'u.email']);
+            $rows = DB::table('purchases')->where('owner_id', $uid)->where('provider', 'manual')->orderByDesc('created_at')->limit(50)->get(['id', 'plan', 'amount_paise', 'status', 'purchased_at', 'access_until', 'created_at']);
+
+            return $ok(['grants' => $rows->map(function ($p) use ($notes) {
+                $mine = $notes->filter(fn ($n) => str_starts_with((string) $n->reference, $p->id.':'))->values();
+                $given = $mine->firstWhere('event', 'manual_grant');
+                $gone = $mine->firstWhere('event', 'manual_grant_revoked');
+
+                return ['id' => $p->id, 'plan' => $p->plan, 'amountPaise' => (int) $p->amount_paise, 'complimentary' => (int) $p->amount_paise === 0, 'startedAt' => $p->purchased_at ?? $p->created_at, 'accessUntil' => $p->access_until,
+                    'active' => $p->access_until && now()->lt($p->access_until), 'note' => $given ? trim(substr((string) $given->reference, strlen($p->id) + 1)) : '', 'grantedBy' => $given->email ?? '',
+                    'revokedAt' => $gone->created_at ?? null, 'revokedBy' => $gone->email ?? '', 'revokeNote' => $gone ? trim(substr((string) $gone->reference, strlen($p->id) + 1)) : ''];
+            })->all()]);
+        }
+
         abort_unless($r->isMethod('POST'), 405);
         AccountSecurity::requireRecent($r);
+        if ($path === 'users/grant-revoke') {
+            // Ends one manual or complimentary grant now. No refund is recorded: complimentary access is not a payment.
+            $v = $r->validate(['purchaseId' => 'required|uuid', 'note' => 'required|string|min:3|max:300']);
+            $p = DB::table('purchases')->where('id', $v['purchaseId'])->where('provider', 'manual')->first();
+            abort_unless($p, 404);
+            abort_unless($p->access_until && now()->lt($p->access_until), 422, 'This grant has already ended.');
+            DB::table('purchases')->where('id', $p->id)->update(['access_until' => now(), 'updated_at' => now()]);
+            Settings::audit($admin, 'manual_grant_revoked', $p->id.': '.$v['note']);
+
+            return $ok(['access' => Settings::access((int) $p->owner_id)]);
+        }
         if ($path === 'users/grant') {
             $v = $r->validate(['userId' => 'required|integer', 'plan' => 'required|string|max:60', 'days' => 'nullable|integer|min:1|max:1095', 'amount' => 'nullable|numeric|min:0|max:1000000', 'note' => 'required|string|min:3|max:300', 'sendEmail' => 'sometimes|boolean']);
             $target = User::findOrFail($v['userId']);

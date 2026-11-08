@@ -42,3 +42,7 @@
 #cvSupport[data-side=left] .cv-sup-panel{right:auto;left:0;border-left:0;border-right:1px solid var(--line,#e2e8f0);box-shadow:12px 0 40px rgba(15,23,42,.22);animation-name:cvSupInL}
 @keyframes cvSupInL{from{transform:translateX(-24px);opacity:.4}to{transform:none;opacity:1}}
 @media(max-width:600px){#cvSupport[data-side=left] .cv-sup-fab{left:12px}}
+
+/* In the workspace top bar */
+.cv-sup-fab.in-top{position:static;box-shadow:none;padding:8px 14px;font-size:13px;transform:none}
+@media(max-width:600px){.cv-sup-fab.in-top{padding:8px 10px}}

@@ -49,7 +49,7 @@ class EmailRenderer
             $a = '';
         }
 
-        return $a !== '' ? preg_replace('/\s*\R\s*/', ', ', $a) : 'Bangalore, Karnataka, India';
+        return $a !== '' ? preg_replace('/\s*\R\s*/', ', ', $a) : 'IndiQube Park, Domlur 1st Stage, Bengaluru, Karnataka 560071';
     }
 
     public static function supportAddress(): string

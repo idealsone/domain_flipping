@@ -433,6 +433,7 @@ class ContentController extends Controller
         }
         if ($path === 'workspace.html') {
             $head .= '<link rel="stylesheet" href="/support-widget.css">'; // the feedback button belongs to signed-in customers only
+            $head .= '<link rel="stylesheet" href="/tara-chat.css">'; // Tara chat shows only when the owner has switched it on
         }
         $kw = trim((string) ($custom['keywords'] ?? $post['keywords'] ?? ''));
         if ($kw !== '') {
@@ -514,6 +515,7 @@ class ContentController extends Controller
         }
         if ($path === 'workspace.html') {
             $scripts .= '<script src="/support-widget.js" defer></script>';
+            $scripts .= '<script src="/tara-chat.js" defer></script>';
         }
         $html = str_replace('</body>', $scripts.'</body>', $html);
 

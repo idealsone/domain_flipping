@@ -49,7 +49,7 @@ class ResumeTailor
         @set_time_limit(180);
         $prompt = "<resume>\n".json_encode($input, JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT)."\n</resume>\n\n<job>\n".mb_substr($jobText, 0, 9000)."\n</job>\n\n<missing>\n".implode(', ', array_slice($report['keywords']['missing'] ?? [], 0, 20))."\n</missing>";
         try {
-            $raw = TaraAI::ask(self::SYSTEM, $prompt, 6000, 150);
+            $raw = TaraAI::ask(self::SYSTEM, $prompt, 6000, 150, 'customer:ats_tailor', $u->id);
             $out = self::parse($raw, count($exp));
             Settings::audit($u->id, 'resume_tailored_for_job');
         } catch (\Throwable $e) {

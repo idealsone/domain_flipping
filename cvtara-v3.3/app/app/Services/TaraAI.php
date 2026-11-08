@@ -73,7 +73,7 @@ class TaraAI
 
     /** One request to Claude with the owner's key and model. Returns the text, or throws (refusal, empty answer, API error, or
      * the monthly cap for growth tasks). Every answer's tokens are counted on the Growth page; $purpose names who asked. */
-    public static function ask(string $system, string $prompt, int $maxTokens, int $timeout = 50, string $purpose = 'customer'): string
+    public static function ask(string $system, string $prompt, int $maxTokens, int $timeout = 50, string $purpose = 'customer', ?int $ownerId = null): string
     {
         if (! Growth::aiAllowed($purpose)) {
             throw new \RuntimeException('budget');
@@ -89,7 +89,7 @@ class TaraAI
             betas: ['server-side-fallback-2026-07-01'],
         );
         try {
-            Growth::recordAi($purpose, (string) ($m->model ?? ''), (int) ($m->usage->inputTokens ?? 0), (int) ($m->usage->outputTokens ?? 0));
+            Growth::recordAi($purpose, (string) ($m->model ?? ''), (int) ($m->usage->inputTokens ?? 0), (int) ($m->usage->outputTokens ?? 0), $ownerId);
         } catch (\Throwable $e) {
             ErrorLog::exception($e); // counting must never cost the customer their answer
         }
@@ -150,7 +150,7 @@ class TaraAI
         @set_time_limit(120); // shared hosting often stops PHP at 30-60 seconds; a suggestion can take longer
         $prompt = $task[1]."\n\n<text>\n".$d['text']."\n</text>".(trim((string) ($d['context'] ?? '')) !== '' ? "\n\n<job>\n".$d['context']."\n</job>" : '');
         try {
-            $text = self::ask(self::SYSTEM, $prompt, 4000 + $task[2] * 2);
+            $text = self::ask(self::SYSTEM, $prompt, 4000 + $task[2] * 2, 50, 'customer:writing_help');
             Settings::audit($u->id, 'tara_ai_suggestion', $d['task']);
 
             return $text;
