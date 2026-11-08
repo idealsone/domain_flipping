@@ -21,3 +21,7 @@
 .pm-plans{display:flex;flex-wrap:wrap;gap:6px 14px;margin-top:4px}.pm-plans label{display:flex;gap:5px;align-items:center;font-size:13px}
 .pm-two{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px}.pm-check{display:flex;gap:8px;align-items:center;margin:8px 0 2px;font-weight:600}
 .pm-trg{display:grid;gap:8px;margin:8px 0;padding:10px;border-radius:10px;background:var(--soft)}
+
+.owner-form .owner-check{display:flex;gap:10px;align-items:flex-start;font-weight:400;margin:10px 0}
+.owner-check input{margin-top:4px;flex:none}
+#fastIndex a{overflow-wrap:anywhere}
