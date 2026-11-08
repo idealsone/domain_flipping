@@ -5,7 +5,17 @@
   if (!button) return;
   const inr = n => '₹' + Number(n || 0).toLocaleString('en-IN');
   const guest = (document.querySelector('meta[name=cvtara-user]')?.content || 'guest') === 'guest';
-  let active = new URLSearchParams(location.search).get('plan') || '', plans = {};
+  let active = new URLSearchParams(location.search).get('plan') || '', plans = {}, gateways = [], gateway = '';
+  const gatewayName = () => (gateways.find(g => g.id === gateway) || gateways[0])?.name || 'our payment partner';
+  function renderGateways() {
+    const box = document.getElementById('coGateways'), note = document.getElementById('coGatewayNote');
+    if (!gateways.some(g => g.id === gateway)) gateway = gateways[0]?.id || '';
+    if (note) note.textContent = 'You pay in ' + gatewayName() + '’s secure payment window. CVTara never sees or stores your card or UPI details.';
+    if (!box) return;
+    box.hidden = gateways.length < 2;
+    box.innerHTML = gateways.length < 2 ? '' : '<p style="margin:8px 0 4px;font-weight:700">Pay with</p>' + gateways.map(g => `<label class="checkout-consent" style="margin-top:4px"><input type="radio" name="coGateway" value="${g.id}" ${g.id === gateway ? 'checked' : ''}><span><b>${g.name}</b> · UPI, cards and net banking</span></label>`).join('');
+    box.querySelectorAll('input[name=coGateway]').forEach(i => { i.onchange = () => { gateway = i.value; renderGateways(); state(); }; });
+  }
   const set = (id, v) => { const e = document.getElementById(id); if (e) e.textContent = v; };
   function state() {
     const live = window.CVTaraOwnerContent?.integrations?.payments !== false;
@@ -13,7 +23,7 @@
     button.disabled = !guest && (!consent.checked || !live || !plans[active]);
     status.innerHTML = guest ? 'Please <a href="/login?next=' + encodeURIComponent('/checkout.html?plan=' + active) + '">sign in</a> or <a href="/register?next=' + encodeURIComponent('/checkout.html?plan=' + active) + '">create a free account</a> to buy a plan.'
       : !live ? 'Payments are not enabled yet. Please check back soon.'
-      : consent.checked ? 'Your payment is handled securely by Razorpay. Access activates after verification.' : 'Accept the policies to continue.';
+      : consent.checked ? 'Your payment is handled securely by ' + gatewayName() + '. Access activates after verification.' : 'Accept the policies to continue.';
   }
   let quoteSeq = 0;
   async function breakdown() {
@@ -25,6 +35,7 @@
     try {
       const q = await api('/api/checkout/quote', { method: 'POST', body: { plan: active, coupon, useWallet } });
       if (seq !== quoteSeq) return;
+      if (Array.isArray(q.gateways)) { gateways = q.gateways; renderGateways(); state(); }
       const rows = [['Price', inr(q.listPaise / 100)]];
       if (q.addonDiscountPaise) rows.push(['Add-on price with your plan', '− ' + inr(q.addonDiscountPaise / 100)]);
       if (q.discountPaise) rows.push(['Coupon ' + q.code, '− ' + inr(q.discountPaise / 100)]);
@@ -73,12 +84,17 @@
     if (guest) { location.href = '/login?next=' + encodeURIComponent('/checkout.html?plan=' + active); return; }
     button.disabled = true; status.textContent = 'Creating your secure order…';
     try {
-      const order = await api('/api/checkout/start', { method: 'POST', body: { plan: active, coupon: window.CVTaraCoupon?.plan === active ? window.CVTaraCoupon.code : '', useWallet: document.getElementById('coWallet')?.checked !== false, showInActivity: !!document.getElementById('coActivity')?.checked } });
+      const order = await api('/api/checkout/start', { method: 'POST', body: { plan: active, coupon: window.CVTaraCoupon?.plan === active ? window.CVTaraCoupon.code : '', useWallet: document.getElementById('coWallet')?.checked !== false, gateway: gateway || undefined, showInActivity: !!document.getElementById('coActivity')?.checked } });
       if (order.provider === 'demo') {
         status.textContent = 'Demo payment (preview only) — activating your plan…';
         await api('/api/checkout/verify', { method: 'POST', body: { provider: 'demo', orderId: order.orderId } });
         status.textContent = 'Demo payment complete. Opening your dashboard…';
         location.href = '/workspace.html?view=billing';
+        return;
+      }
+      if (order.provider === 'phonepe') {
+        status.textContent = 'Opening PhonePe’s secure payment page…';
+        location.href = order.redirectUrl;
         return;
       }
       if (!window.Razorpay) await new Promise((resolve, reject) => { const s = document.createElement('script'); s.src = 'https://checkout.razorpay.com/v1/checkout.js'; s.onload = resolve; s.onerror = () => reject(Error('Payment checkout could not load. Retry without paying again.')); document.head.append(s); });
@@ -89,6 +105,24 @@
       checkout.open();
     } catch (e) { status.textContent = e.message; } finally { button.disabled = false; }
   };
+  // Back from PhonePe's payment page: the server asks PhonePe for the result before granting anything.
+  async function phonepeReturn(orderId) {
+    button.disabled = true;
+    for (let i = 0; i < 12; i++) {
+      status.textContent = i ? 'Waiting for PhonePe to confirm your payment…' : 'Checking your PhonePe payment…';
+      try {
+        const r = await api('/api/checkout/verify', { method: 'POST', body: { provider: 'phonepe', orderId } });
+        if (r.state === 'COMPLETED') { status.textContent = 'Payment verified. Opening your dashboard…'; location.href = '/workspace.html?view=billing'; return; }
+        if (r.state === 'FAILED') { status.textContent = 'Payment was not completed and no money was taken for this order. You can try again.'; break; }
+      } catch (e) { status.textContent = e.message; break; }
+      await new Promise(res => setTimeout(res, 5000));
+      if (i === 11) status.textContent = 'PhonePe is still processing this payment. If money was debited, do not pay again: your plan activates automatically once PhonePe confirms it.';
+    }
+    const url = new URL(location.href); url.searchParams.delete('phonepe_order'); history.replaceState(null, '', url);
+    state();
+  }
   state();
+  const returned = new URLSearchParams(location.search).get('phonepe_order');
+  if (returned && !guest) phonepeReturn(returned);
   window.addEventListener('load', () => init().catch(() => { status.textContent = 'Plans could not be loaded. Please refresh.'; }));
 })();

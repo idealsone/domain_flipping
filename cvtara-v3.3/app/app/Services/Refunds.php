@@ -127,6 +127,10 @@ class Refunds
                 Http::withBasicAuth($k['razorpayKeyId'] ?? '', $k['razorpayKeySecret'] ?? '')->timeout(20)->post(Payments::api().'/payments/'.rawurlencode((string) $p->payment_reference).'/refund', ['amount' => $p->amount_paise, 'receipt' => $refundId])->throw();
                 // Razorpay has accepted the full refund: end access now rather than waiting for the refund.processed webhook (which then changes nothing).
                 DB::table('purchases')->where('id', $p->id)->update(['refunded_paise' => $p->amount_paise, 'status' => 'refunded', 'updated_at' => now()]);
+            } elseif ($p->provider === 'phonepe') {
+                PhonePe::refund($p, $refundId);
+                // PhonePe has accepted the full refund: end access now. Its pg.refund.completed callback then changes nothing.
+                DB::table('purchases')->where('id', $p->id)->update(['refunded_paise' => $p->amount_paise, 'status' => 'refunded', 'updated_at' => now()]);
             } else {
                 throw ValidationException::withMessages(['refund' => 'This order was not paid through a gateway. Refund it by hand and record it.']);
             }
@@ -135,6 +139,7 @@ class Refunds
             throw $e instanceof ValidationException ? $e : ValidationException::withMessages(['refund' => 'The payment gateway did not accept the refund. Nothing was sent. Try again, or refund it in the gateway dashboard.']);
         }
         Settings::audit($admin?->id ?? $p->owner_id, 'refund_approved', $p->id);
+        Referrals::reverse($p, (int) $p->amount_paise);
         self::settled($p->id);
     }
 

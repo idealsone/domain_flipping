@@ -462,23 +462,28 @@ class ApiController extends Controller
                 \Illuminate\Support\Facades\RateLimiter::hit($rk, 60);
             }
 
-            return $ok(BusinessControls::quote($v['plan'], $v['coupon'] ?? '', $u->id, $r->boolean('useWallet', true)));
+            return $ok([...BusinessControls::quote($v['plan'], $v['coupon'] ?? '', $u->id, $r->boolean('useWallet', true)), 'gateways' => Payments::publicGateways()]);
         }
         if ($path === 'checkout/start') {
             \App\Services\EmailVerification::guard($r->user());
-            $r->validate(['plan' => 'required|in:'.implode(',', Settings::paidPlanKeys()), 'showInActivity' => 'nullable|boolean', 'useWallet' => 'nullable|boolean']);
+            $r->validate(['plan' => 'required|in:'.implode(',', Settings::paidPlanKeys()), 'showInActivity' => 'nullable|boolean', 'useWallet' => 'nullable|boolean', 'gateway' => 'nullable|in:'.implode(',', array_keys(Payments::GATEWAYS))]);
             if ($r->has('showInActivity')) {
                 DB::table('profiles')->where('owner_id', $id)->update(['show_in_activity' => $r->boolean('showInActivity')]);
             }
             Payments::guardAddon($u, $r->plan);
 
-            return $ok(Payments::start($u, $r->plan, (string) $r->input('coupon', ''), $r->boolean('useWallet', true)));
+            return $ok(Payments::start($u, $r->plan, (string) $r->input('coupon', ''), $r->boolean('useWallet', true), (string) $r->input('gateway', '')));
         }
         if ($path === 'checkout/verify' && config('app.preview') && $r->input('provider') === 'demo') {
             $r->validate(['orderId' => 'required|string|max:80']);
             Payments::demoVerify($u, $r->orderId);
 
             return $ok();
+        }
+        if ($path === 'checkout/verify' && $r->input('provider') === 'phonepe') {
+            $v = $r->validate(['orderId' => 'required|string|max:63|regex:/^[A-Za-z0-9_-]+$/']);
+
+            return $ok(['state' => \App\Services\PhonePe::verify($u, $v['orderId'])]);
         }
         if ($path === 'checkout/verify') {
             $v = $r->validate(['razorpay_order_id' => 'required|string|max:100', 'razorpay_payment_id' => 'required|string|max:100', 'razorpay_signature' => 'required|string|size:64']);
@@ -493,7 +498,7 @@ class ApiController extends Controller
 
             $referredUsers = User::where('referred_by', $id)
                 ->select('id', 'created_at', 'email_verified_at', 'blocked')
-                ->selectSub(DB::table('purchases')->selectRaw('COUNT(*)')->whereColumn('owner_id', 'users.id')->where('status', 'paid')->where('is_live', true)->whereIn('provider', ['razorpay', 'cashfree'])->where('amount_paise', '>=', Referrals::config()['minQualifyingPaise'])->where('refunded_paise', 0)->whereNotNull('payment_reference')->where('plan', '!=', 'free'), 'qualifying_payments')
+                ->selectSub(DB::table('purchases')->selectRaw('COUNT(*)')->whereColumn('owner_id', 'users.id')->where('status', 'paid')->where('is_live', true)->whereIn('provider', ['razorpay', 'phonepe', 'cashfree'])->where('amount_paise', '>=', Referrals::config()['minQualifyingPaise'])->where('refunded_paise', 0)->whereNotNull('payment_reference')->where('plan', '!=', 'free'), 'qualifying_payments')
                 ->selectSub(DB::table('referral_identities')->selectRaw('COUNT(*)')->whereColumn('owner_id', 'users.id')->where('status', 'verified'), 'verified_phone')
                 ->orderByDesc('created_at')->limit(200)->get()->map(fn ($friend) => [
                     'label' => 'Friend '.substr(hash_hmac('sha256', (string) $friend->id, config('app.key')), 0, 6),

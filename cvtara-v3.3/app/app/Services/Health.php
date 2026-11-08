@@ -37,7 +37,7 @@ class Health
             'emailPostalAddress' => empty($providers['email']['fromEmail']) || trim((string) ($providers['email']['postalAddress'] ?? '')) !== '',
             // Nothing due has waited more than 10 minutes (the cron sends every minute).
             'mailQueueMoving' => ! (Settings::get('integrations')['email'] ?? false) || ! DB::table('mail_outbox')->whereIn('status', ['queued', 'failed'])->where('attempts', '<', 5)->where('due_at', '<', now()->subMinutes(10))->whereNotIn('trigger', EmailRenderer::MARKETING)->exists(),
-            'paymentsConfigured' => ! empty($providers['payments']['razorpayKeyId']) && ! empty($providers['payments']['razorpayKeySecret']),
+            'paymentsConfigured' => (bool) Payments::gateways($providers['payments'] ?? []),
             'debugOff' => ! config('app.debug'),
         ];
         $metrics = [

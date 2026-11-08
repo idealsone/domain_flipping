@@ -84,7 +84,7 @@ def run(ctx, t):
     s, _, about = c.page("/about.html")
     t.check("About says who is behind CVTara, what it does and how it works", s == 200 and all(k in about for k in ("Who is behind it", "What you can do here", "How we work", "within 7 days", "support@cvtara.com")))
     s, _, cont = c.page("/contact.html")
-    t.check("Contact shows email, hours and address with a working form", s == 200 and "c2-card" in cont and "Monday–Saturday" in cont and 'id="contactForm"' in cont and 'name="attachment"' in cont)
+    t.check("Contact shows email, phone, hours and address with a working form", s == 200 and "c2-card" in cont and 'href="tel:+918217823192"' in cont and "Monday–Saturday" in cont and 'id="contactForm"' in cont and 'name="attachment"' in cont)
     t.check("support hours read the same on every page", "Monday–Friday" not in cont + about + home)
     s, _, priv = c.page("/privacy.html")
     t.check("the privacy policy mentions the optional recent-activity notice and the contact form", "recent-activity notice" in priv and "contact form" in priv)

@@ -18,19 +18,46 @@ class Payments
         return $o && config('app.env') !== 'production' ? rtrim($o, '/') : 'https://api.razorpay.com/v1';
     }
 
-    public static function start(User $u, string $plan, string $coupon = '', bool $useWallet = true): array
+    public const GATEWAYS = ['razorpay' => 'Razorpay', 'phonepe' => 'PhonePe'];
+
+    /** Gateways the owner switched on and saved keys for, in the order checkout offers them. */
+    public static function gateways(?array $p = null): array
+    {
+        $p ??= Settings::providers()['payments'] ?? [];
+        $choice = $p['provider'] ?? 'razorpay';
+        $on = $choice === 'both' ? ['razorpay', 'phonepe'] : [$choice];
+        $ready = ['razorpay' => ! empty($p['razorpayKeyId']) && ! empty($p['razorpayKeySecret']), 'phonepe' => PhonePe::configured($p)];
+
+        return array_values(array_filter($on, fn ($g) => $ready[$g] ?? false));
+    }
+
+    /** What the checkout page needs to offer a choice: never any key or secret. */
+    public static function publicGateways(): array
+    {
+        if (! (Settings::get('integrations')['payments'] ?? false)) {
+            return [];
+        }
+
+        return array_map(fn ($g) => ['id' => $g, 'name' => self::GATEWAYS[$g]], self::gateways());
+    }
+
+    public static function start(User $u, string $plan, string $coupon = '', bool $useWallet = true, string $gateway = ''): array
     {
         $plans = Settings::plans();
         abort_unless(isset($plans[$plan]) && $plan !== 'free', 422);
         $i = Settings::get('integrations');
         $p = Settings::providers()['payments'] ?? [];
-        $keys = ! empty($p['razorpayKeyId']) && ! empty($p['razorpayKeySecret']);
-        if (config('app.preview') && ! $keys) {
+        $ready = self::gateways($p);
+        if (config('app.preview') && ! $ready) {
             return self::demoStart($u, $plan, $coupon, $useWallet);
         }
-        if (! ($i['payments'] ?? false) || ! $keys) {
+        if (! ($i['payments'] ?? false) || ! $ready) {
             throw ValidationException::withMessages(['payments' => 'Checkout is not configured. The owner must enable the payment gateway and save its keys.']);
         }
+        if ($gateway !== '' && ! in_array($gateway, $ready, true)) {
+            throw ValidationException::withMessages(['gateway' => 'That payment option is not available right now. Choose another one.']);
+        }
+        $gateway = $gateway ?: $ready[0];
         $id = (string) Str::uuid();
         $lock = $coupon !== '' ? \Illuminate\Support\Facades\Cache::lock('coupon:'.strtoupper(trim($coupon)), 25) : null;
         $lock?->block(15);
@@ -38,11 +65,20 @@ class Payments
         $quote = BusinessControls::quote($plan, $coupon, $u->id, $useWallet);
         $price = $quote['totalPaise'];
         abort_unless($price > 0 && $price < 100000000, 422);
-        $result = Http::withBasicAuth($p['razorpayKeyId'], $p['razorpayKeySecret'])->timeout(20)->post(self::api().'/orders', ['amount' => $price, 'currency' => 'INR', 'receipt' => $id])->throw()->json();
-        DB::table('purchases')->insert(['id' => $id, 'owner_id' => $u->id, 'plan' => $plan, 'amount_paise' => $price, ...BusinessControls::quoteColumns($quote), 'provider' => 'razorpay', 'provider_order_id' => $result['id'], 'is_live' => str_starts_with($p['razorpayKeyId'], 'rzp_live_'), 'limits_json' => json_encode($plans[$plan]), 'access_days' => $plans[$plan]['accessDays'], 'created_at' => now(), 'updated_at' => now()]);
+        if ($gateway === 'phonepe') {
+            $order = PhonePe::create($id, $price, 'CVTara '.($plans[$plan]['name'] ?? $plan));
+            $row = ['provider' => 'phonepe', 'provider_order_id' => $order['merchantOrderId'], 'is_live' => $order['live']];
+        } else {
+            $result = Http::withBasicAuth($p['razorpayKeyId'], $p['razorpayKeySecret'])->timeout(20)->post(self::api().'/orders', ['amount' => $price, 'currency' => 'INR', 'receipt' => $id])->throw()->json();
+            $row = ['provider' => 'razorpay', 'provider_order_id' => $result['id'], 'is_live' => str_starts_with($p['razorpayKeyId'], 'rzp_live_')];
+        }
+        DB::table('purchases')->insert(['id' => $id, 'owner_id' => $u->id, 'plan' => $plan, 'amount_paise' => $price, ...BusinessControls::quoteColumns($quote), ...$row, 'limits_json' => json_encode($plans[$plan]), 'access_days' => $plans[$plan]['accessDays'], 'created_at' => now(), 'updated_at' => now()]);
         Settings::audit($u->id, 'checkout_started', $id);
         } finally {
             $lock?->release();
+        }
+        if ($gateway === 'phonepe') {
+            return ['id' => $id, 'provider' => 'phonepe', 'orderId' => $order['merchantOrderId'], 'redirectUrl' => $order['redirectUrl'], 'amount' => $price, 'currency' => 'INR', 'test' => ! $order['live']];
         }
 
         return ['id' => $id, 'provider' => 'razorpay', 'orderId' => $result['id'], 'keyId' => $p['razorpayKeyId'], 'amount' => $price, 'currency' => 'INR', 'test' => ! str_starts_with($p['razorpayKeyId'], 'rzp_live_')];
@@ -127,14 +163,14 @@ class Payments
             Services::open($p);
             Settings::audit($p->owner_id, 'purchase_verified', $p->id);
             $pl = json_decode((string) $p->limits_json, true) ?: [];
-            MailAutomation::queue(User::findOrFail($p->owner_id), 'purchase_verified', $entity['id'], ['plan_name' => $pl['name'] ?? $p->plan, 'access_until' => $p->access_until ? \Illuminate\Support\Carbon::parse($p->access_until)->format('j F Y') : '', 'amount' => '₹'.number_format($p->amount_paise / 100, 2), 'resumes' => (string) ($pl['savedResumes'] ?? ''), 'letters' => (string) ($pl['savedLetters'] ?? '')]);
+            MailAutomation::queue(User::findOrFail($p->owner_id), 'purchase_verified', $entity['id'], ['plan_name' => $pl['name'] ?? $p->plan, 'paid_with' => self::GATEWAYS[$p->provider] ?? 'CVTara checkout', 'access_until' => $p->access_until ? \Illuminate\Support\Carbon::parse($p->access_until)->format('j F Y') : '', 'amount' => '₹'.number_format($p->amount_paise / 100, 2), 'resumes' => (string) ($pl['savedResumes'] ?? ''), 'letters' => (string) ($pl['savedLetters'] ?? '')]);
         });
     }
 
     public static function verify(User $u, array $d): void
     {
         $p = Settings::providers()['payments'] ?? [];
-        $order = DB::table('purchases')->where('owner_id', $u->id)->where('provider_order_id', $d['razorpay_order_id'])->first();
+        $order = DB::table('purchases')->where('owner_id', $u->id)->where('provider', 'razorpay')->where('provider_order_id', $d['razorpay_order_id'])->first();
         abort_unless($order, 404);
         $sig = hash_hmac('sha256', $order->provider_order_id.'|'.$d['razorpay_payment_id'], $p['razorpayKeySecret'] ?? '');
         abort_unless(! empty($p['razorpayKeySecret']) && hash_equals($sig, $d['razorpay_signature']), 403);
