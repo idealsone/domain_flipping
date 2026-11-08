@@ -79,6 +79,14 @@ Artisan::command('cvtara:cron', function () {
     } catch (\Throwable $e) {
         \App\Services\ErrorLog::exception($e);
     }
+    // SEO agent between daily runs: scan pages, check Google's index status, ask for recrawls of changed pages. Growth agent: daily diagnosis and experiments.
+    try {
+        \App\Services\SeoAgent::work();
+        \App\Services\GrowthOps::run();
+        \App\Services\GrowthOps::work();
+    } catch (\Throwable $e) {
+        \App\Services\ErrorLog::exception($e);
+    }
     // Tara Expert Review orders waiting for Tara AI: a few per run, so the run stays inside the host's time limit.
     try {
         \App\Services\ExpertReview::run();

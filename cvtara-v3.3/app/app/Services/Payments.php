@@ -74,6 +74,7 @@ class Payments
         }
         DB::table('purchases')->insert(['id' => $id, 'owner_id' => $u->id, 'plan' => $plan, 'amount_paise' => $price, ...BusinessControls::quoteColumns($quote), ...$row, 'limits_json' => json_encode($plans[$plan]), 'access_days' => $plans[$plan]['accessDays'], 'created_at' => now(), 'updated_at' => now()]);
         Settings::audit($u->id, 'checkout_started', $id);
+        Attribution::stampPurchase($id);
         } finally {
             $lock?->release();
         }
@@ -211,6 +212,10 @@ class Payments
                 return;
             }if (in_array($type, ['payment.captured', 'order.paid'])) {
                 self::capture($d['payload']['payment']['entity'] ?? []);
+            }if ($type === 'payment.failed') {
+                // Recorded for payment help only. The order stays payable: a later capture on the same order still completes it.
+                $pay = $d['payload']['payment']['entity'] ?? [];
+                DB::table('purchases')->where('provider', 'razorpay')->where('provider_order_id', $pay['order_id'] ?? '')->where('status', 'created')->update(['status' => 'failed', 'updated_at' => now()]);
             }if ($type === 'refund.processed') {
                 $refund = $d['payload']['refund']['entity'] ?? [];
                 $p = DB::table('purchases')->where('payment_reference', $refund['payment_id'] ?? '')->lockForUpdate()->first();

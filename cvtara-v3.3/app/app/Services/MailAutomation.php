@@ -301,7 +301,7 @@ class MailAutomation
             $held = self::sentLast24h() >= max(0, self::mailboxCap() - self::RESERVE);
             $jobs = DB::table('mail_outbox')->whereIn('status', ['queued', 'failed'])->where('attempts', '<', 5)->where('due_at', '<=', now())
                 ->when($held, fn ($q) => $q->whereNotIn('trigger', EmailRenderer::MARKETING))
-                ->orderByRaw("CASE WHEN `trigger` IN ('security_verification','email_verification','password_reset') THEN 0 WHEN `trigger` IN ('purchase_verified','profile_created','refund_requested','refund_processed','refund_rejected','campaign_test') THEN 1 WHEN `trigger` IN ('campaign','nurture','monthly_digest','blog_published','abandoned_purchase','referral_invite','plan_ended') THEN 3 ELSE 2 END")
+                ->orderByRaw("CASE WHEN `trigger` IN ('security_verification','email_verification','password_reset') THEN 0 WHEN `trigger` IN ('purchase_verified','profile_created','refund_requested','refund_processed','refund_rejected','campaign_test') THEN 1 WHEN `trigger` IN ('campaign','nurture','monthly_digest','blog_published','abandoned_purchase','referral_invite','plan_ended','activation_nudge','ats_nudge','pricing_help') THEN 3 ELSE 2 END")
                 ->orderBy('due_at')->limit(self::PER_RUN)->get();
             $sent = 0;
             $processed = 0;
@@ -317,6 +317,12 @@ class MailAutomation
                 }
                 // A payment reminder is dropped if they paid while it waited.
                 if ($j->trigger === 'abandoned_purchase' && $j->owner_id && self::paidSince((int) $j->owner_id, date('Y-m-d H:i:s', strtotime((string) $j->created_at) - 3 * 86400))) {
+                    DB::table('mail_outbox')->where('id', $j->id)->update(['status' => 'cancelled']);
+
+                    continue;
+                }
+                // A journey mail is dropped if the person already did what it asks, or bought, while it waited.
+                if (! Lifecycle::stillEligible($j)) {
                     DB::table('mail_outbox')->where('id', $j->id)->update(['status' => 'cancelled']);
 
                     continue;
@@ -390,7 +396,7 @@ class MailAutomation
      */
     private static function unfinishedPayments(): void
     {
-        $open = DB::table('purchases')->where('status', 'created')->whereBetween('created_at', [now()->subDays(3), now()->subHour()])->orderByDesc('created_at')->get()->unique('owner_id');
+        $open = DB::table('purchases')->whereIn('status', ['created', 'failed'])->whereBetween('created_at', [now()->subDays(3), now()->subHour()])->orderByDesc('created_at')->get()->unique('owner_id');
         $site = rtrim((string) config('app.url'), '/');
         $plans = Settings::plans();
         foreach ($open as $p) {
@@ -412,7 +418,9 @@ class MailAutomation
             $coupon = trim((string) ($p->coupon_code ?? ''));
             $q = ['plan' => $p->plan] + ($coupon !== '' && Promos::couponUsable(Promos::coupon($coupon)) ? ['coupon' => $coupon] : []);
             $vars = ['checkout_url' => $site.'/checkout.html?'.http_build_query($q), 'plan_name' => $plans[$p->plan]['name'] ?? (string) $p->plan, 'amount' => '₹'.number_format($p->amount_paise / 100)];
-            self::queue($u, 'abandoned_purchase', $p->id.($step === 2 ? ':2' : ''), $vars, false, $step === 2 ? 'abandoned-2' : 'abandoned');
+            // The gateway said the payment failed: the first mail offers help and a safe retry instead of "you did not finish".
+            $first = $p->status === 'failed' && collect(Settings::get('emails', []))->merge(Settings::defaults()['emails'])->first(fn ($t) => ($t['id'] ?? '') === 'payment-failed' && ($t['enabled'] ?? false)) ? 'payment-failed' : 'abandoned';
+            self::queue($u, 'abandoned_purchase', $p->id.($step === 2 ? ':2' : ''), $vars, false, $step === 2 ? 'abandoned-2' : $first);
         }
     }
 

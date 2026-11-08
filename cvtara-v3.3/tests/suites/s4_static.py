@@ -30,6 +30,8 @@ def run(ctx, t):
     # nothing shipped may carry authorship notes of any tool
     bad = re.compile(r"claude|anthropic|chatgpt|sonnet|co-authored|generated (by|with)|ai[- ]generated", re.I)
     PROVIDER_NAMED = re.compile(r"chatgpt|sonnet|co-authored|generated (by|with)|ai[- ]generated|written by (claude|ai)", re.I)
+    AUTHORSHIP = re.compile(r"co-authored|generated (by|with)|ai[- ]generated|written by (claude|ai)", re.I)
+    AI_SEARCH_FILES = {"app/Services/AiVisibility.php"}
     TARA_FILES = {"app/Services/TaraAI.php", "app/Http/Controllers/AdminController.php", "resources/data/defaults.json", "resources/console/advanced.js", "resources/console/owner.js", "app/Services/TaraChat.php", "app/Services/TaraOwner.php", "app/Services/TaraBusiness.php", "app/Http/Controllers/TaraAdminController.php", "resources/console/tara.js", "resources/console/assistant.js"}
     hits = []
     for base in (os.path.join(ctx.app, "app"), os.path.join(ctx.app, "routes"), os.path.join(ctx.app, "resources"), os.path.join(ctx.app, "database"), pub):
@@ -39,5 +41,7 @@ def run(ctx, t):
                     txt = open(os.path.join(r, f), errors="ignore").read()
                     rel = os.path.relpath(os.path.join(r, f), ctx.app)
                     # Tara AI names its provider (Claude by Anthropic) to the owner and in the privacy policy; those files are still checked for authorship notes
-                    if (PROVIDER_NAMED.search(txt) if rel.replace(os.sep, "/") in TARA_FILES else bad.search(txt)): hits.append(rel)
+                    relp = rel.replace(os.sep, "/")
+                    # The owner console's AI search tracker has to name the assistants and crawlers it checks (ChatGPT, Claude, GPTBot...); it is still checked for authorship notes
+                    if (AUTHORSHIP.search(txt) if relp in AI_SEARCH_FILES else PROVIDER_NAMED.search(txt) if relp in TARA_FILES else bad.search(txt)): hits.append(rel)
     t.check("no tool/authorship mentions in shipped source", not hits, hits[:5])
