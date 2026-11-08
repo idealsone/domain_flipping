@@ -11,7 +11,7 @@
     const h = $('#admin-speed'); if (!h) return;
     h.innerHTML = '<div class="ops-skel"></div>';
     let s, p;
-    try { [s, p] = await Promise.all([api('/api/admin/speed/status'), api('/api/admin/providers')]); } catch (e) { h.innerHTML = `<div class="panel panel-pad" role="alert">${E(err(e))}</div>`; return; }
+    try { [s, p] = await Promise.all([api('/api/admin/speed/status'), api('/api/admin/providers').catch(() => ({ providers: {}, staff: true }))]); } catch (e) { h.innerHTML = `<div class="panel panel-pad" role="alert">${E(err(e))}</div>`; return; }
     const c = s.cache, t = s.traffic, r = s.reader, jr = (p.providers || {}).jobreader || {};
     const sel = (v, cur) => v === cur ? 'selected' : '';
     h.innerHTML = `<div class="pg-head"><h2>Speed & traffic</h2><p>Keep CVTara fast when many people arrive at once, and power the job-link reading in ATS Match.</p></div>
@@ -46,6 +46,7 @@
     $('#spRefresh', h).onclick = () => document.getElementById('clearCacheBtn')?.click();
     $('#spBuild', h).onclick = async () => { say('#spMsg', 'Building every public page…'); try { const d = await post('/api/admin/speed/rebuild', {}); toast('Pages rebuilt'); say('#spMsg', 'Built ' + d.result.built + ' pages' + (d.result.skipped.length ? '; could not build: ' + d.result.skipped.join(', ') : '') + '.'); speed(); } catch (x) { say('#spMsg', err(x), true); } };
     $('#spPurge', h).onclick = async () => { if (!confirm('Remove the ready-made pages? They are rebuilt automatically as visitors arrive.')) return; try { const d = await post('/api/admin/speed/purge', {}); toast('Cleared ' + d.removed + ' files'); speed(); } catch (x) { say('#spMsg', err(x), true); } };
+    if (p.staff) [$('#jrForm', h), $('#jrTest', h)].forEach(f => { const sec = f && f.closest('section, .panel'); if (sec) sec.hidden = true; });
     const jr$ = $('#jrForm', h), showFor = () => jr$.querySelectorAll('[data-for]').forEach(l => { l.hidden = l.dataset.for !== jr$.provider.value; });
     jr$.provider.onchange = showFor; showFor();
     jr$.onsubmit = async e => { e.preventDefault(); const f = e.target, v = { enabled: f.enabled.value, provider: f.provider.value, customUrlTemplate: f.customUrlTemplate.value.trim(), dailyLimit: String(f.dailyLimit.value || 200) }; for (const k of ['scrapingbeeApiKey', 'zenrowsApiKey', 'customApiKey']) if (f[k].value.trim()) v[k] = f[k].value.trim(); try { await post('/api/admin/providers', { service: 'jobreader', values: v }); toast('Reader saved'); speed(); } catch (x) { say('#jrMsg', err(x), true); } };

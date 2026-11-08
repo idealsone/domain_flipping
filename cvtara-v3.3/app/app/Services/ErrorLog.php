@@ -20,9 +20,10 @@ class ErrorLog
             // Long random tokens (cache keys, ids) would otherwise turn one fault into hundreds of rows.
             $fp = hash('sha256', $source.'|'.preg_replace(['/\b[A-Za-z0-9]{20,}\b/', '/\d+/'], ['~', '#'], $message).'|'.$location);
             $now = now();
+            $context['requestId'] = \App\Http\Middleware\RequestId::current();
             $hit = DB::table('error_logs')->where('fingerprint', $fp)->first();
             if ($hit) {
-                DB::table('error_logs')->where('id', $hit->id)->update(['occurrences' => $hit->occurrences + 1, 'last_seen' => $now, 'resolved_at' => null]);
+                DB::table('error_logs')->where('id', $hit->id)->update(['occurrences' => $hit->occurrences + 1, 'last_seen' => $now, 'resolved_at' => null, 'context' => json_encode(array_merge((array) json_decode((string) $hit->context, true), ['lastRequestId' => $context['requestId']]))]);
 
                 return;
             }

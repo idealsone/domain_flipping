@@ -2,7 +2,11 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\User;
+use App\Services\Access;
 use App\Services\AdminTable;
+use App\Services\SupportCentre;
+use App\Services\SupportView;
 use App\Services\Settings;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -44,9 +48,15 @@ class SupportAdminController extends Controller
                     $q->where('s.'.$k, $r->query($k));
                 }
             }
+            if ($r->query('mine') === '1') {
+                $q->where('s.assigned_to', $id);
+            }
+            if (in_array($r->query('priority'), SupportCentre::PRIORITIES, true)) {
+                $q->where('s.priority', $r->query('priority'));
+            }
             if (($term = trim((string) $r->query('q'))) !== '') {
                 $like = '%'.str_replace(['\\', '%', '_'], ['\\\\', '\\%', '\\_'], mb_substr($term, 0, 80)).'%';
-                $q->where(fn ($w) => $w->where('s.message', 'like', $like)->orWhere('s.email', 'like', $like)->orWhere('s.name', 'like', $like)->orWhere('s.page', 'like', $like));
+                $q->where(fn ($w) => $w->where('s.message', 'like', $like)->orWhere('s.reference', 'like', $like)->orWhere('s.email', 'like', $like)->orWhere('s.name', 'like', $like)->orWhere('s.page', 'like', $like));
             }
             AdminTable::dates($r, $q, 's.created_at');
             AdminTable::export($r, (clone $q)->orderByDesc('s.created_at')->select(['s.created_at', 's.name', 's.email', 's.plan', 's.area', 's.kind', 's.page', 's.rating', 's.status', 's.message', 's.resolved_at']), ['export' => ['title' => 'Support reports', 'columns' => ['created_at' => 'Sent', 'name' => 'Name', 'email' => 'Email', 'plan' => 'Plan', 'area' => 'Area', 'kind' => 'Kind', 'page' => 'Page', 'rating' => 'Rating', 'status' => 'Status', 'message' => 'Message', 'resolved_at' => 'Resolved']]]);
@@ -54,10 +64,68 @@ class SupportAdminController extends Controller
             $per = min(50, max(5, (int) $r->query('per', 20)));
             $page = max(1, (int) $r->query('page', 1));
             $rows = $q->orderByRaw("case s.status when 'new' then 0 when 'seen' then 1 when 'working' then 2 else 3 end")->orderByDesc('s.created_at')->offset(($page - 1) * $per)->limit($per)
-                ->get(['s.id', 's.owner_id', 's.name', 's.email', 's.area', 's.kind', 's.page', 's.message', 's.rating', 's.status', 's.plan', 's.created_at', 's.resolved_at']);
+                ->get(['s.id', 's.owner_id', 's.name', 's.email', 's.area', 's.kind', 's.page', 's.message', 's.rating', 's.status', 's.plan', 's.created_at', 's.resolved_at', 's.reference', 's.priority', 's.assigned_to', 's.last_customer_at', 's.first_response_at']);
             $counts = DB::table('support_attachments')->whereIn('report_id', $rows->pluck('id'))->groupBy('report_id')->selectRaw('report_id, count(*) c')->pluck('c', 'report_id');
 
             return $ok(['total' => $total, 'page' => $page, 'per' => $per, 'rows' => $rows->map(fn ($x) => [...(array) $x, 'message' => mb_substr($x->message, 0, 220), 'images' => (int) ($counts[$x->id] ?? 0)])->all()]);
+        }
+        // 3.40.0 Support Centre ------------------------------------------------------------------------------
+        if ($path === 'support/team' && $r->isMethod('GET')) {
+            // People a ticket can be given to: the owner and staff who may answer tickets.
+            $ids = DB::table('user_roles')->pluck('user_id')->merge(DB::table('users')->where('is_admin', true)->pluck('id'))->unique();
+
+            return $ok(['people' => User::whereIn('id', $ids)->where('blocked', false)->orderBy('name')->get(['id', 'name', 'email'])
+                ->filter(fn ($p) => Access::can($p, 'support.manage'))->map(fn ($p) => ['id' => $p->id, 'name' => $p->name ?: $p->email])->values()->all()]);
+        }
+        if ($path === 'support/new' && $r->isMethod('POST')) {
+            $v = $r->validate(['email' => 'required|email|max:190', 'message' => 'required|string|min:5|max:5000', 'area' => 'nullable|in:'.implode(',', array_keys(SupportController::AREAS)),
+                'kind' => 'nullable|in:'.implode(',', array_keys(SupportController::KINDS)), 'priority' => 'nullable|in:'.implode(',', SupportCentre::PRIORITIES)]);
+            $c = User::where('email', mb_strtolower(trim($v['email'])))->first();
+            abort_unless($c, 422, 'No account uses that email. Ask the person to sign up first, or answer them by email.');
+            abort_if(Access::isStaff($c), 422, 'That is a console account.');
+            $tid = (string) \Illuminate\Support\Str::uuid();
+            DB::table('support_reports')->insert(['id' => $tid, 'owner_id' => $c->id, 'name' => $c->name, 'email' => $c->email, 'area' => $v['area'] ?? array_key_first(SupportController::AREAS),
+                'kind' => $v['kind'] ?? 'question', 'page' => '', 'message' => $v['message'], 'status' => 'working', 'admin_note' => '', 'user_agent' => '', 'viewport' => '', 'plan' => '',
+                'priority' => $v['priority'] ?? 'normal', 'channel' => 'staff', 'assigned_to' => $id, 'created_at' => now(), 'updated_at' => now()]);
+            SupportCentre::stamp($tid, false);
+            SupportCentre::add($tid, $id, 'system', 'Ticket opened by '.$r->user()->name.' for the customer.', true);
+
+            return $ok(['id' => $tid, 'reference' => SupportCentre::ref($tid)]);
+        }
+        if (preg_match('#^support/users/(\d+)$#', $path, $m) && $r->isMethod('GET')) {
+            $c = User::find((int) $m[1]);
+            abort_unless($c, 404);
+            abort_if(Access::isStaff($c) && ! Access::isOwner($r->user()), 403);
+
+            return $ok(['profile' => SupportCentre::profile($c)]);
+        }
+        if ($path === 'support/view/start' && $r->isMethod('POST')) {
+            \App\Services\AccountSecurity::requireRecent($r);
+            $v = $r->validate(['customerId' => 'required|integer', 'ticketId' => 'nullable|uuid', 'reason' => 'required|string|min:10|max:500']);
+
+            return $ok(SupportView::start($r, $r->user(), (int) $v['customerId'], $v['ticketId'] ?? null, $v['reason']));
+        }
+        if ($path === 'support/view/end' && $r->isMethod('POST')) {
+            SupportView::end($r);
+
+            return $ok(['active' => false]);
+        }
+        if ($path === 'support/view/sessions' && $r->isMethod('GET')) {
+            $q = DB::table('support_sessions as s')->leftJoin('users as st', 'st.id', '=', 's.staff_id')->leftJoin('users as c', 'c.id', '=', 's.customer_id')
+                ->select(['s.id', 's.ticket_id', 's.reason', 's.started_at', 's.expires_at', 's.ended_at', 'st.email as staff', 'c.email as customer']);
+            if (! Access::isOwner($r->user())) {
+                $q->where('s.staff_id', $id); // staff see only their own; the owner sees all
+            }
+            $rows = $q->orderByDesc('s.started_at')->limit(50)->get();
+            $ev = DB::table('support_session_events')->whereIn('session_id', $rows->pluck('id'))->groupBy('session_id')->selectRaw('session_id, count(*) n, sum(case when status >= 400 then 1 else 0 end) refused')->get()->keyBy('session_id');
+
+            return $ok(['sessions' => $rows->map(fn ($x) => (array) $x + ['requests' => (int) ($ev[$x->id]->n ?? 0), 'refused' => (int) ($ev[$x->id]->refused ?? 0)])->all()]);
+        }
+        if (preg_match('#^support/view/sessions/([a-f0-9-]{36})/end$#', $path, $m) && $r->isMethod('POST')) {
+            abort_unless(Access::isOwner($r->user()), 403);
+            SupportView::close($m[1], $id);
+
+            return $ok();
         }
         if (preg_match('#^support/file/([a-f0-9-]{36})$#', $path, $m) && $r->isMethod('GET')) {
             $a = DB::table('support_attachments')->where('id', $m[1])->first();
@@ -76,10 +144,29 @@ class SupportAdminController extends Controller
                 $files = DB::table('support_attachments')->where('report_id', $row->id)->orderBy('created_at')->get(['id', 'width', 'height', 'bytes'])->all();
                 $history = $row->owner_id ? DB::table('support_reports')->where('owner_id', $row->owner_id)->where('id', '!=', $row->id)->count() : 0;
 
-                return $ok(['report' => (array) $row, 'images' => $files, 'earlierFromSamePerson' => $history]);
+                $errors = $row->owner_id ? DB::table('error_logs')->where('user_id', $row->owner_id)->where('last_seen', '>=', \Illuminate\Support\Carbon::parse($row->created_at)->subDay())
+                    ->orderByDesc('last_seen')->limit(5)->get(['id', 'level', 'message', 'occurrences', 'last_seen'])->map(fn ($e) => ['message' => mb_strimwidth((string) $e->message, 0, 200, '…')] + (array) $e)->all() : [];
+
+                return $ok(['report' => array_merge((array) $row, ['reference' => ($row->reference ?? '') ?: SupportCentre::ref($row->id)]), 'images' => $files, 'earlierFromSamePerson' => $history,
+                    'messages' => SupportCentre::messages($row->id, true), 'errors' => $errors, 'canViewAs' => (bool) $row->owner_id && Access::can($r->user(), 'customers.view_as'),
+                    'canDelete' => Access::isOwner($r->user())]);
             }
-            $v = $r->validate(['action' => 'required|in:update,delete', 'status' => 'nullable|in:'.implode(',', self::STATUSES), 'adminNote' => 'nullable|string|max:3000']);
+            $v = $r->validate(['action' => 'required|in:update,delete,reply,note', 'status' => 'nullable|in:'.implode(',', self::STATUSES), 'adminNote' => 'nullable|string|max:3000',
+                'body' => 'required_if:action,reply,note|nullable|string|min:2|max:5000', 'priority' => 'nullable|in:'.implode(',', SupportCentre::PRIORITIES), 'assignedTo' => 'nullable|integer']);
+            if ($v['action'] === 'reply') {
+                abort_unless($row->owner_id, 422, 'This message came from the contact page without an account. Answer it by email.');
+                SupportCentre::staffReply($row, $r->user(), $v['body']);
+                Settings::audit($id, 'support_reply', $row->id);
+
+                return $ok(['messages' => SupportCentre::messages($row->id, true)]);
+            }
+            if ($v['action'] === 'note') {
+                SupportCentre::add($row->id, $id, 'staff', $v['body'], true);
+
+                return $ok(['messages' => SupportCentre::messages($row->id, true)]);
+            }
             if ($v['action'] === 'delete') {
+                abort_unless(Access::isOwner($r->user()), 403, 'Only the owner can delete a ticket.');
                 foreach (DB::table('support_attachments')->where('report_id', $row->id)->pluck('path') as $p) {
                     Storage::disk('local')->delete($p);
                 }
@@ -96,6 +183,14 @@ class SupportAdminController extends Controller
             }
             if (array_key_exists('adminNote', $v)) {
                 $set['admin_note'] = $v['adminNote'];
+            }
+            if (! empty($v['priority'])) {
+                $set['priority'] = $v['priority'];
+            }
+            if (array_key_exists('assignedTo', $v)) {
+                $who = $v['assignedTo'] ? User::find($v['assignedTo']) : null;
+                abort_if($v['assignedTo'] && (! $who || ! Access::can($who, 'support.manage')), 422, 'That person cannot answer tickets.');
+                $set['assigned_to'] = $who?->id;
             }
             DB::table('support_reports')->where('id', $row->id)->update($set);
             Settings::audit($id, 'support_report_updated', $row->id);

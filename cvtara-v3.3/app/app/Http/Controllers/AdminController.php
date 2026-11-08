@@ -54,6 +54,15 @@ class AdminController extends Controller
         if (preg_match(TaraAdminController::ROUTES, $path)) {
             return app(TaraAdminController::class)->run($r, $path);
         }
+        if (preg_match(MetricsAdminController::ROUTES, $path)) {
+            return app(MetricsAdminController::class)->run($r, $path);
+        }
+        if (preg_match(ApprovalsAdminController::ROUTES, $path)) {
+            return app(ApprovalsAdminController::class)->run($r, $path);
+        }
+        if (preg_match(FindAdminController::ROUTES, $path)) {
+            return app(FindAdminController::class)->run($r, $path);
+        }
         if (preg_match(SupportAdminController::ROUTES, $path)) {
             return app(SupportAdminController::class)->run($r, $path);
         }
@@ -112,7 +121,7 @@ class AdminController extends Controller
         if ($path === 'providers') {
             $p = Settings::providers();
             unset($p['push']);
-            $fields = ['jobreader' => ['enabled', 'provider', 'scrapingbeeApiKey', 'zenrowsApiKey', 'customUrlTemplate', 'customApiKey', 'dailyLimit'], 'payments' => ['provider', 'mode', 'razorpayKeyId', 'razorpayKeySecret', 'razorpayWebhookSecret', 'phonepeMode', 'phonepeClientId', 'phonepeClientVersion', 'phonepeClientSecret', 'phonepeWebhookUsername', 'phonepeWebhookPassword'], 'email' => ['provider', 'resendApiKey', 'smtpHost', 'smtpPort', 'smtpUser', 'smtpPassword', 'fromEmail', 'fromName', 'replyTo', 'postalAddress'], 'ai' => ['provider', 'claudeApiKey', 'model', 'dailyLimit', 'writerApiKey'], 'grammar' => ['url', 'username', 'premiumApiKey'], 'analytics' => ['measurementId', 'searchConsoleProperty', 'searchConsoleServiceAccount']];
+            $fields = ['jobreader' => ['enabled', 'provider', 'scrapingbeeApiKey', 'zenrowsApiKey', 'customUrlTemplate', 'customApiKey', 'dailyLimit'], 'payments' => ['provider', 'mode', 'razorpayKeyId', 'razorpayKeySecret', 'razorpayWebhookSecret', 'phonepeMode', 'phonepeClientId', 'phonepeClientVersion', 'phonepeClientSecret', 'phonepeWebhookUsername', 'phonepeWebhookPassword'], 'email' => ['provider', 'resendApiKey', 'smtpHost', 'smtpPort', 'smtpUser', 'smtpPassword', 'fromEmail', 'fromName', 'replyTo', 'postalAddress'], 'ai' => ['provider', 'claudeApiKey', 'model', 'dailyLimit'], 'grammar' => ['url', 'username', 'premiumApiKey'], 'analytics' => ['measurementId', 'searchConsoleProperty', 'searchConsoleServiceAccount', 'cruxApiKey']];
             $secret = fn ($k) => preg_match('/Secret|ApiKey|Password|ServiceAccount|AuthToken/', $k);
             if ($get) {
                 foreach ($p as &$service) {

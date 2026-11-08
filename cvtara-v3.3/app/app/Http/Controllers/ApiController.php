@@ -13,7 +13,6 @@ use App\Services\Payments;
 use App\Services\ReferralRewards;
 use App\Services\Referrals;
 use App\Services\Settings;
-use App\Services\WritingAssistant;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
@@ -149,13 +148,122 @@ class ApiController extends Controller
 
             return $ok();
         }
+        // 3.40.0: a staff member with a read-only customer view open is answered as that customer for allowed reads only.
+        if ($u && ($viewed = \App\Services\SupportView::swap($r, $path))) {
+            $u = $viewed;
+            $id = $u->id;
+        }
         abort_unless($u, 401);
         abort_if($u->blocked, 403);
         DB::table('profiles')->insertOrIgnore(['owner_id' => $id, 'name' => $u->name, 'created_at' => now(), 'updated_at' => now()]);
         if (str_starts_with($path, 'admin/')) {
-            abort_unless($u->is_admin, 403);
+            $adminPath = substr($path, 6);
+            // 3.37.0: owner = everything; staff only what their role allows (config/permissions.php); unknown = owner only.
+            \App\Services\Access::need($r, $adminPath);
+            if ($adminPath === 'me' && $get) {
+                return $ok(['role' => \App\Services\Access::role($u), 'roleName' => \App\Services\Access::isOwner($u) ? 'Owner' : (config('permissions.roles')[\App\Services\Access::role($u)]['name'] ?? ''), 'permissions' => \App\Services\Access::permissions($u), 'modules' => array_values(array_filter(array_keys(config('permissions.modules')), fn ($m) => \App\Services\Access::moduleAllowed($u, $m))), 'authenticator' => \App\Services\Totp::enabled($u)]);
+            }
+            if (str_starts_with($adminPath, 'team') || str_starts_with($adminPath, 'audit')) {
+                return app(TeamAdminController::class)->run($r, $adminPath);
+            }
+            if ($get) {
+                return app(AdminController::class)->run($r, $adminPath);
+            }
+            // Every console change goes to the append-only audit log, with settings before and after.
+            $before = \App\Services\Audit::before($adminPath);
+            try {
+                $resp = app(AdminController::class)->run($r, $adminPath);
+            } catch (\Throwable $e) {
+                $code = $e instanceof \Symfony\Component\HttpKernel\Exception\HttpExceptionInterface ? $e->getStatusCode() : ($e instanceof ValidationException ? 422 : 500);
+                \App\Services\Audit::afterWrite($r, $adminPath, $before, $code);
+                throw $e;
+            }
+            \App\Services\Audit::afterWrite($r, $adminPath, $before, method_exists($resp, 'getStatusCode') ? $resp->getStatusCode() : 200);
 
-            return app(AdminController::class)->run($r, substr($path, 6));
+            return $resp;
+        }
+        if (str_starts_with($path, 'security/totp/')) {
+            return app(TeamAdminController::class)->totp($r, substr($path, 14));
+        }
+        // 3.40.0 Support Centre: the customer's own tickets and replies; the staff member's read-only view controls.
+        if ($path === 'support/mine' && $get) {
+            return $ok(['tickets' => \App\Services\SupportCentre::mine($u)]);
+        }
+        if (preg_match('#^support/mine/([a-f0-9-]{36})/reply$#', $path, $m) && $r->isMethod('POST')) {
+            $cap('support-reply', 20, 3600, 'You have sent several replies. Please wait a while before sending another.');
+            $v = $r->validate(['body' => 'required|string|min:2|max:5000']);
+            $t = DB::table('support_reports')->where('id', $m[1])->where('owner_id', $id)->first();
+            abort_unless($t, 404);
+            \App\Services\SupportCentre::add($t->id, $id, 'customer', $v['body']);
+            DB::table('support_reports')->where('id', $t->id)->update(['last_customer_at' => now(), 'updated_at' => now()] + (in_array($t->status, ['resolved', 'closed'], true) ? ['status' => 'new', 'resolved_at' => null] : []));
+
+            return $ok(['tickets' => \App\Services\SupportCentre::mine($u)]);
+        }
+        // 3.41.0 Combined resume + cover letter service, downloads list and career goal.
+        if ($path === 'service-requests' && $get) {
+            return $ok(['requests' => \App\Services\ServiceRequests::mine($u)]);
+        }
+        if ($path === 'service-requests' && $r->isMethod('POST')) {
+            \App\Services\EmailVerification::guard($u);
+            $cap('service-request', 10, 3600, 'Please wait a while before starting another request.');
+            $v = $r->validate(['resumeId' => ['required', 'regex:/^[a-f0-9-]{36}$/'], 'scanId' => ['nullable', 'regex:/^[a-f0-9-]{36}$/'], 'jobText' => 'required_without:scanId|nullable|string|max:40000', 'role' => 'nullable|string|max:160', 'company' => 'nullable|string|max:160', 'letterTemplate' => 'nullable|string|max:120']);
+            if (! empty($v['letterTemplate'])) {
+                $cat = json_decode(file_get_contents(resource_path('data/catalog.json')), true);
+                abort_unless(collect($cat['coverLetters'])->contains('slug', $v['letterTemplate']), 422, 'Choose one of the cover letter designs.');
+            }
+
+            return $ok(['request' => \App\Services\ServiceRequests::create($u, $v)]);
+        }
+        if (preg_match('#^service-requests/([a-f0-9-]{36})(?:/(run|retry|save))?$#', $path, $m)) {
+            $act = $m[2] ?? '';
+            if ($act === '') {
+                abort_unless($get, 405);
+
+                return $ok(['request' => \App\Services\ServiceRequests::show($u, $m[1])]);
+            }
+            abort_unless($r->isMethod('POST'), 405);
+            $cap('service-run', 60, 60, 'Please wait a moment.');
+            if ($act === 'save') {
+                $v = $r->validate(['mode' => 'nullable|in:version,update']);
+
+                return $ok(['request' => \App\Services\ServiceRequests::save($u, $m[1], $v['mode'] ?? 'version')]);
+            }
+
+            return $ok(['request' => $act === 'run' ? \App\Services\ServiceRequests::advance($u, $m[1]) : \App\Services\ServiceRequests::retry($u, $m[1])]);
+        }
+        if ($path === 'downloads' && $get) {
+            $rows = DB::table('product_usage')->where('owner_id', $id)->whereIn('action', ['doc_resume', 'doc_letter'])->orderByDesc('created_at')->limit(100)->get(['action', 'reference', 'created_at']);
+            $ids = $rows->map(fn ($x) => explode('|', (string) $x->reference)[0])->unique()->values();
+            $titles = DB::table('resume_drafts')->where('owner_id', $id)->whereIn('id', $ids)->pluck('title', 'id')->union(DB::table('cover_letter_drafts')->where('owner_id', $id)->whereIn('id', $ids)->pluck('title', 'id'));
+
+            return $ok(['downloads' => $rows->map(function ($x) use ($titles) {
+                [$doc, $rev] = array_pad(explode('|', (string) $x->reference), 2, '');
+
+                return ['kind' => $x->action === 'doc_resume' ? 'resume' : 'letter', 'id' => $doc, 'version' => (int) $rev, 'title' => (string) ($titles[$doc] ?? 'Removed document'), 'exists' => isset($titles[$doc]), 'at' => (string) $x->created_at];
+            })->values()]);
+        }
+        if ($path === 'profile/goal' && $r->isMethod('POST')) {
+            $v = $r->validate(['goal' => 'required|in:first_job,new_job,switch_career,promotion,abroad,exploring', 'role' => 'nullable|string|max:120']);
+            $set = ['career_goal' => $v['goal'], 'updated_at' => now()];
+            if (trim((string) ($v['role'] ?? '')) !== '' && \Illuminate\Support\Facades\Schema::hasColumn('profiles', 'target_role')) {
+                $set['target_role'] = trim($v['role']);
+            }
+            if (! DB::table('profiles')->where('owner_id', $id)->exists()) {
+                DB::table('profiles')->insert(['owner_id' => $id, 'created_at' => now()] + $set);
+            } else {
+                DB::table('profiles')->where('owner_id', $id)->update($set);
+            }
+            Settings::audit($id, 'career_goal_set', $v['goal']);
+
+            return $ok();
+        }
+        if ($path === 'support-view' && $get) {
+            return $ok(\App\Services\SupportView::status($r));
+        }
+        if ($path === 'support-view/end' && $r->isMethod('POST')) {
+            \App\Services\SupportView::end($r);
+
+            return $ok(['active' => false]);
         }
         if ($path === 'referral-rewards' && $get) {
             return $ok(ReferralRewards::status($u));
@@ -201,7 +309,7 @@ class ApiController extends Controller
             $p = DB::table('profiles')->where('owner_id', $id)->first();
             $p->email = $u->email;
 
-            return $ok(['profile' => $p, 'isOwner' => (bool) $u->is_admin, 'isPaid' => (bool) (Settings::access($id)['paid'] ?? false) || (bool) $u->is_admin, 'user' => ['id' => $id, 'email' => $u->email]]);
+            return $ok(['profile' => $p, 'isOwner' => \App\Services\Access::isStaff($u), 'consoleRole' => \App\Services\Access::role($u), 'isPaid' => (bool) (Settings::access($id)['paid'] ?? false) || (bool) $u->is_admin, 'user' => ['id' => $id, 'email' => $u->email]]);
         }
         if ($path === 'profile') {
             $v = $r->validate(['name' => 'required|string|max:120', 'phone' => 'nullable|string|max:40', 'language' => 'sometimes|in:en', 'experienceLevel' => 'required|in:fresher,experienced', 'profession' => 'required|string|max:120', 'category' => 'required|in:Technology,HR & Recruitment,Sales & Marketing,Finance,Operations,Education,Healthcare,Design,Other', 'experienceYears' => 'required|integer|min:0|max:60', 'city' => 'nullable|string|max:120', 'marketingConsent' => 'required|boolean']);
@@ -267,9 +375,8 @@ class ApiController extends Controller
 
                 return $ok(['suggestion' => \App\Services\TaraAI::suggest($u, $v), 'left' => \App\Services\TaraAI::left($u)]);
             }
-            $v = $r->validate(['task' => 'required|in:rewrite,translate,review_requirements', 'language' => 'required|in:English', 'text' => 'required|string|min:30|max:12000', 'context' => 'nullable|string|max:8000', 'consent' => 'accepted']);
-
-            return $ok(['suggestion' => WritingAssistant::suggest($u, $v)]);
+            // One approved writing service only (3.36.0): the old second-provider path was removed.
+            abort(422, 'CVTara team writing help is not switched on yet. Your editor works as usual.');
         }
         if (str_starts_with($path, 'tara/')) {
             return $this->tara($r, substr($path, 5));
@@ -293,10 +400,10 @@ class ApiController extends Controller
             $exports = $pid ? DB::table('product_usage')->where('owner_id', $id)->where('action', 'export')->where('reference', 'like', $pid.':%')->count() : 0;
             $cs = Credits::status($id);
             $scans = $a['paid'] ? $cs['scans']['used'] : DB::table('ats_scans')->where('owner_id', $id)->where('status', '!=', 'void')->count();
-            $plans = Settings::plans();
+            $planName = Settings::planLabel($a);
             unset($a['purchase']);
 
-            return $ok([...$a, 'emailVerified' => ! \App\Services\EmailVerification::required($r->user()), 'jobLinks' => (bool) (((array) Settings::get('speed', []))['jobLinks'] ?? false), 'planName' => $plans[$a['plan']]['name'] ?? 'Free', 'daysLeft' => $a['accessUntil'] ? max(0, (int) ceil((strtotime($a['accessUntil']) - time()) / 86400)) : 0, 'credits' => $cs, 'caps' => ['resumes' => (int) $l['savedResumes'] + 1, 'letters' => (int) $l['savedLetters'], 'atsScans' => $cs['scans']['total'], 'exports' => null], 'used' => ['exports' => $exports, 'savedResumes' => DB::table('resume_drafts')->where('owner_id', $id)->count(), 'savedLetters' => DB::table('cover_letter_drafts')->where('owner_id', $id)->count(), 'atsScans' => $scans, 'dailyMatches' => DB::table('ats_scans')->where('owner_id', $id)->where('status', '!=', 'void')->whereDate('created_at', today())->count()]]);
+            return $ok([...$a, 'emailVerified' => ! \App\Services\EmailVerification::required($r->user()), 'jobLinks' => (bool) (((array) Settings::get('speed', []))['jobLinks'] ?? false), 'planName' => $planName, 'daysLeft' => $a['accessUntil'] ? max(0, (int) ceil((strtotime($a['accessUntil']) - time()) / 86400)) : 0, 'credits' => $cs, 'caps' => ['resumes' => (int) $l['savedResumes'] + 1, 'letters' => (int) $l['savedLetters'], 'atsScans' => $cs['scans']['total'], 'exports' => null], 'used' => ['exports' => $exports, 'savedResumes' => DB::table('resume_drafts')->where('owner_id', $id)->count(), 'savedLetters' => DB::table('cover_letter_drafts')->where('owner_id', $id)->count(), 'atsScans' => $scans, 'dailyMatches' => DB::table('ats_scans')->where('owner_id', $id)->where('status', '!=', 'void')->whereDate('created_at', today())->count()]]);
         }
         if ($path === 'resumes/import') {
             abort_unless($r->isMethod('POST'), 405);
@@ -613,7 +720,7 @@ class ApiController extends Controller
                 throw ValidationException::withMessages(['limit' => 'A free account keeps one resume. Choose a plan to create job-tailored versions and download.']);
             }
             if (! empty($acc['limits']['oneResume'])) {
-                throw ValidationException::withMessages(['limit' => 'Quick Download covers one resume. Job Hunt adds 5 tailored resumes and 5 cover letters, one for each job.']);
+                throw ValidationException::withMessages(['limit' => 'Quick Download covers one resume. Job Hunt adds 10 tailored resumes and 10 cover letters, one for each job.']);
             }
             if (DB::table('resume_drafts')->where('owner_id', $id)->count() >= Settings::get('features')['builder']['limit']) {
                 throw ValidationException::withMessages(['limit' => 'You have reached the saved resume limit for your plan. Edit an existing resume, or choose a plan with more room.']);
@@ -681,7 +788,9 @@ class ApiController extends Controller
             return $x;
         }, $list);
 
-        return ['generatedAt' => now()->toIso8601String(), 'account' => ['name' => $u->name, 'email' => $u->email, 'createdAt' => $u->created_at, 'referralCode' => $u->referral_code], 'profile' => (array) DB::table('profiles')->where('owner_id', $id)->first(), 'resumes' => $decode($rows('resume_drafts')), 'coverLetters' => $decode($rows('cover_letter_drafts')), 'applications' => $rows('applications'), 'taraChats' => DB::table('tara_messages')->where('owner_id', $id)->where('content', '!=', '')->orderBy('created_at')->get(['conversation_id', 'role', 'content', 'created_at'])->map(fn ($x) => (array) $x)->all(), 'purchases' => $rows('purchases', ['id', 'plan', 'amount_paise', 'refunded_paise', 'currency', 'status', 'coupon_code', 'purchased_at', 'access_until']), 'reviews' => $rows('feedback', ['display_name', 'rating', 'content', 'status', 'created_at']), 'referralCommissions' => DB::table('referral_commissions')->where('referrer_id', $id)->get(['amount_paise', 'rate_bps', 'created_at'])->map(fn ($x) => (array) $x)->all(), 'withdrawals' => $rows('withdrawals', ['amount_paise', 'destination_masked', 'status', 'reference', 'created_at']), 'payoutProfile' => (array) DB::table('payout_profiles')->where('owner_id', $id)->first(['status', 'destination_masked']), 'creatorApplication' => (array) DB::table('creator_applications')->where('owner_id', $id)->first(['status', 'audience', 'rate_bps', 'created_at']), 'refundRequests' => $rows('refund_requests', ['purchase_id', 'status', 'amount_paise', 'reason', 'note', 'created_at']), 'walletTransactions' => $rows('wallet_transactions', ['kind', 'amount_paise', 'note', 'earned_at', 'expires_at', 'created_at']), 'serviceOrders' => $rows('service_orders', ['service', 'status', 'note', 'created_at', 'delivered_at']), 'atsChecks' => $rows('ats_scans', ['id', 'source', 'job_url', 'job_title', 'company', 'score', 'result_json', 'status', 'created_at']), 'activity' => DB::table('activity_events')->where('owner_id', $id)->orderByDesc('created_at')->limit(500)->get(['event', 'reference', 'created_at'])->map(fn ($x) => (array) $x)->all()];
+        return ['generatedAt' => now()->toIso8601String(), 'account' => ['name' => $u->name, 'email' => $u->email, 'createdAt' => $u->created_at, 'referralCode' => $u->referral_code], 'profile' => (array) DB::table('profiles')->where('owner_id', $id)->first(), 'resumes' => $decode($rows('resume_drafts')), 'coverLetters' => $decode($rows('cover_letter_drafts')), 'applications' => $rows('applications'), 'taraChats' => DB::table('tara_messages')->where('owner_id', $id)->where('content', '!=', '')->orderBy('created_at')->get(['conversation_id', 'role', 'content', 'created_at'])->map(fn ($x) => (array) $x)->all(), 'purchases' => $rows('purchases', ['id', 'plan', 'amount_paise', 'refunded_paise', 'currency', 'status', 'coupon_code', 'purchased_at', 'access_until']), 'reviews' => $rows('feedback', ['display_name', 'rating', 'content', 'status', 'created_at']), 'referralCommissions' => DB::table('referral_commissions')->where('referrer_id', $id)->get(['amount_paise', 'rate_bps', 'created_at'])->map(fn ($x) => (array) $x)->all(), 'withdrawals' => $rows('withdrawals', ['amount_paise', 'destination_masked', 'status', 'reference', 'created_at']), 'payoutProfile' => (array) DB::table('payout_profiles')->where('owner_id', $id)->first(['status', 'destination_masked']), 'creatorApplication' => (array) DB::table('creator_applications')->where('owner_id', $id)->first(['status', 'audience', 'rate_bps', 'created_at']), 'refundRequests' => $rows('refund_requests', ['purchase_id', 'status', 'amount_paise', 'reason', 'note', 'created_at']), 'walletTransactions' => $rows('wallet_transactions', ['kind', 'amount_paise', 'note', 'earned_at', 'expires_at', 'created_at']), 'serviceOrders' => $rows('service_orders', ['service', 'status', 'note', 'created_at', 'delivered_at']), 'atsChecks' => $rows('ats_scans', ['id', 'source', 'job_url', 'job_title', 'company', 'score', 'result_json', 'status', 'created_at']), 'activity' => DB::table('activity_events')->where('owner_id', $id)->orderByDesc('created_at')->limit(500)->get(['event', 'reference', 'created_at'])->map(fn ($x) => (array) $x)->all(),
+            'supportRequests' => \App\Services\SupportCentre::mine($u),
+            'resumeAndLetterRequests' => \Illuminate\Support\Facades\Schema::hasTable('service_requests') ? DB::table('service_requests')->where('owner_id', $id)->get(['id', 'status', 'scan_id', 'output_json', 'created_at'])->map(fn ($x) => ['output' => json_decode((string) $x->output_json, true)] + array_diff_key((array) $x, ['output_json' => 1]))->all() : []];
     }
 
     // The account and everything in it is removed for good. Money records stay for accounting, detached from the person (AccountEraser).

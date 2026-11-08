@@ -32,7 +32,7 @@ def run(ctx, t):
     PROVIDER_NAMED = re.compile(r"chatgpt|sonnet|co-authored|generated (by|with)|ai[- ]generated|written by (claude|ai)", re.I)
     AUTHORSHIP = re.compile(r"co-authored|generated (by|with)|ai[- ]generated|written by (claude|ai)", re.I)
     AI_SEARCH_FILES = {"app/Services/AiVisibility.php"}
-    TARA_FILES = {"app/Services/TaraAI.php", "app/Http/Controllers/AdminController.php", "resources/data/defaults.json", "resources/console/advanced.js", "resources/console/owner.js", "app/Services/TaraChat.php", "app/Services/TaraOwner.php", "app/Services/TaraBusiness.php", "app/Http/Controllers/TaraAdminController.php", "resources/console/tara.js", "resources/console/assistant.js"}
+    TARA_FILES = {"app/Services/TaraAI.php", "app/Http/Controllers/AdminController.php", "resources/data/defaults.json", "resources/console/advanced.js", "resources/console/owner.js", "app/Services/TaraChat.php", "app/Services/TaraOwner.php", "app/Services/TaraBusiness.php", "app/Http/Controllers/TaraAdminController.php", "resources/console/tara.js", "resources/console/assistant.js", "app/Services/AiGateway.php"}
     hits = []
     for base in (os.path.join(ctx.app, "app"), os.path.join(ctx.app, "routes"), os.path.join(ctx.app, "resources"), os.path.join(ctx.app, "database"), pub):
         for r, _, fs in os.walk(base):

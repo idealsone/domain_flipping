@@ -13,6 +13,8 @@
 
   /* ======================= USERS ======================= */
   const U = { q: undefined, grid: null };
+  K.openUsers = q => { U.q = q; K.open('people'); }; // Ctrl+K search opens the list filtered to one person
+  K.openOrder = id => orderDetail(id);
   async function people() {
     const h = $('#admin-people'); if (!h) return;
     h.innerHTML = `<div class="pg-head"><h2>Users</h2><p>Search accounts, mark customers as paid with subscription details, edit or remove them. Customers get a thank-you email instantly.</p></div>

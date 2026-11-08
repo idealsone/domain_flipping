@@ -1,4 +1,129 @@
-# CVTara v3.35.0 — SEO Director and growth operator layer
+# CVTara v3.46.1 — V2: guides and help centre
+
+## 3.46.1
+- SEO pages: the trust line now says "Made by an HR team in Bangalore" instead of "Built by working recruiters" (owner decision 2026-11-08), matching the footer and emails. No database change.
+
+## 3.46.0
+Eleventh V2 release. No database change.
+- **Customer guide rewritten in 16 chapters** (registration, dashboard, resume creation, upload, improvement, ATS matching, cover letters, the combined resume and cover-letter service, applications, Ask Tara, CVTara team services, plans and billing, downloads, referrals, account, help and support). The package grid now shows the packages really on sale (the old one filtered on fresher / experienced and showed nothing); outdated plan names, scan counts and the "No-Refund" footer link are gone. No mention of AI.
+- **Owner guide rewritten in 21 chapters** for the V2 console (login and security, dashboard, Command Centre, customers, orders and payments with reconciliation, libraries, templates, offers, referrals, communications, reports, support, assisted customer access, AI assistants, SEO Control Centre, Workforce Management, growth, Approval Centre, integrations, security and backups, troubleshooting).
+- Both guides: search, a last-reviewed date, a guide version and version history, and a slot for a short video in every chapter (videos are an owner content task).
+- **"?" help button** in the top bar of the owner console and the customer workspace opens the guide chapter for the page on screen.
+- Tara's product guide reads the new customer guide (without the video slots and history).
+- Test suite `s55_guides` (32 checks), plus a browser check (desktop and phone).
+
+## 3.45.0
+Tenth V2 release. **Database change:** run `php artisan migrate --force` (new table `seo_content_versions`; new columns `seo_proposals.created_by`, `seo_proposals.task_id`, `seo_pages.reviewed_at`, `seo_pages.reviewed_by`). Nothing existing changes.
+- **More kinds of SEO change to approve:** besides titles, descriptions and internal links, a new main heading (H1), extra FAQ questions (also added to the FAQ structured data), structured data (Article, or SoftwareApplication for the free tools only, built from the page's own heading and description, author "CVTara team") and content briefs. Only the ready-made SEO pages can be changed.
+- **Drafting:** SEO Managers, Admins and the owner draft from a page's record (Propose a change). Drafts are cleaned of markup and refused if they mention AI, other brands or promises. A different person with SEO approve rights decides in Approvals & tasks (the owner excepted); the review shows the before and after in plain lists.
+- **Content versions:** every change that goes live is kept with its before and after, who applied it and when, and can be undone in one click. About a minute after it goes live (or is undone) the live page is fetched and checked; the result (Seen live / Not live) shows on the page record, and on the SEO task's evidence when the draft was linked to a task.
+- **Content briefs:** the SEO agent drafts up to two a day for topics missing from the topic groups, each once. An approved brief becomes an approved writing task; it changes no page.
+- **Editorial review line** on SEO pages ("Written by the CVTara team"), and "Reviewed by the CVTara team on <date>" (also on guides) only after a person presses "I reviewed this page today". No invented authors or dates.
+- Test suite `s54_seo_changes` (50 checks), plus a browser check (desktop and phone).
+
+## 3.44.0
+Ninth V2 release. **Database change:** run `php artisan migrate --force` (new table `seo_page_audits`; new columns on `seo_pages`). Nothing existing changes.
+- **Page record** (Growth → SEO → Pages → Record): what each page is for (page type, primary and secondary keywords, search intent, content status, who looks after it, a note) and what the scan read from it (H2/H3 outline, images and ALT text coverage, links in, main call to action). Type and keyword are filled in by rule and from Search Console until a person saves them; the agent never overwrites a saved record. Saving needs SEO draft rights and is in the audit log.
+- **Checklist audit (24 checks, spec 10.5)** after every scan and once a day for all pages: HTTP status, redirects, HTTPS, canonical, robots.txt, noindex, sitemap, crawlability, title, description, H1, outline, duplicates, internal links, links in (orphans), broken links, structured data, breadcrumbs, mobile viewport, image ALT text, content readable without JavaScript, hreflang, pagination and Core Web Vitals. Each page gets a score (0-100) and Good / Needs work / Poor; a failed indexing check always means Poor. Checks that do not apply are left out of the score.
+- **Audit history:** a dated row whenever the result changes (and at least weekly), plus every check a person starts ("Scan and audit this page now"). The page list can be filtered by audit result and sorted by lowest score.
+- **Site lists:** orphan pages, pages linked from the site but missing from the sitemap, sitemap pages marked noindex, and broken pages with the pages that link to them.
+- **Core Web Vitals** only from the Chrome UX Report (real Chrome visitors on phones), for the important pages, weekly. Add the optional key in Integrations → Analytics; without it, or without enough visitors, they show "not tracked", never a number. The key is stored encrypted and never shown back.
+- Scans and the daily audit wait while the site is in busy mode; a one-page check is limited to 10 a minute, the full audit and the vitals check to once every 5 minutes.
+- Test suite `s53_seo_audit` (48 checks), plus a browser check (desktop and phone).
+
+## 3.43.0
+Eighth V2 release. **Database change:** run `php artisan migrate --force` (new table `payment_reconciliation_records`). Nothing existing changes.
+- **One set of business numbers (`App\Services\Metrics`):** registrations, verified sign-ups, paying customers, first-time buyers, paid orders, gross collections, refunds, net revenue, payment success rate, refund requests, resumes built, ATS scans, cover letters, organic and marketing visitors, support backlog, AI service success, approvals waiting, open and overdue tasks. Each has a written definition next to the code that counts it; `docs/METRICS.md` is generated from the same list (`php artisan cvtara:metrics-doc`) and a test checks they match. Money and customer counts use the same function as the reports and the Business assistant, so a period gives the same numbers everywhere.
+- **Overview → Business numbers:** today, 7, 30 or 90 days, the time the numbers were worked out, and "not tracked" (never 0) when something is not measured, such as visitors while site analytics is off. Each tile says how it is counted.
+- **Owner alerts** on the Overview and, once a day each, in the Error Log: many failed payments, AI service failing, approvals waiting more than 48 hours, overdue tasks, payment mismatches, and campaign spend with no paying customer in 30 days.
+- **Daily payment reconciliation** (after 6 AM India time, for the day before): captured Razorpay payments are compared with CVTara's orders (paid at Razorpay but not recorded, recorded but not captured, amounts differ) and PhonePe orders still open are checked with PhonePe. Each mismatch is stored once and written to the Error Log; the owner marks it checked with a note (Overview → Payment reconciliation). Nothing is charged, refunded or granted by it. Finance can see it; only the owner can run it or mark items checked.
+- The cron's newer jobs (3.41-3.43) now each run on their own, so one failure never stops the others.
+- Test suite `s52_metrics` (39 checks), plus a browser check.
+
+## 3.42.0
+Seventh V2 release. **Database change:** run `php artisan migrate --force` (new tables `approval_events`, `ai_tasks`, `ai_task_events`, `ai_task_evidence`; new column `agent_runs.task_id`). Nothing existing changes.
+- **Approvals & tasks** (console menu, with a count of what is waiting): one list of everything waiting for a decision, from SEO changes, refunds, Business assistant actions and agent / team tasks. Each item shows its ID, who submitted it, the agent, the action, why, cost, impact, risk, the proposed change (before and after) and the evidence. Items waiting more than 48 hours are flagged.
+  - Each kind is decided by its own existing code, so every rule still applies (an SEO change goes live through the SEO agent, a refund through the refund checks, an assistant action through its confirm step).
+  - Permission per kind in `config/approvals.php`: SEO changes and SEO tasks need SEO approve, refunds need refund rights (with a fresh sign-in check), Growth tasks need Growth approve, assistant actions and team tasks are owner only. Staff see only what they may decide. Rejecting needs a reason. Every decision is stored (Decided tab) and in the audit log.
+- **Tasks** with a real lifecycle: Draft, Submitted, Under review, Approved, In progress, Completed, Verified, plus Rejected, Blocked, Overdue, Failed, Cancelled. Rules are in the server: nobody approves or verifies a task they created; Verified needs at least one piece of evidence (a link, a number or a note) and a reviewer other than the person who did the work; Blocked, Failed and Cancelled need a reason; every move is kept in the task's history. A task can only be given to someone who works in that area.
+- **Agents create tasks:** the Growth agent's daily high and medium findings, and the SEO agent's site findings (duplicate titles, pages nothing links to, changes waiting) become submitted tasks, one open task per finding. The cron marks approved or in-progress tasks past their due date as Overdue (hourly).
+- Test suite `s51_approvals` (52 checks), plus a browser check.
+
+## 3.41.0
+Sixth V2 release. **Database change:** run `php artisan migrate --force` (new tables `service_requests`, `service_request_events`; new column `profiles.career_goal`). Nothing existing changes.
+- **"What would you like CVTara to help you with?"** on the customer dashboard: create a resume, improve my resume (upload), create a cover letter, resume + cover letter for a job, check ATS compatibility, get career assistance (Tara, shown only when Tara is on) and track applications. Each opens the existing tool.
+- **Resume + cover letter for one job:** the customer picks a saved resume and a job (an earlier ATS check, or a pasted job that goes through the normal ATS check and its scan allowance). The CVTara team tailors the resume and writes the letter, then the server checks that both agree (name, email, company, role, no figure that is not in the resume), checks formatting and the ATS match, and shows a preview.
+  - **Real progress tracker:** Information received, Resume generation, Cover-letter generation, Quality checks, ATS checks, Preview ready, Payment pending, Payment confirmed, Download available. Each step is a stored event with its time; nothing is animated. One step runs per call while the page is open, and the cron finishes a request the customer left (one per minute, after 90 seconds without activity). A lock stops a step running twice.
+  - **Payment:** a free account sees the order summary (what is delivered, the plans that include resumes and letters, price, validity, one-time payment with no automatic renewal) and pays through the normal checkout. Nothing is saved before payment. Once a payment is verified, or straight away on a plan that covers it, the customer saves both: a new job version of the resume (or, by choice, the tailored text into the resume they started from) and the cover letter, through the normal save rules. Downloads then use the plan's credits as usual.
+  - **Failures:** a failed step is stored with a plain message, the writing suggestion it used is given back, and the customer can try again (up to 6 runs). At most 5 requests a day, one running at a time.
+- **Grouped customer menu:** My career workspace, Create & improve (with Career assistance when Tara is on), My account, Help & support (Support requests, Help centre, Share feedback). No page was duplicated.
+- **Downloads** in Account: every clean download with its document and version.
+- **Career goal** asked once on the dashboard (first job, new job, career change, growth, abroad, exploring; optional target role), saved to the profile.
+- **New dashboard next steps:** a failed payment (retry or contact support), a plan that ended in the last 30 days (renewal options), a fresh application without a follow-up date (track it).
+- Account deletion now also removes ticket conversations (3.40.0) and these requests; staff view logs stay, detached from the person. The data export includes support requests and these requests.
+- Test suite `s50_service` (54 checks), plus a browser check (desktop and phone).
+
+## 3.40.0
+Fifth V2 release. **Database change:** run `php artisan migrate --force` (new columns on `support_reports`: `reference`, `priority`, `channel`, `assigned_to`, `first_response_at`, `last_customer_at`; new tables `support_ticket_messages`, `support_sessions`, `support_session_events`). Existing owner notes become each ticket's first internal note; nothing existing is removed.
+- **Ticket conversations:** every request gets a reference (S-XXXXXX). Staff reply to the customer (sent by email as "CVTara team", template `support-reply`, editable under Emails) or add internal notes the customer never sees. First response time is recorded. Priority (low, normal, high, urgent) and "Handled by" (only people who can answer tickets). Owner-only delete.
+- **Staff open tickets** for a customer who phoned or wrote in (channel "staff").
+- **Support profile:** plan, orders, document counts, recent activity, errors and tickets for one customer, without document text, passwords or payout details.
+- **Customers see their requests:** "My requests" in the Feedback panel shows each request with the team's replies and a reply box (20 replies an hour). The reply email links straight to it.
+- **Read-only customer view:** Support Managers and admins (new permission `customers.view_as`) can open a customer's workspace from a ticket, with a written reason and a fresh sign-in check, for 30 minutes. The server answers only listed reads (profile, resumes, letters, applications, scans, purchases, notifications); every change, download, payout, wallet, referral and security page is refused. Every request is logged; the ticket gets a note and the audit log an entry. The view ends on Exit, after 30 minutes, when the owner ends it (Support Inbox > Customer view log), or at once when the staff member loses the permission. A banner shows whose account is open and the time left.
+- Test suite `s49_support` (54 checks), plus a browser check of the customer panel and the view banner.
+
+
+## 3.39.0
+Fourth V2 release. No database change.
+- **Grouped side menu:** Overview and Business assistant stay at the top. Everything else sits in five groups (Customers & orders, Content & pages, Growth & marketing, Money & plans, System) that open and close. The choice is remembered in this browser. The page you are on is never hidden inside a closed group. Groups a staff role cannot use are hidden. The menu is regrouped in the browser from the existing buttons, so every page and link works as before.
+- **Ctrl+K (⌘K on Mac) or the Search button:** go to any menu or Settings page, and search customers (name, email), orders (number, payment reference, email) and support requests.
+  - New read-only endpoint `GET /api/admin/find?q=`. It returns at most 5 of each kind, and only the kinds the person's role may see. A Content Editor gets no customer data, and a Finance Manager gets orders only.
+  - Choosing a customer opens Users filtered to them. Choosing an order opens its details, and choosing a support request opens the Support Inbox filtered to that person.
+  - The owner can hand a question to the Business assistant: it is typed into the assistant's box, never sent by itself, so any change still waits for Confirm.
+  - Recent pages and ☆ favourites are kept in this browser.
+- Test suite `s48_command`, plus a browser check (owner, all staff roles, phone width).
+
+
+## 3.38.0
+Third V2 release. **Database change:** run `php artisan migrate --force` (new columns on `ai_usage`: `status`, `latency_ms`, `request_id`, `error`; nothing existing changes).
+- **One path to Claude (`App\Services\AiGateway`):** writing help, customer Tara, the Business assistant, Expert Review / Profile Boost, ATS tailoring, cover letters and the SEO agent all go through it. Nothing else creates a Claude client (a test checks this).
+- **Real time limits:** the Claude SDK does not enforce its `timeout` option, so until now a stuck AI request could hold a PHP worker until the server killed it. The gateway gives every request an HTTP client with a hard time limit (per assistant in `config/ai.php`; writing help 50 s, chats 60 s, ATS tailoring 150 s, SEO 40 s).
+- **Model in one place:** the owner's model setting, else `config/ai.php` (`AI_DEFAULT_MODEL`). The model name no longer sits in the code.
+- **Every request recorded:** successful or not, with outcome (ok, declined, empty, busy, could not be reached, key refused, error), time taken and the request reference. Requests that never got an answer cost nothing.
+- **AI health (Setup & health):** last 24 hours overall and per assistant: requests, success rate, time within which 95% answered, last problem. A new health check "AI service working". Once an hour the cron writes one Error Log warning (repeats count up) when fewer than 80% of at least 20 requests succeeded; a refused key is reported at once. Customers keep seeing plain "try again" messages.
+- Test suite `s47_ai_gateway` (fake Claude returning 500, 429, 401, empty and a slow answer).
+
+
+## 3.37.0
+Second V2 release. **Database change:** run `php artisan migrate --force` (new tables `user_roles`, `audit_logs`; new columns `users.totp_secret`, `totp_enabled_at`, `totp_last_step`). Nothing existing is changed.
+- **Staff roles (Owner console > Settings > Team & security):** the owner adds a person by email with one of seven roles: Admin, Support Manager, Support Agent, SEO Manager, Growth Manager, Content Editor, Finance Manager. A new person gets an email link to set their own password. Their open sessions end when the role changes, so it applies at once.
+  - Every `/api/admin/...` call is checked on the server against `config/permissions.php` **before** any controller runs. A path not listed there is owner only, so a new console page is never open to staff by accident.
+  - Owner only, whatever the role: keys and providers, prices and plans, business switches, setup, roles, the business assistant, deletes and blocks, agent levels and costs, clearing the Error Log and the audit log.
+  - Staff cannot change the owner's or another staff member's account.
+  - Staff sign in at the private console address only; `/login` refuses console accounts. The console menu hides the parts a role cannot use.
+  - Emergency switch: `ROLES_ENFORCE=off` in `.env` turns every staff role off (the owner keeps full access).
+- **Audit log:** every console change (and every refused or failed one) is recorded with who, which role, what, settings before and after, IP and the request reference. Secrets are masked. There is no way to edit or delete an entry from CVTara. Each entry is chained to the one before by a hash; a daily check (and the "Check the log is intact" button) reports a broken chain in the Error Log.
+- **Authenticator app:** the owner and each staff member can switch on Google Authenticator, Microsoft Authenticator or Authy. Console sign-in then asks for the app's 6-digit code instead of an emailed one. The key is stored encrypted and each code works only once.
+- Test suite `s46_roles` (62 checks, including a live-mode sign-in), plus a browser check of the console signed in as each role.
+
+
+## 3.36.0
+First release of the V2 plan (`/mnt/project-files/v2-discovery/`). No database change.
+- **Error references:** every request gets a random 12-character reference, sent back in the `X-Request-Id` header. A reference sent by the browser is ignored. Every Error Log entry keeps the reference of the request that caused it, and a repeated error keeps the latest one. When something fails, customers see "quote reference XXXX to support". The owner can paste that reference into the Error Log search to find the exact entry.
+- **One approved writing service:** the old second writing-provider path (`WritingAssistant`, the "standard" writing service and its API-key field) is removed. Writing help now runs only through the CVTara team service.
+- Test suite `s45_v2_foundations`.
+
+## 3.35.2
+- **Job Hunt (₹299, 30 days)** now gives 10 tailored resumes and 10 cover letters (was 5 and 5); 20 ATS scans are unchanged. Owner decision, 7 Nov 2026.
+- A migration updates the saved price list where Job Hunt still held 5 and 5 (and its "5 tailored resumes and 5 cover letters" card line), and gives customers on a running Job Hunt the same 10 and 10.
+- The Quick Download upgrade messages and the purchase email sample say 10 and 10.
+
+## 3.35.1
+- **Billing showed "Free" for a paid customer:** the package name was looked up only by the order's package key in today's price list, and fell back to "Free" when the key was not there. A paid plan now shows its current package name, then an older key's replacement (for example an old Fresher plan reads Job Hunt), then the name saved on the order, and never "Free". The same fallback is used in the Business assistant's package names.
+- **A second package no longer goes unused:** when a customer buys a package (for example Quick Download) while a different package of the same level is still running, its credits are now added after the running plan's instead of being hidden until that plan ends. Renewals of the same package work as before.
+- **Privacy policy:** a saved privacy policy holding the old analytics-consent sentences is updated by a migration; other owner wording is untouched.
+- **No analytics consent box:** the "Allow optional analytics" box is removed and Google Analytics is no longer loaded. Page visits and their sources are counted on CVTara's own server for every visitor (no third-party tools, no tracking cookies, no IP address stored). Privacy policy section 5 and the owner console's analytics switch text describe this.
+
 
 ## 3.35.0
 Includes 3.34.0 (not deployed separately). Built from the owner's "SEO Director and Chief Growth and Revenue Manager" brief, reusing the existing services; only the missing parts were added.

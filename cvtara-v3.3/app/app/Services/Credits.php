@@ -9,7 +9,7 @@ use Illuminate\Validation\ValidationException;
 /**
  * Download credits. Saving a draft is free; the first clean (watermark-free) download of a tailored resume or a cover letter
  * uses one credit of its own kind. Resume and cover-letter credits are separate pools:
- *   plan:   e.g. Job Hunt = 5 resume downloads + 5 cover-letter downloads (plus one primary resume free for life, given once after a first purchase, never again on renewals)
+ *   plan:   e.g. Job Hunt = 10 resume downloads + 10 cover-letter downloads (plus one primary resume free for life, given once after a first purchase, never again on renewals)
  *   add-on: e.g. +10 resume downloads + 10 cover-letter downloads, valid until the subscription it was bought on ends (and follows it into a renewal).
  * Downloading the same version again (another format) is free; an edited version is a new document and uses a new credit.
  * Quick Download is the exception: its one credit is bound to one resume, so edits and re-downloads of that resume stay free for 7 days,
@@ -27,6 +27,17 @@ class Credits
         if ($a['paid'] && $a['purchase']) {
             $l = json_decode((string) $a['purchase']->limits_json, true) ?: [];
             $out[] = ['id' => $a['purchase']->id, 'type' => 'plan', 'until' => $a['purchase']->access_until, 'resume' => (int) ($l['savedResumes'] ?? 0), 'letter' => (int) ($l['savedLetters'] ?? 0), 'scan' => self::scanCap($l, (string) $a['purchase']->plan), 'one' => ! empty($l['oneResume'])];
+            // Another package still running (for example a Quick Download bought while an older plan of the same level was active)
+            // keeps its own credits: they are used after the main plan's, so nothing the customer paid for is lost.
+            // A renewal of the same package is not stacked: it already takes over from the running one.
+            $others = DB::table('purchases')->where('owner_id', $uid)->where('id', '!=', $a['purchase']->id)->where('plan', '!=', $a['purchase']->plan)->where('plan', 'not like', 'addon-%')->whereIn('status', ['paid', 'partially_refunded'])->where('access_until', '>', now())->orderBy('access_until')->get();
+            foreach ($others as $r) {
+                $l = json_decode((string) $r->limits_json, true) ?: [];
+                if (($l['type'] ?? 'plan') !== 'plan') {
+                    continue;
+                }
+                $out[] = ['id' => $r->id, 'type' => 'plan', 'until' => $r->access_until, 'resume' => (int) ($l['savedResumes'] ?? 0), 'letter' => (int) ($l['savedLetters'] ?? 0), 'scan' => self::scanCap($l, (string) $r->plan), 'one' => ! empty($l['oneResume'])];
+            }
             $rows = DB::table('purchases')->where('owner_id', $uid)->where('plan', 'like', 'addon-%')->whereIn('status', ['paid', 'partially_refunded'])->where('access_until', '>', now())->orderBy('access_until')->get();
             foreach ($rows as $r) {
                 $l = json_decode((string) $r->limits_json, true) ?: [];
@@ -183,7 +194,7 @@ class Credits
             }
         }
         if ($pools && $pools[0]['one']) {
-            throw ValidationException::withMessages(['limit' => $kind === 'resume' ? 'Quick Download covers one resume, and it is already used on another resume. Job Hunt adds 5 tailored resumes and 5 cover letters.' : 'Quick Download does not include cover letters. Job Hunt adds 5 cover letters and 5 tailored resumes.']);
+            throw ValidationException::withMessages(['limit' => $kind === 'resume' ? 'Quick Download covers one resume, and it is already used on another resume. Job Hunt adds 10 tailored resumes and 10 cover letters.' : 'Quick Download does not include cover letters. Job Hunt adds 10 cover letters and 10 tailored resumes.']);
         }
         throw ValidationException::withMessages(['limit' => self::outOf($kind === 'resume' ? 'resume download credits' : 'cover-letter download credits')]);
     }

@@ -72,7 +72,7 @@ html.dark .au-theme{background:#1a1f2e;border-color:#2d3748;color:#f1f5f9}
 <ul class="au-trust"><li>Free to start, no card</li><li>Pay once, no auto-renewal</li><li>Download or delete your data anytime</li></ul></aside>
 <main class="au-main"><div class="au-card {{$isReg?'au-wide':''}}">
 <h1>{{['owner'=>'Owner sign in','login'=>'Welcome back','register'=>'Create your account','forgot-password'=>'Reset your password','reset-password'=>'Choose a new password','verify'=>'Check your email'][$mode]}}</h1>
-<p class="sub">{{['owner'=>'Sign in to the owner console.','login'=>'Sign in to your CVTara workspace.','register'=>'It takes under a minute. No card needed.','forgot-password'=>'We’ll send a reset link to your email.','reset-password'=>'Use at least 12 characters.','verify'=>($ownerStep??false)?'We emailed a 6-digit sign-in code to the owner address. It expires in 15 minutes.':'We sent a 6-digit code to '.$email.'. It expires in 15 minutes.'][$mode]}}</p>
+<p class="sub">{{['owner'=>'Sign in to the owner console.','login'=>'Sign in to your CVTara workspace.','register'=>'It takes under a minute. No card needed.','forgot-password'=>'We’ll send a reset link to your email.','reset-password'=>'Use at least 12 characters.','verify'=>($ownerStep??false)?(($ownerTotp??false)?'Enter the 6-digit code from your authenticator app.':'We emailed a 6-digit sign-in code to the owner address. It expires in 15 minutes.'):'We sent a 6-digit code to '.$email.'. It expires in 15 minutes.'][$mode]}}</p>
 @if(session('status'))<p class="ok" role="status">{{session('status')}}</p>@endif
 @php($inline=in_array($mode,['register','verify','reset-password']))
 @if($inline && $errors->any())<p class="error" role="alert">Please fix the highlighted fields below.</p>@endif
@@ -92,7 +92,7 @@ html.dark .au-theme{background:#1a1f2e;border-color:#2d3748;color:#f1f5f9}
 </div>
 @endif
 <button class="au-go">{{['owner'=>'Sign in','login'=>'Sign in','register'=>'Create my account','forgot-password'=>'Send reset link','reset-password'=>'Save password','verify'=>'Confirm email'][$mode]}}</button></form>
-@if($ownerStep??false)<p class="au-note">No email? Check spam, or <a href="/{{ request()->path() }}?restart=1">sign in again</a> for a new code.</p>@endif
+@if(($ownerStep??false)&&!($ownerTotp??false))<p class="au-note">No email? Check spam, or <a href="/{{ request()->path() }}?restart=1">sign in again</a> for a new code.</p>@endif
 @if($mode==='verify' && !($ownerStep??false))<form method="post" action="/verify-email/resend" style="margin-top:12px">@csrf @if(request('next'))<input type="hidden" name="next" value="{{ request('next') }}">@endif<button class="au-ghost" type="submit">Send me a new code</button></form><p class="au-note">Not in your inbox? Check spam or promotions. The email comes from support@cvtara.com.</p>@endif
 @if($isReg)<p class="au-note">Build, preview and run ATS checks free first. Pay only when you download, with a 7-day refund if unused.</p>@endif
 <p class="au-links" @if(in_array($mode,['owner','verify'])) hidden @endif>@if($mode==='register')<span>Already have an account? <a href="/login">Sign in</a></span>@elseif($mode==='login')<span>New to CVTara? <a href="/register">Create an account</a></span><a href="/forgot-password">Forgot password?</a>@else<a href="/login">Back to sign in</a>@endif</p>
