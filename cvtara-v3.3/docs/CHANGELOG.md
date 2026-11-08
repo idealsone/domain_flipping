@@ -1,3 +1,13 @@
+# CVTara v3.22.2 — Owner console pages load reliably, lighter pages, unused code removed
+
+## 3.22.2
+- **Blank owner console pages:** the site-wide limit of 240 requests a minute also counted the console's own data calls (about 40 per load), so after a minute of clicking, pages stayed on "Loading…". API and download calls keep their own limits, the owner is not page-limited, and the console shares repeat calls and retries a busy answer.
+- **Lighter owner console:** the SEO page list and the page audit (about 1.1 MB) load only when SEO & sitemap or Keyword intelligence is opened.
+- **Owner scripts are private:** the two owner console scripts moved from public files to `/console/owner.js` and `/console/advanced.js`, served only to a signed-in owner. Delete `public_html/owner-console.js` and `public_html/owner-advanced.js` when updating.
+- **Visitors:** public pages no longer ask for an account allowance when nobody is signed in (a wasted request on every page view).
+- **Unused code removed:** the old audit scripts (written for removed providers), unused owner script tags on 82 public pages, a missing controller import and a dead route branch. The installer page says "optional writing help".
+- No migrations. Rebuild the ready-made pages after updating.
+
 # CVTara v3.22.1 — Pricing and referral rules, small fixes, landing spacing
 
 ## 3.22.1

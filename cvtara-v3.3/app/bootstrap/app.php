@@ -18,7 +18,7 @@ return Application::configure(basePath: dirname(__DIR__))
         }
         $m->append(SecurityHeaders::class);
         $m->redirectGuestsTo('/login');
-        $m->web(prepend: [\App\Http\Middleware\ServeCachedPage::class], append: [OwnerMaintenance::class, \Illuminate\Routing\Middleware\ThrottleRequests::class.':240,1,pages']);
+        $m->web(prepend: [\App\Http\Middleware\ServeCachedPage::class], append: [OwnerMaintenance::class, \Illuminate\Routing\Middleware\ThrottleRequests::class.':pages']);
     })
     ->withExceptions(function (Exceptions $e): void {
         $e->report(function (\Throwable $x) {
