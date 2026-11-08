@@ -39,18 +39,16 @@
   async function list(h) {
     const tbl = $('#fbt', h); if (!tbl) return;
     try {
-      const qs = new URLSearchParams({ page: String(F.page), per: '20' }); if (F.q) qs.set('q', F.q); if (F.status !== 'all') qs.set('status', F.status); if (F.area !== 'all') qs.set('area', F.area); if (F.kind !== 'all') qs.set('kind', F.kind);
+      const qs = new URLSearchParams({ page: String(F.page), per: String(F.per || 20) }); if (F.q) qs.set('q', F.q); if (F.status !== 'all') qs.set('status', F.status); if (F.area !== 'all') qs.set('area', F.area); if (F.kind !== 'all') qs.set('kind', F.kind);
       const d = await api('/api/admin/support?' + qs);
       tbl.innerHTML = d.rows.length ? `<thead><tr><th>Received</th><th>From</th><th>About</th><th>Message</th><th>Status</th></tr></thead><tbody>${d.rows.map(r => `<tr data-id="${E(r.id)}" class="fb-row" tabindex="0" style="cursor:pointer">
         <td>${E(when(r.created_at))}</td><td><b>${E(r.name || 'Visitor')}</b><br><small>${E(r.email || 'no email')} · ${E(r.plan || '')}</small></td>
         <td>${E(META.areas[r.area] || r.area)}<br><small>${E(META.kinds[r.kind] || r.kind)}${r.rating ? ' · ' + '★'.repeat(r.rating) : ''}</small></td>
         <td style="max-width:420px">${E(r.message)}${r.images ? `<br><small>📎 ${r.images} screenshot${r.images > 1 ? 's' : ''}</small>` : ''}</td>
         <td><span class="ad-pill ${tone(r.status)}">${E(STATUS[r.status] || r.status)}</span></td></tr>`).join('')}</tbody>` : '<tbody><tr><td>No reports match these filters.</td></tr></tbody>';
-      const pages = Math.max(1, Math.ceil(d.total / d.per));
-      $('#fbp', h).innerHTML = d.total ? `<span>${d.total} report${d.total === 1 ? '' : 's'} · page ${d.page} of ${pages}</span> <button class="button secondary small" data-pg="${d.page - 1}" ${d.page <= 1 ? 'disabled' : ''}>← Prev</button> <button class="button secondary small" data-pg="${d.page + 1}" ${d.page >= pages ? 'disabled' : ''}>Next →</button>` : '';
+      K.pager($('#fbp', h), d, (p, per) => { F.page = p; F.per = per; list(h); });
       tbl.onclick = e => { const tr = e.target.closest('.fb-row'); if (tr) detail(tr.dataset.id, h); };
       tbl.onkeydown = e => { if (e.key === 'Enter') { const tr = e.target.closest('.fb-row'); if (tr) detail(tr.dataset.id, h); } };
-      $('#fbp', h).onclick = e => { const b = e.target.closest('[data-pg]'); if (b && !b.disabled) { F.page = +b.dataset.pg; list(h); } };
     } catch (e) { tbl.innerHTML = `<tbody><tr><td role="alert">${E(err(e))}</td></tr></tbody>`; }
   }
 

@@ -229,12 +229,10 @@
   async function list(h) {
     const tbl = $('#orT', h); if (!tbl) return;
     try {
-      const qs = new URLSearchParams({ page: String(F.page), per: '50' }); if (F.q) qs.set('q', F.q); if (F.status !== 'all') qs.set('status', F.status); if (F.list !== 'all') qs.set('list', F.list);
+      const qs = new URLSearchParams({ page: String(F.page), per: String(F.per || 20) }); if (F.q) qs.set('q', F.q); if (F.status !== 'all') qs.set('status', F.status); if (F.list !== 'all') qs.set('list', F.list);
       const d = await api('/api/admin/outreach/contacts?' + qs);
       tbl.innerHTML = d.rows.length ? `<thead><tr><th>Contact</th><th>Status</th><th>Mails sent</th><th>Next mail</th><th>Mailbox</th></tr></thead><tbody>${d.rows.map(r => `<tr><td><b>${E(r.email)}</b><br><small>${E([r.name, r.designation, r.college, r.city].filter(Boolean).join(' · '))}${r.source ? ' · ' + E(r.source) : ''}</small><br><small class="muted">${E(D.lists[r.list] || '')}${r.clicks ? ' · ' + r.clicks + ' click' + (r.clicks === 1 ? '' : 's') : ''}${r.shares ? ' · shared ' + r.shares + '×' : ''}</small></td><td><span class="ad-pill ${tone(r.status)}">${E(STATUS[r.status] || r.status)}</span>${r.error ? `<br><small>${E(r.error)}</small>` : ''}</td><td>${r.step}${r.last_sent_at ? `<br><small>last ${E(when(r.last_sent_at))}</small>` : ''}</td><td>${r.status === 'active' ? E(when(r.next_at)) : r.status === 'queued' ? 'In line' : '—'}</td><td>${E(r.sender || '—')}</td></tr>`).join('')}</tbody>` : '<tbody><tr><td>No contacts match.</td></tr></tbody>';
-      const pages = Math.max(1, Math.ceil(d.total / d.per));
-      $('#orP', h).innerHTML = d.total ? `<span>${d.total.toLocaleString('en-IN')} contact${d.total === 1 ? '' : 's'} · page ${d.page} of ${pages}</span> <button class="button secondary small" data-pg="${d.page - 1}" ${d.page <= 1 ? 'disabled' : ''}>← Prev</button> <button class="button secondary small" data-pg="${d.page + 1}" ${d.page >= pages ? 'disabled' : ''}>Next →</button>` : '';
-      $('#orP', h).onclick = e => { const b = e.target.closest('[data-pg]'); if (b && !b.disabled) { F.page = +b.dataset.pg; list(h); } };
+      K.pager($('#orP', h), d, (p, per) => { F.page = p; F.per = per; list(h); });
     } catch (e) { tbl.innerHTML = `<tbody><tr><td role="alert">${E(err(e))}</td></tr></tbody>`; }
   }
 

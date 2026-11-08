@@ -37,9 +37,10 @@ class CampaignAdminController extends Controller
                 $q->where(fn ($w) => $w->where('email', 'like', $like)->orWhere('name', 'like', $like)->orWhere('source', 'like', $like));
             }
             $page = max(1, (int) $r->query('page', 1));
+            $per = in_array((int) $r->query('per'), \App\Services\AdminTable::SIZES, true) ? (int) $r->query('per') : \App\Services\AdminTable::PER;
             $total = (clone $q)->count();
 
-            return $ok(['contacts' => $q->forPage($page, 50)->get(['id', 'email', 'name', 'source', 'confirmed_at', 'unsubscribed_at', 'created_at']), 'total' => $total, 'page' => $page, 'per' => 50]);
+            return $ok(['contacts' => $q->forPage($page, $per)->get(['id', 'email', 'name', 'source', 'confirmed_at', 'unsubscribed_at', 'created_at']), 'total' => $total, 'page' => $page, 'per' => $per]);
         }
         abort_unless($r->isMethod('POST'), 405);
         $text = ['subject' => 'required|string|max:180', 'body' => 'required|string|max:20000'];

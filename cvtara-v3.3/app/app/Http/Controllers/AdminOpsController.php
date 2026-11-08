@@ -87,7 +87,11 @@ class AdminOpsController extends Controller
         if ($path === 'errors') {
             abort_unless($get, 405);
 
-            return $ok($this->errors($r));
+            $all = $this->errors($r, 2000);
+            // Level, source, period and search already ran in SQL; this sorts and cuts out the requested page.
+            $d = \App\Services\AdminTable::rows($r, $all['errors'], ['sorts' => ['last' => 'last_seen', 'count' => 'occurrences', 'level' => 'level'], 'sort' => 'last']);
+
+            return $ok(['errors' => $d['rows'], 'summary' => $all['summary'] + ['browser' => count(array_filter($all['errors'], fn ($e) => $e['source'] === 'browser')), 'mail' => count(array_filter($all['errors'], fn ($e) => $e['source'] === 'mail'))]] + $d);
         }
         if ($path === 'errors/download') {
             abort_unless($get, 405);
@@ -105,12 +109,17 @@ class AdminOpsController extends Controller
         }
         if ($path === 'errors/clear') {
             abort_unless($r->isMethod('POST'), 405);
-            $v = $r->validate(['ids' => 'sometimes|array|max:500', 'ids.*' => 'integer', 'mode' => 'required|in:resolve,delete']);
+            $v = $r->validate(['ids' => 'sometimes|array|max:500', 'ids.*' => 'integer', 'mode' => 'required|in:resolve,delete,purge-resolved']);
             $q = DB::table('error_logs');
             if (! empty($v['ids'])) {
                 $q->whereIn('id', $v['ids']);
             }
-            $n = $v['mode'] === 'delete' ? $q->delete() : $q->whereNull('resolved_at')->update(['resolved_at' => now()]);
+            // purge-resolved: every resolved entry, not only those on the page the owner is looking at.
+            $n = match ($v['mode']) {
+                'delete' => $q->delete(),
+                'purge-resolved' => DB::table('error_logs')->whereNotNull('resolved_at')->delete(),
+                default => $q->whereNull('resolved_at')->update(['resolved_at' => now()]),
+            };
             Settings::audit($admin, 'error_log_'.$v['mode'], (string) $n);
 
             return $ok(['affected' => $n]);

@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\User;
 use App\Services\AccountSecurity;
+use App\Services\AdminTable;
 use App\Services\BusinessControls;
 use App\Services\FastIndex;
 use App\Services\MailAutomation;
@@ -192,60 +193,90 @@ class AdminController extends Controller
             return $ok(['plans' => Settings::plans()]);
         }
         if ($path === 'purchases') {
-            return $ok(['purchases' => DB::table('purchases as p')->join('users as u', 'u.id', '=', 'p.owner_id')->orderByDesc('p.created_at')->limit(500)->get(['p.*', 'u.email', 'u.name'])]);
+            $d = AdminTable::query($r, DB::table('purchases as p')->join('users as u', 'u.id', '=', 'p.owner_id')->select(['p.*', 'u.email', 'u.name']), [
+                'search' => ['u.email', 'u.name', 'p.payment_reference', 'p.provider_order_id', 'p.plan'],
+                'filters' => ['status' => 'p.status', 'provider' => 'p.provider', 'plan' => 'p.plan'],
+                'date' => 'p.created_at',
+                'sorts' => ['date' => 'p.created_at', 'amount' => 'p.amount_paise', 'status' => 'p.status', 'plan' => 'p.plan'],
+                'sort' => 'date',
+                'key' => 'p.id',
+            ]);
+
+            return $ok(['purchases' => $d['rows']] + $d);
         }
-        if (in_array($path, ['overview', 'dashboard', 'users'])) {
+        if ($path === 'users') {
+            // Only the requested page of accounts and four cheap counts: the heavy activity statistics live in 'dashboard'.
+            $uq = DB::table('users')->where('email', '!=', \App\Services\AccountEraser::PLACEHOLDER);
+            $live = fn () => DB::table('purchases')->whereIn('status', ['paid', 'partially_refunded'])->where('access_until', '>', now())->where('provider', '!=', 'referral_reward')->select('owner_id');
+            $ever = fn () => DB::table('purchases')->whereNotNull('purchased_at')->select('owner_id');
+            $d = AdminTable::query($r, $uq->select(['id', 'name', 'email', 'created_at', 'blocked', 'is_admin']), [
+                'search' => ['email', 'name'],
+                'filters' => ['f' => function ($q, $f) use ($live, $ever) {
+                    if ($f === 'owner') {
+                        $q->where('is_admin', true);
+                    } elseif (in_array($f, ['blocked', 'paid', 'expired', 'normal'], true)) {
+                        $q->where('is_admin', false)->where('blocked', $f === 'blocked');
+                        match ($f) {
+                            'paid' => $q->whereIn('id', $live()),
+                            'expired' => $q->whereIn('id', $ever())->whereNotIn('id', $live()),
+                            'normal' => $q->whereNotIn('id', $ever()),
+                            default => null,
+                        };
+                    }
+                }],
+                'date' => 'created_at',
+                'sorts' => ['joined' => 'created_at', 'name' => 'name', 'email' => 'email'],
+                'sort' => 'joined',
+                'key' => 'id',
+            ]);
+            $ids = array_map(fn ($u) => $u->id, $d['rows']);
+            $profiles = DB::table('profiles')->whereIn('owner_id', $ids)->get()->keyBy('owner_id');
+            $counts = fn ($t) => DB::table($t)->whereIn('owner_id', $ids)->groupBy('owner_id')->selectRaw('owner_id, count(*) c')->pluck('c', 'owner_id');
+            $resumeCounts = $counts('resume_drafts');
+            $appCounts = $counts('applications');
+            $everPaid = DB::table('purchases')->whereIn('owner_id', $ids)->whereNotNull('purchased_at')->distinct()->pluck('owner_id')->flip();
+            $acc = Settings::accessMany($ids);
+            $users = array_map(fn ($u) => [...(array) ($profiles[$u->id] ?? []), 'owner_id' => (string) $u->id, 'email' => $u->email, 'name' => $u->name, 'created_at' => $u->created_at, 'blocked' => (bool) $u->blocked, 'isAdmin' => (bool) $u->is_admin, 'paid' => $acc[$u->id]['paid'], 'ever_paid' => isset($everPaid[$u->id]), 'last_plan' => $acc[$u->id]['plan'], 'accessUntil' => $acc[$u->id]['accessUntil'], 'resumes' => $resumeCounts[$u->id] ?? 0, 'applications' => $appCounts[$u->id] ?? 0], $d['rows']);
+            $kpis = \Illuminate\Support\Facades\Cache::remember('admin-user-kpis', 20, function () {
+                $all = User::count();
+                $paid = DB::table('purchases')->where('provider', '!=', 'referral_reward')->whereIn('status', ['paid', 'partially_refunded'])->where('access_until', '>', now())->distinct('owner_id')->count('owner_id');
+
+                return ['totalUsers' => $all, 'paidUsers' => $paid, 'freeUsers' => $all - $paid, 'blockedUsers' => User::where('blocked', true)->count()];
+            });
+
+            return $ok(['users' => $users, 'usersTotal' => $d['total'], 'perPage' => $d['per']] + $d + $kpis);
+        }
+        if (in_array($path, ['overview', 'dashboard'])) {
             $days = in_array((int) $r->query('days', 30), [1, 7, 30, 90]) ? (int) $r->query('days', 30) : 30;
-            $users = [];
-            $usersTotal = User::count();
-            $page = max(1, (int) $r->query('page', 1));
-            if ($path !== 'overview') {
-                $term = trim((string) $r->query('q', ''));
-                $uq = User::query()->where('email', '!=', \App\Services\AccountEraser::PLACEHOLDER);
-                if ($term !== '') {
-                    $like = '%'.addcslashes($term, '%_\\').'%';
-                    $uq->where(fn ($w) => $w->where('email', 'like', $like)->orWhere('name', 'like', $like));
-                }
-                $f = (string) $r->query('f', 'all');
-                if ($f === 'owner') {
-                    $uq->where('is_admin', true);
-                } elseif (in_array($f, ['blocked', 'paid', 'expired', 'normal'], true)) {
-                    $uq->where('is_admin', false);
-                    $f === 'blocked' ? $uq->where('blocked', true) : $uq->where('blocked', false);
-                    $live = DB::table('purchases')->whereIn('status', ['paid', 'partially_refunded'])->where('access_until', '>', now())->where('provider', '!=', 'referral_reward')->select('owner_id');
-                    $ever = DB::table('purchases')->whereNotNull('purchased_at')->select('owner_id');
-                    match ($f) {
-                        'paid' => $uq->whereIn('id', $live),
-                        'expired' => $uq->whereIn('id', $ever)->whereNotIn('id', $live),
-                        'normal' => $uq->whereNotIn('id', $ever),
-                        default => null,
-                    };
-                }
-                $usersTotal = (clone $uq)->count();
-                $list = $uq->orderByDesc('id')->forPage($page, 100)->get(['id', 'name', 'email', 'created_at', 'blocked', 'is_admin']);
-                $ids = $list->pluck('id')->all();
-                $profiles = DB::table('profiles')->whereIn('owner_id', $ids)->get()->keyBy('owner_id');
-                $counts = fn ($t) => DB::table($t)->whereIn('owner_id', $ids)->groupBy('owner_id')->selectRaw('owner_id, count(*) c')->pluck('c', 'owner_id');
-                $resumeCounts = $counts('resume_drafts');
-                $appCounts = $counts('applications');
-                $everPaid = DB::table('purchases')->whereIn('owner_id', $ids)->whereNotNull('purchased_at')->distinct()->pluck('owner_id')->flip();
-                $acc = Settings::accessMany($ids);
-                $users = $list->map(fn ($u) => [...(array) ($profiles[$u->id] ?? []), 'owner_id' => (string) $u->id, 'email' => $u->email, 'name' => $u->name, 'created_at' => $u->created_at, 'blocked' => (bool) $u->blocked, 'isAdmin' => (bool) $u->is_admin, 'paid' => $acc[$u->id]['paid'], 'ever_paid' => isset($everPaid[$u->id]), 'last_plan' => $acc[$u->id]['plan'], 'accessUntil' => $acc[$u->id]['accessUntil'], 'resumes' => $resumeCounts[$u->id] ?? 0, 'applications' => $appCounts[$u->id] ?? 0])->values()->all();
-            }
-            $activity = DB::table('activity_events as a')->leftJoin('users as u', 'a.owner_id', '=', 'u.id')->where('a.created_at', '>=', now()->subDays($days))->orderByDesc('a.created_at')->limit(100)->get(['a.*', 'u.name', 'u.email']);
-            $events = DB::table('activity_events')->where('created_at', '>=', now()->subDays($days))->selectRaw('event,count(*) as count')->groupBy('event')->get();
-            $paid = DB::table('purchases')->where('provider', '!=', 'referral_reward')->whereIn('status', ['paid', 'partially_refunded'])->where('access_until', '>', now())->distinct('owner_id')->count('owner_id');
-            $all = User::count();
-            $data = ['users' => $users, 'usersTotal' => $usersTotal, 'page' => $page, 'perPage' => 100, 'blockedUsers' => User::where('blocked', true)->count(), 'totalUsers' => $all, 'paidUsers' => $paid, 'freeUsers' => $all - $paid, 'resumes' => DB::table('resume_drafts')->count(), 'applications' => DB::table('applications')->count(), 'activityCount' => $events->sum('count'), 'activity' => $activity, 'eventCounts' => $events, 'reviews' => DB::table('feedback')->selectRaw('status,count(*) as count')->groupBy('status')->get(), 'purchases' => DB::table('purchases')->where('created_at', '>=', now()->subDays($days))->selectRaw('status,count(*) as count,SUM(amount_paise-refunded_paise) as amount')->groupBy('status')->get(), 'daily' => DB::table('activity_events')->where('created_at', '>=', now()->subDays($days))->selectRaw('DATE(created_at) as day,event,count(*) as count')->groupByRaw('DATE(created_at),event')->orderBy('day')->get()];
-            $data['totalResumes'] = $data['resumes'];
-            $data['totalApplications'] = $data['applications'];
-            $data['stages'] = DB::table('applications')->selectRaw('stage,count(*) as count')->groupBy('stage')->get();
-            $data['expiredUsers'] = User::whereIn('id', DB::table('purchases')->whereNotNull('purchased_at')->select('owner_id'))->whereNotIn('id', DB::table('purchases')->whereIn('status', ['paid', 'partially_refunded'])->where('access_until', '>', now())->select('owner_id'))->count();
+            // Several console panels ask for these numbers when the console opens; one computation serves them all.
+            $data = \Illuminate\Support\Facades\Cache::remember('admin-dashboard-'.$days, 30, function () use ($days) {
+                $activity = DB::table('activity_events as a')->leftJoin('users as u', 'a.owner_id', '=', 'u.id')->where('a.created_at', '>=', now()->subDays($days))->orderByDesc('a.created_at')->limit(20)->get(['a.*', 'u.name', 'u.email']);
+                $events = DB::table('activity_events')->where('created_at', '>=', now()->subDays($days))->selectRaw('event,count(*) as count')->groupBy('event')->get();
+                $paid = DB::table('purchases')->where('provider', '!=', 'referral_reward')->whereIn('status', ['paid', 'partially_refunded'])->where('access_until', '>', now())->distinct('owner_id')->count('owner_id');
+                $all = User::count();
+                $data = ['users' => [], 'usersTotal' => $all, 'blockedUsers' => User::where('blocked', true)->count(), 'totalUsers' => $all, 'paidUsers' => $paid, 'freeUsers' => $all - $paid, 'resumes' => DB::table('resume_drafts')->count(), 'applications' => DB::table('applications')->count(), 'activityCount' => $events->sum('count'), 'activity' => $activity, 'eventCounts' => $events, 'reviews' => DB::table('feedback')->selectRaw('status,count(*) as count')->groupBy('status')->get(), 'purchases' => DB::table('purchases')->where('created_at', '>=', now()->subDays($days))->selectRaw('status,count(*) as count,SUM(amount_paise-refunded_paise) as amount')->groupBy('status')->get(), 'daily' => DB::table('activity_events')->where('created_at', '>=', now()->subDays($days))->selectRaw('DATE(created_at) as day,event,count(*) as count')->groupByRaw('DATE(created_at),event')->orderBy('day')->get()];
+                $data['totalResumes'] = $data['resumes'];
+                $data['totalApplications'] = $data['applications'];
+                $data['stages'] = DB::table('applications')->selectRaw('stage,count(*) as count')->groupBy('stage')->get();
+                $data['expiredUsers'] = User::whereIn('id', DB::table('purchases')->whereNotNull('purchased_at')->select('owner_id'))->whereNotIn('id', DB::table('purchases')->whereIn('status', ['paid', 'partially_refunded'])->where('access_until', '>', now())->select('owner_id'))->count();
+
+                // The cache only keeps plain arrays (it refuses to rebuild PHP objects), so store the JSON shape.
+                return json_decode(json_encode($data), true);
+            });
             if ($path === 'overview') {
-                $data['users'] = $all;
+                $data['users'] = $data['totalUsers'];
             }
 
             return $ok($data);
+        }
+        if ($path === 'live') {
+            // The "Live stats" card refreshes every 30 seconds: five indexed counts, shared by every open console tab.
+            return $ok(\Illuminate\Support\Facades\Cache::remember('admin-live', 20, function () {
+                $day = now()->startOfDay();
+                $ev = fn ($like) => DB::table('activity_events')->where('created_at', '>=', $day)->where('event', 'like', $like)->count();
+
+                return ['activeUsers' => DB::table('activity_events')->where('created_at', '>=', now()->subDay())->whereNotNull('owner_id')->distinct('owner_id')->count('owner_id'), 'resumesToday' => $ev('%resume%'), 'revenueTodayPaise' => (int) DB::table('purchases')->where('created_at', '>=', $day)->where('provider', '!=', 'referral_reward')->whereIn('status', ['paid', 'partially_refunded', 'refunded'])->sum(DB::raw('amount_paise - refunded_paise')), 'scansToday' => DB::table('activity_events')->where('created_at', '>=', $day)->where(fn ($w) => $w->where('event', 'like', '%compared%')->orWhere('event', 'like', '%ats%'))->count(), 'signupsToday' => User::where('created_at', '>=', $day)->count(), 'totalUsers' => User::count()];
+            }));
         }
         if ($path === 'users/block') {
             abort_unless($r->isMethod('POST'), 405);
@@ -276,7 +307,16 @@ class AdminController extends Controller
         }
         if ($path === 'reviews') {
             if ($get) {
-                return $ok(['reviews' => DB::table('feedback as f')->join('users as u', 'u.id', '=', 'f.owner_id')->orderByDesc('f.created_at')->limit(200)->get(['f.*', 'u.email'])]);
+                $d = AdminTable::query($r, DB::table('feedback as f')->join('users as u', 'u.id', '=', 'f.owner_id')->select(['f.*', 'u.email']), [
+                    'search' => ['f.display_name', 'f.content', 'u.email'],
+                    'filters' => ['status' => 'f.status', 'source' => 'f.source', 'rating' => 'f.rating'],
+                    'date' => 'f.created_at',
+                    'sorts' => ['date' => 'f.created_at', 'rating' => 'f.rating', 'name' => 'f.display_name'],
+                    'sort' => 'date',
+                    'key' => 'f.id',
+                ]);
+
+                return $ok(['reviews' => $d['rows'], 'counts' => DB::table('feedback')->selectRaw('status,count(*) as count')->groupBy('status')->pluck('count', 'status')] + $d);
             }$r->validate(['id' => 'required|uuid', 'status' => 'required|in:pending,published,hidden']);
             $row = DB::table('feedback')->where('id', $r->id)->first();
             abort_unless($row, 404);
@@ -300,7 +340,16 @@ class AdminController extends Controller
             return $ok();
         }
         if ($path === 'email/jobs') {
-            return $ok(['jobs' => DB::table('mail_outbox')->orderByDesc('created_at')->limit(200)->get(['id', 'recipient', 'trigger', 'subject', 'status', 'error', 'due_at', 'sent_at', 'attempts']), 'delivery' => 'Configured SMTP / Resend', 'scheduler' => 'Hostinger cron processes queued jobs.', 'heartbeat' => Settings::get('cronHeartbeat')]);
+            $d = AdminTable::query($r, DB::table('mail_outbox')->select(['id', 'recipient', 'trigger', 'subject', 'status', 'error', 'due_at', 'sent_at', 'attempts', 'created_at']), [
+                'search' => ['recipient', 'subject'],
+                'filters' => ['status' => 'status', 'trigger' => 'trigger'],
+                'date' => 'created_at',
+                'sorts' => ['date' => 'created_at', 'status' => 'status', 'to' => 'recipient'],
+                'sort' => 'date',
+                'key' => 'id',
+            ]);
+
+            return $ok(['jobs' => $d['rows'], 'counts' => DB::table('mail_outbox')->selectRaw('status,count(*) as count')->groupBy('status')->pluck('count', 'status'), 'delivery' => 'Configured SMTP / Resend', 'scheduler' => 'Hostinger cron processes queued jobs.', 'heartbeat' => Settings::get('cronHeartbeat')] + $d);
         }
         if ($path === 'email/preview') {
             abort_unless($r->isMethod('POST'), 405);
@@ -325,8 +374,40 @@ class AdminController extends Controller
 
             return $ok(['url' => '/media/'.$name]);
         }
-        if ($path === 'seo' || $path === 'page-audit') {
-            return $ok(['origin' => config('app.url'), 'seo' => Settings::get('seo'), 'routes' => app(ContentController::class)->pages(), 'pages' => app(ContentController::class)->audit()]);
+        if ($path === 'seo') {
+            return $ok(['origin' => config('app.url'), 'seo' => Settings::get('seo'), 'routes' => app(ContentController::class)->pages()]);
+        }
+        if ($path === 'page-audit') {
+            // Hundreds of programmatic pages: the checklist is worked out once a minute and sent one page of rows at a time.
+            $rows = \Illuminate\Support\Facades\Cache::remember('admin-page-audit', 60, fn () => array_map(fn ($p) => array_intersect_key($p, array_flip(['path', 'title', 'primary', 'titleHits', 'descriptionHits', 'headingHits', 'bodyHits', 'altHits', 'wordCount', 'score'])) + ['section' => preg_match('#^/([a-z0-9-]+)/#', $p['path'], $m) ? $m[1] : 'main'], app(ContentController::class)->audit()));
+            $d = AdminTable::rows($r, $rows, [
+                'search' => ['title', 'path', 'primary'],
+                'filters' => ['section' => 'section', 'score' => fn ($p, $v) => match ($v) {
+                    'low' => $p['score'] < 50,
+                    'mid' => $p['score'] >= 50 && $p['score'] < 80,
+                    'high' => $p['score'] >= 80,
+                    default => true,
+                }],
+                'sorts' => ['page' => 'title', 'path' => 'path', 'words' => 'wordCount', 'score' => 'score', 'body' => 'bodyHits'],
+                'sort' => 'path',
+                'dir' => 'asc',
+            ]);
+
+            $sections = array_count_values(array_column($rows, 'section'));
+            arsort($sections);
+
+            return $ok(['pages' => $d['rows'], 'sections' => $sections] + $d);
+        }
+        if ($path === 'search/rows') {
+            $dim = $r->query('dimension') === 'page' ? 'page' : 'query';
+            $data = Settings::get('searchData', []);
+            $d = AdminTable::rows($r, is_array($data[$dim] ?? null) ? $data[$dim] : [], [
+                'search' => ['key'],
+                'sorts' => ['key' => 'key', 'clicks' => 'clicks', 'impressions' => 'impressions', 'ctr' => 'ctr', 'position' => 'position'],
+                'sort' => 'clicks',
+            ]);
+
+            return $ok($d);
         }
         if ($path === 'search/import') {
             $v = $r->validate(['dimension' => 'required|in:query,page', 'startDate' => 'required|date_format:Y-m-d', 'endDate' => 'required|date_format:Y-m-d|after_or_equal:startDate', 'rows' => 'required|array|max:5000', 'rows.*.key' => 'required|string|max:2000', 'rows.*.clicks' => 'required|numeric|min:0', 'rows.*.impressions' => 'required|numeric|min:0', 'rows.*.ctr' => 'required|numeric|min:0|max:1', 'rows.*.position' => 'required|numeric|min:0']);
