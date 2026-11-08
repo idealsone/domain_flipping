@@ -1,4 +1,7 @@
-# CVTara v3.46.0 — V2: guides and help centre
+# CVTara v3.46.1 — V2: guides and help centre
+
+## 3.46.1
+- SEO pages: the trust line now says "Made by an HR team in Bangalore" instead of "Built by working recruiters" (owner decision 2026-11-08), matching the footer and emails. No database change.
 
 ## 3.46.0
 Eleventh V2 release. No database change.

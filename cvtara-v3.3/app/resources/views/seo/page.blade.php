@@ -22,7 +22,7 @@
 {{-- SEO-CTA:hero start. Product actions for this page come from $p['cta'] (SeoPages::cta); add new buttons here. --}}
 <div class="sp-actions" data-seo-cta="hero">@if(!empty($p['picker']))<a class="sp-cta" href="{{ $p['picker'] }}">Use this template</a>@endif<a class="{{ !empty($p['picker']) ? 'sp-secondary' : 'sp-cta' }}" href="{{ $p['cta']['primary'][0] }}">{{ $p['cta']['primary'][1] }}</a><a class="sp-secondary" href="{{ $p['cta']['secondary'][0] }}">{{ $p['cta']['secondary'][1] }}</a></div>
 {{-- SEO-CTA:hero end --}}
-<p class="sp-trust">Free to build and preview · Pay once, no auto-renewal · Secure UPI and cards · Built by working recruiters</p>
+<p class="sp-trust">Free to build and preview · Pay once, no auto-renewal · Secure UPI and cards · Made by an HR team in Bangalore</p>
 </div>
 <img class="sp-hero-img" src="{{ $p['image'][0] }}" alt="{{ $p['image'][1] }}" width="520" height="390" loading="eager" decoding="async" fetchpriority="high">
 </header>
