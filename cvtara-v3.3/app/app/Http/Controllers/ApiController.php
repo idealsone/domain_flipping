@@ -782,7 +782,24 @@ class ApiController extends Controller
             return $ok(['id' => Referrals::request($u, $v)]);
         }
         if ($path === 'feedback' && $get) {
-            return $ok(['reviews' => DB::table('feedback')->where('owner_id', $id)->orderByDesc('created_at')->limit(10)->get()]);
+            $pend = \App\Services\ReviewEdits::pendingFor($id);
+
+            return $ok(['reviews' => DB::table('feedback')->where('owner_id', $id)->orderByDesc('created_at')->limit(10)->get(['id', 'display_name', 'company', 'designation', 'rating', 'content', 'consent', 'status', 'edit_state', 'edited_at', 'created_at'])->map(fn ($f) => (array) $f + ['pendingEdit' => $pend[$f->id] ?? null])]);
+        }
+        // 3.55.0 Ask for feedback after a resume save (V7 §28), not while editing.
+        if ($path === 'feedback/ask') {
+            if ($get) {
+                return $ok(['ask' => \App\Services\ReviewEdits::shouldAsk($id)]);
+            }
+            $act = $r->input('action') === 'dismissed' ? 'feedback_prompt_dismissed' : 'feedback_prompt_shown';
+            Settings::audit($id, $act);
+
+            return $ok();
+        }
+        if (preg_match('#^feedback/([a-f0-9-]{36})/edits/(\d+)$#', $path, $m) && $r->isMethod('POST')) {
+            \App\Services\ReviewEdits::decide($id, $m[1], (int) $m[2], $r->boolean('approve'));
+
+            return $ok();
         }
         if ($path === 'feedback' && $r->isMethod('POST')) {
             $v = $r->validate(['displayName' => 'required|string|max:100', 'company' => 'nullable|string|max:120', 'designation' => 'nullable|string|max:120', 'rating' => 'required|integer|min:1|max:5', 'content' => 'required|string|min:10|max:2000', 'consent' => 'required|boolean']);
@@ -792,7 +809,10 @@ class ApiController extends Controller
             if (DB::table('feedback')->where('owner_id', $id)->get(['content'])->contains(fn ($x) => $norm($x->content) === $norm($v['content']))) {
                 throw ValidationException::withMessages(['content' => 'You have already sent this feedback. Thank you!']);
             }
-            DB::table('feedback')->insert(['id' => (string) Str::uuid(), 'owner_id' => $id, 'display_name' => $v['displayName'], 'company' => trim((string) ($v['company'] ?? '')), 'designation' => trim((string) ($v['designation'] ?? '')), 'rating' => $v['rating'], 'content' => $v['content'], 'consent' => $v['consent'], 'consented_at' => $v['consent'] ? now() : null, 'created_at' => now(), 'updated_at' => now()]);
+            // What the writer had used, kept with the review (V7 §28): their latest paid order, else their latest saved resume.
+            $usage = ($o = DB::table('purchases')->where('owner_id', $id)->whereIn('status', ['paid', 'partially_refunded', 'refunded'])->whereNotNull('purchased_at')->orderByDesc('purchased_at')->value('id')) ? 'order:'.$o
+                : (($rd = DB::table('resume_drafts')->where('owner_id', $id)->orderByDesc('updated_at')->value('id')) ? 'resume:'.$rd : null);
+            DB::table('feedback')->insert(['id' => (string) Str::uuid(), 'owner_id' => $id, 'display_name' => $v['displayName'], 'company' => trim((string) ($v['company'] ?? '')), 'designation' => trim((string) ($v['designation'] ?? '')), 'rating' => $v['rating'], 'content' => $v['content'], 'consent' => $v['consent'], 'consented_at' => $v['consent'] ? now() : null, 'usage_ref' => $usage, 'created_at' => now(), 'updated_at' => now()]);
 
             return $ok();
         }

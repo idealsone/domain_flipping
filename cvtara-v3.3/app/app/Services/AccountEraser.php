@@ -69,6 +69,10 @@ class AccountEraser
                 DB::table('interview_sessions')->whereIn('id', $sessions)->delete();
                 DB::table('usage_ledger')->where('owner_id', $id)->update(['owner_id' => $keep, 'reason' => null]);
             }
+            // 3.55.0 review edit history holds the customer's own words.
+            if (Schema::hasTable('feedback_edits')) {
+                DB::table('feedback_edits')->whereIn('feedback_id', DB::table('feedback')->where('owner_id', $id)->pluck('id'))->delete();
+            }
             foreach (self::OWN as $table => $col) {
                 if (Schema::hasTable($table)) {
                     DB::table($table)->where($col, $id)->delete();

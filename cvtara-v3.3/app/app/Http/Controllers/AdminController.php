@@ -354,6 +354,12 @@ class AdminController extends Controller
 
             return $ok(['pages' => (clone $q)->selectRaw('path,count(*) as views,count(DISTINCT visitor_id) as visitors')->groupBy('path')->orderByDesc('views')->limit(100)->get(), 'daily' => (clone $q)->selectRaw('DATE(created_at) as day,count(*) as views')->groupByRaw('DATE(created_at)')->orderBy('day')->get(), 'sources' => (clone $q)->selectRaw('source,count(*) as views')->groupBy('source')->get(), 'events' => DB::table('activity_events')->where('created_at', '>=', now()->subDays($days))->selectRaw('event,count(*) as count')->groupBy('event')->get(), 'checkouts' => DB::table('purchases')->selectRaw("CASE WHEN status='created' THEN 'started' ELSE status END as status,count(*) as count")->groupBy('status')->get(), 'email' => DB::table('mail_outbox')->selectRaw('status,count(*) as count')->groupBy('status')->get(), 'traffic' => (clone $q)->selectRaw('count(*) as views,count(DISTINCT visitor_id) as visitors')->first(), 'search' => Settings::get('searchData')]);
         }
+        if ($path === 'reviews/edit' && ! $get) {
+            return $ok(\App\Services\ReviewEdits::edit($r->user(), (string) $r->input('id'), (string) $r->input('content'), (string) $r->input('kind'), (string) $r->input('reason')));
+        }
+        if ($path === 'reviews/history' && $get) {
+            return $ok(\App\Services\ReviewEdits::history((string) $r->query('id')));
+        }
         if ($path === 'reviews') {
             if ($get) {
                 $d = AdminTable::query($r, DB::table('feedback as f')->join('users as u', 'u.id', '=', 'f.owner_id')->select(['f.*', 'u.email']), [
@@ -371,6 +377,7 @@ class AdminController extends Controller
             $row = DB::table('feedback')->where('id', $r->id)->first();
             abort_unless($row, 404);
             abort_if($r->status === 'published' && (! $row->consent || $row->source === 'dummy'), 422);
+            abort_if($r->status === 'published' && $row->edit_state === 'awaiting_customer', 422, 'A wording change is waiting for the customer. Publish after they answer.');
             DB::table('feedback')->where('id', $r->id)->update(['status' => $r->status, 'updated_at' => now()]);
 
             return $ok();

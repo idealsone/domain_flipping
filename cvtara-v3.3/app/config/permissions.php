@@ -116,7 +116,7 @@ return [
         ['GET', '#^partners/(commissions|payouts)$#', 'partners.manage|referrals.manage'],
         ['POST', '#^partners/(save|\d+/links|links/\d+(/campaign)?|\d+/members|\d+/agreements|applications/\d+|rewards/save|rank)$#', 'partners.manage'],
 
-        ['*', '#^(content/(legal|features|library|blog|emails|popup|site)|reviews|feedback/add|whats-new(/save)?|legal/generate|email/preview)$#', 'content.edit'],
+        ['*', '#^(content/(legal|features|library|blog|emails|popup|site)|reviews(/edit|/history)?|feedback/add|whats-new(/save)?|legal/generate|email/preview)$#', 'content.edit'],
 
         ['GET', '#^(seo|page-audit|site-urls|search/rows|indexing|growth/seo(/(proposals|tracked|overview|pages|page|keywords|audit-lists|versions))?|growth/links|growth/visibility(/tests)?|growth/agents/log)$#', 'seo.view'],
         ['POST', '#^(growth/seo/(scan|inspect|keyword|audit|web-vitals|draft|versions/\d+/verify|page/(record|audit|reviewed))|growth/link(/verify|/delete)?|growth/links/draft|growth/visibility/(test|prompts|audit))$#', 'seo.draft'],

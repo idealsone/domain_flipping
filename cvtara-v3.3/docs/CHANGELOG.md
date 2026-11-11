@@ -1,3 +1,15 @@
+# CVTara v3.55.0 — Review edit history and feedback after save
+
+## 3.55.0
+Reviews and feedback (V7 §28, AT-21, R13; V5.1 guide fix). Additive migration `2026_11_21_000001_review_edits`: four nullable columns on `feedback` (`original_content`, `usage_ref`, `edit_state`, `edited_at`) and a new table `feedback_edits`. Nothing existing changes.
+- **Edit history**: in console > User Reviews each review has Edit and History. A spelling or formatting fix, or replacing personal details with [removed], applies at once; a "spelling fix" that changes the words, adds a negation or adds words is refused. The customer's original words, the editor, reason and before/after text are kept for every change.
+- **Wording changes need the customer**: any other change is sent to the customer (notification, and in Share feedback they choose "Approve this wording" or "Keep my words"). The review is off the website until they answer and cannot be published while waiting. Sample and owner-added reviews cannot get such a change. Ratings and names are never edited.
+- **What was used** is stored with each new review (latest paid order, else latest saved resume). Published reviews carry an "edited" flag.
+- **Feedback after a resume save**: a small card after a successful save (never while typing), at most once every 14 days, and never once feedback was sent. "Not now" is respected.
+- **Customer guide**: the ATS-friendly score is explained as a guide, not a promise; new question "Does CVTara guarantee a 70% score or a job?" (No.)
+- Account deletion also removes the review edit history.
+- Test suite `s65_review_edits` (34 checks).
+
 # CVTara v3.54.1 — V7 PartnerHub part 2
 
 ## 3.54.1
