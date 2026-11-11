@@ -1,4 +1,12 @@
-# CVTara v3.52.0 — V7 step 4
+# CVTara v3.53.0 — V7 signup attribution
+
+## 3.53.0
+Where each account came from, decided once at sign-up (V7 WS-02). Additive migration `2026_11_19_000001_signup_attribution`: nullable columns on `users` (`acq_class`, `acq_subtype`, `acq_partner_id`, `acq_campaign`, `acq_link`, `acq_rule_version`, `acq_first_seen_at`, `acq_locked_at`).
+- **Locked at sign-up**: B2C or B2B, and a source (Direct, Referral, Influencer for an approved creator's link; College, Coaching, Corporate or Other partner from a partner campaign link, which arrives with PartnerHub). Later visits, clicks and links never change it. Rule version `v7-1` and the time are stored.
+- **Older accounts are filled in** from who referred them (rule version `backfill-1`), so every account has a value.
+- **Users list**: new "Came as" column and filters (B2C/B2B, source); the Users download and the Users report carry "Came as" and the sign-up campaign.
+- Test suite `s62_signup_attribution`.
+
 
 ## 3.52.0
 Resume version history and document lineage (V7 WS-05). Additive migration `2026_11_18_000001_resume_versions`: new table `resume_versions`, `applications.resume_version_id`, and three nullable columns on `cover_letter_drafts` (`source_resume_id`, `source_scan_id`, `source_application_id`). Nothing existing is changed or dropped.

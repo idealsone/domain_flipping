@@ -23,11 +23,12 @@
     const q = U.q; U.q = undefined;
     U.grid = K.grid($('#pgrid'), {
       id: 'users', url: '/api/admin/users', rowsKey: 'users', search: 'Search by name or email', q, sort: 'joined',
-      dates: 'Joined', filters: [{ key: 'f', label: 'Show', options: [['normal', 'Normal users'], ['paid', 'Paid (active)'], ['expired', 'Expired'], ['blocked', 'Blocked'], ['owner', 'Owner']] }],
+      dates: 'Joined', filters: [{ key: 'f', label: 'Show', options: [['normal', 'Normal users'], ['paid', 'Paid (active)'], ['expired', 'Expired'], ['blocked', 'Blocked'], ['owner', 'Owner']] }, { key: 'acq', label: 'Came as', options: [['b2c', 'B2C'], ['b2b', 'B2B'], ['unknown', 'Unknown']] }, { key: 'sub', label: 'Source', options: [['direct', 'Direct'], ['referral', 'Referral'], ['influencer', 'Influencer'], ['college', 'College'], ['coaching', 'Coaching'], ['corporate', 'Corporate'], ['partner', 'Other partner']] }],
       row: u => `data-uid="${E(u.owner_id)}"`,
       columns: [
         { label: 'User', sort: 'name', html: u => `<b>${E(u.name || '—')}</b><br><small>${E(u.email)}</small>` },
         { label: 'Subscription', html: u => u.paid ? `<span class="pill st-paid">${E(planLabel(pl, u.last_plan))}</span><br><small>until ${dmy(parse(u.accessUntil))}</small>` : u.ever_paid ? `<span class="pill st-failed">Expired</span><br><small>was ${E(planLabel(pl, u.last_plan))}</small>` : '<span class="pill st-free">Normal user</span>' },
+        { label: 'Came as', html: u => `${E(u.acquisition || 'Unknown')}${u.acqCampaign ? `<br><small>${E(u.acqCampaign)}</small>` : ''}` },
         { label: 'Resumes', html: u => `${u.resumes ?? 0}<small> · ${u.applications ?? 0} apps</small>` },
         { label: 'Joined', sort: 'joined', html: u => dmy(parse(u.created_at)) },
         { label: 'Status', html: u => u.isAdmin ? '<span class="pill st-queued">Owner</span>' : u.blocked ? '<span class="pill st-failed">Blocked</span>' : '<span class="pill st-paid">Active</span>' },

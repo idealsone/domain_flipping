@@ -251,9 +251,12 @@ class AdminController extends Controller
             $uq = DB::table('users')->where('email', '!=', AccountEraser::PLACEHOLDER);
             $live = fn () => DB::table('purchases')->whereIn('status', ['paid', 'partially_refunded'])->where('access_until', '>', now())->where('provider', '!=', 'referral_reward')->select('owner_id');
             $ever = fn () => DB::table('purchases')->whereNotNull('purchased_at')->select('owner_id');
-            $d = AdminTable::query($r, $uq->select(['id', 'name', 'email', 'created_at', 'blocked', 'is_admin']), [
+            $d = AdminTable::query($r, $uq->select(['id', 'name', 'email', 'created_at', 'blocked', 'is_admin', 'acq_class', 'acq_subtype', 'acq_partner_id', 'acq_campaign', 'acq_rule_version']), [
                 'search' => ['email', 'name'],
-                'filters' => ['f' => function ($q, $f) use ($live, $ever) {
+                'filters' => ['acq' => fn ($q, $v) => in_array($v, \App\Services\Attribution::CLASSES, true) ? $q->where('acq_class', $v) : ($v === 'unknown' ? $q->whereNull('acq_class') : null),
+                    'sub' => fn ($q, $v) => in_array($v, array_merge(...array_values(\App\Services\Attribution::SUBTYPES)), true) ? $q->where('acq_subtype', $v) : null,
+                    'partner' => fn ($q, $v) => ctype_digit((string) $v) ? $q->where('acq_partner_id', (int) $v) : null,
+                    'f' => function ($q, $f) use ($live, $ever) {
                     if ($f === 'owner') {
                         $q->where('is_admin', true);
                     } elseif (in_array($f, ['blocked', 'paid', 'expired', 'normal'], true)) {
@@ -270,7 +273,7 @@ class AdminController extends Controller
                 'sorts' => ['joined' => 'created_at', 'name' => 'name', 'email' => 'email'],
                 'sort' => 'joined',
                 'key' => 'id',
-                'export' => ['title' => 'Users', 'labels' => ['f' => 'Show'], 'map' => fn ($rows) => $this->usersForExport($rows)],
+                'export' => ['title' => 'Users', 'labels' => ['f' => 'Show', 'acq' => 'Came as', 'sub' => 'Source', 'partner' => 'Partner'], 'map' => fn ($rows) => $this->usersForExport($rows)],
             ]);
             $ids = array_map(fn ($u) => $u->id, $d['rows']);
             $profiles = DB::table('profiles')->whereIn('owner_id', $ids)->get()->keyBy('owner_id');
@@ -279,7 +282,7 @@ class AdminController extends Controller
             $appCounts = $counts('applications');
             $everPaid = DB::table('purchases')->whereIn('owner_id', $ids)->whereNotNull('purchased_at')->distinct()->pluck('owner_id')->flip();
             $acc = Settings::accessMany($ids);
-            $users = array_map(fn ($u) => [...(array) ($profiles[$u->id] ?? []), 'owner_id' => (string) $u->id, 'email' => $u->email, 'name' => $u->name, 'created_at' => $u->created_at, 'blocked' => (bool) $u->blocked, 'isAdmin' => (bool) $u->is_admin, 'paid' => $acc[$u->id]['paid'], 'ever_paid' => isset($everPaid[$u->id]), 'last_plan' => $acc[$u->id]['plan'], 'accessUntil' => $acc[$u->id]['accessUntil'], 'resumes' => $resumeCounts[$u->id] ?? 0, 'applications' => $appCounts[$u->id] ?? 0], $d['rows']);
+            $users = array_map(fn ($u) => [...(array) ($profiles[$u->id] ?? []), 'owner_id' => (string) $u->id, 'email' => $u->email, 'name' => $u->name, 'created_at' => $u->created_at, 'blocked' => (bool) $u->blocked, 'isAdmin' => (bool) $u->is_admin, 'paid' => $acc[$u->id]['paid'], 'ever_paid' => isset($everPaid[$u->id]), 'last_plan' => $acc[$u->id]['plan'], 'accessUntil' => $acc[$u->id]['accessUntil'], 'resumes' => $resumeCounts[$u->id] ?? 0, 'applications' => $appCounts[$u->id] ?? 0, 'acqClass' => $u->acq_class, 'acqSubtype' => $u->acq_subtype, 'acqPartnerId' => $u->acq_partner_id, 'acqCampaign' => $u->acq_campaign, 'acqRules' => $u->acq_rule_version, 'acquisition' => \App\Services\Attribution::label($u->acq_class, $u->acq_subtype)], $d['rows']);
             $kpis = Cache::remember('admin-user-kpis', 20, function () {
                 $all = User::count();
                 $paid = DB::table('purchases')->where('provider', '!=', 'referral_reward')->whereIn('status', ['paid', 'partially_refunded'])->where('access_until', '>', now())->distinct('owner_id')->count('owner_id');
@@ -582,7 +585,8 @@ class AdminController extends Controller
 
             return ['id' => (int) $u['id'], 'name' => $u['name'], 'email' => $u['email'], 'phone' => $p->phone ?? '', 'city' => $p->city ?? '', 'experience_level' => $p->experience_level ?? '', 'profession' => $p->profession ?? '',
                 'joined' => $u['created_at'], 'subscription' => $a['paid'] ? $plan : (isset($everPaid[$u['id']]) ? 'Expired'.($plan ? ' ('.$plan.')' : '') : 'Normal user'), 'access_until' => $a['paid'] ? $a['accessUntil'] : '',
-                'status' => $u['blocked'] ? 'Blocked' : ($u['is_admin'] ? 'Owner' : 'Active'), 'resumes' => (int) ($resumes[$u['id']] ?? 0), 'applications' => (int) ($apps[$u['id']] ?? 0)];
+                'status' => $u['blocked'] ? 'Blocked' : ($u['is_admin'] ? 'Owner' : 'Active'), 'resumes' => (int) ($resumes[$u['id']] ?? 0), 'applications' => (int) ($apps[$u['id']] ?? 0),
+                'came_as' => \App\Services\Attribution::label($u['acq_class'] ?? null, $u['acq_subtype'] ?? null), 'campaign' => $u['acq_campaign'] ?? ''];
         }, $rows);
     }
 }
