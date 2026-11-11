@@ -160,6 +160,7 @@ class Payments
                 }
             }
             Referrals::credit($p);
+            Partners::credit($p);
             Wallet::spend($p);
             Services::open($p);
             Settings::audit($p->owner_id, 'purchase_verified', $p->id);

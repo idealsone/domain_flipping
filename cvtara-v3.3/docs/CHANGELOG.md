@@ -1,3 +1,15 @@
+# CVTara v3.54.0 — V7 PartnerHub (B2B)
+
+## 3.54.0
+PartnerHub, the B2B vertical (V7 §38-39). Additive migration `2026_11_20_000001_partner_hub`: new tables `partners`, `partner_links`, `partner_members`, `partner_commissions`, `partner_applications`. Nothing existing changes.
+- **Partners and agreements** (console > B2B Partners): college, placement cell (TPO), coaching institute, company, influencer/creator or other; contact, city, agreement reference and dates, commission rates (default 30% plans, 40% add-ons). Active, paused or ended.
+- **Campaign links** `/p/{code}` (not indexed): a sign-up within 30 days of the click is locked to the partner (B2B college/coaching/corporate/partner, or B2C influencer for creators), with link and campaign. The later of a customer referral link and a partner link wins, so a sign-up never earns both. Links stop when paused or after the agreement ends. Visits counted once per visitor.
+- **Commission ledger**, separate from customer referrals: 30% of plans, 40% of add-ons (Expert Review, Profile Boost, credit packs), nothing on the ₹99 Quick Download. Live gateway payments only. Pending for the 7-day refund window, then ready to pay (daily cron); any refund or chargeback cancels it (restored if the chargeback is won). Owner marks it paid with a payout reference (owner only). Downloadable.
+- **Partner portal** (workspace > Partner portal, only for members the owner adds): sign-ups, buyers, revenue, commission, results per link and by month. Numbers only, never a student's details. A person can belong to one partner.
+- **Partner applications**: public endpoint `/api/partners/apply` (form arrives with the website pages in 3.59), spam-trap field, 3 per hour per visitor, owner notified; approve creates the partner as paused.
+- New permission `partners.manage` (Admin role). Users list filter by partner. Account deletion removes portal membership and keeps the money records on the placeholder.
+- Test suite `s63_partnerhub` (44 checks).
+
 # CVTara v3.53.0 — V7 signup attribution
 
 ## 3.53.0

@@ -94,6 +94,7 @@ class Referrals
 
     public static function reverse(object $p, int $refunded): void
     {
+        Partners::reverse($p); // the partner ledger is separate, but every refund and chargeback path comes through here
         $c = DB::table('referral_commissions')->where('purchase_id', $p->id)->first();
         if (! $c) {
             return;
@@ -104,6 +105,7 @@ class Referrals
 
     public static function restore(object $p): void
     {
+        Partners::restore($p);
         $c = DB::table('referral_commissions')->where('purchase_id', $p->id)->first();
         if ($c) {
             DB::table('referral_commissions')->where('id', $c->id)->update(['reversed_paise' => min($c->amount_paise, intdiv($p->refunded_paise * $c->rate_bps, 10000)), 'updated_at' => now()]);

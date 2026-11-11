@@ -37,6 +37,7 @@ Artisan::command('cvtara:cron', function () {
     $safe(fn () => \App\Services\ProfileBoost::run(1));
     // 3.49.0 mock interview feedback still waiting, and credits of sessions left unanswered for a day
     $safe(fn () => \Illuminate\Support\Facades\Schema::hasTable('interview_sessions') && \App\Services\Interviews::runDue(2));
+    $safe(fn () => \Illuminate\Support\Facades\Schema::hasTable('partner_commissions') && \App\Services\Partners::release());
     // approved / in-progress tasks past their due date are marked Overdue (once an hour)
     $safe(fn () => \Illuminate\Support\Facades\Cache::add('tasks-overdue', 1, 3600) && \App\Services\AgentTasks::overdue());
     // owner alerts once an hour (each written once a day), and the daily payment reconciliation after 6 AM India time

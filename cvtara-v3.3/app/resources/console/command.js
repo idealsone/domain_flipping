@@ -14,7 +14,7 @@
 
   /* ---------------- Grouped side menu ---------------- */
   const GROUPS = [
-    ['customers', 'Customers & orders', ['people', 'orders', 'feedback', 'referral']],
+    ['customers', 'Customers & orders', ['people', 'orders', 'feedback', 'referral', 'partners']],
     ['content', 'Content & pages', ['resumelib', 'letterlib', 'sitedesign', 'bloghub', 'desk', 'whatsnew', 'interviews']],
     ['growth', 'Growth & marketing', ['growth', 'promos', 'campaigns', 'outreach', 'mailer', 'tara']],
     ['money', 'Money & plans', ['pricing', 'business', 'reports']],

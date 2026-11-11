@@ -93,6 +93,10 @@ class Attribution
         $partner = $r ? self::partnerFrom($r) : null;
         if ($partner) {
             $d = $partner + $d;
+            if ($row->referred_by) {
+                // The partner link was the later click: the partner gets the sign-up, so no customer referral reward too.
+                $d += ['referred_by' => null, 'referral_attached_at' => null];
+            }
         } elseif ($row->referred_by) {
             $creator = DB::table('creator_applications')->where('owner_id', $row->referred_by)->where('status', 'approved')->exists();
             $d['acq_subtype'] = $creator ? 'influencer' : 'referral';
@@ -106,13 +110,9 @@ class Attribution
         DB::table('users')->where('id', $user->id)->whereNull('acq_locked_at')->update($d + ['acq_rule_version' => self::RULES, 'acq_locked_at' => now()]);
     }
 
-    /** A partner campaign link seen in this visit (3.54 PartnerHub), as acquisition fields, or null. */
+    /** A partner campaign link seen in the last 30 days (PartnerHub), as acquisition fields, or null. */
     private static function partnerFrom(Request $r): ?array
     {
-        if (! class_exists(Partners::class)) {
-            return null;
-        }
-
         return Partners::attributionFor($r);
     }
 

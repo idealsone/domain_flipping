@@ -34,11 +34,12 @@ return [
         'ops.view' => 'See the Error Log, health and speed',
         'ops.manage' => 'Clear errors, rebuild pages, run health checks',
         'referrals.manage' => 'Review referral payouts and creator applications',
+        'partners.manage' => 'Add B2B partners, their campaign links and portal members; review partner applications',
     ],
 
     'roles' => [
         'admin' => ['name' => 'Admin', 'about' => 'Day-to-day operations. No keys, prices, deletes, roles or business assistant.',
-            'can' => ['overview.view', 'customers.view', 'customers.manage', 'customers.view_as', 'orders.view', 'orders.refund', 'services.manage', 'support.view', 'support.manage', 'content.edit', 'seo.view', 'seo.draft', 'seo.approve', 'growth.view', 'growth.draft', 'growth.approve', 'reports.view', 'ops.view', 'ops.manage', 'referrals.manage']],
+            'can' => ['overview.view', 'customers.view', 'customers.manage', 'customers.view_as', 'orders.view', 'orders.refund', 'services.manage', 'support.view', 'support.manage', 'content.edit', 'seo.view', 'seo.draft', 'seo.approve', 'growth.view', 'growth.draft', 'growth.approve', 'reports.view', 'ops.view', 'ops.manage', 'referrals.manage', 'partners.manage']],
         'support_manager' => ['name' => 'Support Manager', 'about' => 'Runs support: all tickets, customer lookups, orders, Expert Review queue.',
             'can' => ['overview.view', 'customers.view', 'customers.view_as', 'orders.view', 'services.manage', 'support.view', 'support.manage', 'ops.view']],
         'support_agent' => ['name' => 'Support Agent', 'about' => 'Answers support tickets and looks up customers.',
@@ -56,7 +57,7 @@ return [
     // Console modules (resources/console/NAME.js) a role may load; a module not listed is owner only.
     'modules' => [
         'ops' => 'overview.view', 'people' => 'customers.view', 'reports' => 'reports.view', 'feedback' => 'support.view',
-        'content' => 'content.edit', 'publish' => 'content.edit', 'whatsnew' => 'content.edit', 'interviews' => 'content.edit|customers.view', 'extras' => 'content.edit',
+        'content' => 'content.edit', 'publish' => 'content.edit', 'whatsnew' => 'content.edit', 'interviews' => 'content.edit|customers.view', 'partners' => 'partners.manage|growth.view|referrals.manage', 'extras' => 'content.edit',
         'growth' => 'growth.view|seo.view', 'agents' => 'growth.view|seo.view', 'operators' => 'growth.view',
         'campaigns' => 'growth.view', 'outreach' => 'growth.view', 'promos' => 'growth.view',
         'refunds' => 'orders.view', 'referral' => 'referrals.manage', 'speed' => 'ops.view', 'team' => 'owner', 'command' => 'staff', 'approvals' => 'staff', 'metrics' => 'overview.view',
@@ -109,6 +110,11 @@ return [
         ['GET', '#^interviews$#', 'content.edit|customers.view'],
         ['POST', '#^interviews/(seed|approve|questions/\d+(/retire)?)$#', 'content.edit'],
         ['POST', '#^interviews/grant$#', 'customers.manage'],
+
+        // 3.54.0 PartnerHub. Marking commissions paid is owner only (no rule).
+        ['GET', '#^partners(/\d+|/applications)?$#', 'partners.manage|growth.view'],
+        ['GET', '#^partners/commissions$#', 'partners.manage|referrals.manage'],
+        ['POST', '#^partners/(save|\d+/links|links/\d+|\d+/members|applications/\d+)$#', 'partners.manage'],
 
         ['*', '#^(content/(legal|features|library|blog|emails|popup|site)|reviews|feedback/add|whats-new(/save)?|legal/generate|email/preview)$#', 'content.edit'],
 

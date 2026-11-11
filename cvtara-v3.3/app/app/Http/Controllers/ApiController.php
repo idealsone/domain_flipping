@@ -148,6 +148,14 @@ class ApiController extends Controller
 
             return $ok();
         }
+        // 3.54.0 PartnerHub: public partner application (colleges, placement cells, coaching, companies, creators).
+        if ($path === 'partners/apply' && ! $get) {
+            $cap('partner-apply', 3, 3600, 'Too many applications from here. Please email us instead.');
+            $v = $r->validate(['organisation' => 'required|string|min:2|max:160', 'kind' => 'required|in:'.implode(',', array_keys(\App\Services\Partners::KINDS)), 'name' => 'required|string|min:2|max:120',
+                'email' => 'required|email|max:190', 'phone' => 'nullable|regex:/^[0-9+ -]{7,20}$/', 'city' => 'nullable|string|max:80', 'size' => 'nullable|string|max:40', 'message' => 'nullable|string|max:2000', 'website' => 'nullable|max:0']);
+
+            return $ok(['id' => \App\Services\Partners::apply($v, $r), 'message' => 'Thank you. We will reply by email within two working days.']);
+        }
         // 3.40.0: a staff member with a read-only customer view open is answered as that customer for allowed reads only.
         if ($u && ($viewed = \App\Services\SupportView::swap($r, $path))) {
             $u = $viewed;
@@ -242,6 +250,10 @@ class ApiController extends Controller
             }
 
             return $ok(['services' => \App\Services\Services::forUser($u->id)]);
+        }
+        // 3.54.0 Partner portal: the signed-in member's own organisation, numbers only.
+        if ($path === 'partner' && $get) {
+            return $ok(\App\Services\Partners::portal($u));
         }
         // 3.49.0 Interview practice: question practice (stored questions) and mock interviews with written feedback.
         if ($path === 'interviews' && $get) {
