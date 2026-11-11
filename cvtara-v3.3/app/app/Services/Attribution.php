@@ -76,12 +76,15 @@ class Attribution
 
     public const CLASSES = ['b2c', 'b2b'];
 
-    public const SUBTYPES = ['b2c' => ['direct', 'referral', 'influencer'], 'b2b' => ['college', 'coaching', 'corporate', 'partner']];
+    public const SUBTYPES = ['b2c' => ['direct', 'referral'], 'b2b' => ['college', 'coaching', 'influencer', 'direct_b2b', 'corporate']];
+
+    public const SUBTYPE_LABELS = ['direct' => 'Direct', 'referral' => 'Referral', 'college' => 'College', 'coaching' => 'Coaching', 'influencer' => 'Influencer', 'direct_b2b' => 'Direct B2B', 'corporate' => 'Corporate / TPO / Other'];
 
     /**
      * Decides once, at sign-up, where the account came from (V7 WS-02) and locks it: later visits, clicks or links never
-     * change it. Order: a partner campaign link, then a customer's referral link (an approved creator counts as an
-     * influencer), otherwise direct. Safe to call twice: an account that already has a decision keeps it.
+     * change it (V7 §6 table). A valid partner campaign link gives B2B and the partner's subtype; a customer's referral
+     * link gives B2C Referral; anything else is B2C Direct. Student status or a college email never makes an account B2B
+     * by itself. Safe to call twice: an account that already has a decision keeps it.
      */
     public static function lock($user, ?Request $r = null): void
     {
@@ -98,8 +101,7 @@ class Attribution
                 $d += ['referred_by' => null, 'referral_attached_at' => null];
             }
         } elseif ($row->referred_by) {
-            $creator = DB::table('creator_applications')->where('owner_id', $row->referred_by)->where('status', 'approved')->exists();
-            $d['acq_subtype'] = $creator ? 'influencer' : 'referral';
+            $d['acq_subtype'] = 'referral';
             $at = $r && $r->hasSession() ? $r->session()->get('referral.at') : null;
             $d['acq_first_seen_at'] = $at ? date('Y-m-d H:i:s', (int) $at) : null;
         }
@@ -107,7 +109,10 @@ class Attribution
             $t = (array) $r->session()->get('firstTouch', []);
             $d['acq_campaign'] = isset($t['campaign']) ? mb_substr((string) $t['campaign'], 0, 80) : null;
         }
-        DB::table('users')->where('id', $user->id)->whereNull('acq_locked_at')->update($d + ['acq_rule_version' => self::RULES, 'acq_locked_at' => now()]);
+        $n = DB::table('users')->where('id', $user->id)->whereNull('acq_locked_at')->update($d + ['acq_rule_version' => self::RULES, 'acq_locked_at' => now()]);
+        if ($n && $partner && $r) {
+            PartnerOps::inviteRegistered($user, (int) $partner['acq_partner_id'], $r);
+        }
     }
 
     /** A partner campaign link seen in the last 30 days (PartnerHub), as acquisition fields, or null. */
@@ -123,6 +128,6 @@ class Attribution
             return 'Unknown';
         }
 
-        return strtoupper($class).' · '.ucfirst((string) $subtype);
+        return strtoupper($class).' · '.(self::SUBTYPE_LABELS[(string) $subtype] ?? ucfirst((string) $subtype));
     }
 }

@@ -4,7 +4,9 @@ namespace App\Http\Controllers;
 
 use App\Services\AccountSecurity;
 use App\Services\AdminTable;
+use App\Services\PartnerOps;
 use App\Services\Partners;
+use App\Services\Settings;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
@@ -43,7 +45,35 @@ class PartnerAdminController extends Controller
             abort_unless($p, 404);
             $members = DB::table('partner_members as m')->join('users as u', 'u.id', '=', 'm.user_id')->where('m.partner_id', $p->id)->get(['m.user_id', 'm.role', 'u.name', 'u.email']);
 
-            return $ok(['partner' => $p, 'members' => $members, 'kinds' => Partners::KINDS] + Partners::stats((int) $p->id));
+            return $ok(['partner' => $p, 'members' => $members, 'kinds' => Partners::KINDS, 'draft' => PartnerOps::draftAgreement($p), 'durations' => PartnerOps::DURATIONS] + Partners::stats((int) $p->id));
+        }
+        if (preg_match('#^partners/(\d+)/portal$#', $path, $m) && $get) {
+            // View as partner: the partner's own portal, read-only, logged.
+            Settings::audit($u->id, 'partner_portal_viewed', $m[1]);
+
+            return $ok(Partners::portalFor((int) $m[1], 'viewer'));
+        }
+        if ($path === 'partners/payouts' && $get) {
+            $d = AdminTable::query($r, DB::table('partner_payouts as x')->join('partners as p', 'p.id', '=', 'x.partner_id')->select(['x.id', 'x.partner_id', 'p.name as partner', 'x.amount_paise', 'x.status', 'x.reference', 'x.note', 'x.created_at', 'x.decided_at']), [
+                'search' => ['p.name', 'x.reference'], 'filters' => ['status' => 'x.status'], 'date' => 'x.created_at', 'sorts' => ['date' => 'x.created_at'], 'sort' => 'date', 'key' => 'x.id',
+                'export' => ['title' => 'Partner payouts', 'labels' => ['status' => 'Status']],
+            ]);
+
+            return $ok(['payouts' => $d['rows'], 'settings' => ['attribution' => Partners::rule()]] + $d);
+        }
+        if ($path === 'partners/rewards' && $get) {
+            $d = AdminTable::query($r, DB::table('partner_rewards as x')->join('partners as p', 'p.id', '=', 'x.partner_id')->select(['x.id', 'x.partner_id', 'p.name as partner', 'x.title', 'x.cost_paise', 'x.status', 'x.address', 'x.courier', 'x.tracking', 'x.note', 'x.created_at']), [
+                'search' => ['p.name', 'x.title'], 'filters' => ['status' => 'x.status'], 'date' => 'x.created_at', 'sorts' => ['date' => 'x.created_at'], 'sort' => 'date', 'key' => 'x.id',
+                'export' => ['title' => 'Partner rewards', 'labels' => ['status' => 'Status']],
+            ]);
+
+            return $ok(['rewards' => $d['rows']] + $d);
+        }
+        if ($path === 'partners/rankings' && $get) {
+            $month = (string) ($r->query('month') ?: DB::table('partner_rankings')->max('month'));
+            $rows = DB::table('partner_rankings as k')->join('partners as p', 'p.id', '=', 'k.partner_id')->where('k.month', $month)->orderBy('k.rank')->get(['k.partner_id', 'p.name', 'k.score', 'k.rank', 'k.metrics_json']);
+
+            return $ok(['month' => $month, 'months' => DB::table('partner_rankings')->distinct()->orderByDesc('month')->limit(24)->pluck('month'), 'rankings' => $rows->map(fn ($x) => ['partnerId' => $x->partner_id, 'name' => $x->name, 'score' => $x->score, 'rank' => $x->rank] + (json_decode($x->metrics_json, true) ?: []))]);
         }
         if ($path === 'partners/commissions' && $get) {
             $d = AdminTable::query($r, DB::table('partner_commissions as c')->join('partners as p', 'p.id', '=', 'c.partner_id')->select(['c.id', 'c.partner_id', 'p.name as partner', 'c.purchase_id', 'c.plan', 'c.kind', 'c.base_paise', 'c.rate_bps', 'c.amount_paise', 'c.status', 'c.available_at', 'c.paid_at', 'c.payout_ref', 'c.void_reason', 'c.created_at']), [
@@ -80,6 +110,45 @@ class PartnerAdminController extends Controller
             $v = $r->validate(['code' => 'nullable|string|max:40', 'campaign' => 'nullable|string|max:80', 'label' => 'nullable|string|max:120']);
 
             return $ok(['code' => Partners::addLink($u, (int) $m[1], $v)]);
+        }
+        if (preg_match('#^partners/links/(\d+)/campaign$#', $path, $m)) {
+            $v = $r->validate(['seats' => 'nullable|integer|min:1|max:100000', 'target' => 'nullable|integer|min:0|max:100000', 'startsOn' => 'nullable|date', 'days' => 'nullable|in:'.implode(',', PartnerOps::DURATIONS),
+                'extendDays' => 'nullable|integer|min:1|max:90', 'action' => 'nullable|in:pause,resume,close']);
+            PartnerOps::saveCampaign($u, (int) $m[1], $v);
+
+            return $ok();
+        }
+        if (preg_match('#^partners/(\d+)/agreements$#', $path, $m)) {
+            AccountSecurity::requireRecent($r);
+            $v = $r->validate(['title' => 'nullable|string|max:160', 'body' => 'nullable|string|min:200|max:40000']);
+
+            return $ok(PartnerOps::sendAgreement($u, (int) $m[1], $v['body'] ?? null, $v['title'] ?? null));
+        }
+        if (preg_match('#^partners/payouts/(\d+)$#', $path, $m)) {
+            AccountSecurity::requireRecent($r);
+            $v = $r->validate(['decision' => 'required|in:paid,rejected', 'reference' => 'required_if:decision,paid|nullable|string|min:3|max:120', 'note' => 'nullable|string|max:500']);
+            PartnerOps::decidePayout($u, (int) $m[1], $v['decision'], (string) ($v['reference'] ?? ''), (string) ($v['note'] ?? ''));
+
+            return $ok();
+        }
+        if ($path === 'partners/rewards/save') {
+            $v = $r->validate(['id' => 'nullable|integer', 'partnerId' => 'required_without:id|nullable|integer', 'title' => 'required_without:id|nullable|string|max:160', 'costInr' => 'nullable|numeric|min:0|max:1000000',
+                'status' => 'nullable|in:approved,address,dispatched,delivered,cancelled', 'address' => 'nullable|string|max:600', 'courier' => 'nullable|string|max:80', 'tracking' => 'nullable|string|max:120', 'note' => 'nullable|string|max:500']);
+
+            return $ok(['id' => PartnerOps::saveReward($u, $v)]);
+        }
+        if ($path === 'partners/rank') {
+            $v = $r->validate(['month' => 'nullable|date_format:Y-m']);
+
+            return $ok(['ranked' => PartnerOps::rank($v['month'] ?? null)]);
+        }
+        if ($path === 'partners/settings') {
+            AccountSecurity::requireRecent($r);
+            $v = $r->validate(['attribution' => 'required|in:first,last']);
+            Settings::put('partnerProgram', array_merge((array) Settings::get('partnerProgram', []), $v));
+            Settings::audit($u->id, 'partner_settings', $v['attribution']);
+
+            return $ok(['settings' => $v]);
         }
         if (preg_match('#^partners/links/(\d+)$#', $path, $m)) {
             $v = $r->validate(['active' => 'required|boolean']);

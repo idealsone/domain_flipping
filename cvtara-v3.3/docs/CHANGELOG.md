@@ -1,3 +1,18 @@
+# CVTara v3.54.1 — V7 PartnerHub part 2
+
+## 3.54.1
+PartnerHub part 2 (PartnerHub V2 §4-§19). Additive migration `2026_11_20_000002_partner_hub_campaigns`: four nullable columns on `partner_links` (`starts_on`, `ends_on`, `seats`, `target_paid`) and new tables `partner_agreements`, `partner_invites`, `partner_payouts`, `partner_commission_reversals`, `partner_rankings`, `partner_rewards`. Nothing existing changes.
+- **Agreement versions**: the owner sends a draft filled from the partner's terms (or edited text); the partner's manager reads it in the portal and accepts with a tick and a typed name. The exact text fingerprint, time, IP and method are kept. A campaign link takes no sign-ups until an agreement is accepted (or the owner recorded a signed paper agreement). A new version waits for fresh acceptance while the accepted one stays in force.
+- **Campaigns**: start date, 15/30/45/60/90 days, seats and a paid-customer target per link; pause, resume, extend or close. When the seats are used (verified sign-ups, or all sign-ups while email verification is off), the link stops. The portal shows seats, invited, signed up, paid and refunded.
+- **Student invites**: the manager uploads a sheet (Excel or CSV) or pastes name, email lines after confirming they may share them. Rows are checked and de-duplicated, people who already have an account are not counted, and each student gets a personal link. No account is created from the list; a student who signs up with their link is marked registered. Seat limits apply.
+- **Attribution**: the first valid link wins (customer referral or partner), switchable to last link by the owner. V7 sources: Influencer and Direct B2B (CVTara sales desk) are B2B; a creator's customer referral link stays B2C Referral.
+- **Refunds** now add a reversal entry instead of only changing the status, so the ledger keeps the original amount.
+- **Payouts**: the manager asks for the amount ready to pay (minimum ₹5,000, one request at a time); the owner marks it paid with a reference or rejects it.
+- **Monthly ranking** (paid customers 40%, revenue 40%, sign-ups 20%) on the 1st of each month; a partner sees only its own place, never other partners' names.
+- **Rewards**: the owner adds a gift, the manager confirms the delivery address, the owner records dispatch with courier and tracking.
+- **View as partner**: the owner can open any partner's portal read-only; each view is logged.
+- Test suite `s64_partnerhub_campaigns` (50 checks).
+
 # CVTara v3.54.0 — V7 PartnerHub (B2B)
 
 ## 3.54.0

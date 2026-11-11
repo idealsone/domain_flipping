@@ -255,6 +255,41 @@ class ApiController extends Controller
         if ($path === 'partner' && $get) {
             return $ok(\App\Services\Partners::portal($u));
         }
+        if (str_starts_with($path, 'partner/')) {
+            $pm = \App\Services\Partners::membership($u);
+            abort_unless($pm, 404);
+            if (preg_match('#^partner/agreements/(\d+)/accept$#', $path, $mm) && ! $get) {
+                $v = $r->validate(['hash' => 'required|string|size:64', 'name' => 'required|string|min:3|max:120', 'agree' => 'accepted']);
+                \App\Services\PartnerOps::acceptAgreement($u, (int) $mm[1], $v['hash'], $v['name'], $r);
+
+                return $ok(\App\Services\Partners::portal($u));
+            }
+            if ($path === 'partner/invites' && $get) {
+                $rows = DB::table('partner_invites as i')->join('partner_links as l', 'l.id', '=', 'i.link_id')->where('i.partner_id', $pm->partner_id)->orderByDesc('i.id')->limit(2000)->get(['i.name', 'i.email', 'i.status', 'i.token', 'l.code', 'i.created_at']);
+
+                return $ok(['invites' => $rows->map(fn ($x) => ['name' => $x->name, 'email' => $x->email, 'status' => $x->status, 'link' => $x->status === 'invited' ? url('/p/'.$x->code).'?i='.$x->token : '', 'created_at' => $x->created_at])]);
+            }
+            if ($path === 'partner/invites' && ! $get) {
+                abort_unless($pm->role === 'manager', 403, 'Only a partner manager can upload students.');
+                $cap('partner-invites', 20, 3600, 'Too many uploads. Please try again later.');
+                $v = $r->validate(['linkId' => 'required|integer', 'text' => 'required_without:sheet|nullable|string|max:400000', 'sheet' => 'nullable|string|max:8000000', 'authority' => 'accepted'],
+                    ['authority.accepted' => 'Please confirm that you may share these students\' details and have told them.']);
+                $text = ! empty($v['sheet']) ? \App\Services\Outreach::sheetText((string) base64_decode($v['sheet'], true)) : (string) $v['text'];
+                abort_if(trim($text) === '', 422, 'That file could not be read. Save it as .xlsx or CSV and try again.');
+
+                return $ok(\App\Services\PartnerOps::invite($u, (int) $pm->partner_id, (int) $v['linkId'], $text, true));
+            }
+            if ($path === 'partner/payout' && ! $get) {
+                return $ok(\App\Services\PartnerOps::requestPayout($u));
+            }
+            if (preg_match('#^partner/rewards/(\d+)/address$#', $path, $mm) && ! $get) {
+                $v = $r->validate(['address' => 'required|string|min:15|max:600']);
+                \App\Services\PartnerOps::rewardAddress($u, (int) $mm[1], $v['address']);
+
+                return $ok(\App\Services\Partners::portal($u));
+            }
+            abort(404);
+        }
         // 3.49.0 Interview practice: question practice (stored questions) and mock interviews with written feedback.
         if ($path === 'interviews' && $get) {
             return $ok(\App\Services\Interviews::overview($u));

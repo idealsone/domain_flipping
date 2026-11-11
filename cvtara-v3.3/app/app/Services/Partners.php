@@ -24,10 +24,10 @@ use Illuminate\Support\Str;
  */
 class Partners
 {
-    public const KINDS = ['college' => 'College', 'tpo' => 'Placement cell (TPO)', 'coaching' => 'Coaching institute', 'corporate' => 'Company', 'influencer' => 'Influencer / creator', 'other' => 'Other partner'];
+    public const KINDS = ['college' => 'College / university', 'coaching' => 'Coaching institute', 'influencer' => 'Career influencer', 'sales' => 'CVTara sales (direct B2B)', 'tpo' => 'Placement cell (TPO)', 'corporate' => 'Company', 'other' => 'Other partner'];
 
-    /** How each kind of partner is counted at sign-up (Attribution::lock). */
-    public const ACQ = ['college' => ['b2b', 'college'], 'tpo' => ['b2b', 'college'], 'coaching' => ['b2b', 'coaching'], 'corporate' => ['b2b', 'corporate'], 'influencer' => ['b2c', 'influencer'], 'other' => ['b2b', 'partner']];
+    /** How each kind of partner is counted at sign-up (Attribution::lock), as in V7 §6. */
+    public const ACQ = ['college' => ['b2b', 'college'], 'coaching' => ['b2b', 'coaching'], 'influencer' => ['b2b', 'influencer'], 'sales' => ['b2b', 'direct_b2b'], 'tpo' => ['b2b', 'corporate'], 'corporate' => ['b2b', 'corporate'], 'other' => ['b2b', 'corporate']];
 
     public const CLICK_DAYS = 30;
 
@@ -50,7 +50,8 @@ class Partners
             return null;
         }
         if (! $r->user()) {
-            $r->session()->put('partner', ['code' => $l->code, 'at' => time()]);
+            $inv = preg_match('/^[A-Za-z0-9]{20,40}$/', (string) $r->query('i', '')) ? (string) $r->query('i') : null;
+            $r->session()->put('partner', ['code' => $l->code, 'at' => time(), 'invite' => $inv]);
             $seen = 'partner-click:'.$l->id.':'.hash_hmac('sha256', $r->session()->getId(), (string) config('app.key'));
             if (\Illuminate\Support\Facades\Cache::add($seen, 1, 86400)) {
                 DB::table('partner_links')->where('id', $l->id)->increment('clicks');
@@ -66,11 +67,25 @@ class Partners
         if (! preg_match('/^[a-z0-9-]{3,40}$/', $code)) {
             return null;
         }
+        $day = today()->toDateString();
         $l = DB::table('partner_links as l')->join('partners as p', 'p.id', '=', 'l.partner_id')->where('l.code', $code)->where('l.active', true)->where('p.status', 'active')
-            ->where(fn ($q) => $q->whereNull('p.agreement_to')->orWhere('p.agreement_to', '>=', today()->toDateString()))
-            ->first(['l.id', 'l.code', 'l.partner_id', 'l.campaign', 'p.kind']);
+            ->where(fn ($q) => $q->whereNull('p.agreement_to')->orWhere('p.agreement_to', '>=', $day))
+            ->where(fn ($q) => $q->whereNull('l.starts_on')->orWhere('l.starts_on', '<=', $day))
+            ->where(fn ($q) => $q->whereNull('l.ends_on')->orWhere('l.ends_on', '>=', $day))
+            ->first(['l.id', 'l.code', 'l.partner_id', 'l.campaign', 'l.seats', 'p.kind', 'p.agreement_ref']);
+        if (! $l) {
+            return null;
+        }
+        // A campaign starts only once the partner has accepted the current agreement (or the owner recorded a signed one).
+        if (! $l->agreement_ref && ! DB::table('partner_agreements')->where('partner_id', $l->partner_id)->where('status', 'accepted')->exists()) {
+            return null;
+        }
+        // A full campaign takes no new sign-ups; a seat is used by a verified sign-up only.
+        if ($l->seats !== null && PartnerOps::seatsUsed($l->code) >= (int) $l->seats) {
+            return null;
+        }
 
-        return $l ?: null;
+        return $l;
     }
 
     /** The acquisition fields for a sign-up that came through a partner link in the last 30 days, or null. */
@@ -82,9 +97,10 @@ class Partners
         if (! $code || ($at && $at < now()->subDays(self::CLICK_DAYS)->timestamp)) {
             return null;
         }
-        // The later of a customer referral link and a partner link wins (last click before sign-up).
+        // A customer referral link and a partner link in the same visit: the first valid one wins by default (PartnerHub
+        // V2 §18.1); the owner can switch to the last one. An account that already exists is never reassigned.
         $refAt = $r->hasSession() ? (int) $r->session()->get('referral.at', 0) : 0;
-        if ($refAt && $at && $refAt > $at) {
+        if ($refAt && (! $at || (self::rule() === 'last' ? $refAt > $at : $refAt < $at))) {
             return null;
         }
         $l = self::liveLink((string) $code);
@@ -94,6 +110,12 @@ class Partners
         [$class, $sub] = self::ACQ[$l->kind] ?? ['b2b', 'partner'];
 
         return ['acq_class' => $class, 'acq_subtype' => $sub, 'acq_partner_id' => (int) $l->partner_id, 'acq_campaign' => $l->campaign ? mb_substr($l->campaign, 0, 80) : null, 'acq_link' => $l->code, 'acq_first_seen_at' => $at ? date('Y-m-d H:i:s', $at) : null];
+    }
+
+    /** first (default) or last: which link wins when a visitor opened both a referral and a partner link. */
+    public static function rule(): string
+    {
+        return ((array) Settings::get('partnerProgram', []))['attribution'] ?? 'first';
     }
 
     // ---------------------------------------------------------------- commission ledger
@@ -137,15 +159,24 @@ class Partners
     /** A refund (full or part) or a chargeback voids the commission while it is not paid out yet. */
     public static function reverse(object $p): void
     {
-        DB::table('partner_commissions')->where('purchase_id', $p->id)->whereIn('status', ['pending', 'available'])
-            ->update(['status' => 'void', 'void_reason' => 'Order refunded or disputed', 'updated_at' => now()]);
+        $c = DB::table('partner_commissions')->where('purchase_id', $p->id)->whereIn('status', ['pending', 'available'])->first();
+        if (! $c) {
+            return;
+        }
+        // The original entry is never deleted or changed in amount: a reversal entry records the cancellation.
+        DB::table('partner_commission_reversals')->insert(['commission_id' => $c->id, 'amount_paise' => -1 * (int) $c->amount_paise, 'reason' => 'Order refunded or disputed', 'created_at' => now()]);
+        DB::table('partner_commissions')->where('id', $c->id)->update(['status' => 'void', 'void_reason' => 'Order refunded or disputed', 'updated_at' => now()]);
     }
 
     /** A chargeback that was won brings the commission back (pending again for the rest of the window). */
     public static function restore(object $p): void
     {
-        DB::table('partner_commissions')->where('purchase_id', $p->id)->where('status', 'void')->where('void_reason', 'Order refunded or disputed')
-            ->update(['status' => 'pending', 'void_reason' => null, 'updated_at' => now()]);
+        $c = DB::table('partner_commissions')->where('purchase_id', $p->id)->where('status', 'void')->where('void_reason', 'Order refunded or disputed')->first();
+        if (! $c) {
+            return;
+        }
+        DB::table('partner_commission_reversals')->insert(['commission_id' => $c->id, 'amount_paise' => (int) $c->amount_paise, 'reason' => 'Chargeback won, commission restored', 'created_at' => now()]);
+        DB::table('partner_commissions')->where('id', $c->id)->update(['status' => 'pending', 'void_reason' => null, 'updated_at' => now()]);
     }
 
     /** Cron: commissions whose refund window passed (and whose order is still paid) become available. */
@@ -221,7 +252,7 @@ class Partners
         $signups = (clone $users)->selectRaw("$month m, COUNT(*) n")->groupByRaw($month)->pluck('n', 'm');
         $buyers = (clone $paid)->selectRaw("$pmonth m, COUNT(DISTINCT p.owner_id) n, SUM(p.amount_paise - p.refunded_paise) r")->groupByRaw($pmonth)->get()->keyBy('m');
         $months = collect(array_unique(array_merge($signups->keys()->all(), $buyers->keys()->all())))->sort()->values()->take(-12);
-        $links = DB::table('partner_links')->where('partner_id', $partnerId)->orderBy('created_at')->get(['id', 'code', 'campaign', 'label', 'active', 'clicks']);
+        $links = DB::table('partner_links')->where('partner_id', $partnerId)->orderBy('created_at')->get(['id', 'code', 'campaign', 'label', 'active', 'clicks', 'seats', 'target_paid', 'starts_on', 'ends_on']);
         $perLink = DB::table('users')->where('acq_partner_id', $partnerId)->whereNotNull('acq_link')->selectRaw('acq_link, COUNT(*) n')->groupBy('acq_link')->pluck('n', 'acq_link');
 
         return [
@@ -230,7 +261,12 @@ class Partners
             'revenuePaise' => (int) (clone $paid)->sum(DB::raw('p.amount_paise - p.refunded_paise')),
             'commission' => ['pendingPaise' => (int) ($c['pending']->s ?? 0), 'availablePaise' => (int) ($c['available']->s ?? 0), 'paidPaise' => (int) ($c['paid']->s ?? 0), 'voidPaise' => (int) ($c['void']->s ?? 0)],
             'months' => $months->map(fn ($m) => ['month' => $m, 'signups' => (int) ($signups[$m] ?? 0), 'buyers' => (int) ($buyers[$m]->n ?? 0), 'revenuePaise' => (int) ($buyers[$m]->r ?? 0)])->all(),
-            'links' => $links->map(fn ($l) => ['id' => $l->id, 'code' => $l->code, 'url' => url('/p/'.$l->code), 'campaign' => $l->campaign, 'label' => $l->label, 'active' => (bool) $l->active, 'clicks' => (int) $l->clicks, 'signups' => (int) ($perLink[$l->code] ?? 0)])->all(),
+            'links' => $links->map(fn ($l) => ['id' => $l->id, 'code' => $l->code, 'url' => url('/p/'.$l->code), 'campaign' => $l->campaign, 'label' => $l->label, 'active' => (bool) $l->active, 'clicks' => (int) $l->clicks, 'signups' => (int) ($perLink[$l->code] ?? 0), 'seats' => PartnerOps::campaign($l)])->all(),
+            'agreements' => array_map(fn ($a) => array_diff_key($a, ['body' => 1]) + ['body' => $a['status'] === 'superseded' ? null : $a['body']], PartnerOps::agreements($partnerId)),
+            'payouts' => DB::table('partner_payouts')->where('partner_id', $partnerId)->orderByDesc('id')->limit(24)->get(['id', 'amount_paise', 'status', 'reference', 'note', 'created_at', 'decided_at'])->map(fn ($x) => (array) $x)->all(),
+            'rankings' => DB::table('partner_rankings')->where('partner_id', $partnerId)->orderByDesc('month')->limit(12)->get(['month', 'score', 'rank', 'metrics_json'])->map(fn ($x) => ['month' => $x->month, 'score' => $x->score, 'rank' => $x->rank, 'of' => DB::table('partner_rankings')->where('month', $x->month)->count(), 'metrics' => json_decode($x->metrics_json, true)])->all(),
+            'rewards' => DB::table('partner_rewards')->where('partner_id', $partnerId)->orderByDesc('id')->get(['id', 'title', 'status', 'address', 'courier', 'tracking', 'created_at'])->map(fn ($x) => (array) $x)->all(),
+            'minPayoutPaise' => PartnerOps::MIN_PAYOUT_PAISE,
         ];
     }
 
@@ -251,8 +287,20 @@ class Partners
         $m = self::membership($u);
         abort_unless($m, 404);
 
-        return ['partner' => ['name' => $m->name, 'kind' => self::KINDS[$m->kind] ?? $m->kind, 'status' => $m->status, 'role' => $m->role, 'planPercent' => $m->plan_bps / 100, 'addonPercent' => $m->addon_bps / 100,
-            'agreementFrom' => $m->agreement_from, 'agreementTo' => $m->agreement_to, 'holdDays' => Refunds::DAYS, 'excludedUpToInr' => self::EXCLUDED_UP_TO_INR]] + self::stats((int) $m->partner_id);
+        return self::portalFor((int) $m->partner_id, $m->role);
+    }
+
+    /** The portal page for one partner. The owner's "view as partner" uses the same data (role "viewer", read-only). */
+    public static function portalFor(int $partnerId, string $role = 'viewer'): array
+    {
+        $m = DB::table('partners')->where('id', $partnerId)->first();
+        abort_unless($m, 404);
+        $s = self::stats($partnerId);
+        // Rankings show the partner's own position only, never other partners' names.
+        $s['rankings'] = array_map(fn ($x) => array_diff_key($x, ['metrics' => 1]) + ['signups' => $x['metrics']['signups'] ?? 0, 'buyers' => $x['metrics']['buyers'] ?? 0], $s['rankings']);
+
+        return ['partner' => ['name' => $m->name, 'kind' => self::KINDS[$m->kind] ?? $m->kind, 'status' => $m->status, 'role' => $role, 'planPercent' => $m->plan_bps / 100, 'addonPercent' => $m->addon_bps / 100,
+            'agreementFrom' => $m->agreement_from, 'agreementTo' => $m->agreement_to, 'holdDays' => Refunds::DAYS, 'excludedUpToInr' => self::EXCLUDED_UP_TO_INR, 'rankWeights' => ['signups' => 40, 'buyers' => 40, 'conversion' => 20]]] + $s;
     }
 
     // ---------------------------------------------------------------- applications

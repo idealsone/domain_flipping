@@ -112,9 +112,9 @@ return [
         ['POST', '#^interviews/grant$#', 'customers.manage'],
 
         // 3.54.0 PartnerHub. Marking commissions paid is owner only (no rule).
-        ['GET', '#^partners(/\d+|/applications)?$#', 'partners.manage|growth.view'],
-        ['GET', '#^partners/commissions$#', 'partners.manage|referrals.manage'],
-        ['POST', '#^partners/(save|\d+/links|links/\d+|\d+/members|applications/\d+)$#', 'partners.manage'],
+        ['GET', '#^partners(/\d+(/portal)?|/applications|/rankings|/rewards)?$#', 'partners.manage|growth.view'],
+        ['GET', '#^partners/(commissions|payouts)$#', 'partners.manage|referrals.manage'],
+        ['POST', '#^partners/(save|\d+/links|links/\d+(/campaign)?|\d+/members|\d+/agreements|applications/\d+|rewards/save|rank)$#', 'partners.manage'],
 
         ['*', '#^(content/(legal|features|library|blog|emails|popup|site)|reviews|feedback/add|whats-new(/save)?|legal/generate|email/preview)$#', 'content.edit'],
 

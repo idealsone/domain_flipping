@@ -23,7 +23,7 @@
     const q = U.q; U.q = undefined;
     U.grid = K.grid($('#pgrid'), {
       id: 'users', url: '/api/admin/users', rowsKey: 'users', search: 'Search by name or email', q, sort: 'joined',
-      dates: 'Joined', filters: [{ key: 'f', label: 'Show', options: [['normal', 'Normal users'], ['paid', 'Paid (active)'], ['expired', 'Expired'], ['blocked', 'Blocked'], ['owner', 'Owner']] }, { key: 'acq', label: 'Came as', options: [['b2c', 'B2C'], ['b2b', 'B2B'], ['unknown', 'Unknown']] }, { key: 'sub', label: 'Source', options: [['direct', 'Direct'], ['referral', 'Referral'], ['influencer', 'Influencer'], ['college', 'College'], ['coaching', 'Coaching'], ['corporate', 'Corporate'], ['partner', 'Other partner']] }],
+      dates: 'Joined', filters: [{ key: 'f', label: 'Show', options: [['normal', 'Normal users'], ['paid', 'Paid (active)'], ['expired', 'Expired'], ['blocked', 'Blocked'], ['owner', 'Owner']] }, { key: 'acq', label: 'Came as', options: [['b2c', 'B2C'], ['b2b', 'B2B'], ['unknown', 'Unknown']] }, { key: 'sub', label: 'Source', options: [['direct', 'Direct'], ['referral', 'Referral'], ['college', 'College'], ['coaching', 'Coaching'], ['influencer', 'Influencer'], ['direct_b2b', 'Direct B2B'], ['corporate', 'Corporate / TPO / Other']] }],
       row: u => `data-uid="${E(u.owner_id)}"`,
       columns: [
         { label: 'User', sort: 'name', html: u => `<b>${E(u.name || '—')}</b><br><small>${E(u.email)}</small>` },
