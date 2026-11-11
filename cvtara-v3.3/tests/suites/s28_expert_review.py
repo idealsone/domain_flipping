@@ -67,7 +67,7 @@ def run(ctx, t):
         s, pl = o.api("GET", "admin/plans")
         o.api("POST", "admin/plans", {"plans": {"expert-review": {**pl["plans"]["expert-review"], "sale": True}}})
         s, sv = o.api("GET", "admin/services")
-        t.check("automatic reviews default on, but Tara AI is not set up yet", s == 200 and sv["settings"] == {"autoReview": True, "taraEnabled": False}, sv.get("settings"))
+        t.check("automatic reviews default on, but Tara AI is not set up yet", s == 200 and sv["settings"] == {"autoReview": True, "autoProfileBoost": True, "taraEnabled": False}, sv.get("settings"))
 
         # Tara AI off: the order waits for the owner, nothing is sent
         a0 = customer("er-off@test.local", "Asha Zero")

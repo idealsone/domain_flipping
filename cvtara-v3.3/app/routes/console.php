@@ -33,6 +33,8 @@ Artisan::command('cvtara:cron', function () {
     };
     // finish resume + cover letter requests whose customer left the page (one each minute)
     $safe(fn () => \Illuminate\Support\Facades\Schema::hasTable('service_requests') && \App\Services\ServiceRequests::runDue(1));
+    // 3.51.0 Profile Boost drafts and requested changes still waiting
+    $safe(fn () => \App\Services\ProfileBoost::run(1));
     // 3.49.0 mock interview feedback still waiting, and credits of sessions left unanswered for a day
     $safe(fn () => \Illuminate\Support\Facades\Schema::hasTable('interview_sessions') && \App\Services\Interviews::runDue(2));
     // approved / in-progress tasks past their due date are marked Overdue (once an hour)

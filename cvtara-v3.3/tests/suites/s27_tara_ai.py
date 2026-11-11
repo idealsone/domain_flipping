@@ -85,7 +85,7 @@ def run(ctx, t):
         t.check("someone else's resume cannot be tailored", v.api("POST", f"resumes/{rid}/tailor", {"scanId": sid, "consent": True})[0] in (404, 422))
         MODE["v"] = "ok"
         ws = u.page("/workspace.html")[2]
-        t.check("the workspace loads Tara AI", "/tara-help.js" in ws)
+        t.check("the workspace no longer loads the separate writing-help pop-up (it is part of Tara chat since 3.51.0)", "/tara-help.js" not in ws and "/tara-chat.js" in ws)
         s, _, priv = Client(inst.base).page("/privacy.html")
         t.check("the privacy policy covers CVTara team writing help without naming AI or its provider", "CVTara team writing help" in priv and "text-processing provider" in priv and "Anthropic" not in priv and "Claude" not in priv)
     finally:

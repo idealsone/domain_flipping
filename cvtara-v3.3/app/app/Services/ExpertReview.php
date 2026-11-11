@@ -44,7 +44,7 @@ class ExpertReview
     {
         $s = (array) Settings::get('serviceSettings', []);
 
-        return ['autoReview' => (bool) ($s['autoReview'] ?? true), 'taraEnabled' => TaraAI::enabled()];
+        return ['autoReview' => (bool) ($s['autoReview'] ?? true), 'autoProfileBoost' => (bool) ($s['autoProfileBoost'] ?? true), 'taraEnabled' => TaraAI::enabled()];
     }
 
     /** Automatic reviews run only when the owner has Tara AI configured and switched on, and has not turned this off. */

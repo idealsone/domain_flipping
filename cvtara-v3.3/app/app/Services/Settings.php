@@ -108,14 +108,14 @@ class Settings
         ] + self::serviceDefaults() + self::addonDefaults();
     }
 
-    /** Tara Expert Review is written by Tara AI (see ExpertReview); Profile Boost is done by a person. Cheaper while Job Hunt or Pro is active (planPrice). */
+    /** Tara Expert Review is written automatically (see ExpertReview); Profile Boost is an automatic draft the customer approves (see ProfileBoost). Cheaper while Job Hunt or Pro is active (planPrice). */
     public static function serviceDefaults(): array
     {
         $s = fn ($name, $tag, $price, $planPrice, $perks) => ['type' => 'service', 'name' => $name, 'audience' => 'all', 'tagline' => $tag, 'price' => $price, 'planPrice' => $planPrice, 'mrp' => 0, 'accessDays' => 0, 'savedResumes' => 0, 'savedLetters' => 0, 'atsScans' => 0, 'dailyMatches' => 0, 'exports' => 0, 'rank' => 0, 'perks' => $perks, 'popular' => false, 'bestValue' => false, 'referral' => false, 'sale' => false];
 
         return [
             'expert-review' => $s('Tara Expert Review', 'An instant written review of your whole resume, ready in minutes and emailed to you', 499, 399, ['Comments on every section', 'ATS issues, a rewritten summary and bullets, and your top fixes', 'Delivered to your account and by email']),
-            'profile-boost' => $s('Profile Boost', 'Your LinkedIn and Naukri headline, summary, skills and experience rewritten', 699, 599, ['Headline and About or profile summary', 'Key skills in the right order for your target job', 'One free revision within 7 days']),
+            'profile-boost' => $s('Profile Boost', 'Your LinkedIn and Naukri headline, summary, skills and experience rewritten', 699, 599, ['Headline and About or profile summary', 'Key skills in the right order for your target job', 'A draft you approve, with one round of changes']),
         ];
     }
 

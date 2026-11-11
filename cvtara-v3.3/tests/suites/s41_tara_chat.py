@@ -58,7 +58,7 @@ def run(ctx, t):
         s, g = o.api("GET", "admin/content/integrations"); d = g["data"]; d["ai"] = True; o.api("POST", "admin/content/integrations", {"data": d, "revision": g["revision"]})
         all_tools = list(o.api("GET", "admin/tara")[1]["tools"].keys())
         t.check("the hand-off message may not mention AI", o.api("POST", "admin/tara/settings", dict(base, tools=all_tools, handoff="Our AI will email you soon."))[0] == 422)
-        s, j = o.api("POST", "admin/tara/settings", dict(base, tools=all_tools)); t.check("the owner switches Tara on with every action", s == 200 and j["settings"]["enabled"] is True and len(j["settings"]["tools"]) == 14, (s, str(j)[:300]))
+        s, j = o.api("POST", "admin/tara/settings", dict(base, tools=all_tools)); t.check("the owner switches Tara on with every action", s == 200 and j["settings"]["enabled"] is True and len(j["settings"]["tools"]) == len(all_tools) == 15, (s, str(j)[:300]))
         t.check("a customer cannot reach Tara's owner settings", u.api("GET", "admin/tara")[0] == 403 and u.api("POST", "admin/tara/settings", base)[0] == 403)
 
         s, j = u.api("GET", "tara/status"); st = j["tara"]

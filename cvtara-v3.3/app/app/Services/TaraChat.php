@@ -26,7 +26,7 @@ class TaraChat
         'enabled' => false, 'model' => '', 'instructions' => '', 'freeDaily' => 10, 'paidDaily' => 60, 'siteDaily' => 2000,
         'dailySpendInr' => 300, 'monthlySpendInr' => 5000, 'maxTokens' => 1500, 'historyMessages' => 16, 'maxSteps' => 5,
         'tools' => [], 'handoff' => 'I have passed this to the CVTara support team. They reply by email, usually within one working day.',
-        'suggestions' => true, 'nudges' => true, 'peerMin' => 3, 'greet' => true,
+        'suggestions' => true, 'nudges' => true, 'peerMin' => 3, 'greet' => true, 'toolsKnown' => [],
     ];
 
     /** Version of the customer rules below; saved with every answer so a change of behaviour can be traced. */
@@ -50,6 +50,7 @@ class TaraChat
         'create_support_ticket' => 'Pass a problem to the support team with a reference number',
         'my_profile' => 'The customer\'s own profile, time with CVTara, usage and real counts of people from their college or company',
         'product_guide' => 'The customer guide: how every CVTara feature works',
+        'writing_help' => 'Writing help from the customer\'s own text: clearer wording, achievement bullets, a summary, tailoring, a cover-letter draft, a check against a job or interview questions (uses one writing suggestion)',
     ];
 
     private const RULES = 'You are Tara, the career assistant inside CVTara (cvtara.com), a resume, ATS check and cover-letter service for job seekers in India. '
@@ -72,7 +73,10 @@ class TaraChat
     public static function settings(): array
     {
         $s = array_replace(self::DEFAULTS, array_intersect_key((array) Settings::get('tara', []), self::DEFAULTS));
-        $s['tools'] = array_values(array_intersect(array_keys(self::TOOLS), (array) $s['tools'] ?: array_keys(self::TOOLS)));
+        // A tool added after the owner last saved the list is on until the owner turns it off (3.51.0: writing_help).
+        $known = (array) $s['toolsKnown'] ?: array_diff(array_keys(self::TOOLS), ['writing_help']);
+        $chosen = (array) $s['tools'] ? array_merge((array) $s['tools'], array_diff(array_keys(self::TOOLS), $known)) : array_keys(self::TOOLS);
+        $s['tools'] = array_values(array_intersect(array_keys(self::TOOLS), $chosen));
 
         return $s;
     }
@@ -343,6 +347,9 @@ class TaraChat
             'open_cover_letter' => ['Give the customer the link that writes a cover letter for a resume and a checked job on the cover-letter page (saved there as a separate document).', ['resumeId' => $id, 'scanId' => $id], ['resumeId']],
             'my_profile' => ['The customer\'s profile (name, city, college, last company, target role, experience), days since joining, their own usage, and real counts of other people from the same college or company who use or bought CVTara (only shown when large enough to keep people anonymous).', null, null],
             'product_guide' => ['The CVTara customer guide: how sign-up, the builder, upload, primary resume, tailored versions, ATS match, cover letters, tracker, credits, packages, payments, downloads, referrals and privacy work. Use it to answer how-to questions.', null, null],
+            'writing_help' => ['Write from the customer\'s own text: task rewrite (clearer wording), bullets (achievement bullets), summary (profile summary), tailor (to a job), cover_letter (a draft), review_requirements (check the text against a job) or interview (likely questions with answer outlines). Paste the customer\'s text, or read_resume first and use it. tailor, cover_letter and review_requirements need the job text. Uses one writing suggestion; nothing in their saved documents changes. Show the result and remind them to check the facts.', [
+                'task' => ['type' => 'string', 'enum' => array_keys(TaraAI::TASKS)], 'text' => ['type' => 'string', 'description' => 'The customer\'s own text to work from (at least a sentence).'], 'job' => ['type' => 'string', 'description' => 'The job description or its key requirements, when the task needs it.'],
+            ], ['task', 'text']],
             'create_support_ticket' => ['Pass a problem Tara cannot solve to the support team. Returns a reference number to give the customer.', [
                 'area' => ['type' => 'string', 'enum' => ['payment', 'download', 'account', 'resume', 'ats', 'letter', 'other']], 'summary' => ['type' => 'string', 'description' => 'What the customer needs, with any order date or amount they gave. At least one full sentence.'],
             ], ['area', 'summary']],
@@ -528,6 +535,28 @@ class TaraChat
                 $url = '/workspace.html?view=letter&write=1&resume='.$rid.($sid ? '&scan='.$sid : '');
 
                 return ['ok' => true, 'link' => $url, 'how' => 'The cover-letter page writes the letter from this resume and job and saves it as its own document. The customer can edit it there. A clean download uses one cover-letter download credit.', '_links' => [['label' => 'Write my cover letter', 'url' => $url]]];
+            case 'writing_help':
+                $task = (string) ($in['task'] ?? '');
+                $text = trim((string) ($in['text'] ?? ''));
+                $job = trim((string) ($in['job'] ?? ''));
+                if (! isset(TaraAI::TASKS[$task])) {
+                    return ['ok' => false, 'error' => 'Choose one of the writing tasks.'];
+                }
+                if (mb_strlen($text) < 20) {
+                    return ['ok' => false, 'error' => 'Ask the customer for their text first (a few sentences), or read their resume.'];
+                }
+                if (in_array($task, ['tailor', 'cover_letter', 'review_requirements'], true) && mb_strlen($job) < 20) {
+                    return ['ok' => false, 'error' => 'This task needs the job description. Ask the customer to paste it.'];
+                }
+                try {
+                    $out = TaraAI::suggest($u, ['task' => $task, 'text' => mb_substr($text, 0, 12000), 'context' => mb_substr($job, 0, 8000)]);
+                } catch (\Illuminate\Validation\ValidationException $e) {
+                    return ['ok' => false, 'error' => collect($e->errors())->flatten()->first() ?: 'Writing help is not available right now.'];
+                } catch (\Symfony\Component\HttpKernel\Exception\HttpExceptionInterface $e) {
+                    return ['ok' => false, 'error' => $e->getMessage() ?: 'Writing help is not available right now.'];
+                }
+
+                return ['ok' => true, 'task' => TaraAI::TASKS[$task][0], 'suggestion' => $out, 'writingSuggestionsLeftToday' => TaraAI::left($u), 'note' => 'Nothing in the customer\'s saved resume or letters changed. They copy what helps and check every fact.'];
             case 'my_profile':
                 return ['ok' => true] + self::profileFacts($u);
             case 'product_guide':

@@ -1,4 +1,12 @@
-# CVTara v3.50.0 — V7 step 2b
+# CVTara v3.51.0 — V7 step 3
+
+## 3.51.0
+One assistant, and Profile Boost as a draft the customer approves (V7 WS-07 and WS-13). No database change (Profile Boost reuses `service_orders`).
+- **Writing help is part of Tara chat.** New Tara action `writing_help` (clearer wording, achievement bullets, summary, tailoring, cover-letter draft, check against a job, interview questions) from the customer's own text. Same daily writing allowance as before; nothing saved by itself. The separate "CVTara team" writing pop-up is no longer loaded; `tara-help.js` stays as a tiny file that opens Tara chat for any cached page. `/api/ai/suggest` is unchanged. The owner can turn the action off in Tara settings; an action list saved before 3.51 gets it switched on once.
+- **Profile Boost draft.** After payment, a LinkedIn and Naukri profile draft (headlines, About, summary, key skills, experience highlights) is written from the customer's saved resume, using only their facts. The customer reads it in Account & downloads and either approves it (order delivered) or asks for one round of changes in their own words; the second draft is final. A notification tells them when a draft is ready. Failures retry up to 3 times, then go to the Error Log for the owner. The owner can still edit or finish any order by hand in Refunds & services, and can switch automatic drafts off there (orders then wait for the owner as before).
+- Wording: Profile Boost perks say "A draft you approve, with one round of changes"; the account page no longer promises a person within 48 working hours. Customer guide updated. No mention of AI, and no claim that a person wrote the draft.
+- Tests: `s60_v7_step3` (32 checks); s27, s28 and s41 updated.
+
 
 ## 3.50.0
 Practice progress on the Interview practice page (V7 WS-11). No database change: everything is worked out from the customer's own mock interviews and practice visits (one `interview_practice` activity event per role per day).

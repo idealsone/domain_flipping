@@ -231,6 +231,18 @@ class ApiController extends Controller
 
             return $ok(['request' => $act === 'run' ? \App\Services\ServiceRequests::advance($u, $m[1]) : \App\Services\ServiceRequests::retry($u, $m[1])]);
         }
+        // 3.51.0 Profile Boost: the customer approves the draft, or asks for one round of changes.
+        if (preg_match('#^service-orders/([a-f0-9-]{36})/(approve|revise)$#', $path, $m) && $r->isMethod('POST')) {
+            if ($m[2] === 'approve') {
+                \App\Services\ProfileBoost::approve($u, $m[1]);
+            } else {
+                $cap('profile-boost-revise', 5, 3600, 'Please wait a while before asking again.');
+                $v = $r->validate(['request' => 'required|string|min:10|max:1500']);
+                \App\Services\ProfileBoost::revise($u, $m[1], $v['request']);
+            }
+
+            return $ok(['services' => \App\Services\Services::forUser($u->id)]);
+        }
         // 3.49.0 Interview practice: question practice (stored questions) and mock interviews with written feedback.
         if ($path === 'interviews' && $get) {
             return $ok(\App\Services\Interviews::overview($u));
