@@ -25,6 +25,7 @@ class SupportView
         '#^(resumes|letters|applications|ats/scans|service-requests|interviews)/[a-f0-9-]{36}$#',
         '#^(resumes|letters)$#',
         '#^resumes/[a-f0-9-]{36}/quality$#',
+        '#^resumes/[a-f0-9-]{36}/versions(/[a-f0-9-]{36})?$#',
     ];
 
     public static function current(Request $r): ?object

@@ -156,7 +156,7 @@ class ServiceRequests
             foreach (['subject', 'salutation', 'opening', 'evidence', 'motivation', 'closing', 'signoff'] as $k) {
                 $letter[$k] = (string) ($l['letter'][$k] ?? '');
             }
-            $j = self::call($u, 'POST', 'letters', ['data' => $letter]);
+            $j = self::call($u, 'POST', 'letters', ['data' => $letter, 'source' => ['resumeId' => (string) ($row->result_resume_id ?: $row->resume_id), 'scanId' => (string) $row->scan_id]]);
             abort_unless($j['ok'], 422, ($j['error'] ?? '').' Your tailored resume is saved; you can copy the letter from the preview.');
             DB::table('service_requests')->where('id', $id)->update(['letter_id' => $j['id'], 'updated_at' => now()]);
         }

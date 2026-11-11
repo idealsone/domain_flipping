@@ -503,6 +503,22 @@ class ApiController extends Controller
 
             return $ok(['tailored' => \App\Services\ResumeTailor::run($u, json_decode((string) $row->content_json, true) ?: [], (string) $sc->job_text, json_decode((string) $sc->result_json, true) ?: [])]);
         }
+        // 3.52.0 resume version history: list, read one version, restore it.
+        if (preg_match('#^resumes/([a-f0-9-]{36})/versions(?:/([a-f0-9-]{36})(/restore)?)?$#', $path, $m)) {
+            if (empty($m[2])) {
+                abort_unless($get, 405);
+
+                return $ok(['versions' => \App\Services\ResumeVersions::list($id, $m[1])]);
+            }
+            if (empty($m[3])) {
+                abort_unless($get, 405);
+
+                return $ok(['version' => \App\Services\ResumeVersions::show($id, $m[1], $m[2])]);
+            }
+            abort_unless($r->isMethod('POST'), 405);
+
+            return $ok(\App\Services\ResumeVersions::restore($id, $m[1], $m[2]));
+        }
         if (preg_match('#^resumes/([a-f0-9-]{36})/(primary|variant)$#', $path, $m)) {
             abort_unless($r->isMethod('POST'), 405);
 
@@ -628,6 +644,7 @@ class ApiController extends Controller
 
                 return $aid;
             });
+            \App\Services\ResumeVersions::freezeForApplication($id, $result); // 3.52.0: the resume copy used for this application
 
             return $ok(['id' => $result]);
         }
@@ -1023,9 +1040,22 @@ class ApiController extends Controller
             if ($type === 'resumes') {
                 $record['ats_score'] = \App\Services\ResumeQuality::score($data)['score'];
             }
+            // 3.52.0 cover letters remember the resume, ATS check and application they were made from (only the customer's own).
+            $src = (array) $r->input('source', []);
+            if ($type === 'letters' && \Illuminate\Support\Facades\Schema::hasColumn('cover_letter_drafts', 'source_resume_id')) {
+                foreach (['resumeId' => ['source_resume_id', 'resume_drafts'], 'scanId' => ['source_scan_id', 'ats_scans'], 'applicationId' => ['source_application_id', 'applications']] as $k => [$col, $tbl]) {
+                    $val = (string) ($src[$k] ?? '');
+                    if (preg_match('/^[a-f0-9-]{36}$/', $val) && DB::table($tbl)->where('id', $val)->where('owner_id', $id)->exists()) {
+                        $record[$col] = $val;
+                    }
+                }
+            }
             if ($r->input('id')) {
                 $did = $r->input('id');
                 $rev = (int) $r->input('revision');
+                if ($type === 'resumes') {
+                    \App\Services\ResumeVersions::beforeSave($id, $did); // 3.52.0: the previous content is kept as a version
+                }
                 abort_unless(DB::table($table)->where('id', $did)->where('owner_id', $id)->where('revision', $rev)->update([...$record, 'revision' => $rev + 1]), 409);
                 $rev++;
             } else {

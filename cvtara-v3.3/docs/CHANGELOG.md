@@ -1,4 +1,13 @@
-# CVTara v3.51.0 — V7 step 3
+# CVTara v3.52.0 — V7 step 4
+
+## 3.52.0
+Resume version history and document lineage (V7 WS-05). Additive migration `2026_11_18_000001_resume_versions`: new table `resume_versions`, `applications.resume_version_id`, and three nullable columns on `cover_letter_drafts` (`source_resume_id`, `source_scan_id`, `source_application_id`). Nothing existing is changed or dropped.
+- **Every save keeps the previous content** as a version (the last 30 edits per resume). A save that conflicts with another tab is refused as before and keeps nothing.
+- **The resume sent with an application is frozen**: when a job in Applications is marked Applied, Interview or Offer with a resume chosen, that exact copy is kept and linked to the application; later edits never change it. Choosing a different resume freezes that one.
+- **History on each resume card** (My Resumes): list of versions with date and why it was kept, View, and "Put this version back". A restore first keeps what is on screen, so it can be undone.
+- **Cover letters remember what they were made from**: the resume, ATS check and application (only the customer's own ids are stored), from the cover-letter page and from the combined resume + letter service.
+- Read-only support view can see the history; account deletion removes it. Test suite `s61_resume_versions` (27 checks).
+
 
 ## 3.51.0
 One assistant, and Profile Boost as a draft the customer approves (V7 WS-07 and WS-13). No database change (Profile Boost reuses `service_orders`).

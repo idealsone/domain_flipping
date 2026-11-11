@@ -105,6 +105,7 @@
           <button class="button primary small" data-open="${E(r.id)}">Edit</button>
           <button class="button secondary small" data-export="${E(r.id)}">Download</button>
           <button class="button secondary small" data-ats="${E(r.id)}">ATS check</button>
+          <button class="button secondary small" data-history="${E(r.id)}">History</button>
           ${r.is_primary ? '' : `<button class="button secondary small" data-primary="${E(r.id)}">Make primary</button>`}
         </div>
       </div></article>`;
