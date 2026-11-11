@@ -1,4 +1,15 @@
-# CVTara v3.48.0 — V7 step 1
+# CVTara v3.49.0 — V7 step 2
+
+## 3.49.0
+Second V7 release: interview practice. New tables only (additive migration `2026_11_17_000001_interview_practice`: career_occupations, interview_questions, interview_question_versions, interview_sessions, interview_answers, interview_evaluations, usage_ledger) plus `2026_11_17_000002_interview_bank_seed`, which loads the starter bank as drafts. **Off until the owner approves questions and switches it on** (console > Interview practice).
+- **Question practice** (workspace > Interview practice): pick a role and experience to see approved questions with what a good answer covers. Free and Quick Download see 3 per role; plans with mock interviews see all. Stored content only.
+- **Mock interviews**: a locked set of 5 approved questions (an introduction, about two for the role, the rest general; least-recently-seen first), written answers saved as typed, then written feedback against a fixed rubric (relevance, structure, evidence, communication, role fit, each 1-4), strengths, improvements, a rewrite using only the customer's own facts, a next step and a level (Beginner, Developing, Confident, Interview ready; a practice guide, never a hiring prediction). Runs on the quick-task model when set. Customers can challenge feedback once; it opens a support ticket.
+- **Allowance** (owner decision 2026-11-11): Job Hunt 4 for 30 days, Pro and Complete Job Kit 12 for 90 days, one pool, no monthly reset (`mockInterviews` on the plan, editable in Pricing, frozen on each new order). Orders bought before 3.49.0 keep what they bought (no mock interviews); the owner can give complimentary ones with a reason.
+- **Credit ledger** (`usage_ledger`, append-only, idempotent): a credit is held at the start, used when feedback is ready, given back after 3 failed attempts (also written to the Error Log) or when a session is not submitted within a day. A held or used mock interview blocks the 7-day "unused" refund; a returned one does not.
+- **Owner console > Interview practice**: approve questions one by one or a whole role, edit (new version, back to draft, older sessions keep their wording), retire, on/off switch, questions per session, daily start limit, recent sessions with errors and challenges, complimentary credits.
+- Plan cards show "N mock interviews with written feedback" only while mock interviews are on. Customer guide chapter 10 added. Account deletion removes sessions, answers and feedback. Read-only support view can see the Interview practice page.
+- Starter bank: 12 non-technical roles (NCO 2015 codes to be verified), 90 original questions written for CVTara (18 general, 6 per role).
+
 
 ## 3.48.0
 First V7 release (owner approved "all the updates as per the document step by step", 2026-11-11). Two small additive migrations: `ai_usage.prompt_version`, and a one-time update of the saved Expert Review tagline if it is still the old wording.

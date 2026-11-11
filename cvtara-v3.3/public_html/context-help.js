@@ -7,7 +7,7 @@
   const MAP = admin ? { dashboard: 'dashboard', approvals: 'approvals', people: 'customers', users: 'customers', orders: 'orders', business: 'orders', pricing: 'orders', resumelib: 'libraries', letterlib: 'libraries',
     sitedesign: 'templates', referral: 'referrals', desk: 'referrals', mailer: 'comms', campaigns: 'comms', outreach: 'comms', whatsnew: 'comms', reports: 'reports', promos: 'offers', growth: 'growth', tara: 'ai', assistant: 'ai',
     feedback: 'support', speed: 'integrations', settings: 'integrations', integrations: 'integrations', errors: 'help', setup: 'help', bloghub: 'seo', team: 'workforce' }
-    : { dashboard: 'dashboard', resumes: 'create', builder: 'create', letter: 'letters', tracker: 'applications', match: 'ats', billing: 'plans', account: 'account', referrals: 'referrals', wallet: 'referrals', 'referral-history': 'referrals', feedback: 'help' };
+    : { dashboard: 'dashboard', resumes: 'create', builder: 'create', letter: 'letters', tracker: 'applications', match: 'ats', billing: 'plans', account: 'account', referrals: 'referrals', wallet: 'referrals', 'referral-history': 'referrals', feedback: 'help', interview: 'interview' };
   const base = admin ? '/admin-guide.html' : '/customer-guide.html';
   const update = () => {
     const v = document.querySelector(admin ? '.admin-view.active' : '.workspace-view.active');

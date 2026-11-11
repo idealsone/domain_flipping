@@ -61,6 +61,14 @@ class AccountEraser
                 DB::table('service_request_events')->whereIn('request_id', DB::table('service_requests')->where('owner_id', $id)->pluck('id'))->delete();
                 DB::table('service_requests')->where('owner_id', $id)->delete();
             }
+            // 3.49.0 mock interviews hold the customer's answers and feedback. The credit ledger stays, without the person.
+            if (Schema::hasTable('interview_sessions')) {
+                $sessions = DB::table('interview_sessions')->where('owner_id', $id)->pluck('id');
+                DB::table('interview_answers')->whereIn('session_id', $sessions)->delete();
+                DB::table('interview_evaluations')->whereIn('session_id', $sessions)->delete();
+                DB::table('interview_sessions')->whereIn('id', $sessions)->delete();
+                DB::table('usage_ledger')->where('owner_id', $id)->update(['owner_id' => $keep, 'reason' => null]);
+            }
             foreach (self::OWN as $table => $col) {
                 if (Schema::hasTable($table)) {
                     DB::table($table)->where($col, $id)->delete();

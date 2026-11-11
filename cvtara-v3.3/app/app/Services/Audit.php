@@ -21,7 +21,7 @@ class Audit
     private const SECRET = '/(secret|password|apikey|api_key|token|key$|keyid|serviceaccount|code$|destination|account(number)?$|ifsc|upi)/i';
 
     /** Console paths whose saved settings are kept before and after. */
-    private const SETTINGS = ['settings' => 'settings', 'plans' => 'plans', 'business-controls' => 'businessControls', 'growth/settings' => 'growth', 'growth/seo/settings' => 'seoAgent', 'tara/settings' => 'taraChat', 'refunds/settings' => 'refunds', 'services/settings' => 'services', 'referrals/settings' => 'referrals', 'speed/save' => 'speed', 'campaigns/settings' => 'campaigns', 'outreach/settings' => 'outreach', 'growth/levels' => 'agentLevels', 'growth/costs' => 'growthCosts'];
+    private const SETTINGS = ['settings' => 'settings', 'plans' => 'plans', 'business-controls' => 'businessControls', 'growth/settings' => 'growth', 'growth/seo/settings' => 'seoAgent', 'tara/settings' => 'taraChat', 'refunds/settings' => 'refunds', 'services/settings' => 'services', 'referrals/settings' => 'referrals', 'speed/save' => 'speed', 'campaigns/settings' => 'campaigns', 'outreach/settings' => 'outreach', 'growth/levels' => 'agentLevels', 'growth/costs' => 'growthCosts', 'interviews/settings' => 'interviews'];
 
     public static function record(?User $actor, string $action, string $target = '', $before = null, $after = null, string $reason = '', int $status = 200, ?Request $r = null): void
     {

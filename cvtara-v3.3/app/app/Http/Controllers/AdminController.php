@@ -48,6 +48,9 @@ class AdminController extends Controller
         if (preg_match(OutreachAdminController::ROUTES, $path)) {
             return app(OutreachAdminController::class)->run($r, $path);
         }
+        if (preg_match(InterviewAdminController::ROUTES, $path)) {
+            return app(InterviewAdminController::class)->run($r, $path);
+        }
         if (preg_match(WhatsNewAdminController::ROUTES, $path)) {
             return app(WhatsNewAdminController::class)->run($r, $path);
         }
@@ -208,13 +211,16 @@ class AdminController extends Controller
             if ($get) {
                 return $ok(['plans' => Settings::plans()]);
             }AccountSecurity::requireRecent($r);
-            $v = $r->validate(['plans' => 'required|array', 'plans.*.name' => 'required|string|max:120', 'plans.*.tagline' => 'nullable|string|max:200', 'plans.*.price' => 'required|integer|min:0|max:99999', 'plans.*.mrp' => 'nullable|integer|min:0|max:99999', 'plans.*.accessDays' => 'required|integer|min:0|max:3660', 'plans.*.savedResumes' => 'required|integer|min:0|max:500', 'plans.*.savedLetters' => 'required|integer|min:0|max:500', 'plans.*.atsScans' => 'nullable|integer|min:0|max:100000', 'plans.*.dailyMatches' => 'nullable|integer|min:0|max:1000', 'plans.*.exports' => 'nullable|integer|min:0|max:100000', 'plans.*.popular' => 'sometimes|boolean', 'plans.*.referral' => 'sometimes|boolean', 'plans.*.bestValue' => 'sometimes|boolean', 'plans.*.sale' => 'sometimes|boolean', 'plans.*.planPrice' => 'nullable|integer|min:1|max:99999', 'plans.*.perks' => 'sometimes|array|max:12', 'plans.*.perks.*' => 'string|max:120', 'plans.*.audience' => 'sometimes|in:fresher,experienced,all']);
+            $v = $r->validate(['plans' => 'required|array', 'plans.*.name' => 'required|string|max:120', 'plans.*.tagline' => 'nullable|string|max:200', 'plans.*.price' => 'required|integer|min:0|max:99999', 'plans.*.mrp' => 'nullable|integer|min:0|max:99999', 'plans.*.accessDays' => 'required|integer|min:0|max:3660', 'plans.*.savedResumes' => 'required|integer|min:0|max:500', 'plans.*.savedLetters' => 'required|integer|min:0|max:500', 'plans.*.atsScans' => 'nullable|integer|min:0|max:100000', 'plans.*.dailyMatches' => 'nullable|integer|min:0|max:1000', 'plans.*.exports' => 'nullable|integer|min:0|max:100000', 'plans.*.mockInterviews' => 'nullable|integer|min:0|max:500', 'plans.*.popular' => 'sometimes|boolean', 'plans.*.referral' => 'sometimes|boolean', 'plans.*.bestValue' => 'sometimes|boolean', 'plans.*.sale' => 'sometimes|boolean', 'plans.*.planPrice' => 'nullable|integer|min:1|max:99999', 'plans.*.perks' => 'sometimes|array|max:12', 'plans.*.perks.*' => 'string|max:120', 'plans.*.audience' => 'sometimes|in:fresher,experienced,all']);
             $out = Settings::plans();
             foreach ($v['plans'] as $k => $in) {
                 abort_unless(isset($out[$k]), 422, 'Unknown plan.');
                 abort_if($out[$k]['type'] === 'plan' && $k !== 'free' && ($in['accessDays'] ?? 0) < 1, 422, 'Plans need at least 1 day of access.');
                 $in['atsScans'] = empty($in['atsScans']) ? null : (int) $in['atsScans'];
                 $in['mrp'] = (int) ($in['mrp'] ?? 0);
+                if (array_key_exists('mockInterviews', $in)) {
+                    $in['mockInterviews'] = (int) $in['mockInterviews'];
+                }
                 abort_if($k === 'free' && ! empty($in['sale']), 422, 'The free plan is not sold.');
                 $in['perks'] = array_values(array_filter(array_map('trim', $in['perks'] ?? $out[$k]['perks'])));
                 $out[$k] = array_merge($out[$k], array_intersect_key($in, $out[$k]));

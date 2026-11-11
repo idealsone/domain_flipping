@@ -56,7 +56,7 @@ return [
     // Console modules (resources/console/NAME.js) a role may load; a module not listed is owner only.
     'modules' => [
         'ops' => 'overview.view', 'people' => 'customers.view', 'reports' => 'reports.view', 'feedback' => 'support.view',
-        'content' => 'content.edit', 'publish' => 'content.edit', 'whatsnew' => 'content.edit', 'extras' => 'content.edit',
+        'content' => 'content.edit', 'publish' => 'content.edit', 'whatsnew' => 'content.edit', 'interviews' => 'content.edit|customers.view', 'extras' => 'content.edit',
         'growth' => 'growth.view|seo.view', 'agents' => 'growth.view|seo.view', 'operators' => 'growth.view',
         'campaigns' => 'growth.view', 'outreach' => 'growth.view', 'promos' => 'growth.view',
         'refunds' => 'orders.view', 'referral' => 'referrals.manage', 'speed' => 'ops.view', 'team' => 'owner', 'command' => 'staff', 'approvals' => 'staff', 'metrics' => 'overview.view',
@@ -84,7 +84,7 @@ return [
         ['POST', '#^tasks(/[a-f0-9-]{36}/(move|evidence))?$#', 'seo.draft|growth.draft|seo.approve|growth.approve'],
 
         // Owner only: keys, prices, business switches, setup, roles, the business assistant, deletes and blocks.
-        ['*', '#^(settings|providers|plans|business-controls|setup/.*|team(/.*)?|tara(/.*)?|users/(block|delete)|refunds/settings|services/settings|referrals/settings|campaigns/settings|outreach/(settings|senders)|speed/(save|test-reader)|report/fresh-start|media|indexing/settings|growth/(settings|costs|levels)|errors/clear|audit(/.*)?)$#', 'owner'],
+        ['*', '#^(settings|providers|plans|business-controls|setup/.*|team(/.*)?|tara(/.*)?|users/(block|delete)|refunds/settings|services/settings|referrals/settings|campaigns/settings|outreach/(settings|senders)|speed/(save|test-reader)|report/fresh-start|media|indexing/settings|growth/(settings|costs|levels)|interviews/settings|errors/clear|audit(/.*)?)$#', 'owner'],
 
         ['GET', '#^(overview|live|letter-summary)$#', 'overview.view'],
         ['GET', '#^(users|users/grants|purchases)$#', 'customers.view'],
@@ -104,6 +104,11 @@ return [
         ['POST', '#^support/[a-f0-9-]{36}$#', 'support.manage'],
 
         ['GET', '#^(report|report/meta|report/kpis|reports)$#', 'reports.view'],
+
+        // 3.49.0 interview practice: question bank, sessions and complimentary mock interviews.
+        ['GET', '#^interviews$#', 'content.edit|customers.view'],
+        ['POST', '#^interviews/(seed|approve|questions/\d+(/retire)?)$#', 'content.edit'],
+        ['POST', '#^interviews/grant$#', 'customers.manage'],
 
         ['*', '#^(content/(legal|features|library|blog|emails|popup|site)|reviews|feedback/add|whats-new(/save)?|legal/generate|email/preview)$#', 'content.edit'],
 

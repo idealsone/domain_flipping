@@ -21,8 +21,8 @@ class SupportView
 
     /** Customer API reads allowed in the view (path regexes). Nothing about passwords, security codes, payouts or wallets. */
     private const READ = [
-        '#^(profile|allowance|credits/history|ai/status|notifications|whats-new|purchases|refunds|applications|ats/scans|support/mine|service-requests|downloads)$#',
-        '#^(resumes|letters|applications|ats/scans|service-requests)/[a-f0-9-]{36}$#',
+        '#^(profile|allowance|credits/history|ai/status|notifications|whats-new|purchases|refunds|applications|ats/scans|support/mine|service-requests|downloads|interviews)$#',
+        '#^(resumes|letters|applications|ats/scans|service-requests|interviews)/[a-f0-9-]{36}$#',
         '#^(resumes|letters)$#',
         '#^resumes/[a-f0-9-]{36}/quality$#',
     ];

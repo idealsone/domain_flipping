@@ -25,7 +25,7 @@ class ApiController extends Controller
         $u = $r->user();
         $id = $u?->id;
         $get = $r->isMethod('GET');
-        if ($get && preg_match('#^(checkout/|ats/scan$|traffic$|security/(send|verify)-code|referrals/(withdraw|creator|payout-profile)$|account/delete$|feedback/[^/]+/withdraw$)#', $path)) {
+        if ($get && preg_match('#^(checkout/|interviews/start$|ats/scan$|traffic$|security/(send|verify)-code|referrals/(withdraw|creator|payout-profile)$|account/delete$|feedback/[^/]+/withdraw$)#', $path)) {
             abort(405);
         }if ($r->isMethod('DELETE') && ! preg_match('#^(resumes|letters|applications)/[a-f0-9-]{36}$#', $path)) {
             abort(405);
@@ -47,7 +47,7 @@ class ApiController extends Controller
         if ($path === 'business-public' && $get) {
             $d = BusinessControls::get();
 
-            $plans = Settings::plans();
+            $plans = \App\Services\Interviews::withPerks(Settings::plans());
             // A CVTara team add-on this customer has already ordered the most times allowed today is hidden until tomorrow.
             foreach ($id ? \App\Services\Services::hiddenToday($id) : [] as $k) {
                 $plans[$k]['limitReached'] = true;
@@ -114,7 +114,7 @@ class ApiController extends Controller
             $content = [];
             foreach (['legal', 'features', 'library', 'blog', 'integrations', 'seo', 'site'] as $k) {
                 $content[$k] = Settings::get($k);
-            }$content['plans'] = Settings::plans();
+            }$content['plans'] = \App\Services\Interviews::withPerks(Settings::plans());
             $content['jobLinks'] = (bool) (((array) Settings::get('speed', []))['jobLinks'] ?? false);
             $content['integrations']['measurementId'] = Settings::providers()['analytics']['measurementId'] ?? '';
             foreach ($content['blog'] as $slug => &$post) {
@@ -230,6 +230,46 @@ class ApiController extends Controller
             }
 
             return $ok(['request' => $act === 'run' ? \App\Services\ServiceRequests::advance($u, $m[1]) : \App\Services\ServiceRequests::retry($u, $m[1])]);
+        }
+        // 3.49.0 Interview practice: question practice (stored questions) and mock interviews with written feedback.
+        if ($path === 'interviews' && $get) {
+            return $ok(\App\Services\Interviews::overview($u));
+        }
+        if ($path === 'interviews/questions' && $get) {
+            $v = $r->validate(['occupation' => 'required|string|max:80', 'band' => 'required|string|max:10']);
+
+            return $ok(\App\Services\Interviews::questions($u, $v['occupation'], $v['band']));
+        }
+        if ($path === 'interviews/start' && $r->isMethod('POST')) {
+            \App\Services\EmailVerification::guard($u);
+            $cap('interview-start', 10, 3600, 'Please wait a while before starting another mock interview.');
+            $v = $r->validate(['occupation' => 'required|string|max:80', 'band' => 'required|string|max:10', 'objective' => 'nullable|string|max:20', 'company' => 'nullable|string|max:120']);
+
+            return $ok(['session' => \App\Services\Interviews::start($u, $v)]);
+        }
+        if (preg_match('#^interviews/([a-f0-9-]{36})(?:/(answer|submit|challenge))?$#', $path, $m)) {
+            $act = $m[2] ?? '';
+            if ($act === '') {
+                abort_unless($get, 405);
+
+                return $ok(['session' => \App\Services\Interviews::session($u, $m[1])]);
+            }
+            abort_unless($r->isMethod('POST'), 405);
+            $cap('interview-'.$act, 120, 600, 'Please wait a moment.');
+            if ($act === 'answer') {
+                $v = $r->validate(['position' => 'required|integer|min:1|max:10', 'answer' => 'present|nullable|string|max:3000']);
+                \App\Services\Interviews::answer($u, $m[1], (int) $v['position'], (string) ($v['answer'] ?? ''));
+
+                return $ok();
+            }
+            if ($act === 'challenge') {
+                $v = $r->validate(['note' => 'required|string|min:5|max:1500']);
+                \App\Services\Interviews::challenge($u, $m[1], $v['note']);
+
+                return $ok(['session' => \App\Services\Interviews::session($u, $m[1])]);
+            }
+
+            return $ok(['session' => \App\Services\Interviews::submit($u, $m[1])]);
         }
         if ($path === 'downloads' && $get) {
             $rows = DB::table('product_usage')->where('owner_id', $id)->whereIn('action', ['doc_resume', 'doc_letter'])->orderByDesc('created_at')->limit(100)->get(['action', 'reference', 'created_at']);

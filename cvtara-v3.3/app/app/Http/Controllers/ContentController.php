@@ -521,6 +521,7 @@ class ContentController extends Controller
             $scripts .= '<script src="/support-widget.js" defer></script>';
             $scripts .= '<script src="/support-view.js" defer></script>';
             $scripts .= '<script src="/service-request.js" defer></script>';
+            $scripts .= '<script src="/interview-practice.js" defer></script>';
             $scripts .= '<script src="/tara-chat.js" defer></script>';
         }
         $html = str_replace('</body>', $scripts.'</body>', $html);
