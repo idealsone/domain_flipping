@@ -32,7 +32,13 @@
   .ip-scores span{font-size:12.5px;padding:6px 8px;border-radius:8px;background:rgba(15,23,42,.04)}
   .ip-fb ul{margin:4px 0 8px 18px;padding:0}.ip-fb li{margin:2px 0}
   .ip-rewrite{white-space:pre-wrap;background:rgba(16,185,129,.06);border-radius:8px;padding:10px;font-size:13.5px}
-  .ip-err{color:#b91c1c;font-size:13.5px;margin:8px 0}`;
+  .ip-err{color:#b91c1c;font-size:13.5px;margin:8px 0}
+  .ip-steps{display:flex;gap:6px;flex-wrap:wrap;margin:6px 0}.ip-step{padding:4px 10px;border-radius:999px;border:1px solid var(--line,#e2e8f0);font-size:12.5px;color:var(--muted,#64748b)}
+  .ip-step.on{background:rgba(16,185,129,.12);border-color:rgba(16,185,129,.5);color:inherit;font-weight:700}
+  .ip-badges{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:8px;margin-top:12px}
+  .ip-badge{display:flex;flex-direction:column;gap:2px;padding:8px 10px;border-radius:10px;border:1px dashed var(--line,#cbd5e1);opacity:.7}
+  .ip-badge.on{border-style:solid;border-color:rgba(234,179,8,.6);background:rgba(234,179,8,.08);opacity:1}
+  .ip-badge small{color:var(--muted,#64748b);font-size:12px}`;
   document.head.appendChild(css);
 
   let state = null;
@@ -55,7 +61,7 @@
     const h = host(); const s = state;
     const open = s.open;
     let out = `<div class="ip-card"><h3>Interview practice</h3><p class="ip-muted">Practise common interview questions for your role, then try a mock interview: answer in writing and get feedback on what went well and what to improve. Written feedback is prepared automatically against a fixed checklist; it does not predict any interview result.</p>
-      <div class="ip-row" style="margin-top:10px"><span class="ip-pill">Mock interviews left: ${s.left}</span>${s.progress.completed ? `<span class="ip-pill">Completed: ${s.progress.completed}</span>` : ''}${s.progress.level ? `<span class="ip-pill">Latest level: ${E(s.progress.level)}</span>` : ''}</div></div>`;
+      <div class="ip-row" style="margin-top:10px"><span class="ip-pill">Mock interviews left: ${s.left}</span>${s.progress.completed ? `<span class="ip-pill">Completed: ${s.progress.completed}</span>` : ''}</div></div>${progressHtml(s.progress)}`;
     if (msg) out += `<p class="ip-err">${E(msg)}</p>`;
     if (open) out += sessionHtml(open);
     else {
@@ -72,6 +78,17 @@
       out += `<div class="ip-card"><h3>Your mock interviews</h3>${s.past.map(p => `<div class="ip-row" style="padding:6px 0"><span>${E(p.role || p.occupation)} · ${E(when(p.created_at))}</span><span class="ip-pill">${E(label(p.status, p.level))}</span>${p.status === 'evaluated' ? `<button class="button secondary small" data-ip-open="${E(p.id)}">Read feedback</button>` : ''}</div>`).join('')}</div>`;
     }
     h.innerHTML = out;
+  }
+  function progressHtml(p) {
+    const lv = p.level ? p.levels.indexOf(p.level) : -1;
+    const steps = p.levels.map((l, i) => `<span class="ip-step${i <= lv ? ' on' : ''}">${E(l)}</span>`).join('');
+    const trend = p.level && p.previousLevel && p.level !== p.previousLevel ? (p.levels.indexOf(p.level) > p.levels.indexOf(p.previousLevel) ? ' Up from your last mock interview.' : ' A little lower than last time, which is normal with harder questions.') : '';
+    return `<div class="ip-card"><h3>Your progress</h3>
+      <div class="ip-steps">${steps}</div><p class="ip-muted">${p.level ? `Latest level: <b>${E(p.level)}</b>.${trend}` : 'Finish a mock interview to see your level.'} ${E(LEVEL_NOTE)}</p>
+      <p style="margin:10px 0 4px"><b>Practice streak: ${p.streak} day${p.streak === 1 ? '' : 's'}</b>${p.bestStreak > p.streak ? ` <span class="ip-muted">(best ${p.bestStreak})</span>` : ''}</p>
+      <p class="ip-muted" style="margin:0">A practice day is any day you open practice questions or finish a mock interview. You can rest ${p.restDays} day between practice days without losing your streak.${p.practisedToday ? ' You have practised today.' : ''}</p>
+      <div class="ip-badges">${p.badges.map(b => `<span class="ip-badge${b.earned ? ' on' : ''}" title="${E(b.about)}"><b>${b.earned ? '★' : '☆'} ${E(b.name)}</b><small>${E(b.about)}</small></span>`).join('')}</div>
+      <p class="ip-muted" style="margin:8px 0 0">Your progress is private to you. There are no rankings.</p></div>`;
   }
   const label = (st, lvl) => ({ in_progress: 'In progress', submitted: 'Preparing feedback', evaluating: 'Preparing feedback', evaluated: lvl || 'Feedback ready', failed: 'Credit returned', abandoned: 'Not finished, credit returned' }[st] || st);
 

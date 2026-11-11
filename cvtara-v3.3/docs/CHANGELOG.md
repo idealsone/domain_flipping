@@ -1,4 +1,12 @@
-# CVTara v3.49.0 — V7 step 2
+# CVTara v3.50.0 — V7 step 2b
+
+## 3.50.0
+Practice progress on the Interview practice page (V7 WS-11). No database change: everything is worked out from the customer's own mock interviews and practice visits (one `interview_practice` activity event per role per day).
+- **Levels**: Beginner, Developing, Confident, Interview ready, from the latest mock interview, with "up from last time" when it changes. Always labelled as a practice guide, not a prediction.
+- **Streak with rest days**: a practice day is a day the customer opens practice questions or finishes a mock interview; one rest day between practice days keeps the streak. Current and best streak are shown.
+- **Six badges**: First step, Explorer (3 roles), Real examples (full marks for evidence), Steady practice (5-day streak), Well prepared (3 mock interviews), Interview ready.
+- Private to each customer: no rankings or leaderboards. Test suite `s59_practice_progress`.
+
 
 ## 3.49.0
 Second V7 release: interview practice. New tables only (additive migration `2026_11_17_000001_interview_practice`: career_occupations, interview_questions, interview_question_versions, interview_sessions, interview_answers, interview_evaluations, usage_ledger) plus `2026_11_17_000002_interview_bank_seed`, which loads the starter bank as drafts. **Off until the owner approves questions and switches it on** (console > Interview practice).

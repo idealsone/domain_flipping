@@ -151,6 +151,7 @@ class Interviews
     public static function questions(User $u, string $occupation, string $band): array
     {
         abort_unless(isset(self::BANDS[$band]) && DB::table('career_occupations')->where('slug', $occupation)->where('active', true)->exists(), 422, 'Choose a role and your experience.');
+        self::notePractice($u->id, $occupation);
         $rows = self::eligible($occupation, $band)->sortBy([['occupation', 'desc'], ['difficulty', 'asc'], ['code', 'asc']])->values();
         $full = self::fullBank($u);
         $shown = $full ? $rows : $rows->take(self::SAMPLE);
@@ -285,12 +286,56 @@ class Interviews
             'message' => "Mock interview feedback challenged (session $id):\n".$note, 'status' => 'new', 'created_at' => now(), 'updated_at' => now()]);
     }
 
-    /** Practice progress for the page and for 3.50.0 badges: sessions with feedback and the latest level. */
+    /**
+     * Practice progress (3.50.0, V7 WS-11): levels, a few badges and a streak with rest days. Derived from the customer's
+     * own sessions and practice visits only; nothing is stored, nothing is compared with other customers (no rankings).
+     * Streak: practice days in a row where a gap of up to REST_DAYS days without practice does not break it.
+     */
+    public const REST_DAYS = 1;
+
+    public const BADGES = [
+        'first_step' => ['First step', 'Finish your first mock interview.'],
+        'explorer' => ['Explorer', 'Practise questions for 3 different roles.'],
+        'evidence' => ['Real examples', 'Get full marks for real examples in an answer.'],
+        'steady' => ['Steady practice', 'Keep a 5-day practice streak.'],
+        'three_done' => ['Well prepared', 'Finish 3 mock interviews.'],
+        'ready' => ['Interview ready', 'Reach the Interview ready level in a mock interview.'],
+    ];
+
     public static function progress(int $uid): array
     {
-        $done = DB::table('interview_sessions as s')->join('interview_evaluations as e', 'e.session_id', '=', 's.id')->where('s.owner_id', $uid)->orderBy('s.evaluated_at')->get(['e.level', 's.evaluated_at']);
+        $done = DB::table('interview_sessions as s')->join('interview_evaluations as e', 'e.session_id', '=', 's.id')->where('s.owner_id', $uid)->orderBy('s.evaluated_at')->get(['e.level', 'e.result_json', 's.evaluated_at', 's.occupation']);
+        $practice = DB::table('activity_events')->where('owner_id', $uid)->where('event', 'interview_practice')->get(['reference', 'created_at']);
+        $tz = 'Asia/Kolkata';
+        $days = collect($practice->pluck('created_at'))->merge($done->pluck('evaluated_at'))->filter()
+            ->map(fn ($d) => \Illuminate\Support\Carbon::parse($d, 'UTC')->setTimezone($tz)->toDateString())->unique()->sort()->values();
+        [$best, $run, $prev] = [0, 0, null];
+        foreach ($days as $d) {
+            $run = ($prev && (int) abs(\Illuminate\Support\Carbon::parse($prev)->diffInDays(\Illuminate\Support\Carbon::parse($d))) <= self::REST_DAYS + 1) ? $run + 1 : 1;
+            $best = max($best, $run);
+            $prev = $d;
+        }
+        $today = now($tz)->toDateString();
+        $current = ($prev && (int) abs(\Illuminate\Support\Carbon::parse($prev)->diffInDays(\Illuminate\Support\Carbon::parse($today))) <= self::REST_DAYS + 1) ? $run : 0;
+        $roles = $practice->pluck('reference')->merge($done->pluck('occupation'))->filter()->unique()->count();
+        $evidence = $done->contains(fn ($r) => collect((json_decode($r->result_json, true) ?: [])['answers'] ?? [])->contains(fn ($a) => (int) ($a['scores']['evidence'] ?? 0) === 4));
+        $earned = ['first_step' => $done->count() >= 1, 'explorer' => $roles >= 3, 'evidence' => $evidence, 'steady' => $best >= 5, 'three_done' => $done->count() >= 3, 'ready' => $done->contains('level', 'Interview ready')];
+        $levels = $done->pluck('level')->values();
 
-        return ['completed' => $done->count(), 'level' => $done->last()?->level];
+        return [
+            'completed' => $done->count(), 'level' => $levels->last(), 'previousLevel' => $levels->count() > 1 ? $levels[$levels->count() - 2] : null,
+            'levels' => self::LEVELS, 'streak' => $current, 'bestStreak' => $best, 'restDays' => self::REST_DAYS, 'practisedToday' => $prev === $today,
+            'badges' => array_map(fn ($k) => ['key' => $k, 'name' => self::BADGES[$k][0], 'about' => self::BADGES[$k][1], 'earned' => $earned[$k]], array_keys(self::BADGES)),
+        ];
+    }
+
+    /** One practice visit per role per day counts towards the streak and the Explorer badge. */
+    private static function notePractice(int $uid, string $occupation): void
+    {
+        $from = now('Asia/Kolkata')->startOfDay()->utc();
+        if (! DB::table('activity_events')->where('owner_id', $uid)->where('event', 'interview_practice')->where('reference', $occupation)->where('created_at', '>=', $from)->exists()) {
+            Settings::audit($uid, 'interview_practice', $occupation);
+        }
     }
 
     // ---------------------------------------------------------------- feedback (runs after the response and from cron)
