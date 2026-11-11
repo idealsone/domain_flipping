@@ -208,7 +208,8 @@ class GrowthAdminController extends Controller
         }
         if ($path === 'growth/seo/inspect') {
             abort_unless(\App\Services\SearchConsole::ready(), 422, 'Connect Search Console first: Owner console → Integrations → Analytics.');
-            $out = AgentLog::run('seo', 'inspect', fn () => SeoOps::inspect());
+            $only = array_slice(array_filter((array) $r->input('paths', []), 'is_string'), 0, 20);
+            $out = AgentLog::run('seo', 'inspect', fn () => SeoOps::inspect(null, $only));
             abort_if(isset($out['error']), 422, $out['error'] ?? '');
 
             return $ok($out);

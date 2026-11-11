@@ -367,7 +367,8 @@ class ContentController extends Controller
             if ($faq) {
                 $toc[] = ['faq', 'Frequently asked questions'];
             }
-            $tocHtml = '<b>On this page</b>'.implode('', array_map(fn ($t) => '<a href="#'.e($t[0]).'">'.e($t[1]).'</a>', $toc));
+            $here = '/'.($isCalc ? 'calculators' : 'guides').'/'.$slug.'/'; // full path: the page's <base href="/"> would send a bare "#id" to the home page
+            $tocHtml = '<b>On this page</b>'.implode('', array_map(fn ($t) => '<a href="'.e($here).'#'.e($t[0]).'">'.e($t[1]).'</a>', $toc));
             $html = preg_replace('#(<aside class="toc" id="articleToc">).*?(</aside>)#s', count($toc) >= 2 ? '$1'.addcslashes($tocHtml, '\\$').'$2' : '', $html, 1);
             // Related reading and a next step.
             $related = collect(Settings::get('blog'))->filter(fn ($p, $k) => $k !== $slug && ($p['published'] ?? false) && ($p['category'] ?? '') === ($post['category'] ?? '~'))->take(3);

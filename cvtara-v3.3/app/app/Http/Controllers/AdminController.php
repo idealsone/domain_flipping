@@ -408,7 +408,21 @@ class AdminController extends Controller
             return $ok(['url' => '/media/'.$name]);
         }
         if ($path === 'seo') {
-            return $ok(['origin' => config('app.url'), 'seo' => Settings::get('seo'), 'routes' => app(ContentController::class)->pages()]);
+            // Each page's own Google status: index verdict from URL Inspection (seo_pages) and 28-day clicks from Search Console.
+            $google = [];
+            if (\Illuminate\Support\Facades\Schema::hasTable('seo_pages')) {
+                foreach (DB::table('seo_pages')->get(['path', 'http_status', 'verdict', 'coverage', 'last_crawl_at', 'inspected_at', 'inspect_error']) as $g) {
+                    $google[$g->path] = ['status' => $g->http_status, 'verdict' => $g->verdict, 'coverage' => $g->coverage, 'crawled' => $g->last_crawl_at, 'checked' => $g->inspected_at, 'error' => $g->inspect_error];
+                }
+            }
+            foreach ((array) (Settings::get('searchData', [])['page'] ?? []) as $row) {
+                $path = (string) (parse_url((string) ($row['key'] ?? ''), PHP_URL_PATH) ?: '');
+                if ($path !== '') {
+                    $google[$path] = ($google[$path] ?? []) + ['clicks' => (int) ($row['clicks'] ?? 0), 'impressions' => (int) ($row['impressions'] ?? 0)];
+                }
+            }
+
+            return $ok(['origin' => config('app.url'), 'seo' => Settings::get('seo'), 'routes' => app(ContentController::class)->pages(), 'google' => $google, 'searchConsole' => SearchConsole::ready()]);
         }
         if ($path === 'page-audit') {
             // Hundreds of programmatic pages: the checklist is worked out once a minute and sent one page of rows at a time.
@@ -518,8 +532,13 @@ class AdminController extends Controller
             validator($d, ['sitemapEnabled' => 'required|boolean', 'searchIndexing' => 'required|boolean', 'siteUrl' => 'nullable|url:https|max:255', 'pages' => 'present|array'])->validate();
         }
         if ($k === 'emails') {
+            // Every trigger a shipped template uses is allowed, so a new built-in mail never blocks saving again.
+            $triggers = array_values(array_unique(array_merge(
+                array_map(fn ($t) => (string) ($t['trigger'] ?? ''), (array) (Settings::defaults()['emails'] ?? [])),
+                ['profile_created', 'password_reset', 'resume_saved', 'purchase_verified', 'abandoned_purchase', 'blog_published', 'access_expiring', 'access_expiring_7', 'access_expiring_4', 'access_expiring_1', 'followup_due', 'application_status', 'download_locked', 'email_verification', 'refund_requested', 'refund_processed', 'refund_rejected', 'expert_review_delivered', 'nurture', 'referral_invite', 'plan_ended', 'monthly_digest', 'activation_nudge', 'ats_nudge', 'pricing_help', 'support_reply', 'manual']
+            )));
             foreach ($d as $t) {
-                validator($t, ['id' => 'required|string|max:80', 'subject' => 'required|string|max:180', 'body' => 'required|string|max:20000', 'enabled' => 'required|boolean', 'trigger' => 'required|in:profile_created,password_reset,resume_saved,purchase_verified,abandoned_purchase,blog_published,access_expiring,access_expiring_7,access_expiring_4,access_expiring_1,followup_due,application_status,download_locked,email_verification,refund_requested,refund_processed,refund_rejected,expert_review_delivered,nurture,referral_invite,plan_ended,monthly_digest,manual', 'delayHours' => 'required|integer|min:0|max:720'])->validate();
+                validator($t, ['id' => 'required|string|max:80', 'subject' => 'required|string|max:180', 'body' => 'required|string|max:20000', 'enabled' => 'required|boolean', 'trigger' => ['required', 'string', \Illuminate\Validation\Rule::in($triggers)], 'delayHours' => 'required|integer|min:0|max:720'])->validate();
             }
         }
         if ($k === 'legal') {
