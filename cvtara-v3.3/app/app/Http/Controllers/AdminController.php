@@ -121,7 +121,7 @@ class AdminController extends Controller
         if ($path === 'providers') {
             $p = Settings::providers();
             unset($p['push']);
-            $fields = ['jobreader' => ['enabled', 'provider', 'scrapingbeeApiKey', 'zenrowsApiKey', 'customUrlTemplate', 'customApiKey', 'dailyLimit'], 'payments' => ['provider', 'mode', 'razorpayKeyId', 'razorpayKeySecret', 'razorpayWebhookSecret', 'phonepeMode', 'phonepeClientId', 'phonepeClientVersion', 'phonepeClientSecret', 'phonepeWebhookUsername', 'phonepeWebhookPassword'], 'email' => ['provider', 'resendApiKey', 'smtpHost', 'smtpPort', 'smtpUser', 'smtpPassword', 'fromEmail', 'fromName', 'replyTo', 'postalAddress'], 'ai' => ['provider', 'claudeApiKey', 'model', 'dailyLimit'], 'grammar' => ['url', 'username', 'premiumApiKey'], 'analytics' => ['measurementId', 'searchConsoleProperty', 'searchConsoleServiceAccount', 'cruxApiKey']];
+            $fields = ['jobreader' => ['enabled', 'provider', 'scrapingbeeApiKey', 'zenrowsApiKey', 'customUrlTemplate', 'customApiKey', 'dailyLimit'], 'payments' => ['provider', 'mode', 'razorpayKeyId', 'razorpayKeySecret', 'razorpayWebhookSecret', 'phonepeMode', 'phonepeClientId', 'phonepeClientVersion', 'phonepeClientSecret', 'phonepeWebhookUsername', 'phonepeWebhookPassword'], 'email' => ['provider', 'resendApiKey', 'smtpHost', 'smtpPort', 'smtpUser', 'smtpPassword', 'fromEmail', 'fromName', 'replyTo', 'postalAddress'], 'ai' => ['provider', 'claudeApiKey', 'model', 'quickModel', 'dailyLimit'], 'grammar' => ['url', 'username', 'premiumApiKey'], 'analytics' => ['measurementId', 'searchConsoleProperty', 'searchConsoleServiceAccount', 'cruxApiKey']];
             $secret = fn ($k) => preg_match('/Secret|ApiKey|Password|ServiceAccount|AuthToken/', $k);
             if ($get) {
                 foreach ($p as &$service) {
@@ -140,7 +140,7 @@ class AdminController extends Controller
             AccountSecurity::requireRecent($r);
             $r->validate(['service' => 'required|in:'.implode(',', array_keys($fields)), 'values' => 'required|array']);
             if ($r->service === 'ai') {
-                validator($r->values, ['provider' => 'sometimes|in:claude,standard', 'model' => 'nullable|string|max:80|regex:/^[a-z0-9.\-]*$/', 'dailyLimit' => 'nullable|integer|min:0|max:100000'])->validate();
+                validator($r->values, ['provider' => 'sometimes|in:claude,standard', 'model' => 'nullable|string|max:80|regex:/^[a-z0-9.\-]*$/', 'quickModel' => 'nullable|string|max:80|regex:/^[a-z0-9.\-]*$/', 'dailyLimit' => 'nullable|integer|min:0|max:100000'])->validate();
             }
             if ($r->service === 'jobreader') {
                 validator($r->values, ['enabled' => 'required|in:true,false', 'provider' => 'required|in:'.implode(',', JobReader::PROVIDERS), 'dailyLimit' => 'nullable|integer|min:1|max:100000', 'customUrlTemplate' => 'nullable|string|max:600'])->validate();
@@ -158,6 +158,8 @@ class AdminController extends Controller
                 abort_unless(in_array($k, $fields[$r->service]) && ($v === null || (is_string($v) && strlen($v) <= 12000)), 422);
                 if (trim((string) $v) !== '') {
                     $p[$r->service][$k] = trim($v);
+                } elseif ($r->service === 'ai' && in_array($k, ['model', 'quickModel'], true)) {
+                    unset($p['ai'][$k]); // an emptied model box goes back to the default
                 }
             }if ($r->service === 'jobreader' && ($p['jobreader']['enabled'] ?? 'false') === 'true') {
                 $j = $p['jobreader'];

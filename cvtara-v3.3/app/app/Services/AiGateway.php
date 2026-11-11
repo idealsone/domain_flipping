@@ -29,10 +29,35 @@ class AiGateway
         return (array) ($a[$purpose] ?? $a[strstr($purpose, ':', true) ?: $purpose] ?? []) + $base;
     }
 
-    /** Model: the given override (Tara's own setting), then the owner's AI setting, then the documented default. */
-    public static function model(?string $override = null): string
+    /**
+     * Model: the given override (Tara's own setting), then, for short routine tasks listed in config ai.quick_purposes,
+     * the owner's "quick-task model" (3.48.0, empty = same as the main model), then the owner's AI setting, then the
+     * documented default. Writing for customers (reviews, tailoring, letters, chat answers) always uses the main model.
+     */
+    public static function model(?string $override = null, ?string $purpose = null): string
     {
-        return trim((string) $override) ?: (trim((string) (TaraAI::config()['model'] ?? '')) ?: (string) config('ai.default_model'));
+        $main = trim((string) (TaraAI::config()['model'] ?? '')) ?: (string) config('ai.default_model');
+        $quick = trim((string) (TaraAI::config()['quickModel'] ?? ''));
+
+        return trim((string) $override) ?: ($quick !== '' && $purpose !== null && self::quick($purpose) ? $quick : $main);
+    }
+
+    /** Whether a purpose is a short routine task that may run on the cheaper quick-task model. */
+    public static function quick(string $purpose): bool
+    {
+        return in_array($purpose, (array) config('ai.quick_purposes', []), true);
+    }
+
+    /** Server-side refusal fallback is offered for Opus/Sonnet/Fable models, not for Haiku (the request would be refused). */
+    public static function fallbacks(string $model): bool
+    {
+        return ! str_contains($model, 'haiku');
+    }
+
+    /** A short fingerprint of a system prompt, stored with each request so a change of wording can be traced in costs. */
+    public static function promptVersion(string $system): string
+    {
+        return substr(sha1($system), 0, 10);
     }
 
     /** The Claude API address. Tests may point it at a local stand-in, never on a production site. */
@@ -55,20 +80,20 @@ class AiGateway
      * Sends one request: $build receives the client and returns the API message. The outcome is recorded either way;
      * errors are rethrown unchanged so each feature keeps its own customer wording.
      */
-    public static function send(string $purpose, ?int $ownerId, callable $build, ?int $timeout = null)
+    public static function send(string $purpose, ?int $ownerId, callable $build, ?int $timeout = null, ?string $promptVersion = null)
     {
         $t0 = hrtime(true);
         try {
             $m = $build(self::client($purpose, $timeout));
         } catch (\Throwable $e) {
-            self::record($purpose, '', 0, 0, $ownerId, self::status($e), $t0, mb_strimwidth($e->getMessage(), 0, 190, '…'));
+            self::record($purpose, '', 0, 0, $ownerId, self::status($e), $t0, mb_strimwidth($e->getMessage(), 0, 190, '…'), $promptVersion);
             if (self::status($e) === 'auth') {
                 ErrorLog::record('error', 'ai', 'The Claude API key was refused. Open Owner console → Integrations → AI and press Test the key to see why.');
             }
             throw $e;
         }
         $status = ($m->stopReason ?? '') === 'refusal' ? 'refusal' : 'ok';
-        self::record($purpose, (string) ($m->model ?? ''), (int) ($m->usage->inputTokens ?? 0), (int) ($m->usage->outputTokens ?? 0), $ownerId, $status, $t0);
+        self::record($purpose, (string) ($m->model ?? ''), (int) ($m->usage->inputTokens ?? 0), (int) ($m->usage->outputTokens ?? 0), $ownerId, $status, $t0, '', $promptVersion);
 
         return $m;
     }
@@ -136,6 +161,13 @@ class AiGateway
         };
     }
 
+    private static function hasPromptVersion(): bool
+    {
+        static $has = null;
+
+        return $has ??= Schema::hasColumn('ai_usage', 'prompt_version');
+    }
+
     private static function hasColumns(): bool
     {
         static $has = null;
@@ -143,10 +175,13 @@ class AiGateway
         return $has ??= Schema::hasColumn('ai_usage', 'status');
     }
 
-    private static function record(string $purpose, string $model, int $in, int $out, ?int $ownerId, string $status, int $t0, string $error = ''): void
+    private static function record(string $purpose, string $model, int $in, int $out, ?int $ownerId, string $status, int $t0, string $error = '', ?string $promptVersion = null): void
     {
         try {
             $extra = self::hasColumns() ? ['status' => $status, 'latency_ms' => (int) round((hrtime(true) - $t0) / 1e6), 'request_id' => RequestId::current(), 'error' => $error] : [];
+            if ($promptVersion !== null && self::hasPromptVersion()) {
+                $extra['prompt_version'] = $promptVersion;
+            }
             Growth::recordAi($purpose, $model, $in, $out, $ownerId, $extra);
         } catch (\Throwable $e) {
             ErrorLog::exception($e); // counting must never cost the customer their answer

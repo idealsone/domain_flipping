@@ -178,7 +178,7 @@
       "enabled": true,
       "delayHours": 0,
       "subject": "Your Tara Expert Review is ready, {{name}}",
-      "body": "# Your Tara Expert Review is ready\nHi {{name}}, here is the review of your resume. The CVTara team prepared it from the resume saved in your CVTara account. It is also saved in your account, so you can come back to it any time.\n\n{{review}}\n\n[button: Open my review | {{dashboard_url}}]\nCheck every rewritten line before you use it: keep only what is true for you. Questions about the review? Reply to this email or write to support@cvtara.com with your payment reference {{payment_reference}}."
+      "body": "# Your Tara Expert Review is ready\nHi {{name}}, here is the instant written review of your resume. It was prepared automatically by CVTara's review system from the resume saved in your CVTara account. It is also saved in your account, so you can come back to it any time.\n\n{{review}}\n\n[button: Open my review | {{dashboard_url}}]\nCheck every rewritten line before you use it: keep only what is true for you. Questions about the review? Reply to this email or write to support@cvtara.com with your payment reference {{payment_reference}}."
     },
     {
       "id": "reset",

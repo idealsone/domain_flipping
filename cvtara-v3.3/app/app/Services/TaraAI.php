@@ -67,15 +67,11 @@ class TaraAI
         if (! Growth::aiAllowed($purpose)) {
             throw new \RuntimeException('budget');
         }
-        $m = AiGateway::send($purpose, $ownerId, fn ($c) => $c->beta->messages->create(
-            model: AiGateway::model(),
-            maxTokens: $maxTokens,
-            system: $system,
-            messages: [['role' => 'user', 'content' => $prompt]],
-            outputConfig: ['effort' => 'medium'],
-            fallbacks: 'default',
-            betas: ['server-side-fallback-2026-07-01'],
-        ), $timeout);
+        $model = AiGateway::model(null, $purpose);
+        $m = AiGateway::send($purpose, $ownerId, fn ($c) => AiGateway::fallbacks($model)
+            ? $c->beta->messages->create(model: $model, maxTokens: $maxTokens, system: $system, messages: [['role' => 'user', 'content' => $prompt]], outputConfig: ['effort' => 'medium'], fallbacks: 'default', betas: ['server-side-fallback-2026-07-01'])
+            : $c->beta->messages->create(model: $model, maxTokens: $maxTokens, system: $system, messages: [['role' => 'user', 'content' => $prompt]], outputConfig: ['effort' => 'medium']),
+            $timeout, AiGateway::promptVersion($system));
         if ($m->stopReason === 'refusal') {
             throw new \RuntimeException('refusal');
         }

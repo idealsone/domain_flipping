@@ -229,11 +229,24 @@ class Growth
         return ['spentPaise' => $spent, 'capPaise' => $cap, 'pct' => $cap ? round($spent / $cap * 100, 1) : null, 'byPurpose' => $rows->mapWithKeys(fn ($r) => [$r->purpose => ['paise' => (int) $r->p, 'calls' => (int) $r->n]])->all(), 'stopped' => $cap > 0 && $spent >= $cap];
     }
 
+    /** Dollar prices per million tokens for the model that answered: the published list in config/ai.php, else the owner's Growth settings. */
+    public static function prices(string $model, array $s): array
+    {
+        foreach ((array) config('ai.prices', []) as $id => $p) {
+            if ($model !== '' && str_starts_with($model, (string) $id)) {
+                return [(float) $p[0], (float) $p[1]];
+            }
+        }
+
+        return [(float) $s['inputUsdPerM'], (float) $s['outputUsdPerM']];
+    }
+
     /** Called after every AI request. Customer add-ons are paid for, so they are counted but never stopped by the cap. */
     public static function recordAi(string $purpose, string $model, int $in, int $out, ?int $ownerId = null, array $extra = []): void
     {
         $s = self::settings();
-        $usd = ($in * (float) $s['inputUsdPerM'] + $out * (float) $s['outputUsdPerM']) / 1e6;
+        [$pin, $pout] = self::prices($model, $s);
+        $usd = ($in * $pin + $out * $pout) / 1e6;
         DB::table('ai_usage')->insert(['purpose' => mb_substr($purpose, 0, 40), 'model' => mb_substr($model, 0, 60), 'input_tokens' => $in, 'output_tokens' => $out, 'cost_paise' => (int) ceil($usd * (float) $s['usdInr'] * 100), 'created_at' => now()] + ($ownerId ? ['owner_id' => $ownerId] : []) + $extra);
         $b = self::budget();
         foreach ([90, 75, 50] as $step) {

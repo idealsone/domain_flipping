@@ -1,4 +1,12 @@
-# CVTara v3.47.0 — owner-reported fixes
+# CVTara v3.48.0 — V7 step 1
+
+## 3.48.0
+First V7 release (owner approved "all the updates as per the document step by step", 2026-11-11). Two small additive migrations: `ai_usage.prompt_version`, and a one-time update of the saved Expert Review tagline if it is still the old wording.
+- **Tara Expert Review wording is honest.** The review is written automatically, so the tagline, checkout line, delivery email, order note and customer guide now say "instant written review … prepared automatically" instead of "the CVTara team reviews your resume". The review itself no longer writes as a person. Still no mention of AI on the website (owner rule).
+- **Quick-task model.** Integrations > AI has a second box, "Quick-task model", for short routine jobs (SEO titles, chat summaries, and interview scoring and job parsing once built). Empty = the main model. Customer writing (reviews, tailoring, cover letters, chat answers) always uses the main model. Haiku requests are sent without the refusal fallback setting, which Haiku does not support. Emptying either model box now really goes back to the default.
+- **Cost log.** Each AI request is costed at the list price of the model that answered (Opus 5.5, Sonnet 5.5, Haiku 5.5 in `config/ai.php`; other models use the Growth page prices) and records a short fingerprint of the prompt wording (`prompt_version`).
+- Tara chat summaries are counted separately as `customer:chat_summary`.
+
 
 ## 3.47.0
 Fixes from the owner's 8 November list. No database change.

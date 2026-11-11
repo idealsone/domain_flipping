@@ -21,4 +21,16 @@ return [
     // AI health: a warning goes to the Error Log when, over the last 24 hours and at least 'min_calls' requests,
     // fewer than 'min_success_pct' percent succeeded.
     'health' => ['min_calls' => 20, 'min_success_pct' => 80],
+
+    // 3.48.0: short routine tasks that may run on the owner's cheaper "quick-task model" (Integrations > AI). Customer
+    // writing (reviews, tailoring, letters, chat answers) is not listed and always uses the main model.
+    'quick_purposes' => ['seo', 'customer:chat_summary', 'customer:jd_parse', 'customer:interview_eval'],
+
+    // List prices in US dollars per million tokens (input, output), used to cost each request by the model that answered.
+    // A model not listed is costed with the owner's prices on the Growth page.
+    'prices' => [
+        'claude-opus-5-5' => [4.00, 20.00],
+        'claude-sonnet-5-5' => [2.00, 10.00],
+        'claude-haiku-5-5' => [0.10, 0.50],
+    ],
 ];
