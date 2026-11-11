@@ -61,9 +61,7 @@
     // 3.41.0: the dashboard's "Get career assistance" opens this chat (with a question when given).
     window.CVTaraAssist = q => { toggle(true); if (q) send(q); };
     document.addEventListener('cvtara-resume-saved', () => { if (!$('#taraPanel').hidden) { note('Your resume was uploaded. Ask me to check it, or to compare it with a job.'); $('#taraIn').value = 'I just uploaded my resume. Can you check it?'; } });
-    // "Ask Tara" in the workspace menu
-    const nav = document.querySelector('.side-nav');
-    if (nav && !nav.querySelector('[data-tara-nav]')) { const b = document.createElement('button'); b.type = 'button'; b.dataset.taraNav = '1'; b.innerHTML = '<i aria-hidden="true">💬</i>Ask Tara'; b.onclick = () => toggle(true, true); const at = nav.querySelector('[data-workspace-view="tracker"]'); if (at) at.after(b); else nav.append(b); }
+    // 3.47.0: no separate "Ask Tara" menu item. "Career assistance" in the menu and the floating button open this chat.
   }
 
   function credits(c, left) {

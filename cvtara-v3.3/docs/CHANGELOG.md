@@ -1,4 +1,12 @@
-# CVTara v3.46.1 — V2: guides and help centre
+# CVTara v3.47.0 — owner-reported fixes
+
+## 3.47.0
+Fixes from the owner's 8 November list. No database change.
+- Customer menu: one help entry (Help centre opens the customer guide; the extra "Customer guide" link is no longer added) and no separate "Ask Tara" item; Career assistance and the floating button open the chat.
+- "On this page" lists on guides and calculators no longer open the home page: in-page links keep the visitor on the page despite `<base href="/">`, and article tables of contents carry the article's own address.
+- User Mailer: Save templates no longer fails with "The selected trigger is invalid"; every trigger a built-in template uses is accepted (activation_nudge, ats_nudge, pricing_help, support_reply were missing).
+- Blog & SEO > Job, city & state pages: the list was empty ("No pages match") after visiting the Resume Library, whose grid used the same element ids. The list now has its own ids, 20 rows per page, a link to each live page, Google's index status (URL Inspection) with the date checked, 4-week clicks from Search Console, a filter by Google status, CSV export and "Ask Google about more pages" for the pages on screen.
+- Integrations > AI: new "Test the key" button asks Anthropic whether the saved key and model work and says why not (invalid key, model not available, no credit, busy). Business assistant and Tara errors point to it.
 
 ## 3.46.1
 - SEO pages: the trust line now says "Made by an HR team in Bangalore" instead of "Built by working recruiters" (owner decision 2026-11-08), matching the footer and emails. No database change.

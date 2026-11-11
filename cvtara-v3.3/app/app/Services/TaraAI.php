@@ -97,7 +97,13 @@ class TaraAI
     public static function failure(\Throwable $e): string
     {
         if ($e instanceof APIStatusException && in_array($e->status ?? 0, [401, 403], true)) {
-            return 'The Claude API key was refused. Check it in Settings → Integrations → AI.';
+            return 'The Claude API key was refused. Open Owner console → Integrations → AI and press Test the key to see why.';
+        }
+        if ($e instanceof APIStatusException && ($e->status ?? 0) === 404) {
+            return 'The Claude model set in Integrations → AI is not available to this key. Empty the model box and save.';
+        }
+        if ($e instanceof APIStatusException && ($e->status ?? 0) === 400 && str_contains(strtolower($e->getMessage()), 'credit')) {
+            return 'The Anthropic account has no credit left. Add credit at console.anthropic.com → Billing.';
         }
 
         return match (true) {

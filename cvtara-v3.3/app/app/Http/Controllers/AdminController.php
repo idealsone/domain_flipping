@@ -133,7 +133,11 @@ class AdminController extends Controller
                 }
 
                 return $ok(['providers' => $p, 'secureStorage' => true]);
-            }AccountSecurity::requireRecent($r);
+            }
+            if ($r->input('test') === 'ai') {
+                return $ok(\App\Services\AiGateway::testKey());
+            }
+            AccountSecurity::requireRecent($r);
             $r->validate(['service' => 'required|in:'.implode(',', array_keys($fields)), 'values' => 'required|array']);
             if ($r->service === 'ai') {
                 validator($r->values, ['provider' => 'sometimes|in:claude,standard', 'model' => 'nullable|string|max:80|regex:/^[a-z0-9.\-]*$/', 'dailyLimit' => 'nullable|integer|min:0|max:100000'])->validate();

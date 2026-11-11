@@ -63,7 +63,7 @@ class AiGateway
         } catch (\Throwable $e) {
             self::record($purpose, '', 0, 0, $ownerId, self::status($e), $t0, mb_strimwidth($e->getMessage(), 0, 190, '…'));
             if (self::status($e) === 'auth') {
-                ErrorLog::record('error', 'ai', 'The Claude API key was refused. Check it in Owner console → Settings → Integrations → AI.');
+                ErrorLog::record('error', 'ai', 'The Claude API key was refused. Open Owner console → Integrations → AI and press Test the key to see why.');
             }
             throw $e;
         }
@@ -71,6 +71,46 @@ class AiGateway
         self::record($purpose, (string) ($m->model ?? ''), (int) ($m->usage->inputTokens ?? 0), (int) ($m->usage->outputTokens ?? 0), $ownerId, $status, $t0);
 
         return $m;
+    }
+
+    /**
+     * Integrations > AI "Test the key" (3.47.0): asks Anthropic directly whether the saved key and model work, with one
+     * one-word request, and explains the answer in plain words. The key itself is never returned.
+     */
+    public static function testKey(): array
+    {
+        $key = trim((string) (TaraAI::config()['claudeApiKey'] ?? ''));
+        $model = self::model();
+        if ($key === '') {
+            return ['works' => false, 'model' => $model, 'message' => 'No Claude API key is saved. Paste one from console.anthropic.com and press Save provider settings.'];
+        }
+        $o = env('CLAUDE_API_BASE');
+        $base = $o && config('app.env') !== 'production' ? rtrim($o, '/') : 'https://api.anthropic.com';
+        $shape = str_starts_with($key, 'sk-ant-api') ? '' : ' The saved key does not start with sk-ant-api, so it may not be an API key (an Admin key or a claude.ai login does not work here).';
+        $t0 = hrtime(true);
+        try {
+            $res = \Illuminate\Support\Facades\Http::withHeaders(['x-api-key' => $key, 'anthropic-version' => '2023-06-01'])->timeout(30)
+                ->post($base.'/v1/messages', ['model' => $model, 'max_tokens' => 1, 'messages' => [['role' => 'user', 'content' => 'Hi']]]);
+        } catch (\Throwable $e) {
+            return ['works' => false, 'model' => $model, 'message' => 'Anthropic could not be reached from the server ('.mb_strimwidth($e->getMessage(), 0, 120, '…').'). Try again in a minute.'];
+        }
+        $status = $res->status();
+        $said = mb_strimwidth((string) ($res->json('error.message') ?? ''), 0, 200, '…');
+        self::record('owner:key_test', $res->successful() ? (string) $res->json('model', $model) : '', (int) $res->json('usage.input_tokens', 0), (int) $res->json('usage.output_tokens', 0), null, $res->successful() ? 'ok' : ($status === 401 || $status === 403 ? 'auth' : 'error'), $t0, $res->successful() ? '' : "HTTP $status: $said");
+        $message = match (true) {
+            $res->successful() => 'The key works with '.$model.'. Tara and the Business assistant can answer.',
+            $status === 401 => 'Anthropic says this key is not valid: it was mistyped, deleted or belongs to a disabled workspace.'.$shape.' Create a new key at console.anthropic.com > API keys, paste it here and press Save provider settings.',
+            $status === 403 => 'Anthropic accepted the key but refused the request ('.$said.'). Check the key\'s workspace and its permissions at console.anthropic.com.',
+            $status === 404 => 'The key works, but the model "'.$model.'" is not available to it. Empty the Claude model box (or type a model your account offers) and save.',
+            $status === 400 && str_contains(strtolower($said), 'credit') => 'The key works, but the Anthropic account has no credit left. Add credit at console.anthropic.com > Billing.',
+            $status === 429 || $status === 529 => 'The key works, but Anthropic is busy or the account rate limit is reached. Try again in a minute.',
+            default => 'Anthropic answered HTTP '.$status.($said !== '' ? ': '.$said : '').'.',
+        };
+        if (! $res->successful() && in_array($status, [401, 403], true)) {
+            ErrorLog::record('error', 'ai', 'Key test: '.$message);
+        }
+
+        return ['works' => $res->successful(), 'model' => $model, 'status' => $status, 'message' => $message];
     }
 
     /** Marks a request that came back without usable text (recorded as ok by send()) as empty. */
