@@ -48,7 +48,7 @@ class AiGateway
         return in_array($purpose, (array) config('ai.quick_purposes', []), true);
     }
 
-    /** Server-side refusal fallback is offered for Opus/Sonnet/Fable models, not for Haiku (the request would be refused). */
+    /** Server-side refusal fallback is offered for the larger models, not for Haiku (the request would be refused). */
     public static function fallbacks(string $model): bool
     {
         return ! str_contains($model, 'haiku');
