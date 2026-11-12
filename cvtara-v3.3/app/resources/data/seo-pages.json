@@ -45,7 +45,14 @@
      "Use the STAR method. Show that you listened, used data and agreed on a decision."
     ]
    ],
-   "f": "Freshers should lead with projects, internships and coding practice. Link a GitHub profile and name the stack used in each project."
+   "f": "Freshers should lead with projects, internships and coding practice. Link a GitHub profile and name the stack used in each project.",
+   "a": [
+    "In my last role I rebuilt our order-status service, which timed out at peak hours. I owned the API and the database changes. I moved the slow joins into a cached read model with Redis and added pagination. The p95 response time fell from 2.4 seconds to 300 milliseconds.",
+    "First I reproduce it, ideally with the same input that failed in production. Then I read the logs and traces around that request, form one guess at a time and check it. Once I find the cause I fix it, add a test that would have caught it and note it in the incident log.",
+    "A process is a running program with its own memory. A thread is a path of execution inside a process and shares that memory with other threads. I would use threads when tasks need the same data and mostly wait on I/O, such as handling many network calls at once.",
+    "I measure before changing anything, so I know where the time goes. Usually it is the database, so I check slow queries and indexes first. Then I add caching for data that rarely changes, paginate large lists and trim fields the client does not use. I measure again after each change.",
+    "A teammate wanted one large shared database table for two features; I worried it would slow both. I listened to his reasons, then we load-tested both designs with real data volumes. The split design was 3 times faster under load, so we went with it, and he led the migration."
+   ]
   },
   "python-developer": {
    "t": "Python Developer",
@@ -91,7 +98,14 @@
      "Say what was manual before, what you built and the time saved."
     ]
    ],
-   "f": "Show 2 or 3 projects with a clear purpose, such as a scraper, a small API or a data dashboard, and link the code."
+   "f": "Show 2 or 3 projects with a clear purpose, such as a scraper, a small API or a data dashboard, and link the code.",
+   "a": [
+    "A list can be changed after you create it, and a tuple cannot. I use lists for collections that grow or change, such as rows I am cleaning, and tuples for fixed records like coordinates. Because tuples are immutable and hashable, they can also be used as dictionary keys.",
+    "Every project gets its own virtual environment so packages do not clash. I list dependencies in a requirements file or pyproject with pinned versions, and keep a lock file so every machine and the server install exactly the same versions. I update them on purpose, one at a time, with tests.",
+    "A decorator is a function that wraps another function to add behaviour without changing its code. For example, I wrote a timing decorator that logs how long each report function takes. I just put @timed above the function, and it logs the time on every call.",
+    "I profile it first with cProfile to find the slow part rather than guessing. In one script, a loop over a pandas DataFrame row by row took 20 minutes. I replaced it with vectorised operations and a dictionary lookup instead of a list search, and it ran in under a minute.",
+    "Our accounts team copied data from 6 Excel files into one summary every Monday, which took about 4 hours. I wrote a Python script with pandas that reads the files, checks totals and writes the summary with charts. It now runs in 2 minutes and they use it every week."
+   ]
   },
   "front-end-developer": {
    "t": "Front-End Developer",
@@ -137,7 +151,14 @@
      "Share how you handled a trade-off between design and time or performance."
     ]
    ],
-   "f": "A portfolio with 3 live projects and their code matters more than a long skills list."
+   "f": "A portfolio with 3 live projects and their code matters more than a long skills list.",
+   "a": [
+    "The browser parses HTML into the DOM and CSS into the CSSOM, combines them into a render tree, works out layout and then paints pixels. Changing sizes or positions forces layout to run again, which is costly, so I batch DOM changes and animate with transform and opacity where I can.",
+    "If state is used by one component or a parent and its children, local state and props are enough. When many distant parts of the app need the same data, like the logged-in user or a cart, a store or context saves passing props through many layers and keeps updates predictable.",
+    "I start with semantic HTML, so buttons are buttons and headings are in order. Every input has a label, images have alt text and colour contrast meets WCAG AA. I check that the whole page works with a keyboard and that focus is visible, then test with a screen reader.",
+    "I measure first with Lighthouse and real-user data such as Largest Contentful Paint. Then I resize and compress images, lazy-load what is below the fold, split the JavaScript bundle by route and set cache headers. On one site this took mobile load time from 6 seconds to under 3.",
+    "A designer wanted a large animated hero that made our landing page slow on phones. I showed her the speed numbers and built two versions. We kept the animation on desktop and used a still image on mobile, which kept the look and cut load time by half."
+   ]
   },
   "data-analyst": {
    "t": "Data Analyst",
@@ -183,7 +204,14 @@
      "A line chart, and say why."
     ]
    ],
-   "f": "Freshers can show analysis projects on public datasets. Say the question, the tools and the answer you found."
+   "f": "Freshers can show analysis projects on public datasets. Say the question, the tools and the answer you found.",
+   "a": [
+    "I first profile the data: row counts, missing values, duplicates and column types. I fix types, remove true duplicates and decide case by case whether to fill or drop missing values. Outliers I check with the business before removing. I log every change so the cleaning can be repeated and checked.",
+    "An INNER JOIN returns only rows with a match in both tables. A LEFT JOIN returns every row from the left table, with blanks where the right table has no match. For example, customers LEFT JOIN orders also shows customers who have never ordered, which an inner join would hide.",
+    "Sales asked why repeat orders were falling. I split customers by first-order month and found that buyers whose first delivery was late came back half as often. I shared one chart with the operations team, they fixed the courier allocation, and repeat orders recovered over the next quarter.",
+    "I start with the decision they need to make, not the method. Each chart carries one message in its title, I use plain words instead of statistical terms, and I give the numbers in context, such as 'up 12% on last month'. I end with what I recommend they do.",
+    "A line chart, because time runs naturally along the x-axis and the line makes the direction and rate of change easy to see. If I am comparing a few categories over time I use a few lines with clear labels rather than a cluttered legend."
+   ]
   },
   "data-scientist": {
    "t": "Data Scientist",
@@ -229,7 +257,14 @@
      "Give the definitions and a case where each matters more."
     ]
    ],
-   "f": "Show 2 complete projects with clean notebooks and a short write-up of what you learned."
+   "f": "Show 2 complete projects with clean notebooks and a short write-up of what you learned.",
+   "a": [
+    "I first pick a metric that reflects the rare class, such as recall, precision or F1, because accuracy hides the problem. Then I try class weights in the model, and resampling such as undersampling the majority class or SMOTE, comparing results with stratified cross-validation.",
+    "Overfitting is when a model learns the noise in the training data and does poorly on new data. I prevent it by keeping a proper validation set, using cross-validation, adding regularisation, limiting model complexity and stopping early. If a simpler model scores nearly as well, I prefer it.",
+    "I link the model metric to a business number, such as fewer bad loans or more conversions. Then I propose an A/B test: one group gets decisions from the model, the other from the current method, and we compare the business metric over a fixed period.",
+    "We wanted to predict which customers would cancel. I combined usage, billing and support data, built features like days since last login, and compared logistic regression with gradient boosting. Boosting caught 30% more churners at the same precision. The retention team used the scores in weekly calls.",
+    "Precision is the share of predicted positives that are correct; recall is the share of real positives the model finds. For fraud screening I favour recall so we miss fewer frauds. For an email that offers a discount I favour precision so we do not annoy the wrong customers."
+   ]
   },
   "it-support-engineer": {
    "t": "IT Support Engineer",
@@ -275,7 +310,14 @@
      "Mention certifications or labs you practise on."
     ]
    ],
-   "f": "Freshers can list lab practice, certifications and any college IT help-desk work."
+   "f": "Freshers can list lab practice, certifications and any college IT help-desk work.",
+   "a": [
+    "I check the simple things first: is the cable connected or Wi-Fi on, and do other users have the same problem. Then I check if the device has a valid IP address, try pinging the gateway and a public IP, then test DNS. That tells me whether it is the device, the local network or wider.",
+    "I look at business impact and urgency. A whole team unable to work comes before one slow laptop. I follow the SLA for each priority level, update users on when to expect a fix, and close tickets with a note so repeat issues can be spotted.",
+    "DHCP is a service that gives each device on a network an IP address and settings automatically when it connects, so nobody has to set them by hand. If it fails, devices may get a 169.254 address and cannot reach the network.",
+    "A senior manager's laptop failed an hour before a board presentation, and he was very upset. I stayed calm, moved his files to a spare laptop, set up his email and tested the projector with him. He presented on time and later asked for me on his tickets.",
+    "I am preparing for the CompTIA Network+ exam and practise in a home lab with a router and a Windows Server virtual machine. I also follow vendor release notes for the tools we support, so I know about changes before users report them."
+   ]
   },
   "ui-ux-designer": {
    "t": "UI/UX Designer",
@@ -321,7 +363,14 @@
      "Talk about early involvement, clear specs and checking the build."
     ]
    ],
-   "f": "A portfolio with 3 case studies is essential. Show your thinking, not only final screens."
+   "f": "A portfolio with 3 case studies is essential. Show your thinking, not only final screens.",
+   "a": [
+    "On a food-ordering app, users dropped off at checkout. I watched 6 users order and found the address step confused them. I sketched three options, tested a prototype with 5 more users and shipped a single-page checkout. Completed orders went up 18% in the next month.",
+    "I first make sure I understand the reason behind the feedback. If we still disagree, I suggest testing both versions with a few users or checking analytics. I am happy to be proven wrong; what matters is the decision is based on users, not on opinions.",
+    "I check colour contrast against WCAG, keep tap targets at least 44 pixels, label every form field and icon, and never use colour alone to show meaning. I also check the design with large text and ask developers to test with a screen reader.",
+    "It explains the problem and why it mattered, my exact role in a team, the steps from research to final design, and what changed afterwards, with a number if possible. Showing a rejected idea and why it was dropped makes the thinking clear.",
+    "I involve developers early, when ideas are still sketches, so we know what is feasible. I hand over clear specs with states, spacing and edge cases in Figma, stay available in their channel, and review the build before release to catch gaps."
+   ]
   },
   "product-manager": {
    "t": "Product Manager",
@@ -367,7 +416,14 @@
      "Name a main metric and 1 or 2 guardrail metrics."
     ]
    ],
-   "f": "Freshers can show product thinking through case studies, college projects or an app they improved."
+   "f": "Freshers can show product thinking through case studies, college projects or an app they improved.",
+   "a": [
+    "I score ideas by impact on our main goal, confidence in that impact and the effort needed. Last quarter, saved addresses scored higher than a new loyalty feature because support tickets showed address errors were costing us orders. We built it first and failed deliveries fell 9%.",
+    "We launched a group-buying feature that I was sure users wanted. Adoption stayed under 2%, because we tested the idea in surveys but not with real behaviour. I learned to run a small fake-door test or prototype before committing a full team to a feature.",
+    "I would pick one problem I faced as a user. For example, search results do not remember my filters, so I redo them each time. I would test saving the last filters for logged-in users and measure whether searches per session and conversions go up.",
+    "I ask the team what makes the deadline impossible and what is possible by that date. Then I work with stakeholders to cut scope to the part that delivers the most value, ship that on time and plan the rest for the next release.",
+    "One main metric that shows the feature is used and valuable, such as weekly active users of the feature, plus guardrail metrics to make sure it does not hurt something else, such as page load time or overall conversion."
+   ]
   },
   "business-analyst": {
    "t": "Business Analyst",
@@ -413,7 +469,14 @@
      "Mention UAT and acceptance criteria."
     ]
    ],
-   "f": "Show case studies or internship work where you documented a process or analysed data."
+   "f": "Show case studies or internship work where you documented a process or analysed data.",
+   "a": [
+    "I book short, focused 30-minute sessions with a clear agenda, bring a draft process map so they react rather than start from scratch, and send a written summary the same day asking them to confirm. That way busy people give accurate input without long meetings.",
+    "A BRD describes what the business needs and why, such as 'customers must track orders online'. An FRD describes how the system will meet that need: screens, fields, rules and integrations. The BRD comes first and the FRD turns it into something developers can build.",
+    "I bring both stakeholders together, show how each requirement links to a business goal and what it would cost in time. Usually that makes the priority clear. If not, I escalate to the sponsor with the trade-offs written down, and record the decision.",
+    "Invoice approvals took 9 days because they moved by email. I mapped the steps, found two approvals added little control, and worked with IT on a simple workflow in the ERP. Approval time fell to 3 days and late-payment charges stopped.",
+    "Each requirement gets acceptance criteria before development. I write UAT test cases from them, run UAT with the business users, log any gaps and sign off only when every critical case passes."
+   ]
   },
   "project-manager": {
    "t": "Project Manager",
@@ -459,7 +522,14 @@
      "Mention milestones, a simple dashboard and regular check-ins."
     ]
    ],
-   "f": "Junior candidates can show coordination roles, college event management or internships with clear results."
+   "f": "Junior candidates can show coordination roles, college event management or internships with clear results.",
+   "a": [
+    "I find the real cause first, whether it is scope, resources or a blocker. Then I re-plan, using options like adding people to the critical path or cutting low-value scope, and I tell stakeholders early with a new date and what we are doing to protect it.",
+    "Every change goes through a simple change request: what it is, why, and its impact on time and cost. The sponsor approves or rejects it. This keeps the project honest and stops small additions from quietly pushing the deadline.",
+    "A client head kept changing priorities every week. I met him to understand the pressure he was under, agreed a fortnightly priority review and sent a one-page status every Friday. The changes reduced and the project closed on schedule.",
+    "If requirements are clear and stable, like a fixed regulatory change, waterfall works well. If they are likely to change or we need user feedback, I choose agile with short sprints. Many projects use a mix.",
+    "I set milestones with clear owners, keep a simple dashboard showing progress against plan, risks and open issues, and run short weekly check-ins. Problems are flagged early rather than at the end."
+   ]
   },
   "operations-manager": {
    "t": "Operations Manager",
@@ -505,7 +575,14 @@
      "Give an example of removing waste rather than cutting quality."
     ]
    ],
-   "f": "Not usually a fresher role. Graduates can target operations executive roles first."
+   "f": "Not usually a fresher role. Graduates can target operations executive roles first.",
+   "a": [
+    "I measure the process as it is, map each step and look for waiting, rework and extra handling. Then I test one change on a small scale, compare the numbers and roll it out only if it works. I keep checking afterwards so the gain holds.",
+    "I first have a private talk to understand what is going wrong, set two or three clear goals with dates, and offer support such as training or pairing. I review progress weekly. Most people improve; if not, I follow the formal process fairly.",
+    "In a warehouse I look at orders dispatched on time, picking accuracy, productivity per person, stock accuracy and safety incidents. They show service, quality, cost and risk at a glance, so problems are caught the same day.",
+    "Our main supplier shut down for a week during peak season. I called a short meeting, moved urgent orders to two backup vendors, told key customers about possible delays and tracked stock daily. We filled 94% of orders on time that week.",
+    "I look for waste rather than cutting service. In one site we found 15% of trucks ran half empty. Merging routes and planning loads saved about 12% on transport cost, and delivery times did not change."
+   ]
   },
   "mechanical-engineer": {
    "t": "Mechanical Engineer",
@@ -551,7 +628,14 @@
      "Name tools and what you use each for."
     ]
    ],
-   "f": "Freshers should show final-year projects, internships, certifications in CAD and any shop-floor training."
+   "f": "Freshers should show final-year projects, internships, certifications in CAD and any shop-floor training.",
+   "a": [
+    "Stress is the internal force per unit area in a material, measured in pascals or N/mm². Strain is the change in length divided by the original length, so it has no unit. In the elastic range, stress divided by strain gives Young's modulus.",
+    "Containment first: stop suspect parts from moving forward and check stock. Then I collect data and use tools like 5 Why or a fishbone diagram to find the root cause. I put in a lasting fix, such as a poka-yoke, and track defects to confirm it worked.",
+    "GD&T is a standard way to define the allowed variation in form, orientation and position of features on a drawing. It makes sure parts fit and work together even when made by different suppliers, and it avoids arguments about how to measure.",
+    "A welding fixture took 25 minutes to set up for each batch. I redesigned it with quick-release clamps and locating pins, tested it with the operators, and setup time fell to 8 minutes. That added about one hour of production per shift.",
+    "I use SolidWorks for 3D models and drawings, AutoCAD for layout changes, and ANSYS for basic stress checks. I also use Excel for tolerance stack-ups and SAP to check part numbers and stock."
+   ]
   },
   "automotive-design-engineer": {
    "t": "Automotive Design Engineer",
@@ -597,7 +681,14 @@
      "Talk about material choice, ribs and simulation."
     ]
    ],
-   "f": "Freshers can show CAD projects, student vehicle team work and design certifications."
+   "f": "Freshers can show CAD projects, student vehicle team work and design certifications.",
+   "a": [
+    "I check draft angles so the part releases from the mould, uniform wall thickness to avoid sink marks, rib thickness relative to the wall, and that there are no undercuts the tool cannot make. I review it with the tooling supplier before release.",
+    "DFMEA is design failure mode and effects analysis. The team lists how each design could fail, the effect of each failure, and rates severity, occurrence and detection. High-risk items get actions before the design is frozen.",
+    "I list every dimension in the chain from one feature to the other. Worst case adds all tolerances at their limits. Statistical analysis, such as root sum square, assumes variations rarely all hit their limits, which gives a more realistic result.",
+    "A supplier's bracket was cracking in vibration tests. I visited their plant, we reviewed the process together and found the bend radius was tighter than drawn. We agreed a tooling change and a check fixture, and the next lot passed.",
+    "I look at material first, such as switching to a high-strength steel or glass-filled polymer, then use ribs and section shape instead of thickness. I check each option with simulation before building prototypes."
+   ]
   },
   "production-engineer": {
    "t": "Production Engineer",
@@ -643,7 +734,14 @@
      "Training, daily checks and leading by example."
     ]
    ],
-   "f": "Show plant training, internships and projects on process improvement."
+   "f": "Show plant training, internships and projects on process improvement.",
+   "a": [
+    "OEE is overall equipment effectiveness: availability times performance times quality. To improve availability I reduce breakdowns and changeover time; for performance I remove small stops and slow running; for quality I reduce scrap and rework.",
+    "Safety first, so I make sure the area is safe. Then I find the cause quickly with the operator and maintenance, inform planning about the expected downtime and, if needed, move work to another line. After restart I log the cause to prevent repeats.",
+    "Operators walked 40 metres to fetch tools at one station. We moved tools to a shadow board at the station. It took one afternoon and saved about 20 minutes per shift per operator.",
+    "I check capacity and inventory first, then talk with planning about which orders matter most. We adjust shifts, overtime or batch sizes and confirm material with purchase so the plan is realistic.",
+    "I train operators when they join and before any change, do daily gemba walks to check PPE and guards, and correct unsafe acts on the spot. I also wear the same PPE myself."
+   ]
   },
   "chemical-engineer": {
    "t": "Chemical Engineer",
@@ -689,7 +787,14 @@
      "Name them and what you modelled."
     ]
    ],
-   "f": "Freshers should list plant training, projects and any process simulation work."
+   "f": "Freshers should list plant training, projects and any process simulation work.",
+   "a": [
+    "I check raw material quality against specs, then compare process parameters like temperature, pressure and flow with the last good batch. I also check catalyst activity and equipment issues such as fouling. I change one thing at a time and track the yield.",
+    "HAZOP is a structured study where a team goes through each part of a process using guide words like 'more', 'less' and 'no' to find possible deviations, their causes and consequences, and agrees on safeguards.",
+    "A P&ID shows equipment, piping and instruments with standard symbols. Lines show process and utility flow, and instrument bubbles show what is measured and controlled, such as a flow transmitter linked to a control valve.",
+    "I noticed a relief valve on a reactor was overdue for testing. I reported it to my shift in-charge in writing and we did not start the batch until it was tested. It was found to be sticking and was replaced.",
+    "I have used Aspen HYSYS to model a distillation column and DWSIM in college to simulate a heat exchanger network. I used the models to compare energy use at different operating conditions."
+   ]
   },
   "civil-engineer": {
    "t": "Civil Engineer",
@@ -735,7 +840,14 @@
      "Name tools and what you use them for."
     ]
    ],
-   "f": "List site visits, internships, AutoCAD or estimation training and your final-year project."
+   "f": "List site visits, internships, AutoCAD or estimation training and your final-year project.",
+   "a": [
+    "Before pouring I check the slump against the design. I make cube samples for 7-day and 28-day tests, watch placing and compaction, and make sure curing starts on time and continues for the specified days.",
+    "A bar bending schedule lists every reinforcement bar by member: its diameter, shape, cutting length and quantity. It helps the steel yard cut and bend accurately and lets us estimate steel quantity and control wastage.",
+    "I meet the contractor to understand the cause, agree a recovery plan with extra labour or shifts where possible, and record the plan in writing. I update the client honestly and track progress daily until we are back on schedule.",
+    "I take measurements from drawings for each item, following standard methods of measurement, and enter them in a quantity sheet. I add allowances for wastage and check totals against a second method.",
+    "AutoCAD for drawings, STAAD Pro for structural analysis, MS Project for scheduling and Excel for quantity estimates and bills."
+   ]
   },
   "electrical-engineer": {
    "t": "Electrical Engineer",
@@ -781,7 +893,14 @@
      "Define it and mention lower losses and bills."
     ]
    ],
-   "f": "Show internships, PLC or electrical design training and lab projects."
+   "f": "Show internships, PLC or electrical design training and lab projects.",
+   "a": [
+    "I start with the load current, then choose a cable that carries it after derating for installation method, grouping and temperature. I then check voltage drop over the length and short-circuit rating, and pick the larger size if any check fails.",
+    "Lock-out tag-out is the procedure to isolate all energy sources before maintenance, lock the isolators and tag them with your name. It prevents equipment being switched on while someone is working on it.",
+    "I check the supply voltage at the starter, then the protection such as fuses or overload relays, then the control circuit and contactor. If all are fine I check the motor windings and insulation with a megger.",
+    "During a shutdown I noticed a panel still had back-feed from a generator connection that was not on the isolation list. I stopped the work and got it isolated before anyone touched the busbars.",
+    "Power factor is the ratio of real power to apparent power. A low power factor means more current for the same work, which raises losses and bills. Capacitor banks are a common way to improve it."
+   ]
   },
   "site-engineer": {
    "t": "Site Engineer",
@@ -827,7 +946,14 @@
      "Use STAR with numbers."
     ]
    ],
-   "f": "Mention site internships, survey practice and your final-year project."
+   "f": "Mention site internships, survey practice and your final-year project.",
+   "a": [
+    "I arrive before the crew, check the drawings for the day's work, confirm labour and material are on site, and hold a short toolbox talk. I walk the site twice a day to check progress and quality, and write the daily report in the evening.",
+    "I check stock against requirement before ordering, plan cutting of steel and shuttering to reduce offcuts, store cement and materials correctly, and supervise usage closely.",
+    "I do not guess. I raise a written query to the consultant with a marked-up copy of the drawing and hold that part of the work until I get a written reply.",
+    "Everyone wears PPE, I give a toolbox talk each morning, scaffolds and edges are checked, and I stop any unsafe work immediately, even if it slows the day.",
+    "Slab work fell 10 days behind due to late steel delivery. I added a second shuttering team, moved the masonry crew ahead on other floors and arranged night curing. We recovered 7 of the 10 days within a month."
+   ]
   },
   "construction-supervisor": {
    "t": "Construction Supervisor",
@@ -873,7 +999,14 @@
      "Based on the schedule and material availability."
     ]
    ],
-   "f": "Experience matters most. Diploma holders should list site training and trade skills."
+   "f": "Experience matters most. Diploma holders should list site training and trade skills.",
+   "a": [
+    "I give each gang a clear target every morning, make sure materials and tools are ready, and check work during the day. I treat people fairly and recognise good work, which keeps them motivated.",
+    "I stop the work immediately, explain the danger calmly and show the safe way. If it happens again I report it to the site engineer as per the safety rules.",
+    "I check the scale and dimensions, levels and room names, then read symbols for doors, windows and fittings. I compare with the structural drawing to make sure columns and openings match.",
+    "Plaster on one floor was cracking. I found the curing was not being done. I set a curing schedule with a named person each day, and the next floors had no cracks.",
+    "I look at the weekly schedule and check which materials are available, then assign the number of masons, helpers and carpenters each activity needs, keeping a small buffer for delays."
+   ]
   },
   "accountant": {
    "t": "Accountant",
@@ -919,7 +1052,14 @@
      "Name VLOOKUP or XLOOKUP, pivot tables and SUMIF, with uses."
     ]
    ],
-   "f": "Freshers (B.Com, M.Com) should list Tally and GST training, articleship or internships and any practical work."
+   "f": "Freshers (B.Com, M.Com) should list Tally and GST training, articleship or internships and any practical work.",
+   "a": [
+    "I compare the bank statement with the bank book entry by entry, mark the matches, and list unmatched items such as cheques not yet presented, deposits in transit and bank charges. I adjust the book for charges and interest, then check both balances agree.",
+    "Input tax credit lets a business reduce its GST liability by the GST it has already paid on purchases used for business. One condition is that the supplier must have filed the invoice details so it appears in your GSTR-2B.",
+    "I post entries only with supporting documents, reconcile key accounts like bank, GST and vendors monthly, and review the trial balance for unusual balances before closing. A second person reviews large entries.",
+    "While reconciling vendors I found one invoice booked twice, worth ₹1.8 lakh, which would have been paid twice. I reversed the duplicate and added a check for duplicate invoice numbers in Tally.",
+    "XLOOKUP or VLOOKUP to match ledgers, pivot tables to summarise expenses by head, SUMIFS for totals by month and party, and conditional formatting to spot errors quickly."
+   ]
   },
   "chartered-accountant": {
    "t": "Chartered Accountant",
@@ -965,7 +1105,14 @@
      "Mention institute updates and regular reading."
     ]
    ],
-   "f": "Newly qualified CAs should lead with articleship exposure: audit types, industries and tax work."
+   "f": "Newly qualified CAs should lead with articleship exposure: audit types, industries and tax work.",
+   "a": [
+    "I start by understanding the business, its systems and past issues. Then I identify risk areas, set materiality, decide the mix of control testing and substantive work, and allocate the team. I agree timelines with the client before fieldwork starts.",
+    "Ind AS is based on IFRS and focuses on fair value and substance over form. For example, it requires expected credit loss provisioning and treats some preference shares as liabilities, which old Indian GAAP did not.",
+    "During an audit we found revenue booked before delivery at year end. I discussed it with the finance head with evidence, explained the standard, and they agreed to reverse ₹40 lakh. We noted the control gap in the management letter.",
+    "I enjoyed audit because I saw many businesses, but I want to own outcomes and build processes in one company. Industry lets me work on planning and decisions, not just review them afterwards.",
+    "I read ICAI updates and CBIC and CBDT notifications, follow a few trusted tax journals and attend study circle sessions. I keep a short note of changes that affect our clients."
+   ]
   },
   "financial-analyst": {
    "t": "Financial Analyst",
@@ -1011,7 +1158,14 @@
      "Keep to the key message and a simple chart."
     ]
    ],
-   "f": "Freshers can show modelling coursework, CFA or NISM study and internships."
+   "f": "Freshers can show modelling coursework, CFA or NISM study and internships.",
+   "a": [
+    "Net income from the income statement flows into retained earnings on the balance sheet and is the starting point of the cash flow statement. The cash flow statement then explains the change in the cash balance shown on the balance sheet.",
+    "I identify the main drivers, such as volume, price and costs, agree the assumptions with the business, and build the model in Excel. Each month I compare the forecast with actuals and adjust the drivers that were off.",
+    "Marketing spend was 20% over budget. I broke it down and found one campaign billed twice by an agency. We recovered the amount and added a PO check before agency payments.",
+    "Working capital is current assets minus current liabilities. It shows if a business can pay its short-term bills. Too little causes cash stress; too much ties up cash in stock or receivables.",
+    "I lead with the message, such as 'we will run short of cash in March', use one simple chart and avoid jargon. I keep the detail in an appendix for anyone who wants it."
+   ]
   },
   "bank-jobs": {
    "t": "Bank Jobs",
@@ -1057,7 +1211,14 @@
      "Use a cash or data example."
     ]
    ],
-   "f": "For exam-based bank recruitment, follow the official notification format. For private banks, a clear resume with customer service work helps."
+   "f": "For exam-based bank recruitment, follow the official notification format. For private banks, a clear resume with customer service work helps.",
+   "a": [
+    "I enjoy helping people with practical problems, and banking does that every day, whether it is opening an account or explaining a loan. I also want the structured growth and training a bank offers.",
+    "KYC means Know Your Customer: checking a customer's identity and address with valid documents. It prevents fraud, money laundering and accounts being opened in false names.",
+    "I would listen fully without interrupting, apologise for the trouble, and tell them clearly what I can do now. If it needs a senior, I take them to the right person myself rather than sending them away.",
+    "CRR is the share of deposits a bank must keep with the RBI as cash. SLR is the share of deposits a bank must keep in liquid assets such as cash, gold or approved government securities.",
+    "During my internship at a cooperative society I counted and recorded daily cash collections at month end with long queues. I double-checked each count and the cash tallied every day of that week."
+   ]
   },
   "sales-executive": {
    "t": "Sales Executive",
@@ -1103,7 +1264,14 @@
      "Explain reviewing the pipeline and adding activity."
     ]
    ],
-   "f": "Freshers can show internships, college fest sponsorship work or part-time selling with numbers."
+   "f": "Freshers can show internships, college fest sponsorship work or part-time selling with numbers.",
+   "a": [
+    "Before I sell anything, can I ask what you mostly use a pen for? If you sign documents all day, this pen has a smooth grip and does not smudge, so your signatures stay clean. I would show that, and ask if you want one or a pack for your team.",
+    "I do not take it personally. I note why the customer said no, so I can do better next time, and move to the next call. A steady routine of calls and follow-ups means one rejection does not change my month.",
+    "I closed a ₹12 lakh annual supply order with a hospital chain. It took 4 months: meeting the purchase head, a trial at one hospital and a price discussion. The trial results convinced them.",
+    "I start with follow-ups on hot leads, then visits planned by area to save travel, and end the day updating the CRM and planning tomorrow.",
+    "I review my pipeline to see where deals are stuck, increase calls and visits, and ask my manager or seniors for help on the biggest deals."
+   ]
   },
   "sales-manager": {
    "t": "Sales Manager",
@@ -1149,7 +1317,14 @@
      "Explain how you split time and targets."
     ]
    ],
-   "f": "Not a fresher role. Executives can show team-lead or mentoring experience."
+   "f": "Not a fresher role. Executives can show team-lead or mentoring experience.",
+   "a": [
+    "I first find out why: is it the leads, skills or the market? Then I coach the people who need it, ride along on calls and set weekly targets they can win. Small wins rebuild confidence.",
+    "I use the pipeline stages with historical conversion rates, then adjust for big deals I know personally and for seasonality. I review the forecast weekly with each rep.",
+    "I hired someone with great interview skills but little follow-through. I gave clear feedback and support for 3 months; when it did not improve, we parted ways. Now I use a role-play and reference checks.",
+    "I study the market size, key customers and competitors, find a few good distributors or partners, and set a 90-day plan with clear targets. I visit the territory myself in the first weeks.",
+    "I split targets so new business and existing accounts both count, and give account managers time each week for new prospects. Existing clients often lead to referrals too."
+   ]
   },
   "business-development-executive": {
    "t": "Business Development Executive",
@@ -1195,7 +1370,14 @@
      "Share feedback on lead quality."
     ]
    ],
-   "f": "Freshers can show internships, communication skills and any targets met in part-time work."
+   "f": "Freshers can show internships, communication skills and any targets met in part-time work.",
+   "a": [
+    "I read the company website and recent news, check the person's role and posts on LinkedIn, and note one problem we can help with. I open the call with that point.",
+    "I check budget, need, authority and timing. If they have a real need, a budget, the person can decide and the timing fits, I move them forward; otherwise I set a follow-up date.",
+    "Each day I make about 40 calls or emails, follow up on every lead within 48 hours, and book at least 2 meetings. I track everything in the CRM.",
+    "A lead had gone silent after a demo. I found they were worried about setup time, sent a short case study of a similar company that set up in a week, and they signed within a month.",
+    "I tell marketing which leads converted and which did not and why, so they can improve targeting. I also share common customer questions for their content."
+   ]
   },
   "medical-representative": {
    "t": "Medical Representative",
@@ -1241,7 +1423,14 @@
      "Link to science background and people skills."
     ]
    ],
-   "f": "B.Pharm and B.Sc freshers should show communication skills, any field training and a two-wheeler licence if the role needs travel."
+   "f": "B.Pharm and B.Sc freshers should show communication skills, any field training and a two-wheeler licence if the role needs travel.",
+   "a": [
+    "I respect their time: I come prepared with one clear message and useful data, keep the visit short and leave a sample or literature they can check later.",
+    "I promoted an antihypertensive. I explained in simple words how once-daily dosing helped patients stick to their medicine, and shared trial data on blood pressure control.",
+    "I list doctors by priority and potential, set a visit frequency for each and plan routes area by area so I meet my daily call target without wasting travel time.",
+    "I ask what they like about the other product, listen carefully and share relevant data calmly. I do not criticise the competitor. Sometimes I suggest trying ours for a few patients.",
+    "My B.Pharm gave me the science, and I enjoy meeting people. Pharma sales uses both: understanding the product and explaining it clearly to doctors."
+   ]
   },
   "retail-sales-associate": {
    "t": "Retail Sales Associate",
@@ -1287,7 +1476,14 @@
      "Mention the brand style and customer experience."
     ]
    ],
-   "f": "Freshers can mention part-time work, language skills and availability for shifts."
+   "f": "Freshers can mention part-time work, language skills and availability for shifts.",
+   "a": [
+    "I greet them with a smile, tell them I am around if they need help, and give them space. If they pause at a product, I offer one useful detail, such as the sizes we have in stock.",
+    "I listen to the reason, check the item and bill against the store policy, and process it politely. If it is outside policy, I explain why and offer what options I can, like an exchange.",
+    "A customer wanted a phone for her father. I asked how he would use it and suggested a model with a large screen and simple settings, then a cover and screen guard. She bought all three.",
+    "I greet waiting customers so they feel noticed, help the quickest requests first and ask teammates to cover billing if the queue grows.",
+    "I like your brand's style and how the stores treat customers. I enjoy talking to people and want to learn retail from a team that does it well."
+   ]
   },
   "store-manager": {
    "t": "Store Manager",
@@ -1333,7 +1529,14 @@
      "Sales, stock and staffing."
     ]
    ],
-   "f": "Not a fresher role. Associates can show shift-lead or training duties."
+   "f": "Not a fresher role. Associates can show shift-lead or training duties.",
+   "a": [
+    "I look at footfall, conversion and average bill separately to see which one is weak. If conversion is low, I coach staff on greeting and need-based selling; if the bill is small, I work on displays and add-ons. In my last store, bill value rose 14% in a quarter.",
+    "I check where the loss comes from: theft, billing errors, damage or wrong receiving. Then I tighten receiving checks, keep high-value items secured, do weekly cycle counts and train staff on billing. Shrinkage at my last store fell from 1.2% to 0.6%.",
+    "Two senior staff kept clashing over shift timings, which affected the floor. I met them separately, then together, and we agreed a fair rotation in writing. The clash stopped and both stayed with the store.",
+    "I start planning 6 weeks ahead using last year's sales by day and hour. I hire and train temporary staff early, stagger leave, schedule more people at peak hours and keep one floater for billing.",
+    "Daily sales against target, footfall and conversion, average bill value, stock of fast movers and any cash differences. They tell me where to act before the day is over."
+   ]
   },
   "cashier": {
    "t": "Cashier",
@@ -1379,7 +1582,14 @@
      "Accuracy, honesty and good service."
     ]
    ],
-   "f": "Freshers can show basic computer skills, part-time work and reliability."
+   "f": "Freshers can show basic computer skills, part-time work and reliability.",
+   "a": [
+    "I recount the cash and check every bill and refund for the shift. If there is still a difference, I report it to my supervisor immediately with the details, rather than adjusting it myself.",
+    "I stay calm and work steadily, greet each customer, keep change and bags ready, and call a supervisor to open another counter when the queue grows.",
+    "I check the security thread, watermark, colour-shifting numeral and the feel of the paper. If a note looks doubtful, I politely refuse it and inform my supervisor.",
+    "I apologise and check the bill against the items with them. If there is a mistake, I correct it as per store policy right away; if the bill is correct, I explain each item calmly.",
+    "I am careful with cash, polite with customers and stay calm under pressure. In my last job my cash tallied every day for over a year."
+   ]
   },
   "digital-marketing-executive": {
    "t": "Digital Marketing Executive",
@@ -1425,7 +1635,14 @@
      "Search intent, volume, difficulty and relevance."
     ]
    ],
-   "f": "Freshers can show certifications, a personal blog or social page they grew, and real numbers from it."
+   "f": "Freshers can show certifications, a personal blog or social page they grew, and real numbers from it.",
+   "a": [
+    "I would start with an audit: which pages get traffic, which keywords we rank close to page one for, and technical issues like slow pages. Then I would improve those pages, publish content around real customer questions and build a few quality links.",
+    "I agree the goal first, such as leads or sales, then track cost per result, conversion rate and return on ad spend, alongside click-through rate. I compare results with the previous period and a control where possible.",
+    "SEO earns free traffic from search results by improving pages and authority, and takes months to build. Paid search buys ads on search results, which brings traffic quickly but stops when spending stops.",
+    "A video ad campaign for a new product got cheap views but almost no sales. I learned that our audience was too broad. The next campaign targeted past website visitors and brought sales at a third of the cost.",
+    "I start from customer language, then use tools like Google Keyword Planner and Search Console to check volume and competition. I choose keywords that match the intent of the page."
+   ]
   },
   "marketing-manager": {
    "t": "Marketing Manager",
@@ -1471,7 +1688,14 @@
      "Awareness, consideration and share of search."
     ]
    ],
-   "f": "Not a fresher role. Executives can show campaigns they owned."
+   "f": "Not a fresher role. Executives can show campaigns they owned.",
+   "a": [
+    "I start from the business goal, such as sales or new customers, and the cost of getting one customer in each channel. I put most budget in proven channels and keep about 10 to 20% for tests, then review monthly.",
+    "For a new snack range we ran sampling in 50 stores and social ads targeting nearby areas. In 3 months the range reached 8% of category sales in those stores, ahead of the 5% plan.",
+    "I meet sales regularly, agree what a good lead is, share campaign plans early and ask for feedback on lead quality. Shared targets help both teams pull in the same direction.",
+    "I look at their work for similar brands, the team who will actually work on our account, and how they measure results. I start with a small, clear brief before a long contract.",
+    "I track awareness and consideration through surveys, share of search, and repeat purchase and reviews. Together they show if people know us, like us and come back."
+   ]
   },
   "content-writer": {
    "t": "Content Writer",
@@ -1517,7 +1741,14 @@
      "Outline first and keep a simple process."
     ]
    ],
-   "f": "Freshers should share 3 to 5 writing samples or a blog link."
+   "f": "Freshers should share 3 to 5 writing samples or a blog link.",
+   "a": [
+    "I read trusted sources such as official sites, research and expert articles, note the main questions people ask and talk to a subject expert if possible. Then I write in simple words and check facts before submitting.",
+    "I write for the reader first, answering their question clearly. I use the main keyword where it fits naturally, in the title and a heading, and cover related questions rather than repeating the same phrase.",
+    "A guide I wrote on GST registration for small shops reached the first page in 3 months and brought about 2,000 visits a month, because it answered each step with examples.",
+    "I read it without taking it personally, ask questions if something is unclear and apply it. If I disagree, I explain why with reasons. Good feedback makes the piece better.",
+    "I break the work into small parts, write a quick outline first and keep distractions away. If a deadline is at risk, I tell the editor early."
+   ]
   },
   "seo-executive": {
    "t": "SEO Executive",
@@ -1563,7 +1794,14 @@
      "Rankings, organic traffic and conversions over time."
     ]
    ],
-   "f": "Freshers can show a site they optimised and the change in traffic."
+   "f": "Freshers can show a site they optimised and the change in traffic.",
+   "a": [
+    "Indexing and crawl issues, broken links and redirects, page speed, mobile usability, duplicate titles and descriptions, and structured data errors. I check Search Console coverage and fix the issues with the biggest impact first.",
+    "Search intent is the reason behind a search: to learn, to find a specific site, to compare or to buy. A page ranks best when it matches that intent, such as a guide for 'how to' searches and a product page for 'buy' searches.",
+    "I earn links with useful content, digital PR and partnerships with relevant sites. I avoid buying links, link networks and spam, which can get a site penalised.",
+    "Schema markup is structured data added to a page, usually in JSON-LD, that tells search engines what the content is, such as a product, FAQ or article. It can make a result eligible for rich features.",
+    "I report on organic clicks, impressions, rankings for key terms and conversions from organic visits, compared with last month. I also explain what we did and what we will do next."
+   ]
   },
   "hr-executive": {
    "t": "HR Executive",
@@ -1609,7 +1847,14 @@
      "Quick updates, clear process and respect."
     ]
    ],
-   "f": "MBA HR freshers should show internships, recruitment projects and HR tools learned."
+   "f": "MBA HR freshers should show internships, recruitment projects and HR tools learned.",
+   "a": [
+    "I first note the must-have skills from the job description. I check each resume for those, then experience level and location. I shortlist quickly and keep a short note on why each candidate passed or not.",
+    "Offer acceptance, ID and address proof, PAN, education and experience certificates, relieving letter, bank details, photographs, and forms for PF and nomination.",
+    "I listen carefully and privately, take notes, assure confidentiality and explain the next steps. I investigate fairly, involve the right people and keep the employee informed until it is closed.",
+    "PF is a retirement savings scheme where employer and employee both contribute. ESI is a health insurance scheme for employees earning up to the wage limit set by the government.",
+    "I keep candidates informed at every stage, give interview details clearly and share feedback quickly. A simple, respectful process makes even rejected candidates speak well of the company."
+   ]
   },
   "hr-recruiter": {
    "t": "HR Recruiter",
@@ -1655,7 +1900,14 @@
      "STAR with numbers."
     ]
    ],
-   "f": "Freshers can show recruitment internships and any campus coordination work."
+   "f": "Freshers can show recruitment internships and any campus coordination work.",
+   "a": [
+    "I first clarify the must-haves with the hiring manager. Then I search job portals and LinkedIn with Boolean strings, look at similar companies, ask current employees for referrals and contact passive candidates with a personal message.",
+    "I keep in touch after the offer, understand any worries early and involve the manager in a welcome call. If someone still drops, I ask why and go back to my shortlisted backup candidates.",
+    "I agree the profile and timelines at the start, share a shortlist with notes, and push for quick feedback. Weekly updates keep both of us aligned.",
+    "Time to fill, offer acceptance rate, source of hire, interview-to-offer ratio and early attrition of new joiners.",
+    "A data engineer role stayed open for 3 months. I studied why candidates were dropping and found the salary range was below market. I showed the data to the manager, the range was revised and I closed it in 4 weeks."
+   ]
   },
   "hr-manager": {
    "t": "HR Manager",
@@ -1701,7 +1953,14 @@
      "Attrition, time to hire, engagement and cost per hire."
     ]
    ],
-   "f": "Not a fresher role."
+   "f": "Not a fresher role.",
+   "a": [
+    "I study exit data to find the main reasons, such as manager issues, pay or growth. Then I act on them: manager training, clear career paths and pay corrections where needed, and check attrition by team every month.",
+    "I keep it confidential, listen without judgement, follow the policy step by step, involve the right committee if required and document everything. Both sides get a fair hearing.",
+    "I introduced a hybrid work policy with clear rules on office days and availability. We tested it with two teams first. Attendance and productivity stayed stable and engagement scores rose.",
+    "I attend their business reviews, understand their goals and bring HR data that helps, such as attrition risk or hiring timelines. HR then plans around what the business needs.",
+    "Attrition, especially in the first year, time to fill, engagement, absenteeism and the cost of hiring."
+   ]
   },
   "administrative-assistant": {
    "t": "Administrative Assistant",
@@ -1747,7 +2006,14 @@
      "Clear naming, folders and regular clean-up."
     ]
    ],
-   "f": "Freshers can show computer skills, typing speed and any office internship."
+   "f": "Freshers can show computer skills, typing speed and any office internship.",
+   "a": [
+    "I list the tasks, check deadlines and impact, and ask my manager if two are equally urgent. I finish the highest-impact task first and tell people when to expect the rest.",
+    "I share information only with people who need it, lock files and screens, and never discuss office matters outside work.",
+    "Word for letters and reports, Excel for trackers and simple formulas, Outlook for calendars and emails, and PowerPoint for presentations.",
+    "I once booked a meeting room for the wrong date. I noticed the evening before, moved the meeting to another room and informed everyone. Since then I double-check bookings after confirming.",
+    "I use a clear folder structure with consistent file names and dates, both on the computer and in physical files, so anyone can find a document quickly."
+   ]
   },
   "office-assistant": {
    "t": "Office Assistant",
@@ -1793,7 +2059,14 @@
      "Reliability and willingness to learn."
     ]
    ],
-   "f": "Show basic computer skills and any part-time office work."
+   "f": "Show basic computer skills and any part-time office work.",
+   "a": [
+    "I check supplies, equipment and meeting rooms each morning, fix small problems early and keep a list of tasks for the day so nothing is missed.",
+    "I type about 40 words per minute with good accuracy in English. I can also type in Hindi.",
+    "I stay polite and calm, listen to the problem, and help or connect them with the right person quickly.",
+    "I would inform my supervisor, arrange a quick purchase if allowed, and start keeping a simple stock list to reorder before things run out.",
+    "I am reliable, punctual and willing to do any task to keep the office running. My previous employer can confirm that."
+   ]
   },
   "receptionist": {
    "t": "Receptionist",
@@ -1839,7 +2112,14 @@
      "Enjoy helping people and being organised."
     ]
    ],
-   "f": "Freshers can show language skills and any customer-facing work."
+   "f": "Freshers can show language skills and any customer-facing work.",
+   "a": [
+    "I answer each call politely, take messages quickly if needed, put calls on hold briefly with permission and return to them in order.",
+    "I listen calmly without interrupting, apologise for the trouble and help find a solution or call the right person.",
+    "I record every visitor's name, time in and out, purpose and person visited in the register or visitor system, and issue passes.",
+    "I speak English, Hindi and Kannada fluently.",
+    "I enjoy meeting people and helping them, and I like keeping things organised. The front desk is the first impression of a company, and I take that seriously."
+   ]
   },
   "data-entry-operator": {
    "t": "Data Entry Operator",
@@ -1885,7 +2165,14 @@
      "Follow access rules and never share files."
     ]
    ],
-   "f": "Freshers should state typing speed, Excel skills and any computer course."
+   "f": "Freshers should state typing speed, Excel skills and any computer course.",
+   "a": [
+    "About 40 words per minute with 98% accuracy, and around 10,000 key depressions per hour on numbers.",
+    "I check each entry against the source, use Excel validation and double-check totals at the end of each batch.",
+    "Sorting, filters, VLOOKUP, SUMIF, removing duplicates and basic pivot tables.",
+    "I break the work into batches, take short breaks and track my progress against the daily target.",
+    "I follow company rules on passwords, do not share data, lock my computer when I leave my seat and use only approved storage."
+   ]
   },
   "customer-support": {
    "t": "Customer Support Executive",
@@ -1931,7 +2218,14 @@
      "Share a short real example."
     ]
    ],
-   "f": "Freshers should show communication skills, typing speed and any customer-facing work."
+   "f": "Freshers should show communication skills, typing speed and any customer-facing work.",
+   "a": [
+    "I let them speak without interrupting, acknowledge the problem and apologise for the trouble. Then I explain what I will do and by when, and follow up. Most angry customers calm down when they feel heard and see action.",
+    "Solving the customer's problem quickly, being polite and honest, and making sure they do not need to contact us again for the same issue.",
+    "I tell the customer I will find out, check the knowledge base or ask a senior, and get back within the promised time. I never guess.",
+    "I use templates for common answers, keep notes for each chat and focus on one reply at a time. I usually handle 3 chats at once while keeping quality.",
+    "A customer wrote to my manager thanking me for following up on a delayed refund for 3 days until it was resolved. It was added to our team's monthly highlights."
+   ]
   },
   "bpo-executive": {
    "t": "BPO Executive",
@@ -1977,7 +2271,14 @@
      "Simple steps and check understanding."
     ]
    ],
-   "f": "Freshers should mention language fluency, typing speed and shift flexibility."
+   "f": "Freshers should mention language fluency, typing speed and shift flexibility.",
+   "a": [
+    "AHT means Average Handling Time: the average time spent on a call, including talk, hold and after-call work. Lower AHT is good, but not at the cost of solving the problem.",
+    "Yes. I have worked night shifts before and I manage my sleep and food routine to stay alert.",
+    "I stay calm and polite, warn the caller once as per the process, and if the abuse continues I end the call professionally and report it.",
+    "I am a B.Com graduate with 1 year of voice support experience for a telecom company. I handled about 80 calls a day with a quality score above 90%. I am applying because I want to grow in customer service.",
+    "I would go through the bill line by line in simple words, explain any charges they did not expect and check if any correction is needed."
+   ]
   },
   "teacher": {
    "t": "Teacher",
@@ -2023,7 +2324,14 @@
      "Give 1 or 2 real examples."
     ]
    ],
-   "f": "B.Ed freshers should list teaching practice, subjects, classes taught and any eligibility test cleared."
+   "f": "B.Ed freshers should list teaching practice, subjects, classes taught and any eligibility test cleared.",
+   "a": [
+    "I try to find out why: maybe the topic is too hard or too easy, or something is wrong at home. I link the lesson to their interests, give them small tasks they can succeed at and praise effort.",
+    "I start from the learning objective, plan a short starter, the main activity and a quick check of understanding. I prepare examples and a task for students who finish early.",
+    "I set clear rules from day one, use a calm signal for attention, keep the lesson moving with activities and speak privately to students who keep disturbing.",
+    "I keep parents informed regularly, not just when there is a problem, and share specific progress and simple ways they can help at home.",
+    "I use slides and short videos to explain concepts, quizzes on Google Forms to check understanding, and online assignments for practice."
+   ]
   },
   "lecturer": {
    "t": "Lecturer",
@@ -2069,7 +2377,14 @@
      "Link your strengths to their needs."
     ]
    ],
-   "f": "Mention qualifying exams such as NET or SET if cleared, and any research or teaching assistant work."
+   "f": "Mention qualifying exams such as NET or SET if cleared, and any research or teaching assistant work.",
+   "a": [
+    "I connect each topic to real examples, ask questions throughout, and use short activities like problem solving in pairs. I keep slides simple and talk with students, not at them.",
+    "My PhD was on water treatment using low-cost adsorbents. I published 3 papers in Scopus-indexed journals and want to continue with industry-linked projects.",
+    "I share clear rubrics in advance, use a mix of tests, assignments and presentations, and grade anonymously where I can.",
+    "I meet my mentees regularly, help them choose electives and internships, and guide them on projects and higher studies.",
+    "I would like to start an industry project lab where students work on real problems from local companies, and help the department apply for research grants."
+   ]
   },
   "government-jobs": {
    "t": "Government Jobs",
@@ -2115,7 +2430,14 @@
      "Give a balanced, factual answer."
     ]
    ],
-   "f": "Most government posts use the format in the official notification. Use this resume for contract roles, PSUs and interviews that ask for one."
+   "f": "Most government posts use the format in the official notification. Use this resume for contract roles, PSUs and interviews that ask for one.",
+   "a": [
+    "I want to serve the public and contribute to work that affects many people. I also value the stability and the chance to grow through a clear, fair system.",
+    "I would read the department's official website and recent annual report before the interview, and speak about its main schemes and responsibilities.",
+    "I would politely refuse, follow the rules and, if needed, report the matter to my senior in writing.",
+    "I am honest, disciplined and good at keeping records. In my previous job I handled data entry for a district office scheme with no errors found in audit.",
+    "I would speak about two or three current issues from reliable news, such as water supply, employment or a recent state scheme, and give a balanced view."
+   ]
   },
   "lawyer": {
    "t": "Lawyer",
@@ -2161,7 +2483,14 @@
      "Link to its practice areas."
     ]
    ],
-   "f": "Law graduates should list internships with chambers or firms, moot courts and publications."
+   "f": "Law graduates should list internships with chambers or firms, moot courts and publications.",
+   "a": [
+    "I handled a commercial recovery suit for a supplier. I drafted the plaint, managed filings and argued the interim application for attachment. We secured an interim order and the case settled for 85% of the claim.",
+    "I start with the statute and commentaries, then read leading judgments on SCC Online or Manupatra, and summarise the position in a short note with citations.",
+    "I keep a court diary and a digital calendar with reminders a week before each date, and check the cause list every evening.",
+    "I explain the risk in plain language, give the likely outcomes and costs, and recommend a course of action.",
+    "Your firm's work in corporate disputes matches my experience, and I want to work with senior lawyers who handle complex matters."
+   ]
   },
   "legal-assistant": {
    "t": "Legal Assistant",
@@ -2207,7 +2536,14 @@
      "Clarify instructions and update often."
     ]
    ],
-   "f": "Show internships, typing and drafting skills."
+   "f": "Show internships, typing and drafting skills.",
+   "a": [
+    "I keep a master calendar of every hearing and filing date, set reminders a week and a day before, and check the cause list daily.",
+    "I store files in locked cabinets and secure folders, share documents only with authorised people and never discuss cases outside the office.",
+    "While preparing a filing I noticed the party's name was spelt differently in two places. I flagged it to the lawyer and it was corrected before filing.",
+    "MS Word for drafting, Excel for case trackers, e-filing portals, and SCC Online for finding judgments.",
+    "I understand their priorities each morning, prepare documents on time and ask questions early if instructions are not clear."
+   ]
   },
   "maintenance-technician": {
    "t": "Maintenance Technician",
@@ -2253,7 +2589,14 @@
      "Name types and makes you know."
     ]
    ],
-   "f": "ITI and diploma freshers should list trade, apprenticeship and machines handled."
+   "f": "ITI and diploma freshers should list trade, apprenticeship and machines handled.",
+   "a": [
+    "I talk to the operator about what happened, check for obvious signs like noise, heat or error codes, then test step by step: power, controls, then mechanical parts.",
+    "Preventive maintenance is planned servicing done before a machine fails, like lubrication, inspections and part replacements on a schedule. It reduces breakdowns.",
+    "I follow lock-out tag-out, wear PPE and never bypass safety guards.",
+    "A conveyor stopped during a shift. I found a tripped overload due to a jammed roller, cleared it, replaced the bearing and had the line running in 40 minutes.",
+    "CNC lathes, hydraulic presses, compressors and conveyors."
+   ]
   },
   "electrician": {
    "t": "Electrician",
@@ -2299,7 +2642,14 @@
      "Problem and fix."
     ]
    ],
-   "f": "ITI freshers should list trade, apprenticeship and licence."
+   "f": "ITI freshers should list trade, apprenticeship and licence.",
+   "a": [
+    "I use a tester or multimeter after confirming it works on a known live point, and I treat every wire as live until proven otherwise.",
+    "Earthing connects electrical equipment to the ground so that fault current flows safely to earth, protecting people from shock.",
+    "I isolate circuits one by one to find the faulty section, then check wires and connections with a multimeter for low resistance between conductors.",
+    "I hold a wireman licence issued by the state electrical licensing board.",
+    "I traced a fault in an old building with no wiring diagram by testing each circuit and labelling them. I fixed the fault and gave the owner a simple wiring map."
+   ]
   },
   "ac-technician": {
    "t": "AC Technician",
@@ -2345,7 +2695,14 @@
      "Power off, PPE and proper tools."
     ]
    ],
-   "f": "Mention ITI trade and any company training."
+   "f": "Mention ITI trade and any company training.",
+   "a": [
+    "I check pressure with gauges, then use soap solution or an electronic detector on joints and coils to find the leak.",
+    "Dirty filters, low gas, a faulty compressor or capacitor, a blocked condenser or wrong thermostat settings.",
+    "I explain in simple words what is wrong, what it will cost and how long it will take, before starting work.",
+    "LG, Voltas, Daikin and Samsung split and window ACs.",
+    "I switch off power before work, use proper tools and PPE and handle refrigerant as per safety rules."
+   ]
   },
   "real-estate-sales-executive": {
    "t": "Real Estate Sales Executive",
@@ -2391,7 +2748,14 @@
      "Honest information and quick answers."
     ]
    ],
-   "f": "Freshers can show sales internships and communication skills."
+   "f": "Freshers can show sales internships and communication skills.",
+   "a": [
+    "I understand what they compare it with, then explain the value: location, amenities, builder track record and payment options.",
+    "I call within an hour of an enquiry, follow up on a fixed schedule and keep notes in the CRM so I remember each buyer's needs.",
+    "A family visited three times and worried about the loan. I connected them with our partner bank, who approved the loan quickly, and they booked a 2BHK.",
+    "Before the interview I would study your current projects: locations, unit types, price ranges and possession dates.",
+    "I am honest about timelines and costs, share approvals and documents openly, and always do what I promise."
+   ]
   },
   "property-manager": {
    "t": "Property Manager",
@@ -2437,7 +2801,14 @@
      "Annual calendar for lifts, pumps and DG sets."
     ]
    ],
-   "f": "Not a fresher role. Facility executives can show supervisory duties."
+   "f": "Not a fresher role. Facility executives can show supervisory duties.",
+   "a": [
+    "I respond quickly, check the cause with the plumber, keep residents informed with an expected time and arrange tankers if needed.",
+    "I compare at least three quotes, check references and past work, and agree clear service terms.",
+    "I send polite reminders, offer payment plans where needed and follow the society's rules for repeated defaulters.",
+    "A pipe burst at night. I shut the valve, arranged a plumber and informed affected flats. Water was restored by morning.",
+    "I keep a yearly calendar for lifts, pumps, fire systems and painting, and track it with vendors."
+   ]
   },
   "production-supervisor": {
    "t": "Production Supervisor",
@@ -2483,7 +2854,14 @@
      "Problem and change."
     ]
    ],
-   "f": "Diploma holders can show shift-lead experience and training."
+   "f": "Diploma holders can show shift-lead experience and training.",
+   "a": [
+    "I check the production plan, manpower, materials and machine status before the shift, and assign people to each line.",
+    "I find the cause, fix it with the team or maintenance, and adjust manpower or overtime to recover.",
+    "I train operators, check hygiene and documentation during rounds and correct issues immediately.",
+    "I listen to both sides privately, focus on the facts and agree a fair solution.",
+    "I introduced daily machine-guard checks on the line, and minor injuries dropped to zero for 6 months."
+   ]
   },
   "pharma-production": {
    "t": "Pharma Production Officer",
@@ -2529,7 +2907,14 @@
      "Explain your role."
     ]
    ],
-   "f": "B.Pharm and M.Sc freshers should show plant training and knowledge of GMP basics."
+   "f": "B.Pharm and M.Sc freshers should show plant training and knowledge of GMP basics.",
+   "a": [
+    "GMP means Good Manufacturing Practice: rules that make sure medicines are made consistently, safely and to quality standards, covering people, premises, equipment, materials and documentation.",
+    "I check that the previous product, materials and documents are removed, the equipment and area are clean and labelled, and I record it in the batch record before starting.",
+    "I stop and inform QA immediately, record the deviation with the facts and support the investigation and the corrective action.",
+    "Tablet compression machines, coating pans, granulators and blister packing machines.",
+    "Yes. During a WHO-GMP audit I explained our line clearance process and showed batch records. There were no observations for our area."
+   ]
   },
   "pharma-qa-qc": {
    "t": "Pharma QA / QC Executive",
@@ -2575,7 +2960,14 @@
      "Describe your part."
     ]
    ],
-   "f": "M.Sc Chemistry and B.Pharm freshers should list instruments learned and lab training."
+   "f": "M.Sc Chemistry and B.Pharm freshers should list instruments learned and lab training.",
+   "a": [
+    "Data integrity means data is complete, consistent and accurate through its whole life, following ALCOA+: attributable, legible, contemporaneous, original and accurate.",
+    "I follow the SOP: report it, check for lab errors first in a phase one investigation, then a full investigation if needed. I never retest just to get a passing result.",
+    "System suitability checks that the HPLC is working well before analysis, using parameters such as resolution, tailing factor, theoretical plates and repeatability of injections.",
+    "QA designs and controls the quality system: SOPs, deviations, change control and batch release. QC tests raw materials, in-process samples and finished products.",
+    "Yes, I supported a USFDA inspection. I presented our stability data and answered questions on trending."
+   ]
   },
   "textile-production": {
    "t": "Textile Production Supervisor",
@@ -2621,7 +3013,14 @@
      "Fair treatment and recognition."
     ]
    ],
-   "f": "Diploma and B.Tech Textile freshers should list mill training."
+   "f": "Diploma and B.Tech Textile freshers should list mill training.",
+   "a": [
+    "I check yarn quality, humidity and machine settings, and make sure operators handle yarn correctly. Regular cleaning and maintenance also help.",
+    "I inspect samples against standards for GSM, shade, defects and shrinkage, and follow the four-point inspection system.",
+    "I check the order plan, machine availability and manpower, and assign work to meet the target.",
+    "A batch had shade variation. We found dye bath temperature was not consistent, fixed the controller and added a check every hour.",
+    "I set clear daily targets, recognise good work and listen to their problems."
+   ]
   },
   "security-guard": {
    "t": "Security Guard",
@@ -2667,7 +3066,14 @@
      "Stay calm and polite."
     ]
    ],
-   "f": "Mention training certificates, ex-servicemen status if any, and shift flexibility."
+   "f": "Mention training certificates, ex-servicemen status if any, and shift flexibility.",
+   "a": [
+    "I stop them politely, ask for ID and the reason for the visit, check with the person they want to meet and issue a visitor pass only if approved.",
+    "I raise the alarm, call the fire brigade, help people out by the nearest exit and use the extinguisher only if it is safe.",
+    "I take short rounds, stay active, drink water and avoid heavy food.",
+    "Yes. I completed security guard training under PSARA and a fire safety course.",
+    "I stay calm and polite, explain the rules, and call my supervisor if needed."
+   ]
   },
   "security-supervisor": {
    "t": "Security Supervisor",
@@ -2713,7 +3119,14 @@
      "Surprise checks and rounds."
     ]
    ],
-   "f": "Not a fresher role."
+   "f": "Not a fresher role.",
+   "a": [
+    "I assess risk points such as gates and stores, then deploy guards by shift with relievers and check posts with surprise rounds.",
+    "I explain the site rules, show them each post and do on-the-job training for the first week.",
+    "A theft attempt at night was stopped because a guard noticed a cut fence. We increased patrols and lighting in that area.",
+    "I plan with the facility team, announce it in advance to staff, run the drill, time it and share improvements.",
+    "Surprise checks at different hours, register reviews and CCTV checks."
+   ]
   },
   "hospitality": {
    "t": "Hospitality Executive",
@@ -2759,7 +3172,14 @@
      "Answer honestly."
     ]
    ],
-   "f": "Hotel management freshers should show industrial training departments."
+   "f": "Hotel management freshers should show industrial training departments.",
+   "a": [
+    "I apologise, listen to the problem and offer to fix it immediately or move them to another room if possible.",
+    "I suggest something that adds value to their stay, like a spa offer for a guest who mentioned being tired, and accept a no politely.",
+    "Making each guest feel welcome, comfortable and remembered, by paying attention to small details.",
+    "I check expected departures and arrivals early, keep guests informed, and offer lounge seating and refreshments while their room is prepared.",
+    "Opera PMS and IDS."
+   ]
   },
   "chef": {
    "t": "Chef",
@@ -2805,7 +3225,14 @@
      "Show, practise, check."
     ]
    ],
-   "f": "Culinary freshers should list training kitchens and cuisines learned."
+   "f": "Culinary freshers should list training kitchens and cuisines learned.",
+   "a": [
+    "I set standard recipes and portion sizes, check stock daily, use FIFO and reduce waste by planning prep to forecast covers.",
+    "I prepare mise en place before service, keep each station organised and taste dishes before they go out.",
+    "I follow FSSAI rules: correct storage temperatures, separate raw and cooked food, wash hands and keep the kitchen clean.",
+    "I created a millet salad with seasonal vegetables that became one of our top three lunch items.",
+    "I show them the technique step by step, then let them practise under my supervision."
+   ]
   },
   "gulf-jobs": {
    "t": "Gulf Jobs",
@@ -2851,7 +3278,14 @@
      "Answer honestly."
     ]
    ],
-   "f": "Recruiters for overseas roles often ask for passport details, certificates and exact experience dates. Only apply through registered recruiting agents and never pay to an unverified agent."
+   "f": "Recruiters for overseas roles often ask for passport details, certificates and exact experience dates. Only apply through registered recruiting agents and never pay to an unverified agent.",
+   "a": [
+    "I want to grow my skills on bigger projects and earn better to support my family, while gaining international experience.",
+    "Yes. My passport is valid for 6 more years and my certificates are attested.",
+    "I respect local laws and customs, learn basic words in the local language and work well with people from many countries.",
+    "I have 4 years of experience as an electrician in commercial buildings in Pune, working on wiring, panels and maintenance.",
+    "Yes. I have worked outdoor shifts in summer and I follow safety rules like drinking water and taking breaks."
+   ]
   },
   "logistics-executive": {
    "t": "Logistics Executive",
@@ -2897,7 +3331,14 @@
      "Name ERP and Excel tasks."
     ]
    ],
-   "f": "Freshers can show supply chain coursework and warehouse internships."
+   "f": "Freshers can show supply chain coursework and warehouse internships.",
+   "a": [
+    "I check the orders, stock and delivery dates, choose vehicles, plan routes and prepare documents before dispatch.",
+    "I contact the driver to know the reason and new ETA, inform the customer and arrange another vehicle if needed.",
+    "An e-way bill is an electronic document required under GST for moving goods above a set value. It has details of the goods, consignor, consignee and vehicle.",
+    "Better load planning, combining shipments, negotiating rates with transporters and choosing the right vehicle size.",
+    "SAP for orders and invoices, a transport management system for tracking, and Excel for reports."
+   ]
   },
   "supply-chain-executive": {
    "t": "Supply Chain Executive",
@@ -2943,7 +3384,14 @@
      "Stock, ageing and fill rate."
     ]
    ],
-   "f": "Freshers can show supply chain projects and Excel skills."
+   "f": "Freshers can show supply chain projects and Excel skills.",
+   "a": [
+    "I use average daily demand times lead time, plus safety stock. I review it when demand or lead time changes.",
+    "I check stock and supplier capacity, prioritise key customers, speed up orders and look for alternate suppliers.",
+    "Safety stock is extra stock kept to cover unexpected demand or supplier delays.",
+    "I found 20% of stock was slow-moving. We stopped ordering those items and ran a clearance, reducing inventory value by 15%.",
+    "Stock levels, open orders, supplier delivery performance and forecast accuracy."
+   ]
   },
   "warehouse-supervisor": {
    "t": "Warehouse Supervisor",
@@ -2989,7 +3437,14 @@
      "Answer honestly."
     ]
    ],
-   "f": "Not a fresher role."
+   "f": "Not a fresher role.",
+   "a": [
+    "Regular cycle counts, clear bin locations, barcode scanning and finding the cause of each mismatch.",
+    "I plan manpower and equipment in advance, arrange stock in pick order and start early.",
+    "FIFO means first in, first out: older stock is used or shipped first so nothing expires.",
+    "Clear aisles, safe stacking, forklift training and PPE, with regular safety checks.",
+    "SAP EWM and a custom barcode-based WMS."
+   ]
   },
   "driver": {
    "t": "Driver",
@@ -3035,7 +3490,14 @@
      "Answer honestly."
     ]
    ],
-   "f": "State licence type, years of driving and routes known."
+   "f": "State licence type, years of driving and routes known.",
+   "a": [
+    "I hold an LMV licence valid until 2032, and a commercial badge.",
+    "I check tyres, brakes, lights, fuel, oil and water, and that documents are in the vehicle.",
+    "I park safely, switch on hazard lights, inform my employer and arrange help.",
+    "I take short breaks every two hours, avoid driving when sleepy and do not use my phone while driving.",
+    "No. I have a clean record in 8 years of driving."
+   ]
   },
   "delivery-executive": {
    "t": "Delivery Executive",
@@ -3081,7 +3543,14 @@
      "Stay polite and report if needed."
     ]
    ],
-   "f": "State vehicle and licence, area knowledge and smartphone skills."
+   "f": "State vehicle and licence, area knowledge and smartphone skills.",
+   "a": [
+    "I group orders by area using the app map and plan the shortest route.",
+    "I call them, wait a few minutes, and follow company rules: leave with a neighbour if allowed or reschedule.",
+    "I count it carefully, give change and deposit the cash daily as per the process.",
+    "Yes, a motorcycle with valid licence, RC and insurance.",
+    "I stay polite, complete the delivery and report the issue if needed."
+   ]
   },
   "staff-nurse": {
    "t": "Staff Nurse",
@@ -3127,7 +3596,14 @@
      "Clear steps and outcome."
     ]
    ],
-   "f": "Nursing freshers should list clinical postings, registration number and BLS training."
+   "f": "Nursing freshers should list clinical postings, registration number and BLS training.",
+   "a": [
+    "I follow the five rights: right patient, drug, dose, route and time. I check the chart, confirm patient identity and double-check high-risk drugs with another nurse.",
+    "I check vital signs, inform the doctor immediately, start basic life support if needed and document everything.",
+    "I listen with empathy, explain clearly what is happening and involve the senior nurse or doctor if needed.",
+    "Hand hygiene, PPE, aseptic technique and correct disposal of biomedical waste.",
+    "A patient had a cardiac arrest in the ward. I started CPR and called the code team. The patient was revived and shifted to ICU."
+   ]
   },
   "pharmacist": {
    "t": "Pharmacist",
@@ -3173,7 +3649,14 @@
      "Answer honestly."
     ]
    ],
-   "f": "Mention registration with the pharmacy council and internship details."
+   "f": "Mention registration with the pharmacy council and internship details.",
+   "a": [
+    "I check patient details, the doctor's name and registration, drug name, dose, frequency and possible interactions.",
+    "I contact the doctor to confirm before dispensing.",
+    "I use FEFO, check expiry dates monthly and return near-expiry stock to suppliers.",
+    "I explain how and when to take the medicine, possible side effects and what to avoid, in simple words.",
+    "Marg ERP and the hospital's pharmacy module."
+   ]
   },
   "lab-technician": {
    "t": "Lab Technician",
@@ -3219,7 +3702,14 @@
      "Answer honestly."
     ]
    ],
-   "f": "DMLT and BMLT freshers should list training labs and tests learned."
+   "f": "DMLT and BMLT freshers should list training labs and tests learned.",
+   "a": [
+    "I label each sample at collection, check two identifiers and follow the barcode system.",
+    "Running known controls with patient samples to make sure results are accurate.",
+    "I segregate waste by colour code and follow the biomedical waste rules.",
+    "I check the sample, rerun the test and inform the pathologist before releasing the result.",
+    "Fully automated biochemistry and haematology analysers, and centrifuges."
+   ]
   },
   "doctor": {
    "t": "Doctor",
@@ -3265,7 +3755,14 @@
      "Be honest about specialisation goals."
     ]
    ],
-   "f": "Interns and new graduates should list rotations, registration and courses such as BLS."
+   "f": "Interns and new graduates should list rotations, registration and courses such as BLS.",
+   "a": [
+    "During residency a young patient came with fever and confusion. I suspected meningitis, started treatment early and arranged a lumbar puncture. The patient recovered fully.",
+    "I choose a quiet place, ask what the family already knows, give the news simply and honestly, and allow time for questions.",
+    "I raise my concern respectfully with evidence. If patient safety is at risk, I escalate as per protocol.",
+    "I triage quickly, focus on the most critical patients first and communicate clearly with the team.",
+    "I want to gain experience in internal medicine and prepare for my postgraduate exams."
+   ]
   },
   "fitness-trainer": {
    "t": "Fitness Trainer",
@@ -3311,7 +3808,14 @@
      "Set realistic, safe expectations."
     ]
    ],
-   "f": "Mention certifications and any internship at a gym."
+   "f": "Mention certifications and any internship at a gym.",
+   "a": [
+    "I check their health history, goals and current fitness, then plan a safe programme and review it every 4 weeks.",
+    "I set small goals, track progress and celebrate improvements, and keep sessions varied.",
+    "I stop the exercise, check the pain and refer them to a doctor if needed.",
+    "I am certified by ACE and hold a CPR certificate.",
+    "I explain what is realistic and safe, and set a plan with steady progress."
+   ]
   },
   "yoga-instructor": {
    "t": "Yoga Instructor",
@@ -3357,7 +3861,14 @@
      "Care and steady progress."
     ]
    ],
-   "f": "List certification hours and teaching practice."
+   "f": "List certification hours and teaching practice.",
+   "a": [
+    "I ask about the injury, give modified poses or props, and avoid anything that causes pain.",
+    "Breathing, simple warm-ups, basic standing and seated poses, and relaxation, with clear instructions.",
+    "A 200-hour RYT certification from a Yoga Alliance registered school.",
+    "I check the camera angle, cue clearly and watch each student closely.",
+    "I keep classes friendly, track progress and adjust poses for each person."
+   ]
   },
   "social-worker": {
    "t": "Social Worker",
@@ -3403,7 +3914,14 @@
      "Name them accurately."
     ]
    ],
-   "f": "MSW freshers should list field placements and projects."
+   "f": "MSW freshers should list field placements and projects.",
+   "a": [
+    "I meet local leaders, listen to people's needs and keep my promises.",
+    "I helped a family access a widow pension by helping with documents and follow-ups. They received it in 3 months.",
+    "I track numbers such as people reached and benefits received, and collect stories of change.",
+    "I take breaks, talk to my team and set boundaries.",
+    "MGNREGA, PM Awas Yojana and widow pension schemes."
+   ]
   },
   "ngo-program-coordinator": {
    "t": "NGO Programme Coordinator",
@@ -3449,7 +3967,14 @@
      "Baseline and regular data."
     ]
    ],
-   "f": "Freshers can show fellowships and field placements."
+   "f": "Freshers can show fellowships and field placements.",
+   "a": [
+    "I send regular reports with activities, numbers, photos and spending, and I am honest about challenges.",
+    "I set clear targets, hold weekly reviews and visit the field regularly.",
+    "A health camp had low turnout. We involved local ASHA workers and the next camp had three times more people.",
+    "I study the donor's priorities, describe the need with data and write clear activities, budget and outcomes.",
+    "With indicators set at the start and regular data collection."
+   ]
   },
   "beautician": {
    "t": "Beautician",
@@ -3495,7 +4020,14 @@
      "The brief and result."
     ]
    ],
-   "f": "Mention courses, certificates and a photo portfolio."
+   "f": "Mention courses, certificates and a photo portfolio.",
+   "a": [
+    "I ask about their occasion and preferences, and show reference photos before starting.",
+    "I sterilise tools after each use, use disposable items and keep the station clean.",
+    "I stop immediately, clean the area and suggest seeing a doctor if needed.",
+    "I prefer brands that are dermatologically tested and suit Indian skin types.",
+    "I did a bridal look with an HD base and traditional eye make-up, and it lasted the full day."
+   ]
   },
   "hair-stylist": {
    "t": "Hair Stylist",
@@ -3541,7 +4073,14 @@
      "Bring real photos."
     ]
    ],
-   "f": "List academy training and a portfolio."
+   "f": "List academy training and a portfolio.",
+   "a": [
+    "I look at their face shape, hair type and daily routine, then suggest two options and show photos so they can choose.",
+    "I listen to what they do not like, apologise and offer to fix it right away at no extra cost.",
+    "I apply a small amount of colour behind the ear or on the inner arm 48 hours before, and check for any reaction before going ahead.",
+    "I attend brand workshops, follow stylists I admire and practise new techniques on mannequins.",
+    "My portfolio has photos of cuts, colours and keratin treatments, with before and after pictures."
+   ]
   },
   "freshers": {
    "t": "Freshers",
@@ -3587,7 +4126,14 @@
      "Growth in this field, not a different career."
     ]
    ],
-   "f": "Keep it to one page. Put education first, then projects, internships, skills, certifications and activities."
+   "f": "Keep it to one page. Put education first, then projects, internships, skills, certifications and activities.",
+   "a": [
+    "I am a final-year B.Com student. I completed a 2-month internship in accounts, where I reconciled vendor statements in Tally, and I lead the finance club. I am applying because I want to start my career in accounts.",
+    "I learn quickly, I am reliable and I have already used the tools in your job post, Excel and Tally, in my internship.",
+    "My strength is that I finish what I start. My weakness is public speaking, so I joined a speaking club and now present in class confidently.",
+    "My project was a mobile app for college event registration, built with my teammates in Flutter. I did the backend with Firebase. Over 300 students used it.",
+    "I see myself as a skilled professional in this field, handling more responsibility and perhaps guiding new joiners."
+   ]
   },
   "internship": {
    "t": "Internship",
@@ -3633,7 +4179,14 @@
      "Specific skills."
     ]
    ],
-   "f": "Show coursework, projects, volunteering and any college roles."
+   "f": "Show coursework, projects, volunteering and any college roles.",
+   "a": [
+    "I want to apply what I learned in college to real work and learn from experienced people.",
+    "Before the interview I would study your products, customers and recent news.",
+    "In a college project our team built a website for a local NGO. I handled design and testing, and we delivered on time.",
+    "I plan my week, keep a timetable and focus on one task at a time.",
+    "How real projects are planned and delivered, and the tools your team uses."
+   ]
   },
   "student": {
    "t": "College Student",
@@ -3679,7 +4232,14 @@
      "Short and realistic."
     ]
    ],
-   "f": "List education, projects, clubs, volunteering and certifications."
+   "f": "List education, projects, clubs, volunteering and certifications.",
+   "a": [
+    "I am a second-year B.Sc student. I enjoy organising events and helping my classmates with science subjects.",
+    "When I organised our college fest I learned to plan, divide work and handle problems calmly.",
+    "I make a list, start early and break big tasks into smaller parts.",
+    "It fits my studies and gives me practical experience.",
+    "I want to finish my degree, gain experience and build a career in my field."
+   ]
   },
   "graphic-designer": {
    "t": "Graphic Designer",
@@ -3725,7 +4285,14 @@
      "References and practice."
     ]
    ],
-   "f": "A portfolio link is a must. Show 8 to 12 of your best pieces."
+   "f": "A portfolio link is a must. Show 8 to 12 of your best pieces.",
+   "a": [
+    "I designed packaging for a local tea brand. I researched competitors, created three concepts and refined one with the client. Their sales grew after the new launch.",
+    "I collect all changes in one list, confirm them and agree the number of revision rounds at the start.",
+    "I choose fonts that are easy to read and fit the brand, and use no more than two.",
+    "I use CMYK, 300 dpi images, bleed and crop marks, and outline fonts before sending.",
+    "I look at design work daily, try new styles and take short breaks."
+   ]
   },
   "video-editor": {
    "t": "Video Editor",
@@ -3771,7 +4338,14 @@
      "Bring a short best-of reel."
     ]
    ],
-   "f": "A show reel matters most."
+   "f": "A show reel matters most.",
+   "a": [
+    "I start with a strong hook, keep cuts quick, add captions and remove anything that does not move the story.",
+    "I listen, ask questions if needed and make changes quickly.",
+    "Adobe Premiere Pro and After Effects, and DaVinci Resolve for colour.",
+    "I organise footage into folders, label clips and save versions often.",
+    "My reel shows short-form ads, YouTube videos and event highlights."
+   ]
   }
  },
  "categories": {
@@ -3790,7 +4364,13 @@
     "Results with numbers (speed, users, uptime)",
     "Links to code or live work"
    ],
-   "cl": "I am applying for the Software Engineer role on your payments team. Over the last 3 years I have built and run REST services in Java and Spring Boot, and I enjoy the part of the job where a slow or broken system becomes fast and reliable again."
+   "cl": "I am applying for the Software Engineer role on your payments team. Over the last 3 years I have built and run REST services in Java and Spring Boot, and I enjoy the part of the job where a slow or broken system becomes fast and reliable again.",
+   "fr": "I am a final-year B.Tech student applying for the Graduate Engineer Trainee role. In my final-year project I built a library management web app in Python and Django that our college now uses, and I enjoy debugging until something works properly.",
+   "mx": [
+    "Listing every language you have heard of instead of the ones the job needs",
+    "No link to GitHub, a portfolio or a live project",
+    "Copying the same letter for a product company and a services company"
+   ]
   },
   "engineering": {
    "n": "Engineering",
@@ -3807,7 +4387,13 @@
     "Process improvements with results",
     "Plant, site or product exposure"
    ],
-   "cl": "I am writing to apply for the Mechanical Engineer position at your plant. In 3 years of design and production support I have designed fixtures that cut setup time and led root cause analysis that closed repeat quality issues."
+   "cl": "I am writing to apply for the Mechanical Engineer position at your plant. In 3 years of design and production support I have designed fixtures that cut setup time and led root cause analysis that closed repeat quality issues.",
+   "fr": "I am writing to apply for the Graduate Engineer Trainee post. During my 6-week internship at an auto components plant I studied changeover times on a press line and suggested a quick-change die setup that the team is now testing.",
+   "mx": [
+    "Not naming the standards and software you know, such as GD&T or SolidWorks",
+    "Talking about theory without any shop-floor or site exposure",
+    "Skipping safety, which plant managers look for first"
+   ]
   },
   "accounting-finance": {
    "n": "Accounting & Finance",
@@ -3824,7 +4410,13 @@
     "Tools (Tally, ERP, Excel)",
     "Accuracy and deadlines met"
    ],
-   "cl": "I am applying for the Accountant role in your finance team. I have 4 years of experience filing GST and TDS returns on time, closing books every month and supporting statutory audits without major observations."
+   "cl": "I am applying for the Accountant role in your finance team. I have 4 years of experience filing GST and TDS returns on time, closing books every month and supporting statutory audits without major observations.",
+   "fr": "I am a B.Com graduate applying for the Junior Accountant role. During my articleship I helped prepare GST returns for 15 clients and reconciled bank statements every month, and I am comfortable with Tally Prime and Excel.",
+   "mx": [
+    "Not mentioning GST, TDS or audit work, which recruiters scan for",
+    "Spelling or number errors, which hurt more in finance than anywhere else",
+    "Writing about wanting to learn without showing what you already know"
+   ]
   },
   "sales": {
    "n": "Sales",
@@ -3841,7 +4433,13 @@
     "New accounts or revenue added",
     "Industry and territory"
    ],
-   "cl": "I am writing to apply for the Sales Executive role. In the last financial year I achieved 110% of my target and opened 35 new business accounts by following up steadily and understanding what each client needed."
+   "cl": "I am writing to apply for the Sales Executive role. In the last financial year I achieved 110% of my target and opened 35 new business accounts by following up steadily and understanding what each client needed.",
+   "fr": "I am applying for the Sales Trainee role. As the sponsorship lead for my college fest I called 60 local businesses and raised ₹75,000, which taught me how to listen to what a buyer wants before I pitch.",
+   "mx": [
+    "No numbers: target, achievement or accounts",
+    "Talking about yourself instead of the customer and the territory",
+    "Ending without asking for a meeting"
+   ]
   },
   "marketing": {
    "n": "Marketing",
@@ -3858,7 +4456,13 @@
     "Metrics improved",
     "Budget handled"
    ],
-   "cl": "I am applying for the Digital Marketing Executive role. Over 2 years I have grown organic traffic for an e-commerce brand through on-page SEO and steady content, and managed monthly ad budgets with a focus on cost per lead."
+   "cl": "I am applying for the Digital Marketing Executive role. Over 2 years I have grown organic traffic for an e-commerce brand through on-page SEO and steady content, and managed monthly ad budgets with a focus on cost per lead.",
+   "fr": "I am applying for the Marketing Intern role. I run the Instagram page for our college club and grew it from 300 to 2,400 followers in a year by posting short videos twice a week and replying to every comment.",
+   "mx": [
+    "Saying \"creative\" without showing any campaign or result",
+    "Ignoring the channel the job is about, such as SEO or performance ads",
+    "Not linking a portfolio or sample work"
+   ]
   },
   "human-resources": {
    "n": "Human Resources",
@@ -3875,7 +4479,13 @@
     "HR operations and compliance",
     "HRMS and ATS tools"
    ],
-   "cl": "I am writing to apply for the HR Executive role. In 3 years I have closed more than 60 positions a year and run onboarding for every new joiner, from documents to induction."
+   "cl": "I am writing to apply for the HR Executive role. In 3 years I have closed more than 60 positions a year and run onboarding for every new joiner, from documents to induction.",
+   "fr": "I am an MBA (HR) student applying for the HR Trainee role. During my summer internship I screened over 400 resumes and scheduled 90 interviews for a BPO, and I learned how much candidates value a quick reply.",
+   "mx": [
+    "Talking only about \"liking people\" without hiring or operations examples",
+    "Not mentioning HRMS, ATS or Excel skills",
+    "Sharing confidential details from a past employer as examples"
+   ]
   },
   "education": {
    "n": "Education",
@@ -3892,7 +4502,13 @@
     "Qualifications and eligibility tests",
     "Student results and activities"
    ],
-   "cl": "I am applying for the post of Mathematics Teacher. For 5 years I have taught classes 6 to 10 in a CBSE school, using activity-based lessons to help weaker students catch up."
+   "cl": "I am applying for the post of Mathematics Teacher. For 5 years I have taught classes 6 to 10 in a CBSE school, using activity-based lessons to help weaker students catch up.",
+   "fr": "I am applying for the post of Primary Teacher. I completed my B.Ed with a 6-week teaching practice in class 3, where I used picture cards and group reading to help slow readers, and I have cleared CTET.",
+   "mx": [
+    "Not naming the subjects, classes and board you can teach",
+    "Leaving out eligibility such as B.Ed, CTET or state TET",
+    "No example of how you handle students who need extra help"
+   ]
   },
   "government": {
    "n": "Government",
@@ -3909,7 +4525,13 @@
     "Duties and responsibilities",
     "Languages and computer skills"
    ],
-   "cl": "I am writing to apply for the contract post in your department. I have 2 years of experience in office administration, record keeping and data entry on government portals."
+   "cl": "I am writing to apply for the contract post in your department. I have 2 years of experience in office administration, record keeping and data entry on government portals.",
+   "fr": "I am writing to apply for the contract post of Data Entry Operator advertised in your notification. I hold a B.A. and a DCA certificate, type at 40 words per minute in English and Hindi, and have used government portals during my internship at the block office.",
+   "mx": [
+    "Ignoring the format given in the official notification",
+    "Missing exact dates, qualifications or reference numbers",
+    "Writing a long personal story instead of eligibility and skills"
+   ]
   },
   "retail": {
    "n": "Retail",
@@ -3926,7 +4548,13 @@
     "Customer service and billing",
     "Store type and footfall"
    ],
-   "cl": "I am applying for the Retail Sales Associate role. I have 2 years of experience on a busy fashion store floor, helping 50 or more customers a day and meeting my monthly targets in most months."
+   "cl": "I am applying for the Retail Sales Associate role. I have 2 years of experience on a busy fashion store floor, helping 50 or more customers a day and meeting my monthly targets in most months.",
+   "fr": "I am applying for the Retail Sales Associate role at your store. I have helped at my family’s clothing shop on weekends for 3 years, handling billing, stock and customers during festival rush.",
+   "mx": [
+    "Not mentioning availability for weekends and festive seasons",
+    "No example of helping a customer or meeting a target",
+    "Forgetting to mention languages spoken in the store’s area"
+   ]
   },
   "legal": {
    "n": "Legal",
@@ -3943,7 +4571,13 @@
     "Drafting and court experience",
     "Research skills"
    ],
-   "cl": "I am writing to apply for the Associate position in your litigation team. In 4 years of practice I have drafted pleadings in civil and commercial matters and appeared before district courts and tribunals."
+   "cl": "I am writing to apply for the Associate position in your litigation team. In 4 years of practice I have drafted pleadings in civil and commercial matters and appeared before district courts and tribunals.",
+   "fr": "I am a final-year LL.B student applying for the Junior Associate role. During my internship at a civil litigation chamber I drafted 8 applications, researched case law on SCC Online and attended hearings at the district court.",
+   "mx": [
+    "Not naming the practice areas you have worked in",
+    "Long legal language where plain words would do",
+    "Typos, which make a reader doubt your drafting"
+   ]
   },
   "maintenance-repair": {
    "n": "Maintenance & Repair",
@@ -3960,7 +4594,13 @@
     "Machines and systems handled",
     "Safety practice"
    ],
-   "cl": "I am applying for the Maintenance Technician role. I am an ITI Fitter with 5 years of experience in preventive and breakdown maintenance of CNC and textile machines."
+   "cl": "I am applying for the Maintenance Technician role. I am an ITI Fitter with 5 years of experience in preventive and breakdown maintenance of CNC and textile machines.",
+   "fr": "I am an ITI Fitter applying for the Maintenance Technician post. During my apprenticeship at a packaging plant I carried out daily preventive maintenance on 6 machines and learned lock-out tag-out procedures.",
+   "mx": [
+    "Not listing the machines and systems you have worked on",
+    "Leaving out your trade certificate or licence",
+    "No mention of safety practice"
+   ]
   },
   "administrative": {
    "n": "Administrative & Customer Support",
@@ -3977,7 +4617,13 @@
     "Languages",
     "Volume handled (calls, records, tickets)"
    ],
-   "cl": "I am writing to apply for the Administrative Assistant role. For 4 years I have managed calendars, travel and records for senior managers, so that they could focus on their work."
+   "cl": "I am writing to apply for the Administrative Assistant role. For 4 years I have managed calendars, travel and records for senior managers, so that they could focus on their work.",
+   "fr": "I am applying for the Office Assistant role. I completed a B.Com and an MS Office course, type at 35 words per minute, and handled the visitor register and phone calls during a 3-month internship at a CA firm.",
+   "mx": [
+    "Not giving typing speed, software or languages",
+    "No example of handling volume, such as calls or records a day",
+    "A long letter for a role that values short, clear writing"
+   ]
   },
   "real-estate": {
    "n": "Real Estate",
@@ -3994,7 +4640,13 @@
     "Project types",
     "Local market knowledge"
    ],
-   "cl": "I am applying for the Sales Executive role for your residential projects. In 2 years I have closed the sale of more than 30 apartments by understanding buyer needs and following up patiently."
+   "cl": "I am applying for the Sales Executive role for your residential projects. In 2 years I have closed the sale of more than 30 apartments by understanding buyer needs and following up patiently.",
+   "fr": "I am applying for the Sales Trainee role in your residential projects. I have lived in this area for 10 years, know its schools, transport and markets well, and enjoy explaining options clearly to families.",
+   "mx": [
+    "No local market knowledge",
+    "Over-promising returns, which buyers and employers distrust",
+    "Not mentioning follow-up habits or a CRM"
+   ]
   },
   "production": {
    "n": "Production & Manufacturing",
@@ -4011,7 +4663,13 @@
     "Output and quality results",
     "Standards (GMP, 5S, safety)"
    ],
-   "cl": "I am writing to apply for the Production Officer role. I have 4 years of experience in oral solid dosage manufacturing and I keep batch records right first time."
+   "cl": "I am writing to apply for the Production Officer role. I have 4 years of experience in oral solid dosage manufacturing and I keep batch records right first time.",
+   "fr": "I am a Diploma holder in Mechanical Engineering applying for the Production Trainee post. During my in-plant training I helped the team track hourly output on a packing line and learned 5S and GMP basics.",
+   "mx": [
+    "Not naming processes and equipment you have handled",
+    "No output, quality or safety numbers",
+    "Ignoring shift work, which most plants expect"
+   ]
   },
   "business-management": {
    "n": "Business & Management",
@@ -4028,7 +4686,13 @@
     "Outcomes and metrics",
     "Decisions you made"
    ],
-   "cl": "I am applying for the Product Manager role. For 4 years I have worked with engineering and design teams to ship features that solved real user problems and moved clear metrics."
+   "cl": "I am applying for the Product Manager role. For 4 years I have worked with engineering and design teams to ship features that solved real user problems and moved clear metrics.",
+   "fr": "I am an MBA graduate applying for the Management Trainee programme. In my summer internship at a logistics firm I analysed route costs for 40 trucks and suggested two changes that the team adopted, saving about 6% a month.",
+   "mx": [
+    "General talk about leadership with no team size or budget",
+    "No decision you made and its result",
+    "Repeating the resume instead of explaining why this company"
+   ]
   },
   "security-protective-services": {
    "n": "Security & Protective Services",
@@ -4045,7 +4709,13 @@
     "Premises type and size",
     "Incident handling"
    ],
-   "cl": "I am writing to apply for the Security Guard position. I have 5 years of experience guarding corporate offices and residential complexes and I keep every register complete."
+   "cl": "I am writing to apply for the Security Guard position. I have 5 years of experience guarding corporate offices and residential complexes and I keep every register complete.",
+   "fr": "I am applying for the post of Security Guard. I have completed PSARA-approved security training and a fire safety course, and I served as a volunteer marshal at district sports events.",
+   "mx": [
+    "Leaving out training, licence and police verification",
+    "Not saying the premises types you can guard",
+    "No mention of shift availability"
+   ]
   },
   "hospitality-catering": {
    "n": "Hospitality & Catering",
@@ -4062,7 +4732,13 @@
     "Guest feedback and upselling",
     "Cuisines or systems known"
    ],
-   "cl": "I am applying for the Front Office Executive role. For 3 years I have handled check-ins, guest requests and complaints at a 120-room hotel and helped improve our review scores."
+   "cl": "I am applying for the Front Office Executive role. For 3 years I have handled check-ins, guest requests and complaints at a 120-room hotel and helped improve our review scores.",
+   "fr": "I am a hotel management graduate applying for the Front Office Associate role. During industrial training at a 4-star hotel I handled check-ins, guest requests and Opera PMS, and I speak English, Hindi and basic French.",
+   "mx": [
+    "Not naming departments and property types you have worked in",
+    "No guest feedback or upselling result",
+    "Leaving out systems such as Opera or POS"
+   ]
   },
   "transport-logistics": {
    "n": "Transport & Logistics",
@@ -4079,7 +4755,13 @@
     "On-time and accuracy results",
     "ERP or WMS used"
    ],
-   "cl": "I am writing to apply for the Logistics Executive role. I plan daily dispatches for more than 40 shipments and work closely with transporters to deliver on time."
+   "cl": "I am writing to apply for the Logistics Executive role. I plan daily dispatches for more than 40 shipments and work closely with transporters to deliver on time.",
+   "fr": "I am a B.Com graduate applying for the Logistics Trainee role. During my internship at a distribution centre I tracked 150 dispatches a day in Excel and learned how e-way bills and delivery challans are prepared.",
+   "mx": [
+    "No volumes, such as shipments or SKUs handled",
+    "Not mentioning ERP or WMS tools",
+    "Missing accuracy or on-time numbers"
+   ]
   },
   "transportation": {
    "n": "Transportation",
@@ -4096,7 +4778,13 @@
     "Years and routes",
     "Safety record"
    ],
-   "cl": "I am applying for the Driver position. I have 8 years of commercial driving experience and a clean record on both city and highway routes."
+   "cl": "I am applying for the Driver position. I have 8 years of commercial driving experience and a clean record on both city and highway routes.",
+   "fr": "I am applying for the post of Driver. I hold a valid LMV licence with a commercial badge, have driven for 3 years without any accident, and know the routes across the city well.",
+   "mx": [
+    "Not giving licence type and validity",
+    "No mention of safety record",
+    "Not saying which routes or vehicles you know"
+   ]
   },
   "medical": {
    "n": "Medical & Healthcare",
@@ -4113,7 +4801,13 @@
     "Departments and patient load",
     "Certifications (BLS, ACLS)"
    ],
-   "cl": "I am writing to apply for the Staff Nurse position. I hold a B.Sc in Nursing and have 4 years of experience in medical-surgical and ICU wards, with a strong focus on medication safety."
+   "cl": "I am writing to apply for the Staff Nurse position. I hold a B.Sc in Nursing and have 4 years of experience in medical-surgical and ICU wards, with a strong focus on medication safety.",
+   "fr": "I am a B.Sc Nursing graduate applying for the Staff Nurse post. During my internship I worked in medical, surgical and paediatric wards, and I hold BLS certification and state nursing council registration.",
+   "mx": [
+    "Missing registration number and certifications",
+    "Not naming departments and patient load",
+    "Using abbreviations that a hospital HR team may not know"
+   ]
   },
   "sport-fitness": {
    "n": "Sport & Fitness",
@@ -4130,7 +4824,13 @@
     "Client results",
     "Classes and formats"
    ],
-   "cl": "I am applying for the Personal Trainer role. I am certified and have trained 25 personal clients with plans built around their goals and safety."
+   "cl": "I am applying for the Personal Trainer role. I am certified and have trained 25 personal clients with plans built around their goals and safety.",
+   "fr": "I am a certified fitness trainer applying for the Personal Trainer role. During my internship at a gym I helped 15 members with form and planned beginner programmes, and I hold CPR certification.",
+   "mx": [
+    "Not naming your certification",
+    "No client results",
+    "Promising quick results, which reputable gyms avoid"
+   ]
   },
   "social-work": {
    "n": "Social Work & NGO",
@@ -4147,7 +4847,13 @@
     "Programmes and scale",
     "Reporting and impact"
    ],
-   "cl": "I am writing to apply for the Programme Coordinator role. I have 5 years of experience running education projects across 30 schools and reporting to donors on time."
+   "cl": "I am writing to apply for the Programme Coordinator role. I have 5 years of experience running education projects across 30 schools and reporting to donors on time.",
+   "fr": "I am an MSW student applying for the Field Coordinator role. In my fieldwork with a women’s self-help group project I helped 30 members open bank accounts and tracked attendance at weekly meetings.",
+   "mx": [
+    "Not describing the community and scale of your field work",
+    "No reporting or impact numbers",
+    "Talking about passion without examples"
+   ]
   },
   "construction": {
    "n": "Construction",
@@ -4164,7 +4870,13 @@
     "Site responsibilities",
     "Safety and quality"
    ],
-   "cl": "I am applying for the Site Engineer role. For 4 years I have managed daily work on building and road projects, keeping quality checks and progress reports up to date."
+   "cl": "I am applying for the Site Engineer role. For 4 years I have managed daily work on building and road projects, keeping quality checks and progress reports up to date.",
+   "fr": "I am a B.E. Civil graduate applying for the Junior Site Engineer role. During my internship on a residential project I checked reinforcement against the bar bending schedule and helped with quantity estimates for 2 floors.",
+   "mx": [
+    "Not naming project types and sizes",
+    "Leaving out site safety and quality checks",
+    "No software, such as AutoCAD or MS Project"
+   ]
   },
   "beauty-wellness": {
    "n": "Beauty & Wellness",
@@ -4181,7 +4893,13 @@
     "Hygiene practice",
     "Portfolio and repeat clients"
    ],
-   "cl": "I am writing to apply for the Beautician role. I have 4 years of experience in skin care, threading, waxing and bridal make-up, and many of my clients return regularly."
+   "cl": "I am writing to apply for the Beautician role. I have 4 years of experience in skin care, threading, waxing and bridal make-up, and many of my clients return regularly.",
+   "fr": "I am applying for the Beautician role at your salon. I completed a 6-month course from a beauty academy, practise strict tool hygiene, and have done make-up for 10 weddings in my neighbourhood.",
+   "mx": [
+    "Not listing services and specialities",
+    "No portfolio link or photos",
+    "Leaving out hygiene practice"
+   ]
   },
   "student": {
    "n": "Students & Freshers",
@@ -4198,7 +4916,13 @@
     "Projects and internships",
     "Skills and certifications"
    ],
-   "cl": "I am a final-year B.Tech student applying for the Graduate Engineer Trainee role. My final-year project and a 2-month internship gave me practical experience that I want to build on in your team."
+   "cl": "I am a final-year B.Tech student applying for the Graduate Engineer Trainee role. My final-year project and a 2-month internship gave me practical experience that I want to build on in your team.",
+   "fr": "I am a second-year B.Com student applying for your part-time Customer Support role. I organised registrations for our college fest, handling 500 participants and their queries, and I am available 20 hours a week.",
+   "mx": [
+    "Not stating your availability",
+    "Listing every certificate instead of the 2 that fit",
+    "Writing more than one page"
+   ]
   },
   "creative-artistic": {
    "n": "Creative & Design",
@@ -4215,7 +4939,13 @@
     "Formats and tools",
     "Results such as engagement or launches"
    ],
-   "cl": "I am applying for the Graphic Designer role. Over 3 years I have designed more than 300 social creatives and a full brand kit, and my portfolio link is in my resume."
+   "cl": "I am applying for the Graphic Designer role. Over 3 years I have designed more than 300 social creatives and a full brand kit, and my portfolio link is in my resume.",
+   "fr": "I am a design graduate applying for the Junior Graphic Designer role. My portfolio includes packaging for a local spice brand and posters for 12 college events, all made in Illustrator and Photoshop.",
+   "mx": [
+    "No portfolio link",
+    "Describing your style instead of results for clients",
+    "Sending a heavy, designed letter that is hard to read in an applicant tracking system"
+   ]
   }
  },
  "templates": {
@@ -5582,7 +6312,22 @@
    "ex": [
     "Learned Python for data work.",
     "Became proficient in Python and used it to automate 6 weekly reports."
-   ]
+   ],
+   "more": [
+    [
+     "Learned Tally at my internship.",
+     "Trained in Tally Prime and posted 600 vouchers during a 2-month internship."
+    ],
+    [
+     "Learned customer handling.",
+     "Gained hands-on customer handling by resolving 40 walk-in queries a day at the front desk."
+    ],
+    [
+     "Learning AutoCAD.",
+     "Completing an AutoCAD course; drafted 3 floor plans for a college project."
+    ]
+   ],
+   "ok": "In a \"currently learning\" line under skills, when you are honest that a skill is still new."
   },
   "contribute": {
    "w": "Contribute",
@@ -5602,7 +6347,22 @@
    "ex": [
     "Contributed to the website launch.",
     "Delivered the checkout pages for the website launch, used by 20,000 visitors in the first month."
-   ]
+   ],
+   "more": [
+    [
+     "Contributed to sales growth.",
+     "Added 18 new retail accounts, lifting territory sales 12% in a year."
+    ],
+    [
+     "Contributed to the audit.",
+     "Prepared 35 ledger reconciliations for the statutory audit, closed with no major observations."
+    ],
+    [
+     "Contributed to a college fest.",
+     "Raised ₹60,000 in sponsorship for the college fest from 9 local businesses."
+    ]
+   ],
+   "ok": "When you truly played a small part in a big team result, followed by what your part was."
   },
   "passionate": {
    "w": "Passionate",
@@ -5622,7 +6382,22 @@
    "ex": [
     "Passionate about teaching.",
     "Committed teacher who started a weekly remedial class for 15 students who were falling behind."
-   ]
+   ],
+   "more": [
+    [
+     "Passionate about coding.",
+     "Built 4 side projects in React, including a budget app with 300 users."
+    ],
+    [
+     "Passionate about fitness.",
+     "Certified trainer who has coached 25 clients to their 12-week goals."
+    ],
+    [
+     "Passionate about design.",
+     "Redesigned the college magazine layout and grew readership from 400 to 1,100 copies."
+    ]
+   ],
+   "ok": "Almost never on its own. Show the interest through projects, results or volunteer work instead."
   },
   "ensure": {
    "w": "Ensure",
@@ -5642,7 +6417,22 @@
    "ex": [
     "Ensured quality of reports.",
     "Verified every monthly report against source data, cutting errors flagged by managers."
-   ]
+   ],
+   "more": [
+    [
+     "Ensured safety on site.",
+     "Ran daily toolbox talks for 40 workers; the site had zero lost-time injuries in 14 months."
+    ],
+    [
+     "Ensured timely delivery.",
+     "Planned dispatch for 120 orders a day, with 97% delivered on time."
+    ],
+    [
+     "Ensured compliance.",
+     "Filed GST and TDS returns for 12 months with no late fees."
+    ]
+   ],
+   "ok": "In process roles where checking is the job, as long as the line says what you checked and the result."
   },
   "participate": {
    "w": "Participate",
@@ -5662,7 +6452,22 @@
    "ex": [
     "Participated in the annual audit.",
     "Collaborated on the annual audit and prepared 40 reconciliations for the audit team."
-   ]
+   ],
+   "more": [
+    [
+     "Participated in a hackathon.",
+     "Built a ride-sharing prototype in a 36-hour hackathon; placed 2nd of 60 teams."
+    ],
+    [
+     "Participated in training sessions.",
+     "Completed 30 hours of GMP training and passed the assessment with 92%."
+    ],
+    [
+     "Participated in campaigns.",
+     "Ran door-to-door awareness for a vaccination drive covering 600 homes."
+    ]
+   ],
+   "ok": "For events where taking part is the point, such as a national-level competition, then add the result."
   },
   "pursue": {
    "w": "Pursue",
@@ -5682,7 +6487,22 @@
    "ex": [
     "Pursuing a career in finance.",
     "Targeting an analyst role in corporate finance, backed by NISM certification and a 2-month internship."
-   ]
+   ],
+   "more": [
+    [
+     "Pursuing MBA.",
+     "MBA (Finance), 2nd year, Symbiosis; CGPA 8.1."
+    ],
+    [
+     "Pursuing a career in HR.",
+     "Targeting an HR executive role, with a 3-month recruitment internship and 45 hires supported."
+    ],
+    [
+     "Pursued new clients.",
+     "Secured 9 new corporate clients through cold calls and referrals in 6 months."
+    ]
+   ],
+   "ok": "In education lines, where \"pursuing\" is a standard way to show a course is in progress."
   },
   "prioritize": {
    "w": "Prioritise",
@@ -5702,7 +6522,22 @@
    "ex": [
     "Prioritised tasks well.",
     "Triaged 25 support tickets a day by business impact, meeting the response-time target."
-   ]
+   ],
+   "more": [
+    [
+     "Prioritised patient care.",
+     "Triaged 30 patients a shift in the emergency ward using the hospital triage scale."
+    ],
+    [
+     "Prioritised urgent orders.",
+     "Sequenced 50 daily orders by delivery date, cutting late dispatches by a third."
+    ],
+    [
+     "Prioritised tasks for my manager.",
+     "Organised the director’s calendar and travel, clearing 15 to 20 meeting requests a week."
+    ]
+   ],
+   "ok": "When the decision of what comes first is the skill, as in triage or planning roles."
   },
   "achieve": {
    "w": "Achieve",
@@ -5722,7 +6557,22 @@
    "ex": [
     "Achieved sales targets.",
     "Exceeded the annual sales target by 10% and opened 35 new accounts."
-   ]
+   ],
+   "more": [
+    [
+     "Achieved good results.",
+     "Raised class 10 maths pass rate from 78% to 94% in one year."
+    ],
+    [
+     "Achieved targets.",
+     "Hit 105% of the quarterly collection target for 4 quarters in a row."
+    ],
+    [
+     "Achieved certification.",
+     "Earned AWS Solutions Architect Associate certification in 2025."
+    ]
+   ],
+   "ok": "When the target itself was hard and you give the number you reached."
   },
   "experienced": {
    "w": "Experienced",
@@ -5742,7 +6592,22 @@
    "ex": [
     "Experienced accountant.",
     "Accountant with 4 years of GST, TDS and month-end closing for 3 group companies."
-   ]
+   ],
+   "more": [
+    [
+     "Experienced accountant.",
+     "Accountant with 6 years in GST, TDS and month-end closing for manufacturing firms."
+    ],
+    [
+     "Experienced in sales.",
+     "Field sales professional with 4 years in FMCG, managing 120 outlets."
+    ],
+    [
+     "Experienced nurse.",
+     "Staff nurse with 5 years in ICU care, BLS and ACLS certified."
+    ]
+   ],
+   "ok": "In the summary, if you follow it with years, field and one proof point."
   },
   "convey": {
    "w": "Convey",
@@ -5762,7 +6627,22 @@
    "ex": [
     "Conveyed results to managers.",
     "Presented monthly sales findings to 25 regional managers in plain language."
-   ]
+   ],
+   "more": [
+    [
+     "Conveyed product benefits.",
+     "Presented product benefits to 15 doctors a day using clinical study data."
+    ],
+    [
+     "Conveyed updates to the client.",
+     "Briefed the client weekly on progress, risks and next steps for a 9-month project."
+    ],
+    [
+     "Conveyed safety rules.",
+     "Explained site safety rules in Hindi and Kannada to 80 new workers during induction."
+    ]
+   ],
+   "ok": "Rarely. Communicated, presented or explained are clearer."
   },
   "impressive": {
    "w": "Impressive",
@@ -5782,7 +6662,22 @@
    "ex": [
     "Impressive track record.",
     "Strong record: top 3 in regional sales for 6 straight quarters."
-   ]
+   ],
+   "more": [
+    [
+     "Impressive sales record.",
+     "Ranked in the top 3 of 40 executives for sales in FY 2024-25."
+    ],
+    [
+     "Impressive academic record.",
+     "Scored 92% in class 12 and 8.7 CGPA in B.Tech."
+    ],
+    [
+     "Impressive portfolio.",
+     "Portfolio of 25 brand projects, including 3 national campaigns."
+    ]
+   ],
+   "ok": "Never about yourself. Let the numbers make the impression."
   },
   "implemented": {
    "w": "Implemented",
@@ -5802,7 +6697,22 @@
    "ex": [
     "Implemented a new process.",
     "Rolled out a weekly payment cycle that cleared a 2-month vendor backlog."
-   ]
+   ],
+   "more": [
+    [
+     "Implemented a new system.",
+     "Rolled out a barcode system in the warehouse, raising stock accuracy from 91% to 99%."
+    ],
+    [
+     "Implemented changes.",
+     "Introduced a 2-step invoice check that stopped duplicate payments."
+    ],
+    [
+     "Implemented a CRM.",
+     "Launched Zoho CRM for a 15-person sales team; follow-ups recorded rose from 40% to 95%."
+    ]
+   ],
+   "ok": "Fine for IT and process work, as long as the line says what changed because of it."
   },
   "conducted": {
    "w": "Conducted",
@@ -5822,7 +6732,22 @@
    "ex": [
     "Conducted training sessions.",
     "Ran 12 training sessions for 200 new joiners on safety and SOPs."
-   ]
+   ],
+   "more": [
+    [
+     "Conducted training.",
+     "Ran 12 product training sessions for 200 retail staff across 4 cities."
+    ],
+    [
+     "Conducted research.",
+     "Surveyed 300 shoppers and found price was the main reason for cart abandonment."
+    ],
+    [
+     "Conducted audits.",
+     "Led 24 internal safety audits and closed 90% of findings within 30 days."
+    ]
+   ],
+   "ok": "For audits, interviews and inspections, where it is the normal word, with the scale and outcome."
   },
   "investigate": {
    "w": "Investigate",
@@ -5842,7 +6767,22 @@
    "ex": [
     "Investigated quality issues.",
     "Diagnosed the cause of repeat defects with 5-Why analysis and cut scrap on the line."
-   ]
+   ],
+   "more": [
+    [
+     "Investigated customer complaints.",
+     "Analysed 150 complaints a month and found 3 causes behind 70% of them."
+    ],
+    [
+     "Investigated a fraud.",
+     "Examined 2 years of vendor payments and recovered ₹4.2 lakh in duplicate claims."
+    ],
+    [
+     "Investigated machine failures.",
+     "Diagnosed recurring motor trips and fixed the cause, cutting downtime by 20 hours a month."
+    ]
+   ],
+   "ok": "For compliance, audit and quality roles, followed by the finding."
   },
   "innovative": {
    "w": "Innovative",
@@ -5862,7 +6802,22 @@
    "ex": [
     "Innovative thinker.",
     "Designed a new fixture that cut setup time on 2 machining lines."
-   ]
+   ],
+   "more": [
+    [
+     "Innovative teacher.",
+     "Created activity-based maths kits now used by 6 teachers in the school."
+    ],
+    [
+     "Innovative marketer.",
+     "Started a WhatsApp catalogue that brought 22% of monthly orders."
+    ],
+    [
+     "Innovative engineer.",
+     "Designed a low-cost jig that removed a manual measuring step."
+    ]
+   ],
+   "ok": "Avoid as a self-description. Describe the new thing you made and what it did."
   },
   "leading": {
    "w": "Leading",
@@ -5882,7 +6837,22 @@
    "ex": [
     "Leading a team.",
     "Managing a team of 12 sales executives across 3 cities."
-   ]
+   ],
+   "more": [
+    [
+     "Leading the sales team.",
+     "Heading a 9-person sales team that grew revenue 18% this year."
+    ],
+    [
+     "Leading projects.",
+     "Directing 3 ERP roll-outs at the same time for clients in retail and pharma."
+    ],
+    [
+     "Leading the night shift.",
+     "Supervising a 25-person night shift with the plant’s best safety record."
+    ]
+   ],
+   "ok": "When the size of the team or project follows it."
   },
   "teamwork": {
    "w": "Teamwork",
@@ -5902,7 +6872,22 @@
    "ex": [
     "Good teamwork skills.",
     "Worked with design and engineering to ship 12 features in a year."
-   ]
+   ],
+   "more": [
+    [
+     "Good teamwork skills.",
+     "Worked with design and sales to launch a product range in 6 weeks."
+    ],
+    [
+     "Team player.",
+     "Covered shifts for 2 colleagues during peak season so the store stayed fully staffed."
+    ],
+    [
+     "Strong teamwork.",
+     "Partnered with the QA team to cut release bugs by 40%."
+    ]
+   ],
+   "ok": "Fine in a skills list, but show it in an experience line with who you worked with and the result."
   },
   "strategy": {
    "w": "Strategy",
@@ -5922,7 +6907,22 @@
    "ex": [
     "Worked on marketing strategy.",
     "Built the 6-month content roadmap from keyword research."
-   ]
+   ],
+   "more": [
+    [
+     "Worked on marketing strategy.",
+     "Planned a 6-month content roadmap that doubled organic sign-ups."
+    ],
+    [
+     "Developed a sales strategy.",
+     "Built a territory plan for 3 new districts, adding ₹45 lakh in annual sales."
+    ],
+    [
+     "Strategic thinker.",
+     "Proposed shifting 20% of ad spend to search, which cut cost per lead by 30%."
+    ]
+   ],
+   "ok": "For senior roles, when you name the plan, the goal and the result."
   },
   "build": {
    "w": "Build",
@@ -5942,7 +6942,22 @@
    "ex": [
     "Built a dashboard.",
     "Designed a weekly sales dashboard that replaced 6 manual reports."
-   ]
+   ],
+   "more": [
+    [
+     "Built relationships.",
+     "Grew a network of 40 distributors across Gujarat."
+    ],
+    [
+     "Built a dashboard.",
+     "Designed a Power BI dashboard used daily by 25 managers."
+    ],
+    [
+     "Built a team.",
+     "Hired and trained a 12-person support team in 4 months."
+    ]
+   ],
+   "ok": "Good for anything you made from scratch. Add what it does or who uses it."
   },
   "skilled": {
    "w": "Skilled",
@@ -5962,7 +6977,22 @@
    "ex": [
     "Skilled in Excel.",
     "Proficient in Excel: pivot tables, XLOOKUP and automated monthly MIS reports."
-   ]
+   ],
+   "more": [
+    [
+     "Skilled in Excel.",
+     "Advanced Excel: pivot tables, XLOOKUP, macros; automated 5 weekly reports."
+    ],
+    [
+     "Skilled electrician.",
+     "Licensed electrician with 7 years in industrial panels and motor control."
+    ],
+    [
+     "Skilled communicator.",
+     "Presented monthly results to the leadership team for 2 years."
+    ]
+   ],
+   "ok": "In a skills heading. In a line about you, prove the skill instead."
   },
   "help": {
    "w": "Help",
@@ -5982,7 +7012,22 @@
    "ex": [
     "Helped customers.",
     "Resolved 60+ customer chats a day within quality targets."
-   ]
+   ],
+   "more": [
+    [
+     "Helped customers.",
+     "Resolved 60 customer chats a day with a 4.7 out of 5 rating."
+    ],
+    [
+     "Helped the manager.",
+     "Prepared weekly sales reports for the area manager across 18 stores."
+    ],
+    [
+     "Helped students.",
+     "Guided 30 final-year students through their project reports."
+    ]
+   ],
+   "ok": "When helping others is the main duty, but still say how many and with what result."
   },
   "manage": {
    "w": "Manage",
@@ -6002,7 +7047,22 @@
    "ex": [
     "Managed the warehouse.",
     "Supervised a 25-person warehouse team and raised stock accuracy with cycle counts."
-   ]
+   ],
+   "more": [
+    [
+     "Managed accounts.",
+     "Oversaw 35 key accounts worth ₹3 crore a year."
+    ],
+    [
+     "Managed inventory.",
+     "Ran stock for 1,200 SKUs with 99% accuracy in quarterly audits."
+    ],
+    [
+     "Managed social media.",
+     "Ran Instagram and LinkedIn for a brand, growing followers from 2,000 to 15,000."
+    ]
+   ],
+   "ok": "Fine when you were in charge, followed by the scope: people, money or volume."
   },
   "improve": {
    "w": "Improve",
@@ -6022,7 +7082,22 @@
    "ex": [
     "Improved website speed.",
     "Optimised the home page and raised its performance score from 58 to 91."
-   ]
+   ],
+   "more": [
+    [
+     "Improved customer service.",
+     "Raised the customer satisfaction score from 78% to 91% in 6 months."
+    ],
+    [
+     "Improved processes.",
+     "Cut month-end closing from 8 days to 4 by standardising journal templates."
+    ],
+    [
+     "Improved sales.",
+     "Increased average bill value by 15% through add-on suggestions."
+    ]
+   ],
+   "ok": "It is a fine word when a number follows. Without one, it says little."
   },
   "responsible-for": {
    "w": "Responsible for",
@@ -6042,7 +7117,22 @@
    "ex": [
     "Responsible for payroll.",
     "Owned monthly payroll inputs for 250 employees with no late payments."
-   ]
+   ],
+   "more": [
+    [
+     "Responsible for billing.",
+     "Handled billing for 400 customers a day with zero cash differences in 6 months."
+    ],
+    [
+     "Responsible for recruitment.",
+     "Owned hiring for 3 departments, closing 70 positions in a year."
+    ],
+    [
+     "Responsible for site safety.",
+     "Ran safety for a 200-worker site with no reportable incidents."
+    ]
+   ],
+   "ok": "Avoid it. It lists a duty, not what you did. Start with the action instead."
   },
   "worked-on": {
    "w": "Worked on",
@@ -6062,7 +7152,22 @@
    "ex": [
     "Worked on the annual budget.",
     "Prepared the annual budget model for 4 business units."
-   ]
+   ],
+   "more": [
+    [
+     "Worked on the mobile app.",
+     "Built the login and payments screens for an app with 50,000 downloads."
+    ],
+    [
+     "Worked on reports.",
+     "Produced 12 monthly MIS reports for the finance head."
+    ],
+    [
+     "Worked on a project.",
+     "Delivered the electrical design for a 6-floor commercial building."
+    ]
+   ],
+   "ok": "Rarely. Name the exact part you did."
   },
   "communicate": {
    "w": "Communicate",
@@ -6082,7 +7187,22 @@
    "ex": [
     "Good communication skills.",
     "Briefed senior leaders weekly on project status and risks."
-   ]
+   ],
+   "more": [
+    [
+     "Communicated with clients.",
+     "Briefed 10 clients a week on order status and resolved delivery issues."
+    ],
+    [
+     "Good communication skills.",
+     "Fluent in English, Hindi and Tamil; handled customer calls in all three."
+    ],
+    [
+     "Communicated with teams.",
+     "Liaised between design, production and sales for 15 product launches."
+    ]
+   ],
+   "ok": "In a skills list. In experience lines, say who you communicated with and why."
   },
   "detail-oriented": {
    "w": "Detail-oriented",
@@ -6102,7 +7222,22 @@
    "ex": [
     "Detail-oriented person.",
     "Entered 500+ records a day with very few errors found in quality checks."
-   ]
+   ],
+   "more": [
+    [
+     "Detail-oriented accountant.",
+     "Found and reversed ₹2.1 lakh in duplicate vendor entries during reconciliation."
+    ],
+    [
+     "Detail-oriented data entry operator.",
+     "Entered 8,000 records a month with 99.8% accuracy."
+    ],
+    [
+     "Detail-oriented designer.",
+     "Prepared print-ready files for 40 jobs with no printer rework."
+    ]
+   ],
+   "ok": "Show it with an accuracy rate or an error you caught instead."
   },
   "hardworking": {
    "w": "Hard-working",
@@ -6122,7 +7257,22 @@
    "ex": [
     "Hard-working employee.",
     "Handled 80+ calls a shift while keeping quality scores above target."
-   ]
+   ],
+   "more": [
+    [
+     "Hardworking sales executive.",
+     "Made 60 calls a day and visited 8 outlets daily, the highest activity in the team."
+    ],
+    [
+     "Hardworking student.",
+     "Worked part-time 20 hours a week while keeping an 8.2 CGPA."
+    ],
+    [
+     "Hardworking employee.",
+     "Covered extra shifts during the festive season, helping the store reach 120% of target."
+    ]
+   ],
+   "ok": "Avoid it. Everyone writes it. Show effort with a number."
   }
  }
 }

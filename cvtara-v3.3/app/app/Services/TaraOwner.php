@@ -380,7 +380,7 @@ class TaraOwner
                 if ($on === null) {
                     return ['error' => 'Say on (true) or off (false).'];
                 }
-                $s = SeoAgent::settings();
+                $s = SeoAgent::baseSettings();
 
                 return ['target' => 'SEO agent', 'before' => ['automaticRuns' => $s['auto']], 'summary' => ($on ? 'Switch on' : 'Pause').' the SEO agent\'s automatic daily runs.', 'call' => ['POST', 'growth/seo/settings', ['auto' => $on] + $s]];
             case 'growth_reports':

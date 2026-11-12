@@ -155,7 +155,7 @@ class ContentController extends Controller
 
     private function serverLinks(string $path, string $html): string
     {
-        $hubs = array_merge(\App\Services\SeoPages::HUBS, [['/templates.html', 'Template gallery'], ['/cover-letters.html', 'Cover letter designs'], ['/blog.html', 'Career blog'], ['/guides.html', 'Guides and calculators'], ['/#pricing', 'Pricing'], ['/about.html', 'About us'], ['/partners.html', 'For colleges and partners'], ['/contact.html', 'Contact'], ['/privacy.html', 'Privacy policy'], ['/terms.html', 'Terms'], ['/refund.html', 'Refund policy']]);
+        $hubs = array_merge(\App\Services\SeoPages::HUBS, [['/templates.html', 'Template gallery'], ['/cover-letters.html', 'Cover letter designs'], ['/blog.html', 'Career blog'], ['/guides.html', 'Guides and calculators'], ['/pricing/', 'Pricing'], ['/about.html', 'About us'], ['/partners.html', 'For colleges and partners'], ['/contact.html', 'Contact'], ['/privacy.html', 'Privacy policy'], ['/terms.html', 'Terms'], ['/refund.html', 'Refund policy']]);
         $nav = '<nav class="footer-links" aria-label="Site links"><ul>'.implode('', array_map(fn ($l) => '<li><a href="'.e($l[0]).'">'.e($l[1]).'</a></li>', $hubs)).'</ul></nav>';
         $html = preg_replace('#<div data-footer>\s*</div>#', '<div data-footer>'.addcslashes($nav, '\\$').'</div>', $html, 1);
         if (in_array($path, ['blog.html', 'guides.html'], true)) {
@@ -234,9 +234,19 @@ class ContentController extends Controller
             $seo = Settings::get('seo');
             abort_unless($seo['sitemapEnabled'], 404);
             $xml = '<?xml version="1.0" encoding="UTF-8"?><urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">';
+            // 3.68.0: <lastmod> from the agent's page scan (the day the page's content last changed), so search engines
+            // re-read changed pages first. Google uses it only while it stays accurate, so it is never just "today".
+            $mod = [];
+            try {
+                if (\Illuminate\Support\Facades\Schema::hasTable('seo_pages')) {
+                    $mod = \Illuminate\Support\Facades\DB::table('seo_pages')->whereNotNull('changed_at')->pluck('changed_at', 'path')->all();
+                }
+            } catch (\Throwable $e) {
+                $mod = [];
+            }
             foreach ($this->pages() as $p) {
                 if ($p['included']) {
-                    $xml .= '<url><loc>'.e(rtrim($seo['siteUrl'] ?: config('app.url'), '/').$p['path']).'</loc></url>';
+                    $xml .= '<url><loc>'.e(rtrim($seo['siteUrl'] ?: config('app.url'), '/').$p['path']).'</loc>'.(isset($mod[$p['path']]) ? '<lastmod>'.substr((string) $mod[$p['path']], 0, 10).'</lastmod>' : '').'</url>';
                 }
             }
 
@@ -256,9 +266,10 @@ class ContentController extends Controller
         }
         $aliases = ['resume-builder' => 'workspace.html?view=builder', 'cover-letter' => 'workspace.html?view=letter', 'resume-match' => 'workspace.html?view=match', 'admin' => 'admin.html', 'privacy-policy' => 'privacy.html', 'terms-and-conditions' => 'terms.html', 'about-us' => 'about.html', 'contact-us' => 'contact.html'];
         // Addresses people type or guess that have no page of their own: send them, and any links Google already holds, to the right page for good.
-        $moved = ['guides' => 'guides.html', 'calculators' => 'guides.html', 'blog' => 'blog.html', 'pricing' => '#pricing', 'pricing.html' => '#pricing', 'plans' => '#pricing', 'templates' => 'templates.html', 'cover-letters' => 'cover-letters.html', 'about' => 'about.html', 'contact' => 'contact.html', 'privacy' => 'privacy.html', 'terms' => 'terms.html', 'refund' => 'refund.html', 'refund-policy' => 'refund.html'];
+        $moved = ['guides' => 'guides.html', 'calculators' => 'guides.html', 'blog' => 'blog.html', 'pricing.html' => 'pricing/', 'plans' => 'pricing/', 'templates' => 'templates.html', 'cover-letters' => 'cover-letters.html', 'about' => 'about.html', 'contact' => 'contact.html', 'privacy' => 'privacy.html', 'terms' => 'terms.html', 'refund' => 'refund.html', 'refund-policy' => 'refund.html'];
         if (isset($moved[$path])) {
-            return redirect('/'.$moved[$path], 301);
+            // A relative Location keeps a trailing slash (redirect() drops it, which made /pricing.html take two hops to /pricing/).
+            return str_ends_with($moved[$path], '/') ? response('', 301, ['Location' => '/'.$moved[$path]]) : redirect('/'.$moved[$path], 301);
         }
         // /resume-builder/ is the free resume builder's landing page for visitors and search engines; signed-in customers go straight to the builder.
         if ($path === 'resume-builder' && ! $r->user()) {
@@ -384,6 +395,9 @@ class ContentController extends Controller
             $minutes = max(1, (int) ceil($words / 200));
             $kind = $isCalc ? 'Calculator' : 'Guide';
             $meta = 'By <b>'.e($post['author'] ?? 'CVTara Editorial Team').'</b> · '.$minutes.' min read · '.$kind.(! empty($post['category']) ? ' · '.e($post['category']) : '');
+            if ($upd = \App\Services\SeoContent::updatedAt('/'.($isCalc ? 'calculators' : 'guides').'/'.$slug.'/', $post)) { // 3.68.0
+                $meta .= ' · Updated <time datetime="'.substr($upd, 0, 10).'">'.e(\Carbon\Carbon::parse($upd)->tz('Asia/Kolkata')->format('j M Y')).'</time>';
+            }
             if ($rev = \App\Services\SeoContent::reviewedAt('/'.($isCalc ? 'calculators' : 'guides').'/'.$slug.'/')) { // 3.45.0: only a review a person recorded
                 $meta .= ' · Reviewed '.e(\Carbon\Carbon::parse($rev)->tz('Asia/Kolkata')->format('j M Y'));
             }
@@ -492,6 +506,9 @@ class ContentController extends Controller
         if ($post) {
             $image = $post['imageUrl'] ?? '';
             $schema = ['@context' => 'https://schema.org', '@type' => 'BlogPosting', 'headline' => $post['title'], 'description' => $post['description'], 'url' => $siteBase.$uri, 'author' => ['@type' => 'Organization', 'name' => $post['author'] ?? 'CVTara'], 'publisher' => ['@type' => 'Organization', 'name' => 'CVTara']];
+            if ($upd = \App\Services\SeoContent::updatedAt('/'.(($post['type'] ?? '') === 'Calculator' ? 'calculators' : 'guides').'/'.$slug.'/', $post)) {
+                $schema['dateModified'] = substr($upd, 0, 10); // 3.68.0
+            }
             if ($image) {
                 $schema['image'] = $abs($image);
             }$schema['mainEntityOfPage'] = $siteBase.$uri;

@@ -19,7 +19,7 @@ class CustomerEvents
         'support_request' => 'Asked for help', 'journey_mail' => 'Lifecycle email sent', 'unsubscribed' => 'Turned off emails'];
 
     /** Customer pages that mean "looking at prices". */
-    public const PRICING_PATHS = ['/checkout.html', '/checkout', '/pricing', '/plans'];
+    public const PRICING_PATHS = ['/checkout.html', '/checkout', '/pricing', '/plans', '/pricing/', '/pricing/quick-download/', '/pricing/job-hunt/', '/pricing/pro/', '/pricing/free-vs-paid/'];
 
     private const BATCH = 3000;
 

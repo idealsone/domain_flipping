@@ -1,3 +1,30 @@
+# CVTara v3.69.0 — Stronger pages for the 60-day index push
+
+## 3.69.0
+Owner (12 Nov 2026, 18:31 UTC): "all pages should rank on the engine so do what you want but it should be there in 60 days". Built on 3.68.0. No migration.
+- **Every page in the sitemap stays in.** The open idea of dropping the 130 city+role pages for 4 weeks is not used, because the goal is every page indexed.
+- **More words of each page's own** on the most templated sections (measured as 6-word phrases not shared with other pages in the section):
+  - Interview questions (82 pages): every role question now has a sample answer written for that role (410 answers, about 11,000 words). Own words per page, median 204 → 354.
+  - Resume words (28 pages): three more before-and-after lines from different fields and a "When it is still fine" note. Median 131 → 227.
+  - Cover letter examples (26 pages): an opening for freshers in that field and three mistakes letters in that field often make. Median 196 → 275.
+  - Content lives in `tools/seo/answers_*.py`, `words_more.py` and `cover_more.py`; `build_seo_data.py` refuses to build if a role, word or field is missing its new content.
+- **The sprint runs 60 days** instead of 30. A sprint started under 3.68.0 runs the full 60 days from its start (the live one now ends 11 Jan 2027). The plan has 8 weeks: weeks 5 to 8 cover a second wave for pages still not indexed, more outside links, a second position 4-30 review and the two-month report.
+- **One hop to /pricing/**: `/pricing.html` and `/plans` now go straight to `/pricing/` (they went to `/pricing` first, then `/pricing/`).
+- A page section with no content for that page is left out instead of showing an empty heading.
+- `s80_index_sprint` covers the sample answers, word examples, cover letter notes, one-hop redirect and the 60-day sprint.
+
+# CVTara v3.68.0 — Index sprint and pricing pages
+
+## 3.68.0
+Owner brief (12 Nov 2026): the SEO and Growth agents should work about 10x harder for one month so ~600 pages get indexed and rank; every approval must say which page, which section and which link; build transactional pages because revenue is the goal. Built on 3.67.2. No migration.
+- **Search Console review** (exports of 12 Nov): 456 of 526 sitemap pages are "Discovered - currently not indexed" and Google has not crawled any of them yet (resume 130, resume-examples 108, resume-builder 46, interview-questions 42, guides 34, calculators 31, resume-words 29, cover-letter-examples 21, resume-templates 15). A full crawl of the live site found no technical blocker: every page answers 200, one H1, self canonical, index,follow, valid structured data, no duplicate titles or descriptions. The cause is a new domain with almost no outside links, so Google is slow to spend crawl time; the fix is authority (links), stronger pages and a clear crawl priority.
+- **One pricing page** (owner, 12 Nov: "make one page /pricing"): `/pricing/` has a section per plan (`#quick-download`, `#job-hunt`, `#pro`, each with what you get, who it is for and a buy button), a comparison table, `#free-vs-paid`, how paying works and a refund FAQ. Prices, limits and validity come from the live plan settings; a plan taken off sale drops out. Each plan is Product structured data with its INR price and the 7-day return window. `/pricing`, `/pricing.html` and `/plans` move permanently to `/pricing/`, and `/pricing/{plan}/` addresses to their section. The footer and every programmatic page link to `/pricing/` ("See plans from ₹99"). Pricing visits count as pricing views for the customer journeys.
+- **"Updated <date>"** (owner: show the current date when a page or post is updated): guides, calculators and all programmatic pages show "Updated 12 Nov 2026" from the last content change (owner edit of a guide, approved SEO change, a person's review, or the page scan noticing new content) and send it as `dateModified`. Saving a guide whose words changed stamps it with today; saving without changes keeps the old date. No date is shown when none is known.
+- **30-day index sprint** (Growth > SEO agent, Start/Stop): raises pages scanned per run 40→200, Google URL Inspection 60→600 a day (Google allows 2,000), recrawl requests 10→50 per run, title and link drafts 10→50 a day, and acts on smaller signals (5 impressions). Not raised: Google Indexing API (Google's 200 a day), outreach sends. Ends by itself after 30 days. The settings form still shows and saves the owner's own numbers. New drafts pause while 60 already wait for a decision. Week-by-week plan in `resources/data/seo-sprint.json` shown on the tab.
+- **Approval detail**: every SEO approval card has a Where row: the full page address, the section of the page that changes (title tag and meta description, main heading, FAQ box, structured data, or the "Popular with job seekers" link box), every page a link is added on and the link text.
+- **Sitemap `<lastmod>`**: each page's last content change from the agent's page scan, so engines re-read changed pages first.
+- Test suite `s80_index_sprint`; `s23` updated for the pricing redirect and link.
+
 # CVTara v3.67.2 — Night mode readability
 
 ## 3.67.2
