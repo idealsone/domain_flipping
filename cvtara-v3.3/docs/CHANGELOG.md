@@ -1,4 +1,16 @@
-# CVTara v3.59.0 — Template library
+# CVTara v3.60.0 — Website and search
+
+## 3.60.0
+Website and search (V7 §31, §34; V5.0 §2, §9; V5.5 §2; V6 SEO §4-§5, §13). Additive migration `2026_11_26_000001_site_search_register`: new table `brand_profiles`, column `seo_keywords.cluster`; loads the keyword backlog and the listings register.
+- **For colleges, coaching and partners** page (`/partners.html`): what students get, how a partnership works (form, written agreement, campaign link and seats, reports without students' documents unless they consent), what we do not promise, FAQ, and the application form (sends to the existing partner applications inbox). In the sitemap, footer links and llms.txt.
+- **About page** rewritten with the approved V5.5 positioning ("From resume building to interview readiness", the problems, how CVTara helps, our approach), keeping the HR-team and pricing facts. Mock interviews are described as "structured written feedback, prepared automatically". If the owner has already edited About in the console, that text stays until changed there.
+- **og:locale en_IN** on every page.
+- **Interview hub** gains "Practise in your CVTara account" (role search, timer, mock interviews, company research, revision).
+- **Keyword backlog**: the 118 searches in 6 clusters from the V6 SEO pack are loaded into the keyword store, each mapped to the one page that answers it; 39 with no page yet stay unassigned. The SEO Head's weekly report turns them into one planning task per cluster (validate demand first, no thin pages).
+- **Directory and brand listings register**: platform, type, public URL, state (not listed, pending, live, needs a fix), claimed, verified, last checked. Seeded with search consoles, the four social profiles and software directories. "Check" opens the public page only; a live listing that stops opening is marked as needing a fix. Paged, filtered and downloadable.
+- Growth page gains a **Listings & keywords** tab; the SEO reports show the backlog by cluster.
+- Test suite `s70_site_search`; `s20` follows the new About headings.
+
 
 ## 3.59.0
 Template library (V7 §15, V5.0 §5-§7). Additive migration `2026_11_25_000001_template_library`: new tables `template_library`, `template_versions`, `template_packages`; every built-in resume and cover-letter design is listed as a CVTara original.

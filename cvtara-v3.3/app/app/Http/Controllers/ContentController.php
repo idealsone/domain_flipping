@@ -14,7 +14,7 @@ class ContentController extends Controller
         $custom = Settings::get('blog');
         $seo = Settings::get('seo');
         $catalog = json_decode(file_get_contents(resource_path('data/catalog.json')), true);
-        $base = ['/' => 'CVTara — Resume and cover-letter builder', '/templates.html' => 'Resume templates', '/cover-letters.html' => 'Cover-letter templates', '/blog.html' => 'Career blog', '/guides.html' => 'Career guides & calculators', '/about.html' => 'About CVTara', '/contact.html' => 'Contact CVTara', '/privacy.html' => 'Privacy policy', '/terms.html' => 'Terms & conditions', '/refund.html' => 'Refund policy'];
+        $base = ['/' => 'CVTara — Resume and cover-letter builder', '/templates.html' => 'Resume templates', '/cover-letters.html' => 'Cover-letter templates', '/blog.html' => 'Career blog', '/guides.html' => 'Career guides & calculators', '/about.html' => 'About CVTara', '/partners.html' => 'CVTara for colleges, coaching and partners', '/contact.html' => 'Contact CVTara', '/privacy.html' => 'Privacy policy', '/terms.html' => 'Terms & conditions', '/refund.html' => 'Refund policy'];
         foreach ($base as $path => $title) {
             $rows[] = ['path' => $path, 'title' => $seo['pages'][$path]['title'] ?? $title, 'description' => $seo['pages'][$path]['description'] ?? 'CVTara career preparation tools.', 'included' => $seo['pages'][$path]['includeInSitemap'] ?? true];
         }foreach ($catalog['blog'] as $p) {
@@ -125,14 +125,14 @@ class ContentController extends Controller
         if ($plans) {
             array_push($L, '', '## Plans', ...$plans);
         }
-        array_push($L, '', '## Company', "- [About]($base/about.html)", "- [Contact]($base/contact.html): support@cvtara.com", "- [Refund policy]($base/refund.html): 7-day refund if a plan is unused", "- [Privacy policy]($base/privacy.html)", '');
+        array_push($L, '', '## Company', "- [About]($base/about.html)", "- [For colleges, coaching and partners]($base/partners.html): seats, campaign links and reports for placement cells, coaching institutes and career partners", "- [Contact]($base/contact.html): support@cvtara.com", "- [Refund policy]($base/refund.html): 7-day refund if a plan is unused", "- [Privacy policy]($base/privacy.html)", '');
 
         return implode("\n", $L);
     }
 
     private function serverLinks(string $path, string $html): string
     {
-        $hubs = array_merge(\App\Services\SeoPages::HUBS, [['/templates.html', 'Template gallery'], ['/cover-letters.html', 'Cover letter designs'], ['/blog.html', 'Career blog'], ['/guides.html', 'Guides and calculators'], ['/#pricing', 'Pricing'], ['/about.html', 'About us'], ['/contact.html', 'Contact'], ['/privacy.html', 'Privacy policy'], ['/terms.html', 'Terms'], ['/refund.html', 'Refund policy']]);
+        $hubs = array_merge(\App\Services\SeoPages::HUBS, [['/templates.html', 'Template gallery'], ['/cover-letters.html', 'Cover letter designs'], ['/blog.html', 'Career blog'], ['/guides.html', 'Guides and calculators'], ['/#pricing', 'Pricing'], ['/about.html', 'About us'], ['/partners.html', 'For colleges and partners'], ['/contact.html', 'Contact'], ['/privacy.html', 'Privacy policy'], ['/terms.html', 'Terms'], ['/refund.html', 'Refund policy']]);
         $nav = '<nav class="footer-links" aria-label="Site links"><ul>'.implode('', array_map(fn ($l) => '<li><a href="'.e($l[0]).'">'.e($l[1]).'</a></li>', $hubs)).'</ul></nav>';
         $html = preg_replace('#<div data-footer>\s*</div>#', '<div data-footer>'.addcslashes($nav, '\\$').'</div>', $html, 1);
         if (in_array($path, ['blog.html', 'guides.html'], true)) {
@@ -454,7 +454,7 @@ class ContentController extends Controller
                 $head .= '<script type="application/ld+json">'.json_encode($block, JSON_HEX_TAG | JSON_HEX_AMP | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE).'</script>';
             }
         }
-        $head .= '<meta property="og:site_name" content="CVTara"><meta property="og:title" content="'.e($pageTitle).'"><meta property="og:description" content="'.e($pageDescription).'"><meta property="og:url" content="'.e($siteBase.$uri).'"><meta property="og:type" content="'.($post ? 'article' : 'website').'"><meta property="og:image" content="'.e($abs($shareImage)).'"><meta property="og:image:alt" content="CVTara — Your next move starts here."><meta name="twitter:card" content="summary_large_image"><meta name="twitter:image" content="'.e($abs($shareImage)).'">';
+        $head .= '<meta property="og:site_name" content="CVTara"><meta property="og:locale" content="en_IN"><meta property="og:title" content="'.e($pageTitle).'"><meta property="og:description" content="'.e($pageDescription).'"><meta property="og:url" content="'.e($siteBase.$uri).'"><meta property="og:type" content="'.($post ? 'article' : 'website').'"><meta property="og:image" content="'.e($abs($shareImage)).'"><meta property="og:image:alt" content="CVTara — Your next move starts here."><meta name="twitter:card" content="summary_large_image"><meta name="twitter:image" content="'.e($abs($shareImage)).'">';
         if ($path === '') {
             $head .= '<script type="application/ld+json">'.json_encode(['@context' => 'https://schema.org', '@type' => 'WebSite', 'name' => 'CVTara', 'url' => $siteBase.'/', 'publisher' => ['@type' => 'Organization', 'name' => 'CVTara', 'logo' => $siteBase.'/assets/brand/cvtara-mark.svg', 'email' => 'support@cvtara.com', 'address' => ['@type' => 'PostalAddress', 'addressLocality' => 'Bangalore', 'addressCountry' => 'IN']]], JSON_HEX_TAG | JSON_HEX_AMP | JSON_UNESCAPED_SLASHES).'</script>';
         }
@@ -484,7 +484,7 @@ class ContentController extends Controller
         }
         // Every main page says what it is and where it sits, so search results can show it with its trail.
         $pageType = ['templates.html' => ['CollectionPage', 'Resume templates'], 'cover-letters.html' => ['CollectionPage', 'Cover letter examples'], 'guides.html' => ['CollectionPage', 'Career guides and calculators'],
-            'about.html' => ['AboutPage', 'About'], 'contact.html' => ['ContactPage', 'Contact'], 'privacy.html' => ['WebPage', 'Privacy policy'], 'terms.html' => ['WebPage', 'Terms'], 'refund.html' => ['WebPage', 'Refund policy']][$path] ?? null;
+            'about.html' => ['AboutPage', 'About'], 'partners.html' => ['WebPage', 'For colleges, coaching and partners'], 'contact.html' => ['ContactPage', 'Contact'], 'privacy.html' => ['WebPage', 'Privacy policy'], 'terms.html' => ['WebPage', 'Terms'], 'refund.html' => ['WebPage', 'Refund policy']][$path] ?? null;
         if ($pageType) {
             $ld = [['@context' => 'https://schema.org', '@type' => $pageType[0], 'name' => $pageTitle, 'description' => $pageDescription, 'url' => $siteBase.'/'.$path, 'inLanguage' => 'en-IN', 'isPartOf' => ['@type' => 'WebSite', 'name' => 'CVTara', 'url' => $siteBase.'/']],
                 ['@context' => 'https://schema.org', '@type' => 'BreadcrumbList', 'itemListElement' => [['@type' => 'ListItem', 'position' => 1, 'name' => 'Home', 'item' => $siteBase.'/'], ['@type' => 'ListItem', 'position' => 2, 'name' => $pageType[1], 'item' => $siteBase.'/'.$path]]]];

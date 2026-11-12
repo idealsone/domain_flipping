@@ -109,6 +109,12 @@ class AgentCadence
             usort($low, fn ($a, $b) => $b['impressions'] <=> $a['impressions']);
             $d['lowClickRate'] = array_map(fn ($r) => ['query' => $r['key'], 'position' => round((float) $r['position'], 1), 'impressions' => (int) $r['impressions'], 'ctrPct' => round((float) $r['ctr'] * 100, 1)], array_slice($low, 0, 15));
         }
+        if ($cadence !== 'daily' && class_exists(SeoBacklog::class) && Schema::hasColumn('seo_keywords', 'cluster')) {
+            // Keyword backlog: searches with no page yet become one planning task per cluster (deduplicated).
+            $d['backlog'] = array_map(fn ($c) => ['cluster' => $c['cluster'], 'keywords' => $c['keywords'], 'mapped' => $c['mapped'], 'gaps' => count($c['gaps'])], SeoBacklog::summary());
+            $d['backlogTasks'] = SeoBacklog::gapTasks();
+            $d['sources'][] = 'seo_keywords';
+        }
         if ($cadence === 'monthly') {
             // Monthly: coverage per section (pillar) and sign-ups that arrived from search.
             $d['sections'] = (clone $pages)->select('section', DB::raw('count(*) as pages'), DB::raw("sum(case when coverage like 'Submitted and indexed%' then 1 else 0 end) as indexed"))->groupBy('section')->get()

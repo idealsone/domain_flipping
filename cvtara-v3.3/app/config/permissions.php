@@ -73,6 +73,8 @@ return [
         ['GET', '#^content/(seo|blog|library|features|legal|site)$#', 'content.edit|seo.view'],
         ['GET', '#^growth/agents$#', 'growth.view|seo.view'],  // agent on/off status only
         ['GET', '#^growth/agents/(cadence|corrections)$#', 'growth.view|seo.view'],
+        ['GET', '#^growth/(brand-profiles|seo/backlog)$#', 'growth.view|seo.view'],
+        ['POST', '#^growth/brand-profiles(/check)?$#', 'seo.approve|growth.approve'],
         ['POST', '#^growth/agents/cadence/run$#', 'growth.view|seo.view'], // the controller checks seo.view / growth.approve per agent
         ['GET', '#^dashboard$#', 'overview.view'],
         // Ctrl+K search: every console role may search; the answer holds only the kinds the role can see.

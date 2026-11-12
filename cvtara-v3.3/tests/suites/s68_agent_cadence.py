@@ -105,6 +105,6 @@ def run(ctx, t):
         cu = Client(inst.base); cu.register("cad-a@test.local")
         t.check("customers cannot read agent reports", cu.api("GET", "admin/growth/agents/cadence")[0] in (403, 404))
         js = open(ctx.app + "/resources/console/agents.js").read(); gj = open(ctx.app + "/resources/console/growth.js").read()
-        t.check("the Growth page has an Agent reports tab", "cadence: 'Agent reports'" in gj and "cadence }" in js and "agents.js?v=3.58.0" in gj)
+        t.check("the Growth page has an Agent reports tab", "cadence: 'Agent reports'" in gj and "log, cadence" in js and "agents.js?v=3.60.0" in gj)
     finally:
         inst.stop()

@@ -1,0 +1,950 @@
+{
+ "version": "2026-11-12",
+ "source": "CVTara SEO Keyword Opportunity Backlog (V6 SEO pack). Volumes not yet measured; validate in Search Console before writing pages.",
+ "keywords": [
+  {
+   "keyword": "how to make a resume with no work experience",
+   "cluster": "Freshers & first resume",
+   "intent": "Informational / problem-first",
+   "audience": "Students, fresh graduates, first-job seekers",
+   "opportunity": "Free resume start → account registration → resume save/download",
+   "target": "/guides/resume/no-experience-format/"
+  },
+  {
+   "keyword": "resume for fresher with no experience",
+   "cluster": "Freshers & first resume",
+   "intent": "Informational / problem-first",
+   "audience": "Students, fresh graduates, first-job seekers",
+   "opportunity": "Free resume start → account registration → resume save/download",
+   "target": "/resume-templates/fresher/"
+  },
+  {
+   "keyword": "first job resume format for fresh graduates",
+   "cluster": "Freshers & first resume",
+   "intent": "Informational / problem-first",
+   "audience": "Students, fresh graduates, first-job seekers",
+   "opportunity": "Free resume start → account registration → resume save/download",
+   "target": "/resume-examples/student/freshers/"
+  },
+  {
+   "keyword": "what to write in resume when you have no experience",
+   "cluster": "Freshers & first resume",
+   "intent": "Informational / problem-first",
+   "audience": "Students, fresh graduates, first-job seekers",
+   "opportunity": "Free resume start → account registration → resume save/download",
+   "target": "/guides/resume/no-experience-format/"
+  },
+  {
+   "keyword": "resume summary for fresher applying for first job",
+   "cluster": "Freshers & first resume",
+   "intent": "Informational / problem-first",
+   "audience": "Students, fresh graduates, first-job seekers",
+   "opportunity": "Free resume start → account registration → resume save/download",
+   "target": "/guides/resume/professional-summary-guide/"
+  },
+  {
+   "keyword": "resume headline for fresher looking for job",
+   "cluster": "Freshers & first resume",
+   "intent": "Informational / problem-first",
+   "audience": "Students, fresh graduates, first-job seekers",
+   "opportunity": "Free resume start → account registration → resume save/download",
+   "target": ""
+  },
+  {
+   "keyword": "how to show college projects in a resume",
+   "cluster": "Freshers & first resume",
+   "intent": "Informational / problem-first",
+   "audience": "Students, fresh graduates, first-job seekers",
+   "opportunity": "Free resume start → account registration → resume save/download",
+   "target": "/guides/resume/fresher-projects-guide/"
+  },
+  {
+   "keyword": "how to add internship experience to a fresher resume",
+   "cluster": "Freshers & first resume",
+   "intent": "Informational / problem-first",
+   "audience": "Students, fresh graduates, first-job seekers",
+   "opportunity": "Free resume start → account registration → resume save/download",
+   "target": "/resume-examples/student/internship/"
+  },
+  {
+   "keyword": "resume for final year college student",
+   "cluster": "Freshers & first resume",
+   "intent": "Informational / problem-first",
+   "audience": "Students, fresh graduates, first-job seekers",
+   "opportunity": "Free resume start → account registration → resume save/download",
+   "target": "/resume-examples/student/student/"
+  },
+  {
+   "keyword": "resume for graduates with career gap after college",
+   "cluster": "Freshers & first resume",
+   "intent": "Informational / problem-first",
+   "audience": "Students, fresh graduates, first-job seekers",
+   "opportunity": "Free resume start → account registration → resume save/download",
+   "target": "/guides/resume/gap-in-employment-explanation/"
+  },
+  {
+   "keyword": "resume format for bcom fresher",
+   "cluster": "Freshers & first resume",
+   "intent": "Informational / problem-first",
+   "audience": "Students, fresh graduates, first-job seekers",
+   "opportunity": "Free resume start → account registration → resume save/download",
+   "target": ""
+  },
+  {
+   "keyword": "resume for bba fresher",
+   "cluster": "Freshers & first resume",
+   "intent": "Informational / problem-first",
+   "audience": "Students, fresh graduates, first-job seekers",
+   "opportunity": "Free resume start → account registration → resume save/download",
+   "target": ""
+  },
+  {
+   "keyword": "resume for mba fresher",
+   "cluster": "Freshers & first resume",
+   "intent": "Informational / problem-first",
+   "audience": "Students, fresh graduates, first-job seekers",
+   "opportunity": "Free resume start → account registration → resume save/download",
+   "target": ""
+  },
+  {
+   "keyword": "resume for bca fresher",
+   "cluster": "Freshers & first resume",
+   "intent": "Informational / problem-first",
+   "audience": "Students, fresh graduates, first-job seekers",
+   "opportunity": "Free resume start → account registration → resume save/download",
+   "target": ""
+  },
+  {
+   "keyword": "resume for ba fresher",
+   "cluster": "Freshers & first resume",
+   "intent": "Informational / problem-first",
+   "audience": "Students, fresh graduates, first-job seekers",
+   "opportunity": "Free resume start → account registration → resume save/download",
+   "target": ""
+  },
+  {
+   "keyword": "resume for diploma fresher",
+   "cluster": "Freshers & first resume",
+   "intent": "Informational / problem-first",
+   "audience": "Students, fresh graduates, first-job seekers",
+   "opportunity": "Free resume start → account registration → resume save/download",
+   "target": ""
+  },
+  {
+   "keyword": "resume for engineering fresher",
+   "cluster": "Freshers & first resume",
+   "intent": "Informational / problem-first",
+   "audience": "Students, fresh graduates, first-job seekers",
+   "opportunity": "Free resume start → account registration → resume save/download",
+   "target": "/resume-examples/engineering/"
+  },
+  {
+   "keyword": "resume for non technical fresher jobs",
+   "cluster": "Freshers & first resume",
+   "intent": "Informational / problem-first",
+   "audience": "Students, fresh graduates, first-job seekers",
+   "opportunity": "Free resume start → account registration → resume save/download",
+   "target": "/resume-examples/student/freshers/"
+  },
+  {
+   "keyword": "how to write skills in resume as a fresher",
+   "cluster": "Freshers & first resume",
+   "intent": "Informational / problem-first",
+   "audience": "Students, fresh graduates, first-job seekers",
+   "opportunity": "Free resume start → account registration → resume save/download",
+   "target": "/guides/resume/skills-section-keywords/"
+  },
+  {
+   "keyword": "fresher resume mistakes that get rejected",
+   "cluster": "Freshers & first resume",
+   "intent": "Informational / problem-first",
+   "audience": "Students, fresh graduates, first-job seekers",
+   "opportunity": "Free resume start → account registration → resume save/download",
+   "target": ""
+  },
+  {
+   "keyword": "how to check if my resume is ats friendly",
+   "cluster": "ATS & job-specific resume pain",
+   "intent": "Informational → commercial",
+   "audience": "Active applicants, experienced candidates",
+   "opportunity": "Free ATS check → job-specific match → paid tailored resume/download",
+   "target": "/ats-checker/"
+  },
+  {
+   "keyword": "why is my resume not getting shortlisted",
+   "cluster": "ATS & job-specific resume pain",
+   "intent": "Informational → commercial",
+   "audience": "Active applicants, experienced candidates",
+   "opportunity": "Free ATS check → job-specific match → paid tailored resume/download",
+   "target": "/ats-checker/"
+  },
+  {
+   "keyword": "resume keywords missing from job description",
+   "cluster": "ATS & job-specific resume pain",
+   "intent": "Informational → commercial",
+   "audience": "Active applicants, experienced candidates",
+   "opportunity": "Free ATS check → job-specific match → paid tailored resume/download",
+   "target": "/ats-checker/"
+  },
+  {
+   "keyword": "how to match resume with job description",
+   "cluster": "ATS & job-specific resume pain",
+   "intent": "Informational → commercial",
+   "audience": "Active applicants, experienced candidates",
+   "opportunity": "Free ATS check → job-specific match → paid tailored resume/download",
+   "target": "/ats-checker/"
+  },
+  {
+   "keyword": "ats resume checker for indian jobs",
+   "cluster": "ATS & job-specific resume pain",
+   "intent": "Informational → commercial",
+   "audience": "Active applicants, experienced candidates",
+   "opportunity": "Free ATS check → job-specific match → paid tailored resume/download",
+   "target": "/ats-checker/"
+  },
+  {
+   "keyword": "ats score meaning and how to improve it",
+   "cluster": "ATS & job-specific resume pain",
+   "intent": "Informational → commercial",
+   "audience": "Active applicants, experienced candidates",
+   "opportunity": "Free ATS check → job-specific match → paid tailored resume/download",
+   "target": ""
+  },
+  {
+   "keyword": "does ats read pdf resumes",
+   "cluster": "ATS & job-specific resume pain",
+   "intent": "Informational → commercial",
+   "audience": "Active applicants, experienced candidates",
+   "opportunity": "Free ATS check → job-specific match → paid tailored resume/download",
+   "target": "/guides/resume/pdf-vs-word-ats/"
+  },
+  {
+   "keyword": "one column vs two column resume for ats",
+   "cluster": "ATS & job-specific resume pain",
+   "intent": "Informational → commercial",
+   "audience": "Active applicants, experienced candidates",
+   "opportunity": "Free ATS check → job-specific match → paid tailored resume/download",
+   "target": "/resume-templates/one-column/"
+  },
+  {
+   "keyword": "resume tables and text boxes ats problem",
+   "cluster": "ATS & job-specific resume pain",
+   "intent": "Informational → commercial",
+   "audience": "Active applicants, experienced candidates",
+   "opportunity": "Free ATS check → job-specific match → paid tailored resume/download",
+   "target": "/guides/resume/ats-friendly-format-india/"
+  },
+  {
+   "keyword": "how to tailor one resume for different jobs",
+   "cluster": "ATS & job-specific resume pain",
+   "intent": "Informational → commercial",
+   "audience": "Active applicants, experienced candidates",
+   "opportunity": "Free ATS check → job-specific match → paid tailored resume/download",
+   "target": ""
+  },
+  {
+   "keyword": "how to make multiple versions of a resume",
+   "cluster": "ATS & job-specific resume pain",
+   "intent": "Informational → commercial",
+   "audience": "Active applicants, experienced candidates",
+   "opportunity": "Free ATS check → job-specific match → paid tailored resume/download",
+   "target": ""
+  },
+  {
+   "keyword": "resume rejected despite meeting job requirements",
+   "cluster": "ATS & job-specific resume pain",
+   "intent": "Informational → commercial",
+   "audience": "Active applicants, experienced candidates",
+   "opportunity": "Free ATS check → job-specific match → paid tailored resume/download",
+   "target": ""
+  },
+  {
+   "keyword": "how to find keywords in a job description for resume",
+   "cluster": "ATS & job-specific resume pain",
+   "intent": "Informational → commercial",
+   "audience": "Active applicants, experienced candidates",
+   "opportunity": "Free ATS check → job-specific match → paid tailored resume/download",
+   "target": "/guides/resume/skills-section-keywords/"
+  },
+  {
+   "keyword": "how to add skills without keyword stuffing in resume",
+   "cluster": "ATS & job-specific resume pain",
+   "intent": "Informational → commercial",
+   "audience": "Active applicants, experienced candidates",
+   "opportunity": "Free ATS check → job-specific match → paid tailored resume/download",
+   "target": "/guides/resume/skills-section-keywords/"
+  },
+  {
+   "keyword": "resume format for workday ats",
+   "cluster": "ATS & job-specific resume pain",
+   "intent": "Informational → commercial",
+   "audience": "Active applicants, experienced candidates",
+   "opportunity": "Free ATS check → job-specific match → paid tailored resume/download",
+   "target": "/guides/resume/ats-friendly-format-india/"
+  },
+  {
+   "keyword": "resume format for naukri profile",
+   "cluster": "ATS & job-specific resume pain",
+   "intent": "Informational → commercial",
+   "audience": "Active applicants, experienced candidates",
+   "opportunity": "Free ATS check → job-specific match → paid tailored resume/download",
+   "target": ""
+  },
+  {
+   "keyword": "resume for linkedin job application",
+   "cluster": "ATS & job-specific resume pain",
+   "intent": "Informational → commercial",
+   "audience": "Active applicants, experienced candidates",
+   "opportunity": "Free ATS check → job-specific match → paid tailored resume/download",
+   "target": ""
+  },
+  {
+   "keyword": "how to fix resume parsing errors",
+   "cluster": "ATS & job-specific resume pain",
+   "intent": "Informational → commercial",
+   "audience": "Active applicants, experienced candidates",
+   "opportunity": "Free ATS check → job-specific match → paid tailored resume/download",
+   "target": ""
+  },
+  {
+   "keyword": "why does ats miss my skills",
+   "cluster": "ATS & job-specific resume pain",
+   "intent": "Informational → commercial",
+   "audience": "Active applicants, experienced candidates",
+   "opportunity": "Free ATS check → job-specific match → paid tailored resume/download",
+   "target": "/ats-checker/"
+  },
+  {
+   "keyword": "how to improve resume match without lying",
+   "cluster": "ATS & job-specific resume pain",
+   "intent": "Informational → commercial",
+   "audience": "Active applicants, experienced candidates",
+   "opportunity": "Free ATS check → job-specific match → paid tailored resume/download",
+   "target": ""
+  },
+  {
+   "keyword": "resume for 3 years experience with achievements",
+   "cluster": "Experienced professionals & career change",
+   "intent": "Informational / commercial",
+   "audience": "3–15+ years experience, returners, career switchers",
+   "opportunity": "Upload existing resume → improvement → application-specific copy",
+   "target": "/guides/resume/achievements-bullet-points/"
+  },
+  {
+   "keyword": "resume for 5 years experience job switch",
+   "cluster": "Experienced professionals & career change",
+   "intent": "Informational / commercial",
+   "audience": "3–15+ years experience, returners, career switchers",
+   "opportunity": "Upload existing resume → improvement → application-specific copy",
+   "target": "/resume-templates/experienced/"
+  },
+  {
+   "keyword": "resume for 10 years experienced professional",
+   "cluster": "Experienced professionals & career change",
+   "intent": "Informational / commercial",
+   "audience": "3–15+ years experience, returners, career switchers",
+   "opportunity": "Upload existing resume → improvement → application-specific copy",
+   "target": "/resume-templates/senior/"
+  },
+  {
+   "keyword": "how to write measurable achievements in resume",
+   "cluster": "Experienced professionals & career change",
+   "intent": "Informational / commercial",
+   "audience": "3–15+ years experience, returners, career switchers",
+   "opportunity": "Upload existing resume → improvement → application-specific copy",
+   "target": "/guides/resume/achievements-bullet-points/"
+  },
+  {
+   "keyword": "how to explain job hopping in resume",
+   "cluster": "Experienced professionals & career change",
+   "intent": "Informational / commercial",
+   "audience": "3–15+ years experience, returners, career switchers",
+   "opportunity": "Upload existing resume → improvement → application-specific copy",
+   "target": ""
+  },
+  {
+   "keyword": "resume for career gap after 5 years experience",
+   "cluster": "Experienced professionals & career change",
+   "intent": "Informational / commercial",
+   "audience": "3–15+ years experience, returners, career switchers",
+   "opportunity": "Upload existing resume → improvement → application-specific copy",
+   "target": "/guides/resume/gap-in-employment-explanation/"
+  },
+  {
+   "keyword": "resume after long career break",
+   "cluster": "Experienced professionals & career change",
+   "intent": "Informational / commercial",
+   "audience": "3–15+ years experience, returners, career switchers",
+   "opportunity": "Upload existing resume → improvement → application-specific copy",
+   "target": "/guides/resume/gap-in-employment-explanation/"
+  },
+  {
+   "keyword": "resume for returning to work after career break",
+   "cluster": "Experienced professionals & career change",
+   "intent": "Informational / commercial",
+   "audience": "3–15+ years experience, returners, career switchers",
+   "opportunity": "Upload existing resume → improvement → application-specific copy",
+   "target": ""
+  },
+  {
+   "keyword": "career change resume with no direct experience",
+   "cluster": "Experienced professionals & career change",
+   "intent": "Informational / commercial",
+   "audience": "3–15+ years experience, returners, career switchers",
+   "opportunity": "Upload existing resume → improvement → application-specific copy",
+   "target": "/resume-templates/career-change/"
+  },
+  {
+   "keyword": "how to transfer skills to a new industry resume",
+   "cluster": "Experienced professionals & career change",
+   "intent": "Informational / commercial",
+   "audience": "3–15+ years experience, returners, career switchers",
+   "opportunity": "Upload existing resume → improvement → application-specific copy",
+   "target": "/resume-templates/career-change/"
+  },
+  {
+   "keyword": "resume for internal promotion",
+   "cluster": "Experienced professionals & career change",
+   "intent": "Informational / commercial",
+   "audience": "3–15+ years experience, returners, career switchers",
+   "opportunity": "Upload existing resume → improvement → application-specific copy",
+   "target": ""
+  },
+  {
+   "keyword": "resume for team lead role",
+   "cluster": "Experienced professionals & career change",
+   "intent": "Informational / commercial",
+   "audience": "3–15+ years experience, returners, career switchers",
+   "opportunity": "Upload existing resume → improvement → application-specific copy",
+   "target": ""
+  },
+  {
+   "keyword": "resume for manager role with no leadership title",
+   "cluster": "Experienced professionals & career change",
+   "intent": "Informational / commercial",
+   "audience": "3–15+ years experience, returners, career switchers",
+   "opportunity": "Upload existing resume → improvement → application-specific copy",
+   "target": ""
+  },
+  {
+   "keyword": "how to show promotions in one company on resume",
+   "cluster": "Experienced professionals & career change",
+   "intent": "Informational / commercial",
+   "audience": "3–15+ years experience, returners, career switchers",
+   "opportunity": "Upload existing resume → improvement → application-specific copy",
+   "target": ""
+  },
+  {
+   "keyword": "how to write freelance work in resume",
+   "cluster": "Experienced professionals & career change",
+   "intent": "Informational / commercial",
+   "audience": "3–15+ years experience, returners, career switchers",
+   "opportunity": "Upload existing resume → improvement → application-specific copy",
+   "target": "/resume-templates/freelance/"
+  },
+  {
+   "keyword": "resume for contract employee",
+   "cluster": "Experienced professionals & career change",
+   "intent": "Informational / commercial",
+   "audience": "3–15+ years experience, returners, career switchers",
+   "opportunity": "Upload existing resume → improvement → application-specific copy",
+   "target": ""
+  },
+  {
+   "keyword": "resume for consultant changing to full time",
+   "cluster": "Experienced professionals & career change",
+   "intent": "Informational / commercial",
+   "audience": "3–15+ years experience, returners, career switchers",
+   "opportunity": "Upload existing resume → improvement → application-specific copy",
+   "target": ""
+  },
+  {
+   "keyword": "resume for remote jobs india",
+   "cluster": "Experienced professionals & career change",
+   "intent": "Informational / commercial",
+   "audience": "3–15+ years experience, returners, career switchers",
+   "opportunity": "Upload existing resume → improvement → application-specific copy",
+   "target": ""
+  },
+  {
+   "keyword": "how to shorten a 4 page resume",
+   "cluster": "Experienced professionals & career change",
+   "intent": "Informational / commercial",
+   "audience": "3–15+ years experience, returners, career switchers",
+   "opportunity": "Upload existing resume → improvement → application-specific copy",
+   "target": "/resume-templates/one-page/"
+  },
+  {
+   "keyword": "resume for senior professional india",
+   "cluster": "Experienced professionals & career change",
+   "intent": "Informational / commercial",
+   "audience": "3–15+ years experience, returners, career switchers",
+   "opportunity": "Upload existing resume → improvement → application-specific copy",
+   "target": "/resume-templates/senior/"
+  },
+  {
+   "keyword": "resume vs cv difference in india for private jobs",
+   "cluster": "CV writing, cover letters & LinkedIn",
+   "intent": "Informational → transactional",
+   "audience": "All job seekers, especially active applicants",
+   "opportunity": "Template/guide → builder or cover-letter tool",
+   "target": ""
+  },
+  {
+   "keyword": "how to write a professional resume summary",
+   "cluster": "CV writing, cover letters & LinkedIn",
+   "intent": "Informational → transactional",
+   "audience": "All job seekers, especially active applicants",
+   "opportunity": "Template/guide → builder or cover-letter tool",
+   "target": "/guides/resume/professional-summary-guide/"
+  },
+  {
+   "keyword": "how to write resume bullet points with metrics",
+   "cluster": "CV writing, cover letters & LinkedIn",
+   "intent": "Informational → transactional",
+   "audience": "All job seekers, especially active applicants",
+   "opportunity": "Template/guide → builder or cover-letter tool",
+   "target": "/guides/resume/achievements-bullet-points/"
+  },
+  {
+   "keyword": "cover letter for job application with no experience",
+   "cluster": "CV writing, cover letters & LinkedIn",
+   "intent": "Informational → transactional",
+   "audience": "All job seekers, especially active applicants",
+   "opportunity": "Template/guide → builder or cover-letter tool",
+   "target": "/cover-letter-examples/student/"
+  },
+  {
+   "keyword": "cover letter matching resume and job description",
+   "cluster": "CV writing, cover letters & LinkedIn",
+   "intent": "Informational → transactional",
+   "audience": "All job seekers, especially active applicants",
+   "opportunity": "Template/guide → builder or cover-letter tool",
+   "target": "/cover-letter-generator/"
+  },
+  {
+   "keyword": "short email to send resume to hr",
+   "cluster": "CV writing, cover letters & LinkedIn",
+   "intent": "Informational → transactional",
+   "audience": "All job seekers, especially active applicants",
+   "opportunity": "Template/guide → builder or cover-letter tool",
+   "target": "/guides/cover-letter/short-email-format/"
+  },
+  {
+   "keyword": "what to write in email when sending resume to recruiter",
+   "cluster": "CV writing, cover letters & LinkedIn",
+   "intent": "Informational → transactional",
+   "audience": "All job seekers, especially active applicants",
+   "opportunity": "Template/guide → builder or cover-letter tool",
+   "target": "/guides/cover-letter/short-email-format/"
+  },
+  {
+   "keyword": "linkedin message to recruiter after applying",
+   "cluster": "CV writing, cover letters & LinkedIn",
+   "intent": "Informational → transactional",
+   "audience": "All job seekers, especially active applicants",
+   "opportunity": "Template/guide → builder or cover-letter tool",
+   "target": ""
+  },
+  {
+   "keyword": "linkedin headline for freshers seeking jobs",
+   "cluster": "CV writing, cover letters & LinkedIn",
+   "intent": "Informational → transactional",
+   "audience": "All job seekers, especially active applicants",
+   "opportunity": "Template/guide → builder or cover-letter tool",
+   "target": ""
+  },
+  {
+   "keyword": "how to write linkedin about section for job seekers",
+   "cluster": "CV writing, cover letters & LinkedIn",
+   "intent": "Informational → transactional",
+   "audience": "All job seekers, especially active applicants",
+   "opportunity": "Template/guide → builder or cover-letter tool",
+   "target": ""
+  },
+  {
+   "keyword": "how to update naukri profile with new resume",
+   "cluster": "CV writing, cover letters & LinkedIn",
+   "intent": "Informational → transactional",
+   "audience": "All job seekers, especially active applicants",
+   "opportunity": "Template/guide → builder or cover-letter tool",
+   "target": ""
+  },
+  {
+   "keyword": "how to write a career objective for fresher",
+   "cluster": "CV writing, cover letters & LinkedIn",
+   "intent": "Informational → transactional",
+   "audience": "All job seekers, especially active applicants",
+   "opportunity": "Template/guide → builder or cover-letter tool",
+   "target": ""
+  },
+  {
+   "keyword": "resume objective vs professional summary",
+   "cluster": "CV writing, cover letters & LinkedIn",
+   "intent": "Informational → transactional",
+   "audience": "All job seekers, especially active applicants",
+   "opportunity": "Template/guide → builder or cover-letter tool",
+   "target": "/guides/resume/professional-summary-guide/"
+  },
+  {
+   "keyword": "how to list certifications on resume",
+   "cluster": "CV writing, cover letters & LinkedIn",
+   "intent": "Informational → transactional",
+   "audience": "All job seekers, especially active applicants",
+   "opportunity": "Template/guide → builder or cover-letter tool",
+   "target": ""
+  },
+  {
+   "keyword": "how to include online courses on resume",
+   "cluster": "CV writing, cover letters & LinkedIn",
+   "intent": "Informational → transactional",
+   "audience": "All job seekers, especially active applicants",
+   "opportunity": "Template/guide → builder or cover-letter tool",
+   "target": ""
+  },
+  {
+   "keyword": "how to explain employment gap in cover letter",
+   "cluster": "CV writing, cover letters & LinkedIn",
+   "intent": "Informational → transactional",
+   "audience": "All job seekers, especially active applicants",
+   "opportunity": "Template/guide → builder or cover-letter tool",
+   "target": "/guides/resume/gap-in-employment-explanation/"
+  },
+  {
+   "keyword": "resume file name format for job application",
+   "cluster": "CV writing, cover letters & LinkedIn",
+   "intent": "Informational → transactional",
+   "audience": "All job seekers, especially active applicants",
+   "opportunity": "Template/guide → builder or cover-letter tool",
+   "target": ""
+  },
+  {
+   "keyword": "best pdf settings for resume download",
+   "cluster": "CV writing, cover letters & LinkedIn",
+   "intent": "Informational → transactional",
+   "audience": "All job seekers, especially active applicants",
+   "opportunity": "Template/guide → builder or cover-letter tool",
+   "target": "/guides/resume/pdf-vs-word-ats/"
+  },
+  {
+   "keyword": "how to prepare for hr interview for first job",
+   "cluster": "Interview preparation & job search",
+   "intent": "Informational → commercial",
+   "audience": "Freshers, job switchers, interview-stage candidates",
+   "opportunity": "Free preparation content → role-based mock interview",
+   "target": "/interview-questions/freshers/"
+  },
+  {
+   "keyword": "common hr interview questions with sample answers for freshers",
+   "cluster": "Interview preparation & job search",
+   "intent": "Informational → commercial",
+   "audience": "Freshers, job switchers, interview-stage candidates",
+   "opportunity": "Free preparation content → role-based mock interview",
+   "target": "/interview-questions/freshers/"
+  },
+  {
+   "keyword": "tell me about yourself answer for fresher",
+   "cluster": "Interview preparation & job search",
+   "intent": "Informational → commercial",
+   "audience": "Freshers, job switchers, interview-stage candidates",
+   "opportunity": "Free preparation content → role-based mock interview",
+   "target": "/guides/interview/tell-me-about-yourself/"
+  },
+  {
+   "keyword": "how to answer why should we hire you fresher",
+   "cluster": "Interview preparation & job search",
+   "intent": "Informational → commercial",
+   "audience": "Freshers, job switchers, interview-stage candidates",
+   "opportunity": "Free preparation content → role-based mock interview",
+   "target": "/interview-questions/freshers/"
+  },
+  {
+   "keyword": "how to explain salary expectation in hr interview india",
+   "cluster": "Interview preparation & job search",
+   "intent": "Informational → commercial",
+   "audience": "Freshers, job switchers, interview-stage candidates",
+   "opportunity": "Free preparation content → role-based mock interview",
+   "target": "/guides/interview/salary-expectations-answer/"
+  },
+  {
+   "keyword": "how to answer reason for leaving previous job",
+   "cluster": "Interview preparation & job search",
+   "intent": "Informational → commercial",
+   "audience": "Freshers, job switchers, interview-stage candidates",
+   "opportunity": "Free preparation content → role-based mock interview",
+   "target": ""
+  },
+  {
+   "keyword": "mock interview practice for freshers online",
+   "cluster": "Interview preparation & job search",
+   "intent": "Informational → commercial",
+   "audience": "Freshers, job switchers, interview-stage candidates",
+   "opportunity": "Free preparation content → role-based mock interview",
+   "target": "/interview-questions/"
+  },
+  {
+   "keyword": "practice hr interview questions by job role",
+   "cluster": "Interview preparation & job search",
+   "intent": "Informational → commercial",
+   "audience": "Freshers, job switchers, interview-stage candidates",
+   "opportunity": "Free preparation content → role-based mock interview",
+   "target": "/interview-questions/"
+  },
+  {
+   "keyword": "interview questions for sales executive fresher",
+   "cluster": "Interview preparation & job search",
+   "intent": "Informational → commercial",
+   "audience": "Freshers, job switchers, interview-stage candidates",
+   "opportunity": "Free preparation content → role-based mock interview",
+   "target": "/interview-questions/sales-executive/"
+  },
+  {
+   "keyword": "interview questions for customer support executive",
+   "cluster": "Interview preparation & job search",
+   "intent": "Informational → commercial",
+   "audience": "Freshers, job switchers, interview-stage candidates",
+   "opportunity": "Free preparation content → role-based mock interview",
+   "target": "/interview-questions/customer-support/"
+  },
+  {
+   "keyword": "interview questions for business development executive",
+   "cluster": "Interview preparation & job search",
+   "intent": "Informational → commercial",
+   "audience": "Freshers, job switchers, interview-stage candidates",
+   "opportunity": "Free preparation content → role-based mock interview",
+   "target": "/interview-questions/business-development-executive/"
+  },
+  {
+   "keyword": "interview questions for hr recruiter",
+   "cluster": "Interview preparation & job search",
+   "intent": "Informational → commercial",
+   "audience": "Freshers, job switchers, interview-stage candidates",
+   "opportunity": "Free preparation content → role-based mock interview",
+   "target": "/interview-questions/hr-recruiter/"
+  },
+  {
+   "keyword": "interview questions for accountant fresher",
+   "cluster": "Interview preparation & job search",
+   "intent": "Informational → commercial",
+   "audience": "Freshers, job switchers, interview-stage candidates",
+   "opportunity": "Free preparation content → role-based mock interview",
+   "target": "/interview-questions/accountant/"
+  },
+  {
+   "keyword": "interview questions for operations executive",
+   "cluster": "Interview preparation & job search",
+   "intent": "Informational → commercial",
+   "audience": "Freshers, job switchers, interview-stage candidates",
+   "opportunity": "Free preparation content → role-based mock interview",
+   "target": "/interview-questions/operations-manager/"
+  },
+  {
+   "keyword": "how to answer behavioural interview questions using star",
+   "cluster": "Interview preparation & job search",
+   "intent": "Informational → commercial",
+   "audience": "Freshers, job switchers, interview-stage candidates",
+   "opportunity": "Free preparation content → role-based mock interview",
+   "target": "/guides/interview/star-method-examples/"
+  },
+  {
+   "keyword": "how to prepare for a job interview in 24 hours",
+   "cluster": "Interview preparation & job search",
+   "intent": "Informational → commercial",
+   "audience": "Freshers, job switchers, interview-stage candidates",
+   "opportunity": "Free preparation content → role-based mock interview",
+   "target": ""
+  },
+  {
+   "keyword": "what to do after applying for a job and no response",
+   "cluster": "Interview preparation & job search",
+   "intent": "Informational → commercial",
+   "audience": "Freshers, job switchers, interview-stage candidates",
+   "opportunity": "Free preparation content → role-based mock interview",
+   "target": "/guides/jobs/follow-up-email-template/"
+  },
+  {
+   "keyword": "how to follow up with recruiter after interview",
+   "cluster": "Interview preparation & job search",
+   "intent": "Informational → commercial",
+   "audience": "Freshers, job switchers, interview-stage candidates",
+   "opportunity": "Free preparation content → role-based mock interview",
+   "target": "/guides/interview/thank-you-email-template/"
+  },
+  {
+   "keyword": "how to track job applications in one place",
+   "cluster": "Interview preparation & job search",
+   "intent": "Informational → commercial",
+   "audience": "Freshers, job switchers, interview-stage candidates",
+   "opportunity": "Free preparation content → role-based mock interview",
+   "target": "/guides/jobs/application-tracker-method/"
+  },
+  {
+   "keyword": "how to prepare for interview after career break",
+   "cluster": "Interview preparation & job search",
+   "intent": "Informational → commercial",
+   "audience": "Freshers, job switchers, interview-stage candidates",
+   "opportunity": "Free preparation content → role-based mock interview",
+   "target": ""
+  },
+  {
+   "keyword": "resume builder with one time payment india",
+   "cluster": "Product, trust, pricing & decision queries",
+   "intent": "Commercial / transactional",
+   "audience": "High-intent buyers comparing tools",
+   "opportunity": "Pricing/features proof → start free → purchase",
+   "target": "/#pricing"
+  },
+  {
+   "keyword": "resume builder without auto renewal india",
+   "cluster": "Product, trust, pricing & decision queries",
+   "intent": "Commercial / transactional",
+   "audience": "High-intent buyers comparing tools",
+   "opportunity": "Pricing/features proof → start free → purchase",
+   "target": "/#pricing"
+  },
+  {
+   "keyword": "affordable ats resume builder india",
+   "cluster": "Product, trust, pricing & decision queries",
+   "intent": "Commercial / transactional",
+   "audience": "High-intent buyers comparing tools",
+   "opportunity": "Pricing/features proof → start free → purchase",
+   "target": "/resume-builder/"
+  },
+  {
+   "keyword": "free resume builder with pdf download india",
+   "cluster": "Product, trust, pricing & decision queries",
+   "intent": "Commercial / transactional",
+   "audience": "High-intent buyers comparing tools",
+   "opportunity": "Pricing/features proof → start free → purchase",
+   "target": "/resume-builder/"
+  },
+  {
+   "keyword": "resume builder with job description matching",
+   "cluster": "Product, trust, pricing & decision queries",
+   "intent": "Commercial / transactional",
+   "audience": "High-intent buyers comparing tools",
+   "opportunity": "Pricing/features proof → start free → purchase",
+   "target": "/ats-checker/"
+  },
+  {
+   "keyword": "resume builder and cover letter maker india",
+   "cluster": "Product, trust, pricing & decision queries",
+   "intent": "Commercial / transactional",
+   "audience": "High-intent buyers comparing tools",
+   "opportunity": "Pricing/features proof → start free → purchase",
+   "target": "/cover-letter-generator/"
+  },
+  {
+   "keyword": "resume builder with resume upload and editing",
+   "cluster": "Product, trust, pricing & decision queries",
+   "intent": "Commercial / transactional",
+   "audience": "High-intent buyers comparing tools",
+   "opportunity": "Pricing/features proof → start free → purchase",
+   "target": "/resume-builder/"
+  },
+  {
+   "keyword": "resume checker and resume builder in one tool",
+   "cluster": "Product, trust, pricing & decision queries",
+   "intent": "Commercial / transactional",
+   "audience": "High-intent buyers comparing tools",
+   "opportunity": "Pricing/features proof → start free → purchase",
+   "target": "/ats-checker/"
+  },
+  {
+   "keyword": "resume builder for freshers with examples india",
+   "cluster": "Product, trust, pricing & decision queries",
+   "intent": "Commercial / transactional",
+   "audience": "High-intent buyers comparing tools",
+   "opportunity": "Pricing/features proof → start free → purchase",
+   "target": "/resume-templates/fresher/"
+  },
+  {
+   "keyword": "resume improvement tool for experienced professionals",
+   "cluster": "Product, trust, pricing & decision queries",
+   "intent": "Commercial / transactional",
+   "audience": "High-intent buyers comparing tools",
+   "opportunity": "Pricing/features proof → start free → purchase",
+   "target": "/resume-templates/experienced/"
+  },
+  {
+   "keyword": "resume builder with application tracker india",
+   "cluster": "Product, trust, pricing & decision queries",
+   "intent": "Commercial / transactional",
+   "audience": "High-intent buyers comparing tools",
+   "opportunity": "Pricing/features proof → start free → purchase",
+   "target": "/guides/jobs/application-tracker-method/"
+  },
+  {
+   "keyword": "resume builder with interview preparation india",
+   "cluster": "Product, trust, pricing & decision queries",
+   "intent": "Commercial / transactional",
+   "audience": "High-intent buyers comparing tools",
+   "opportunity": "Pricing/features proof → start free → purchase",
+   "target": "/interview-questions/"
+  },
+  {
+   "keyword": "ai resume builder that does not invent experience",
+   "cluster": "Product, trust, pricing & decision queries",
+   "intent": "Commercial / transactional",
+   "audience": "High-intent buyers comparing tools",
+   "opportunity": "Pricing/features proof → start free → purchase",
+   "target": ""
+  },
+  {
+   "keyword": "resume builder with recruiter reviewed guidance",
+   "cluster": "Product, trust, pricing & decision queries",
+   "intent": "Commercial / transactional",
+   "audience": "High-intent buyers comparing tools",
+   "opportunity": "Pricing/features proof → start free → purchase",
+   "target": "/about.html"
+  },
+  {
+   "keyword": "is paid resume builder worth it india",
+   "cluster": "Product, trust, pricing & decision queries",
+   "intent": "Commercial / transactional",
+   "audience": "High-intent buyers comparing tools",
+   "opportunity": "Pricing/features proof → start free → purchase",
+   "target": "/#pricing"
+  },
+  {
+   "keyword": "best low cost resume builder for job seekers india",
+   "cluster": "Product, trust, pricing & decision queries",
+   "intent": "Commercial / transactional",
+   "audience": "High-intent buyers comparing tools",
+   "opportunity": "Pricing/features proof → start free → purchase",
+   "target": "/#pricing"
+  },
+  {
+   "keyword": "resume writing service vs resume builder india",
+   "cluster": "Product, trust, pricing & decision queries",
+   "intent": "Commercial / transactional",
+   "audience": "High-intent buyers comparing tools",
+   "opportunity": "Pricing/features proof → start free → purchase",
+   "target": ""
+  },
+  {
+   "keyword": "resume builder alternative to monthly subscription",
+   "cluster": "Product, trust, pricing & decision queries",
+   "intent": "Commercial / transactional",
+   "audience": "High-intent buyers comparing tools",
+   "opportunity": "Pricing/features proof → start free → purchase",
+   "target": "/#pricing"
+  },
+  {
+   "keyword": "resume builder with ats score and explanation",
+   "cluster": "Product, trust, pricing & decision queries",
+   "intent": "Commercial / transactional",
+   "audience": "High-intent buyers comparing tools",
+   "opportunity": "Pricing/features proof → start free → purchase",
+   "target": "/ats-checker/"
+  },
+  {
+   "keyword": "resume tool that keeps separate resume for each job application",
+   "cluster": "Product, trust, pricing & decision queries",
+   "intent": "Commercial / transactional",
+   "audience": "High-intent buyers comparing tools",
+   "opportunity": "Pricing/features proof → start free → purchase",
+   "target": "/resume-builder/"
+  }
+ ]
+}

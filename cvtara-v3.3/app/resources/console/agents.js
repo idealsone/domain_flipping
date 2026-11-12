@@ -357,7 +357,7 @@
   const CR = { page: 1, per: 20, agent: 'all', status: 'all' };
   function facts(d) {
     if (!d) return '<p class="muted">Not written yet.</p>';
-    const skip = new Set(['sources', 'period', 'from', 'to', 'knowledgeVersion', 'corrections', 'month', 'bottleneck', 'margin', 'plans', 'sections', 'nearWins', 'lowClickRate', 'brokenPages', 'importantNotIndexed', 'signupsBySource']);
+    const skip = new Set(['sources', 'period', 'from', 'to', 'knowledgeVersion', 'corrections', 'month', 'bottleneck', 'margin', 'plans', 'sections', 'nearWins', 'lowClickRate', 'brokenPages', 'importantNotIndexed', 'signupsBySource', 'backlog']);
     const label = k => k.replace(/Paise$/, '').replace(/([A-Z])/g, ' $1').replace(/^./, c => c.toUpperCase());
     const val = (k, v) => /Paise$/.test(k) ? inr(v) : (v === null || v === undefined ? 'Not tracked' : typeof v === 'object' ? E(JSON.stringify(v)) : E(String(v)));
     const rows = Object.entries(d).filter(([k]) => !skip.has(k)).map(([k, v]) => `<tr><td>${E(label(k))}</td><td>${val(k, v)}</td></tr>`);
@@ -367,6 +367,7 @@
       ${list('Pages that do not open', Object.entries(d.brokenPages || {}), ([p, s]) => `<li>${E(p)} (${E(s)})</li>`)}
       ${list('Searches close to page 1', d.nearWins, r => `<li>${E(r.query)}: position ${E(r.position)}, ${n(r.impressions)} views</li>`)}
       ${list('Shown but rarely clicked', d.lowClickRate, r => `<li>${E(r.query)}: ${E(r.ctrPct)}% at position ${E(r.position)}</li>`)}
+      ${list('Keyword backlog by cluster', d.backlog, r => `<li>${E(r.cluster)}: ${n(r.mapped)} of ${n(r.keywords)} have a page, ${n(r.gaps)} without</li>`)}
       ${list('Sections', d.sections, r => `<li>${E(r.section)}: ${n(r.indexed)} of ${n(r.pages)} indexed</li>`)}
       <p class="muted" style="font-size:.85em">Read from: ${E((d.sources || []).join(', '))}. Knowledge version ${n(d.knowledgeVersion)}.</p>`;
   }
@@ -403,5 +404,49 @@
     } catch (e) { $('#crT', h).innerHTML = `<p role="alert">${E(err(e))}</p>`; }
   }
 
-  window.CVTaraAgents = { seo, revenue, log, cadence };
+  // ---------------------------------------------------------------- listings register and keyword backlog (3.60.0)
+  const BS = { not_listed: ['Not listed', ''], pending: ['Pending', 'mid'], live: ['Live', 'ok'], needs_fix: ['Needs a fix', 'bad'] };
+  const BK = { search: 'Search engine', social: 'Social profile', directory: 'Software directory', review: 'Review site', business: 'Business listing' };
+  const BR = { page: 1, per: 20, status: 'all', kind: 'all' };
+  async function brand(h) {
+    if (!$('#brT', h)) {
+      h.innerHTML = `<section class="panel panel-pad" data-nokit><h3 style="margin-top:0">Directory and brand listings</h3><p class="muted" style="margin-top:0">Where CVTara is listed, the public address, and whether the listing is claimed and verified. Checking only opens the public page; nothing is submitted anywhere for you.</p>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:8px"><select id="brS"><option value="all">Any state</option>${Object.entries(BS).map(([k, v]) => `<option value="${k}">${v[0]}</option>`).join('')}</select><select id="brK"><option value="all">Any type</option>${Object.entries(BK).map(([k, v]) => `<option value="${k}">${v}</option>`).join('')}</select>
+          <a class="button secondary small" id="brCsv" href="#">Download CSV</a><a class="button secondary small" id="brXl" href="#">Download Excel</a><button type="button" class="button primary small" id="brAdd">Add a listing</button></div>
+        <div id="brT"></div><div class="ops-pager" id="brP"></div></section>
+        <section class="panel panel-pad" data-nokit><h3 style="margin-top:0">Keyword backlog</h3><p class="muted" style="margin-top:0" id="kbSrc"></p><div id="kbT"></div></section>`;
+      $('#brS', h).onchange = e => { BR.status = e.target.value; BR.page = 1; brands(h); };
+      $('#brK', h).onchange = e => { BR.kind = e.target.value; BR.page = 1; brands(h); };
+      $('#brAdd', h).onclick = () => brandForm(h, {});
+    }
+    brands(h);
+    try {
+      const b = await api('/api/admin/growth/seo/backlog'); $('#kbSrc', h).textContent = b.source;
+      $('#kbT', h).innerHTML = table(['Cluster', 'Searches', 'With a page', 'Without a page yet'], b.clusters.map(c => `<tr><td>${E(c.cluster)}</td><td>${n(c.keywords)}</td><td>${n(c.mapped)}</td><td>${c.gaps.length ? `<details><summary>${n(c.gaps.length)}</summary><ul>${c.gaps.map(g => `<li>${E(g)}</li>`).join('')}</ul></details>` : '0'}</td></tr>`), 'No backlog loaded.');
+    } catch (e) { $('#kbT', h).innerHTML = `<p role="alert">${E(err(e))}</p>`; }
+  }
+  async function brands(h) {
+    const q = qs(BR, ['status', 'kind']); $('#brCsv', h).href = '/api/admin/growth/brand-profiles?' + q + '&export=csv'; $('#brXl', h).href = '/api/admin/growth/brand-profiles?' + q + '&export=xlsx';
+    try {
+      const d = await api('/api/admin/growth/brand-profiles?' + q);
+      $('#brT', h).innerHTML = table(['Platform', 'Type', 'Listing', 'State', 'Claimed', 'Verified', 'Last checked', ''], d.rows.map(r => `<tr><td>${E(r.platform)}${r.note ? `<br><small class="muted">${E(r.note)}</small>` : ''}</td><td>${E(BK[r.kind] || r.kind)}</td><td>${r.url ? `<a href="${E(r.url)}" target="_blank" rel="noopener">Open</a>` : '—'}</td><td><span class="pill ${(BS[r.status] || ['', ''])[1]}">${E((BS[r.status] || [r.status])[0])}</span></td><td>${r.claimed ? 'Yes' : 'No'}</td><td>${r.verified ? 'Yes' : 'No'}</td><td>${E(when(r.last_checked_at))}${r.http_status !== null && r.http_status !== undefined ? ' (' + E(r.http_status) + ')' : ''}</td>
+        <td><button type="button" class="button secondary small" data-bre="${r.id}">Edit</button> ${r.url ? `<button type="button" class="button secondary small" data-brc="${r.id}">Check</button>` : ''}</td></tr>`), 'No listings.');
+      h.querySelectorAll('[data-bre]').forEach(b => b.onclick = () => brandForm(h, d.rows.find(r => String(r.id) === b.dataset.bre)));
+      h.querySelectorAll('[data-brc]').forEach(b => b.onclick = async () => { b.disabled = true; try { const r = await api('/api/admin/growth/brand-profiles/check', { method: 'POST', body: { id: Number(b.dataset.brc) } }); toast('Checked: status ' + r.profile.http_status); brands(h); } catch (x) { toast(err(x)); b.disabled = false; } });
+      K.pager($('#brP', h), d, (p, per) => { BR.page = p; BR.per = per; brands(h); });
+    } catch (e) { $('#brT', h).innerHTML = `<p role="alert">${E(err(e))}</p>`; }
+  }
+  function brandForm(h, r) {
+    const m = modal(r.id ? 'Edit ' + r.platform : 'Add a listing', `<form class="ops-form"><label>Platform<input name="platform" required maxlength="80" value="${E(r.platform || '')}"></label>
+      <label>Type<select name="kind">${Object.entries(BK).map(([k, v]) => `<option value="${k}" ${r.kind === k ? 'selected' : ''}>${v}</option>`).join('')}</select></label>
+      <label class="wide">Public listing address<input name="url" type="url" maxlength="300" placeholder="https://" value="${E(r.url || '')}"></label>
+      <label>State<select name="status">${Object.entries(BS).map(([k, v]) => `<option value="${k}" ${(r.status || 'not_listed') === k ? 'selected' : ''}>${v[0]}</option>`).join('')}</select></label>
+      <label class="ops-check"><input type="checkbox" name="claimed" ${r.claimed ? 'checked' : ''}> Claimed by CVTara</label><label class="ops-check"><input type="checkbox" name="verified" ${r.verified ? 'checked' : ''}> Verified</label>
+      <label class="wide">Note<textarea name="note" maxlength="500" rows="2">${E(r.note || '')}</textarea></label><div class="wide"><button class="button primary">Save</button> <span class="ops-st" role="status"></span></div></form>`);
+    const f = (m.el || m.body).querySelector('form');
+    f.onsubmit = async e => { e.preventDefault(); const st = f.querySelector('.ops-st'); const b = Object.fromEntries(new FormData(f)); b.claimed = f.claimed.checked; b.verified = f.verified.checked; if (r.id) b.id = r.id; if (!b.url) delete b.url;
+      try { await api('/api/admin/growth/brand-profiles', { method: 'POST', body: b }); toast('Saved'); m.close(); brands(h); } catch (x) { st.textContent = err(x); } };
+  }
+
+  window.CVTaraAgents = { seo, revenue, log, cadence, brand };
 })();

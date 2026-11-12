@@ -19,7 +19,7 @@ class SeoOps
 {
     /** The pages that matter most for search and for the brand result (Google may choose some of them as sitelinks). */
     public const IMPORTANT = ['/', '/resume-builder/', '/ats-checker/', '/cover-letter-generator/', '/templates.html', '/resume-templates/', '/resume-examples/', '/cover-letter-examples/', '/cover-letter-examples/how-to-write/',
-        '/cover-letters.html', '/guides.html', '/blog.html', '/interview-questions/', '/resume-words/', '/resume-builder/india/', '/about.html', '/contact.html'];
+        '/cover-letters.html', '/guides.html', '/blog.html', '/interview-questions/', '/resume-words/', '/resume-builder/india/', '/about.html', '/contact.html', '/partners.html'];
 
     /** The brand result the owner wants: main pages Google may show under the CVTara result. null = no page for it yet. */
     public const SITELINKS = ['Resume Builder' => '/resume-builder/', 'ATS Resume Checker' => '/ats-checker/', 'Resume vs JD Matcher' => null, 'Cover Letter Generator' => '/cover-letter-generator/',

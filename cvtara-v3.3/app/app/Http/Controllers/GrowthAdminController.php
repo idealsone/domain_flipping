@@ -96,6 +96,24 @@ class GrowthAdminController extends Controller
         if ($path === 'growth/agents' && $get) {
             return $ok(['seo' => \App\Services\SeoAgent::agentStatus(), 'growth' => Growth::agentStatus(), 'settings' => ['seo' => SeoAgent::settings()['auto'], 'growth' => GrowthOps::settings()['auto']]]);
         }
+        // 3.60.0 directory and brand listings register, keyword backlog by cluster
+        if ($path === 'growth/brand-profiles' && $get) {
+            return $ok(AdminTable::query($r, DB::table('brand_profiles'), ['search' => ['platform', 'url', 'note'], 'filters' => ['status' => 'status', 'kind' => 'kind'], 'sorts' => ['platform' => 'platform', 'checked' => 'last_checked_at', 'sort' => 'id'], 'sort' => 'platform', 'dir' => 'asc', 'key' => 'id',
+                'export' => ['title' => 'Directory and brand listings', 'map' => fn ($rows) => array_map(fn ($x) => ['Platform' => $x['platform'], 'Type' => \App\Services\BrandProfiles::KINDS[$x['kind']] ?? $x['kind'], 'URL' => $x['url'],
+                    'State' => \App\Services\BrandProfiles::STATES[$x['status']] ?? $x['status'], 'Claimed' => $x['claimed'] ? 'Yes' : 'No', 'Verified' => $x['verified'] ? 'Yes' : 'No', 'Last checked' => $x['last_checked_at'], 'Status code' => $x['http_status'], 'Note' => $x['note']], $rows)]]));
+        }
+        if ($path === 'growth/brand-profiles' && ! $get) {
+            $v = $r->validate(['id' => 'nullable|integer', 'platform' => 'required|string|min:2|max:80', 'kind' => 'required|in:'.implode(',', array_keys(\App\Services\BrandProfiles::KINDS)), 'url' => 'nullable|url|max:300',
+                'status' => 'required|in:'.implode(',', array_keys(\App\Services\BrandProfiles::STATES)), 'claimed' => 'boolean', 'verified' => 'boolean', 'note' => 'nullable|string|max:500']);
+
+            return $ok(['id' => \App\Services\BrandProfiles::save($r->user()->id, $v)]);
+        }
+        if ($path === 'growth/brand-profiles/check' && ! $get) {
+            return $ok(['profile' => \App\Services\BrandProfiles::check((int) $r->input('id'))]);
+        }
+        if ($path === 'growth/seo/backlog' && $get) {
+            return $ok(['clusters' => \App\Services\SeoBacklog::summary(), 'source' => \App\Services\SeoBacklog::data()['source'] ?? '']);
+        }
         if ($path === 'growth/agents/cadence' && $get) {
             return $ok(\App\Services\AgentCadence::overview());
         }
