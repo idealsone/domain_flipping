@@ -81,6 +81,7 @@ class Settings
         if (DB::table('site_settings')->where('key', $key)->update(['value_json' => $json, 'revision' => DB::raw('revision + 1'), 'updated_at' => now()]) === 0) {
             DB::table('site_settings')->insertOrIgnore(['key' => $key, 'value_json' => $json, 'revision' => 1, 'updated_at' => now(), 'created_at' => now()]);
         }
+        KnowledgeSync::changed($key);
     }
 
     public static function providers(): array

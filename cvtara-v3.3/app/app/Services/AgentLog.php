@@ -20,7 +20,7 @@ class AgentLog
         try {
             $out = (array) $fn();
             $status = ($out['skipped'] ?? false) ? 'skipped' : 'ok';
-            self::write($agent, $task, $status, (string) ($out['summary'] ?? ''), '', $at, $start);
+            $out['_run'] = self::write($agent, $task, $status, (string) ($out['summary'] ?? ''), '', $at, $start, (array) ($out['_meta'] ?? []));
 
             return $out;
         } catch (\Throwable $e) {
@@ -32,10 +32,32 @@ class AgentLog
         }
     }
 
-    private static function write(string $agent, string $task, string $status, string $summary, string $error, $at, float $start): void
+    /**
+     * One row per task. Since 3.58.0 each row also carries its run id, the rules/prompt version, the model (empty when no
+     * model was used), the sources it read and the knowledge version it worked from (V7 §37), from the task's `_meta`.
+     */
+    private static function write(string $agent, string $task, string $status, string $summary, string $error, $at, float $start, array $meta = []): string
     {
-        DB::table('agent_runs')->insert(['agent' => $agent, 'task' => mb_substr($task, 0, 40), 'status' => $status, 'summary' => mb_substr($summary, 0, 500), 'error' => mb_substr($error, 0, 500),
-            'ms' => (int) round((microtime(true) - $start) * 1000), 'started_at' => $at, 'finished_at' => now()]);
+        $uid = (string) \Illuminate\Support\Str::uuid();
+        $row = ['agent' => $agent, 'task' => mb_substr($task, 0, 40), 'status' => $status, 'summary' => mb_substr($summary, 0, 500), 'error' => mb_substr($error, 0, 500),
+            'ms' => (int) round((microtime(true) - $start) * 1000), 'started_at' => $at, 'finished_at' => now()];
+        if (self::traced()) {
+            $row += ['run_uid' => $uid, 'prompt_version' => mb_substr((string) ($meta['promptVersion'] ?? ''), 0, 40), 'model' => mb_substr((string) ($meta['model'] ?? ''), 0, 60),
+                'sources_json' => isset($meta['sources']) ? json_encode(array_values(array_slice((array) $meta['sources'], 0, 30))) : null, 'knowledge_version' => $meta['knowledgeVersion'] ?? KnowledgeSync::version()];
+        }
+        DB::table('agent_runs')->insert($row);
+        if (self::traced()) {
+            KnowledgeSync::mark($agent);
+        }
+
+        return $uid;
+    }
+
+    private static ?bool $traced = null;
+
+    private static function traced(): bool
+    {
+        return self::$traced ??= \Illuminate\Support\Facades\Schema::hasColumn('agent_runs', 'run_uid');
     }
 
     /** Counts for one agent over the last N days. */

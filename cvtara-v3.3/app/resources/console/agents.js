@@ -351,5 +351,57 @@
     } catch (e) { $('#lgT', h).innerHTML = `<p role="alert">${E(err(e))}</p>`; }
   }
 
-  window.CVTaraAgents = { seo, revenue, log };
+  // ---------------------------------------------------------------- agent reports, corrective actions, knowledge sync (3.58.0)
+  const CAD = { daily: 'Daily', weekly: 'Weekly', monthly: 'Monthly' };
+  const AG = { seo: 'SEO Head', growth: 'Growth & Revenue' };
+  const CR = { page: 1, per: 20, agent: 'all', status: 'all' };
+  function facts(d) {
+    if (!d) return '<p class="muted">Not written yet.</p>';
+    const skip = new Set(['sources', 'period', 'from', 'to', 'knowledgeVersion', 'corrections', 'month', 'bottleneck', 'margin', 'plans', 'sections', 'nearWins', 'lowClickRate', 'brokenPages', 'importantNotIndexed', 'signupsBySource']);
+    const label = k => k.replace(/Paise$/, '').replace(/([A-Z])/g, ' $1').replace(/^./, c => c.toUpperCase());
+    const val = (k, v) => /Paise$/.test(k) ? inr(v) : (v === null || v === undefined ? 'Not tracked' : typeof v === 'object' ? E(JSON.stringify(v)) : E(String(v)));
+    const rows = Object.entries(d).filter(([k]) => !skip.has(k)).map(([k, v]) => `<tr><td>${E(label(k))}</td><td>${val(k, v)}</td></tr>`);
+    const list = (t, a, f) => a && a.length ? `<p style="margin:8px 0 2px"><b>${E(t)}</b></p><ul style="margin:0">${a.slice(0, 8).map(f).join('')}</ul>` : '';
+    return `<table class="ad-table">${rows.join('')}</table>
+      ${d.month ? `<p class="muted">${E(d.month.label)}: ${n(d.month.purchases)} of ${n(d.month.target)} orders, ${d.month.attainment === null ? 'no target set' : E(d.month.attainment + '% of pace')} <span class="pill ${{ green: 'ok', amber: 'mid', red: 'bad' }[d.month.band] || ''}">${E(d.month.band)}</span></p>` : ''}
+      ${list('Pages that do not open', Object.entries(d.brokenPages || {}), ([p, s]) => `<li>${E(p)} (${E(s)})</li>`)}
+      ${list('Searches close to page 1', d.nearWins, r => `<li>${E(r.query)}: position ${E(r.position)}, ${n(r.impressions)} views</li>`)}
+      ${list('Shown but rarely clicked', d.lowClickRate, r => `<li>${E(r.query)}: ${E(r.ctrPct)}% at position ${E(r.position)}</li>`)}
+      ${list('Sections', d.sections, r => `<li>${E(r.section)}: ${n(r.indexed)} of ${n(r.pages)} indexed</li>`)}
+      <p class="muted" style="font-size:.85em">Read from: ${E((d.sources || []).join(', '))}. Knowledge version ${n(d.knowledgeVersion)}.</p>`;
+  }
+  async function cadence(h) {
+    let d; try { d = await api('/api/admin/growth/agents/cadence'); } catch (e) { h.innerHTML = `<div class="panel panel-pad" role="alert">${E(err(e))}</div>`; return; }
+    const cards = d.reports.map(r => `<details class="panel panel-pad" style="margin-bottom:8px"><summary><b>${E(AG[r.agent])}: ${E(CAD[r.cadence])}</b> <span class="muted">${r.period ? E(r.period) + ', written ' + E(when(r.at)) : 'not written yet'}</span>
+      ${r.data && r.data.corrections && r.data.corrections.length ? `<span class="pill bad">${r.data.corrections.length} to fix</span>` : ''}</summary>${facts(r.data)}
+      <button type="button" class="button secondary small" data-crun="${r.agent}:${r.cadence}">Write this report now</button></details>`).join('');
+    const ks = d.knowledge.agents.map(a => `<tr><td>${E(a.label)}</td><td>${a.version === null ? '—' : n(a.version)}</td><td>${E(when(a.syncedAt))}</td><td>${n(a.changesSince)}</td><td>${a.stale ? '<span class="pill mid">Behind</span>' : '<span class="pill ok">Up to date</span>'}</td></tr>`);
+    h.innerHTML = `<section class="panel panel-pad" data-nokit><h3 style="margin-top:0">Agent reports</h3>
+      <p class="muted" style="margin-top:0">The SEO Head and the Growth & Revenue agent each write a daily, weekly and monthly report after 7 AM. Numbers come from the site's own records; nothing here is changed on the site without your approval.</p>${cards}</section>
+      <section class="panel panel-pad" data-nokit><h3 style="margin-top:0">Corrective actions</h3><p class="muted" style="margin-top:0">Written when a target is missed. Each one also waits as a task in Approvals.</p>
+        <div style="display:flex;gap:8px;margin-bottom:8px"><select id="crA"><option value="all">Both agents</option><option value="seo">SEO Head</option><option value="growth">Growth & Revenue</option></select><select id="crS"><option value="all">Any status</option><option value="open">Open</option><option value="met">Met</option><option value="missed">Missed</option></select><a class="button secondary small" id="crCsv" href="#">Download CSV</a><a class="button secondary small" id="crXl" href="#">Download Excel</a></div>
+        <div id="crT"></div><div class="ops-pager" id="crP"></div></section>
+      <section class="panel panel-pad" data-nokit><h3 style="margin-top:0">What the agents know</h3><p class="muted" style="margin-top:0">Every saved change to plans, prices, offers and programme rules is listed here. An agent that has not worked since a change is shown as behind.</p>
+        ${table(['Agent', 'Knowledge version', 'Last worked', 'Changes since', 'State'], ks, 'No agents yet.')}
+        ${table(['When', 'What changed', 'By'], d.changes.map(c => `<tr><td>${E(when(c.at))}</td><td>${E(c.summary)}</td><td>${E(c.by || 'System')}</td></tr>`), 'No changes recorded yet.')}</section>
+      <section class="panel panel-pad" data-nokit><h3 style="margin-top:0">Recent runs</h3>
+        ${table(['When', 'Agent', 'Task', 'Rules', 'Model', 'Read from', 'Run id'], d.runs.map(r => `<tr><td>${E(when(r.at))}</td><td>${E(AG[r.agent] || r.agent)}</td><td>${E(r.task)}</td><td>${E(r.rules || '—')}</td><td>${E(r.model || 'None')}</td><td>${E(r.sources.join(', '))}</td><td><code>${E(String(r.run).slice(0, 8))}</code></td></tr>`), 'No traced runs yet.')}</section>`;
+    h.querySelectorAll('[data-crun]').forEach(b => b.onclick = async () => { const [agent, c] = b.dataset.crun.split(':'); b.disabled = true; try { const r = await api('/api/admin/growth/agents/cadence/run', { method: 'POST', body: { agent, cadence: c } }); toast(r.summary); cadence(h); } catch (x) { toast(err(x)); b.disabled = false; } });
+    $('#crA', h).onchange = e => { CR.agent = e.target.value; CR.page = 1; corrections(h); };
+    $('#crS', h).onchange = e => { CR.status = e.target.value; CR.page = 1; corrections(h); };
+    corrections(h);
+  }
+  async function corrections(h) {
+    const q = qs(CR, ['agent', 'status']);
+    $('#crCsv', h).href = '/api/admin/growth/agents/corrections?' + q + '&export=csv';
+    $('#crXl', h).href = '/api/admin/growth/agents/corrections?' + q + '&export=xlsx';
+    try {
+      const d = await api('/api/admin/growth/agents/corrections?' + q);
+      $('#crT', h).innerHTML = table(['Period', 'Agent', 'Metric', 'Target', 'Actual', 'Variance', 'Root cause', 'Corrective action', 'Owner', 'Deadline', 'Expected result', 'Review'],
+        d.rows.map(r => `<tr><td>${E(r.period)}</td><td>${E(AG[r.agent] || r.agent)}</td><td>${E(r.metric)}</td><td>${E(r.target)}</td><td>${E(r.actual)}</td><td>${E(r.variance)}</td><td title="${E(r.evidence)}">${E(r.root_cause)}</td><td>${E(r.action)}</td><td>${E(r.owner)}</td><td>${E(r.deadline)}</td><td>${E(r.expected)}</td><td>${E(r.review_date)}</td></tr>`), 'No missed targets.');
+      K.pager($('#crP', h), d, (p, per) => { CR.page = p; CR.per = per; corrections(h); });
+    } catch (e) { $('#crT', h).innerHTML = `<p role="alert">${E(err(e))}</p>`; }
+  }
+
+  window.CVTaraAgents = { seo, revenue, log, cadence };
 })();

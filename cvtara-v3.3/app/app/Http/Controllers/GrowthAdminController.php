@@ -96,6 +96,22 @@ class GrowthAdminController extends Controller
         if ($path === 'growth/agents' && $get) {
             return $ok(['seo' => \App\Services\SeoAgent::agentStatus(), 'growth' => Growth::agentStatus(), 'settings' => ['seo' => SeoAgent::settings()['auto'], 'growth' => GrowthOps::settings()['auto']]]);
         }
+        if ($path === 'growth/agents/cadence' && $get) {
+            return $ok(\App\Services\AgentCadence::overview());
+        }
+        if ($path === 'growth/agents/cadence/run' && ! $get) {
+            $v = $r->validate(['agent' => 'required|in:seo,growth', 'cadence' => 'required|in:daily,weekly,monthly']);
+            abort_unless(\App\Services\Access::can($r->user(), $v['agent'] === 'seo' ? 'seo.view' : 'growth.approve'), 403, 'Your role cannot run this report.');
+            $out = \App\Services\AgentCadence::run($v['agent'], $v['cadence']);
+            abort_if(isset($out['error']), 500, $out['error'] ?? '');
+
+            return $ok(['summary' => $out['summary'] ?? 'Done']);
+        }
+        if ($path === 'growth/agents/corrections' && $get) {
+            return $ok(AdminTable::query($r, DB::table('agent_corrections'), ['search' => ['metric', 'action', 'root_cause'], 'filters' => ['agent' => 'agent', 'status' => 'status'], 'date' => 'created_at', 'sorts' => ['sort' => 'id'], 'key' => 'id',
+                'export' => ['title' => 'Corrective actions', 'map' => fn ($rows) => array_map(fn ($x) => ['Created' => $x['created_at'], 'Agent' => \App\Services\KnowledgeSync::AGENTS[$x['agent']] ?? $x['agent'], 'Period' => $x['period'], 'Metric' => $x['metric'], 'Target' => $x['target'], 'Actual' => $x['actual'],
+                    'Variance' => $x['variance'], 'Evidence' => $x['evidence'], 'Root cause' => $x['root_cause'], 'Corrective action' => $x['action'], 'Owner' => $x['owner'], 'Deadline' => $x['deadline'], 'Expected result' => $x['expected'], 'Review date' => $x['review_date'], 'Status' => $x['status']], $rows)]]));
+        }
         if ($path === 'growth/agents/log' && $get) {
             return $ok(AdminTable::query($r, DB::table('agent_runs'), ['search' => ['task', 'summary', 'error'], 'filters' => ['agent' => 'agent', 'status' => 'status'], 'date' => 'started_at', 'sorts' => ['sort' => 'id'], 'key' => 'id',
                 'export' => ['title' => 'Agent log', 'map' => fn ($rows) => array_map(fn ($x) => ['Started' => $x['started_at'], 'Agent' => AgentLog::AGENTS[$x['agent']] ?? $x['agent'], 'Task' => $x['task'], 'Status' => $x['status'], 'Result' => $x['summary'], 'Error' => $x['error'], 'Took (ms)' => $x['ms']], $rows)]]));

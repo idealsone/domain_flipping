@@ -1,4 +1,14 @@
-# CVTara v3.57.0 — Interview vertical
+# CVTara v3.58.0 — Stronger agents
+
+## 3.58.0
+Stronger agents (V7 §29, §37; Growth plan §11.2, §12.1-§12.2). Additive migration `2026_11_24_000001_agent_cadence`: five columns on `agent_runs` (`run_uid`, `prompt_version`, `model`, `sources_json`, `knowledge_version`) and new tables `agent_reports`, `agent_corrections`, `config_changes`.
+- **Daily, weekly and monthly reports** for the SEO Head and the Growth & Revenue agent, written once per period after 7 AM India time. SEO: pages that do not open, important pages Google has not indexed, changes waiting, searches close to page 1, searches shown but rarely clicked, section coverage, organic sign-ups. Growth: registrations, verified, resumes started, payments ok and failed, paid and new customers, revenue and order value, abandoned checkouts, the month's pace and band, email and outreach, experiments, sign-ups by source, forecast, refund rate, referral purchases, contribution margin, partner sign-ups, interview use and plan mix. Numbers come from the site's records; anything not measured is shown as Not tracked. No model is called.
+- **Corrective actions**: when a target is missed (orders behind pace, refund rate over 5%, a page that does not open, searches shown but not clicked) the agent writes target, actual, variance, evidence, root cause, corrective action, owner, deadline, expected result and review date, and opens one task in Approvals. Nothing on the site changes without approval. Paged, filtered and downloadable (CSV/Excel).
+- **Run evidence**: every agent run keeps a run id, rules version, model (none for rule-based work), the sources it read and the knowledge version it worked from.
+- **Change feed**: every saved change to plans, public wording, referral and refund rules, offers, partner programme, interview settings, cost limits, legal pages, emails, growth targets and agent rules is recorded. The console shows each agent's knowledge version and flags an agent that is behind.
+- Growth page gains an **Agent reports** tab (reports, corrective actions, what the agents know, recent runs, a "Write this report now" button).
+- Test suite `s68_agent_cadence`.
+
 
 ## 3.57.0
 Interview preparation (V7 §16-§20, §31; V5.6-V5.7 §5). Additive migration `2026_11_23_000001_interview_vertical`: three columns on `career_occupations` (`domain`, `isco_code`, `seniority`), `interview_answers.seconds`, and a new table `company_research`. It also loads 12 more non-technical roles (inside sales/telecaller, receptionist, data entry, insurance advisor, collections, store manager, warehouse supervisor, content writer, travel consultant, back office, pharmacy assistant, event coordinator) with 24 original role questions as drafts (nothing is shown before the owner approves them).

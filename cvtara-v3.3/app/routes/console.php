@@ -44,6 +44,8 @@ Artisan::command('cvtara:cron', function () {
     // owner alerts once an hour (each written once a day), and the daily payment reconciliation after 6 AM India time
     $safe(fn () => \Illuminate\Support\Facades\Cache::add('metrics-alerts', 1, 3600) && \App\Services\Metrics::alerts(true));
     $safe(fn () => \Illuminate\Support\Facades\Schema::hasTable('payment_reconciliation_records') && \App\Services\Reconcile::due());
+    // 3.58.0 SEO Head and Growth & Revenue daily / weekly / monthly reports and corrective actions (after 7 AM India time)
+    $safe(fn () => \Illuminate\Support\Facades\Cache::add('agent-cadence', 1, 600) && \App\Services\AgentCadence::due());
     if (\Illuminate\Support\Facades\Cache::add('retention-run', 1, 86400)) {
         \App\Services\Retention::run();
     }
