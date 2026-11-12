@@ -46,6 +46,8 @@ Artisan::command('cvtara:cron', function () {
     $safe(fn () => \Illuminate\Support\Facades\Schema::hasTable('payment_reconciliation_records') && \App\Services\Reconcile::due());
     // 3.58.0 SEO Head and Growth & Revenue daily / weekly / monthly reports and corrective actions (after 7 AM India time)
     $safe(fn () => \Illuminate\Support\Facades\Cache::add('agent-cadence', 1, 600) && \App\Services\AgentCadence::due());
+    // 3.59.0 text-reading test for designs never tested or changed since (a few a minute)
+    $safe(fn () => \App\Services\TemplateLibrary::testDue(6));
     if (\Illuminate\Support\Facades\Cache::add('retention-run', 1, 86400)) {
         \App\Services\Retention::run();
     }

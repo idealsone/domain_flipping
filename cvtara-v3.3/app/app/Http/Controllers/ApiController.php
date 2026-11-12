@@ -115,6 +115,7 @@ class ApiController extends Controller
             foreach (['legal', 'features', 'library', 'blog', 'integrations', 'seo', 'site'] as $k) {
                 $content[$k] = Settings::get($k);
             }$content['plans'] = \App\Services\Interviews::withPerks(Settings::plans());
+            $content['templateLib'] = \App\Services\TemplateLibrary::publicData();
             $content['jobLinks'] = (bool) (((array) Settings::get('speed', []))['jobLinks'] ?? false);
             $content['integrations']['measurementId'] = Settings::providers()['analytics']['measurementId'] ?? '';
             foreach ($content['blog'] as $slug => &$post) {
@@ -216,8 +217,7 @@ class ApiController extends Controller
             $cap('service-request', 10, 3600, 'Please wait a while before starting another request.');
             $v = $r->validate(['resumeId' => ['required', 'regex:/^[a-f0-9-]{36}$/'], 'scanId' => ['nullable', 'regex:/^[a-f0-9-]{36}$/'], 'jobText' => 'required_without:scanId|nullable|string|max:40000', 'role' => 'nullable|string|max:160', 'company' => 'nullable|string|max:160', 'letterTemplate' => 'nullable|string|max:120']);
             if (! empty($v['letterTemplate'])) {
-                $cat = json_decode(file_get_contents(resource_path('data/catalog.json')), true);
-                abort_unless(collect($cat['coverLetters'])->contains('slug', $v['letterTemplate']), 422, 'Choose one of the cover letter designs.');
+                abort_unless(\App\Services\TemplateLibrary::exists('letter', $v['letterTemplate']), 422, 'Choose one of the cover letter designs.');
             }
 
             return $ok(['request' => \App\Services\ServiceRequests::create($u, $v)]);
@@ -1170,8 +1170,7 @@ class ApiController extends Controller
             $slug = $data['template'];
             $already = $r->input('id') && DB::table($table)->where('id', $r->input('id'))->where('owner_id', $id)->where('template', $slug)->exists();
             abort_if(! $already && (Settings::get('library')[$type === 'resumes' ? 'templates' : 'letters'][$slug]['published'] ?? true) === false, 422, 'This template is no longer available. Choose another template.');
-            $catalog = json_decode(file_get_contents(resource_path('data/catalog.json')), true);
-            abort_unless(collect($catalog[$type === 'resumes' ? 'templates' : 'coverLetters'])->contains('slug', $slug), 422);
+            abort_unless(\App\Services\TemplateLibrary::exists($type === 'resumes' ? 'resume' : 'letter', (string) $slug), 422);
             $record = ['title' => $data['title'], 'template' => $slug, 'content_json' => json_encode($data), 'company' => $data['company'] ?? '', 'role' => $data['role'] ?? '', 'updated_at' => now()];
             if ($type === 'resumes') {
                 $record['ats_score'] = \App\Services\ResumeQuality::score($data)['score'];

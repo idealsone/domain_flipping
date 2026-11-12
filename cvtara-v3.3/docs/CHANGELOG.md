@@ -1,4 +1,15 @@
-# CVTara v3.58.0 — Stronger agents
+# CVTara v3.59.0 — Template library
+
+## 3.59.0
+Template library (V7 §15, V5.0 §5-§7). Additive migration `2026_11_25_000001_template_library`: new tables `template_library`, `template_versions`, `template_packages`; every built-in resume and cover-letter design is listed as a CVTara original.
+- **Metadata for every design**: licence, source, author, version, preview, export formats, role group, status.
+- **Text-reading test**: each design is exported to PDF and Word with clearly labelled demo data, and the text is read back (new `PdfText` reader for the site's own PDFs; Word text from the file itself). It checks every word, section order, dates next to the employer and special characters (? – [ ] ( ) & " ' ₹ →). The scheduler tests a few designs a minute; the console can test on demand.
+- **ATS label rule**: a design shows the ATS label only when it is a text-first, single-column layout and passed the reading test. Two-column designs never show it. Until the scheduler has tested a design (about 30 minutes after deploy), its ATS label is hidden.
+- **Package import**: upload a ZIP with `manifest.json` and template JSON files (V5.0 §6 contract). Checked: allowed file types only, no path tricks, no scripts, event handlers, frames, remote files or unsafe CSS, no Word macros, valid images, manifest fields, checksum (SHA-256 of the template files in path order), template count, required template fields, licence/source/author, colour and font, section names, export formats, and a CVTara design to build on. Designs arrive as drafts, are tested, and go live only when approved. Duplicates are skipped; a changed design becomes a new version; every version is kept and can be rolled back. Documents customers already made keep working while a new version waits.
+- **Coverage report**: designs per role group against five resumes and five cover letters, with gaps. Downloadable.
+- New console page **Template quality** (Content & pages). Imported designs reach the public gallery through the live site data.
+- Test suite `s69_template_library`.
+
 
 ## 3.58.0
 Stronger agents (V7 §29, §37; Growth plan §11.2, §12.1-§12.2). Additive migration `2026_11_24_000001_agent_cadence`: five columns on `agent_runs` (`run_uid`, `prompt_version`, `model`, `sources_json`, `knowledge_version`) and new tables `agent_reports`, `agent_corrections`, `config_changes`.

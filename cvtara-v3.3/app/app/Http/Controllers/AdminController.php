@@ -48,6 +48,9 @@ class AdminController extends Controller
         if (preg_match(OutreachAdminController::ROUTES, $path)) {
             return app(OutreachAdminController::class)->run($r, $path);
         }
+        if (preg_match(TemplateAdminController::ROUTES, $path)) {
+            return app(TemplateAdminController::class)->run($r, $path);
+        }
         if (preg_match(CostAdminController::ROUTES, $path)) {
             return app(CostAdminController::class)->run($r, $path);
         }
