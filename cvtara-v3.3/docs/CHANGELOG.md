@@ -1,3 +1,25 @@
+# CVTara v3.57.0 — Interview vertical
+
+## 3.57.0
+Interview preparation (V7 §16-§20, §31; V5.6-V5.7 §5). Additive migration `2026_11_23_000001_interview_vertical`: three columns on `career_occupations` (`domain`, `isco_code`, `seniority`), `interview_answers.seconds`, and a new table `company_research`. It also loads 12 more non-technical roles (inside sales/telecaller, receptionist, data entry, insurance advisor, collections, store manager, warehouse supervisor, content writer, travel consultant, back office, pharmacy assistant, event coordinator) with 24 original role questions as drafts (nothing is shown before the owner approves them).
+- **India role taxonomy**: every role has an industry, business domain, job family, NCO/ISCO-08 code (4-digit unit group; check against the official NCO 2015 list before quoting it publicly), a seniority ladder and common Indian designations as synonyms. Customers find their role by typing their job title ("telecaller" finds Inside Sales Executive). Existing owner edits are kept.
+- **Research a company**: the customer pastes the company's own website; one public page is read (robots.txt respected, no logins, no bypassing, private addresses refused), a short summary is kept with its source and time, and six original practice questions are made from templates (motivation, product, customer, stakeholder, ethics, first 90 days), labelled "CVTara practice questions based on publicly available company information; not confirmed questions from the employer." No AI. Five a day per customer; erased with the account.
+- **Timer**: optional; shows the time on each answer (aim for about 2 minutes) and saves it with the answer. Nothing is penalised.
+- **Revision mode**: questions from the customer's finished mock interviews with their earlier answer and what to improve, to write a better one. Free, not scored, counts as a practice day.
+- **Badges renamed to V7**: First Practice, 5 Sessions, Clear Communication, STAR Practice, Consistency Milestone (derived from the customer's own practice; no rankings).
+- **Public interview pages** (one per role) gain "Practise your answers" linking to practice in the account; the full bank stays inside the account. Dashboard gains a "Practise interviews" button. Customer guide updated.
+- Test suite `s67_interview_vertical`; `s58` now expects 24 roles; `s59` uses the new badge names.
+
+# CVTara v3.56.0 — Evidence check, job confirmation, costs and margin
+
+## 3.56.0
+Trust and money controls (V7 §12-§14, §24-§26, AT-10, AT-11). Additive migration `2026_11_22_000001_costs_evidence`: new tables `evidence_confirmations` and `ai_invoices`. Nothing existing changes.
+- **Evidence check before a clean download**: a job version of a resume, or a cover letter made from a resume, is compared with the customer's own resume. Numbers, years, tools and names that are not in it (the employer and role typed for that version are allowed) are listed in the Download window; the customer removes them or presses "These are true, download". The confirmation is kept per version; a new version with new facts asks again. No credit is used until then; watermarked previews and the customer's own resumes are never held up. Plain comparison, no AI.
+- **"Is this the right job?"**: ATS Match first reads the posting (link, file or text) into job fields: title, company, location, type, level, experience, education, skills asked for, good-to-have skills, and pay only when the posting states it. No scan is used until the customer confirms (title and company can be corrected). The confirmed fields and time are stored with the check. A link is opened once; the check reuses that reading.
+- **Usage ledger mirror**: every clean download and ATS scan also writes a row to the append-only usage ledger against its order. Today's counters are unchanged.
+- **Costs & margin** (new console page, Money & plans): AI spend this month by feature against its cap, today's highest-spending customers, caps (per customer per day, per feature per month, per order as a share of its price) with alerts in the Error Log. Paid features are never stopped by a cap; only Tara chat and writing help pause for a customer who reached the daily cap (default ₹30). Invoice check: enter the provider's monthly bill and see the difference from our cost log. Contribution margin per plan and add-on: net collected minus GST share (set to 0 if not registered), gateway fees (default 2.36%), the buyers' AI cost while each order was active, and fulfilment and support cost per order the owner enters. Download as CSV or Excel (Reports > Contribution margin).
+- Test suite `s66_costs_evidence` (37 checks).
+
 # CVTara v3.55.0 — Review edit history and feedback after save
 
 ## 3.55.0

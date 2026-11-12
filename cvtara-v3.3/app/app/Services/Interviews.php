@@ -75,7 +75,12 @@ class Interviews
             $q->where('active', true);
         }
 
-        return $q->get(['slug', 'name', 'family', 'industry', 'nco_code', 'active'])->map(fn ($r) => (array) $r)->all();
+        $cols = ['slug', 'name', 'family', 'industry', 'nco_code', 'synonyms', 'active'];
+        if (\Illuminate\Support\Facades\Schema::hasColumn('career_occupations', 'domain')) {
+            array_push($cols, 'domain', 'isco_code', 'seniority');
+        }
+
+        return $q->get($cols)->map(fn ($r) => (array) $r)->all();
     }
 
     /** Loads the starter question bank (resources/data/interview-bank.json) as drafts. Safe to run again: existing codes are skipped. */
@@ -86,8 +91,17 @@ class Interviews
             return 0;
         }
         $bank = json_decode((string) file_get_contents($f), true) ?: [];
+        $tax = \Illuminate\Support\Facades\Schema::hasColumn('career_occupations', 'domain');
         foreach ($bank['occupations'] ?? [] as $o) {
             DB::table('career_occupations')->insertOrIgnore(['slug' => $o['slug'], 'name' => $o['name'], 'family' => $o['family'], 'industry' => $o['industry'] ?? '', 'nco_code' => $o['nco'] ?? null, 'active' => true, 'created_at' => now(), 'updated_at' => now()]);
+            // 3.57.0 taxonomy: filled in where still empty, so an owner's own edits are kept.
+            $row = DB::table('career_occupations')->where('slug', $o['slug'])->first();
+            if ($row && empty($row->synonyms) && ! empty($o['synonyms'])) {
+                DB::table('career_occupations')->where('id', $row->id)->update(['synonyms' => $o['synonyms']]);
+            }
+            if ($tax && $row && $row->domain === '') {
+                DB::table('career_occupations')->where('id', $row->id)->update(['domain' => $o['domain'] ?? '', 'isco_code' => $o['isco'] ?? null, 'seniority' => $o['seniority'] ?? '']);
+            }
         }
         $n = 0;
         foreach ($bank['questions'] ?? [] as $q) {
@@ -246,12 +260,16 @@ class Interviews
             'feedback' => $e ? ['level' => $e->level, 'result' => json_decode($e->result_json, true), 'dimensions' => self::DIMENSIONS, 'challenged' => (bool) $e->challenged_at] : null];
     }
 
-    public static function answer(User $u, string $id, int $position, string $text): void
+    public static function answer(User $u, string $id, int $position, string $text, ?int $seconds = null): void
     {
         $text = mb_substr(trim($text), 0, 3000);
+        $set = ['a.answer' => $text, 'a.updated_at' => now()];
+        if ($seconds !== null && \Illuminate\Support\Facades\Schema::hasColumn('interview_answers', 'seconds')) {
+            $set['a.seconds'] = max(0, min(7200, $seconds)); // 3.57.0 optional answer timer
+        }
         $ok = DB::table('interview_answers as a')->join('interview_sessions as s', 's.id', '=', 'a.session_id')
             ->where('s.id', $id)->where('s.owner_id', $u->id)->where('s.status', 'in_progress')->where('a.position', $position)
-            ->update(['a.answer' => $text, 'a.updated_at' => now()]);
+            ->update($set);
         abort_unless($ok || DB::table('interview_sessions')->where('id', $id)->where('owner_id', $u->id)->where('status', 'in_progress')->exists(), 409, 'This mock interview is already submitted.');
         DB::table('interview_sessions')->where('id', $id)->update(['updated_at' => now()]);
     }
@@ -293,13 +311,13 @@ class Interviews
      */
     public const REST_DAYS = 1;
 
+    // 3.57.0 V7 §20 badge set. Learning milestones only, from the customer's own practice; never compared with others.
     public const BADGES = [
-        'first_step' => ['First step', 'Finish your first mock interview.'],
-        'explorer' => ['Explorer', 'Practise questions for 3 different roles.'],
-        'evidence' => ['Real examples', 'Get full marks for real examples in an answer.'],
-        'steady' => ['Steady practice', 'Keep a 5-day practice streak.'],
-        'three_done' => ['Well prepared', 'Finish 3 mock interviews.'],
-        'ready' => ['Interview ready', 'Reach the Interview ready level in a mock interview.'],
+        'first_practice' => ['First Practice', 'Finish your first mock interview.'],
+        'five_sessions' => ['5 Sessions', 'Finish 5 mock interviews.'],
+        'clear_communication' => ['Clear Communication', 'Get full marks for clear and professional communication in an answer.'],
+        'star_practice' => ['STAR Practice', 'Get full marks for a clear structure (situation, task, action, result) in an answer.'],
+        'consistency' => ['Consistency Milestone', 'Keep a 5-day practice streak (rest days allowed).'],
     ];
 
     public static function progress(int $uid): array
@@ -317,13 +335,13 @@ class Interviews
         }
         $today = now($tz)->toDateString();
         $current = ($prev && (int) abs(\Illuminate\Support\Carbon::parse($prev)->diffInDays(\Illuminate\Support\Carbon::parse($today))) <= self::REST_DAYS + 1) ? $run : 0;
-        $roles = $practice->pluck('reference')->merge($done->pluck('occupation'))->filter()->unique()->count();
-        $evidence = $done->contains(fn ($r) => collect((json_decode($r->result_json, true) ?: [])['answers'] ?? [])->contains(fn ($a) => (int) ($a['scores']['evidence'] ?? 0) === 4));
-        $earned = ['first_step' => $done->count() >= 1, 'explorer' => $roles >= 3, 'evidence' => $evidence, 'steady' => $best >= 5, 'three_done' => $done->count() >= 3, 'ready' => $done->contains('level', 'Interview ready')];
+        $roles = $practice->pluck('reference')->merge($done->pluck('occupation'))->filter(fn ($x) => $x && $x !== 'revision')->unique()->count();
+        $full = fn (string $dim) => $done->contains(fn ($r) => collect((json_decode($r->result_json, true) ?: [])['answers'] ?? [])->contains(fn ($a) => (int) ($a['scores'][$dim] ?? 0) === 4));
+        $earned = ['first_practice' => $done->count() >= 1, 'five_sessions' => $done->count() >= 5, 'clear_communication' => $full('communication'), 'star_practice' => $full('structure'), 'consistency' => $best >= 5];
         $levels = $done->pluck('level')->values();
 
         return [
-            'completed' => $done->count(), 'level' => $levels->last(), 'previousLevel' => $levels->count() > 1 ? $levels[$levels->count() - 2] : null,
+            'completed' => $done->count(), 'roles' => $roles, 'level' => $levels->last(), 'previousLevel' => $levels->count() > 1 ? $levels[$levels->count() - 2] : null,
             'levels' => self::LEVELS, 'streak' => $current, 'bestStreak' => $best, 'restDays' => self::REST_DAYS, 'practisedToday' => $prev === $today,
             'badges' => array_map(fn ($k) => ['key' => $k, 'name' => self::BADGES[$k][0], 'about' => self::BADGES[$k][1], 'earned' => $earned[$k]], array_keys(self::BADGES)),
         ];

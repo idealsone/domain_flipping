@@ -37,7 +37,7 @@ def run(ctx, t):
         p = c.api("GET", "interviews")[1]["progress"]
         t.check("one rest day between practice days keeps the streak", p["streak"] == 6 and p["bestStreak"] == 6, p)
         badges = {b["key"]: b["earned"] for b in p["badges"]}
-        t.check("Steady practice is earned at a 5-day streak and Explorer at 3 roles", badges.get("steady") and badges.get("explorer"), badges)
+        t.check("Consistency Milestone is earned at a 5-day streak (3.57 V7 badge names)", badges.get("consistency") and p.get("roles") >= 3, (badges, p.get("roles")))
 
         # Without today's visit the streak still stands (resting today); without the last four days it ends.
         php(f"DB::table('activity_events')->where('owner_id', {uid})->where('created_at', '>=', now()->subHours(1))->delete();")
@@ -50,18 +50,21 @@ def run(ctx, t):
         # Levels and the remaining badges come from finished mock interviews.
         def finished(level, evidence, days_ago):
             sid = str(uuid.uuid4())
-            res = json.dumps({"summary": "x", "next_step": "y", "answers": [{"position": 1, "scores": {"relevance": 3, "structure": 3, "evidence": evidence, "communication": 3, "role_alignment": 3}, "strengths": [], "improve": [], "quote": "", "rewrite": "", "missing": ""}]}).replace("'", "\\'")
+            res = json.dumps({"summary": "x", "next_step": "y", "answers": [{"position": 1, "scores": {"relevance": 3, "structure": evidence, "evidence": evidence, "communication": evidence, "role_alignment": 3}, "strengths": [], "improve": [], "quote": "", "rewrite": "", "missing": ""}]}).replace("'", "\\'")
             php(f"DB::table('interview_sessions')->insert(['id' => '{sid}', 'owner_id' => {uid}, 'occupation' => 'sales-executive', 'band' => 'fresher', 'objective' => 'first_job', 'questions_json' => '[]', 'status' => 'evaluated', 'evaluated_at' => now()->subDays({days_ago}), 'created_at' => now()->subDays({days_ago}), 'updated_at' => now()]);"
                 f"DB::table('interview_evaluations')->insert(['session_id' => '{sid}', 'level' => '{level}', 'result_json' => '{res}', 'created_at' => now()]);")
         finished("Developing", 2, 4)
         p = c.api("GET", "interviews")[1]["progress"]
-        t.check("the first finished mock interview gives a level and the First step badge", p["level"] == "Developing" and {b["key"]: b["earned"] for b in p["badges"]}["first_step"], p)
+        t.check("the first finished mock interview gives a level and the First Practice badge", p["level"] == "Developing" and {b["key"]: b["earned"] for b in p["badges"]}["first_practice"], p)
         finished("Confident", 4, 0)
         finished("Interview ready", 3, 0)
         p = c.api("GET", "interviews")[1]["progress"]
         b = {x["key"]: x["earned"] for x in p["badges"]}
         t.check("later sessions move the level and show the change", p["level"] == "Interview ready" and p["previousLevel"] == "Confident" and p["completed"] == 3, p)
-        t.check("Real examples, Well prepared and Interview ready badges are earned", b["evidence"] and b["three_done"] and b["ready"], b)
+        t.check("Clear Communication and STAR Practice are earned; 5 Sessions not yet", b["clear_communication"] and b["star_practice"] and not b["five_sessions"], b)
+        finished("Confident", 3, 0)
+        finished("Confident", 3, 0)
+        t.check("5 Sessions is earned at five finished mock interviews", {x["key"]: x["earned"] for x in c.api("GET", "interviews")[1]["progress"]["badges"]}["five_sessions"])
 
         other = Client(inst.base); other.register("pp-b@test.local"); other.page("/workspace.html")
         po = other.api("GET", "interviews")[1]["progress"]

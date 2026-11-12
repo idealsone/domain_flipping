@@ -129,6 +129,10 @@ class ReportController extends Controller
             'ai_spend' => ['label' => 'AI spending', 'filters' => ['q', 'from', 'to'], 'defaults' => ['month', 'feature', 'model', 'calls', 'input_tokens', 'output_tokens', 'cost_inr', 'per_paying_user_inr'], 'columns' => [
                 ['key' => 'month', 'label' => 'Month'], ['key' => 'feature', 'label' => 'Feature'], ['key' => 'model', 'label' => 'Model'], ['key' => 'calls', 'label' => 'Requests', 'num' => true], ['key' => 'input_tokens', 'label' => 'Input tokens', 'num' => true], ['key' => 'output_tokens', 'label' => 'Output tokens', 'num' => true],
                 ['key' => 'cost_inr', 'label' => 'Cost (INR)', 'num' => true], ['key' => 'avg_inr', 'label' => 'Cost per request (INR)', 'num' => true], ['key' => 'paying_users', 'label' => 'Paying customers that month', 'num' => true], ['key' => 'per_paying_user_inr', 'label' => 'Cost per paying customer (INR)', 'num' => true]]],
+            'margin' => ['label' => 'Contribution margin', 'filters' => ['from', 'to'], 'defaults' => ['plan', 'orders', 'net_inr', 'fees_inr', 'ai_inr', 'margin_inr', 'margin_pct'], 'columns' => [
+                ['key' => 'plan', 'label' => 'Plan or add-on'], ['key' => 'orders', 'label' => 'Orders', 'num' => true], ['key' => 'gross_inr', 'label' => 'Collected (INR)', 'num' => true], ['key' => 'refunds_inr', 'label' => 'Refunds (INR)', 'num' => true], ['key' => 'net_inr', 'label' => 'Net (INR)', 'num' => true],
+                ['key' => 'gst_inr', 'label' => 'GST share (INR)', 'num' => true], ['key' => 'fees_inr', 'label' => 'Gateway fees (INR)', 'num' => true], ['key' => 'ai_inr', 'label' => 'AI cost (INR)', 'num' => true], ['key' => 'fulfilment_inr', 'label' => 'Fulfilment (INR)', 'num' => true], ['key' => 'support_inr', 'label' => 'Support (INR)', 'num' => true],
+                ['key' => 'margin_inr', 'label' => 'Margin (INR)', 'num' => true], ['key' => 'margin_pct', 'label' => 'Margin %', 'num' => true], ['key' => 'per_order_inr', 'label' => 'Margin per order (INR)', 'num' => true]]],
             'mail' => ['label' => 'Email queue', 'filters' => ['q', 'status', 'from', 'to'], 'defaults' => ['date', 'recipient', 'subject', 'trigger', 'status'], 'columns' => [
                 ['key' => 'date', 'label' => 'Created'], ['key' => 'recipient', 'label' => 'To'], ['key' => 'subject', 'label' => 'Subject'], ['key' => 'trigger', 'label' => 'Type'], ['key' => 'status', 'label' => 'Status'], ['key' => 'attempts', 'label' => 'Attempts', 'num' => true], ['key' => 'error', 'label' => 'Error'], ['key' => 'sent_at', 'label' => 'Sent']]],
         ];
@@ -182,7 +186,7 @@ class ReportController extends Controller
     }
 
     /** Data sets that are totals worked out per day / page / source rather than one row per record. */
-    private const SUMMARIES = ['daily', 'traffic', 'sources', 'activity', 'ai_spend'];
+    private const SUMMARIES = ['daily', 'traffic', 'sources', 'activity', 'ai_spend', 'margin'];
 
     private function file(Request $r, string $set, string $format, array $columns, array $rows, int $total)
     {
@@ -263,6 +267,12 @@ class ReportController extends Controller
                 $rows[] = ['month' => $a['month'], 'feature' => $a['feature'], 'model' => $a['model'], 'calls' => $a['calls'], 'input_tokens' => $a['input_tokens'], 'output_tokens' => $a['output_tokens'],
                     'cost_inr' => (float) self::inr($a['paise']), 'avg_inr' => round($a['paise'] / max(1, $a['calls']) / 100, 2), 'paying_users' => $n, 'per_paying_user_inr' => $n ? round($a['paise'] / $n / 100, 2) : 0];
             }
+        } elseif ($set === 'margin') {
+            $in = fn ($p) => round($p / 100, 2);
+            foreach (\App\Services\CostControls::margin($from, $to) as $m) {
+                $rows[] = ['plan' => $m['name'], 'orders' => $m['orders'], 'gross_inr' => $in($m['grossPaise']), 'refunds_inr' => $in($m['refundsPaise']), 'net_inr' => $in($m['netPaise']), 'gst_inr' => $in($m['gstPaise']), 'fees_inr' => $in($m['feesPaise']),
+                    'ai_inr' => $in($m['aiPaise']), 'fulfilment_inr' => $in($m['fulfilmentPaise']), 'support_inr' => $in($m['supportPaise']), 'margin_inr' => $in($m['marginPaise']), 'margin_pct' => $m['marginPct'] ?? 0, 'per_order_inr' => $in($m['perOrderPaise'])];
+            }
         } else {
             $q = $range(DB::table('activity_events'), 'created_at');
             if ($term !== '') {
@@ -282,10 +292,11 @@ class ReportController extends Controller
         if ($set === 'ai_spend') {
             $sums = ['calls' => array_sum(array_column($rows, 'calls')), 'input_tokens' => array_sum(array_column($rows, 'input_tokens')), 'output_tokens' => array_sum(array_column($rows, 'output_tokens')), 'cost_inr' => round(array_sum(array_column($rows, 'cost_inr')), 2)];
         }
-        if ($set === 'daily') {
+        if ($set === 'daily' || $set === 'margin') {
             foreach (array_filter($meta['columns'], fn ($c) => ! empty($c['num'])) as $c) {
                 $sums[$c['key']] = round(array_sum(array_column($rows, $c['key'])), 2);
             }
+            unset($sums['margin_pct'], $sums['per_order_inr']); // shares are not added up
         }
         Settings::audit($r->user()->id, 'report_'.($format === 'json' ? 'viewed' : 'exported'), $set.':'.$total);
         $rows = array_map(fn ($row) => array_intersect_key($row, array_flip($cols)), $rows);

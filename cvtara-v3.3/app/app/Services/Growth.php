@@ -248,6 +248,7 @@ class Growth
         [$pin, $pout] = self::prices($model, $s);
         $usd = ($in * $pin + $out * $pout) / 1e6;
         DB::table('ai_usage')->insert(['purpose' => mb_substr($purpose, 0, 40), 'model' => mb_substr($model, 0, 60), 'input_tokens' => $in, 'output_tokens' => $out, 'cost_paise' => (int) ceil($usd * (float) $s['usdInr'] * 100), 'created_at' => now()] + ($ownerId ? ['owner_id' => $ownerId] : []) + $extra);
+        CostControls::afterUsage($purpose, $ownerId); // 3.56.0 per-customer, per-feature and per-order alerts
         $b = self::budget();
         foreach ([90, 75, 50] as $step) {
             if ($b['pct'] !== null && $b['pct'] >= $step) {

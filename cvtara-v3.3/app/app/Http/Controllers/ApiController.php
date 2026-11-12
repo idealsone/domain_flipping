@@ -299,6 +299,26 @@ class ApiController extends Controller
 
             return $ok(\App\Services\Interviews::questions($u, $v['occupation'], $v['band']));
         }
+        // 3.57.0 role search, Research a company and revision mode.
+        if ($path === 'interviews/roles' && $get) {
+            return $ok(['roles' => \App\Services\InterviewPrep::findRoles((string) $r->query('q', ''))]);
+        }
+        if ($path === 'interviews/revision' && $get) {
+            return $ok(\App\Services\InterviewPrep::revision($u));
+        }
+        if ($path === 'interviews/research' && $get) {
+            return $ok(['research' => \App\Services\InterviewPrep::history($u), 'label' => \App\Services\InterviewPrep::LABEL]);
+        }
+        if (preg_match('#^interviews/research/(\d+)$#', $path, $m) && $get) {
+            return $ok(['research' => \App\Services\InterviewPrep::show($u, (int) $m[1])]);
+        }
+        if ($path === 'interviews/research' && $r->isMethod('POST')) {
+            \App\Services\EmailVerification::guard($u);
+            $cap('company-research', 10, 3600, 'Please wait a while before researching another company.');
+            $v = $r->validate(['company' => 'required|string|max:160', 'url' => 'required|string|max:500', 'occupation' => 'nullable|string|max:80']);
+
+            return $ok(['research' => \App\Services\InterviewPrep::research($u, $v['company'], $v['url'], $v['occupation'] ?? null)]);
+        }
         if ($path === 'interviews/start' && $r->isMethod('POST')) {
             \App\Services\EmailVerification::guard($u);
             $cap('interview-start', 10, 3600, 'Please wait a while before starting another mock interview.');
@@ -316,8 +336,8 @@ class ApiController extends Controller
             abort_unless($r->isMethod('POST'), 405);
             $cap('interview-'.$act, 120, 600, 'Please wait a moment.');
             if ($act === 'answer') {
-                $v = $r->validate(['position' => 'required|integer|min:1|max:10', 'answer' => 'present|nullable|string|max:3000']);
-                \App\Services\Interviews::answer($u, $m[1], (int) $v['position'], (string) ($v['answer'] ?? ''));
+                $v = $r->validate(['position' => 'required|integer|min:1|max:10', 'answer' => 'present|nullable|string|max:3000', 'seconds' => 'nullable|integer|min:0|max:7200']);
+                \App\Services\Interviews::answer($u, $m[1], (int) $v['position'], (string) ($v['answer'] ?? ''), isset($v['seconds']) ? (int) $v['seconds'] : null);
 
                 return $ok();
             }
@@ -588,6 +608,37 @@ class ApiController extends Controller
         if (preg_match('#^(resumes|letters)(?:/([a-f0-9-]{36}))?$#', $path, $m)) {
             return $this->documents($r, $m[1], $m[2] ?? null);
         }
+        // 3.56.0 "Is this the right job?" (V7 §13, AT-11): read the posting and show what was understood. No scan is used.
+        if ($path === 'ats/read' && $r->isMethod('POST')) {
+            $v = $r->validate(['source' => 'required|in:link,file,text', 'url' => 'nullable|string|max:1000', 'text' => 'nullable|string|max:60000', 'title' => 'nullable|string|max:180', 'company' => 'nullable|string|max:180']);
+            abort_unless(Settings::get('features')['match']['enabled'], 403);
+            $url = '';
+            $details = [];
+            $title = trim((string) ($v['title'] ?? ''));
+            $company = trim((string) ($v['company'] ?? ''));
+            if ($v['source'] === 'link') {
+                abort_unless((((array) Settings::get('speed', []))['jobLinks'] ?? false), 422, 'Job links are not available yet. Paste the job text or upload a PDF.');
+                abort_if(empty($v['url']), 422, 'Paste the link of the job posting.');
+                if (\Illuminate\Support\Facades\RateLimiter::tooManyAttempts('ats-link:'.$id, (int) env('ATS_LINK_RATE', 10))) {
+                    throw ValidationException::withMessages(['url' => 'Too many job links in a minute. Wait a moment and try again.']);
+                }
+                \Illuminate\Support\Facades\RateLimiter::hit('ats-link:'.$id, 60);
+                \App\Services\Traffic::guardHeavy();
+                $page = JobPage::fetch($v['url']);
+                $text = $page['text'];
+                $url = JobPage::canonical((string) $v['url']);
+                $details = $page['details'] ?? [];
+                $title = $title ?: $page['title'];
+                $company = $company ?: $page['company'];
+                // The check that follows reuses this reading instead of opening the link again.
+                $r->session()->put('ats.read', ['url' => $url, 'text' => $text, 'title' => $page['title'], 'company' => $page['company'], 'details' => $details, 'at' => time()]);
+            } else {
+                $text = mb_substr(trim((string) ($v['text'] ?? '')), 0, 40000);
+                abort_if(mb_strlen($text) < 80, 422, 'The job description is too short to review. Include the responsibilities and requirements.');
+            }
+
+            return $ok(['job' => \App\Services\JobFields::read($text, $title, $company, $url, $details)]);
+        }
         if ($path === 'ats/scan' && $r->isMethod('POST')) {
             $v = $r->validate(['resumeId' => ['required', 'regex:/^[a-f0-9-]{36}$/'], 'source' => 'required|in:link,file,text', 'url' => 'nullable|string|max:1000', 'text' => 'nullable|string|max:60000', 'title' => 'nullable|string|max:180', 'company' => 'nullable|string|max:180']);
             abort_unless(Settings::get('features')['match']['enabled'], 403);
@@ -617,8 +668,12 @@ class ApiController extends Controller
                 if (\Illuminate\Support\Facades\RateLimiter::tooManyAttempts('ats-link:'.$id, (int) env('ATS_LINK_RATE', 10))) {
                     throw ValidationException::withMessages(['url' => 'Too many job links in a minute. Wait a moment and try again.']);
                 }
-                \Illuminate\Support\Facades\RateLimiter::hit('ats-link:'.$id, 60);
-                $page = JobPage::fetch($v['url']);
+                $cached = (array) $r->session()->get('ats.read', []);
+                $page = ($cached['url'] ?? '') === JobPage::canonical((string) $v['url']) && (int) ($cached['at'] ?? 0) > time() - 900 ? $cached : null;
+                if (! $page) {
+                    \Illuminate\Support\Facades\RateLimiter::hit('ats-link:'.$id, 60);
+                    $page = JobPage::fetch($v['url']);
+                }
                 $text = $page['text'];
                 $title = $title ?: $page['title'];
                 $company = $company ?: $page['company'];
@@ -640,6 +695,9 @@ class ApiController extends Controller
                 throw ValidationException::withMessages(['text' => $e->getMessage()]);
             }
             $report['details'] = $details;
+            $report['jd'] = \App\Services\JobFields::read($text, $title, $company, $v['source'] === 'link' ? JobPage::canonical((string) $v['url']) : '', $details);
+            $report['jd']['confirmed'] = $r->boolean('confirmed');
+            $report['jd']['confirmedAt'] = $r->boolean('confirmed') ? now()->toIso8601String() : null;
             $resumeData = json_decode((string) $resume->content_json, true) ?: [];
             $report['resumeHash'] = \App\Services\AtsEngine::fingerprint($resumeData);
             $scanId = (string) Str::uuid();
@@ -785,6 +843,17 @@ class ApiController extends Controller
             $pend = \App\Services\ReviewEdits::pendingFor($id);
 
             return $ok(['reviews' => DB::table('feedback')->where('owner_id', $id)->orderByDesc('created_at')->limit(10)->get(['id', 'display_name', 'company', 'designation', 'rating', 'content', 'consent', 'status', 'edit_state', 'edited_at', 'created_at'])->map(fn ($f) => (array) $f + ['pendingEdit' => $pend[$f->id] ?? null])]);
+        }
+        // 3.56.0 Evidence check before a clean download: what this version says that the customer's own resume does not.
+        if (preg_match('#^evidence/(resume|letter)/([a-f0-9-]{36})(/confirm)?$#', $path, $m)) {
+            $row = DB::table($m[1] === 'resume' ? 'resume_drafts' : 'cover_letter_drafts')->where('owner_id', $id)->where('id', $m[2])->first();
+            abort_unless($row, 404);
+            if (! empty($m[3])) {
+                abort_if($get, 405);
+                \App\Services\EvidenceCheck::confirm($id, $m[1], $row);
+            }
+
+            return $ok(\App\Services\EvidenceCheck::forDocument($id, $m[1], $row) + ['revision' => (int) $row->revision]);
         }
         // 3.55.0 Ask for feedback after a resume save (V7 §28), not while editing.
         if ($path === 'feedback/ask') {

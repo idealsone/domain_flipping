@@ -83,6 +83,11 @@ class AiGateway
     public static function send(string $purpose, ?int $ownerId, callable $build, ?int $timeout = null, ?string $promptVersion = null)
     {
         $t0 = hrtime(true);
+        // 3.56.0 A free helper pauses for a customer who reached today's AI cap; paid features are never stopped here.
+        if (! CostControls::allowed($purpose, $ownerId)) {
+            self::record($purpose, '', 0, 0, $ownerId, 'capped', $t0, 'Daily AI cap for this customer reached', $promptVersion);
+            throw new \RuntimeException('This customer reached today\'s AI cap.');
+        }
         try {
             $m = $build(self::client($purpose, $timeout));
         } catch (\Throwable $e) {
@@ -197,9 +202,9 @@ class AiGateway
         $rows = DB::table('ai_usage')->where('created_at', '>=', now()->subDay())->orderBy('id')->get(['purpose', 'status', 'latency_ms', 'error', 'created_at']);
         $sum = function ($rs) {
             $n = $rs->count();
-            $ok = $rs->whereIn('status', ['ok', 'refusal'])->count(); // a refusal is the service working as designed
+            $ok = $rs->whereIn('status', ['ok', 'refusal', 'capped'])->count(); // a refusal or our own cap is the service working as designed
             $lat = $rs->pluck('latency_ms')->filter(fn ($x) => $x !== null)->sort()->values();
-            $last = $rs->whereNotIn('status', ['ok', 'refusal'])->last();
+            $last = $rs->whereNotIn('status', ['ok', 'refusal', 'capped'])->last();
 
             return ['calls' => $n, 'successPct' => $n ? round($ok / $n * 100, 1) : null,
                 'p95Ms' => $lat->count() ? (int) $lat[(int) max(0, ceil($lat->count() * 0.95) - 1)] : null,

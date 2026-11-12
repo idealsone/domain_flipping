@@ -57,7 +57,7 @@ return [
     // Console modules (resources/console/NAME.js) a role may load; a module not listed is owner only.
     'modules' => [
         'ops' => 'overview.view', 'people' => 'customers.view', 'reports' => 'reports.view', 'feedback' => 'support.view',
-        'content' => 'content.edit', 'publish' => 'content.edit', 'whatsnew' => 'content.edit', 'interviews' => 'content.edit|customers.view', 'partners' => 'partners.manage|growth.view|referrals.manage', 'extras' => 'content.edit',
+        'content' => 'content.edit', 'publish' => 'content.edit', 'whatsnew' => 'content.edit', 'interviews' => 'content.edit|customers.view', 'partners' => 'partners.manage|growth.view|referrals.manage', 'costs' => 'orders.view|growth.view', 'extras' => 'content.edit',
         'growth' => 'growth.view|seo.view', 'agents' => 'growth.view|seo.view', 'operators' => 'growth.view',
         'campaigns' => 'growth.view', 'outreach' => 'growth.view', 'promos' => 'growth.view',
         'refunds' => 'orders.view', 'referral' => 'referrals.manage', 'speed' => 'ops.view', 'team' => 'owner', 'command' => 'staff', 'approvals' => 'staff', 'metrics' => 'overview.view',
@@ -112,6 +112,7 @@ return [
         ['POST', '#^interviews/grant$#', 'customers.manage'],
 
         // 3.54.0 PartnerHub. Marking commissions paid is owner only (no rule).
+        ['GET', '#^costs(/margin)?$#', 'orders.view|growth.view'],
         ['GET', '#^partners(/\d+(/portal)?|/applications|/rankings|/rewards)?$#', 'partners.manage|growth.view'],
         ['GET', '#^partners/(commissions|payouts)$#', 'partners.manage|referrals.manage'],
         ['POST', '#^partners/(save|\d+/links|links/\d+(/campaign)?|\d+/members|\d+/agreements|applications/\d+|rewards/save|rank)$#', 'partners.manage'],

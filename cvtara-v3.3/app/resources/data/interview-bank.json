@@ -1,5 +1,5 @@
 {
- "version": "2026-11-11",
+ "version": "2026-11-12",
  "source": "CVTara original question bank (starter set, written for CVTara)",
  "occupations": [
   {
@@ -7,84 +7,264 @@
    "name": "Customer Support Executive",
    "family": "Customer service",
    "industry": "BPO / IT services",
-   "nco": "4222"
+   "nco": "4222",
+   "domain": "Customer experience",
+   "seniority": "Executive, Senior executive, Team leader, Manager",
+   "synonyms": "customer care executive, customer service executive, call centre executive, voice process, non-voice process, chat support, telecaller support, CSR, helpdesk executive",
+   "isco": "4222"
   },
   {
    "slug": "sales-executive",
    "name": "Sales Executive",
    "family": "Sales",
    "industry": "Retail / FMCG",
-   "nco": "3322"
+   "nco": "3322",
+   "domain": "Sales and business development",
+   "seniority": "Executive, Senior executive, Area manager, Regional manager",
+   "synonyms": "field sales, business development executive, BDE, sales officer, territory sales, sales representative, sales associate",
+   "isco": "3322"
   },
   {
    "slug": "hr-recruiter",
    "name": "HR Recruiter",
    "family": "Human resources",
    "industry": "Professional services",
-   "nco": "2423"
+   "nco": "2423",
+   "domain": "People and talent",
+   "seniority": "Recruiter, Senior recruiter, Talent acquisition lead, HR manager",
+   "synonyms": "talent acquisition, TA executive, HR executive, recruitment executive, IT recruiter, non-IT recruiter, staffing executive",
+   "isco": "2423"
   },
   {
    "slug": "accounts-executive",
    "name": "Accounts Executive",
    "family": "Finance and accounts",
    "industry": "All industries",
-   "nco": "3313"
+   "nco": "3313",
+   "domain": "Finance and accounting",
+   "seniority": "Executive, Senior executive, Accounts manager",
+   "synonyms": "accountant, accounts assistant, junior accountant, Tally operator, billing executive, AP executive, AR executive, GST executive",
+   "isco": "3313"
   },
   {
    "slug": "office-administrator",
    "name": "Office Administrator",
    "family": "Administration",
    "industry": "All industries",
-   "nco": "3341"
+   "nco": "3341",
+   "domain": "Administration and facilities",
+   "seniority": "Executive, Senior executive, Admin manager",
+   "synonyms": "admin executive, office assistant, office coordinator, facility executive, front office admin, administration officer",
+   "isco": "3341"
   },
   {
    "slug": "retail-store",
    "name": "Retail Store Associate",
    "family": "Retail",
    "industry": "Retail",
-   "nco": "5223"
+   "nco": "5223",
+   "domain": "Retail operations",
+   "seniority": "Associate, Senior associate, Team leader",
+   "synonyms": "sales associate, store associate, floor executive, cashier, customer sales associate, retail executive, showroom executive",
+   "isco": "5223"
   },
   {
    "slug": "hotel-front-office",
    "name": "Hotel Front Office Executive",
    "family": "Hospitality",
    "industry": "Hospitality",
-   "nco": "4224"
+   "nco": "4224",
+   "domain": "Hospitality services",
+   "seniority": "Associate, Executive, Supervisor, Front office manager",
+   "synonyms": "front desk executive, guest relations executive, GRE, hotel receptionist, front office associate",
+   "isco": "4224"
   },
   {
    "slug": "hospital-front-office",
    "name": "Hospital Front Office Executive",
    "family": "Healthcare administration",
    "industry": "Healthcare",
-   "nco": "4226"
+   "nco": "4226",
+   "domain": "Healthcare services",
+   "seniority": "Executive, Senior executive, Supervisor",
+   "synonyms": "patient care coordinator, hospital receptionist, front desk executive, billing and admissions executive, patient relations executive",
+   "isco": "4226"
   },
   {
    "slug": "bank-operations",
    "name": "Banking Operations Executive",
    "family": "Banking operations",
    "industry": "BFSI",
-   "nco": "4312"
+   "nco": "4312",
+   "domain": "Banking and financial services",
+   "seniority": "Officer, Senior officer, Branch operations manager",
+   "synonyms": "bank officer, operations executive, back office banking, KYC executive, branch operations, clearing executive",
+   "isco": "4312"
   },
   {
    "slug": "teacher",
    "name": "School Teacher",
    "family": "Education",
    "industry": "Education",
-   "nco": "2330"
+   "nco": "2330",
+   "domain": "Education and training",
+   "seniority": "Teacher, Senior teacher, Head of department",
+   "synonyms": "school teacher, TGT, PGT, primary teacher, subject teacher, tutor, educator",
+   "isco": "2330"
   },
   {
    "slug": "logistics-coordinator",
    "name": "Logistics Coordinator",
    "family": "Operations and logistics",
    "industry": "Logistics",
-   "nco": "4323"
+   "nco": "4323",
+   "domain": "Supply chain and logistics",
+   "seniority": "Executive, Senior executive, Supervisor, Manager",
+   "synonyms": "logistics executive, dispatch coordinator, shipping executive, transport coordinator, supply chain executive",
+   "isco": "4323"
   },
   {
    "slug": "marketing-executive",
    "name": "Marketing Executive",
    "family": "Marketing",
    "industry": "All industries",
-   "nco": "2431"
+   "nco": "2431",
+   "domain": "Marketing and brand",
+   "seniority": "Executive, Senior executive, Marketing manager",
+   "synonyms": "marketing coordinator, digital marketing executive, brand executive, marketing associate, promotions executive",
+   "isco": "2431"
+  },
+  {
+   "slug": "inside-sales",
+   "name": "Inside Sales Executive",
+   "family": "Sales",
+   "industry": "BFSI / EdTech / Real estate",
+   "nco": "5244",
+   "isco": "5244",
+   "domain": "Sales and business development",
+   "seniority": "Executive, Senior executive, Team leader",
+   "synonyms": "telecaller, tele sales, telemarketing executive, inside sales associate, pre-sales executive, lead generation executive"
+  },
+  {
+   "slug": "receptionist",
+   "name": "Receptionist",
+   "family": "Administration",
+   "industry": "All industries",
+   "nco": "4226",
+   "isco": "4226",
+   "domain": "Administration and facilities",
+   "seniority": "Receptionist, Senior receptionist, Front office supervisor",
+   "synonyms": "front desk executive, front office executive, reception executive, office receptionist"
+  },
+  {
+   "slug": "data-entry",
+   "name": "Data Entry Operator",
+   "family": "Administration",
+   "industry": "All industries",
+   "nco": "4132",
+   "isco": "4132",
+   "domain": "Back office operations",
+   "seniority": "Operator, Senior operator, Team leader",
+   "synonyms": "data entry executive, computer operator, back office data entry, MIS data entry, typist"
+  },
+  {
+   "slug": "insurance-advisor",
+   "name": "Insurance Advisor",
+   "family": "Sales",
+   "industry": "Insurance",
+   "nco": "3321",
+   "isco": "3321",
+   "domain": "Banking and financial services",
+   "seniority": "Advisor, Senior advisor, Sales manager",
+   "synonyms": "insurance agent, relationship officer insurance, bancassurance officer, policy advisor, financial advisor insurance"
+  },
+  {
+   "slug": "collections-executive",
+   "name": "Collections Executive",
+   "family": "Banking operations",
+   "industry": "BFSI / NBFC",
+   "nco": "4214",
+   "isco": "4214",
+   "domain": "Banking and financial services",
+   "seniority": "Executive, Senior executive, Team leader",
+   "synonyms": "recovery executive, collection officer, tele collections, field collections, credit collections executive"
+  },
+  {
+   "slug": "store-manager",
+   "name": "Retail Store Manager",
+   "family": "Retail",
+   "industry": "Retail",
+   "nco": "1420",
+   "isco": "1420",
+   "domain": "Retail operations",
+   "seniority": "Assistant store manager, Store manager, Cluster manager",
+   "synonyms": "store in-charge, outlet manager, showroom manager, branch store manager, assistant store manager"
+  },
+  {
+   "slug": "warehouse-supervisor",
+   "name": "Warehouse Supervisor",
+   "family": "Operations and logistics",
+   "industry": "Logistics / E-commerce",
+   "nco": "4321",
+   "isco": "4321",
+   "domain": "Supply chain and logistics",
+   "seniority": "Supervisor, Senior supervisor, Warehouse manager",
+   "synonyms": "store keeper, inventory supervisor, stores executive, warehouse executive, godown in-charge"
+  },
+  {
+   "slug": "content-writer",
+   "name": "Content Writer",
+   "family": "Marketing",
+   "industry": "Media / Digital",
+   "nco": "2641",
+   "isco": "2641",
+   "domain": "Marketing and brand",
+   "seniority": "Writer, Senior writer, Content lead",
+   "synonyms": "copywriter, content executive, blog writer, content creator, technical writer non-coding, editor"
+  },
+  {
+   "slug": "travel-consultant",
+   "name": "Travel Consultant",
+   "family": "Customer service",
+   "industry": "Travel and tourism",
+   "nco": "4221",
+   "isco": "4221",
+   "domain": "Travel and tourism",
+   "seniority": "Consultant, Senior consultant, Team leader",
+   "synonyms": "travel agent, ticketing executive, tour consultant, holiday consultant, reservations executive"
+  },
+  {
+   "slug": "back-office",
+   "name": "Back Office Executive",
+   "family": "Administration",
+   "industry": "All industries",
+   "nco": "4110",
+   "isco": "4110",
+   "domain": "Back office operations",
+   "seniority": "Executive, Senior executive, Team leader",
+   "synonyms": "back office assistant, operations executive, process associate, MIS executive, documentation executive"
+  },
+  {
+   "slug": "pharmacy-assistant",
+   "name": "Pharmacy Assistant",
+   "family": "Healthcare",
+   "industry": "Healthcare / Retail pharmacy",
+   "nco": "3213",
+   "isco": "3213",
+   "domain": "Healthcare services",
+   "seniority": "Assistant, Senior assistant, Pharmacy supervisor",
+   "synonyms": "pharmacy helper, chemist shop assistant, medical store assistant, pharmacy billing executive"
+  },
+  {
+   "slug": "event-coordinator",
+   "name": "Event Coordinator",
+   "family": "Hospitality",
+   "industry": "Events / Hospitality",
+   "nco": "3332",
+   "isco": "3332",
+   "domain": "Events and hospitality",
+   "seniority": "Coordinator, Senior coordinator, Event manager",
+   "synonyms": "event executive, event planner, wedding coordinator, event operations executive"
   }
  ],
  "questions": [
@@ -987,6 +1167,247 @@
    "max_band": "12+",
    "text": "Would you use a customer's photo or review in an advertisement without asking?",
    "guidance": "No. Explain getting written consent, respecting privacy and keeping claims truthful."
+  },
+  {
+   "code": "INSIDE-SAL-001",
+   "occupation": "inside-sales",
+   "competency": "role",
+   "difficulty": 2,
+   "min_band": "fresher",
+   "max_band": "12+",
+   "text": "How do you open a cold call so the person does not hang up in the first ten seconds?",
+   "guidance": "Say who you are and why you are calling in one line, ask permission to take two minutes, and lead with something useful to them rather than the product. Mention how you would handle \"not interested\" politely and still leave a door open."
+  },
+  {
+   "code": "INSIDE-SAL-002",
+   "occupation": "inside-sales",
+   "competency": "role",
+   "difficulty": 2,
+   "min_band": "fresher",
+   "max_band": "12+",
+   "text": "How do you keep going after many calls end in \"no\"?",
+   "guidance": "Show that you track numbers (calls, connects, follow-ups) and learn from patterns rather than taking rejection personally. A short example of a day or week you improved your conversion helps."
+  },
+  {
+   "code": "RECEPTIONI-001",
+   "occupation": "receptionist",
+   "competency": "role",
+   "difficulty": 2,
+   "min_band": "fresher",
+   "max_band": "12+",
+   "text": "Three visitors arrive while the phone is ringing. What do you do?",
+   "guidance": "Greet the visitors with eye contact and a quick \"I will be with you in a moment\", answer the call briefly or take a message, then attend to visitors in order. Show calm, courtesy and how you keep a log."
+  },
+  {
+   "code": "RECEPTIONI-002",
+   "occupation": "receptionist",
+   "competency": "role",
+   "difficulty": 2,
+   "min_band": "fresher",
+   "max_band": "12+",
+   "text": "How do you handle a visitor who insists on meeting someone without an appointment?",
+   "guidance": "Stay polite, check with the person or their assistant, offer a time or a message, and follow the building or security rules. Never promise a meeting you cannot confirm."
+  },
+  {
+   "code": "DATA-ENTRY-001",
+   "occupation": "data-entry",
+   "competency": "role",
+   "difficulty": 2,
+   "min_band": "fresher",
+   "max_band": "12+",
+   "text": "How do you make sure your entries are accurate when you are working fast?",
+   "guidance": "Talk about checking a sample, using the source document side by side, keyboard shortcuts, and stopping to verify unclear handwriting or numbers. Mention any accuracy or speed figure you were measured on."
+  },
+  {
+   "code": "DATA-ENTRY-002",
+   "occupation": "data-entry",
+   "competency": "role",
+   "difficulty": 2,
+   "min_band": "fresher",
+   "max_band": "12+",
+   "text": "What would you do if you found a mistake you made in data that was already submitted?",
+   "guidance": "Report it quickly to your supervisor, explain what is affected, correct it the agreed way and suggest how to avoid it again. Honesty matters more than the mistake."
+  },
+  {
+   "code": "INSURANCE--001",
+   "occupation": "insurance-advisor",
+   "competency": "role",
+   "difficulty": 2,
+   "min_band": "fresher",
+   "max_band": "12+",
+   "text": "How do you explain a policy to someone who does not understand insurance?",
+   "guidance": "Use simple words and a real-life example, focus on what the policy covers and does not cover, the premium and the claim process. Never push a policy that does not fit the person's need."
+  },
+  {
+   "code": "INSURANCE--002",
+   "occupation": "insurance-advisor",
+   "competency": "role",
+   "difficulty": 2,
+   "min_band": "fresher",
+   "max_band": "12+",
+   "text": "A customer wants to cancel a policy you sold last month. How do you respond?",
+   "guidance": "Listen to the reason, check whether there is a misunderstanding, explain the free-look period and options honestly, and respect their decision. Mention following the insurer's and IRDAI rules."
+  },
+  {
+   "code": "COLLECTION-001",
+   "occupation": "collections-executive",
+   "competency": "role",
+   "difficulty": 2,
+   "min_band": "fresher",
+   "max_band": "12+",
+   "text": "How do you speak to a customer who has missed several payments?",
+   "guidance": "Be respectful and factual, understand their situation, explain the amount and the consequences clearly, and agree a realistic plan. Show you know that threats or harassment are never acceptable."
+  },
+  {
+   "code": "COLLECTION-002",
+   "occupation": "collections-executive",
+   "competency": "role",
+   "difficulty": 2,
+   "min_band": "fresher",
+   "max_band": "12+",
+   "text": "A customer promises to pay but does not, again. What next?",
+   "guidance": "Record the promise and follow up on the date, escalate according to the process, and offer documented options. Show patience and how you keep accurate notes."
+  },
+  {
+   "code": "STORE-MANA-001",
+   "occupation": "store-manager",
+   "competency": "role",
+   "difficulty": 2,
+   "min_band": "fresher",
+   "max_band": "12+",
+   "text": "How would you improve sales in a store whose numbers have dropped?",
+   "guidance": "Look at footfall, conversion and average bill separately, talk to the team and customers, check stock and display, and try one or two changes with a target date. Give an example with numbers if you have one."
+  },
+  {
+   "code": "STORE-MANA-002",
+   "occupation": "store-manager",
+   "competency": "role",
+   "difficulty": 2,
+   "min_band": "fresher",
+   "max_band": "12+",
+   "text": "How do you plan staff shifts when two people call in sick on a weekend?",
+   "guidance": "Show how you prioritise customer-facing areas, call on backup staff fairly, adjust breaks, and step in yourself. Mention keeping a roster plan for busy days."
+  },
+  {
+   "code": "WAREHOUSE--001",
+   "occupation": "warehouse-supervisor",
+   "competency": "role",
+   "difficulty": 2,
+   "min_band": "fresher",
+   "max_band": "12+",
+   "text": "How do you keep stock records matching what is physically in the warehouse?",
+   "guidance": "Talk about cycle counts, clear receiving and dispatch checks, labelling and bin locations, and investigating differences quickly. Mention any accuracy figure you achieved."
+  },
+  {
+   "code": "WAREHOUSE--002",
+   "occupation": "warehouse-supervisor",
+   "competency": "role",
+   "difficulty": 2,
+   "min_band": "fresher",
+   "max_band": "12+",
+   "text": "How do you keep the team safe while meeting dispatch targets?",
+   "guidance": "Explain basic safety rules (lifting, forklift zones, clear aisles), briefings at the start of a shift, and that you stop work if something is unsafe. Targets are met by planning, not shortcuts."
+  },
+  {
+   "code": "CONTENT-WR-001",
+   "occupation": "content-writer",
+   "competency": "role",
+   "difficulty": 2,
+   "min_band": "fresher",
+   "max_band": "12+",
+   "text": "How do you write for a topic you know little about?",
+   "guidance": "Describe how you research from reliable sources, talk to a subject expert, outline before writing and check facts. Mention how you keep the reader's question at the centre."
+  },
+  {
+   "code": "CONTENT-WR-002",
+   "occupation": "content-writer",
+   "competency": "role",
+   "difficulty": 2,
+   "min_band": "fresher",
+   "max_band": "12+",
+   "text": "How do you handle heavy edits or criticism of your draft?",
+   "guidance": "Show that you separate yourself from the draft, ask questions to understand the reason, and apply the feedback to the next pieces too. An example of a piece that improved after feedback helps."
+  },
+  {
+   "code": "TRAVEL-CON-001",
+   "occupation": "travel-consultant",
+   "competency": "role",
+   "difficulty": 2,
+   "min_band": "fresher",
+   "max_band": "12+",
+   "text": "A customer's flight is cancelled while they are travelling. How do you help?",
+   "guidance": "Stay calm, check the options with the airline quickly, explain choices and costs clearly, rebook and confirm in writing. Mention keeping the customer updated until it is sorted."
+  },
+  {
+   "code": "TRAVEL-CON-002",
+   "occupation": "travel-consultant",
+   "competency": "role",
+   "difficulty": 2,
+   "min_band": "fresher",
+   "max_band": "12+",
+   "text": "How do you suggest a holiday package to a family with a fixed budget?",
+   "guidance": "Ask about dates, interests, travel style and must-haves, then offer two or three options within the budget with what is and is not included. Never hide charges."
+  },
+  {
+   "code": "BACK-OFFIC-001",
+   "occupation": "back-office",
+   "competency": "role",
+   "difficulty": 2,
+   "min_band": "fresher",
+   "max_band": "12+",
+   "text": "How do you manage a large volume of repetitive work without errors?",
+   "guidance": "Talk about checklists, batching similar tasks, short breaks, and self-checks before submitting. Mention any turnaround time or accuracy you met."
+  },
+  {
+   "code": "BACK-OFFIC-002",
+   "occupation": "back-office",
+   "competency": "role",
+   "difficulty": 2,
+   "min_band": "fresher",
+   "max_band": "12+",
+   "text": "What would you do if a process you follow seems to waste time?",
+   "guidance": "Note where the time goes, suggest a small change to your supervisor with the benefit, and keep following the agreed process until a change is approved."
+  },
+  {
+   "code": "PHARMACY-A-001",
+   "occupation": "pharmacy-assistant",
+   "competency": "role",
+   "difficulty": 2,
+   "min_band": "fresher",
+   "max_band": "12+",
+   "text": "A customer asks for a medicine that needs a prescription but has none. What do you do?",
+   "guidance": "Politely explain that you cannot give it without a prescription, suggest they see a doctor, and involve the pharmacist. Show you follow the law and put customer safety first."
+  },
+  {
+   "code": "PHARMACY-A-002",
+   "occupation": "pharmacy-assistant",
+   "competency": "role",
+   "difficulty": 2,
+   "min_band": "fresher",
+   "max_band": "12+",
+   "text": "How do you avoid giving the wrong medicine when names look similar?",
+   "guidance": "Read the prescription carefully, check the strength and form, confirm with the pharmacist when unsure, and repeat the name and dose to the customer."
+  },
+  {
+   "code": "EVENT-COOR-001",
+   "occupation": "event-coordinator",
+   "competency": "role",
+   "difficulty": 2,
+   "min_band": "fresher",
+   "max_band": "12+",
+   "text": "The venue informs you two hours before an event that the sound system has failed. What do you do?",
+   "guidance": "Stay calm, call your vendor list for a backup, inform the client honestly with a plan, and adjust the programme if needed. Mention keeping backup contacts for every event."
+  },
+  {
+   "code": "EVENT-COOR-002",
+   "occupation": "event-coordinator",
+   "competency": "role",
+   "difficulty": 2,
+   "min_band": "fresher",
+   "max_band": "12+",
+   "text": "How do you keep track of many vendors and deadlines for one event?",
+   "guidance": "Talk about a simple run sheet or tracker, confirmed timelines in writing, reminders, and one point of contact for each vendor."
   }
- ]
+ ],
+ "codes": "nco and isco are 4-digit ISCO-08 unit groups; NCO 2015 follows ISCO-08 at this level. Check against the official NCO 2015 list before publishing a code."
 }

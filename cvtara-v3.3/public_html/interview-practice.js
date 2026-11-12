@@ -42,6 +42,11 @@
   document.head.appendChild(css);
 
   let state = null;
+  const RESEARCH_LABEL = 'These are CVTara practice questions based on publicly available company information; they are not confirmed questions from the employer.';
+  // 3.57.0 optional answer timer: time on each answer is shown and saved with it; nothing is penalised.
+  const clock = { on: false, start: {}, spent: {}, tick: null };
+  const mmss = n => Math.floor(n / 60) + ':' + String(n % 60).padStart(2, '0');
+  const secs = pos => Math.round(((clock.spent[pos] || 0) + (clock.start[pos] ? Date.now() - clock.start[pos] : 0)) / 1000);
   const LEVEL_NOTE = 'Levels show how your practice answers read against the rubric. They are a learning guide, not a prediction of any interview result.';
 
   function roleOptions(sel) {
@@ -67,12 +72,16 @@
     else {
       const can = s.enabled && s.left > 0;
       out += `<div class="ip-card"><h3>Start a mock interview</h3>
-        <div class="ip-form"><label>Role<select data-ip="occupation">${roleOptions()}</select></label>
+        <div class="ip-form"><label>Find your role<input data-ip-find maxlength="60" placeholder="Type your job title, e.g. telecaller" autocomplete="off"></label><div data-ip-found class="ip-row" style="grid-column:1/-1"></div>
+        <label>Role<select data-ip="occupation">${roleOptions(state.pick || new URLSearchParams(location.search).get('role') || '')}</select></label>
         <label>Your experience<select data-ip="band">${opts(s.bands, 'fresher')}</select></label>
         <label>Your goal<select data-ip="objective">${opts(s.objectives, 'first_job')}</select></label>
         <label>Company (optional)<input data-ip="company" maxlength="120" placeholder="e.g. a bank or retail chain"></label></div>
         ${can ? '<button class="button mint" data-ip-start>Start mock interview</button>' : (!s.enabled ? '<p class="ip-muted">Mock interviews will open soon. You can practise questions below in the meantime.</p>' : '<p class="ip-muted">Job Hunt includes 4 mock interviews and Pro includes 12, for the whole plan.</p><button class="button secondary" data-workspace-view="billing">See plans</button>')}
-        <button class="button secondary" data-ip-browse>Practise questions</button></div><div data-ip-bank></div>`;
+        <button class="button secondary" data-ip-browse>Practise questions</button>${s.progress.completed ? ' <button class="button secondary" data-ip-revise>Revision: practise your past questions</button>' : ''}</div><div data-ip-bank></div>
+        <div class="ip-card"><h3>Research a company</h3><p class="ip-muted">Paste the company's own website (for example its About page). We read that one public page, show a short summary with its source, and give you practice questions about the company. ${E(RESEARCH_LABEL)}</p>
+        <div class="ip-form"><label>Company name<input data-ip-rc="company" maxlength="160" placeholder="e.g. Acme Retail"></label><label>Company website<input data-ip-rc="url" maxlength="500" placeholder="https://"></label></div>
+        <button class="button secondary" data-ip-research>Research this company</button><div data-ip-research-out></div></div>`;
     }
     if (s.past.length) {
       out += `<div class="ip-card"><h3>Your mock interviews</h3>${s.past.map(p => `<div class="ip-row" style="padding:6px 0"><span>${E(p.role || p.occupation)} · ${E(when(p.created_at))}</span><span class="ip-pill">${E(label(p.status, p.level))}</span>${p.status === 'evaluated' ? `<button class="button secondary small" data-ip-open="${E(p.id)}">Read feedback</button>` : ''}</div>`).join('')}</div>`;
@@ -96,7 +105,8 @@
     let out = `<div class="ip-card" data-ip-session="${E(x.id)}"><h3>${E(x.role)} · ${E(x.bandLabel)}</h3>`;
     if (x.status === 'in_progress') {
       out += `<p class="ip-muted">Answer each question as you would say it in the interview, in a few sentences. Your answers save as you type. Submit when you are done; the session closes after a day without submitting and your credit is returned.</p>`;
-      out += x.answers.map(a => `<div class="ip-q"><b>${a.position}. ${E(a.question)}</b><textarea data-ip-answer="${a.position}" maxlength="3000">${E(a.answer)}</textarea><details><summary class="ip-guide">What a good answer covers</summary><p class="ip-guide">${E(a.guidance)}</p></details></div>`).join('');
+      out += `<label class="ip-row ip-muted" style="margin:6px 0"><input type="checkbox" data-ip-clock${clock.on ? ' checked' : ''}> Use a timer (aim for about 2 minutes per answer, as in a real interview)</label>`;
+      out += x.answers.map(a => `<div class="ip-q"><b>${a.position}. ${E(a.question)}</b>${clock.on ? `<span class="ip-pill" data-ip-time="${a.position}">${mmss(secs(a.position))}</span>` : ''}<textarea data-ip-answer="${a.position}" maxlength="3000">${E(a.answer)}</textarea><details><summary class="ip-guide">What a good answer covers</summary><p class="ip-guide">${E(a.guidance)}</p></details></div>`).join('');
       out += `<button class="button mint" data-ip-submit>Submit for feedback</button>`;
     } else if (x.status === 'submitted' || x.status === 'evaluating') {
       out += `<p class="ip-muted">Your feedback is being prepared. This usually takes a minute or two; we will also let you know in your notifications.</p><button class="button secondary" data-ip-refresh>Check again</button>`;
@@ -129,8 +139,21 @@
     const t = e.target.closest('[data-ip-answer]'); if (!t || !state?.open) return;
     const pos = +t.dataset.ipAnswer; const id = state.open.id;
     clearTimeout(saveTimers[pos]);
-    saveTimers[pos] = setTimeout(() => api(`interviews/${id}/answer`, { position: pos, answer: t.value }).catch(() => {}), 800);
+    saveTimers[pos] = setTimeout(() => api(`interviews/${id}/answer`, { position: pos, answer: t.value, ...(clock.on ? { seconds: secs(pos) } : {}) }).catch(() => {}), 800);
     const a = state.open.answers.find(x => x.position === pos); if (a) a.answer = t.value;
+  });
+
+  document.addEventListener('focusin', e => { const t = e.target.closest?.('[data-ip-answer]'); if (!t || !clock.on) return; const pos = +t.dataset.ipAnswer; Object.keys(clock.start).forEach(k => { if (clock.start[k]) { clock.spent[k] = (clock.spent[k] || 0) + Date.now() - clock.start[k]; clock.start[k] = 0; } }); clock.start[pos] = Date.now(); });
+  document.addEventListener('change', e => {
+    if (!e.target.matches?.('[data-ip-clock]')) return; clock.on = e.target.checked; clearInterval(clock.tick);
+    if (clock.on) clock.tick = setInterval(() => document.querySelectorAll('[data-ip-time]').forEach(el => { const n = secs(+el.dataset.ipTime); el.textContent = mmss(n); el.style.background = n > 150 ? 'rgba(234,179,8,.18)' : ''; }), 1000);
+    render();
+  });
+  let findTimer = null;
+  document.addEventListener('input', e => {
+    const f = e.target.closest?.('[data-ip-find]'); if (!f) return; clearTimeout(findTimer);
+    findTimer = setTimeout(async () => { const box = host()?.querySelector('[data-ip-found]'); if (!box) return; if (f.value.trim().length < 2) { box.innerHTML = ''; return; }
+      try { const { roles } = await api('interviews/roles?q=' + encodeURIComponent(f.value.trim())); box.innerHTML = roles.length ? roles.map(r => `<button type="button" class="button secondary small" data-ip-pick="${E(r.slug)}">${E(r.name)}${r.matched ? ` <small>(${E(r.matched)})</small>` : ''}</button>`).join('') : '<span class="ip-muted">No match yet. Choose the closest role from the list.</span>'; } catch { box.innerHTML = ''; } }, 250);
   });
 
   document.addEventListener('click', async e => {
@@ -156,6 +179,17 @@
       } else if (b.matches('[data-ip-challenge]')) {
         const note = h.querySelector('[data-ip-note]')?.value || '';
         state.open = (await api(`interviews/${state.open.id}/challenge`, { note })).session; render();
+      } else if (b.matches('[data-ip-pick]')) {
+        const sel = h.querySelector('[data-ip="occupation"]'); if (sel) sel.value = b.dataset.ipPick; state.pick = b.dataset.ipPick; h.querySelector('[data-ip-found]').innerHTML = '';
+      } else if (b.matches('[data-ip-research]')) {
+        const out = h.querySelector('[data-ip-research-out]'); b.disabled = true; out.innerHTML = '<p class="ip-muted">Reading the page…</p>';
+        try {
+          const r = (await api('interviews/research', { company: h.querySelector('[data-ip-rc=company]').value, url: h.querySelector('[data-ip-rc=url]').value, occupation: val('occupation') || null })).research;
+          out.innerHTML = r.status !== 'ready' ? `<p class="ip-muted">${E(r.message || r.note || 'That page could not be read.')}</p>` : `<div style="margin-top:12px"><p><b>${E(r.company)}</b> · <a href="${E(r.source)}" rel="nofollow noopener" target="_blank">source</a> · read ${E(when(r.readAt))}</p>${r.summary ? `<blockquote class="ip-guide" style="margin:6px 0 10px">${E(r.summary)}</blockquote>` : ''}<p class="ip-muted"><b>${E(r.label)}</b></p>${r.questions.map((q, i) => `<div class="ip-q"><b>${i + 1}. ${E(q.text)}</b><span class="ip-pill">${E(q.type)}</span><p class="ip-guide">${E(q.tip)}</p><textarea maxlength="3000" placeholder="Practise your answer here (not saved)"></textarea></div>`).join('')}</div>`;
+        } catch (err) { out.innerHTML = `<p class="ip-err">${E(err.message)}</p>`; } finally { b.disabled = false; }
+      } else if (b.matches('[data-ip-revise]')) {
+        const j = await api('interviews/revision'); const box = h.querySelector('[data-ip-bank]');
+        box.innerHTML = `<div class="ip-card"><h3>Revision</h3><p class="ip-muted">${E(j.note)}</p>${j.questions.map((q, i) => `<div class="ip-q"><b>${i + 1}. ${E(q.question)}</b><details><summary class="ip-guide">Your earlier answer and what to improve</summary><p class="ip-guide">${E(q.earlier)}</p>${q.improve.length ? `<ul class="ip-guide">${q.improve.map(t => `<li>${E(t)}</li>`).join('')}</ul>` : ''}</details><textarea maxlength="3000" placeholder="Write a better answer (not saved)"></textarea></div>`).join('') || '<p class="ip-muted">Finish a mock interview first; its questions appear here.</p>'}</div>`;
       } else if (b.matches('[data-ip-browse]')) {
         const j = await api(`interviews/questions?occupation=${encodeURIComponent(val('occupation'))}&band=${encodeURIComponent(val('band'))}`);
         const box = h.querySelector('[data-ip-bank]');

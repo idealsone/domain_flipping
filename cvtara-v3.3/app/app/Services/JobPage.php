@@ -64,6 +64,42 @@ class JobPage
         return $ips;
     }
 
+    /**
+     * 3.57.0 Whether the site's robots.txt lets a general crawler read this path ("User-agent: *" Disallow rules only).
+     * No robots.txt, or one that cannot be read, counts as allowed. Same address checks as reading a page.
+     */
+    public static function robotsAllows(string $url): bool
+    {
+        $p = parse_url($url);
+        if (! $p || empty($p['host']) || ! in_array($p['scheme'] ?? '', ['http', 'https'], true)) {
+            return false;
+        }
+        $port = $p['port'] ?? ($p['scheme'] === 'https' ? 443 : 80);
+        $ip = self::resolve($p['host'])[0];
+        try {
+            $res = Http::withOptions(['allow_redirects' => false, 'curl' => [CURLOPT_RESOLVE => [$p['host'].':'.$port.':'.$ip]]])
+                ->withHeaders(['User-Agent' => 'Mozilla/5.0 (compatible; CVTaraBot/1.0; +https://cvtara.com)'])->connectTimeout(4)->timeout(6)
+                ->get($p['scheme'].'://'.$p['host'].(isset($p['port']) ? ':'.$p['port'] : '').'/robots.txt');
+        } catch (\Throwable) {
+            return true;
+        }
+        if (! $res->successful()) {
+            return true;
+        }
+        $path = ($p['path'] ?? '/') ?: '/';
+        $mine = false;
+        foreach (preg_split('/\r\n|\n|\r/', mb_substr($res->body(), 0, 100000)) as $line) {
+            $line = trim(preg_replace('/#.*/', '', $line));
+            if (preg_match('/^user-agent:\s*(.+)$/i', $line, $m)) {
+                $mine = trim($m[1]) === '*' || stripos($m[1], 'cvtara') !== false;
+            } elseif ($mine && preg_match('/^disallow:\s*(\S+)/i', $line, $m) && str_starts_with($path, $m[1])) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
     /** Reads the posting. Tries the page directly; if the site refuses or hides the text, uses the owner's reading service when one is switched on. */
     public static function fetch(string $url): array
     {
