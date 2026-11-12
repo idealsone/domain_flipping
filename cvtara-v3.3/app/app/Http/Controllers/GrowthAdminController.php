@@ -112,7 +112,7 @@ class GrowthAdminController extends Controller
             return $ok(['profile' => \App\Services\BrandProfiles::check((int) $r->input('id'))]);
         }
         if ($path === 'growth/seo/backlog' && $get) {
-            return $ok(['clusters' => \App\Services\SeoBacklog::summary(), 'source' => \App\Services\SeoBacklog::data()['source'] ?? '']);
+            return $ok(['clusters' => \App\Services\SeoBacklog::summary(), 'source' => \App\Services\SeoBacklog::data()['source'] ?? '', 'playbook' => \App\Services\SeoBacklog::playbook(), 'linkPlan' => \App\Services\SeoBacklog::linkPlan()]);
         }
         if ($path === 'growth/agents/cadence' && $get) {
             return $ok(\App\Services\AgentCadence::overview());

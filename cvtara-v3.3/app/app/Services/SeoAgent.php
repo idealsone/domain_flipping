@@ -168,7 +168,8 @@ class SeoAgent
         $min = (int) self::settings()['minImpressions'];
         $pairs = collect(Settings::get('seoPairs', [])['rows'] ?? [])->reject(fn ($r) => self::branded($r['query']));
         $pages = collect(Settings::get('searchData', [])['page'] ?? [])->map(fn ($r) => ['path' => self::path($r['key'])] + $r);
-        $striking = $pairs->filter(fn ($r) => $r['position'] >= 4 && $r['position'] <= 20 && $r['impressions'] >= $min)->sortByDesc('impressions')->values();
+        // Owner rule (2026-11-12): positions 4–30 are the realistic page-one candidates; beyond 30 the page usually does not answer the search yet.
+        $striking = $pairs->filter(fn ($r) => $r['position'] >= 4 && $r['position'] <= 30 && $r['impressions'] >= $min)->sortByDesc('impressions')->values();
         $lowCtr = $pages->filter(function ($r) use ($min) {
             $pos = max(1, (int) round($r['position']));
 
@@ -177,7 +178,7 @@ class SeoAgent
         $split = $pairs->groupBy('query')->filter(fn ($g) => $g->where('impressions', '>=', $min / 2)->count() >= 2)
             ->map(fn ($g, $q) => ['query' => $q, 'pages' => $g->sortByDesc('impressions')->pluck('path')->unique()->values()->all(), 'impressions' => $g->sum('impressions')])->sortByDesc('impressions')->values();
         $gaps = $pairs->groupBy('query')->map(fn ($g, $q) => ['query' => $q, 'impressions' => $g->sum('impressions'), 'best' => $g->min('position'), 'path' => $g->sortBy('position')->first()['path']])
-            ->filter(fn ($r) => $r['best'] > 20 && $r['impressions'] >= $min)->sortByDesc('impressions')->values();
+            ->filter(fn ($r) => $r['best'] > 30 && $r['impressions'] >= $min)->sortByDesc('impressions')->values();
 
         return ['striking' => $striking->take(50)->all(), 'lowCtr' => $lowCtr->take(50)->all(), 'split' => $split->take(30)->all(), 'gaps' => $gaps->take(30)->all()];
     }

@@ -31,8 +31,8 @@ def run(ctx, t):
         t.check("llms.txt lists the partners page", b"/partners.html" in b)
 
         n = db.q("select count(*) from seo_keywords where source='seed' and cluster!=''")[0][0]
-        t.check("the 118-search backlog is loaded with its clusters", n == 118, n)
         bk = json.load(open(ctx.app + "/resources/data/keyword-backlog.json"))
+        t.check("the whole backlog (V6 118 + 2026-11-12 additions) is loaded with its clusters", n == len(bk["keywords"]) and n >= 118 + 150, n)
         targets = [k["target"] for k in bk["keywords"] if k["target"]]
         t.check("each mapped search points at a page that exists", all(c.raw("GET", p.split("#")[0] or "/")[0] in (200, 304) for p in sorted(set(targets))))
         t.check("searches with no page yet stay unassigned", db.q("select count(*) from seo_keywords where cluster!='' and target=''")[0][0] == sum(1 for k in bk["keywords"] if not k["target"]))
@@ -59,7 +59,7 @@ def run(ctx, t):
         st, h, b = o.raw("GET", "/api/admin/growth/brand-profiles?export=csv")
         t.check("downloadable", st == 200 and b"Platform" in b and b"Verified" in b and b"Last checked" in b)
         s, j = o.api("GET", "admin/growth/seo/backlog")
-        t.check("the console shows the backlog by cluster", s == 200 and len(j["clusters"]) == 6 and sum(c["keywords"] for c in j["clusters"]) == 118)
+        t.check("the console shows the backlog by cluster", s == 200 and len(j["clusters"]) == len({k["cluster"] for k in bk["keywords"]}) and sum(c["keywords"] for c in j["clusters"]) == len(bk["keywords"]))
         cu = Client(inst.base); cu.register("ss-a@test.local")
         t.check("customers cannot see the register", cu.api("GET", "admin/growth/brand-profiles")[0] in (403, 404))
         gj = open(ctx.app + "/resources/console/growth.js").read()

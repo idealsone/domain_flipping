@@ -130,6 +130,29 @@ class ContentController extends Controller
         return implode("\n", $L);
     }
 
+    /**
+     * The brand's structured data (3.62.0): Organization + WebSite with stable ids, alternate spellings, logo, contact and
+     * the social profiles saved under Site details. Only links that are filled in are listed, so a removed profile drops out.
+     */
+    public static function brandSchema(string $siteBase): array
+    {
+        $legal = (array) Settings::get('legal');
+        $same = array_values(array_filter(array_map(fn ($k) => trim((string) ($legal[$k] ?? '')), ['linkedin', 'instagram', 'facebook', 'x']), fn ($u) => str_starts_with($u, 'https://')));
+        $email = trim((string) ($legal['supportEmail'] ?? '')) ?: 'support@cvtara.com';
+        $org = ['@context' => 'https://schema.org', '@type' => 'Organization', '@id' => $siteBase.'/#organization', 'name' => 'CVTara', 'alternateName' => ['CV Tara', 'CVTara Resume Builder', 'cvtara.com'],
+            'url' => $siteBase.'/', 'logo' => ['@type' => 'ImageObject', 'url' => $siteBase.'/favicon-512.png', 'width' => 512, 'height' => 512], 'image' => $siteBase.'/assets/brand/cvtara-social.png',
+            'description' => 'CVTara is a resume builder, ATS resume checker, cover letter writer and interview practice service for job seekers in India, made by an HR team in Bangalore.',
+            'email' => $email, 'contactPoint' => ['@type' => 'ContactPoint', 'contactType' => 'customer support', 'email' => $email, 'areaServed' => 'IN', 'availableLanguage' => ['English']],
+            'address' => ['@type' => 'PostalAddress', 'addressLocality' => 'Bengaluru', 'addressRegion' => 'Karnataka', 'addressCountry' => 'IN'], 'areaServed' => 'IN'];
+        if ($same) {
+            $org['sameAs'] = $same;
+        }
+        $site = ['@context' => 'https://schema.org', '@type' => 'WebSite', '@id' => $siteBase.'/#website', 'name' => 'CVTara', 'alternateName' => ['CV Tara', 'CVTara Resume Builder'], 'url' => $siteBase.'/',
+            'inLanguage' => 'en-IN', 'publisher' => ['@id' => $siteBase.'/#organization']];
+
+        return [$org, $site];
+    }
+
     private function serverLinks(string $path, string $html): string
     {
         $hubs = array_merge(\App\Services\SeoPages::HUBS, [['/templates.html', 'Template gallery'], ['/cover-letters.html', 'Cover letter designs'], ['/blog.html', 'Career blog'], ['/guides.html', 'Guides and calculators'], ['/#pricing', 'Pricing'], ['/about.html', 'About us'], ['/partners.html', 'For colleges and partners'], ['/contact.html', 'Contact'], ['/privacy.html', 'Privacy policy'], ['/terms.html', 'Terms'], ['/refund.html', 'Refund policy']]);
@@ -242,7 +265,11 @@ class ContentController extends Controller
             unset($aliases['resume-builder']);
         }
         if (isset($aliases[$path])) {
-            return redirect(! $r->user() && str_starts_with($aliases[$path], 'workspace.html') ? '/register' : '/'.$aliases[$path]);
+            // Public pages (privacy, terms, about, contact) moved for good: a permanent redirect lets search engines keep one address.
+            // The workspace shortcuts depend on who is signed in, so they stay temporary.
+            return str_starts_with($aliases[$path], 'workspace.html') || $aliases[$path] === 'admin.html'
+                ? redirect(! $r->user() && str_starts_with($aliases[$path], 'workspace.html') ? '/register' : '/'.$aliases[$path])
+                : redirect('/'.$aliases[$path], 301);
         }
         // Programmatic SEO pages (resume examples, city guides, interview questions...). Always served at a trailing-slash address.
         $seoPage = \App\Services\SeoPages::owns($path) ? \App\Services\SeoPages::find($path) : null;
@@ -455,8 +482,12 @@ class ContentController extends Controller
             }
         }
         $head .= '<meta property="og:site_name" content="CVTara"><meta property="og:locale" content="en_IN"><meta property="og:title" content="'.e($pageTitle).'"><meta property="og:description" content="'.e($pageDescription).'"><meta property="og:url" content="'.e($siteBase.$uri).'"><meta property="og:type" content="'.($post ? 'article' : 'website').'"><meta property="og:image" content="'.e($abs($shareImage)).'"><meta property="og:image:alt" content="CVTara — Your next move starts here."><meta name="twitter:card" content="summary_large_image"><meta name="twitter:image" content="'.e($abs($shareImage)).'">';
-        if ($path === '') {
-            $head .= '<script type="application/ld+json">'.json_encode(['@context' => 'https://schema.org', '@type' => 'WebSite', 'name' => 'CVTara', 'url' => $siteBase.'/', 'publisher' => ['@type' => 'Organization', 'name' => 'CVTara', 'logo' => $siteBase.'/assets/brand/cvtara-mark.svg', 'email' => 'support@cvtara.com', 'address' => ['@type' => 'PostalAddress', 'addressLocality' => 'Bangalore', 'addressCountry' => 'IN']]], JSON_HEX_TAG | JSON_HEX_AMP | JSON_UNESCAPED_SLASHES).'</script>';
+        if ($path === '' || $path === 'about.html') {
+            // 3.62.0 brand result: one Organization and one WebSite, each with a stable @id, the spellings people search
+            // (cvtara, cv tara, CVTara resume builder) and the official social profiles, so Google can tie them to cvtara.com.
+            foreach (self::brandSchema($siteBase) as $block) {
+                $head .= '<script type="application/ld+json">'.json_encode($block, JSON_HEX_TAG | JSON_HEX_AMP | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE).'</script>';
+            }
         }
         if ($post) {
             $image = $post['imageUrl'] ?? '';

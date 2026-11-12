@@ -111,6 +111,8 @@ class AgentCadence
         }
         if ($cadence !== 'daily' && class_exists(SeoBacklog::class) && Schema::hasColumn('seo_keywords', 'cluster')) {
             // Keyword backlog: searches with no page yet become one planning task per cluster (deduplicated).
+            // 3.62.0: a newer backlog file shipped with a release is picked up here (load() only adds searches it has not seen).
+            SeoBacklog::load();
             $d['backlog'] = array_map(fn ($c) => ['cluster' => $c['cluster'], 'keywords' => $c['keywords'], 'mapped' => $c['mapped'], 'gaps' => count($c['gaps'])], SeoBacklog::summary());
             $d['backlogTasks'] = SeoBacklog::gapTasks();
             $d['sources'][] = 'seo_keywords';
