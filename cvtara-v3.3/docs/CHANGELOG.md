@@ -1,7 +1,7 @@
 # CVTara v3.67.0 — Simpler customer journey
 
 ## 3.67.0
-Owner's feedback of 12 Nov 2026, audited and approved ("approved", then "complete"). Built on 3.65.0. Additive migrations `2026_12_01_000001_whats_new_november` (adds the 6-12 Nov notes to a saved What's new list and hides the old phone note) and `2026_12_01_000002_template_letter_domains` (files each built-in cover letter under its real role group). No tables change.
+Owner's feedback of 12 Nov 2026, audited and approved ("approved", then "complete"). Built on 3.65.0 and 3.66.0. Additive migrations `2026_12_01_000001_whats_new_november` (adds the 6-12 Nov notes to a saved What's new list and hides the old phone note) and `2026_12_01_000002_template_letter_domains` (files each built-in cover letter under its real role group). No tables change.
 - **Sign-up**: passwords need 8 characters (was 6) on sign-up and reset; 25 job categories (was 9) on sign-up, profile and onboarding, checked on the server.
 - **My account menu** (top right): Account, Billing, Refer & earn, Wallet and Referral history live only there; the sidebar group and the duplicate referral links are gone. Keyboard and Escape work.
 - **Fix for this job**: a score ring, two steps (keywords to add, what the job asks for) and one action row, in about half the height.
@@ -14,7 +14,15 @@ Owner's feedback of 12 Nov 2026, audited and approved ("approved", then "complet
 - **Colours**: teal sidebar and hero, coral and indigo accents, faint pattern behind the chat only.
 - **What's new**: eight notes for 6-12 Nov; the 26 Oct phone note is hidden.
 - **Templates**: Clinical Pharmacist resume and three letters (HR Generalist, Senior Staff Nurse, Assistant Professor). Coverage now counts letters in their real role group and adds a fresher / mid-career / experienced table; every role group and level has at least five resumes and five letters.
-- Test suite `s78_customer_journey`; s1, s14, s27, s32 and s65 updated for the 8-character password, verified reviews and the Job Hunt gate.
+- Test suite `s79_customer_journey`; s1, s14, s27, s32 and s65 updated for the 8-character password, verified reviews and the Job Hunt gate.
+# CVTara v3.66.0 — Interview question bulk upload
+
+## 3.66.0
+Owner request (12 Nov 2026): bulk upload and bulk approval for the interview question bank. No migration.
+- **Bulk upload** in console Interview practice > Question bank: a CSV or Excel (.xlsx) sheet, one question per row (Role, Question, Guidance, Example, Skill, Difficulty, From, To). Role is a role name or slug, or "general" for every role; blank experience means fresher to 12+. Choose "Keep as drafts" or "Approve straight away". Rows with an unknown role, wrong length, wrong experience range or wording that mentions AI are listed by row number; wording already in the bank is skipped. Up to 2,000 rows per file. A blank sheet with two example rows downloads from the same panel.
+- **Approve all drafts (every role)** next to the role filter (the per-role button stays).
+- **Load any new starter questions** is always shown and safe to press again: it adds starter questions that are missing on the site and never duplicates.
+- Routes `GET admin/interviews/template`, `POST admin/interviews/import` (content.edit); `interviews/approve` takes `occupation: "*"` for every role. Test suite `s78_question_upload`.
 
 # CVTara v3.64.0 — Lower AI costs
 

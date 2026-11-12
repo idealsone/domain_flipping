@@ -651,7 +651,9 @@ class Interviews
     public static function approve(User $admin, array $ids, ?string $occupation = null): int
     {
         $q = DB::table('interview_questions')->where('status', 'draft');
-        if ($occupation !== null) {
+        if ($occupation === '*') {
+            // 3.61.1: every draft in the bank, for every role.
+        } elseif ($occupation !== null) {
             $occupation === 'general' ? $q->whereNull('occupation') : $q->where('occupation', $occupation);
         } else {
             $q->whereIn('id', $ids ?: [0]);
@@ -663,6 +665,123 @@ class Interviews
         }
 
         return $n;
+    }
+
+    /** Column names accepted in an uploaded sheet (lower case, spaces removed) and the field each one fills. */
+    public const IMPORT_COLUMNS = ['role' => 'role', 'jobrole' => 'role', 'occupation' => 'role', 'question' => 'text', 'questiontext' => 'text', 'text' => 'text',
+        'guidance' => 'guidance', 'whatagoodanswercovers' => 'guidance', 'answerguidance' => 'guidance', 'example' => 'example', 'exampleanswer' => 'example',
+        'skill' => 'competency', 'competency' => 'competency', 'difficulty' => 'difficulty', 'from' => 'min_band', 'minexperience' => 'min_band', 'experiencefrom' => 'min_band',
+        'to' => 'max_band', 'maxexperience' => 'max_band', 'experienceto' => 'max_band', 'source' => 'source', 'rights' => 'rights'];
+
+    /**
+     * 3.61.1 bulk upload: rows from a CSV or Excel sheet (first row = column names) become draft questions, or approved ones
+     * when $approve is set. A question whose wording is already in the bank is skipped. Nothing is half-saved: each row is checked first.
+     *
+     * @return array{received:int,added:int,approved:int,duplicate:int,errors:array}
+     */
+    public static function import(User $admin, string $text, bool $approve = false): array
+    {
+        $text = preg_replace('/^\xEF\xBB\xBF/', '', str_replace(["\r\n", "\r"], "\n", $text));
+        $lines = array_values(array_filter(explode("\n", $text), fn ($l) => trim($l) !== ''));
+        $out = ['received' => max(0, count($lines) - 1), 'added' => 0, 'approved' => 0, 'duplicate' => 0, 'errors' => []];
+        if (count($lines) < 2) {
+            $out['errors'][] = 'The sheet needs a first row of column names and at least one question row.';
+
+            return $out;
+        }
+        abort_if(count($lines) > 2001, 422, 'Up to 2,000 questions per file. Split the sheet and upload each part.');
+        $sep = substr_count($lines[0], "\t") > 0 ? "\t" : (substr_count($lines[0], ';') > substr_count($lines[0], ',') ? ';' : ',');
+        $head = array_map(fn ($h) => self::IMPORT_COLUMNS[preg_replace('/[^a-z]/', '', strtolower((string) $h))] ?? null, str_getcsv($lines[0], $sep, '"', ''));
+        if (! in_array('text', $head, true) || ! in_array('guidance', $head, true)) {
+            $out['errors'][] = 'Columns "Question" and "Guidance" are needed. Download the blank sheet to see every column.';
+
+            return $out;
+        }
+        $roles = [];
+        foreach (self::occupations(true) as $o) {
+            $roles[strtolower($o['slug'])] = $o['slug'];
+            $roles[strtolower($o['name'])] = $o['slug'];
+        }
+        $bands = [];
+        foreach (self::BANDS as $k => $label) {
+            $bands[strtolower($k)] = $k;
+            $bands[strtolower($label)] = $k;
+        }
+        $bands['0-1'] = 'fresher';
+        $bands['12'] = '12+';
+        $existing = DB::table('interview_question_versions')->pluck('text')->map(fn ($t) => self::sameText($t))->flip()->all();
+        $rows = [];
+        foreach (array_slice($lines, 1) as $i => $line) {
+            $n = $i + 2;
+            $cells = str_getcsv($line, $sep, '"', '');
+            $r = [];
+            foreach ($head as $k => $field) {
+                if ($field !== null && ! isset($r[$field])) {
+                    $r[$field] = trim((string) ($cells[$k] ?? ''));
+                }
+            }
+            $why = null;
+            $role = strtolower($r['role'] ?? '');
+            $slug = in_array($role, ['', 'general', 'every role', 'all', 'all roles', 'any'], true) ? null : ($roles[$role] ?? false);
+            $min = $bands[strtolower($r['min_band'] ?? '')] ?? (($r['min_band'] ?? '') === '' ? 'fresher' : false);
+            $max = $bands[strtolower($r['max_band'] ?? '')] ?? (($r['max_band'] ?? '') === '' ? '12+' : false);
+            $keys = array_keys(self::BANDS);
+            if (mb_strlen($r['text'] ?? '') < 10 || mb_strlen($r['text']) > 600) {
+                $why = 'question must be 10 to 600 characters';
+            } elseif (mb_strlen($r['guidance'] ?? '') < 10 || mb_strlen($r['guidance']) > 1200) {
+                $why = 'guidance must be 10 to 1,200 characters';
+            } elseif ($slug === false) {
+                $why = 'role "'.mb_substr($r['role'], 0, 40).'" is not in the role list';
+            } elseif ($min === false || $max === false || array_search($min, $keys) > array_search($max, $keys)) {
+                $why = 'experience must be one of '.implode(', ', $keys).', with From not above To';
+            } elseif (preg_match(WhatsNew::BANNED, $r['text'].' '.$r['guidance'].' '.($r['example'] ?? ''))) {
+                $why = 'customer-facing text never mentions AI or the tools behind it';
+            } elseif (isset($existing[self::sameText($r['text'])])) {
+                $out['duplicate']++;
+
+                continue;
+            }
+            if ($why) {
+                if (count($out['errors']) < 50) {
+                    $out['errors'][] = "Row $n: $why.";
+                }
+
+                continue;
+            }
+            $existing[self::sameText($r['text'])] = true;
+            $rows[] = ['occupation' => $slug, 'competency' => mb_substr(strtolower($r['competency'] ?? '') ?: 'role', 0, 40), 'difficulty' => max(1, min(3, (int) ($r['difficulty'] ?? 2) ?: 2)),
+                'min_band' => $min, 'max_band' => $max, 'text' => $r['text'], 'guidance' => $r['guidance'], 'example' => ($r['example'] ?? '') !== '' ? mb_substr($r['example'], 0, 2000) : null,
+                'source' => mb_substr(($r['source'] ?? '') ?: 'CVTara team upload', 0, 160), 'rights' => in_array($r['rights'] ?? '', ['original', 'licensed', 'public'], true) ? $r['rights'] : 'original'];
+        }
+        DB::transaction(function () use ($rows, $admin, $approve, &$out) {
+            foreach ($rows as $q) {
+                $code = 'UP-'.strtoupper(substr(sha1(self::sameText($q['text'])), 0, 8));
+                $id = DB::table('interview_questions')->insertGetId(['code' => $code, 'occupation' => $q['occupation'], 'competency' => $q['competency'], 'difficulty' => $q['difficulty'], 'min_band' => $q['min_band'], 'max_band' => $q['max_band'],
+                    'status' => $approve ? 'approved' : 'draft', 'created_at' => now(), 'updated_at' => now()]);
+                $vid = DB::table('interview_question_versions')->insertGetId(['question_id' => $id, 'version' => 1, 'text' => $q['text'], 'guidance' => $q['guidance'], 'example' => $q['example'], 'source' => $q['source'], 'rights' => $q['rights'],
+                    'approved_by' => $approve ? $admin->id : null, 'approved_at' => $approve ? now() : null, 'created_at' => now()]);
+                DB::table('interview_questions')->where('id', $id)->update(['current_version_id' => $vid]);
+                $out['added']++;
+                $out['approved'] += $approve ? 1 : 0;
+            }
+        });
+
+        return $out;
+    }
+
+    private static function sameText(string $t): string
+    {
+        return trim(preg_replace('/[^a-z0-9]+/', ' ', strtolower($t)));
+    }
+
+    /** 3.61.1 the blank sheet for bulk upload, with one filled example row. */
+    public static function importTemplate(): string
+    {
+        $rows = [['Role', 'Question', 'Guidance', 'Example', 'Skill', 'Difficulty', 'From', 'To'],
+            ['Customer Support Executive', 'How do you calm down an angry customer on a call?', 'Listen without interrupting, say sorry for the trouble, repeat the problem back, give a clear next step and a time, and follow up.', '', 'customer', '2', 'fresher', '5-8'],
+            ['general', 'Why do you want to work with us?', 'Show you know what the company does, link two of your strengths to the role and say what you want to learn.', '', 'motivation', '1', 'fresher', '12+']];
+
+        return implode("\r\n", array_map(fn ($r) => implode(',', array_map(fn ($c) => '"'.str_replace('"', '""', $c).'"', $r)), $rows))."\r\n";
     }
 
     /** A new wording is a new version and waits for approval again; earlier versions stay for sessions that used them. */
