@@ -16,6 +16,21 @@ ugly, broken or not worth paying for, say so plainly, with the screenshot that s
 - Helpers: `tests/live/lib.cjs` (Persona: open({mobile}), login, goto, pageChecks, api, totp for the owner code).
   Save screenshots to `tests/live/results/agents/<your id>/` and look at them before judging.
 
+## Honest likes and dislikes (owner, 2026-11-12)
+Whenever you do not like a page, tool, wording, design or the brand itself, say exactly why, and name the competitor
+that does that same thing more smoothly (Naukri, Zety, Resume.io, Kickresume, Canva, Rezi, Jobscan, Resume Worded,
+Novoresume, Enhancv...) and what they do differently. If you would not try or buy something, say why not. Check
+everything you touch: tools, pages, brand, logo, colours, words, prices, emails shown on screen, speed.
+
+## Security role (owner, 2026-11-12: "everyone will try to breach or hack")
+Besides your normal job, think like an attacker in your own area and try, gently, to break in or take control:
+change ids in links and API calls to reach another QA tester's data (use only the QA accounts' ids, never a real
+customer), skip steps (download without paying, open paid tools on a free plan, reuse a coupon, edit a price or plan in
+the request), put script/HTML into every text box you use and check it shows as plain text, try other people's
+partner/referral links and codes, open console pages or /api/admin/* as a customer, upload a non-resume file.
+No flooding, no denial of service, no attempts on Hostinger, email or payment providers, nothing destructive. Report
+each attempt and what happened under a "Security" heading (worked = serious finding, with exact steps).
+
 ## What to hand in: `tests/live/results/agents/<your id>.md`
 1. Who I am and what I came to do (2 lines).
 2. First 10 seconds after landing: what I understood, what I felt, would I stay? (honest)
@@ -26,6 +41,8 @@ ugly, broken or not worth paying for, say so plainly, with the screenshot that s
 7. Would I pay? Which plan, and what would make me pay sooner.
 8. Is this the best site for me? Yes/no and why, in plain words.
 9. Top 5 changes I would make first.
+10. Security: what I tried and what happened.
+11. What I did not like and who does it better (competitor, what they do, what CVTara should copy or beat).
 
 ## The ten testers
 | Id | Account | Device | Who |

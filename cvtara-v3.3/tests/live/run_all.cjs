@@ -3,7 +3,7 @@
 const { spawn } = require('child_process'); const path = require('path'); const fs = require('fs');
 const OUT = process.env.QA_OUT || path.join(__dirname, 'results');
 const ALL = [['p01', 'p01_public_desktop.cjs', { HALF: '0' }], ['p02', 'p01_public_desktop.cjs', { HALF: '1' }], ['p03', 'p03_signup_auth.cjs'], ['p04', 'p04_resume_builder.cjs'], ['p05', 'p05_ats_letters.cjs'],
-  ['p06', 'p06_interview_tracker.cjs'], ['p07', 'p07_tara_support.cjs'], ['p08', 'p08_checkout_referrals.cjs'], ['p09', 'p09_b2b_partner.cjs'], ['p10', 'p10_admin_console.cjs']];
+  ['p06', 'p06_interview_tracker.cjs'], ['p07', 'p07_tara_support.cjs'], ['p08', 'p08_checkout_referrals.cjs'], ['p09', 'p09_b2b_partner.cjs'], ['p10', 'p10_admin_console.cjs'], ['p11', 'p11_security.cjs']];
 const pick = process.argv.slice(2); const list = pick.length ? ALL.filter(x => pick.includes(x[0])) : ALL;
 const STAGGER = +(process.env.QA_STAGGER_MS || 15000);
 fs.mkdirSync(OUT, { recursive: true });
