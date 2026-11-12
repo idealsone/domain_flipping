@@ -52,7 +52,7 @@ def run(ctx, t):
         t.check("an unknown task is refused", ask(u, task="hack")[0] == 422)
         s, j = ask(u); h = HITS[-1] if HITS else {"body": {}, "headers": {}}
         t.check("a suggestion comes back with the count left", s == 200 and "14 retail stores" in j.get("suggestion", "") and j.get("left") == 2, (s, str(j)[:200]))
-        t.check("Claude gets the default model, the key and the fallback setting", h["path"].startswith("/v1/messages") and h["body"].get("model") == "claude-opus-5-5" and h["headers"].get("x-api-key") == "sk-ant-test-1" and h["body"].get("fallbacks") == "default" and "server-side-fallback-2026-07-01" in h["headers"].get("anthropic-beta", ""), (h["path"], h["body"].get("model"), h["body"].get("fallbacks"), h["headers"].get("anthropic-beta")))
+        t.check("Claude gets the default model, the key and the fallback setting", h["path"].startswith("/v1/messages") and h["body"].get("model") == "claude-sonnet-5-5" and h["headers"].get("x-api-key") == "sk-ant-test-1" and h["body"].get("fallbacks") == "default" and "server-side-fallback-2026-07-01" in h["headers"].get("anthropic-beta", ""), (h["path"], h["body"].get("model"), h["body"].get("fallbacks"), h["headers"].get("anthropic-beta")))
         t.check("the text goes inside tags with the rules in the system prompt", "<text>" in h["body"]["messages"][0]["content"] and "Never invent" in json.dumps(h["body"].get("system")))
         t.check("job-based tasks send the job description too", ask(u, task="tailor", context="Need Excel and walk-in drives")[0] == 200 and "<job>" in HITS[-1]["body"]["messages"][0]["content"])
         MODE["v"] = "refusal"; s, j = ask(u)
@@ -68,24 +68,27 @@ def run(ctx, t):
         # the whole resume tailored for one checked job: a proposal only, numbers not in the resume are pointed out
         o.api("POST", "admin/providers", {"service": "ai", "values": {"dailyLimit": "0"}})
         w = Client(inst.base); w.register("tara-c@test.local"); w.page("/workspace.html")
+        from lib.plans import give_job_hunt; give_job_hunt(db, "tara-c@test.local")
         doc = {"version": "1", "title": "Mine", "template": "suite-prism", "accent": "#1557d2", "font": "Arial", "personal": {"name": "Ann", "email": "ann@example.com"}, "summary": "Recruiter for retail stores in Pune.", "skills": "Excel", "order": ["summary", "experience"],
                "experience": [{"role": "Recruiter", "company": "Acme", "start": "2021", "current": True, "bullets": "Hired staff for 14 stores.\nKept weekly reports in Excel."}], "education": [], "projects": [], "certifications": []}
         s, j = w.api("POST", "resumes", {"data": doc}); rid = j["id"]
         s, j = w.api("POST", "ats/scan", {"resumeId": rid, "source": "text", "text": "We are hiring a recruiter. Responsibilities: source candidates, screen candidates, schedule interviews, use Workday. Required: 2+ years of recruitment experience."}); sid = j.get("scanId")
         t.check("a check to tailor against", s == 200, (s, str(j)[:200]))
         t.check("tailoring needs the customer's agreement", w.api("POST", f"resumes/{rid}/tailor", {"scanId": sid})[0] == 422)
+        left0 = w.api("GET", "ai/status")[1]["ai"]["left"]  # Job Hunt has its own daily number of suggestions
         MODE["v"] = "tailor"; n = len(HITS); s, j = w.api("POST", f"resumes/{rid}/tailor", {"scanId": sid, "consent": True}); tl = j.get("tailored", {})
         t.check("the whole resume comes back tailored for the job", s == 200 and tl.get("summary", "").startswith("Recruiter who hires") and tl.get("skills") == "Recruitment, Excel" and tl.get("experience") == [{"i": 0, "bullets": "Hired staff for 14 stores\nCut hiring time by 99%"}] and tl.get("notShown") == ["Workday"], (s, str(j)[:300]))
         t.check("a number that is not in the resume is flagged for the customer", any("99" in c for c in tl.get("check", [])), tl.get("check"))
         h = HITS[-1] if len(HITS) > n else {"body": {"messages": [{"content": ""}], "system": ""}}
         t.check("the resume, the job and the missing keywords are sent inside tags", all(k in h["body"]["messages"][0]["content"] for k in ("<resume>", "<job>", "<missing>")) and "Never invent" in json.dumps(h["body"].get("system")))
-        t.check("tailoring uses one suggestion and saves nothing by itself", tl.get("left") == 2 and w.api("GET", f"resumes/{rid}")[1]["resume"]["data"]["summary"] == "Recruiter for retail stores in Pune.")
+        t.check("tailoring uses one suggestion and saves nothing by itself", tl.get("left") == left0 - 1 and w.api("GET", f"resumes/{rid}")[1]["resume"]["data"]["summary"] == "Recruiter for retail stores in Pune.")
         MODE["v"] = "junk"; s, j = w.api("POST", f"resumes/{rid}/tailor", {"scanId": sid, "consent": True})
-        t.check("an unreadable answer changes nothing and gives the suggestion back", s == 422 and "Nothing was changed" in str(j) and w.api("GET", "ai/status")[1]["ai"]["left"] == 2, (s, str(j)[:200]))
+        t.check("an unreadable answer changes nothing and gives the suggestion back", s == 422 and "Nothing was changed" in str(j) and w.api("GET", "ai/status")[1]["ai"]["left"] == left0 - 1, (s, str(j)[:200]))
+        give_job_hunt(db, "tara-b@test.local")
         t.check("someone else's resume cannot be tailored", v.api("POST", f"resumes/{rid}/tailor", {"scanId": sid, "consent": True})[0] in (404, 422))
         MODE["v"] = "ok"
         ws = u.page("/workspace.html")[2]
-        t.check("the workspace loads Tara AI", "/tara-help.js" in ws)
+        t.check("the workspace no longer loads the separate writing-help pop-up (it is part of Tara chat since 3.51.0)", "/tara-help.js" not in ws and "/tara-chat.js" in ws)
         s, _, priv = Client(inst.base).page("/privacy.html")
         t.check("the privacy policy covers CVTara team writing help without naming AI or its provider", "CVTara team writing help" in priv and "text-processing provider" in priv and "Anthropic" not in priv and "Claude" not in priv)
     finally:

@@ -61,9 +61,7 @@
     // 3.41.0: the dashboard's "Get career assistance" opens this chat (with a question when given).
     window.CVTaraAssist = q => { toggle(true); if (q) send(q); };
     document.addEventListener('cvtara-resume-saved', () => { if (!$('#taraPanel').hidden) { note('Your resume was uploaded. Ask me to check it, or to compare it with a job.'); $('#taraIn').value = 'I just uploaded my resume. Can you check it?'; } });
-    // "Ask Tara" in the workspace menu
-    const nav = document.querySelector('.side-nav');
-    if (nav && !nav.querySelector('[data-tara-nav]')) { const b = document.createElement('button'); b.type = 'button'; b.dataset.taraNav = '1'; b.innerHTML = '<i aria-hidden="true">💬</i>Ask Tara'; b.onclick = () => toggle(true, true); const at = nav.querySelector('[data-workspace-view="tracker"]'); if (at) at.after(b); else nav.append(b); }
+    // 3.47.0: no separate "Ask Tara" menu item. "Career assistance" in the menu and the floating button open this chat.
   }
 
   function credits(c, left) {
@@ -95,8 +93,8 @@
     $('.tara-chips', box).innerHTML = '';
     bubble('user', text);
     const wait = note('');
-    wait.className = 'tara-typing'; wait.innerHTML = '<span></span><span></span><span></span> <em>Tara is looking into it…</em>';
-    const slow = setTimeout(() => { const em = wait.querySelector('em'); if (em) em.textContent = 'Still working: checking your account and documents…'; }, 6000);
+    wait.className = 'tara-typing'; wait.innerHTML = '<span></span><span></span><span></span> <em>CVTara team is typing…</em>';
+    const slow = setTimeout(() => { const em = wait.querySelector('em'); if (em) em.textContent = 'CVTara team is typing… checking your account and documents'; }, 6000);
     try {
       const r = await api('/api/tara/message', { body: { text, ...(conv ? { conversationId: conv } : {}) } });
       conv = r.conversationId;

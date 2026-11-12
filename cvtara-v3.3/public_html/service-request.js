@@ -15,13 +15,13 @@
     if (!r.ok || j.ok === false) throw Error(j.error || (j.errors && Object.values(j.errors)[0]?.[0]) || j.message || 'That did not work. Please try again.');
     return j;
   }
-  const go = view => { const b = document.querySelector(`.side-nav [data-workspace-view="${view}"]`); if (b) b.click(); else location.href = '/workspace.html?view=' + view; };
+  const go = view => { const b = document.querySelector(`.side-nav [data-workspace-view="${view}"], .acct-pop [data-workspace-view="${view}"]`); if (b) b.click(); else location.href = '/workspace.html?view=' + view; };
 
   const css = document.createElement('style');
   css.textContent = `
   .sr-pick{margin:0 0 20px}.sr-pick h3{margin:0 0 12px;font-size:17px}
   .sr-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:10px}
-  .sr-tile{display:flex;flex-direction:column;gap:4px;text-align:left;padding:14px 16px;border:1px solid var(--line,#e2e8f0);border-radius:12px;background:var(--panel,#fff);color:inherit;cursor:pointer;font:inherit}
+  .sr-tile{display:flex;flex-direction:column;gap:4px;text-align:left;padding:14px 16px;border:1px solid var(--line,#e2e8f0);border-radius:12px;background:var(--paper,#fff);color:var(--ink,#0f172a);cursor:pointer;font:inherit}
   .sr-tile:hover,.sr-tile:focus-visible{border-color:var(--blue,#2563eb);outline:none;box-shadow:0 0 0 3px rgba(37,99,235,.12)}
   .sr-tile b{font-size:14px}.sr-tile small{color:var(--muted,#64748b);font-size:12.5px;line-height:1.4}
   .sr-tile.sr-main{border-color:var(--blue,#2563eb);background:rgba(37,99,235,.06)}

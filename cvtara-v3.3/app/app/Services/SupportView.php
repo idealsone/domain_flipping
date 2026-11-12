@@ -21,11 +21,15 @@ class SupportView
 
     /** Customer API reads allowed in the view (path regexes). Nothing about passwords, security codes, payouts or wallets. */
     private const READ = [
-        '#^(profile|allowance|credits/history|ai/status|notifications|whats-new|purchases|refunds|applications|ats/scans|support/mine|service-requests|downloads)$#',
-        '#^(resumes|letters|applications|ats/scans|service-requests)/[a-f0-9-]{36}$#',
-        '#^(resumes|letters)$#',
+        '#^(profile|allowance|credits/history|ai/status|notifications|whats-new|purchases|refunds|applications|ats/scans|support/mine|service-requests|downloads|interviews)$#',
+        '#^(resumes|letters|applications|ats/scans|service-requests|interviews)/[a-f0-9-]{36}$#',
+        '#^(resumes|letters|resumes/journey)$#',
         '#^resumes/[a-f0-9-]{36}/quality$#',
+        '#^resumes/[a-f0-9-]{36}/versions(/[a-f0-9-]{36})?$#',
     ];
+
+    /** 3.65.0 (owner decision 2026-11-12): the owner may also see a B2B partner's portal, read-only. Not other staff. */
+    private const OWNER_READ = ['#^partner(/invites)?$#'];
 
     public static function current(Request $r): ?object
     {
@@ -59,7 +63,8 @@ class SupportView
         if (! $s) {
             return null;
         }
-        $allowed = $r->isMethod('GET') && collect(self::READ)->contains(fn ($re) => preg_match($re, $path));
+        $allowed = $r->isMethod('GET') && (collect(self::READ)->contains(fn ($re) => preg_match($re, $path))
+            || (Access::isOwner($r->user()) && collect(self::OWNER_READ)->contains(fn ($re) => preg_match($re, $path))));
         $c = $allowed ? User::whereKey($s->customer_id)->first() : null;
         $ok = $c && ! $c->blocked && ! Access::isStaff($c);
         self::event($s->id, $r, $path, $ok ? 200 : 403);

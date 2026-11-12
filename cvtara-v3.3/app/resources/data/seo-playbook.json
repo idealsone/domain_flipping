@@ -1,0 +1,45 @@
+{
+ "version": "2026-11-12",
+ "purpose": "How the SEO and Growth agents plan, write and link pages for CVTara (owner brief 2026-11-12). Every page must say honestly which job-search problem CVTara solves and give real value before asking for sign-up.",
+ "rules": [
+  "One page per search intent. Before planning a page, check the backlog target and Search Console: if another page already ranks for the search, improve that page instead of making a new one.",
+  "No thin or near-copy pages. A generated page needs at least three facts that belong only to it (role-specific skills, a filled example, local or industry detail). Pages without them stay noindex,follow, like the city pages without a local note.",
+  "Never invent numbers, salaries, statistics, reviews or results. Use only figures from Search Console, CVTara's own data or a named official source with a link.",
+  "No pages attacking or naming competitors; write neutral 'how to choose' guides instead (owner decision 2026-11-12).",
+  "Never mention AI on public pages; never promise jobs, interviews, shortlisting or an ATS pass.",
+  "Every page states the problem in the searcher's words, the honest fix, and where CVTara helps (free first, paid only when it adds something)."
+ ],
+ "pageTemplate": [
+  ["H1", "The search in natural words, e.g. 'Resume for {role} freshers in India'. One H1 only."],
+  ["Short answer", "40-60 words directly under the H1 that answer the search on their own. Answer engines quote this block."],
+  ["Who this is for", "One line naming the reader (fresher, 2-5 years, career switcher) and the problem."],
+  ["Steps", "3-7 numbered steps the reader can follow today."],
+  ["Filled example", "A real, fictional-name example (bullets, summary or answer) specific to this page. This is the page's unique value."],
+  ["Table", "A comparison or checklist table where it helps (format vs format, do vs avoid, skills by level)."],
+  ["Common mistakes", "3-5 mistakes recruiters see for this role or situation, with the fix."],
+  ["India specifics", "CTC, notice period, CGPA/percentage, campus or government rules only when they apply, with an official link."],
+  ["FAQ", "3-6 questions taken from Search Console queries and real customer questions, each answered in 2-3 sentences. FAQPage data only when the questions are visible on the page."],
+  ["Related links", "Link up to the pillar, across to 3 sibling pages and to the matching free tool, with descriptive anchor text (never 'click here')."],
+  ["CTA", "One primary action matched to intent (informational: free check or template; commercial: build or tailor; transactional: plans). One soft secondary link."],
+  ["Metadata", "Title up to 50 characters before ' | CVTara', starting with the search; description 120-155 characters saying what the page gives and the next step."],
+  ["Structured data", "WebPage or Article + BreadcrumbList; FAQPage when the FAQ is visible; Organization and WebSite only on the home and About pages."],
+  ["Trust", "Who wrote or reviewed it (CVTara team, HR background), the reviewed date when a person really reviewed it, and links to official sources."]
+ ],
+ "aiSearch": [
+  "Put a self-contained answer of 40-60 words right under each H2 question; answer engines lift these blocks.",
+  "Use the entity names people use: CVTara, ATS (applicant tracking system), CTC, CGPA, campus placement, notice period. Define each once.",
+  "Prefer lists and tables for steps, comparisons and checklists; keep one idea per paragraph.",
+  "State facts with their source and date (official notification, government site). Do not state numbers without a source.",
+  "Keep the brand facts identical everywhere: name CVTara, made by an HR team in Bangalore, one-time payment, 7-day refund if unused, support@cvtara.com.",
+  "Keep llms.txt, the About page, Organization data and social profiles saying the same thing.",
+  "Record monthly checks of how answer engines describe CVTara in Growth > AI visibility; fix wrong facts at the source page."
+ ],
+ "pillars": [
+  {"pillar": "Resume builder", "url": "/resume-builder/", "clusters": ["/resume-templates/", "/resume-examples/", "/guides/resume/no-experience-format/", "/guides/resume/professional-summary-guide/", "/guides/resume/achievements-bullet-points/", "/resume-words/"]},
+  {"pillar": "ATS resume check", "url": "/ats-checker/", "clusters": ["/guides/resume/ats-friendly-format-india/", "/guides/resume/pdf-vs-word-ats/", "/guides/resume/skills-section-keywords/", "/resume-templates/ats-friendly/", "/resume-templates/one-column/"]},
+  {"pillar": "Cover letters", "url": "/cover-letter-generator/", "clusters": ["/cover-letter-examples/", "/cover-letter-examples/how-to-write/", "/guides/cover-letter/short-email-format/", "/cover-letters.html"]},
+  {"pillar": "Interview preparation", "url": "/interview-questions/", "clusters": ["/interview-questions/freshers/", "/guides/interview/tell-me-about-yourself/", "/guides/interview/star-method-examples/", "/guides/interview/salary-expectations-answer/", "/guides/interview/questions-to-ask-them/", "/guides/interview/thank-you-email-template/"]},
+  {"pillar": "Job search and offers", "url": "/guides.html", "clusters": ["/guides/jobs/application-tracker-method/", "/guides/jobs/follow-up-email-template/", "/guides/jobs/remote-job-scams-signs/", "/guides/jobs/how-many-jobs-to-apply/", "/calculators/ctc-to-in-hand-salary-calculator/", "/calculators/notice-period-buyout-calculator/"]},
+  {"pillar": "Colleges and partners", "url": "/partners.html", "clusters": ["/resume-examples/student/", "/interview-questions/freshers/", "/resume-templates/fresher/"]}
+ ]
+}

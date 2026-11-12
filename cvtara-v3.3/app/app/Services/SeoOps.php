@@ -19,7 +19,7 @@ class SeoOps
 {
     /** The pages that matter most for search and for the brand result (Google may choose some of them as sitelinks). */
     public const IMPORTANT = ['/', '/resume-builder/', '/ats-checker/', '/cover-letter-generator/', '/templates.html', '/resume-templates/', '/resume-examples/', '/cover-letter-examples/', '/cover-letter-examples/how-to-write/',
-        '/cover-letters.html', '/guides.html', '/blog.html', '/interview-questions/', '/resume-words/', '/resume-builder/india/', '/about.html', '/contact.html'];
+        '/cover-letters.html', '/guides.html', '/blog.html', '/interview-questions/', '/resume-words/', '/resume-builder/india/', '/about.html', '/contact.html', '/partners.html'];
 
     /** The brand result the owner wants: main pages Google may show under the CVTara result. null = no page for it yet. */
     public const SITELINKS = ['Resume Builder' => '/resume-builder/', 'ATS Resume Checker' => '/ats-checker/', 'Resume vs JD Matcher' => null, 'Cover Letter Generator' => '/cover-letter-generator/',
@@ -328,7 +328,7 @@ class SeoOps
     // ---------------------------------------------------------------- Google index status
 
     /** Asks Google how it sees a few pages (URL Inspection API), important and changed pages first, within a daily cap. */
-    public static function inspect(?int $limit = null): array
+    public static function inspect(?int $limit = null, array $only = []): array
     {
         if (! SearchConsole::ready()) {
             return ['skipped' => true, 'summary' => 'Search Console is not connected.'];
@@ -341,8 +341,18 @@ class SeoOps
         if ($limit <= 0) {
             return ['skipped' => true, 'summary' => 'Daily inspection cap reached ('.$s['inspectPerDay'].').'];
         }
-        $rows = DB::table('seo_pages')->where('http_status', 200)->get(['path', 'important', 'inspected_at', 'changed_at', 'verdict']);
-        $due = [];
+        $only = array_values(array_unique(array_filter($only, fn ($p) => is_string($p) && preg_match('#^/[a-z0-9/._-]{0,250}$#', $p))));
+        if ($only) {
+            // The owner asked about these pages (Blog & SEO list): ask Google about them first, even if the page scan has not reached them yet.
+            foreach ($only as $p) {
+                DB::table('seo_pages')->insertOrIgnore(['path' => $p, 'created_at' => now(), 'updated_at' => now()]);
+            }
+            $due = array_fill_keys(array_slice($only, 0, $limit), 1);
+            $rows = [];
+        } else {
+            $rows = DB::table('seo_pages')->where('http_status', 200)->get(['path', 'important', 'inspected_at', 'changed_at', 'verdict']);
+            $due = [];
+        }
         foreach ($rows as $r) {
             $age = $r->inspected_at ? now()->diffInDays(Carbon::parse($r->inspected_at), true) : 999;
             $changed = $r->inspected_at && $r->changed_at && Carbon::parse($r->changed_at)->gt(Carbon::parse($r->inspected_at));

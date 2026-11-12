@@ -25,7 +25,7 @@ class ApiController extends Controller
         $u = $r->user();
         $id = $u?->id;
         $get = $r->isMethod('GET');
-        if ($get && preg_match('#^(checkout/|ats/scan$|traffic$|security/(send|verify)-code|referrals/(withdraw|creator|payout-profile)$|account/delete$|feedback/[^/]+/withdraw$)#', $path)) {
+        if ($get && preg_match('#^(checkout/|interviews/start$|ats/scan$|traffic$|security/(send|verify)-code|referrals/(withdraw|creator|payout-profile)$|account/delete$|feedback/[^/]+/withdraw$)#', $path)) {
             abort(405);
         }if ($r->isMethod('DELETE') && ! preg_match('#^(resumes|letters|applications)/[a-f0-9-]{36}$#', $path)) {
             abort(405);
@@ -47,7 +47,7 @@ class ApiController extends Controller
         if ($path === 'business-public' && $get) {
             $d = BusinessControls::get();
 
-            $plans = Settings::plans();
+            $plans = \App\Services\Interviews::withPerks(Settings::plans());
             // A CVTara team add-on this customer has already ordered the most times allowed today is hidden until tomorrow.
             foreach ($id ? \App\Services\Services::hiddenToday($id) : [] as $k) {
                 $plans[$k]['limitReached'] = true;
@@ -114,7 +114,8 @@ class ApiController extends Controller
             $content = [];
             foreach (['legal', 'features', 'library', 'blog', 'integrations', 'seo', 'site'] as $k) {
                 $content[$k] = Settings::get($k);
-            }$content['plans'] = Settings::plans();
+            }$content['plans'] = \App\Services\Interviews::withPerks(Settings::plans());
+            $content['templateLib'] = \App\Services\TemplateLibrary::publicData();
             $content['jobLinks'] = (bool) (((array) Settings::get('speed', []))['jobLinks'] ?? false);
             $content['integrations']['measurementId'] = Settings::providers()['analytics']['measurementId'] ?? '';
             foreach ($content['blog'] as $slug => &$post) {
@@ -126,7 +127,8 @@ class ApiController extends Controller
                 }
             }
 
-            return $ok(['content' => $content, 'reviews' => \App\Services\Reviews::published()]);
+            // 3.65.0 (owner approval 2026-11-12): the public site shows reviews from verified buyers only.
+            return $ok(['content' => $content, 'reviews' => array_values(array_filter(\App\Services\Reviews::published(), fn ($x) => $x['verified']))]);
         }
         if ($path === 'traffic') {
             $cap('traffic', 60, 60, 'Too many requests. Please wait.');
@@ -147,6 +149,14 @@ class ApiController extends Controller
             }
 
             return $ok();
+        }
+        // 3.54.0 PartnerHub: public partner application (colleges, placement cells, coaching, companies, creators).
+        if ($path === 'partners/apply' && ! $get) {
+            $cap('partner-apply', 3, 3600, 'Too many applications from here. Please email us instead.');
+            $v = $r->validate(['organisation' => 'required|string|min:2|max:160', 'kind' => 'required|in:'.implode(',', array_keys(\App\Services\Partners::KINDS)), 'name' => 'required|string|min:2|max:120',
+                'email' => 'required|email|max:190', 'phone' => 'nullable|regex:/^[0-9+ -]{7,20}$/', 'city' => 'nullable|string|max:80', 'size' => 'nullable|string|max:40', 'message' => 'nullable|string|max:2000', 'website' => 'nullable|max:0']);
+
+            return $ok(['id' => \App\Services\Partners::apply($v, $r), 'message' => 'Thank you. We will reply by email within two working days.']);
         }
         // 3.40.0: a staff member with a read-only customer view open is answered as that customer for allowed reads only.
         if ($u && ($viewed = \App\Services\SupportView::swap($r, $path))) {
@@ -208,8 +218,7 @@ class ApiController extends Controller
             $cap('service-request', 10, 3600, 'Please wait a while before starting another request.');
             $v = $r->validate(['resumeId' => ['required', 'regex:/^[a-f0-9-]{36}$/'], 'scanId' => ['nullable', 'regex:/^[a-f0-9-]{36}$/'], 'jobText' => 'required_without:scanId|nullable|string|max:40000', 'role' => 'nullable|string|max:160', 'company' => 'nullable|string|max:160', 'letterTemplate' => 'nullable|string|max:120']);
             if (! empty($v['letterTemplate'])) {
-                $cat = json_decode(file_get_contents(resource_path('data/catalog.json')), true);
-                abort_unless(collect($cat['coverLetters'])->contains('slug', $v['letterTemplate']), 422, 'Choose one of the cover letter designs.');
+                abort_unless(\App\Services\TemplateLibrary::exists('letter', $v['letterTemplate']), 422, 'Choose one of the cover letter designs.');
             }
 
             return $ok(['request' => \App\Services\ServiceRequests::create($u, $v)]);
@@ -230,6 +239,117 @@ class ApiController extends Controller
             }
 
             return $ok(['request' => $act === 'run' ? \App\Services\ServiceRequests::advance($u, $m[1]) : \App\Services\ServiceRequests::retry($u, $m[1])]);
+        }
+        // 3.51.0 Profile Boost: the customer approves the draft, or asks for one round of changes.
+        if (preg_match('#^service-orders/([a-f0-9-]{36})/(approve|revise)$#', $path, $m) && $r->isMethod('POST')) {
+            if ($m[2] === 'approve') {
+                \App\Services\ProfileBoost::approve($u, $m[1]);
+            } else {
+                $cap('profile-boost-revise', 5, 3600, 'Please wait a while before asking again.');
+                $v = $r->validate(['request' => 'required|string|min:10|max:1500']);
+                \App\Services\ProfileBoost::revise($u, $m[1], $v['request']);
+            }
+
+            return $ok(['services' => \App\Services\Services::forUser($u->id)]);
+        }
+        // 3.54.0 Partner portal: the signed-in member's own organisation, numbers only.
+        if ($path === 'partner' && $get) {
+            return $ok(\App\Services\Partners::portal($u));
+        }
+        if (str_starts_with($path, 'partner/')) {
+            $pm = \App\Services\Partners::membership($u);
+            abort_unless($pm, 404);
+            if (preg_match('#^partner/agreements/(\d+)/accept$#', $path, $mm) && ! $get) {
+                $v = $r->validate(['hash' => 'required|string|size:64', 'name' => 'required|string|min:3|max:120', 'agree' => 'accepted']);
+                \App\Services\PartnerOps::acceptAgreement($u, (int) $mm[1], $v['hash'], $v['name'], $r);
+
+                return $ok(\App\Services\Partners::portal($u));
+            }
+            if ($path === 'partner/invites' && $get) {
+                $rows = DB::table('partner_invites as i')->join('partner_links as l', 'l.id', '=', 'i.link_id')->where('i.partner_id', $pm->partner_id)->orderByDesc('i.id')->limit(2000)->get(['i.name', 'i.email', 'i.status', 'i.token', 'l.code', 'i.created_at']);
+
+                return $ok(['invites' => $rows->map(fn ($x) => ['name' => $x->name, 'email' => $x->email, 'status' => $x->status, 'link' => $x->status === 'invited' ? url('/p/'.$x->code).'?i='.$x->token : '', 'created_at' => $x->created_at])]);
+            }
+            if ($path === 'partner/invites' && ! $get) {
+                abort_unless($pm->role === 'manager', 403, 'Only a partner manager can upload students.');
+                $cap('partner-invites', 20, 3600, 'Too many uploads. Please try again later.');
+                $v = $r->validate(['linkId' => 'required|integer', 'text' => 'required_without:sheet|nullable|string|max:400000', 'sheet' => 'nullable|string|max:8000000', 'authority' => 'accepted'],
+                    ['authority.accepted' => 'Please confirm that you may share these students\' details and have told them.']);
+                $text = ! empty($v['sheet']) ? \App\Services\Outreach::sheetText((string) base64_decode($v['sheet'], true)) : (string) $v['text'];
+                abort_if(trim($text) === '', 422, 'That file could not be read. Save it as .xlsx or CSV and try again.');
+
+                return $ok(\App\Services\PartnerOps::invite($u, (int) $pm->partner_id, (int) $v['linkId'], $text, true));
+            }
+            if ($path === 'partner/payout' && ! $get) {
+                return $ok(\App\Services\PartnerOps::requestPayout($u));
+            }
+            if (preg_match('#^partner/rewards/(\d+)/address$#', $path, $mm) && ! $get) {
+                $v = $r->validate(['address' => 'required|string|min:15|max:600']);
+                \App\Services\PartnerOps::rewardAddress($u, (int) $mm[1], $v['address']);
+
+                return $ok(\App\Services\Partners::portal($u));
+            }
+            abort(404);
+        }
+        // 3.49.0 Interview practice: question practice (stored questions) and mock interviews with written feedback.
+        if ($path === 'interviews' && $get) {
+            return $ok(\App\Services\Interviews::overview($u));
+        }
+        if ($path === 'interviews/questions' && $get) {
+            $v = $r->validate(['occupation' => 'required|string|max:80', 'band' => 'required|string|max:10']);
+
+            return $ok(\App\Services\Interviews::questions($u, $v['occupation'], $v['band']));
+        }
+        // 3.57.0 role search, Research a company and revision mode.
+        if ($path === 'interviews/roles' && $get) {
+            return $ok(['roles' => \App\Services\InterviewPrep::findRoles((string) $r->query('q', ''))]);
+        }
+        if ($path === 'interviews/revision' && $get) {
+            return $ok(\App\Services\InterviewPrep::revision($u));
+        }
+        if ($path === 'interviews/research' && $get) {
+            return $ok(['research' => \App\Services\InterviewPrep::history($u), 'label' => \App\Services\InterviewPrep::LABEL]);
+        }
+        if (preg_match('#^interviews/research/(\d+)$#', $path, $m) && $get) {
+            return $ok(['research' => \App\Services\InterviewPrep::show($u, (int) $m[1])]);
+        }
+        if ($path === 'interviews/research' && $r->isMethod('POST')) {
+            \App\Services\EmailVerification::guard($u);
+            $cap('company-research', 10, 3600, 'Please wait a while before researching another company.');
+            $v = $r->validate(['company' => 'required|string|max:160', 'url' => 'required|string|max:500', 'occupation' => 'nullable|string|max:80']);
+
+            return $ok(['research' => \App\Services\InterviewPrep::research($u, $v['company'], $v['url'], $v['occupation'] ?? null)]);
+        }
+        if ($path === 'interviews/start' && $r->isMethod('POST')) {
+            \App\Services\EmailVerification::guard($u);
+            $cap('interview-start', 10, 3600, 'Please wait a while before starting another mock interview.');
+            $v = $r->validate(['occupation' => 'required|string|max:80', 'band' => 'required|string|max:10', 'objective' => 'nullable|string|max:20', 'company' => 'nullable|string|max:120', 'mode' => 'nullable|in:standard,full']);
+
+            return $ok(['session' => \App\Services\Interviews::start($u, $v)]);
+        }
+        if (preg_match('#^interviews/([a-f0-9-]{36})(?:/(answer|submit|challenge))?$#', $path, $m)) {
+            $act = $m[2] ?? '';
+            if ($act === '') {
+                abort_unless($get, 405);
+
+                return $ok(['session' => \App\Services\Interviews::session($u, $m[1])]);
+            }
+            abort_unless($r->isMethod('POST'), 405);
+            $cap('interview-'.$act, 120, 600, 'Please wait a moment.');
+            if ($act === 'answer') {
+                $v = $r->validate(['position' => 'required|integer|min:1|max:12', 'answer' => 'present|nullable|string|max:3000', 'seconds' => 'nullable|integer|min:0|max:7200']);
+                \App\Services\Interviews::answer($u, $m[1], (int) $v['position'], (string) ($v['answer'] ?? ''), isset($v['seconds']) ? (int) $v['seconds'] : null);
+
+                return $ok();
+            }
+            if ($act === 'challenge') {
+                $v = $r->validate(['note' => 'required|string|min:5|max:1500']);
+                \App\Services\Interviews::challenge($u, $m[1], $v['note']);
+
+                return $ok(['session' => \App\Services\Interviews::session($u, $m[1])]);
+            }
+
+            return $ok(['session' => \App\Services\Interviews::submit($u, $m[1])]);
         }
         if ($path === 'downloads' && $get) {
             $rows = DB::table('product_usage')->where('owner_id', $id)->whereIn('action', ['doc_resume', 'doc_letter'])->orderByDesc('created_at')->limit(100)->get(['action', 'reference', 'created_at']);
@@ -312,7 +432,7 @@ class ApiController extends Controller
             return $ok(['profile' => $p, 'isOwner' => \App\Services\Access::isStaff($u), 'consoleRole' => \App\Services\Access::role($u), 'isPaid' => (bool) (Settings::access($id)['paid'] ?? false) || (bool) $u->is_admin, 'user' => ['id' => $id, 'email' => $u->email]]);
         }
         if ($path === 'profile') {
-            $v = $r->validate(['name' => 'required|string|max:120', 'phone' => 'nullable|string|max:40', 'language' => 'sometimes|in:en', 'experienceLevel' => 'required|in:fresher,experienced', 'profession' => 'required|string|max:120', 'category' => 'required|in:Technology,HR & Recruitment,Sales & Marketing,Finance,Operations,Education,Healthcare,Design,Other', 'experienceYears' => 'required|integer|min:0|max:60', 'city' => 'nullable|string|max:120', 'marketingConsent' => 'required|boolean']);
+            $v = $r->validate(['name' => 'required|string|max:120', 'phone' => 'nullable|string|max:40', 'language' => 'sometimes|in:en', 'experienceLevel' => 'required|in:fresher,experienced', 'profession' => 'required|string|max:120', 'category' => ['required', \Illuminate\Validation\Rule::in(\App\Services\JobFields::CATEGORIES)], 'experienceYears' => 'required|integer|min:0|max:60', 'city' => 'nullable|string|max:120', 'marketingConsent' => 'required|boolean']);
             DB::table('profiles')->where('owner_id', $id)->update(['name' => $v['name'], 'phone' => $v['phone'] ?? '', 'language' => 'en', 'experience_level' => $v['experienceLevel'], 'profession' => $v['profession'], 'category' => $v['category'], 'experience_years' => $v['experienceLevel'] === 'fresher' ? 0 : $v['experienceYears'], 'city' => $v['city'] ?? '', 'marketing_consent' => $v['marketingConsent'], 'onboarding_done' => true, 'updated_at' => now()]);
             $u->name = $v['name'];
             $u->save();
@@ -339,6 +459,9 @@ class ApiController extends Controller
         if ($path === 'letters/draft' && $r->isMethod('POST')) {
             $v = $r->validate(['resumeId' => ['required', 'regex:/^[a-f0-9-]{36}$/'], 'scanId' => ['nullable', 'regex:/^[a-f0-9-]{36}$/'], 'role' => 'nullable|string|max:160', 'company' => 'nullable|string|max:160', 'recipient' => 'nullable|string|max:180', 'jobText' => 'nullable|string|max:40000']);
             abort_unless(Settings::get('features')['letter']['enabled'], 403);
+            if (! Settings::careerTools($u)) {
+                return response()->json(['ok' => false, 'plan' => 'career', 'error' => 'One-click cover letters come with Job Hunt and Pro. You can still write a letter yourself in the editor.'], 402);
+            }
             $key = 'letter-draft:'.$id;
             if (\Illuminate\Support\Facades\RateLimiter::tooManyAttempts($key, 8)) {
                 throw ValidationException::withMessages(['letter' => 'Please wait a moment before writing another letter.']);
@@ -405,6 +528,27 @@ class ApiController extends Controller
 
             return $ok([...$a, 'emailVerified' => ! \App\Services\EmailVerification::required($r->user()), 'jobLinks' => (bool) (((array) Settings::get('speed', []))['jobLinks'] ?? false), 'planName' => $planName, 'daysLeft' => $a['accessUntil'] ? max(0, (int) ceil((strtotime($a['accessUntil']) - time()) / 86400)) : 0, 'credits' => $cs, 'caps' => ['resumes' => (int) $l['savedResumes'] + 1, 'letters' => (int) $l['savedLetters'], 'atsScans' => $cs['scans']['total'], 'exports' => null], 'used' => ['exports' => $exports, 'savedResumes' => DB::table('resume_drafts')->where('owner_id', $id)->count(), 'savedLetters' => DB::table('cover_letter_drafts')->where('owner_id', $id)->count(), 'atsScans' => $scans, 'dailyMatches' => DB::table('ats_scans')->where('owner_id', $id)->where('status', '!=', 'void')->whereDate('created_at', today())->count()]]);
         }
+        // 3.61.0 The original uploaded file (kept 90 days, private to the customer, deletable).
+        if (preg_match('#^resumes/([a-f0-9-]{36})/original$#', $path, $m) && $r->isMethod('POST')) {
+            $cap('resume-original', 20, 600, 'Too many uploads in a few minutes. Wait a little and try again.');
+            $v = $r->validate(['file' => 'required|string|max:7100000', 'fileName' => 'nullable|string|max:200']);
+
+            return $ok(['original' => \App\Services\ResumeOriginals::store($r->user(), $m[1], $v['file'], (string) ($v['fileName'] ?? 'resume'))]);
+        }
+        if ($path === 'resumes/originals' && $get) {
+            return $ok(['originals' => \App\Services\ResumeOriginals::list($r->user()->id), 'days' => \App\Services\ResumeOriginals::DAYS]);
+        }
+        if (preg_match('#^resumes/originals/([a-f0-9-]{36})(/delete)?$#', $path, $m)) {
+            if (! empty($m[2])) {
+                abort_unless($r->isMethod('POST'), 405);
+                \App\Services\ResumeOriginals::delete($r->user(), $m[1]);
+
+                return $ok();
+            }
+            abort_unless($get, 405);
+
+            return \App\Services\ResumeOriginals::download($r->user(), $m[1]);
+        }
         if ($path === 'resumes/import') {
             abort_unless($r->isMethod('POST'), 405);
             $cap('resume-import', 20, 600, 'Too many uploads in a few minutes. Wait a little and try again.');
@@ -439,6 +583,9 @@ class ApiController extends Controller
         }
         if (preg_match('#^resumes/([a-f0-9-]{36})/tailor$#', $path, $m) && $r->isMethod('POST')) {
             // the CVTara team rewrites this resume for one checked job; the builder shows it for review, nothing is saved here
+            if (! Settings::careerTools($u)) {
+                return response()->json(['ok' => false, 'plan' => 'career', 'error' => 'Tailoring your whole resume in one click comes with Job Hunt and Pro. You can still add the keywords yourself.'], 402);
+            }
             $v = $r->validate(['scanId' => ['required', 'regex:/^[a-f0-9-]{36}$/'], 'consent' => 'accepted']);
             $row = DB::table('resume_drafts')->where('id', $m[1])->where('owner_id', $id)->first();
             abort_unless($row, 404);
@@ -450,6 +597,22 @@ class ApiController extends Controller
             \Illuminate\Support\Facades\RateLimiter::hit('tara-ai:'.$id, 60);
 
             return $ok(['tailored' => \App\Services\ResumeTailor::run($u, json_decode((string) $row->content_json, true) ?: [], (string) $sc->job_text, json_decode((string) $sc->result_json, true) ?: [])]);
+        }
+        // 3.52.0 resume version history: list, read one version, restore it.
+        if (preg_match('#^resumes/([a-f0-9-]{36})/versions(?:/([a-f0-9-]{36})(/restore)?)?$#', $path, $m)) {
+            if (empty($m[2])) {
+                abort_unless($get, 405);
+
+                return $ok(['versions' => \App\Services\ResumeVersions::list($id, $m[1])]);
+            }
+            if (empty($m[3])) {
+                abort_unless($get, 405);
+
+                return $ok(['version' => \App\Services\ResumeVersions::show($id, $m[1], $m[2])]);
+            }
+            abort_unless($r->isMethod('POST'), 405);
+
+            return $ok(\App\Services\ResumeVersions::restore($id, $m[1], $m[2]));
         }
         if (preg_match('#^resumes/([a-f0-9-]{36})/(primary|variant)$#', $path, $m)) {
             abort_unless($r->isMethod('POST'), 405);
@@ -472,6 +635,37 @@ class ApiController extends Controller
         }
         if (preg_match('#^(resumes|letters)(?:/([a-f0-9-]{36}))?$#', $path, $m)) {
             return $this->documents($r, $m[1], $m[2] ?? null);
+        }
+        // 3.56.0 "Is this the right job?" (V7 §13, AT-11): read the posting and show what was understood. No scan is used.
+        if ($path === 'ats/read' && $r->isMethod('POST')) {
+            $v = $r->validate(['source' => 'required|in:link,file,text', 'url' => 'nullable|string|max:1000', 'text' => 'nullable|string|max:60000', 'title' => 'nullable|string|max:180', 'company' => 'nullable|string|max:180']);
+            abort_unless(Settings::get('features')['match']['enabled'], 403);
+            $url = '';
+            $details = [];
+            $title = trim((string) ($v['title'] ?? ''));
+            $company = trim((string) ($v['company'] ?? ''));
+            if ($v['source'] === 'link') {
+                abort_unless((((array) Settings::get('speed', []))['jobLinks'] ?? false), 422, 'Job links are not available yet. Paste the job text or upload a PDF.');
+                abort_if(empty($v['url']), 422, 'Paste the link of the job posting.');
+                if (\Illuminate\Support\Facades\RateLimiter::tooManyAttempts('ats-link:'.$id, (int) env('ATS_LINK_RATE', 10))) {
+                    throw ValidationException::withMessages(['url' => 'Too many job links in a minute. Wait a moment and try again.']);
+                }
+                \Illuminate\Support\Facades\RateLimiter::hit('ats-link:'.$id, 60);
+                \App\Services\Traffic::guardHeavy();
+                $page = JobPage::fetch($v['url']);
+                $text = $page['text'];
+                $url = JobPage::canonical((string) $v['url']);
+                $details = $page['details'] ?? [];
+                $title = $title ?: $page['title'];
+                $company = $company ?: $page['company'];
+                // The check that follows reuses this reading instead of opening the link again.
+                $r->session()->put('ats.read', ['url' => $url, 'text' => $text, 'title' => $page['title'], 'company' => $page['company'], 'details' => $details, 'at' => time()]);
+            } else {
+                $text = mb_substr(trim((string) ($v['text'] ?? '')), 0, 40000);
+                abort_if(mb_strlen($text) < 80, 422, 'The job description is too short to review. Include the responsibilities and requirements.');
+            }
+
+            return $ok(['job' => \App\Services\JobFields::read($text, $title, $company, $url, $details)]);
         }
         if ($path === 'ats/scan' && $r->isMethod('POST')) {
             $v = $r->validate(['resumeId' => ['required', 'regex:/^[a-f0-9-]{36}$/'], 'source' => 'required|in:link,file,text', 'url' => 'nullable|string|max:1000', 'text' => 'nullable|string|max:60000', 'title' => 'nullable|string|max:180', 'company' => 'nullable|string|max:180']);
@@ -502,8 +696,12 @@ class ApiController extends Controller
                 if (\Illuminate\Support\Facades\RateLimiter::tooManyAttempts('ats-link:'.$id, (int) env('ATS_LINK_RATE', 10))) {
                     throw ValidationException::withMessages(['url' => 'Too many job links in a minute. Wait a moment and try again.']);
                 }
-                \Illuminate\Support\Facades\RateLimiter::hit('ats-link:'.$id, 60);
-                $page = JobPage::fetch($v['url']);
+                $cached = (array) $r->session()->get('ats.read', []);
+                $page = ($cached['url'] ?? '') === JobPage::canonical((string) $v['url']) && (int) ($cached['at'] ?? 0) > time() - 900 ? $cached : null;
+                if (! $page) {
+                    \Illuminate\Support\Facades\RateLimiter::hit('ats-link:'.$id, 60);
+                    $page = JobPage::fetch($v['url']);
+                }
                 $text = $page['text'];
                 $title = $title ?: $page['title'];
                 $company = $company ?: $page['company'];
@@ -525,6 +723,9 @@ class ApiController extends Controller
                 throw ValidationException::withMessages(['text' => $e->getMessage()]);
             }
             $report['details'] = $details;
+            $report['jd'] = \App\Services\JobFields::read($text, $title, $company, $v['source'] === 'link' ? JobPage::canonical((string) $v['url']) : '', $details);
+            $report['jd']['confirmed'] = $r->boolean('confirmed');
+            $report['jd']['confirmedAt'] = $r->boolean('confirmed') ? now()->toIso8601String() : null;
             $resumeData = json_decode((string) $resume->content_json, true) ?: [];
             $report['resumeHash'] = \App\Services\AtsEngine::fingerprint($resumeData);
             $scanId = (string) Str::uuid();
@@ -576,6 +777,7 @@ class ApiController extends Controller
 
                 return $aid;
             });
+            \App\Services\ResumeVersions::freezeForApplication($id, $result); // 3.52.0: the resume copy used for this application
 
             return $ok(['id' => $result]);
         }
@@ -666,7 +868,48 @@ class ApiController extends Controller
             return $ok(['id' => Referrals::request($u, $v)]);
         }
         if ($path === 'feedback' && $get) {
-            return $ok(['reviews' => DB::table('feedback')->where('owner_id', $id)->orderByDesc('created_at')->limit(10)->get()]);
+            $pend = \App\Services\ReviewEdits::pendingFor($id);
+
+            return $ok(['reviews' => DB::table('feedback')->where('owner_id', $id)->orderByDesc('created_at')->limit(10)->get(['id', 'display_name', 'company', 'designation', 'rating', 'content', 'consent', 'status', 'edit_state', 'edited_at', 'created_at'])->map(fn ($f) => (array) $f + ['pendingEdit' => $pend[$f->id] ?? null])]);
+        }
+        // 3.56.0 Evidence check before a clean download: what this version says that the customer's own resume does not.
+        if (preg_match('#^evidence/(resume|letter)/([a-f0-9-]{36})(/confirm)?$#', $path, $m)) {
+            $row = DB::table($m[1] === 'resume' ? 'resume_drafts' : 'cover_letter_drafts')->where('owner_id', $id)->where('id', $m[2])->first();
+            abort_unless($row, 404);
+            if (! empty($m[3])) {
+                abort_if($get, 405);
+                \App\Services\EvidenceCheck::confirm($id, $m[1], $row);
+            }
+
+            return $ok(\App\Services\EvidenceCheck::forDocument($id, $m[1], $row) + ['revision' => (int) $row->revision]);
+        }
+        // 3.65.0 The resume journey card: V1 as it arrived, V2 primary, V3 one copy per job (with its letter).
+        if ($path === 'resumes/journey' && $get) {
+            return $ok(['journey' => \App\Services\ResumeJourney::for($id)]);
+        }
+        // 3.55.0 Ask for feedback after a resume save (V7 §28), not while editing.
+        if ($path === 'feedback/ask') {
+            if ($get) {
+                return $ok(['ask' => \App\Services\ReviewEdits::shouldAsk($id)]);
+            }
+            // 3.65.0: one tap on "Is the price fair?" in the same card (too_high, fair or great_value), kept for the owner's Reviews page.
+            if ($r->input('action') === 'price') {
+                $pv = (string) $r->input('value');
+                abort_unless(in_array($pv, \App\Services\ReviewEdits::PRICE_VIEWS, true), 422);
+                DB::table('activity_events')->where('owner_id', $id)->where('event', 'price_view')->where('created_at', '>=', now()->subDays(30))->delete();
+                Settings::audit($id, 'price_view', $pv);
+
+                return $ok();
+            }
+            $act = $r->input('action') === 'dismissed' ? 'feedback_prompt_dismissed' : 'feedback_prompt_shown';
+            Settings::audit($id, $act);
+
+            return $ok();
+        }
+        if (preg_match('#^feedback/([a-f0-9-]{36})/edits/(\d+)$#', $path, $m) && $r->isMethod('POST')) {
+            \App\Services\ReviewEdits::decide($id, $m[1], (int) $m[2], $r->boolean('approve'));
+
+            return $ok();
         }
         if ($path === 'feedback' && $r->isMethod('POST')) {
             $v = $r->validate(['displayName' => 'required|string|max:100', 'company' => 'nullable|string|max:120', 'designation' => 'nullable|string|max:120', 'rating' => 'required|integer|min:1|max:5', 'content' => 'required|string|min:10|max:2000', 'consent' => 'required|boolean']);
@@ -676,7 +919,10 @@ class ApiController extends Controller
             if (DB::table('feedback')->where('owner_id', $id)->get(['content'])->contains(fn ($x) => $norm($x->content) === $norm($v['content']))) {
                 throw ValidationException::withMessages(['content' => 'You have already sent this feedback. Thank you!']);
             }
-            DB::table('feedback')->insert(['id' => (string) Str::uuid(), 'owner_id' => $id, 'display_name' => $v['displayName'], 'company' => trim((string) ($v['company'] ?? '')), 'designation' => trim((string) ($v['designation'] ?? '')), 'rating' => $v['rating'], 'content' => $v['content'], 'consent' => $v['consent'], 'consented_at' => $v['consent'] ? now() : null, 'created_at' => now(), 'updated_at' => now()]);
+            // What the writer had used, kept with the review (V7 §28): their latest paid order, else their latest saved resume.
+            $usage = ($o = DB::table('purchases')->where('owner_id', $id)->whereIn('status', ['paid', 'partially_refunded', 'refunded'])->whereNotNull('purchased_at')->orderByDesc('purchased_at')->value('id')) ? 'order:'.$o
+                : (($rd = DB::table('resume_drafts')->where('owner_id', $id)->orderByDesc('updated_at')->value('id')) ? 'resume:'.$rd : null);
+            DB::table('feedback')->insert(['id' => (string) Str::uuid(), 'owner_id' => $id, 'display_name' => $v['displayName'], 'company' => trim((string) ($v['company'] ?? '')), 'designation' => trim((string) ($v['designation'] ?? '')), 'rating' => $v['rating'], 'content' => $v['content'], 'consent' => $v['consent'], 'consented_at' => $v['consent'] ? now() : null, 'usage_ref' => $usage, 'created_at' => now(), 'updated_at' => now()]);
 
             return $ok();
         }
@@ -788,7 +1034,7 @@ class ApiController extends Controller
             return $x;
         }, $list);
 
-        return ['generatedAt' => now()->toIso8601String(), 'account' => ['name' => $u->name, 'email' => $u->email, 'createdAt' => $u->created_at, 'referralCode' => $u->referral_code], 'profile' => (array) DB::table('profiles')->where('owner_id', $id)->first(), 'resumes' => $decode($rows('resume_drafts')), 'coverLetters' => $decode($rows('cover_letter_drafts')), 'applications' => $rows('applications'), 'taraChats' => DB::table('tara_messages')->where('owner_id', $id)->where('content', '!=', '')->orderBy('created_at')->get(['conversation_id', 'role', 'content', 'created_at'])->map(fn ($x) => (array) $x)->all(), 'purchases' => $rows('purchases', ['id', 'plan', 'amount_paise', 'refunded_paise', 'currency', 'status', 'coupon_code', 'purchased_at', 'access_until']), 'reviews' => $rows('feedback', ['display_name', 'rating', 'content', 'status', 'created_at']), 'referralCommissions' => DB::table('referral_commissions')->where('referrer_id', $id)->get(['amount_paise', 'rate_bps', 'created_at'])->map(fn ($x) => (array) $x)->all(), 'withdrawals' => $rows('withdrawals', ['amount_paise', 'destination_masked', 'status', 'reference', 'created_at']), 'payoutProfile' => (array) DB::table('payout_profiles')->where('owner_id', $id)->first(['status', 'destination_masked']), 'creatorApplication' => (array) DB::table('creator_applications')->where('owner_id', $id)->first(['status', 'audience', 'rate_bps', 'created_at']), 'refundRequests' => $rows('refund_requests', ['purchase_id', 'status', 'amount_paise', 'reason', 'note', 'created_at']), 'walletTransactions' => $rows('wallet_transactions', ['kind', 'amount_paise', 'note', 'earned_at', 'expires_at', 'created_at']), 'serviceOrders' => $rows('service_orders', ['service', 'status', 'note', 'created_at', 'delivered_at']), 'atsChecks' => $rows('ats_scans', ['id', 'source', 'job_url', 'job_title', 'company', 'score', 'result_json', 'status', 'created_at']), 'activity' => DB::table('activity_events')->where('owner_id', $id)->orderByDesc('created_at')->limit(500)->get(['event', 'reference', 'created_at'])->map(fn ($x) => (array) $x)->all(),
+        return ['generatedAt' => now()->toIso8601String(), 'account' => ['name' => $u->name, 'email' => $u->email, 'createdAt' => $u->created_at, 'referralCode' => $u->referral_code], 'profile' => (array) DB::table('profiles')->where('owner_id', $id)->first(), 'resumes' => $decode($rows('resume_drafts')), 'uploadedFiles' => \App\Services\ResumeOriginals::list($id), 'coverLetters' => $decode($rows('cover_letter_drafts')), 'applications' => $rows('applications'), 'taraChats' => DB::table('tara_messages')->where('owner_id', $id)->where('content', '!=', '')->orderBy('created_at')->get(['conversation_id', 'role', 'content', 'created_at'])->map(fn ($x) => (array) $x)->all(), 'purchases' => $rows('purchases', ['id', 'plan', 'amount_paise', 'refunded_paise', 'currency', 'status', 'coupon_code', 'purchased_at', 'access_until']), 'reviews' => $rows('feedback', ['display_name', 'rating', 'content', 'status', 'created_at']), 'referralCommissions' => DB::table('referral_commissions')->where('referrer_id', $id)->get(['amount_paise', 'rate_bps', 'created_at'])->map(fn ($x) => (array) $x)->all(), 'withdrawals' => $rows('withdrawals', ['amount_paise', 'destination_masked', 'status', 'reference', 'created_at']), 'payoutProfile' => (array) DB::table('payout_profiles')->where('owner_id', $id)->first(['status', 'destination_masked']), 'creatorApplication' => (array) DB::table('creator_applications')->where('owner_id', $id)->first(['status', 'audience', 'rate_bps', 'created_at']), 'refundRequests' => $rows('refund_requests', ['purchase_id', 'status', 'amount_paise', 'reason', 'note', 'created_at']), 'walletTransactions' => $rows('wallet_transactions', ['kind', 'amount_paise', 'note', 'earned_at', 'expires_at', 'created_at']), 'serviceOrders' => $rows('service_orders', ['service', 'status', 'note', 'created_at', 'delivered_at']), 'atsChecks' => $rows('ats_scans', ['id', 'source', 'job_url', 'job_title', 'company', 'score', 'result_json', 'status', 'created_at']), 'activity' => DB::table('activity_events')->where('owner_id', $id)->orderByDesc('created_at')->limit(500)->get(['event', 'reference', 'created_at'])->map(fn ($x) => (array) $x)->all(),
             'supportRequests' => \App\Services\SupportCentre::mine($u),
             'resumeAndLetterRequests' => \Illuminate\Support\Facades\Schema::hasTable('service_requests') ? DB::table('service_requests')->where('owner_id', $id)->get(['id', 'status', 'scan_id', 'output_json', 'created_at'])->map(fn ($x) => ['output' => json_decode((string) $x->output_json, true)] + array_diff_key((array) $x, ['output_json' => 1]))->all() : []];
     }
@@ -965,15 +1211,27 @@ class ApiController extends Controller
             $slug = $data['template'];
             $already = $r->input('id') && DB::table($table)->where('id', $r->input('id'))->where('owner_id', $id)->where('template', $slug)->exists();
             abort_if(! $already && (Settings::get('library')[$type === 'resumes' ? 'templates' : 'letters'][$slug]['published'] ?? true) === false, 422, 'This template is no longer available. Choose another template.');
-            $catalog = json_decode(file_get_contents(resource_path('data/catalog.json')), true);
-            abort_unless(collect($catalog[$type === 'resumes' ? 'templates' : 'coverLetters'])->contains('slug', $slug), 422);
+            abort_unless(\App\Services\TemplateLibrary::exists($type === 'resumes' ? 'resume' : 'letter', (string) $slug), 422);
             $record = ['title' => $data['title'], 'template' => $slug, 'content_json' => json_encode($data), 'company' => $data['company'] ?? '', 'role' => $data['role'] ?? '', 'updated_at' => now()];
             if ($type === 'resumes') {
                 $record['ats_score'] = \App\Services\ResumeQuality::score($data)['score'];
             }
+            // 3.52.0 cover letters remember the resume, ATS check and application they were made from (only the customer's own).
+            $src = (array) $r->input('source', []);
+            if ($type === 'letters' && \Illuminate\Support\Facades\Schema::hasColumn('cover_letter_drafts', 'source_resume_id')) {
+                foreach (['resumeId' => ['source_resume_id', 'resume_drafts'], 'scanId' => ['source_scan_id', 'ats_scans'], 'applicationId' => ['source_application_id', 'applications']] as $k => [$col, $tbl]) {
+                    $val = (string) ($src[$k] ?? '');
+                    if (preg_match('/^[a-f0-9-]{36}$/', $val) && DB::table($tbl)->where('id', $val)->where('owner_id', $id)->exists()) {
+                        $record[$col] = $val;
+                    }
+                }
+            }
             if ($r->input('id')) {
                 $did = $r->input('id');
                 $rev = (int) $r->input('revision');
+                if ($type === 'resumes') {
+                    \App\Services\ResumeVersions::beforeSave($id, $did); // 3.52.0: the previous content is kept as a version
+                }
                 abort_unless(DB::table($table)->where('id', $did)->where('owner_id', $id)->where('revision', $rev)->update([...$record, 'revision' => $rev + 1]), 409);
                 $rev++;
             } else {

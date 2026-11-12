@@ -1,0 +1,1413 @@
+{
+ "version": "2026-11-12",
+ "source": "CVTara original question bank (starter set, written for CVTara)",
+ "occupations": [
+  {
+   "slug": "customer-support",
+   "name": "Customer Support Executive",
+   "family": "Customer service",
+   "industry": "BPO / IT services",
+   "nco": "4222",
+   "domain": "Customer experience",
+   "seniority": "Executive, Senior executive, Team leader, Manager",
+   "synonyms": "customer care executive, customer service executive, call centre executive, voice process, non-voice process, chat support, telecaller support, CSR, helpdesk executive",
+   "isco": "4222"
+  },
+  {
+   "slug": "sales-executive",
+   "name": "Sales Executive",
+   "family": "Sales",
+   "industry": "Retail / FMCG",
+   "nco": "3322",
+   "domain": "Sales and business development",
+   "seniority": "Executive, Senior executive, Area manager, Regional manager",
+   "synonyms": "field sales, business development executive, BDE, sales officer, territory sales, sales representative, sales associate",
+   "isco": "3322"
+  },
+  {
+   "slug": "hr-recruiter",
+   "name": "HR Recruiter",
+   "family": "Human resources",
+   "industry": "Professional services",
+   "nco": "2423",
+   "domain": "People and talent",
+   "seniority": "Recruiter, Senior recruiter, Talent acquisition lead, HR manager",
+   "synonyms": "talent acquisition, TA executive, HR executive, recruitment executive, IT recruiter, non-IT recruiter, staffing executive",
+   "isco": "2423"
+  },
+  {
+   "slug": "accounts-executive",
+   "name": "Accounts Executive",
+   "family": "Finance and accounts",
+   "industry": "All industries",
+   "nco": "3313",
+   "domain": "Finance and accounting",
+   "seniority": "Executive, Senior executive, Accounts manager",
+   "synonyms": "accountant, accounts assistant, junior accountant, Tally operator, billing executive, AP executive, AR executive, GST executive",
+   "isco": "3313"
+  },
+  {
+   "slug": "office-administrator",
+   "name": "Office Administrator",
+   "family": "Administration",
+   "industry": "All industries",
+   "nco": "3341",
+   "domain": "Administration and facilities",
+   "seniority": "Executive, Senior executive, Admin manager",
+   "synonyms": "admin executive, office assistant, office coordinator, facility executive, front office admin, administration officer",
+   "isco": "3341"
+  },
+  {
+   "slug": "retail-store",
+   "name": "Retail Store Associate",
+   "family": "Retail",
+   "industry": "Retail",
+   "nco": "5223",
+   "domain": "Retail operations",
+   "seniority": "Associate, Senior associate, Team leader",
+   "synonyms": "sales associate, store associate, floor executive, cashier, customer sales associate, retail executive, showroom executive",
+   "isco": "5223"
+  },
+  {
+   "slug": "hotel-front-office",
+   "name": "Hotel Front Office Executive",
+   "family": "Hospitality",
+   "industry": "Hospitality",
+   "nco": "4224",
+   "domain": "Hospitality services",
+   "seniority": "Associate, Executive, Supervisor, Front office manager",
+   "synonyms": "front desk executive, guest relations executive, GRE, hotel receptionist, front office associate",
+   "isco": "4224"
+  },
+  {
+   "slug": "hospital-front-office",
+   "name": "Hospital Front Office Executive",
+   "family": "Healthcare administration",
+   "industry": "Healthcare",
+   "nco": "4226",
+   "domain": "Healthcare services",
+   "seniority": "Executive, Senior executive, Supervisor",
+   "synonyms": "patient care coordinator, hospital receptionist, front desk executive, billing and admissions executive, patient relations executive",
+   "isco": "4226"
+  },
+  {
+   "slug": "bank-operations",
+   "name": "Banking Operations Executive",
+   "family": "Banking operations",
+   "industry": "BFSI",
+   "nco": "4312",
+   "domain": "Banking and financial services",
+   "seniority": "Officer, Senior officer, Branch operations manager",
+   "synonyms": "bank officer, operations executive, back office banking, KYC executive, branch operations, clearing executive",
+   "isco": "4312"
+  },
+  {
+   "slug": "teacher",
+   "name": "School Teacher",
+   "family": "Education",
+   "industry": "Education",
+   "nco": "2330",
+   "domain": "Education and training",
+   "seniority": "Teacher, Senior teacher, Head of department",
+   "synonyms": "school teacher, TGT, PGT, primary teacher, subject teacher, tutor, educator",
+   "isco": "2330"
+  },
+  {
+   "slug": "logistics-coordinator",
+   "name": "Logistics Coordinator",
+   "family": "Operations and logistics",
+   "industry": "Logistics",
+   "nco": "4323",
+   "domain": "Supply chain and logistics",
+   "seniority": "Executive, Senior executive, Supervisor, Manager",
+   "synonyms": "logistics executive, dispatch coordinator, shipping executive, transport coordinator, supply chain executive",
+   "isco": "4323"
+  },
+  {
+   "slug": "marketing-executive",
+   "name": "Marketing Executive",
+   "family": "Marketing",
+   "industry": "All industries",
+   "nco": "2431",
+   "domain": "Marketing and brand",
+   "seniority": "Executive, Senior executive, Marketing manager",
+   "synonyms": "marketing coordinator, digital marketing executive, brand executive, marketing associate, promotions executive",
+   "isco": "2431"
+  },
+  {
+   "slug": "inside-sales",
+   "name": "Inside Sales Executive",
+   "family": "Sales",
+   "industry": "BFSI / EdTech / Real estate",
+   "nco": "5244",
+   "isco": "5244",
+   "domain": "Sales and business development",
+   "seniority": "Executive, Senior executive, Team leader",
+   "synonyms": "telecaller, tele sales, telemarketing executive, inside sales associate, pre-sales executive, lead generation executive"
+  },
+  {
+   "slug": "receptionist",
+   "name": "Receptionist",
+   "family": "Administration",
+   "industry": "All industries",
+   "nco": "4226",
+   "isco": "4226",
+   "domain": "Administration and facilities",
+   "seniority": "Receptionist, Senior receptionist, Front office supervisor",
+   "synonyms": "front desk executive, front office executive, reception executive, office receptionist"
+  },
+  {
+   "slug": "data-entry",
+   "name": "Data Entry Operator",
+   "family": "Administration",
+   "industry": "All industries",
+   "nco": "4132",
+   "isco": "4132",
+   "domain": "Back office operations",
+   "seniority": "Operator, Senior operator, Team leader",
+   "synonyms": "data entry executive, computer operator, back office data entry, MIS data entry, typist"
+  },
+  {
+   "slug": "insurance-advisor",
+   "name": "Insurance Advisor",
+   "family": "Sales",
+   "industry": "Insurance",
+   "nco": "3321",
+   "isco": "3321",
+   "domain": "Banking and financial services",
+   "seniority": "Advisor, Senior advisor, Sales manager",
+   "synonyms": "insurance agent, relationship officer insurance, bancassurance officer, policy advisor, financial advisor insurance"
+  },
+  {
+   "slug": "collections-executive",
+   "name": "Collections Executive",
+   "family": "Banking operations",
+   "industry": "BFSI / NBFC",
+   "nco": "4214",
+   "isco": "4214",
+   "domain": "Banking and financial services",
+   "seniority": "Executive, Senior executive, Team leader",
+   "synonyms": "recovery executive, collection officer, tele collections, field collections, credit collections executive"
+  },
+  {
+   "slug": "store-manager",
+   "name": "Retail Store Manager",
+   "family": "Retail",
+   "industry": "Retail",
+   "nco": "1420",
+   "isco": "1420",
+   "domain": "Retail operations",
+   "seniority": "Assistant store manager, Store manager, Cluster manager",
+   "synonyms": "store in-charge, outlet manager, showroom manager, branch store manager, assistant store manager"
+  },
+  {
+   "slug": "warehouse-supervisor",
+   "name": "Warehouse Supervisor",
+   "family": "Operations and logistics",
+   "industry": "Logistics / E-commerce",
+   "nco": "4321",
+   "isco": "4321",
+   "domain": "Supply chain and logistics",
+   "seniority": "Supervisor, Senior supervisor, Warehouse manager",
+   "synonyms": "store keeper, inventory supervisor, stores executive, warehouse executive, godown in-charge"
+  },
+  {
+   "slug": "content-writer",
+   "name": "Content Writer",
+   "family": "Marketing",
+   "industry": "Media / Digital",
+   "nco": "2641",
+   "isco": "2641",
+   "domain": "Marketing and brand",
+   "seniority": "Writer, Senior writer, Content lead",
+   "synonyms": "copywriter, content executive, blog writer, content creator, technical writer non-coding, editor"
+  },
+  {
+   "slug": "travel-consultant",
+   "name": "Travel Consultant",
+   "family": "Customer service",
+   "industry": "Travel and tourism",
+   "nco": "4221",
+   "isco": "4221",
+   "domain": "Travel and tourism",
+   "seniority": "Consultant, Senior consultant, Team leader",
+   "synonyms": "travel agent, ticketing executive, tour consultant, holiday consultant, reservations executive"
+  },
+  {
+   "slug": "back-office",
+   "name": "Back Office Executive",
+   "family": "Administration",
+   "industry": "All industries",
+   "nco": "4110",
+   "isco": "4110",
+   "domain": "Back office operations",
+   "seniority": "Executive, Senior executive, Team leader",
+   "synonyms": "back office assistant, operations executive, process associate, MIS executive, documentation executive"
+  },
+  {
+   "slug": "pharmacy-assistant",
+   "name": "Pharmacy Assistant",
+   "family": "Healthcare",
+   "industry": "Healthcare / Retail pharmacy",
+   "nco": "3213",
+   "isco": "3213",
+   "domain": "Healthcare services",
+   "seniority": "Assistant, Senior assistant, Pharmacy supervisor",
+   "synonyms": "pharmacy helper, chemist shop assistant, medical store assistant, pharmacy billing executive"
+  },
+  {
+   "slug": "event-coordinator",
+   "name": "Event Coordinator",
+   "family": "Hospitality",
+   "industry": "Events / Hospitality",
+   "nco": "3332",
+   "isco": "3332",
+   "domain": "Events and hospitality",
+   "seniority": "Coordinator, Senior coordinator, Event manager",
+   "synonyms": "event executive, event planner, wedding coordinator, event operations executive"
+  }
+ ],
+ "questions": [
+  {
+   "code": "GEN-001",
+   "occupation": null,
+   "competency": "introduction",
+   "difficulty": 1,
+   "min_band": "fresher",
+   "max_band": "12+",
+   "text": "Tell me about yourself.",
+   "guidance": "Keep it to about one minute. Start with who you are now (current role or course), then two or three facts that fit this job (skills, results, responsibilities), and end with why you are applying here. Avoid repeating your whole resume or personal details such as family background."
+  },
+  {
+   "code": "GEN-002",
+   "occupation": null,
+   "competency": "motivation",
+   "difficulty": 1,
+   "min_band": "fresher",
+   "max_band": "12+",
+   "text": "Why do you want to work with our company?",
+   "guidance": "Show that you have read about the company: name something specific (its customers, products, growth or values) and connect it to what you want to do. Avoid answers only about salary or location."
+  },
+  {
+   "code": "GEN-003",
+   "occupation": null,
+   "competency": "motivation",
+   "difficulty": 1,
+   "min_band": "fresher",
+   "max_band": "12+",
+   "text": "Why are you interested in this role?",
+   "guidance": "Link two or three duties in the job description to things you have done or studied. End with what you hope to learn or contribute in the first months."
+  },
+  {
+   "code": "GEN-004",
+   "occupation": null,
+   "competency": "self",
+   "difficulty": 2,
+   "min_band": "fresher",
+   "max_band": "12+",
+   "text": "What are your strengths?",
+   "guidance": "Pick two strengths that matter for this job and prove each with a short real example. A strength without an example sounds like a claim."
+  },
+  {
+   "code": "GEN-005",
+   "occupation": null,
+   "competency": "self",
+   "difficulty": 2,
+   "min_band": "fresher",
+   "max_band": "12+",
+   "text": "What is one area you are working to improve?",
+   "guidance": "Choose a real but manageable weakness, explain what you are doing about it and what has improved. Avoid fake weaknesses such as 'I work too hard'."
+  },
+  {
+   "code": "GEN-006",
+   "occupation": null,
+   "competency": "problem",
+   "difficulty": 2,
+   "min_band": "fresher",
+   "max_band": "12+",
+   "text": "Tell me about a difficult problem you solved.",
+   "guidance": "Use the situation, task, action, result order. Spend most of the time on what you personally did, and finish with a result you can state honestly, with a number if you have one."
+  },
+  {
+   "code": "GEN-007",
+   "occupation": null,
+   "competency": "teamwork",
+   "difficulty": 2,
+   "min_band": "fresher",
+   "max_band": "12+",
+   "text": "Describe a time you worked with a team to reach a goal.",
+   "guidance": "Say what the team had to achieve, what your part was, how you helped others or handled a disagreement, and what the outcome was."
+  },
+  {
+   "code": "GEN-008",
+   "occupation": null,
+   "competency": "pressure",
+   "difficulty": 2,
+   "min_band": "fresher",
+   "max_band": "12+",
+   "text": "How do you handle pressure or tight deadlines?",
+   "guidance": "Give one real example: the deadline, how you planned and prioritised, who you kept informed and how it ended. Mention a habit you use, such as a daily task list."
+  },
+  {
+   "code": "GEN-009",
+   "occupation": null,
+   "competency": "conflict",
+   "difficulty": 2,
+   "min_band": "1-3",
+   "max_band": "12+",
+   "text": "Tell me about a disagreement with a colleague or manager and how you handled it.",
+   "guidance": "Stay calm and fair to the other person. Explain how you listened, what you agreed and what you learnt. Avoid blaming anyone."
+  },
+  {
+   "code": "GEN-010",
+   "occupation": null,
+   "competency": "learning",
+   "difficulty": 1,
+   "min_band": "fresher",
+   "max_band": "12+",
+   "text": "Tell me about something new you learnt recently.",
+   "guidance": "Choose a skill useful at work (a tool, a process, a language). Say why you learnt it, how, and where you have already used it."
+  },
+  {
+   "code": "GEN-011",
+   "occupation": null,
+   "competency": "career",
+   "difficulty": 1,
+   "min_band": "fresher",
+   "max_band": "12+",
+   "text": "Where do you see yourself in the next three to five years?",
+   "guidance": "Show ambition that fits the company: the skills you want to build and the responsibility you hope to earn. Avoid naming a different career or company."
+  },
+  {
+   "code": "GEN-012",
+   "occupation": null,
+   "competency": "career",
+   "difficulty": 2,
+   "min_band": "1-3",
+   "max_band": "12+",
+   "text": "Why are you looking for a change from your current job?",
+   "guidance": "Stay positive about your current employer. Focus on what you want to grow into, such as new responsibility or a larger team, and how this role offers it."
+  },
+  {
+   "code": "GEN-013",
+   "occupation": null,
+   "competency": "ethics",
+   "difficulty": 2,
+   "min_band": "fresher",
+   "max_band": "12+",
+   "text": "What would you do if you saw a colleague breaking a company rule?",
+   "guidance": "Show judgement: get the facts, speak to the colleague if it is minor, and escalate through the right channel if it affects customers, money or safety. Mention respecting confidentiality."
+  },
+  {
+   "code": "GEN-014",
+   "occupation": null,
+   "competency": "achievement",
+   "difficulty": 2,
+   "min_band": "fresher",
+   "max_band": "12+",
+   "text": "What achievement are you most proud of?",
+   "guidance": "Pick one achievement related to work or study, explain the challenge, your actions and the result. Numbers and recognition help, but only if they are true."
+  },
+  {
+   "code": "GEN-015",
+   "occupation": null,
+   "competency": "leadership",
+   "difficulty": 3,
+   "min_band": "5-8",
+   "max_band": "12+",
+   "text": "Tell me about a time you led people through a change.",
+   "guidance": "Explain the change, why people resisted, how you communicated and supported them, and the measurable result. Show how you listened as well as directed."
+  },
+  {
+   "code": "GEN-016",
+   "occupation": null,
+   "competency": "closing",
+   "difficulty": 1,
+   "min_band": "fresher",
+   "max_band": "12+",
+   "text": "Do you have any questions for us?",
+   "guidance": "Always ask one or two: about the first 90 days, how success is measured, the team, or training. Avoid asking only about leave or salary in the first round."
+  },
+  {
+   "code": "GEN-017",
+   "occupation": null,
+   "competency": "career",
+   "difficulty": 2,
+   "min_band": "fresher",
+   "max_band": "1-3",
+   "text": "You are a fresher. Why should we choose you over someone with experience?",
+   "guidance": "Point to what you bring now: relevant course projects or internships, quick learning shown by an example, and energy for this specific role. Do not criticise experienced candidates."
+  },
+  {
+   "code": "GEN-018",
+   "occupation": null,
+   "competency": "career",
+   "difficulty": 2,
+   "min_band": "1-3",
+   "max_band": "12+",
+   "text": "Can you explain the gap in your career?",
+   "guidance": "Be brief and honest about the reason, then move to what you did to stay current (courses, freelance work, caregiving skills) and why you are ready now."
+  },
+  {
+   "code": "CUSTOMER-SUP-001",
+   "occupation": "customer-support",
+   "competency": "customer",
+   "difficulty": 2,
+   "min_band": "fresher",
+   "max_band": "12+",
+   "text": "How would you calm down an angry customer on a call?",
+   "guidance": "Acknowledge the feeling, apologise for the experience without blaming, ask questions to understand the issue, give a clear next step and a time, then follow up. A short real example makes this strong."
+  },
+  {
+   "code": "CUSTOMER-SUP-002",
+   "occupation": "customer-support",
+   "competency": "role",
+   "difficulty": 1,
+   "min_band": "fresher",
+   "max_band": "12+",
+   "text": "What does good customer service mean to you?",
+   "guidance": "Talk about solving the problem on the first contact where possible, being clear about timelines, and leaving the customer feeling respected. Mention a measure you know, such as first-call resolution or CSAT."
+  },
+  {
+   "code": "CUSTOMER-SUP-003",
+   "occupation": "customer-support",
+   "competency": "pressure",
+   "difficulty": 2,
+   "min_band": "fresher",
+   "max_band": "12+",
+   "text": "You have many calls waiting and a customer wants a long explanation. What do you do?",
+   "guidance": "Show you balance quality and queue time: answer the key question, offer a call-back or written follow-up for the rest, and record notes so the next agent has context."
+  },
+  {
+   "code": "CUSTOMER-SUP-004",
+   "occupation": "customer-support",
+   "competency": "problem",
+   "difficulty": 2,
+   "min_band": "fresher",
+   "max_band": "12+",
+   "text": "Tell me about a time you could not solve a customer's problem yourself.",
+   "guidance": "Explain how you escalated correctly, what information you passed on, how you kept the customer informed and what the result was."
+  },
+  {
+   "code": "CUSTOMER-SUP-005",
+   "occupation": "customer-support",
+   "competency": "role",
+   "difficulty": 2,
+   "min_band": "fresher",
+   "max_band": "12+",
+   "text": "How do you keep your call or chat quality scores high?",
+   "guidance": "Mention following the script without sounding robotic, accurate notes, empathy statements, checking understanding before closing, and learning from QA feedback."
+  },
+  {
+   "code": "CUSTOMER-SUP-006",
+   "occupation": "customer-support",
+   "competency": "ethics",
+   "difficulty": 2,
+   "min_band": "fresher",
+   "max_band": "12+",
+   "text": "A customer asks for a refund that the policy does not allow. How do you handle it?",
+   "guidance": "Explain the policy politely and clearly, show what you can do instead, and escalate if there is a genuine exception. Never promise what you cannot deliver."
+  },
+  {
+   "code": "SALES-EXECUT-001",
+   "occupation": "sales-executive",
+   "competency": "role",
+   "difficulty": 2,
+   "min_band": "fresher",
+   "max_band": "12+",
+   "text": "How do you prepare before meeting a new prospect?",
+   "guidance": "Research the customer, their likely needs and past purchases, prepare questions and one or two relevant offers, and plan the next step you want from the meeting."
+  },
+  {
+   "code": "SALES-EXECUT-002",
+   "occupation": "sales-executive",
+   "competency": "customer",
+   "difficulty": 2,
+   "min_band": "fresher",
+   "max_band": "12+",
+   "text": "A customer says our product is too expensive. What do you say?",
+   "guidance": "Ask what they are comparing with, restate the value that matters to them, share proof such as savings or service, and offer options. Avoid immediately cutting the price."
+  },
+  {
+   "code": "SALES-EXECUT-003",
+   "occupation": "sales-executive",
+   "competency": "achievement",
+   "difficulty": 2,
+   "min_band": "fresher",
+   "max_band": "12+",
+   "text": "Tell me about a target you achieved and how.",
+   "guidance": "Give the target, the period, your plan (territory, calls, follow-ups) and the result in numbers you can back up."
+  },
+  {
+   "code": "SALES-EXECUT-004",
+   "occupation": "sales-executive",
+   "competency": "pressure",
+   "difficulty": 2,
+   "min_band": "fresher",
+   "max_band": "12+",
+   "text": "What do you do when you are behind your monthly target with one week left?",
+   "guidance": "Show a plan: review the pipeline, focus on deals closest to closing, re-contact warm leads, and ask your manager for support where needed."
+  },
+  {
+   "code": "SALES-EXECUT-005",
+   "occupation": "sales-executive",
+   "competency": "role",
+   "difficulty": 1,
+   "min_band": "fresher",
+   "max_band": "12+",
+   "text": "How do you build long-term relationships with customers?",
+   "guidance": "Talk about regular follow-up, keeping promises, solving after-sales issues and remembering customer details. A loyal-customer example helps."
+  },
+  {
+   "code": "SALES-EXECUT-006",
+   "occupation": "sales-executive",
+   "competency": "ethics",
+   "difficulty": 2,
+   "min_band": "fresher",
+   "max_band": "12+",
+   "text": "Would you ever promise a customer something you are not sure the company can deliver?",
+   "guidance": "No. Explain why trust matters for repeat sales and how you check with the right team before committing."
+  },
+  {
+   "code": "HR-RECRUITER-001",
+   "occupation": "hr-recruiter",
+   "competency": "role",
+   "difficulty": 2,
+   "min_band": "fresher",
+   "max_band": "12+",
+   "text": "How do you source candidates for a hard-to-fill position?",
+   "guidance": "Mention job portals, referrals, LinkedIn searches, campus or community networks, and refining the job description with the hiring manager. Explain how you track sources that work."
+  },
+  {
+   "code": "HR-RECRUITER-002",
+   "occupation": "hr-recruiter",
+   "competency": "role",
+   "difficulty": 2,
+   "min_band": "fresher",
+   "max_band": "12+",
+   "text": "How do you screen a resume quickly but fairly?",
+   "guidance": "Compare against the must-have requirements, look for evidence rather than keywords, note gaps to ask about, and avoid bias based on college, gender or background."
+  },
+  {
+   "code": "HR-RECRUITER-003",
+   "occupation": "hr-recruiter",
+   "competency": "customer",
+   "difficulty": 2,
+   "min_band": "fresher",
+   "max_band": "12+",
+   "text": "A hiring manager keeps rejecting good candidates. What would you do?",
+   "guidance": "Meet them to recalibrate requirements, review rejected profiles together, agree on clear criteria and timelines, and share market data."
+  },
+  {
+   "code": "HR-RECRUITER-004",
+   "occupation": "hr-recruiter",
+   "competency": "problem",
+   "difficulty": 2,
+   "min_band": "fresher",
+   "max_band": "12+",
+   "text": "Tell me about a time a selected candidate did not join. What did you learn?",
+   "guidance": "Explain the reason you found, what you changed (pre-joining engagement, offer clarity, backup candidates) and the result."
+  },
+  {
+   "code": "HR-RECRUITER-005",
+   "occupation": "hr-recruiter",
+   "competency": "ethics",
+   "difficulty": 2,
+   "min_band": "fresher",
+   "max_band": "12+",
+   "text": "How do you keep candidate information confidential?",
+   "guidance": "Share data only with the hiring team, store it in approved systems, never discuss candidates outside work and follow the company's privacy rules."
+  },
+  {
+   "code": "HR-RECRUITER-006",
+   "occupation": "hr-recruiter",
+   "competency": "role",
+   "difficulty": 1,
+   "min_band": "fresher",
+   "max_band": "12+",
+   "text": "Which recruitment metrics do you track?",
+   "guidance": "Mention time to fill, offer-to-joining ratio, source effectiveness, candidate experience and quality of hire, and how you used one to improve."
+  },
+  {
+   "code": "ACCOUNTS-EXE-001",
+   "occupation": "accounts-executive",
+   "competency": "role",
+   "difficulty": 2,
+   "min_band": "fresher",
+   "max_band": "12+",
+   "text": "Walk me through how you reconcile a bank statement.",
+   "guidance": "Describe matching book entries with the statement, identifying differences such as uncleared cheques or bank charges, investigating, correcting entries and documenting."
+  },
+  {
+   "code": "ACCOUNTS-EXE-002",
+   "occupation": "accounts-executive",
+   "competency": "role",
+   "difficulty": 2,
+   "min_band": "fresher",
+   "max_band": "12+",
+   "text": "What is GST input tax credit and how do you make sure it is claimed correctly?",
+   "guidance": "Explain claiming tax paid on purchases against output tax, matching with supplier filings (GSTR-2B), checking eligibility and keeping invoices. Say what you have handled in practice."
+  },
+  {
+   "code": "ACCOUNTS-EXE-003",
+   "occupation": "accounts-executive",
+   "competency": "problem",
+   "difficulty": 2,
+   "min_band": "fresher",
+   "max_band": "12+",
+   "text": "Tell me about an accounting error you found and fixed.",
+   "guidance": "Explain how you spotted it, how you traced the cause, the correction and what control you added to prevent it."
+  },
+  {
+   "code": "ACCOUNTS-EXE-004",
+   "occupation": "accounts-executive",
+   "competency": "pressure",
+   "difficulty": 2,
+   "min_band": "fresher",
+   "max_band": "12+",
+   "text": "How do you manage month-end closing deadlines?",
+   "guidance": "Talk about a checklist, early reconciliations, following up pending documents and keeping your manager informed of risks."
+  },
+  {
+   "code": "ACCOUNTS-EXE-005",
+   "occupation": "accounts-executive",
+   "competency": "ethics",
+   "difficulty": 3,
+   "min_band": "fresher",
+   "max_band": "12+",
+   "text": "Your manager asks you to backdate an entry. What do you do?",
+   "guidance": "Ask for the reason and supporting documents, explain the compliance risk, and refuse to record anything misleading; escalate through the right channel if needed."
+  },
+  {
+   "code": "ACCOUNTS-EXE-006",
+   "occupation": "accounts-executive",
+   "competency": "role",
+   "difficulty": 1,
+   "min_band": "fresher",
+   "max_band": "12+",
+   "text": "Which accounting software have you used and for what?",
+   "guidance": "Name the tools you have actually used (for example Tally or an ERP), the tasks you did in them and any reports you prepared."
+  },
+  {
+   "code": "OFFICE-ADMIN-001",
+   "occupation": "office-administrator",
+   "competency": "role",
+   "difficulty": 2,
+   "min_band": "fresher",
+   "max_band": "12+",
+   "text": "How do you manage office supplies and vendors?",
+   "guidance": "Mention stock tracking, reorder levels, comparing quotations, timely payments and keeping vendor contacts and agreements organised."
+  },
+  {
+   "code": "OFFICE-ADMIN-002",
+   "occupation": "office-administrator",
+   "competency": "pressure",
+   "difficulty": 2,
+   "min_band": "fresher",
+   "max_band": "12+",
+   "text": "Several people ask you for urgent help at the same time. How do you prioritise?",
+   "guidance": "Assess urgency and impact, handle safety or business-critical issues first, tell others when you will reach them and keep a simple task list."
+  },
+  {
+   "code": "OFFICE-ADMIN-003",
+   "occupation": "office-administrator",
+   "competency": "problem",
+   "difficulty": 2,
+   "min_band": "fresher",
+   "max_band": "12+",
+   "text": "Tell me about a process you improved in an office.",
+   "guidance": "Describe the old process, the problem it caused, what you changed and the time or cost saved."
+  },
+  {
+   "code": "OFFICE-ADMIN-004",
+   "occupation": "office-administrator",
+   "competency": "role",
+   "difficulty": 1,
+   "min_band": "fresher",
+   "max_band": "12+",
+   "text": "How do you organise meetings and travel for senior staff?",
+   "guidance": "Talk about confirming details early, checking calendars, preparing documents, booking within policy and having a backup plan."
+  },
+  {
+   "code": "OFFICE-ADMIN-005",
+   "occupation": "office-administrator",
+   "competency": "ethics",
+   "difficulty": 2,
+   "min_band": "fresher",
+   "max_band": "12+",
+   "text": "How do you handle confidential documents?",
+   "guidance": "Store them securely, share only with authorised people, follow the company's rules for printing and disposal and never discuss their contents."
+  },
+  {
+   "code": "OFFICE-ADMIN-006",
+   "occupation": "office-administrator",
+   "competency": "customer",
+   "difficulty": 1,
+   "min_band": "fresher",
+   "max_band": "12+",
+   "text": "How do you make visitors feel welcome at the office?",
+   "guidance": "Greet promptly, follow security procedures politely, inform the host quickly and offer basic comfort while they wait."
+  },
+  {
+   "code": "RETAIL-STORE-001",
+   "occupation": "retail-store",
+   "competency": "customer",
+   "difficulty": 1,
+   "min_band": "fresher",
+   "max_band": "12+",
+   "text": "How do you greet and help a customer who walks into the store?",
+   "guidance": "Greet warmly, give them space to browse, offer help with an open question, and suggest products based on what they need."
+  },
+  {
+   "code": "RETAIL-STORE-002",
+   "occupation": "retail-store",
+   "competency": "role",
+   "difficulty": 2,
+   "min_band": "fresher",
+   "max_band": "12+",
+   "text": "How would you increase sales of a slow-moving product?",
+   "guidance": "Mention placement and display, demonstrating the product, suggesting it with related items and telling the manager what customers say about it."
+  },
+  {
+   "code": "RETAIL-STORE-003",
+   "occupation": "retail-store",
+   "competency": "pressure",
+   "difficulty": 2,
+   "min_band": "fresher",
+   "max_band": "12+",
+   "text": "The store is crowded during a sale and the billing queue is long. What do you do?",
+   "guidance": "Stay calm, help speed up billing or packing, keep customers informed, and make sure nobody leaves without being attended."
+  },
+  {
+   "code": "RETAIL-STORE-004",
+   "occupation": "retail-store",
+   "competency": "customer",
+   "difficulty": 2,
+   "min_band": "fresher",
+   "max_band": "12+",
+   "text": "A customer wants to return a product without a bill. How do you handle it?",
+   "guidance": "Listen, explain the return policy politely, check if the purchase can be verified another way and involve the manager for exceptions."
+  },
+  {
+   "code": "RETAIL-STORE-005",
+   "occupation": "retail-store",
+   "competency": "role",
+   "difficulty": 1,
+   "min_band": "fresher",
+   "max_band": "12+",
+   "text": "How do you keep the store shelves and stock in order?",
+   "guidance": "Talk about regular restocking, checking expiry or damage, following planograms and reporting shortages early."
+  },
+  {
+   "code": "RETAIL-STORE-006",
+   "occupation": "retail-store",
+   "competency": "ethics",
+   "difficulty": 2,
+   "min_band": "fresher",
+   "max_band": "12+",
+   "text": "What would you do if you noticed stock going missing?",
+   "guidance": "Report it to the manager with facts, follow the store's procedure and avoid accusing anyone without evidence."
+  },
+  {
+   "code": "HOTEL-FRONT--001",
+   "occupation": "hotel-front-office",
+   "competency": "customer",
+   "difficulty": 2,
+   "min_band": "fresher",
+   "max_band": "12+",
+   "text": "A guest arrives and their booked room is not ready. What do you do?",
+   "guidance": "Apologise, give an honest time, offer a comfortable wait (lounge, refreshment, luggage storage) and keep them updated; involve the manager for a gesture if the delay is long."
+  },
+  {
+   "code": "HOTEL-FRONT--002",
+   "occupation": "hotel-front-office",
+   "competency": "role",
+   "difficulty": 1,
+   "min_band": "fresher",
+   "max_band": "12+",
+   "text": "Walk me through a smooth check-in.",
+   "guidance": "Greet, verify the booking and ID as per law, explain key facilities, confirm payment, hand over keys and offer help with luggage."
+  },
+  {
+   "code": "HOTEL-FRONT--003",
+   "occupation": "hotel-front-office",
+   "competency": "customer",
+   "difficulty": 2,
+   "min_band": "fresher",
+   "max_band": "12+",
+   "text": "How do you handle a complaint about room cleanliness?",
+   "guidance": "Apologise, act at once (housekeeping or room change), follow up personally and record it so it does not repeat."
+  },
+  {
+   "code": "HOTEL-FRONT--004",
+   "occupation": "hotel-front-office",
+   "competency": "role",
+   "difficulty": 2,
+   "min_band": "fresher",
+   "max_band": "12+",
+   "text": "How would you upsell a room upgrade without being pushy?",
+   "guidance": "Find out the purpose of the stay, describe one benefit that matters to the guest and accept a no gracefully."
+  },
+  {
+   "code": "HOTEL-FRONT--005",
+   "occupation": "hotel-front-office",
+   "competency": "pressure",
+   "difficulty": 2,
+   "min_band": "fresher",
+   "max_band": "12+",
+   "text": "Many guests arrive together for a group booking. How do you manage it?",
+   "guidance": "Prepare keys and registration in advance, divide work with colleagues, keep a waiting area organised and communicate times clearly."
+  },
+  {
+   "code": "HOTEL-FRONT--006",
+   "occupation": "hotel-front-office",
+   "competency": "ethics",
+   "difficulty": 2,
+   "min_band": "fresher",
+   "max_band": "12+",
+   "text": "A guest asks for another guest's room number. What do you say?",
+   "guidance": "Never share it. Offer to call the guest's room or take a message, explaining that it protects every guest's privacy."
+  },
+  {
+   "code": "HOSPITAL-FRO-001",
+   "occupation": "hospital-front-office",
+   "competency": "customer",
+   "difficulty": 2,
+   "min_band": "fresher",
+   "max_band": "12+",
+   "text": "A worried relative is shouting at the front desk. How do you respond?",
+   "guidance": "Stay calm and kind, acknowledge their worry, find out what they need, give clear information or bring the right person, and avoid arguing."
+  },
+  {
+   "code": "HOSPITAL-FRO-002",
+   "occupation": "hospital-front-office",
+   "competency": "role",
+   "difficulty": 1,
+   "min_band": "fresher",
+   "max_band": "12+",
+   "text": "Walk me through registering a new patient.",
+   "guidance": "Collect identity and contact details, insurance or payment information, explain the next step and waiting time, and enter data accurately in the hospital system."
+  },
+  {
+   "code": "HOSPITAL-FRO-003",
+   "occupation": "hospital-front-office",
+   "competency": "role",
+   "difficulty": 2,
+   "min_band": "fresher",
+   "max_band": "12+",
+   "text": "How do you handle an insurance or cashless admission query?",
+   "guidance": "Explain checking policy details, coordinating with the TPA or insurance desk, informing the patient of documents needed and keeping them updated."
+  },
+  {
+   "code": "HOSPITAL-FRO-004",
+   "occupation": "hospital-front-office",
+   "competency": "pressure",
+   "difficulty": 2,
+   "min_band": "fresher",
+   "max_band": "12+",
+   "text": "The OPD waiting area is full and doctors are running late. What do you do?",
+   "guidance": "Keep patients informed about delays, prioritise emergencies as per protocol, manage the queue fairly and inform the department head if waiting is too long."
+  },
+  {
+   "code": "HOSPITAL-FRO-005",
+   "occupation": "hospital-front-office",
+   "competency": "ethics",
+   "difficulty": 2,
+   "min_band": "fresher",
+   "max_band": "12+",
+   "text": "How do you protect patient privacy at the front desk?",
+   "guidance": "Share information only with authorised people, avoid discussing cases aloud, protect screens and files and follow hospital policy."
+  },
+  {
+   "code": "HOSPITAL-FRO-006",
+   "occupation": "hospital-front-office",
+   "competency": "problem",
+   "difficulty": 2,
+   "min_band": "fresher",
+   "max_band": "12+",
+   "text": "Tell me about a time you resolved a billing or appointment mix-up.",
+   "guidance": "Explain how you found the cause, corrected it with the right department, apologised to the patient and prevented a repeat."
+  },
+  {
+   "code": "BANK-OPERATI-001",
+   "occupation": "bank-operations",
+   "competency": "role",
+   "difficulty": 2,
+   "min_band": "fresher",
+   "max_band": "12+",
+   "text": "What checks do you do before processing a high-value transaction?",
+   "guidance": "Mention verifying the customer and signature, checking limits and mandates, following maker-checker rules and reporting anything unusual as per policy."
+  },
+  {
+   "code": "BANK-OPERATI-002",
+   "occupation": "bank-operations",
+   "competency": "role",
+   "difficulty": 2,
+   "min_band": "fresher",
+   "max_band": "12+",
+   "text": "What is KYC and why is it important?",
+   "guidance": "Explain identifying and verifying customers to prevent fraud and money laundering, periodic updates, and following RBI and bank guidelines."
+  },
+  {
+   "code": "BANK-OPERATI-003",
+   "occupation": "bank-operations",
+   "competency": "customer",
+   "difficulty": 2,
+   "min_band": "fresher",
+   "max_band": "12+",
+   "text": "A customer is upset because a transaction failed but money was debited. What do you do?",
+   "guidance": "Apologise, check the transaction status, explain the reversal timeline as per rules, raise a complaint with a reference number and follow up."
+  },
+  {
+   "code": "BANK-OPERATI-004",
+   "occupation": "bank-operations",
+   "competency": "pressure",
+   "difficulty": 2,
+   "min_band": "fresher",
+   "max_band": "12+",
+   "text": "How do you keep accuracy high when work volume is heavy at month-end?",
+   "guidance": "Use checklists, double-check critical fields, take short breaks, and ask for help rather than rushing past controls."
+  },
+  {
+   "code": "BANK-OPERATI-005",
+   "occupation": "bank-operations",
+   "competency": "ethics",
+   "difficulty": 3,
+   "min_band": "fresher",
+   "max_band": "12+",
+   "text": "A known customer asks you to skip a document just this once. What do you do?",
+   "guidance": "Politely refuse, explain that the rule protects them and the bank, and help them arrange the document quickly."
+  },
+  {
+   "code": "BANK-OPERATI-006",
+   "occupation": "bank-operations",
+   "competency": "problem",
+   "difficulty": 2,
+   "min_band": "fresher",
+   "max_band": "12+",
+   "text": "Tell me about an error or discrepancy you found in operations.",
+   "guidance": "Explain how you noticed it, traced it, corrected it with approval and what control you suggested."
+  },
+  {
+   "code": "TEACHER-001",
+   "occupation": "teacher",
+   "competency": "role",
+   "difficulty": 2,
+   "min_band": "fresher",
+   "max_band": "12+",
+   "text": "How do you plan a lesson for students with different levels of ability?",
+   "guidance": "Mention clear learning goals, a mix of activities, simpler and harder tasks, checking understanding during the lesson and support for those who need it."
+  },
+  {
+   "code": "TEACHER-002",
+   "occupation": "teacher",
+   "competency": "role",
+   "difficulty": 2,
+   "min_band": "fresher",
+   "max_band": "12+",
+   "text": "How do you manage a noisy or distracted class?",
+   "guidance": "Talk about clear routines and expectations set early, engaging starts, moving around the room, positive reinforcement and calm, consistent consequences."
+  },
+  {
+   "code": "TEACHER-003",
+   "occupation": "teacher",
+   "competency": "customer",
+   "difficulty": 2,
+   "min_band": "fresher",
+   "max_band": "12+",
+   "text": "A parent complains that their child is getting low marks. How do you respond?",
+   "guidance": "Listen, share specific evidence of the child's work, agree on a plan for school and home, and follow up."
+  },
+  {
+   "code": "TEACHER-004",
+   "occupation": "teacher",
+   "competency": "achievement",
+   "difficulty": 2,
+   "min_band": "fresher",
+   "max_band": "12+",
+   "text": "Tell me about a student you helped improve.",
+   "guidance": "Describe the starting point, what you changed for that student, and the improvement you saw, with marks or behaviour if you have them."
+  },
+  {
+   "code": "TEACHER-005",
+   "occupation": "teacher",
+   "competency": "learning",
+   "difficulty": 1,
+   "min_band": "fresher",
+   "max_band": "12+",
+   "text": "How do you use technology in your teaching?",
+   "guidance": "Name tools you have used (presentations, quizzes, videos, learning apps) and how they helped learning, not just how they looked."
+  },
+  {
+   "code": "TEACHER-006",
+   "occupation": "teacher",
+   "competency": "ethics",
+   "difficulty": 2,
+   "min_band": "fresher",
+   "max_band": "12+",
+   "text": "What would you do if you suspected a student was being bullied?",
+   "guidance": "Act early: speak privately with the student, inform the class teacher or counsellor as per school policy, involve parents appropriately and keep monitoring."
+  },
+  {
+   "code": "LOGISTICS-CO-001",
+   "occupation": "logistics-coordinator",
+   "competency": "role",
+   "difficulty": 2,
+   "min_band": "fresher",
+   "max_band": "12+",
+   "text": "How do you make sure shipments are delivered on time?",
+   "guidance": "Talk about planning with carriers, tracking each shipment, early alerts on delays, keeping customers informed and having backup options."
+  },
+  {
+   "code": "LOGISTICS-CO-002",
+   "occupation": "logistics-coordinator",
+   "competency": "problem",
+   "difficulty": 2,
+   "min_band": "fresher",
+   "max_band": "12+",
+   "text": "A truck carrying an urgent order has broken down. What do you do?",
+   "guidance": "Inform the customer, arrange an alternative vehicle or transfer, update timelines, and record the incident for the vendor review."
+  },
+  {
+   "code": "LOGISTICS-CO-003",
+   "occupation": "logistics-coordinator",
+   "competency": "role",
+   "difficulty": 2,
+   "min_band": "fresher",
+   "max_band": "12+",
+   "text": "How do you keep inventory records accurate?",
+   "guidance": "Mention regular cycle counts, checking inward and outward entries, investigating differences and using the warehouse system correctly."
+  },
+  {
+   "code": "LOGISTICS-CO-004",
+   "occupation": "logistics-coordinator",
+   "competency": "customer",
+   "difficulty": 2,
+   "min_band": "fresher",
+   "max_band": "12+",
+   "text": "How do you handle a customer complaint about a damaged delivery?",
+   "guidance": "Apologise, collect photos and details, arrange replacement or credit as per policy, claim from the carrier and improve packing if needed."
+  },
+  {
+   "code": "LOGISTICS-CO-005",
+   "occupation": "logistics-coordinator",
+   "competency": "pressure",
+   "difficulty": 2,
+   "min_band": "fresher",
+   "max_band": "12+",
+   "text": "How do you manage several urgent dispatches on the same day?",
+   "guidance": "Prioritise by customer commitment and route, plan loading, coordinate with the warehouse team and update everyone on changes."
+  },
+  {
+   "code": "LOGISTICS-CO-006",
+   "occupation": "logistics-coordinator",
+   "competency": "role",
+   "difficulty": 1,
+   "min_band": "fresher",
+   "max_band": "12+",
+   "text": "Which documents are needed for moving goods within India?",
+   "guidance": "Mention the invoice, e-way bill where required, delivery challan, and lorry receipt, and say which ones you have handled."
+  },
+  {
+   "code": "MARKETING-EX-001",
+   "occupation": "marketing-executive",
+   "competency": "role",
+   "difficulty": 2,
+   "min_band": "fresher",
+   "max_band": "12+",
+   "text": "How would you plan a campaign to bring more customers to a local business?",
+   "guidance": "Define the goal and audience, choose channels (social media, local events, WhatsApp, search), set a budget, track results and adjust."
+  },
+  {
+   "code": "MARKETING-EX-002",
+   "occupation": "marketing-executive",
+   "competency": "role",
+   "difficulty": 2,
+   "min_band": "fresher",
+   "max_band": "12+",
+   "text": "Which marketing results do you track and why?",
+   "guidance": "Mention reach, leads, cost per lead, conversion rate and return on spend, and explain how one of them changed a decision you made."
+  },
+  {
+   "code": "MARKETING-EX-003",
+   "occupation": "marketing-executive",
+   "competency": "achievement",
+   "difficulty": 2,
+   "min_band": "fresher",
+   "max_band": "12+",
+   "text": "Tell me about a campaign you worked on and its result.",
+   "guidance": "Describe the goal, your part, what you tried, and the measured outcome. Be honest about what did not work as well."
+  },
+  {
+   "code": "MARKETING-EX-004",
+   "occupation": "marketing-executive",
+   "competency": "problem",
+   "difficulty": 2,
+   "min_band": "fresher",
+   "max_band": "12+",
+   "text": "A campaign is not getting results halfway through. What do you do?",
+   "guidance": "Check the data, identify the weak point (audience, message, channel), test a change quickly and report to your manager with a plan."
+  },
+  {
+   "code": "MARKETING-EX-005",
+   "occupation": "marketing-executive",
+   "competency": "customer",
+   "difficulty": 1,
+   "min_band": "fresher",
+   "max_band": "12+",
+   "text": "How do you understand what customers want?",
+   "guidance": "Talk about surveys, sales team feedback, reviews, social comments and simple tests, and give an example of an insight you used."
+  },
+  {
+   "code": "MARKETING-EX-006",
+   "occupation": "marketing-executive",
+   "competency": "ethics",
+   "difficulty": 2,
+   "min_band": "fresher",
+   "max_band": "12+",
+   "text": "Would you use a customer's photo or review in an advertisement without asking?",
+   "guidance": "No. Explain getting written consent, respecting privacy and keeping claims truthful."
+  },
+  {
+   "code": "INSIDE-SAL-001",
+   "occupation": "inside-sales",
+   "competency": "role",
+   "difficulty": 2,
+   "min_band": "fresher",
+   "max_band": "12+",
+   "text": "How do you open a cold call so the person does not hang up in the first ten seconds?",
+   "guidance": "Say who you are and why you are calling in one line, ask permission to take two minutes, and lead with something useful to them rather than the product. Mention how you would handle \"not interested\" politely and still leave a door open."
+  },
+  {
+   "code": "INSIDE-SAL-002",
+   "occupation": "inside-sales",
+   "competency": "role",
+   "difficulty": 2,
+   "min_band": "fresher",
+   "max_band": "12+",
+   "text": "How do you keep going after many calls end in \"no\"?",
+   "guidance": "Show that you track numbers (calls, connects, follow-ups) and learn from patterns rather than taking rejection personally. A short example of a day or week you improved your conversion helps."
+  },
+  {
+   "code": "RECEPTIONI-001",
+   "occupation": "receptionist",
+   "competency": "role",
+   "difficulty": 2,
+   "min_band": "fresher",
+   "max_band": "12+",
+   "text": "Three visitors arrive while the phone is ringing. What do you do?",
+   "guidance": "Greet the visitors with eye contact and a quick \"I will be with you in a moment\", answer the call briefly or take a message, then attend to visitors in order. Show calm, courtesy and how you keep a log."
+  },
+  {
+   "code": "RECEPTIONI-002",
+   "occupation": "receptionist",
+   "competency": "role",
+   "difficulty": 2,
+   "min_band": "fresher",
+   "max_band": "12+",
+   "text": "How do you handle a visitor who insists on meeting someone without an appointment?",
+   "guidance": "Stay polite, check with the person or their assistant, offer a time or a message, and follow the building or security rules. Never promise a meeting you cannot confirm."
+  },
+  {
+   "code": "DATA-ENTRY-001",
+   "occupation": "data-entry",
+   "competency": "role",
+   "difficulty": 2,
+   "min_band": "fresher",
+   "max_band": "12+",
+   "text": "How do you make sure your entries are accurate when you are working fast?",
+   "guidance": "Talk about checking a sample, using the source document side by side, keyboard shortcuts, and stopping to verify unclear handwriting or numbers. Mention any accuracy or speed figure you were measured on."
+  },
+  {
+   "code": "DATA-ENTRY-002",
+   "occupation": "data-entry",
+   "competency": "role",
+   "difficulty": 2,
+   "min_band": "fresher",
+   "max_band": "12+",
+   "text": "What would you do if you found a mistake you made in data that was already submitted?",
+   "guidance": "Report it quickly to your supervisor, explain what is affected, correct it the agreed way and suggest how to avoid it again. Honesty matters more than the mistake."
+  },
+  {
+   "code": "INSURANCE--001",
+   "occupation": "insurance-advisor",
+   "competency": "role",
+   "difficulty": 2,
+   "min_band": "fresher",
+   "max_band": "12+",
+   "text": "How do you explain a policy to someone who does not understand insurance?",
+   "guidance": "Use simple words and a real-life example, focus on what the policy covers and does not cover, the premium and the claim process. Never push a policy that does not fit the person's need."
+  },
+  {
+   "code": "INSURANCE--002",
+   "occupation": "insurance-advisor",
+   "competency": "role",
+   "difficulty": 2,
+   "min_band": "fresher",
+   "max_band": "12+",
+   "text": "A customer wants to cancel a policy you sold last month. How do you respond?",
+   "guidance": "Listen to the reason, check whether there is a misunderstanding, explain the free-look period and options honestly, and respect their decision. Mention following the insurer's and IRDAI rules."
+  },
+  {
+   "code": "COLLECTION-001",
+   "occupation": "collections-executive",
+   "competency": "role",
+   "difficulty": 2,
+   "min_band": "fresher",
+   "max_band": "12+",
+   "text": "How do you speak to a customer who has missed several payments?",
+   "guidance": "Be respectful and factual, understand their situation, explain the amount and the consequences clearly, and agree a realistic plan. Show you know that threats or harassment are never acceptable."
+  },
+  {
+   "code": "COLLECTION-002",
+   "occupation": "collections-executive",
+   "competency": "role",
+   "difficulty": 2,
+   "min_band": "fresher",
+   "max_band": "12+",
+   "text": "A customer promises to pay but does not, again. What next?",
+   "guidance": "Record the promise and follow up on the date, escalate according to the process, and offer documented options. Show patience and how you keep accurate notes."
+  },
+  {
+   "code": "STORE-MANA-001",
+   "occupation": "store-manager",
+   "competency": "role",
+   "difficulty": 2,
+   "min_band": "fresher",
+   "max_band": "12+",
+   "text": "How would you improve sales in a store whose numbers have dropped?",
+   "guidance": "Look at footfall, conversion and average bill separately, talk to the team and customers, check stock and display, and try one or two changes with a target date. Give an example with numbers if you have one."
+  },
+  {
+   "code": "STORE-MANA-002",
+   "occupation": "store-manager",
+   "competency": "role",
+   "difficulty": 2,
+   "min_band": "fresher",
+   "max_band": "12+",
+   "text": "How do you plan staff shifts when two people call in sick on a weekend?",
+   "guidance": "Show how you prioritise customer-facing areas, call on backup staff fairly, adjust breaks, and step in yourself. Mention keeping a roster plan for busy days."
+  },
+  {
+   "code": "WAREHOUSE--001",
+   "occupation": "warehouse-supervisor",
+   "competency": "role",
+   "difficulty": 2,
+   "min_band": "fresher",
+   "max_band": "12+",
+   "text": "How do you keep stock records matching what is physically in the warehouse?",
+   "guidance": "Talk about cycle counts, clear receiving and dispatch checks, labelling and bin locations, and investigating differences quickly. Mention any accuracy figure you achieved."
+  },
+  {
+   "code": "WAREHOUSE--002",
+   "occupation": "warehouse-supervisor",
+   "competency": "role",
+   "difficulty": 2,
+   "min_band": "fresher",
+   "max_band": "12+",
+   "text": "How do you keep the team safe while meeting dispatch targets?",
+   "guidance": "Explain basic safety rules (lifting, forklift zones, clear aisles), briefings at the start of a shift, and that you stop work if something is unsafe. Targets are met by planning, not shortcuts."
+  },
+  {
+   "code": "CONTENT-WR-001",
+   "occupation": "content-writer",
+   "competency": "role",
+   "difficulty": 2,
+   "min_band": "fresher",
+   "max_band": "12+",
+   "text": "How do you write for a topic you know little about?",
+   "guidance": "Describe how you research from reliable sources, talk to a subject expert, outline before writing and check facts. Mention how you keep the reader's question at the centre."
+  },
+  {
+   "code": "CONTENT-WR-002",
+   "occupation": "content-writer",
+   "competency": "role",
+   "difficulty": 2,
+   "min_band": "fresher",
+   "max_band": "12+",
+   "text": "How do you handle heavy edits or criticism of your draft?",
+   "guidance": "Show that you separate yourself from the draft, ask questions to understand the reason, and apply the feedback to the next pieces too. An example of a piece that improved after feedback helps."
+  },
+  {
+   "code": "TRAVEL-CON-001",
+   "occupation": "travel-consultant",
+   "competency": "role",
+   "difficulty": 2,
+   "min_band": "fresher",
+   "max_band": "12+",
+   "text": "A customer's flight is cancelled while they are travelling. How do you help?",
+   "guidance": "Stay calm, check the options with the airline quickly, explain choices and costs clearly, rebook and confirm in writing. Mention keeping the customer updated until it is sorted."
+  },
+  {
+   "code": "TRAVEL-CON-002",
+   "occupation": "travel-consultant",
+   "competency": "role",
+   "difficulty": 2,
+   "min_band": "fresher",
+   "max_band": "12+",
+   "text": "How do you suggest a holiday package to a family with a fixed budget?",
+   "guidance": "Ask about dates, interests, travel style and must-haves, then offer two or three options within the budget with what is and is not included. Never hide charges."
+  },
+  {
+   "code": "BACK-OFFIC-001",
+   "occupation": "back-office",
+   "competency": "role",
+   "difficulty": 2,
+   "min_band": "fresher",
+   "max_band": "12+",
+   "text": "How do you manage a large volume of repetitive work without errors?",
+   "guidance": "Talk about checklists, batching similar tasks, short breaks, and self-checks before submitting. Mention any turnaround time or accuracy you met."
+  },
+  {
+   "code": "BACK-OFFIC-002",
+   "occupation": "back-office",
+   "competency": "role",
+   "difficulty": 2,
+   "min_band": "fresher",
+   "max_band": "12+",
+   "text": "What would you do if a process you follow seems to waste time?",
+   "guidance": "Note where the time goes, suggest a small change to your supervisor with the benefit, and keep following the agreed process until a change is approved."
+  },
+  {
+   "code": "PHARMACY-A-001",
+   "occupation": "pharmacy-assistant",
+   "competency": "role",
+   "difficulty": 2,
+   "min_band": "fresher",
+   "max_band": "12+",
+   "text": "A customer asks for a medicine that needs a prescription but has none. What do you do?",
+   "guidance": "Politely explain that you cannot give it without a prescription, suggest they see a doctor, and involve the pharmacist. Show you follow the law and put customer safety first."
+  },
+  {
+   "code": "PHARMACY-A-002",
+   "occupation": "pharmacy-assistant",
+   "competency": "role",
+   "difficulty": 2,
+   "min_band": "fresher",
+   "max_band": "12+",
+   "text": "How do you avoid giving the wrong medicine when names look similar?",
+   "guidance": "Read the prescription carefully, check the strength and form, confirm with the pharmacist when unsure, and repeat the name and dose to the customer."
+  },
+  {
+   "code": "EVENT-COOR-001",
+   "occupation": "event-coordinator",
+   "competency": "role",
+   "difficulty": 2,
+   "min_band": "fresher",
+   "max_band": "12+",
+   "text": "The venue informs you two hours before an event that the sound system has failed. What do you do?",
+   "guidance": "Stay calm, call your vendor list for a backup, inform the client honestly with a plan, and adjust the programme if needed. Mention keeping backup contacts for every event."
+  },
+  {
+   "code": "EVENT-COOR-002",
+   "occupation": "event-coordinator",
+   "competency": "role",
+   "difficulty": 2,
+   "min_band": "fresher",
+   "max_band": "12+",
+   "text": "How do you keep track of many vendors and deadlines for one event?",
+   "guidance": "Talk about a simple run sheet or tracker, confirmed timelines in writing, reminders, and one point of contact for each vendor."
+  }
+ ],
+ "codes": "nco and isco are 4-digit ISCO-08 unit groups; NCO 2015 follows ISCO-08 at this level. Check against the official NCO 2015 list before publishing a code."
+}

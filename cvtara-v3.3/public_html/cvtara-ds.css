@@ -469,3 +469,23 @@ html{overflow-y:scroll;scrollbar-gutter:stable}
 .cv-grid-wrap{overflow:auto}
 .cv-grid tbody[aria-busy=true]{opacity:.55;transition:opacity .15s}
 @media (max-width:640px){.cv-pager{justify-content:center}.cv-pager .gp-info{width:100%;text-align:center}}
+/* Console pop-up windows (Edit review, Review history, Confirm it's you). styles.css makes every <dialog> transparent with
+   no padding for the template windows, so these need their own card, backdrop and no sideways scrolling. */
+dialog.ops-dlg,dialog.ad-dialog{width:min(640px,calc(100vw - 32px));max-width:640px!important;max-height:min(88vh,860px);margin:auto;padding:24px 26px;overflow-x:hidden;overflow-y:auto;background:var(--paper);color:var(--ink);border:1px solid var(--line);border-radius:16px;box-shadow:0 24px 70px rgba(15,23,42,.35)}
+dialog.ops-dlg::backdrop,dialog.ad-dialog::backdrop{background:rgba(15,23,42,.55);backdrop-filter:blur(2px)}
+dialog.ops-dlg h3{font-size:19px;margin:0 0 6px;padding-right:8px}
+dialog.ops-dlg .ops-form{grid-template-columns:minmax(0,1fr)}
+dialog.ops-dlg .ops-form label{min-width:0}
+dialog.ops-dlg :is(input,select,textarea),dialog.ad-dialog :is(input,select,textarea){width:100%;max-width:100%;box-sizing:border-box}
+dialog.ops-dlg textarea{resize:vertical;min-height:130px}
+dialog.ops-dlg .ops-form .wide:last-child{display:flex;flex-wrap:wrap;gap:8px;align-items:center;padding-top:4px}
+dialog.ops-dlg blockquote,dialog.ops-dlg p{overflow-wrap:anywhere}
+@media (max-width:560px){dialog.ops-dlg,dialog.ad-dialog{padding:18px 16px;border-radius:14px}}
+/* Night mode readability (owner, 12 Nov): cards that asked for --panel fell back to white with light text, and every
+   secondary button turned pink. Panels follow the page colours; secondary buttons use the normal text colour, and only
+   delete/danger buttons stay red. */
+:root,body,body.dark,html.dark,:root[data-theme=dark]{--panel:var(--paper)}
+body.dark .button.secondary,body.dark .workspace-main .button.secondary,body.dark .panel .button.secondary,body.dark .workspace-main button.button.secondary{color:var(--ink);border-color:var(--line)}
+body.dark .button.secondary:hover,body.dark .workspace-main button.button.secondary:hover{border-color:#60a5fa;color:#fff}
+body.dark .ws-hero .button.secondary,body.dark .workspace-main .ws-hero .button.secondary{color:#fff;background:rgba(255,255,255,.12);border-color:rgba(255,255,255,.35)}
+body.dark button.button.secondary.danger,body.dark .button.secondary[data-danger],body.dark button.button.secondary[style*="b91c1c"]{color:#fca5a5!important;border-color:rgba(252,165,165,.4)}

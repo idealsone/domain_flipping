@@ -81,6 +81,7 @@ class Settings
         if (DB::table('site_settings')->where('key', $key)->update(['value_json' => $json, 'revision' => DB::raw('revision + 1'), 'updated_at' => now()]) === 0) {
             DB::table('site_settings')->insertOrIgnore(['key' => $key, 'value_json' => $json, 'revision' => 1, 'updated_at' => now(), 'created_at' => now()]);
         }
+        KnowledgeSync::changed($key);
     }
 
     public static function providers(): array
@@ -92,29 +93,30 @@ class Settings
 
     /**
      * Packages are paid once, with no auto-renewal. Quick Download covers one resume for 7 days; Job Hunt and Pro add tailored
-     * resumes, cover letters and ATS Match scans. Services (Tara Expert Review by Tara AI, Profile Boost by a person) stay off until the owner switches them on.
+     * resumes, cover letters and ATS Match scans. Services (Tara Expert Review written automatically, Profile Boost by a person) stay off until the owner switches them on.
      */
+    /** mockInterviews (3.49.0): mock interviews with written feedback for the whole plan validity, one pool, no monthly reset (owner decision 2026-11-11: Job Hunt 4, Pro 12). */
     public static function planDefaults(): array
     {
-        $mk = fn ($name, $tag, $price, $days, $resumes, $letters, $ats, $rank, $perks, $extra = []) => array_merge(['type' => 'plan', 'name' => $name, 'audience' => 'all', 'tagline' => $tag, 'price' => $price, 'mrp' => 0, 'accessDays' => $days, 'savedResumes' => $resumes, 'savedLetters' => $letters, 'atsScans' => $ats, 'dailyMatches' => 100, 'exports' => 0, 'rank' => $rank, 'perks' => $perks, 'popular' => false, 'bestValue' => false, 'referral' => false, 'sale' => true], $extra);
+        $mk = fn ($name, $tag, $price, $days, $resumes, $letters, $ats, $rank, $perks, $extra = []) => array_merge(['type' => 'plan', 'name' => $name, 'audience' => 'all', 'tagline' => $tag, 'price' => $price, 'mrp' => 0, 'accessDays' => $days, 'savedResumes' => $resumes, 'savedLetters' => $letters, 'atsScans' => $ats, 'dailyMatches' => 100, 'exports' => 0, 'mockInterviews' => 0, 'rank' => $rank, 'perks' => $perks, 'popular' => false, 'bestValue' => false, 'referral' => false, 'sale' => true], $extra);
 
         return [
-            'free' => ['type' => 'plan', 'name' => 'Free', 'audience' => 'all', 'tagline' => 'Build, edit and preview with a light watermark. Pay only when you download.', 'price' => 0, 'mrp' => 0, 'accessDays' => 0, 'savedResumes' => 0, 'savedLetters' => 0, 'atsScans' => null, 'dailyMatches' => 3, 'exports' => 0, 'rank' => 0, 'perks' => [], 'popular' => false, 'bestValue' => false, 'referral' => false, 'sale' => false],
+            'free' => ['type' => 'plan', 'name' => 'Free', 'audience' => 'all', 'tagline' => 'Build, edit and preview with a light watermark. Pay only when you download.', 'price' => 0, 'mrp' => 0, 'accessDays' => 0, 'savedResumes' => 0, 'savedLetters' => 0, 'atsScans' => null, 'dailyMatches' => 3, 'exports' => 0, 'mockInterviews' => 0, 'rank' => 0, 'perks' => [], 'popular' => false, 'bestValue' => false, 'referral' => false, 'sale' => false],
             'quick' => $mk('Quick Download', 'Download one finished resume without the watermark', 99, 7, 1, 0, 0, 1, ['1 resume as clean PDF and Word', 'Edit and re-download that resume as often as you like for 7 days', '3 free ATS checks a day'], ['oneResume' => true, 'dailyMatches' => 3]),
-            'job-hunt' => $mk('Job Hunt', 'Tailor your resume and a cover letter for each job you apply to', 299, 30, 10, 10, 20, 2, ['10 tailored resumes and 10 cover letters', '20 ATS Match scans with a gap report', 'Application tracker with reminders'], ['popular' => true]),
-            'pro' => $mk('Pro', 'For a longer search across many jobs', 599, 90, 20, 20, 60, 3, ['20 tailored resumes and 20 cover letters', '60 ATS Match scans with a gap report', 'Application tracker with reminders'], ['bestValue' => true]),
-            'complete-kit' => $mk('Complete Job Kit', 'Pro, plus a Tara Expert Review and a LinkedIn and Naukri profile rewrite', 1299, 90, 20, 20, 60, 3, ['Everything in Pro', 'Tara Expert Review of your resume', 'Profile Boost for LinkedIn and Naukri'], ['mrp' => 1797, 'includes' => ['expert-review', 'profile-boost'], 'sale' => false]),
+            'job-hunt' => $mk('Job Hunt', 'Tailor your resume and a cover letter for each job you apply to', 299, 30, 10, 10, 20, 2, ['10 tailored resumes and 10 cover letters', '20 ATS Match scans with a gap report', 'Application tracker with reminders'], ['popular' => true, 'mockInterviews' => 4]),
+            'pro' => $mk('Pro', 'For a longer search across many jobs', 599, 90, 20, 20, 60, 3, ['20 tailored resumes and 20 cover letters', '60 ATS Match scans with a gap report', 'Application tracker with reminders'], ['bestValue' => true, 'mockInterviews' => 12]),
+            'complete-kit' => $mk('Complete Job Kit', 'Pro, plus a Tara Expert Review and a LinkedIn and Naukri profile rewrite', 1299, 90, 20, 20, 60, 3, ['Everything in Pro', 'Tara Expert Review of your resume', 'Profile Boost for LinkedIn and Naukri'], ['mrp' => 1797, 'includes' => ['expert-review', 'profile-boost'], 'sale' => false, 'mockInterviews' => 12]),
         ] + self::serviceDefaults() + self::addonDefaults();
     }
 
-    /** Tara Expert Review is written by Tara AI (see ExpertReview); Profile Boost is done by a person. Cheaper while Job Hunt or Pro is active (planPrice). */
+    /** Tara Expert Review is written automatically (see ExpertReview); Profile Boost is an automatic draft the customer approves (see ProfileBoost). Cheaper while Job Hunt or Pro is active (planPrice). */
     public static function serviceDefaults(): array
     {
         $s = fn ($name, $tag, $price, $planPrice, $perks) => ['type' => 'service', 'name' => $name, 'audience' => 'all', 'tagline' => $tag, 'price' => $price, 'planPrice' => $planPrice, 'mrp' => 0, 'accessDays' => 0, 'savedResumes' => 0, 'savedLetters' => 0, 'atsScans' => 0, 'dailyMatches' => 0, 'exports' => 0, 'rank' => 0, 'perks' => $perks, 'popular' => false, 'bestValue' => false, 'referral' => false, 'sale' => false];
 
         return [
-            'expert-review' => $s('Tara Expert Review', 'The CVTara team reviews your whole resume and sends you a written report', 499, 399, ['Comments on every section', 'ATS issues, a rewritten summary and bullets, and your top fixes', 'Delivered to your account and by email']),
-            'profile-boost' => $s('Profile Boost', 'Your LinkedIn and Naukri headline, summary, skills and experience rewritten', 699, 599, ['Headline and About or profile summary', 'Key skills in the right order for your target job', 'One free revision within 7 days']),
+            'expert-review' => $s('Tara Expert Review', 'An instant written review of your whole resume, ready in minutes and emailed to you', 499, 399, ['Comments on every section', 'ATS issues, a rewritten summary and bullets, and your top fixes', 'Delivered to your account and by email']),
+            'profile-boost' => $s('Profile Boost', 'Your LinkedIn and Naukri headline, summary, skills and experience rewritten', 699, 599, ['Headline and About or profile summary', 'Key skills in the right order for your target job', 'A draft you approve, with one round of changes']),
         ];
     }
 
@@ -191,6 +193,21 @@ class Settings
     }
 
     /**
+     * 3.64.0 (owner approval 2026-11-12): one-click tailoring of a whole resume and one-click cover letters are part of the
+     * Job Hunt and Pro packs. Free and Quick Download (Rs 99) accounts see the upgrade dialog instead. A package counts when
+     * it includes cover letters of its own (add-on letters alone do not). Owner and staff accounts are never blocked.
+     */
+    public static function careerTools($user): bool
+    {
+        if (! $user || ! empty($user->is_admin) || Access::isStaff($user)) {
+            return (bool) $user;
+        }
+        $a = self::access((int) $user->id);
+
+        return ! empty($a['paid']) && ((int) ($a['limits']['savedLetters'] ?? 0) - (int) ($a['extras']['letters'] ?? 0)) > 0;
+    }
+
+    /**
      * The name a customer sees for their current package. A paid purchase must never read "Free":
      * use the package's current name, then the name stored on the purchase itself (a package
      * from an older price list), then the package that replaced it, then a readable key.
@@ -250,6 +267,11 @@ class Settings
     public static function sinceStart($q, string $col)
     {
         $s = self::statsSince();
+        // 3.61.0 orders the owner marked as test payments are left out of revenue figures (they are never deleted).
+        $test = TestPayments::testIds();
+        if ($test) {
+            $q->whereNotIn(str_contains($col, '.') ? strstr($col, '.', true).'.id' : 'id', $test);
+        }
 
         return $s ? $q->where($col, '>=', $s) : $q;
     }

@@ -48,6 +48,18 @@ class AdminController extends Controller
         if (preg_match(OutreachAdminController::ROUTES, $path)) {
             return app(OutreachAdminController::class)->run($r, $path);
         }
+        if (preg_match(TemplateAdminController::ROUTES, $path)) {
+            return app(TemplateAdminController::class)->run($r, $path);
+        }
+        if (preg_match(CostAdminController::ROUTES, $path)) {
+            return app(CostAdminController::class)->run($r, $path);
+        }
+        if (preg_match(PartnerAdminController::ROUTES, $path)) {
+            return app(PartnerAdminController::class)->run($r, $path);
+        }
+        if (preg_match(InterviewAdminController::ROUTES, $path)) {
+            return app(InterviewAdminController::class)->run($r, $path);
+        }
         if (preg_match(WhatsNewAdminController::ROUTES, $path)) {
             return app(WhatsNewAdminController::class)->run($r, $path);
         }
@@ -121,7 +133,7 @@ class AdminController extends Controller
         if ($path === 'providers') {
             $p = Settings::providers();
             unset($p['push']);
-            $fields = ['jobreader' => ['enabled', 'provider', 'scrapingbeeApiKey', 'zenrowsApiKey', 'customUrlTemplate', 'customApiKey', 'dailyLimit'], 'payments' => ['provider', 'mode', 'razorpayKeyId', 'razorpayKeySecret', 'razorpayWebhookSecret', 'phonepeMode', 'phonepeClientId', 'phonepeClientVersion', 'phonepeClientSecret', 'phonepeWebhookUsername', 'phonepeWebhookPassword'], 'email' => ['provider', 'resendApiKey', 'smtpHost', 'smtpPort', 'smtpUser', 'smtpPassword', 'fromEmail', 'fromName', 'replyTo', 'postalAddress'], 'ai' => ['provider', 'claudeApiKey', 'model', 'dailyLimit'], 'grammar' => ['url', 'username', 'premiumApiKey'], 'analytics' => ['measurementId', 'searchConsoleProperty', 'searchConsoleServiceAccount', 'cruxApiKey']];
+            $fields = ['jobreader' => ['enabled', 'provider', 'scrapingbeeApiKey', 'zenrowsApiKey', 'customUrlTemplate', 'customApiKey', 'dailyLimit'], 'payments' => ['provider', 'mode', 'razorpayKeyId', 'razorpayKeySecret', 'razorpayWebhookSecret', 'phonepeMode', 'phonepeClientId', 'phonepeClientVersion', 'phonepeClientSecret', 'phonepeWebhookUsername', 'phonepeWebhookPassword'], 'email' => ['provider', 'resendApiKey', 'smtpHost', 'smtpPort', 'smtpUser', 'smtpPassword', 'fromEmail', 'fromName', 'replyTo', 'postalAddress'], 'ai' => ['provider', 'claudeApiKey', 'model', 'chatModel', 'quickModel', 'dailyLimit'], 'grammar' => ['url', 'username', 'premiumApiKey'], 'analytics' => ['measurementId', 'searchConsoleProperty', 'searchConsoleServiceAccount', 'cruxApiKey', 'bingApiKey']];
             $secret = fn ($k) => preg_match('/Secret|ApiKey|Password|ServiceAccount|AuthToken/', $k);
             if ($get) {
                 foreach ($p as &$service) {
@@ -133,10 +145,14 @@ class AdminController extends Controller
                 }
 
                 return $ok(['providers' => $p, 'secureStorage' => true]);
-            }AccountSecurity::requireRecent($r);
+            }
+            if ($r->input('test') === 'ai') {
+                return $ok(\App\Services\AiGateway::testKey());
+            }
+            AccountSecurity::requireRecent($r);
             $r->validate(['service' => 'required|in:'.implode(',', array_keys($fields)), 'values' => 'required|array']);
             if ($r->service === 'ai') {
-                validator($r->values, ['provider' => 'sometimes|in:claude,standard', 'model' => 'nullable|string|max:80|regex:/^[a-z0-9.\-]*$/', 'dailyLimit' => 'nullable|integer|min:0|max:100000'])->validate();
+                validator($r->values, ['provider' => 'sometimes|in:claude,standard', 'model' => 'nullable|string|max:80|regex:/^[a-z0-9.\-]*$/', 'quickModel' => 'nullable|string|max:80|regex:/^[a-z0-9.\-]*$/', 'chatModel' => 'nullable|string|max:80|regex:/^[a-z0-9.\-]*$/', 'dailyLimit' => 'nullable|integer|min:0|max:100000'])->validate();
             }
             if ($r->service === 'jobreader') {
                 validator($r->values, ['enabled' => 'required|in:true,false', 'provider' => 'required|in:'.implode(',', JobReader::PROVIDERS), 'dailyLimit' => 'nullable|integer|min:1|max:100000', 'customUrlTemplate' => 'nullable|string|max:600'])->validate();
@@ -154,6 +170,8 @@ class AdminController extends Controller
                 abort_unless(in_array($k, $fields[$r->service]) && ($v === null || (is_string($v) && strlen($v) <= 12000)), 422);
                 if (trim((string) $v) !== '') {
                     $p[$r->service][$k] = trim($v);
+                } elseif ($r->service === 'ai' && in_array($k, ['model', 'chatModel', 'quickModel'], true)) {
+                    unset($p['ai'][$k]); // an emptied model box goes back to the default
                 }
             }if ($r->service === 'jobreader' && ($p['jobreader']['enabled'] ?? 'false') === 'true') {
                 $j = $p['jobreader'];
@@ -202,13 +220,16 @@ class AdminController extends Controller
             if ($get) {
                 return $ok(['plans' => Settings::plans()]);
             }AccountSecurity::requireRecent($r);
-            $v = $r->validate(['plans' => 'required|array', 'plans.*.name' => 'required|string|max:120', 'plans.*.tagline' => 'nullable|string|max:200', 'plans.*.price' => 'required|integer|min:0|max:99999', 'plans.*.mrp' => 'nullable|integer|min:0|max:99999', 'plans.*.accessDays' => 'required|integer|min:0|max:3660', 'plans.*.savedResumes' => 'required|integer|min:0|max:500', 'plans.*.savedLetters' => 'required|integer|min:0|max:500', 'plans.*.atsScans' => 'nullable|integer|min:0|max:100000', 'plans.*.dailyMatches' => 'nullable|integer|min:0|max:1000', 'plans.*.exports' => 'nullable|integer|min:0|max:100000', 'plans.*.popular' => 'sometimes|boolean', 'plans.*.referral' => 'sometimes|boolean', 'plans.*.bestValue' => 'sometimes|boolean', 'plans.*.sale' => 'sometimes|boolean', 'plans.*.planPrice' => 'nullable|integer|min:1|max:99999', 'plans.*.perks' => 'sometimes|array|max:12', 'plans.*.perks.*' => 'string|max:120', 'plans.*.audience' => 'sometimes|in:fresher,experienced,all']);
+            $v = $r->validate(['plans' => 'required|array', 'plans.*.name' => 'required|string|max:120', 'plans.*.tagline' => 'nullable|string|max:200', 'plans.*.price' => 'required|integer|min:0|max:99999', 'plans.*.mrp' => 'nullable|integer|min:0|max:99999', 'plans.*.accessDays' => 'required|integer|min:0|max:3660', 'plans.*.savedResumes' => 'required|integer|min:0|max:500', 'plans.*.savedLetters' => 'required|integer|min:0|max:500', 'plans.*.atsScans' => 'nullable|integer|min:0|max:100000', 'plans.*.dailyMatches' => 'nullable|integer|min:0|max:1000', 'plans.*.exports' => 'nullable|integer|min:0|max:100000', 'plans.*.mockInterviews' => 'nullable|integer|min:0|max:500', 'plans.*.popular' => 'sometimes|boolean', 'plans.*.referral' => 'sometimes|boolean', 'plans.*.bestValue' => 'sometimes|boolean', 'plans.*.sale' => 'sometimes|boolean', 'plans.*.planPrice' => 'nullable|integer|min:1|max:99999', 'plans.*.perks' => 'sometimes|array|max:12', 'plans.*.perks.*' => 'string|max:120', 'plans.*.audience' => 'sometimes|in:fresher,experienced,all']);
             $out = Settings::plans();
             foreach ($v['plans'] as $k => $in) {
                 abort_unless(isset($out[$k]), 422, 'Unknown plan.');
                 abort_if($out[$k]['type'] === 'plan' && $k !== 'free' && ($in['accessDays'] ?? 0) < 1, 422, 'Plans need at least 1 day of access.');
                 $in['atsScans'] = empty($in['atsScans']) ? null : (int) $in['atsScans'];
                 $in['mrp'] = (int) ($in['mrp'] ?? 0);
+                if (array_key_exists('mockInterviews', $in)) {
+                    $in['mockInterviews'] = (int) $in['mockInterviews'];
+                }
                 abort_if($k === 'free' && ! empty($in['sale']), 422, 'The free plan is not sold.');
                 $in['perks'] = array_values(array_filter(array_map('trim', $in['perks'] ?? $out[$k]['perks'])));
                 $out[$k] = array_merge($out[$k], array_intersect_key($in, $out[$k]));
@@ -239,9 +260,12 @@ class AdminController extends Controller
             $uq = DB::table('users')->where('email', '!=', AccountEraser::PLACEHOLDER);
             $live = fn () => DB::table('purchases')->whereIn('status', ['paid', 'partially_refunded'])->where('access_until', '>', now())->where('provider', '!=', 'referral_reward')->select('owner_id');
             $ever = fn () => DB::table('purchases')->whereNotNull('purchased_at')->select('owner_id');
-            $d = AdminTable::query($r, $uq->select(['id', 'name', 'email', 'created_at', 'blocked', 'is_admin']), [
+            $d = AdminTable::query($r, $uq->select(['id', 'name', 'email', 'created_at', 'blocked', 'is_admin', 'acq_class', 'acq_subtype', 'acq_partner_id', 'acq_campaign', 'acq_rule_version']), [
                 'search' => ['email', 'name'],
-                'filters' => ['f' => function ($q, $f) use ($live, $ever) {
+                'filters' => ['acq' => fn ($q, $v) => in_array($v, \App\Services\Attribution::CLASSES, true) ? $q->where('acq_class', $v) : ($v === 'unknown' ? $q->whereNull('acq_class') : null),
+                    'sub' => fn ($q, $v) => in_array($v, array_merge(...array_values(\App\Services\Attribution::SUBTYPES)), true) ? $q->where('acq_subtype', $v) : null,
+                    'partner' => fn ($q, $v) => ctype_digit((string) $v) ? $q->where('acq_partner_id', (int) $v) : null,
+                    'f' => function ($q, $f) use ($live, $ever) {
                     if ($f === 'owner') {
                         $q->where('is_admin', true);
                     } elseif (in_array($f, ['blocked', 'paid', 'expired', 'normal'], true)) {
@@ -258,7 +282,7 @@ class AdminController extends Controller
                 'sorts' => ['joined' => 'created_at', 'name' => 'name', 'email' => 'email'],
                 'sort' => 'joined',
                 'key' => 'id',
-                'export' => ['title' => 'Users', 'labels' => ['f' => 'Show'], 'map' => fn ($rows) => $this->usersForExport($rows)],
+                'export' => ['title' => 'Users', 'labels' => ['f' => 'Show', 'acq' => 'Came as', 'sub' => 'Source', 'partner' => 'Partner'], 'map' => fn ($rows) => $this->usersForExport($rows)],
             ]);
             $ids = array_map(fn ($u) => $u->id, $d['rows']);
             $profiles = DB::table('profiles')->whereIn('owner_id', $ids)->get()->keyBy('owner_id');
@@ -267,7 +291,7 @@ class AdminController extends Controller
             $appCounts = $counts('applications');
             $everPaid = DB::table('purchases')->whereIn('owner_id', $ids)->whereNotNull('purchased_at')->distinct()->pluck('owner_id')->flip();
             $acc = Settings::accessMany($ids);
-            $users = array_map(fn ($u) => [...(array) ($profiles[$u->id] ?? []), 'owner_id' => (string) $u->id, 'email' => $u->email, 'name' => $u->name, 'created_at' => $u->created_at, 'blocked' => (bool) $u->blocked, 'isAdmin' => (bool) $u->is_admin, 'paid' => $acc[$u->id]['paid'], 'ever_paid' => isset($everPaid[$u->id]), 'last_plan' => $acc[$u->id]['plan'], 'accessUntil' => $acc[$u->id]['accessUntil'], 'resumes' => $resumeCounts[$u->id] ?? 0, 'applications' => $appCounts[$u->id] ?? 0], $d['rows']);
+            $users = array_map(fn ($u) => [...(array) ($profiles[$u->id] ?? []), 'owner_id' => (string) $u->id, 'email' => $u->email, 'name' => $u->name, 'created_at' => $u->created_at, 'blocked' => (bool) $u->blocked, 'isAdmin' => (bool) $u->is_admin, 'paid' => $acc[$u->id]['paid'], 'ever_paid' => isset($everPaid[$u->id]), 'last_plan' => $acc[$u->id]['plan'], 'accessUntil' => $acc[$u->id]['accessUntil'], 'resumes' => $resumeCounts[$u->id] ?? 0, 'applications' => $appCounts[$u->id] ?? 0, 'acqClass' => $u->acq_class, 'acqSubtype' => $u->acq_subtype, 'acqPartnerId' => $u->acq_partner_id, 'acqCampaign' => $u->acq_campaign, 'acqRules' => $u->acq_rule_version, 'acquisition' => \App\Services\Attribution::label($u->acq_class, $u->acq_subtype)], $d['rows']);
             $kpis = Cache::remember('admin-user-kpis', 20, function () {
                 $all = User::count();
                 $paid = DB::table('purchases')->where('provider', '!=', 'referral_reward')->whereIn('status', ['paid', 'partially_refunded'])->where('access_until', '>', now())->distinct('owner_id')->count('owner_id');
@@ -336,6 +360,12 @@ class AdminController extends Controller
 
             return $ok(['pages' => (clone $q)->selectRaw('path,count(*) as views,count(DISTINCT visitor_id) as visitors')->groupBy('path')->orderByDesc('views')->limit(100)->get(), 'daily' => (clone $q)->selectRaw('DATE(created_at) as day,count(*) as views')->groupByRaw('DATE(created_at)')->orderBy('day')->get(), 'sources' => (clone $q)->selectRaw('source,count(*) as views')->groupBy('source')->get(), 'events' => DB::table('activity_events')->where('created_at', '>=', now()->subDays($days))->selectRaw('event,count(*) as count')->groupBy('event')->get(), 'checkouts' => DB::table('purchases')->selectRaw("CASE WHEN status='created' THEN 'started' ELSE status END as status,count(*) as count")->groupBy('status')->get(), 'email' => DB::table('mail_outbox')->selectRaw('status,count(*) as count')->groupBy('status')->get(), 'traffic' => (clone $q)->selectRaw('count(*) as views,count(DISTINCT visitor_id) as visitors')->first(), 'search' => Settings::get('searchData')]);
         }
+        if ($path === 'reviews/edit' && ! $get) {
+            return $ok(\App\Services\ReviewEdits::edit($r->user(), (string) $r->input('id'), (string) $r->input('content'), (string) $r->input('kind'), (string) $r->input('reason')));
+        }
+        if ($path === 'reviews/history' && $get) {
+            return $ok(\App\Services\ReviewEdits::history((string) $r->query('id')));
+        }
         if ($path === 'reviews') {
             if ($get) {
                 $d = AdminTable::query($r, DB::table('feedback as f')->join('users as u', 'u.id', '=', 'f.owner_id')->select(['f.*', 'u.email']), [
@@ -348,11 +378,12 @@ class AdminController extends Controller
                     'export' => ['title' => 'User reviews', 'map' => fn ($rows) => array_map(fn ($f) => ['date' => $f['created_at'], 'name' => $f['display_name'], 'rating' => (int) $f['rating'], 'review' => $f['content'], 'status' => $f['status'], 'source' => $f['source'], 'consent' => (bool) $f['consent'], 'consent_reference' => $f['consent_reference'] ?? '', 'account_email' => $f['email']], $rows)],
                 ]);
 
-                return $ok(['reviews' => \App\Services\Reviews::flag(array_map(fn ($x) => (array) $x, is_array($d['rows']) ? $d['rows'] : $d['rows']->all())), 'counts' => DB::table('feedback')->selectRaw('status,count(*) as count')->groupBy('status')->pluck('count', 'status')] + $d);
+                return $ok(['reviews' => \App\Services\Reviews::flag(array_map(fn ($x) => (array) $x, is_array($d['rows']) ? $d['rows'] : $d['rows']->all())), 'counts' => DB::table('feedback')->selectRaw('status,count(*) as count')->groupBy('status')->pluck('count', 'status'), 'priceViews' => \App\Services\ReviewEdits::priceViews()] + $d);
             }$r->validate(['id' => 'required|uuid', 'status' => 'required|in:pending,published,hidden']);
             $row = DB::table('feedback')->where('id', $r->id)->first();
             abort_unless($row, 404);
             abort_if($r->status === 'published' && (! $row->consent || $row->source === 'dummy'), 422);
+            abort_if($r->status === 'published' && $row->edit_state === 'awaiting_customer', 422, 'A wording change is waiting for the customer. Publish after they answer.');
             DB::table('feedback')->where('id', $r->id)->update(['status' => $r->status, 'updated_at' => now()]);
 
             return $ok();
@@ -408,7 +439,21 @@ class AdminController extends Controller
             return $ok(['url' => '/media/'.$name]);
         }
         if ($path === 'seo') {
-            return $ok(['origin' => config('app.url'), 'seo' => Settings::get('seo'), 'routes' => app(ContentController::class)->pages()]);
+            // Each page's own Google status: index verdict from URL Inspection (seo_pages) and 28-day clicks from Search Console.
+            $google = [];
+            if (\Illuminate\Support\Facades\Schema::hasTable('seo_pages')) {
+                foreach (DB::table('seo_pages')->get(['path', 'http_status', 'verdict', 'coverage', 'last_crawl_at', 'inspected_at', 'inspect_error']) as $g) {
+                    $google[$g->path] = ['status' => $g->http_status, 'verdict' => $g->verdict, 'coverage' => $g->coverage, 'crawled' => $g->last_crawl_at, 'checked' => $g->inspected_at, 'error' => $g->inspect_error];
+                }
+            }
+            foreach ((array) (Settings::get('searchData', [])['page'] ?? []) as $row) {
+                $path = (string) (parse_url((string) ($row['key'] ?? ''), PHP_URL_PATH) ?: '');
+                if ($path !== '') {
+                    $google[$path] = ($google[$path] ?? []) + ['clicks' => (int) ($row['clicks'] ?? 0), 'impressions' => (int) ($row['impressions'] ?? 0)];
+                }
+            }
+
+            return $ok(['origin' => config('app.url'), 'seo' => Settings::get('seo'), 'routes' => app(ContentController::class)->pages(), 'google' => $google, 'searchConsole' => SearchConsole::ready()]);
         }
         if ($path === 'page-audit') {
             // Hundreds of programmatic pages: the checklist is worked out once a minute and sent one page of rows at a time.
@@ -458,6 +503,12 @@ class AdminController extends Controller
         }
         if ($path === 'indexing') {
             return $ok(FastIndex::status());
+        }
+        if ($path === 'indexing/engines') {
+            return $ok(\App\Services\IndexStatus::all());
+        }
+        if ($path === 'indexing/engines/refresh') {
+            return $ok(\App\Services\IndexStatus::all(true));
         }
         if ($path === 'indexing/settings') {
             $v = $r->validate(['auto' => 'required|boolean', 'google' => 'required|boolean']);
@@ -518,8 +569,13 @@ class AdminController extends Controller
             validator($d, ['sitemapEnabled' => 'required|boolean', 'searchIndexing' => 'required|boolean', 'siteUrl' => 'nullable|url:https|max:255', 'pages' => 'present|array'])->validate();
         }
         if ($k === 'emails') {
+            // Every trigger a shipped template uses is allowed, so a new built-in mail never blocks saving again.
+            $triggers = array_values(array_unique(array_merge(
+                array_map(fn ($t) => (string) ($t['trigger'] ?? ''), (array) (Settings::defaults()['emails'] ?? [])),
+                ['profile_created', 'password_reset', 'resume_saved', 'purchase_verified', 'abandoned_purchase', 'blog_published', 'access_expiring', 'access_expiring_7', 'access_expiring_4', 'access_expiring_1', 'followup_due', 'application_status', 'download_locked', 'email_verification', 'refund_requested', 'refund_processed', 'refund_rejected', 'expert_review_delivered', 'nurture', 'referral_invite', 'plan_ended', 'monthly_digest', 'activation_nudge', 'ats_nudge', 'pricing_help', 'support_reply', 'manual']
+            )));
             foreach ($d as $t) {
-                validator($t, ['id' => 'required|string|max:80', 'subject' => 'required|string|max:180', 'body' => 'required|string|max:20000', 'enabled' => 'required|boolean', 'trigger' => 'required|in:profile_created,password_reset,resume_saved,purchase_verified,abandoned_purchase,blog_published,access_expiring,access_expiring_7,access_expiring_4,access_expiring_1,followup_due,application_status,download_locked,email_verification,refund_requested,refund_processed,refund_rejected,expert_review_delivered,nurture,referral_invite,plan_ended,monthly_digest,manual', 'delayHours' => 'required|integer|min:0|max:720'])->validate();
+                validator($t, ['id' => 'required|string|max:80', 'subject' => 'required|string|max:180', 'body' => 'required|string|max:20000', 'enabled' => 'required|boolean', 'trigger' => ['required', 'string', \Illuminate\Validation\Rule::in($triggers)], 'delayHours' => 'required|integer|min:0|max:720'])->validate();
             }
         }
         if ($k === 'legal') {
@@ -551,7 +607,8 @@ class AdminController extends Controller
 
             return ['id' => (int) $u['id'], 'name' => $u['name'], 'email' => $u['email'], 'phone' => $p->phone ?? '', 'city' => $p->city ?? '', 'experience_level' => $p->experience_level ?? '', 'profession' => $p->profession ?? '',
                 'joined' => $u['created_at'], 'subscription' => $a['paid'] ? $plan : (isset($everPaid[$u['id']]) ? 'Expired'.($plan ? ' ('.$plan.')' : '') : 'Normal user'), 'access_until' => $a['paid'] ? $a['accessUntil'] : '',
-                'status' => $u['blocked'] ? 'Blocked' : ($u['is_admin'] ? 'Owner' : 'Active'), 'resumes' => (int) ($resumes[$u['id']] ?? 0), 'applications' => (int) ($apps[$u['id']] ?? 0)];
+                'status' => $u['blocked'] ? 'Blocked' : ($u['is_admin'] ? 'Owner' : 'Active'), 'resumes' => (int) ($resumes[$u['id']] ?? 0), 'applications' => (int) ($apps[$u['id']] ?? 0),
+                'came_as' => \App\Services\Attribution::label($u['acq_class'] ?? null, $u['acq_subtype'] ?? null), 'campaign' => $u['acq_campaign'] ?? ''];
         }, $rows);
     }
 }

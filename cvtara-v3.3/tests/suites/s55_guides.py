@@ -5,7 +5,7 @@ guide; the owner guide stays private."""
 import os, re
 NAME = "Guides and help centre"
 ADMIN = ["login", "dashboard", "command", "customers", "orders", "libraries", "templates", "offers", "referrals", "comms", "reports", "support", "assisted", "ai", "seo", "workforce", "growth", "approvals", "integrations", "backups", "help"]
-CUST = ["register", "dashboard", "create", "upload", "improve", "ats", "letters", "combined", "applications", "tara", "team", "plans", "downloads", "referrals", "account", "help"]
+CUST = ["register", "dashboard", "create", "upload", "improve", "ats", "letters", "combined", "applications", "interview", "tara", "team", "plans", "downloads", "referrals", "account", "help"]
 
 
 def run(ctx, t):
@@ -21,8 +21,8 @@ def run(ctx, t):
 
     c = ctx.client(); s, _, h = c.page("/customer-guide.html")
     ids = re.findall(r'<section class="g" id="([a-z-]+)">', h)
-    t.check("the customer guide has the 16 chapters in order, plus its version history", s == 200 and ids == CUST + ["versions"], ids)
-    t.check("the customer guide shows when it was last reviewed, is searchable and has video slots", re.search(r'Last reviewed <time datetime="\d{4}-\d\d-\d\d">', h) and 'id="gq"' in h and h.count('data-video=') == 16)
+    t.check("the customer guide has the 17 chapters in order, plus its version history", s == 200 and ids == CUST + ["versions"], ids)
+    t.check("the customer guide shows when it was last reviewed, is searchable and has video slots", re.search(r'Last reviewed <time datetime="\d{4}-\d\d-\d\d">', h) and 'id="gq"' in h and h.count('data-video=') == 17)
     text = re.sub(r"<script.*?</script>|<style.*?</style>", "", h, flags=re.S)
     t.check("the customer guide never mentions AI or the provider", not re.search(r"\bAI\b|artificial intelligence|Claude|Anthropic", text), re.findall(r".{30}\bAI\b.{30}", text)[:3])
     t.check("the customer guide states the packages as they are", all(x in text for x in ("10 tailored resumes and 10 cover letters", "20 tailored resumes and 20 cover letters", "One-time payment", "7-day refund if unused")))

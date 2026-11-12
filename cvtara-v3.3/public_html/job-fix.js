@@ -26,18 +26,27 @@
   const draft = () => window.CVTaraStudio.getDraft();
   const has = (skills, k) => new RegExp('(^|[^\\p{L}\\p{N}])' + k.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '($|[^\\p{L}\\p{N}])', 'iu').test(skills);
 
+  // 3.64.0: a compact panel. Score ring, keyword chips to tick, the job's requirements as short pills (details on click)
+  // and one row of actions, instead of three columns of text.
+  const gapParts = g => {
+    const m = String(g).match(/^(?:[^·]*·\s*)?(.*?)\s+—\s+([^.]*)\.?\s*(.*)$/);
+    return m ? { name: m[1], state: m[2], tip: m[3] } : { name: String(g), state: '', tip: '' };
+  };
+  const ring = n => `<div class="jf-ring ${tone(n)}" style="--p:${Math.max(0, Math.min(100, n))}" role="img" aria-label="Match for this job ${n}%"><b>${n}%</b><small>match</small></div>`;
+
   function render() {
     const rep = scan.report, kw = rep.keywords || { missing: [] }, d = draft(), text = [d.summary, d.skills, ...(d.experience || []).map(x => x.bullets)].join('\n');
     const missing = (kw.missing || []).filter(k => !has(text, k));
-    const gaps = (rep.gaps || []).filter(g => !/^Keywords ·|^Resume format ·/.test(g)).slice(0, 6);
+    const gaps = (rep.gaps || []).filter(g => !/^Keywords ·|^Resume format ·/.test(g)).slice(0, 6).map(gapParts);
+    const score = last ?? scan.score;
     let note = ''; try { note = sessionStorage.getItem('cvtara-fix-note') || ''; sessionStorage.removeItem('cvtara-fix-note'); } catch { /* ignore */ }
-    box.innerHTML = `<div class="jf-head"><div><span class="eyebrow">FIX FOR THIS JOB</span><h3>${E(scan.title || 'This job')}${scan.company ? ' · ' + E(scan.company) : ''}</h3><p class="ats-muted">Match for this job: <b class="${tone(last ?? scan.score)}">${last ?? scan.score}%</b>${last != null && last !== scan.score ? ` (was ${scan.score}%)` : ''}. Add only what is true for you — every keyword below is one this job uses that your resume does not show yet.${note ? ' ' + E(note) : ''}</p></div><button class="button secondary small" type="button" data-jf-close aria-label="Hide the job panel">Hide</button></div>
-<div class="jf-grid"><section><h4>1 · Keywords you really have</h4>${missing.length ? `<div class="jf-kw">${missing.map(k => `<label><input type="checkbox" value="${E(k)}"> ${E(k)}</label>`).join('')}</div><button class="button primary small" type="button" data-jf-add>Add ticked keywords to my Skills</button>` : '<p class="ats-muted">Your resume already shows every keyword we found in this job.</p>'}
-<p class="ats-muted">Then use the same words in a bullet under the job where you did that work — recruiters and tracking systems both look for them in context.</p></section>
-<section><h4>2 · What this job asks for</h4>${gaps.length ? `<ol class="jf-gaps">${gaps.map(g => `<li>${E(g)}</li>`).join('')}</ol>` : '<p class="ats-muted">No open requirements were found.</p>'}
-</section>
-<section><h4>3 · Save and check again</h4><p class="ats-muted">Saves this resume to your profile and checks it against the same job. Uses 1 ATS scan.</p><button class="button primary small" type="button" data-jf-recheck>Save and re-check</button></section></div>
-${ai?.enabled ? `<div class="jf-ai"><h4>Or let the CVTara team do it</h4><p class="ats-muted">One click rewrites your summary, skills and job bullets for this role. Employers, titles, dates and numbers stay as they are, and nothing you have not done is added. You review every change before it goes in.</p><label class="jf-consent"><input type="checkbox" data-jf-consent> Share this resume and job with the CVTara team (see our privacy policy).</label><button class="button primary small" type="button" data-jf-tailor ${ai.left ? '' : 'disabled'}>Tailor my whole resume for this job (${ai.left} left today)</button><div data-jf-out></div></div>` : ''}
+    box.innerHTML = `<div class="jf-head">${ring(score)}<div class="jf-title"><span class="eyebrow">FIX FOR THIS JOB</span><h3>${E(scan.title || 'This job')}${scan.company ? ' · ' + E(scan.company) : ''}</h3>${last != null && last !== scan.score ? `<p class="jf-up">Was ${scan.score}%, now ${last}%</p>` : ''}${note ? `<p class="ats-muted">${E(note)}</p>` : ''}</div><button class="button secondary small" type="button" data-jf-close aria-label="Hide the job panel">Hide</button></div>
+<div class="jf-steps">
+<section><h4><span class="jf-n">1</span>Tick keywords you really have</h4>${missing.length ? `<div class="jf-kw">${missing.map(k => `<label><input type="checkbox" value="${E(k)}"> ${E(k)}</label>`).join('')}</div><button class="button secondary small" type="button" data-jf-add>Add to my Skills</button>` : '<p class="jf-ok">✓ All keywords found</p>'}</section>
+<section><h4><span class="jf-n">2</span>The job asks for</h4>${gaps.length ? `<ul class="jf-req">${gaps.map(g => `<li title="${E(g.tip)}"><span class="jf-dot ${/not found/i.test(g.state) ? 'miss' : 'part'}" aria-hidden="true"></span>${E(g.name)}<small>${/not found/i.test(g.state) ? 'missing' : 'add an example'}</small></li>`).join('')}</ul><details class="jf-why"><summary>What to do</summary><p>Add one true example for each: what you did and the result. Missing items you have not done are role gaps, so leave them out.</p></details>` : '<p class="jf-ok">✓ Nothing open</p>'}</section>
+</div>
+<div class="jf-actions"><button class="button primary small" type="button" data-jf-recheck>Save and re-check <small>(1 scan)</small></button>${ai?.enabled ? `<button class="button secondary small" type="button" data-jf-tailor ${ai.left ? '' : 'disabled'}>Tailor whole resume for me <small>(${ai.left} left today)</small></button><label class="jf-consent"><input type="checkbox" data-jf-consent> Share this resume and job with the CVTara team (<a href="/privacy.html" target="_blank" rel="noopener">privacy</a>). You review every change; nothing you have not done is added.</label>` : ''}</div>
+${ai?.enabled ? '<div data-jf-out></div>' : ''}
 <p role="status" class="ats-status" data-jf-status></p>`;
   }
 

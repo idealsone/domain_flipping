@@ -6,7 +6,7 @@ use App\Models\User;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 
-/** Work done after payment: Tara Expert Review (written by Tara AI when automatic reviews are on, see ExpertReview) and Profile Boost (done by a person), alone or inside the Complete Job Kit. */
+/** Work done after payment: Tara Expert Review (written automatically, see ExpertReview) and Profile Boost (an automatic draft the customer approves, see ProfileBoost; the owner can still finish it by hand), alone or inside the Complete Job Kit. */
 class Services
 {
     public const STATUSES = ['not_started', 'in_review', 'delivered', 'cancelled'];
@@ -34,6 +34,9 @@ class Services
         if (in_array(ExpertReview::SERVICE, $list, true)) {
             ExpertReview::soon();
         }
+        if (in_array(ProfileBoost::SERVICE, $list, true)) {
+            ProfileBoost::soon();
+        }
     }
 
     /** Once a reviewer has started, the purchase can no longer be refunded. */
@@ -47,7 +50,8 @@ class Services
         $names = Settings::plans();
 
         return DB::table('service_orders')->where('owner_id', $uid)->orderByDesc('created_at')->limit(50)->get()
-            ->map(fn ($o) => ['id' => $o->id, 'purchaseId' => $o->purchase_id, 'service' => $o->service, 'name' => $names[$o->service]['name'] ?? $o->service, 'status' => $o->status, 'note' => $o->status === 'delivered' ? $o->note : null, 'review' => $o->status === 'delivered' ? $o->review : null, 'createdAt' => $o->created_at, 'deliveredAt' => $o->delivered_at])->all();
+            ->map(fn ($o) => ['id' => $o->id, 'purchaseId' => $o->purchase_id, 'service' => $o->service, 'name' => $names[$o->service]['name'] ?? $o->service, 'status' => $o->status, 'note' => $o->status === 'delivered' || ($o->service === ProfileBoost::SERVICE && $o->status === 'in_review') ? $o->note : null, 'review' => $o->status === 'delivered' ? $o->review : null, 'createdAt' => $o->created_at, 'deliveredAt' => $o->delivered_at]
+                + ($o->service === ProfileBoost::SERVICE ? ProfileBoost::view($o) : []))->all();
     }
 
     public static function queue(): array

@@ -96,6 +96,40 @@ class GrowthAdminController extends Controller
         if ($path === 'growth/agents' && $get) {
             return $ok(['seo' => \App\Services\SeoAgent::agentStatus(), 'growth' => Growth::agentStatus(), 'settings' => ['seo' => SeoAgent::settings()['auto'], 'growth' => GrowthOps::settings()['auto']]]);
         }
+        // 3.60.0 directory and brand listings register, keyword backlog by cluster
+        if ($path === 'growth/brand-profiles' && $get) {
+            return $ok(AdminTable::query($r, DB::table('brand_profiles'), ['search' => ['platform', 'url', 'note'], 'filters' => ['status' => 'status', 'kind' => 'kind'], 'sorts' => ['platform' => 'platform', 'checked' => 'last_checked_at', 'sort' => 'id'], 'sort' => 'platform', 'dir' => 'asc', 'key' => 'id',
+                'export' => ['title' => 'Directory and brand listings', 'map' => fn ($rows) => array_map(fn ($x) => ['Platform' => $x['platform'], 'Type' => \App\Services\BrandProfiles::KINDS[$x['kind']] ?? $x['kind'], 'URL' => $x['url'],
+                    'State' => \App\Services\BrandProfiles::STATES[$x['status']] ?? $x['status'], 'Claimed' => $x['claimed'] ? 'Yes' : 'No', 'Verified' => $x['verified'] ? 'Yes' : 'No', 'Last checked' => $x['last_checked_at'], 'Status code' => $x['http_status'], 'Note' => $x['note']], $rows)]]));
+        }
+        if ($path === 'growth/brand-profiles' && ! $get) {
+            $v = $r->validate(['id' => 'nullable|integer', 'platform' => 'required|string|min:2|max:80', 'kind' => 'required|in:'.implode(',', array_keys(\App\Services\BrandProfiles::KINDS)), 'url' => 'nullable|url|max:300',
+                'status' => 'required|in:'.implode(',', array_keys(\App\Services\BrandProfiles::STATES)), 'claimed' => 'boolean', 'verified' => 'boolean', 'note' => 'nullable|string|max:500']);
+
+            return $ok(['id' => \App\Services\BrandProfiles::save($r->user()->id, $v)]);
+        }
+        if ($path === 'growth/brand-profiles/check' && ! $get) {
+            return $ok(['profile' => \App\Services\BrandProfiles::check((int) $r->input('id'))]);
+        }
+        if ($path === 'growth/seo/backlog' && $get) {
+            return $ok(['clusters' => \App\Services\SeoBacklog::summary(), 'source' => \App\Services\SeoBacklog::data()['source'] ?? '', 'playbook' => \App\Services\SeoBacklog::playbook(), 'linkPlan' => \App\Services\SeoBacklog::linkPlan()]);
+        }
+        if ($path === 'growth/agents/cadence' && $get) {
+            return $ok(\App\Services\AgentCadence::overview());
+        }
+        if ($path === 'growth/agents/cadence/run' && ! $get) {
+            $v = $r->validate(['agent' => 'required|in:seo,growth', 'cadence' => 'required|in:daily,weekly,monthly']);
+            abort_unless(\App\Services\Access::can($r->user(), $v['agent'] === 'seo' ? 'seo.view' : 'growth.approve'), 403, 'Your role cannot run this report.');
+            $out = \App\Services\AgentCadence::run($v['agent'], $v['cadence']);
+            abort_if(isset($out['error']), 500, $out['error'] ?? '');
+
+            return $ok(['summary' => $out['summary'] ?? 'Done']);
+        }
+        if ($path === 'growth/agents/corrections' && $get) {
+            return $ok(AdminTable::query($r, DB::table('agent_corrections'), ['search' => ['metric', 'action', 'root_cause'], 'filters' => ['agent' => 'agent', 'status' => 'status'], 'date' => 'created_at', 'sorts' => ['sort' => 'id'], 'key' => 'id',
+                'export' => ['title' => 'Corrective actions', 'map' => fn ($rows) => array_map(fn ($x) => ['Created' => $x['created_at'], 'Agent' => \App\Services\KnowledgeSync::AGENTS[$x['agent']] ?? $x['agent'], 'Period' => $x['period'], 'Metric' => $x['metric'], 'Target' => $x['target'], 'Actual' => $x['actual'],
+                    'Variance' => $x['variance'], 'Evidence' => $x['evidence'], 'Root cause' => $x['root_cause'], 'Corrective action' => $x['action'], 'Owner' => $x['owner'], 'Deadline' => $x['deadline'], 'Expected result' => $x['expected'], 'Review date' => $x['review_date'], 'Status' => $x['status']], $rows)]]));
+        }
         if ($path === 'growth/agents/log' && $get) {
             return $ok(AdminTable::query($r, DB::table('agent_runs'), ['search' => ['task', 'summary', 'error'], 'filters' => ['agent' => 'agent', 'status' => 'status'], 'date' => 'started_at', 'sorts' => ['sort' => 'id'], 'key' => 'id',
                 'export' => ['title' => 'Agent log', 'map' => fn ($rows) => array_map(fn ($x) => ['Started' => $x['started_at'], 'Agent' => AgentLog::AGENTS[$x['agent']] ?? $x['agent'], 'Task' => $x['task'], 'Status' => $x['status'], 'Result' => $x['summary'], 'Error' => $x['error'], 'Took (ms)' => $x['ms']], $rows)]]));
@@ -208,7 +242,8 @@ class GrowthAdminController extends Controller
         }
         if ($path === 'growth/seo/inspect') {
             abort_unless(\App\Services\SearchConsole::ready(), 422, 'Connect Search Console first: Owner console → Integrations → Analytics.');
-            $out = AgentLog::run('seo', 'inspect', fn () => SeoOps::inspect());
+            $only = array_slice(array_filter((array) $r->input('paths', []), 'is_string'), 0, 20);
+            $out = AgentLog::run('seo', 'inspect', fn () => SeoOps::inspect(null, $only));
             abort_if(isset($out['error']), 422, $out['error'] ?? '');
 
             return $ok($out);

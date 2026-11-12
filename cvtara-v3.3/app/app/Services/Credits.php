@@ -122,6 +122,7 @@ class Credits
         foreach ($pools as $p) {
             if (self::usedScans($uid, $p['id']) < $p['scan']) {
                 DB::table('product_usage')->insert(['id' => (string) Str::uuid(), 'owner_id' => $uid, 'action' => 'ats_scan', 'reference' => $scanId.'|'.$p['id'], 'created_at' => now(), 'updated_at' => now()]);
+                UsageLedger::add($uid, 'ats_scan', 'consume', -1, 'scan:'.$scanId, self::uuidOrNull($p['id']), $scanId); // 3.56.0 ledger mirror
 
                 return true;
             }
@@ -189,6 +190,7 @@ class Credits
         foreach ($pools as $p) {
             if (self::used($uid, $kind, $p['id']) < $p[$kind]) {
                 DB::table('product_usage')->insert(['id' => (string) Str::uuid(), 'owner_id' => $uid, 'action' => 'doc_'.$kind, 'reference' => $docId.'|'.$revision.'|'.$p['id'], 'created_at' => now(), 'updated_at' => now()]);
+                UsageLedger::add($uid, $kind.'_download', 'consume', -1, 'dl:'.$kind.':'.$docId.'|'.$revision, self::uuidOrNull($p['id']), $docId.'|'.$revision); // 3.56.0 ledger mirror
 
                 return true;
             }
@@ -197,5 +199,11 @@ class Credits
             throw ValidationException::withMessages(['limit' => $kind === 'resume' ? 'Quick Download covers one resume, and it is already used on another resume. Job Hunt adds 10 tailored resumes and 10 cover letters.' : 'Quick Download does not include cover letters. Job Hunt adds 10 cover letters and 10 tailored resumes.']);
         }
         throw ValidationException::withMessages(['limit' => self::outOf($kind === 'resume' ? 'resume download credits' : 'cover-letter download credits')]);
+    }
+
+    /** Plan pools are orders (uuid); anything else is kept in the reference only. */
+    private static function uuidOrNull($id): ?string
+    {
+        return is_string($id) && preg_match('/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i', $id) ? $id : null;
     }
 }

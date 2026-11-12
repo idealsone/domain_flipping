@@ -67,15 +67,12 @@ class TaraAI
         if (! Growth::aiAllowed($purpose)) {
             throw new \RuntimeException('budget');
         }
-        $m = AiGateway::send($purpose, $ownerId, fn ($c) => $c->beta->messages->create(
-            model: AiGateway::model(),
-            maxTokens: $maxTokens,
-            system: $system,
-            messages: [['role' => 'user', 'content' => $prompt]],
-            outputConfig: ['effort' => 'medium'],
-            fallbacks: 'default',
-            betas: ['server-side-fallback-2026-07-01'],
-        ), $timeout);
+        $model = AiGateway::model(null, $purpose);
+        $effort = AiGateway::effort($purpose); // 3.64.0: low for routine jobs, medium for customer writing
+        $m = AiGateway::send($purpose, $ownerId, fn ($c) => AiGateway::fallbacks($model)
+            ? $c->beta->messages->create(model: $model, maxTokens: $maxTokens, system: $system, messages: [['role' => 'user', 'content' => $prompt]], outputConfig: ['effort' => $effort], fallbacks: 'default', betas: ['server-side-fallback-2026-07-01'])
+            : $c->beta->messages->create(model: $model, maxTokens: $maxTokens, system: $system, messages: [['role' => 'user', 'content' => $prompt]], outputConfig: ['effort' => $effort]),
+            $timeout, AiGateway::promptVersion($system));
         if ($m->stopReason === 'refusal') {
             throw new \RuntimeException('refusal');
         }
@@ -97,7 +94,13 @@ class TaraAI
     public static function failure(\Throwable $e): string
     {
         if ($e instanceof APIStatusException && in_array($e->status ?? 0, [401, 403], true)) {
-            return 'The Claude API key was refused. Check it in Settings → Integrations → AI.';
+            return 'The Claude API key was refused. Open Owner console → Integrations → AI and press Test the key to see why.';
+        }
+        if ($e instanceof APIStatusException && ($e->status ?? 0) === 404) {
+            return 'The Claude model set in Integrations → AI is not available to this key. Empty the model box and save.';
+        }
+        if ($e instanceof APIStatusException && ($e->status ?? 0) === 400 && str_contains(strtolower($e->getMessage()), 'credit')) {
+            return 'The Anthropic account has no credit left. Add credit at console.anthropic.com → Billing.';
         }
 
         return match (true) {

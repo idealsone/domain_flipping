@@ -96,6 +96,25 @@
     return true;
   }
 
+  // 3.56.0 "Is this the right job?": show what was read from the posting before a scan is used (V7 §13).
+  async function confirmJob(text, url) {
+    st.busy = true; const btn = $('#atsRun'); btn.disabled = true; const out = $('#atsOut'); out.innerHTML = '';
+    try {
+      say(st.source === 'link' ? 'Opening the job link and reading the posting…' : 'Reading the job description…');
+      const body = { source: st.source, title: $('#atsTitle').value.trim(), company: $('#atsCompany').value.trim() };
+      if (st.source === 'link') body.url = url; else body.text = text;
+      const j = (await api('/api/ats/read', { method: 'POST', body })).job;
+      const row = (l, v) => v && (!Array.isArray(v) || v.length) ? `<div><dt>${E(l)}</dt><dd>${E(Array.isArray(v) ? v.join(', ') : v)}</dd></div>` : '';
+      out.innerHTML = `<section class="panel panel-pad ats-confirm"><h3>Is this the right job?</h3><p class="ats-muted">This is what we read from the posting. No scan is used until you confirm.${j.confidence === 'low' ? ' Only a little could be read, so check the text you gave.' : ''}</p>
+        <div class="ats-confirm-edit"><label>Job title<input data-jc="title" value="${E(j.title || '')}" maxlength="180"></label><label>Company<input data-jc="company" value="${E(j.company || '')}" maxlength="180"></label></div>
+        <dl class="ats-facts">${row('Location', j.location)}${row('Type', j.employmentType)}${row('Level', j.seniority)}${row('Experience', j.experience)}${row('Education', j.education)}${row('Skills asked for', j.requiredSkills)}${row('Good to have', j.preferredSkills)}${row('Pay (as stated)', j.compensation)}</dl>
+        <p class="ats-inline-actions"><button class="button primary" type="button" data-jc-ok>Yes, check my resume (uses 1 scan)</button> <button class="button secondary" type="button" data-jc-no>No, change the job</button></p></section>`;
+      say('Check the job details below.');
+      out.querySelector('[data-jc-ok]').onclick = () => { $('#atsTitle').value = out.querySelector('[data-jc=title]').value.trim(); $('#atsCompany').value = out.querySelector('[data-jc=company]').value.trim(); run({ confirmed: true, skipUnsaved: true }); };
+      out.querySelector('[data-jc-no]').onclick = () => { out.innerHTML = ''; say('Change the link or the job text, then check again.'); (st.source === 'link' ? $('#atsUrl') : $('#atsText'))?.focus(); };
+    } catch (e) { say((e.message || 'The job could not be read.') + ' No scan was used.', true); } finally { st.busy = false; if ($('#atsRun')) $('#atsRun').disabled = false; }
+  }
+
   async function run(opts = {}) {
     if (st.busy) return;
     const text = $('#atsText')?.value.trim() || '', url = $('#atsUrl')?.value.trim() || '';
@@ -103,11 +122,12 @@
     if (st.source === 'link' && !/^https?:\/\//i.test(url)) { say('Paste the full link of the job posting, starting with https://', true); $('#atsUrl')?.focus(); return; }
     if (st.source !== 'link' && text.length < 80) { say('Add the job description first (at least a few lines).', true); return; }
     if (!opts.skipUnsaved && await unsavedBuilderChanges()) return;
+    if (!opts.confirmed) return confirmJob(text, url);
     st.busy = true; const btn = $('#atsRun'); btn.disabled = true; $('#atsOut').innerHTML = '';
     let used = false;
     try {
       say(st.source === 'link' ? 'Opening the job link and reading the posting…' : 'Comparing your resume with the job…');
-      const body = { resumeId: st.resumeId, source: st.source, title: $('#atsTitle').value.trim(), company: $('#atsCompany').value.trim() };
+      const body = { resumeId: st.resumeId, source: st.source, title: $('#atsTitle').value.trim(), company: $('#atsCompany').value.trim(), confirmed: true };
       if (st.source === 'link') body.url = url; else body.text = text;
       const s = await api('/api/ats/scan', { method: 'POST', body }); used = true;
       if (s.title && !$('#atsTitle').value) $('#atsTitle').value = s.title;

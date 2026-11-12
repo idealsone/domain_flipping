@@ -34,11 +34,12 @@ return [
         'ops.view' => 'See the Error Log, health and speed',
         'ops.manage' => 'Clear errors, rebuild pages, run health checks',
         'referrals.manage' => 'Review referral payouts and creator applications',
+        'partners.manage' => 'Add B2B partners, their campaign links and portal members; review partner applications',
     ],
 
     'roles' => [
         'admin' => ['name' => 'Admin', 'about' => 'Day-to-day operations. No keys, prices, deletes, roles or business assistant.',
-            'can' => ['overview.view', 'customers.view', 'customers.manage', 'customers.view_as', 'orders.view', 'orders.refund', 'services.manage', 'support.view', 'support.manage', 'content.edit', 'seo.view', 'seo.draft', 'seo.approve', 'growth.view', 'growth.draft', 'growth.approve', 'reports.view', 'ops.view', 'ops.manage', 'referrals.manage']],
+            'can' => ['overview.view', 'customers.view', 'customers.manage', 'customers.view_as', 'orders.view', 'orders.refund', 'services.manage', 'support.view', 'support.manage', 'content.edit', 'seo.view', 'seo.draft', 'seo.approve', 'growth.view', 'growth.draft', 'growth.approve', 'reports.view', 'ops.view', 'ops.manage', 'referrals.manage', 'partners.manage']],
         'support_manager' => ['name' => 'Support Manager', 'about' => 'Runs support: all tickets, customer lookups, orders, Expert Review queue.',
             'can' => ['overview.view', 'customers.view', 'customers.view_as', 'orders.view', 'services.manage', 'support.view', 'support.manage', 'ops.view']],
         'support_agent' => ['name' => 'Support Agent', 'about' => 'Answers support tickets and looks up customers.',
@@ -56,7 +57,7 @@ return [
     // Console modules (resources/console/NAME.js) a role may load; a module not listed is owner only.
     'modules' => [
         'ops' => 'overview.view', 'people' => 'customers.view', 'reports' => 'reports.view', 'feedback' => 'support.view',
-        'content' => 'content.edit', 'publish' => 'content.edit', 'whatsnew' => 'content.edit', 'extras' => 'content.edit',
+        'content' => 'content.edit', 'publish' => 'content.edit', 'whatsnew' => 'content.edit', 'interviews' => 'content.edit|customers.view', 'partners' => 'partners.manage|growth.view|referrals.manage', 'costs' => 'orders.view|growth.view', 'templib' => 'content.edit', 'extras' => 'content.edit',
         'growth' => 'growth.view|seo.view', 'agents' => 'growth.view|seo.view', 'operators' => 'growth.view',
         'campaigns' => 'growth.view', 'outreach' => 'growth.view', 'promos' => 'growth.view',
         'refunds' => 'orders.view', 'referral' => 'referrals.manage', 'speed' => 'ops.view', 'team' => 'owner', 'command' => 'staff', 'approvals' => 'staff', 'metrics' => 'overview.view',
@@ -71,6 +72,10 @@ return [
         ['GET', '#^(plans|content/integrations)$#', 'staff'],
         ['GET', '#^content/(seo|blog|library|features|legal|site)$#', 'content.edit|seo.view'],
         ['GET', '#^growth/agents$#', 'growth.view|seo.view'],  // agent on/off status only
+        ['GET', '#^growth/agents/(cadence|corrections)$#', 'growth.view|seo.view'],
+        ['GET', '#^growth/(brand-profiles|seo/backlog)$#', 'growth.view|seo.view'],
+        ['POST', '#^growth/brand-profiles(/check)?$#', 'seo.approve|growth.approve'],
+        ['POST', '#^growth/agents/cadence/run$#', 'growth.view|seo.view'], // the controller checks seo.view / growth.approve per agent
         ['GET', '#^dashboard$#', 'overview.view'],
         // Ctrl+K search: every console role may search; the answer holds only the kinds the role can see.
         ['GET', '#^find$#', 'staff'],
@@ -84,7 +89,7 @@ return [
         ['POST', '#^tasks(/[a-f0-9-]{36}/(move|evidence))?$#', 'seo.draft|growth.draft|seo.approve|growth.approve'],
 
         // Owner only: keys, prices, business switches, setup, roles, the business assistant, deletes and blocks.
-        ['*', '#^(settings|providers|plans|business-controls|setup/.*|team(/.*)?|tara(/.*)?|users/(block|delete)|refunds/settings|services/settings|referrals/settings|campaigns/settings|outreach/(settings|senders)|speed/(save|test-reader)|report/fresh-start|media|indexing/settings|growth/(settings|costs|levels)|errors/clear|audit(/.*)?)$#', 'owner'],
+        ['*', '#^(settings|providers|plans|business-controls|setup/.*|team(/.*)?|tara(/.*)?|users/(block|delete)|refunds/settings|services/settings|referrals/settings|campaigns/settings|outreach/(settings|senders)|speed/(save|test-reader)|report/fresh-start|media|indexing/settings|growth/(settings|costs|levels)|interviews/settings|errors/clear|audit(/.*)?)$#', 'owner'],
 
         ['GET', '#^(overview|live|letter-summary)$#', 'overview.view'],
         ['GET', '#^(users|users/grants|purchases)$#', 'customers.view'],
@@ -105,11 +110,24 @@ return [
 
         ['GET', '#^(report|report/meta|report/kpis|reports)$#', 'reports.view'],
 
-        ['*', '#^(content/(legal|features|library|blog|emails|popup|site)|reviews|feedback/add|whats-new(/save)?|legal/generate|email/preview)$#', 'content.edit'],
+        // 3.49.0 interview practice: question bank, sessions and complimentary mock interviews.
+        ['GET', '#^interviews$#', 'content.edit|customers.view'],
+        ['GET', '#^interviews/template$#', 'content.edit'],
+        ['POST', '#^interviews/(seed|approve|import|questions/\d+(/retire)?)$#', 'content.edit'],
+        ['POST', '#^interviews/grant$#', 'customers.manage'],
 
-        ['GET', '#^(seo|page-audit|site-urls|search/rows|indexing|growth/seo(/(proposals|tracked|overview|pages|page|keywords|audit-lists|versions))?|growth/links|growth/visibility(/tests)?|growth/agents/log)$#', 'seo.view'],
+        // 3.54.0 PartnerHub. Marking commissions paid is owner only (no rule).
+        ['GET', '#^costs(/margin)?$#', 'orders.view|growth.view'],
+        ['*', '#^template-library(/.*)?$#', 'content.edit'],
+        ['GET', '#^partners(/\d+(/portal)?|/applications|/rankings|/rewards)?$#', 'partners.manage|growth.view'],
+        ['GET', '#^partners/(commissions|payouts)$#', 'partners.manage|referrals.manage'],
+        ['POST', '#^partners/(save|\d+/links|links/\d+(/campaign)?|\d+/members|\d+/agreements|applications/\d+|rewards/save|rank)$#', 'partners.manage'],
+
+        ['*', '#^(content/(legal|features|library|blog|emails|popup|site)|reviews(/edit|/history)?|feedback/add|whats-new(/save)?|legal/generate|email/preview)$#', 'content.edit'],
+
+        ['GET', '#^(seo|page-audit|site-urls|search/rows|indexing(/engines)?|growth/seo(/(proposals|tracked|overview|pages|page|keywords|audit-lists|versions))?|growth/links|growth/visibility(/tests)?|growth/agents/log)$#', 'seo.view'],
         ['POST', '#^(growth/seo/(scan|inspect|keyword|audit|web-vitals|draft|versions/\d+/verify|page/(record|audit|reviewed))|growth/link(/verify|/delete)?|growth/links/draft|growth/visibility/(test|prompts|audit))$#', 'seo.draft'],
-        ['POST', '#^(growth/seo/(decide|run|settings)|growth/visibility/policy|indexing/(submit|sitemap)|search/(import|sync)|content/seo)$#', 'seo.approve'],
+        ['POST', '#^(growth/seo/(decide|run|settings)|growth/visibility/policy|indexing/(submit|sitemap|engines/refresh)|search/(import|sync)|content/seo)$#', 'seo.approve'],
 
         ['GET', '#^(growth|growth/reports|growth/report|growth/revenue|growth/campaign-plans|growth/experiments|growth/customers|growth/checkout|growth/customer|growth/scorecard|growth/agents|campaigns|campaigns/(count|contacts|preview)|outreach|outreach/(contacts|export|preview)|promos|promos/employers)$#', 'growth.view'],
         ['POST', '#^(growth/(diagnose|campaign-plan|experiment|events/sync|report-now)|campaigns/(save|test|preview|count)|outreach/(import|preview)|promos/save)$#', 'growth.draft'],

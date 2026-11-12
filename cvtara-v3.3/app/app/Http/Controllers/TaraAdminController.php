@@ -54,7 +54,7 @@ class TaraAdminController extends Controller
             abort_if($v['enabled'] && ! TaraAI::enabled(), 422, 'Add the Claude API key and switch AI on in Settings → Integrations → AI first.');
             abort_if($v['enabled'] && ! $v['tools'], 422, 'Leave at least one action on, or Tara cannot look anything up.');
             abort_if(preg_match('/\b(AI|artificial intelligence|Claude|Anthropic|GPT|chatbot)\b/i', $v['handoff']), 422, 'The hand-off message is shown to customers: leave out AI and provider names.');
-            Settings::put('tara', $v + array_intersect_key(TaraChat::settings(), ['nudges' => 1, 'peerMin' => 1, 'greet' => 1]));
+            Settings::put('tara', $v + ['toolsKnown' => array_keys(TaraChat::TOOLS)] + array_intersect_key(TaraChat::settings(), ['nudges' => 1, 'peerMin' => 1, 'greet' => 1]));
             Settings::audit($uid, 'tara_settings_saved', $v['enabled'] ? 'on' : 'off');
 
             return $ok(['settings' => TaraChat::settings()]);

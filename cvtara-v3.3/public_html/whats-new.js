@@ -63,7 +63,7 @@
   const busy = () => document.querySelector('dialog[open]'); // another window (welcome form, plan dialog) goes first
   function popup(tries = 0) {
     if (!data || !data.unseen.length) return;
-    if (busy()) { if (tries < 6) setTimeout(() => popup(tries + 1), 5000); return; }
+    if (busy()) { if (tries < 36) setTimeout(() => popup(tries + 1), 5000); return; } // wait up to 3 minutes for another window to close
     open(true);
   }
   async function load() {

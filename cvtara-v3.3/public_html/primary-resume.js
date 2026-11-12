@@ -31,6 +31,7 @@
       try {
         if (!window.CVTaraImport) throw Error('The document reader did not load. Refresh the page and try again.');
         const text = await window.CVTaraImport.readFile(file);
+        this.file = file;
         await this.send(text, file.name);
       } catch (e) { this.failed(e); }
     },
@@ -44,13 +45,25 @@
           ${(r.warnings || []).length ? `<div class="rh-warn" role="status"><b>Please check:</b><ul>${r.warnings.map(w => `<li>${E(w)}</li>`).join('')}</ul></div>` : ''}
           ${q.tips.length ? `<div class="rh-tips"><b>To score higher</b><ul>${q.tips.map(t => `<li>${E(t)}</li>`).join('')}</ul></div>` : '<p class="rh-ok">Nicely done. Your resume is ATS-friendly.</p>'}
           <p class="rh-note">We read the text of your file and filled the builder. Pick a template, check every section and download when you are happy.</p>
+          ${this.file ? '<p class="rh-note" data-rh-kept>We keep a copy of your original file for 90 days so you can download it again from Account &gt; Your data. You can delete it there at any time.</p>' : ''}
           <div class="rh-actions"><button class="button primary" data-rh-edit="${E(r.id)}">Review and edit</button><button class="button secondary" data-rh-close>Later</button></div></div>`);
         $('[data-rh-edit]', $('#rhDialog')).onclick = () => open(r.id);
         document.dispatchEvent(new CustomEvent('cvtara-resume-saved'));
+        if (this.file) this.keep(this.file, r.id);
       } catch (e) {
         if (e.data && e.data.needsReplace) return this.replace(e.data, text, fileName);
         this.failed(e);
       }
+    },
+    // 3.61.0 Keep the original file (private, 90 days, deletable). A failure here never affects the resume itself.
+    keep(file, id) {
+      this.file = null;
+      const note = () => $('[data-rh-kept]', $('#rhDialog'));
+      if (file.size > 5 * 1024 * 1024) { const n = note(); if (n) n.textContent = 'Your original file is larger than 5 MB, so a copy was not kept. Your resume was filled in as usual.'; return; }
+      const fr = new FileReader();
+      fr.onload = () => api(`/api/resumes/${id}/original`, { method: 'POST', body: { file: String(fr.result).split(',')[1] || '', fileName: file.name } })
+        .catch(e => { const n = note(); if (n) n.textContent = 'A copy of your original file could not be kept (' + e.message + '). Your resume was filled in as usual.'; });
+      fr.readAsDataURL(file);
     },
     // The file was read, but the plan has no room for another resume: let the customer put it into one they already have.
     replace(d, text, fileName) {
@@ -105,6 +118,7 @@
           <button class="button primary small" data-open="${E(r.id)}">Edit</button>
           <button class="button secondary small" data-export="${E(r.id)}">Download</button>
           <button class="button secondary small" data-ats="${E(r.id)}">ATS check</button>
+          <button class="button secondary small" data-history="${E(r.id)}">History</button>
           ${r.is_primary ? '' : `<button class="button secondary small" data-primary="${E(r.id)}">Make primary</button>`}
         </div>
       </div></article>`;
@@ -119,16 +133,32 @@
     } catch (e) { box.textContent = e.message; delete box.dataset.loaded; }
   }
 
+  // 3.65.0 V1 (as it arrived) -> V2 (your main resume) -> V3 (one copy per job). Real scores only.
+  const stageName = { saved: 'Saved', applied: 'Applied', interview: 'Interview', offer: 'Offer', rejected: 'Closed', wishlist: 'Saved' };
+  function journey(j) {
+    if (!j || !j.primary) return '';
+    const v3 = j.v3 || [], gain = j.v2.gain;
+    return `<section class="rj" aria-label="Your resume journey">
+      <div class="rj-step"><span class="rj-tag">V1 · As it arrived</span>${ring(j.v1.score)}<small>${j.v1.same ? 'Not edited yet' : 'First version, ' + E(when(j.v1.date))}${j.v1.file ? ` · <a href="/api/resumes/originals/${E(j.v1.file.id)}" download>original file</a>` : ''}</small></div>
+      <div class="rj-arrow" aria-hidden="true">→</div>
+      <div class="rj-step main"><span class="rj-tag">V2 · Your main resume</span>${ring(j.v2.score)}<small>${gain > 0 ? `<b class="rj-up">+${gain} points</b> since V1` : gain < 0 ? `${gain} points since V1` : 'Edit it to raise the score'}</small><button class="button secondary small" data-open="${E(j.primary.id)}">Improve</button></div>
+      <div class="rj-arrow" aria-hidden="true">→</div>
+      <div class="rj-step jobs"><span class="rj-tag">V3 · One copy per job</span>${v3.length ? `<ul>${v3.slice(0, 5).map(c => `<li><b>${E(c.company || c.title || 'Job')}</b><span>${E(c.role || '')}</span>${c.stage ? `<em class="rj-st">${E(stageName[c.stage] || c.stage)}</em>` : ''}${c.frozen ? '<em title="The copy sent with this application never changes">🔒 kept as sent</em>' : ''}${c.letterId ? `<a href="/workspace.html?view=letter&letter=${encodeURIComponent(c.letterId)}" title="Cover letter for this job">✉ letter</a>` : ''}${c.kind === 'tailored' ? `<button class="linklike" data-open="${E(c.resumeId)}">open</button>` : ''}</li>`).join('')}</ul>${v3.length > 5 ? `<small>and ${v3.length - 5} more below</small>` : ''}` : '<p>Tailor your main resume for a job. Each job keeps its own copy and letter.</p>'}</div>
+    </section>`;
+  }
+
   async function render() {
     const host = $('#view-resumes');
     if (!host) return;
     host.innerHTML = '<div class="pr-panel"><p>Loading your resumes…</p></div>';
     let list;
     try { list = await api('/api/resumes'); } catch (e) { host.innerHTML = `<div class="pr-panel" role="alert">${E(e.message)}</div>`; return; }
+    let jr = null; try { jr = (await api('/api/resumes/journey')).journey; } catch { jr = null; }
     const rows = (list.resumes || []).slice().sort((a, b) => (b.is_primary ? 1 : 0) - (a.is_primary ? 1 : 0) || a.number - b.number);
     const primary = rows.find(r => r.is_primary), cr = list.credits || { resumes: { used: 0, total: 0, remaining: 0 } };
     const full = rows.length >= list.limit;
     host.innerHTML = `<div class="admin-heading"><div><h2>My resumes</h2><p>Every resume you make here shows how ATS-friendly it is. Edit it, download it, or check it against a job.</p></div></div>
+      ${journey(jr)}
       <div class="rh-start" role="group" aria-label="Create a resume">
         <button class="rh-opt" data-upload><i>📤</i><b>Upload your resume</b><small>Word, PDF or text. We fill the builder for you.</small></button>
         <button class="rh-opt" data-new><i>🎨</i><b>Choose a template</b><small>Pick a design, add your details, download.</small></button>

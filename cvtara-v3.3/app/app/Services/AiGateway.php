@@ -29,10 +29,79 @@ class AiGateway
         return (array) ($a[$purpose] ?? $a[strstr($purpose, ':', true) ?: $purpose] ?? []) + $base;
     }
 
-    /** Model: the given override (Tara's own setting), then the owner's AI setting, then the documented default. */
-    public static function model(?string $override = null): string
+    /**
+     * Model: the given override (Tara's own setting), else the model for the purpose's tier (3.64.0): "chat" (customer
+     * Tara) uses the chat model, "quick" (short routine jobs in config ai.quick_purposes) the quick-task model, and
+     * everything else (customer writing, the Business assistant) the writing model. Each tier is the owner's box in
+     * Integrations > AI when filled, else config/ai.php. Before 3.64.0 one model (Opus) answered everything.
+     */
+    public static function model(?string $override = null, ?string $purpose = null): string
     {
-        return trim((string) $override) ?: (trim((string) (TaraAI::config()['model'] ?? '')) ?: (string) config('ai.default_model'));
+        if (trim((string) $override) !== '') {
+            return trim((string) $override);
+        }
+        $c = TaraAI::config();
+        [$box, $default] = match (self::tier($purpose)) {
+            'chat' => ['chatModel', 'ai.chat_model'],
+            'quick' => ['quickModel', 'ai.quick_model'],
+            default => ['model', 'ai.default_model'],
+        };
+
+        return trim((string) ($c[$box] ?? '')) ?: (string) config($default);
+    }
+
+    /** The cost tier of a purpose: chat, quick or writing. */
+    public static function tier(?string $purpose): string
+    {
+        return match (true) {
+            $purpose !== null && in_array($purpose, (array) config('ai.chat_purposes', []), true) => 'chat',
+            $purpose !== null && self::quick($purpose) => 'quick',
+            default => 'writing',
+        };
+    }
+
+    /** Whether a purpose is a short routine task that runs on the quick-task model. */
+    public static function quick(string $purpose): bool
+    {
+        return in_array($purpose, (array) config('ai.quick_purposes', []), true);
+    }
+
+    /** Thinking effort for a purpose (thinking is billed as output, so routine work thinks less). */
+    public static function effort(?string $purpose): string
+    {
+        return (string) (((array) config('ai.effort', []))[self::tier($purpose)] ?? 'medium');
+    }
+
+    /** The three models in use now, for the console (Costs & margin and Integrations). */
+    public static function models(): array
+    {
+        return ['writing' => self::model(null, null), 'chat' => self::model(null, 'customer:tara_chat'), 'quick' => self::model(null, 'seo')];
+    }
+
+    /**
+     * System prompt as cacheable blocks (3.64.0): the fixed part first with a cache marker, then the part that changes
+     * per customer or per minute (date, name, conversation summary) after it, so the fixed part is read from cache.
+     */
+    public static function system(string $fixed, string $changing = ''): array
+    {
+        $blocks = [['type' => 'text', 'text' => $fixed] + (config('ai.cache') ? ['cacheControl' => ['type' => 'ephemeral']] : [])];
+        if (trim($changing) !== '') {
+            $blocks[] = ['type' => 'text', 'text' => trim($changing)];
+        }
+
+        return $blocks;
+    }
+
+    /** Server-side refusal fallback is offered for the larger models, not for Haiku (the request would be refused). */
+    public static function fallbacks(string $model): bool
+    {
+        return ! str_contains($model, 'haiku');
+    }
+
+    /** A short fingerprint of a system prompt, stored with each request so a change of wording can be traced in costs. */
+    public static function promptVersion(string $system): string
+    {
+        return substr(sha1($system), 0, 10);
     }
 
     /** The Claude API address. Tests may point it at a local stand-in, never on a production site. */
@@ -55,22 +124,68 @@ class AiGateway
      * Sends one request: $build receives the client and returns the API message. The outcome is recorded either way;
      * errors are rethrown unchanged so each feature keeps its own customer wording.
      */
-    public static function send(string $purpose, ?int $ownerId, callable $build, ?int $timeout = null)
+    public static function send(string $purpose, ?int $ownerId, callable $build, ?int $timeout = null, ?string $promptVersion = null)
     {
         $t0 = hrtime(true);
+        // 3.56.0 A free helper pauses for a customer who reached today's AI cap; paid features are never stopped here.
+        if (! CostControls::allowed($purpose, $ownerId)) {
+            self::record($purpose, '', 0, 0, $ownerId, 'capped', $t0, 'Daily AI cap for this customer reached', $promptVersion);
+            throw new \RuntimeException('This customer reached today\'s AI cap.');
+        }
         try {
             $m = $build(self::client($purpose, $timeout));
         } catch (\Throwable $e) {
-            self::record($purpose, '', 0, 0, $ownerId, self::status($e), $t0, mb_strimwidth($e->getMessage(), 0, 190, '…'));
+            self::record($purpose, '', 0, 0, $ownerId, self::status($e), $t0, mb_strimwidth($e->getMessage(), 0, 190, '…'), $promptVersion);
             if (self::status($e) === 'auth') {
-                ErrorLog::record('error', 'ai', 'The Claude API key was refused. Check it in Owner console → Settings → Integrations → AI.');
+                ErrorLog::record('error', 'ai', 'The Claude API key was refused. Open Owner console → Integrations → AI and press Test the key to see why.');
             }
             throw $e;
         }
         $status = ($m->stopReason ?? '') === 'refusal' ? 'refusal' : 'ok';
-        self::record($purpose, (string) ($m->model ?? ''), (int) ($m->usage->inputTokens ?? 0), (int) ($m->usage->outputTokens ?? 0), $ownerId, $status, $t0);
+        self::record($purpose, (string) ($m->model ?? ''), (int) ($m->usage->inputTokens ?? 0), (int) ($m->usage->outputTokens ?? 0), $ownerId, $status, $t0, '', $promptVersion,
+            (int) ($m->usage->cacheReadInputTokens ?? 0), (int) ($m->usage->cacheCreationInputTokens ?? 0));
 
         return $m;
+    }
+
+    /**
+     * Integrations > AI "Test the key" (3.47.0): asks Anthropic directly whether the saved key and model work, with one
+     * one-word request, and explains the answer in plain words. The key itself is never returned.
+     */
+    public static function testKey(): array
+    {
+        $key = trim((string) (TaraAI::config()['claudeApiKey'] ?? ''));
+        $model = self::model();
+        if ($key === '') {
+            return ['works' => false, 'model' => $model, 'message' => 'No Claude API key is saved. Paste one from console.anthropic.com and press Save provider settings.'];
+        }
+        $o = env('CLAUDE_API_BASE');
+        $base = $o && config('app.env') !== 'production' ? rtrim($o, '/') : 'https://api.anthropic.com';
+        $shape = str_starts_with($key, 'sk-ant-api') ? '' : ' The saved key does not start with sk-ant-api, so it may not be an API key (an Admin key or a claude.ai login does not work here).';
+        $t0 = hrtime(true);
+        try {
+            $res = \Illuminate\Support\Facades\Http::withHeaders(['x-api-key' => $key, 'anthropic-version' => '2023-06-01'])->timeout(30)
+                ->post($base.'/v1/messages', ['model' => $model, 'max_tokens' => 1, 'messages' => [['role' => 'user', 'content' => 'Hi']]]);
+        } catch (\Throwable $e) {
+            return ['works' => false, 'model' => $model, 'message' => 'Anthropic could not be reached from the server ('.mb_strimwidth($e->getMessage(), 0, 120, '…').'). Try again in a minute.'];
+        }
+        $status = $res->status();
+        $said = mb_strimwidth((string) ($res->json('error.message') ?? ''), 0, 200, '…');
+        self::record('owner:key_test', $res->successful() ? (string) $res->json('model', $model) : '', (int) $res->json('usage.input_tokens', 0), (int) $res->json('usage.output_tokens', 0), null, $res->successful() ? 'ok' : ($status === 401 || $status === 403 ? 'auth' : 'error'), $t0, $res->successful() ? '' : "HTTP $status: $said");
+        $message = match (true) {
+            $res->successful() => 'The key works with '.$model.'. Tara and the Business assistant can answer.',
+            $status === 401 => 'Anthropic says this key is not valid: it was mistyped, deleted or belongs to a disabled workspace.'.$shape.' Create a new key at console.anthropic.com > API keys, paste it here and press Save provider settings.',
+            $status === 403 => 'Anthropic accepted the key but refused the request ('.$said.'). Check the key\'s workspace and its permissions at console.anthropic.com.',
+            $status === 404 => 'The key works, but the model "'.$model.'" is not available to it. Empty the Claude model box (or type a model your account offers) and save.',
+            $status === 400 && str_contains(strtolower($said), 'credit') => 'The key works, but the Anthropic account has no credit left. Add credit at console.anthropic.com > Billing.',
+            $status === 429 || $status === 529 => 'The key works, but Anthropic is busy or the account rate limit is reached. Try again in a minute.',
+            default => 'Anthropic answered HTTP '.$status.($said !== '' ? ': '.$said : '').'.',
+        };
+        if (! $res->successful() && in_array($status, [401, 403], true)) {
+            ErrorLog::record('error', 'ai', 'Key test: '.$message);
+        }
+
+        return ['works' => $res->successful(), 'model' => $model, 'status' => $status, 'message' => $message];
     }
 
     /** Marks a request that came back without usable text (recorded as ok by send()) as empty. */
@@ -96,6 +211,20 @@ class AiGateway
         };
     }
 
+    private static function hasPromptVersion(): bool
+    {
+        static $has = null;
+
+        return $has ??= Schema::hasColumn('ai_usage', 'prompt_version');
+    }
+
+    private static function hasCacheColumns(): bool
+    {
+        static $has = null;
+
+        return $has ??= Schema::hasColumn('ai_usage', 'cache_read_tokens');
+    }
+
     private static function hasColumns(): bool
     {
         static $has = null;
@@ -103,10 +232,17 @@ class AiGateway
         return $has ??= Schema::hasColumn('ai_usage', 'status');
     }
 
-    private static function record(string $purpose, string $model, int $in, int $out, ?int $ownerId, string $status, int $t0, string $error = ''): void
+    private static function record(string $purpose, string $model, int $in, int $out, ?int $ownerId, string $status, int $t0, string $error = '', ?string $promptVersion = null, int $cacheRead = 0, int $cacheWrite = 0): void
     {
         try {
             $extra = self::hasColumns() ? ['status' => $status, 'latency_ms' => (int) round((hrtime(true) - $t0) / 1e6), 'request_id' => RequestId::current(), 'error' => $error] : [];
+            if ($promptVersion !== null && self::hasPromptVersion()) {
+                $extra['prompt_version'] = $promptVersion;
+            }
+            if (self::hasCacheColumns()) {
+                $extra['cache_read_tokens'] = $cacheRead;
+                $extra['cache_write_tokens'] = $cacheWrite;
+            }
             Growth::recordAi($purpose, $model, $in, $out, $ownerId, $extra);
         } catch (\Throwable $e) {
             ErrorLog::exception($e); // counting must never cost the customer their answer
@@ -122,9 +258,9 @@ class AiGateway
         $rows = DB::table('ai_usage')->where('created_at', '>=', now()->subDay())->orderBy('id')->get(['purpose', 'status', 'latency_ms', 'error', 'created_at']);
         $sum = function ($rs) {
             $n = $rs->count();
-            $ok = $rs->whereIn('status', ['ok', 'refusal'])->count(); // a refusal is the service working as designed
+            $ok = $rs->whereIn('status', ['ok', 'refusal', 'capped'])->count(); // a refusal or our own cap is the service working as designed
             $lat = $rs->pluck('latency_ms')->filter(fn ($x) => $x !== null)->sort()->values();
-            $last = $rs->whereNotIn('status', ['ok', 'refusal'])->last();
+            $last = $rs->whereNotIn('status', ['ok', 'refusal', 'capped'])->last();
 
             return ['calls' => $n, 'successPct' => $n ? round($ok / $n * 100, 1) : null,
                 'p95Ms' => $lat->count() ? (int) $lat[(int) max(0, ceil($lat->count() * 0.95) - 1)] : null,

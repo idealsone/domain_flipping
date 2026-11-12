@@ -55,8 +55,8 @@ class AdminOpsController extends Controller
         }
         if ($path === 'services/settings') {
             abort_unless($r->isMethod('POST'), 405);
-            $v = $r->validate(['autoReview' => 'required|boolean']);
-            Settings::put('serviceSettings', ['autoReview' => (bool) $v['autoReview']]);
+            $v = $r->validate(['autoReview' => 'required|boolean', 'autoProfileBoost' => 'sometimes|boolean']);
+            Settings::put('serviceSettings', ['autoReview' => (bool) $v['autoReview'], 'autoProfileBoost' => (bool) ($v['autoProfileBoost'] ?? ExpertReview::settings()['autoProfileBoost'])]);
             Settings::audit($admin, 'service_settings_saved', $v['autoReview'] ? 'auto_on' : 'auto_off');
 
             return $ok(['orders' => Services::queue(), 'settings' => ExpertReview::settings()]);

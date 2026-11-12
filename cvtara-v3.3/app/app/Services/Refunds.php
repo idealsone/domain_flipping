@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
@@ -43,6 +44,9 @@ class Refunds
         })->exists();
         if ($used) {
             return 'A clean download or a paid ATS scan from this order has already been used.';
+        }
+        if (Schema::hasTable('usage_ledger') && UsageLedger::usedFromPurchase($p->id)) {
+            return 'A mock interview from this order has already been used.';
         }
         if (DB::table('resume_drafts')->where('owner_id', $p->owner_id)->where('source', 'tailored')->where('created_at', '>=', $since)->exists()) {
             return 'A tailored resume has already been made with this order.';

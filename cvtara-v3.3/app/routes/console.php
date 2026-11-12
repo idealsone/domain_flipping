@@ -33,11 +33,23 @@ Artisan::command('cvtara:cron', function () {
     };
     // finish resume + cover letter requests whose customer left the page (one each minute)
     $safe(fn () => \Illuminate\Support\Facades\Schema::hasTable('service_requests') && \App\Services\ServiceRequests::runDue(1));
+    // 3.51.0 Profile Boost drafts and requested changes still waiting
+    $safe(fn () => \App\Services\ProfileBoost::run(1));
+    // 3.49.0 mock interview feedback still waiting, and credits of sessions left unanswered for a day
+    $safe(fn () => \Illuminate\Support\Facades\Schema::hasTable('interview_sessions') && \App\Services\Interviews::runDue(2));
+    $safe(fn () => \Illuminate\Support\Facades\Schema::hasTable('partner_commissions') && \App\Services\Partners::release());
+    $safe(fn () => \Illuminate\Support\Facades\Schema::hasTable('partner_rankings') && \App\Services\PartnerOps::monthly());
     // approved / in-progress tasks past their due date are marked Overdue (once an hour)
     $safe(fn () => \Illuminate\Support\Facades\Cache::add('tasks-overdue', 1, 3600) && \App\Services\AgentTasks::overdue());
     // owner alerts once an hour (each written once a day), and the daily payment reconciliation after 6 AM India time
     $safe(fn () => \Illuminate\Support\Facades\Cache::add('metrics-alerts', 1, 3600) && \App\Services\Metrics::alerts(true));
     $safe(fn () => \Illuminate\Support\Facades\Schema::hasTable('payment_reconciliation_records') && \App\Services\Reconcile::due());
+    // 3.58.0 SEO Head and Growth & Revenue daily / weekly / monthly reports and corrective actions (after 7 AM India time)
+    $safe(fn () => \Illuminate\Support\Facades\Cache::add('agent-cadence', 1, 600) && \App\Services\AgentCadence::due());
+    // 3.59.0 text-reading test for designs never tested or changed since (a few a minute)
+    $safe(fn () => \App\Services\TemplateLibrary::testDue(6));
+    // 3.61.0 original uploaded resume files are erased after 90 days (checked once an hour)
+    $safe(fn () => \Illuminate\Support\Facades\Cache::add('originals-purge', 1, 3600) && \App\Services\ResumeOriginals::purge());
     if (\Illuminate\Support\Facades\Cache::add('retention-run', 1, 86400)) {
         \App\Services\Retention::run();
     }

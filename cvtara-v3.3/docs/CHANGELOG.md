@@ -1,4 +1,232 @@
-# CVTara v3.46.1 — V2: guides and help centre
+# CVTara v3.67.2 — Night mode readability
+
+## 3.67.2
+Owner report (12 Nov 2026): night mode looked wrong on the customer dashboard. No migration.
+- Cards that used `--panel` ("What would you like CVTara to help you with?" tiles, "What brings you to CVTara?", parts of Interview practice, Resume hub and Account) fell back to white with light text. `--panel` now follows the page colours in both modes.
+- Every secondary button turned pink in night mode; they now use the normal text colour, and only delete or danger buttons stay red. The dashboard banner's buttons use white text.
+
+# CVTara v3.67.1 — Review editor and What's new
+
+## 3.67.1
+Review editor and What's new, on 3.67.0 (PR #55).
+Owner report (12 Nov 2026): the console "Edit review" window had no card, and customers had seen no update notes since 1 Nov. No migration.
+- **Console pop-ups fixed**: Edit review, Review history and "Confirm it's you" had no styles of their own, so the site-wide rule that makes every `<dialog>` transparent with no padding (for the template windows) left the form floating over the page with a sideways scrollbar. They now get a card, backdrop, phone layout and dark mode (`cvtara-ds.css`).
+- **Why customers got no updates**: notes were only ever added by hand in the console, and none had been added since 1 Nov, so the pop-up had nothing new to show (and customers who joined after 1 Nov had never seen one).
+- **Release notes ship with the code**: `WhatsNew::shipped()` holds each release's customer-facing notes. After a deploy they are added on the first page load, stamped with that time, so every customer who joined before sees them once. The owner can edit, hide or delete them; a deleted one never comes back (`removed` list in the `whatsNew` setting).
+- Shipped notes (alongside the eight 6-12 Nov notes 3.67.0 added to the seed, no duplicate ids): for 3.67.0 (account menu moved, resume journey, one-question-at-a-time mock interviews, shorter Fix for this job), for 12 Nov (interview practice, full mock interview, company research, check before download, tested ATS labels) and catch-up notes for 7-8 Nov (help centre, support replies, Ask Tara).
+- Console What's new warns when the newest note is more than 14 days old. The customer pop-up waits up to 3 minutes (was 30 seconds) for another window to close before giving up for that visit.
+- Test suite `s40_whats_new` extended.
+- **Blog & SEO page error** "e.toLocaleDateString is not a function": the Job, city & state pages list passed the Google check time to the date formatter as text once a page had been checked. Fixed there and in the Interview practice recent sessions list.
+
+## 3.67.0
+Owner's feedback of 12 Nov 2026, audited and approved ("approved", then "complete"). Built on 3.65.0 and 3.66.0. Additive migrations `2026_12_01_000001_whats_new_november` (adds the 6-12 Nov notes to a saved What's new list and hides the old phone note) and `2026_12_01_000002_template_letter_domains` (files each built-in cover letter under its real role group). No tables change.
+- **Sign-up**: passwords need 8 characters (was 12) on sign-up and reset; 25 job categories (was 9) on sign-up, profile and onboarding, checked on the server.
+- **My account menu** (top right): Account, Billing, Refer & earn, Wallet and Referral history live only there; the sidebar group and the duplicate referral links are gone. Keyboard and Escape work.
+- **Fix for this job**: a score ring, two steps (keywords to add, what the job asks for) and one action row, in about half the height.
+- **Career tools need Job Hunt or Pro**: one-click cover letters, whole-resume tailoring and mock interviews answer 402 for Free and Quick Download (Rs 99) accounts, and an upgrade card with icons opens. Staff are not limited.
+- **Resume journey card**: V1 (first version, real score, original file) → V2 (primary now, score and gain) → V3 (one copy per job: tailored copies and frozen application copies, with their cover letter). Scores are the normal strict ATS-friendly score; nothing is adjusted. The oldest version is never pruned.
+- **Price question after a save**: Great value / Fair / Too high, at most once in 30 days; the owner sees the latest answer per customer on the Reviews page.
+- **Reviews**: only verified reviews show on the home page, with a "Verified customer" badge.
+- **View as customer or partner** (owner choice: view only, logged): People and Partners have a View button that asks for a reason and opens a 30-minute read-only view; partner portals are owner-only.
+- **Interview room**: one question at a time with an interviewer panel, Previous/Next and progress dots; questions are not repeated across the last 200 sessions (was 5); practice tiles show streak, minutes today and this week, and mock interviews done.
+- **Colours**: teal sidebar and hero, coral and indigo accents, faint pattern behind the chat only.
+- **What's new**: eight notes for 6-12 Nov; the 26 Oct phone note is hidden.
+- **Templates**: Clinical Pharmacist resume and three letters (HR Generalist, Senior Staff Nurse, Assistant Professor). Coverage now counts letters in their real role group and adds a fresher / mid-career / experienced table; every role group and level has at least five resumes and five letters.
+- Test suite `s79_customer_journey`; s1, s14, s27, s32, s40, s61 and s65 updated for the 8-character password, verified reviews, the Job Hunt gate, newer What's new notes and the kept first version.
+
+# CVTara v3.66.0 — Interview question bulk upload
+
+## 3.66.0
+Owner request (12 Nov 2026): bulk upload and bulk approval for the interview question bank. No migration.
+- **Bulk upload** in console Interview practice > Question bank: a CSV or Excel (.xlsx) sheet, one question per row (Role, Question, Guidance, Example, Skill, Difficulty, From, To). Role is a role name or slug, or "general" for every role; blank experience means fresher to 12+. Choose "Keep as drafts" or "Approve straight away". Rows with an unknown role, wrong length, wrong experience range or wording that mentions AI are listed by row number; wording already in the bank is skipped. Up to 2,000 rows per file. A blank sheet with two example rows downloads from the same panel.
+- **Approve all drafts (every role)** next to the role filter (the per-role button stays).
+- **Load any new starter questions** is always shown and safe to press again: it adds starter questions that are missing on the site and never duplicates.
+- Routes `GET admin/interviews/template`, `POST admin/interviews/import` (content.edit); `interviews/approve` takes `occupation: "*"` for every role. Test suite `s78_question_upload`.
+
+# CVTara v3.64.0 — Lower AI costs
+
+## 3.64.0
+Owner report (12 Nov 2026): a few chats on claude-opus-5-5 cost about Rs 100. Cause: every request (customer Tara chat, writing, SEO titles) ran on Opus at $4/$20 per million tokens, with no prompt caching, and one chat answer can take up to 5 requests that each re-send the rules (~2,000 tokens), 15 tool definitions (~2,500), the history and every tool result read so far (the customer guide alone is ~4,000). Thinking is billed as output. Additive migration `2026_11_30_000001_ai_cache_tokens` (`ai_usage.cache_read_tokens`, `cache_write_tokens`).
+- **Model per kind of work** (config/ai.php, owner boxes in Integrations > AI): customer Tara chat on the chat model (default claude-haiku-5-5, about 40x cheaper than Opus), customer writing and the Business assistant on the writing model (default claude-sonnet-5-5, half the Opus price), SEO titles, chat summaries, job parsing and interview scoring on the quick model (default claude-haiku-5-5). A model the owner types in a box wins; Tara's own model box still wins for the chat.
+- **Thinking effort per tier**: chat and quick jobs low, writing medium (Sonnet's own default would be high).
+- **Prompt caching**: Tara's and the Business assistant's fixed rules (with the tool list ahead of them) are sent as one cached block; the date, name and conversation summary follow it, so steps 2-5 of an answer and the next message within 5 minutes read it at a tenth of the price or less.
+- **Smaller requests**: customer chat keeps the last 10 messages (was 16) and at most 4 steps (was 5); the Business assistant 12 messages and 6 steps (was 20 and 8). Saved console settings are kept. A tool result longer than 6,000 characters is cut (the customer guide is kept whole).
+- **Exact spending**: cached input is recorded per request and costed at 1.25x input for a cache write and the model's cache-read price for a read.
+- **SEO agent**: title and description drafts run on the quick model at low effort with room to finish (1,500 tokens instead of 400, which thinking could use up and leave an empty answer, so the plain rule was used instead).
+- Tara chat shows "CVTara team is typing…" while she works. The separate "CVTara team writing help" pop-up was already retired in 3.51.0 (its actions are Tara's writing_help).
+- Test suite `s76_ai_costs`; s27, s28, s47 and s57 expect the new default models.
+
+# CVTara v3.61.0 — Owner decisions of 12 November
+
+## 3.61.0
+Owner's confirmed decisions (12 Nov 2026). Additive migrations `2026_11_27_000001_full_mock` (`interview_sessions.mode`, `sections_json`), `2026_11_27_000002_resume_originals` (new table `resume_originals`), `2026_11_27_000003_payment_marks` (new table `payment_marks`). Nothing existing changes.
+- **Full mock interview** (V5.8 §5, V5.10 §2, D04): an optional type of about 60 minutes in four 15-minute parts (about you and your motivation, knowledge of the role, your past experience, situations and closing), three questions each, least-seen first, ending with a closing question. Uses one mock interview credit, like a standard one. One part at a time with a guide clock per part; running over is shown, never marked down. Feedback covers every answer plus an average for each part from the rubric scores (no extra request). The owner can stop offering it (Interview practice > Switch and limits). Customer guide updated.
+- **Original uploaded resume file kept 90 days** (V7 §11 R1): after a resume is built from an upload, a private copy of the original PDF, Word or text file (up to 5 MB, checked by its first bytes) is kept outside the public folder. Account > Your data lists it with Download and Delete now; it is erased after 90 days (hourly check), with the account, or when a new file replaces it for the same resume. Listed in the data download; privacy policy default updated.
+- **Test payment review** (V4.8 §6): Costs & margin lists every order made up to 9 Nov 2026 (India time) with a suggestion from fixed rules (test mode, demo checkout, owner or staff account, ₹10 or less, test-looking email, full refund within 2 days; unfinished checkouts and ₹0 grants apart). The owner marks orders Test or Real (one by one, ticked, or accept the suggestion). Orders marked Test are left out of revenue figures; no order is changed or deleted. Owner only, audited, downloadable.
+- **Template import from a Word file** (V5.0 §6): Template quality accepts one .docx with design name, type, role group, licence, source and author. Its section headings and order, main font (closest available font, with a note), heading colour and one or two columns are read; it becomes a draft built on the closest CVTara design, takes the text-reading test and goes live only after approval. Macros, missing headings or missing licence details are refused; the sample text is not stored; the same design saved again is a duplicate.
+- Test suites `s75_full_mock`, `s72_resume_originals`, `s73_test_payments`, `s74_docx_templates`.
+
+
+## 3.60.1
+Search engine index status on the console Overview (owner request 2026-11-12). No migration.
+- **Search engines box** on the Overview, after Business numbers, for the owner and staff who may view SEO: **Google** pages indexed out of live pages (from the URL Inspection results the SEO agent stores), why the others are not indexed, pages not checked yet, and Search Console impressions and clicks; **Bing** pages in index, pages crawled, crawl errors and last-30-day impressions and clicks from Bing Webmaster Tools; **IndexNow** pages sent, pages waiting and the last send. Refresh button.
+- **Bing Webmaster Tools API key** field in Integrations > Analytics (owner only, stored encrypted, never sent back). Bing numbers are kept for six hours; a new key is used at once. Refused keys and unverified sites get a plain explanation.
+- New `App\Services\IndexStatus`, routes `GET admin/indexing/engines` (seo.view) and `POST admin/indexing/engines/refresh` (seo.approve), console script `indexing.js`. Test suite `s71_index_status`; the Google stand-in also answers the Bing Webmaster API.
+
+
+## 3.60.0
+Website and search (V7 §31, §34; V5.0 §2, §9; V5.5 §2; V6 SEO §4-§5, §13). Additive migration `2026_11_26_000001_site_search_register`: new table `brand_profiles`, column `seo_keywords.cluster`; loads the keyword backlog and the listings register.
+- **For colleges, coaching and partners** page (`/partners.html`): what students get, how a partnership works (form, written agreement, campaign link and seats, reports without students' documents unless they consent), what we do not promise, FAQ, and the application form (sends to the existing partner applications inbox). In the sitemap, footer links and llms.txt.
+- **About page** rewritten with the approved V5.5 positioning ("From resume building to interview readiness", the problems, how CVTara helps, our approach), keeping the HR-team and pricing facts. Mock interviews are described as "structured written feedback, prepared automatically". If the owner has already edited About in the console, that text stays until changed there.
+- **og:locale en_IN** on every page.
+- **Interview hub** gains "Practise in your CVTara account" (role search, timer, mock interviews, company research, revision).
+- **Keyword backlog**: the 118 searches in 6 clusters from the V6 SEO pack are loaded into the keyword store, each mapped to the one page that answers it; 39 with no page yet stay unassigned. The SEO Head's weekly report turns them into one planning task per cluster (validate demand first, no thin pages).
+- **Directory and brand listings register**: platform, type, public URL, state (not listed, pending, live, needs a fix), claimed, verified, last checked. Seeded with search consoles, the four social profiles and software directories. "Check" opens the public page only; a live listing that stops opening is marked as needing a fix. Paged, filtered and downloadable.
+- Growth page gains a **Listings & keywords** tab; the SEO reports show the backlog by cluster.
+- Test suite `s70_site_search`; `s20` follows the new About headings.
+
+
+## 3.59.0
+Template library (V7 §15, V5.0 §5-§7). Additive migration `2026_11_25_000001_template_library`: new tables `template_library`, `template_versions`, `template_packages`; every built-in resume and cover-letter design is listed as a CVTara original.
+- **Metadata for every design**: licence, source, author, version, preview, export formats, role group, status.
+- **Text-reading test**: each design is exported to PDF and Word with clearly labelled demo data, and the text is read back (new `PdfText` reader for the site's own PDFs; Word text from the file itself). It checks every word, section order, dates next to the employer and special characters (? – [ ] ( ) & " ' ₹ →). The scheduler tests a few designs a minute; the console can test on demand.
+- **ATS label rule**: a design shows the ATS label only when it is a text-first, single-column layout and passed the reading test. Two-column designs never show it. Until the scheduler has tested a design (about 30 minutes after deploy), its ATS label is hidden.
+- **Package import**: upload a ZIP with `manifest.json` and template JSON files (V5.0 §6 contract). Checked: allowed file types only, no path tricks, no scripts, event handlers, frames, remote files or unsafe CSS, no Word macros, valid images, manifest fields, checksum (SHA-256 of the template files in path order), template count, required template fields, licence/source/author, colour and font, section names, export formats, and a CVTara design to build on. Designs arrive as drafts, are tested, and go live only when approved. Duplicates are skipped; a changed design becomes a new version; every version is kept and can be rolled back. Documents customers already made keep working while a new version waits.
+- **Coverage report**: designs per role group against five resumes and five cover letters, with gaps. Downloadable.
+- New console page **Template quality** (Content & pages). Imported designs reach the public gallery through the live site data.
+- Test suite `s69_template_library`.
+
+
+## 3.58.0
+Stronger agents (V7 §29, §37; Growth plan §11.2, §12.1-§12.2). Additive migration `2026_11_24_000001_agent_cadence`: five columns on `agent_runs` (`run_uid`, `prompt_version`, `model`, `sources_json`, `knowledge_version`) and new tables `agent_reports`, `agent_corrections`, `config_changes`.
+- **Daily, weekly and monthly reports** for the SEO Head and the Growth & Revenue agent, written once per period after 7 AM India time. SEO: pages that do not open, important pages Google has not indexed, changes waiting, searches close to page 1, searches shown but rarely clicked, section coverage, organic sign-ups. Growth: registrations, verified, resumes started, payments ok and failed, paid and new customers, revenue and order value, abandoned checkouts, the month's pace and band, email and outreach, experiments, sign-ups by source, forecast, refund rate, referral purchases, contribution margin, partner sign-ups, interview use and plan mix. Numbers come from the site's records; anything not measured is shown as Not tracked. No model is called.
+- **Corrective actions**: when a target is missed (orders behind pace, refund rate over 5%, a page that does not open, searches shown but not clicked) the agent writes target, actual, variance, evidence, root cause, corrective action, owner, deadline, expected result and review date, and opens one task in Approvals. Nothing on the site changes without approval. Paged, filtered and downloadable (CSV/Excel).
+- **Run evidence**: every agent run keeps a run id, rules version, model (none for rule-based work), the sources it read and the knowledge version it worked from.
+- **Change feed**: every saved change to plans, public wording, referral and refund rules, offers, partner programme, interview settings, cost limits, legal pages, emails, growth targets and agent rules is recorded. The console shows each agent's knowledge version and flags an agent that is behind.
+- Growth page gains an **Agent reports** tab (reports, corrective actions, what the agents know, recent runs, a "Write this report now" button).
+- Test suite `s68_agent_cadence`.
+
+
+## 3.57.0
+Interview preparation (V7 §16-§20, §31; V5.6-V5.7 §5). Additive migration `2026_11_23_000001_interview_vertical`: three columns on `career_occupations` (`domain`, `isco_code`, `seniority`), `interview_answers.seconds`, and a new table `company_research`. It also loads 12 more non-technical roles (inside sales/telecaller, receptionist, data entry, insurance advisor, collections, store manager, warehouse supervisor, content writer, travel consultant, back office, pharmacy assistant, event coordinator) with 24 original role questions as drafts (nothing is shown before the owner approves them).
+- **India role taxonomy**: every role has an industry, business domain, job family, NCO/ISCO-08 code (4-digit unit group; check against the official NCO 2015 list before quoting it publicly), a seniority ladder and common Indian designations as synonyms. Customers find their role by typing their job title ("telecaller" finds Inside Sales Executive). Existing owner edits are kept.
+- **Research a company**: the customer pastes the company's own website; one public page is read (robots.txt respected, no logins, no bypassing, private addresses refused), a short summary is kept with its source and time, and six original practice questions are made from templates (motivation, product, customer, stakeholder, ethics, first 90 days), labelled "CVTara practice questions based on publicly available company information; not confirmed questions from the employer." No AI. Five a day per customer; erased with the account.
+- **Timer**: optional; shows the time on each answer (aim for about 2 minutes) and saves it with the answer. Nothing is penalised.
+- **Revision mode**: questions from the customer's finished mock interviews with their earlier answer and what to improve, to write a better one. Free, not scored, counts as a practice day.
+- **Badges renamed to V7**: First Practice, 5 Sessions, Clear Communication, STAR Practice, Consistency Milestone (derived from the customer's own practice; no rankings).
+- **Public interview pages** (one per role) gain "Practise your answers" linking to practice in the account; the full bank stays inside the account. Dashboard gains a "Practise interviews" button. Customer guide updated.
+- Test suite `s67_interview_vertical`; `s58` now expects 24 roles; `s59` uses the new badge names.
+
+# CVTara v3.56.0 — Evidence check, job confirmation, costs and margin
+
+## 3.56.0
+Trust and money controls (V7 §12-§14, §24-§26, AT-10, AT-11). Additive migration `2026_11_22_000001_costs_evidence`: new tables `evidence_confirmations` and `ai_invoices`. Nothing existing changes.
+- **Evidence check before a clean download**: a job version of a resume, or a cover letter made from a resume, is compared with the customer's own resume. Numbers, years, tools and names that are not in it (the employer and role typed for that version are allowed) are listed in the Download window; the customer removes them or presses "These are true, download". The confirmation is kept per version; a new version with new facts asks again. No credit is used until then; watermarked previews and the customer's own resumes are never held up. Plain comparison, no AI.
+- **"Is this the right job?"**: ATS Match first reads the posting (link, file or text) into job fields: title, company, location, type, level, experience, education, skills asked for, good-to-have skills, and pay only when the posting states it. No scan is used until the customer confirms (title and company can be corrected). The confirmed fields and time are stored with the check. A link is opened once; the check reuses that reading.
+- **Usage ledger mirror**: every clean download and ATS scan also writes a row to the append-only usage ledger against its order. Today's counters are unchanged.
+- **Costs & margin** (new console page, Money & plans): AI spend this month by feature against its cap, today's highest-spending customers, caps (per customer per day, per feature per month, per order as a share of its price) with alerts in the Error Log. Paid features are never stopped by a cap; only Tara chat and writing help pause for a customer who reached the daily cap (default ₹30). Invoice check: enter the provider's monthly bill and see the difference from our cost log. Contribution margin per plan and add-on: net collected minus GST share (set to 0 if not registered), gateway fees (default 2.36%), the buyers' AI cost while each order was active, and fulfilment and support cost per order the owner enters. Download as CSV or Excel (Reports > Contribution margin).
+- Test suite `s66_costs_evidence` (37 checks).
+
+# CVTara v3.55.0 — Review edit history and feedback after save
+
+## 3.55.0
+Reviews and feedback (V7 §28, AT-21, R13; V5.1 guide fix). Additive migration `2026_11_21_000001_review_edits`: four nullable columns on `feedback` (`original_content`, `usage_ref`, `edit_state`, `edited_at`) and a new table `feedback_edits`. Nothing existing changes.
+- **Edit history**: in console > User Reviews each review has Edit and History. A spelling or formatting fix, or replacing personal details with [removed], applies at once; a "spelling fix" that changes the words, adds a negation or adds words is refused. The customer's original words, the editor, reason and before/after text are kept for every change.
+- **Wording changes need the customer**: any other change is sent to the customer (notification, and in Share feedback they choose "Approve this wording" or "Keep my words"). The review is off the website until they answer and cannot be published while waiting. Sample and owner-added reviews cannot get such a change. Ratings and names are never edited.
+- **What was used** is stored with each new review (latest paid order, else latest saved resume). Published reviews carry an "edited" flag.
+- **Feedback after a resume save**: a small card after a successful save (never while typing), at most once every 14 days, and never once feedback was sent. "Not now" is respected.
+- **Customer guide**: the ATS-friendly score is explained as a guide, not a promise; new question "Does CVTara guarantee a 70% score or a job?" (No.)
+- Account deletion also removes the review edit history.
+- Test suite `s65_review_edits` (34 checks).
+
+# CVTara v3.54.1 — V7 PartnerHub part 2
+
+## 3.54.1
+PartnerHub part 2 (PartnerHub V2 §4-§19). Additive migration `2026_11_20_000002_partner_hub_campaigns`: four nullable columns on `partner_links` (`starts_on`, `ends_on`, `seats`, `target_paid`) and new tables `partner_agreements`, `partner_invites`, `partner_payouts`, `partner_commission_reversals`, `partner_rankings`, `partner_rewards`. Nothing existing changes.
+- **Agreement versions**: the owner sends a draft filled from the partner's terms (or edited text); the partner's manager reads it in the portal and accepts with a tick and a typed name. The exact text fingerprint, time, IP and method are kept. A campaign link takes no sign-ups until an agreement is accepted (or the owner recorded a signed paper agreement). A new version waits for fresh acceptance while the accepted one stays in force.
+- **Campaigns**: start date, 15/30/45/60/90 days, seats and a paid-customer target per link; pause, resume, extend or close. When the seats are used (verified sign-ups, or all sign-ups while email verification is off), the link stops. The portal shows seats, invited, signed up, paid and refunded.
+- **Student invites**: the manager uploads a sheet (Excel or CSV) or pastes name, email lines after confirming they may share them. Rows are checked and de-duplicated, people who already have an account are not counted, and each student gets a personal link. No account is created from the list; a student who signs up with their link is marked registered. Seat limits apply.
+- **Attribution**: the first valid link wins (customer referral or partner), switchable to last link by the owner. V7 sources: Influencer and Direct B2B (CVTara sales desk) are B2B; a creator's customer referral link stays B2C Referral.
+- **Refunds** now add a reversal entry instead of only changing the status, so the ledger keeps the original amount.
+- **Payouts**: the manager asks for the amount ready to pay (minimum ₹5,000, one request at a time); the owner marks it paid with a reference or rejects it.
+- **Monthly ranking** (paid customers 40%, revenue 40%, sign-ups 20%) on the 1st of each month; a partner sees only its own place, never other partners' names.
+- **Rewards**: the owner adds a gift, the manager confirms the delivery address, the owner records dispatch with courier and tracking.
+- **View as partner**: the owner can open any partner's portal read-only; each view is logged.
+- Test suite `s64_partnerhub_campaigns` (50 checks).
+
+# CVTara v3.54.0 — V7 PartnerHub (B2B)
+
+## 3.54.0
+PartnerHub, the B2B vertical (V7 §38-39). Additive migration `2026_11_20_000001_partner_hub`: new tables `partners`, `partner_links`, `partner_members`, `partner_commissions`, `partner_applications`. Nothing existing changes.
+- **Partners and agreements** (console > B2B Partners): college, placement cell (TPO), coaching institute, company, influencer/creator or other; contact, city, agreement reference and dates, commission rates (default 30% plans, 40% add-ons). Active, paused or ended.
+- **Campaign links** `/p/{code}` (not indexed): a sign-up within 30 days of the click is locked to the partner (B2B college/coaching/corporate/partner, or B2C influencer for creators), with link and campaign. The later of a customer referral link and a partner link wins, so a sign-up never earns both. Links stop when paused or after the agreement ends. Visits counted once per visitor.
+- **Commission ledger**, separate from customer referrals: 30% of plans, 40% of add-ons (Expert Review, Profile Boost, credit packs), nothing on the ₹99 Quick Download. Live gateway payments only. Pending for the 7-day refund window, then ready to pay (daily cron); any refund or chargeback cancels it (restored if the chargeback is won). Owner marks it paid with a payout reference (owner only). Downloadable.
+- **Partner portal** (workspace > Partner portal, only for members the owner adds): sign-ups, buyers, revenue, commission, results per link and by month. Numbers only, never a student's details. A person can belong to one partner.
+- **Partner applications**: public endpoint `/api/partners/apply` (form arrives with the website pages in 3.59), spam-trap field, 3 per hour per visitor, owner notified; approve creates the partner as paused.
+- New permission `partners.manage` (Admin role). Users list filter by partner. Account deletion removes portal membership and keeps the money records on the placeholder.
+- Test suite `s63_partnerhub` (44 checks).
+
+# CVTara v3.53.0 — V7 signup attribution
+
+## 3.53.0
+Where each account came from, decided once at sign-up (V7 WS-02). Additive migration `2026_11_19_000001_signup_attribution`: nullable columns on `users` (`acq_class`, `acq_subtype`, `acq_partner_id`, `acq_campaign`, `acq_link`, `acq_rule_version`, `acq_first_seen_at`, `acq_locked_at`).
+- **Locked at sign-up**: B2C or B2B, and a source (Direct, Referral, Influencer for an approved creator's link; College, Coaching, Corporate or Other partner from a partner campaign link, which arrives with PartnerHub). Later visits, clicks and links never change it. Rule version `v7-1` and the time are stored.
+- **Older accounts are filled in** from who referred them (rule version `backfill-1`), so every account has a value.
+- **Users list**: new "Came as" column and filters (B2C/B2B, source); the Users download and the Users report carry "Came as" and the sign-up campaign.
+- Test suite `s62_signup_attribution`.
+
+
+## 3.52.0
+Resume version history and document lineage (V7 WS-05). Additive migration `2026_11_18_000001_resume_versions`: new table `resume_versions`, `applications.resume_version_id`, and three nullable columns on `cover_letter_drafts` (`source_resume_id`, `source_scan_id`, `source_application_id`). Nothing existing is changed or dropped.
+- **Every save keeps the previous content** as a version (the last 30 edits per resume). A save that conflicts with another tab is refused as before and keeps nothing.
+- **The resume sent with an application is frozen**: when a job in Applications is marked Applied, Interview or Offer with a resume chosen, that exact copy is kept and linked to the application; later edits never change it. Choosing a different resume freezes that one.
+- **History on each resume card** (My Resumes): list of versions with date and why it was kept, View, and "Put this version back". A restore first keeps what is on screen, so it can be undone.
+- **Cover letters remember what they were made from**: the resume, ATS check and application (only the customer's own ids are stored), from the cover-letter page and from the combined resume + letter service.
+- Read-only support view can see the history; account deletion removes it. Test suite `s61_resume_versions` (27 checks).
+
+
+## 3.51.0
+One assistant, and Profile Boost as a draft the customer approves (V7 WS-07 and WS-13). No database change (Profile Boost reuses `service_orders`).
+- **Writing help is part of Tara chat.** New Tara action `writing_help` (clearer wording, achievement bullets, summary, tailoring, cover-letter draft, check against a job, interview questions) from the customer's own text. Same daily writing allowance as before; nothing saved by itself. The separate "CVTara team" writing pop-up is no longer loaded; `tara-help.js` stays as a tiny file that opens Tara chat for any cached page. `/api/ai/suggest` is unchanged. The owner can turn the action off in Tara settings; an action list saved before 3.51 gets it switched on once.
+- **Profile Boost draft.** After payment, a LinkedIn and Naukri profile draft (headlines, About, summary, key skills, experience highlights) is written from the customer's saved resume, using only their facts. The customer reads it in Account & downloads and either approves it (order delivered) or asks for one round of changes in their own words; the second draft is final. A notification tells them when a draft is ready. Failures retry up to 3 times, then go to the Error Log for the owner. The owner can still edit or finish any order by hand in Refunds & services, and can switch automatic drafts off there (orders then wait for the owner as before).
+- Wording: Profile Boost perks say "A draft you approve, with one round of changes"; the account page no longer promises a person within 48 working hours. Customer guide updated. No mention of AI, and no claim that a person wrote the draft.
+- Tests: `s60_v7_step3` (32 checks); s27, s28 and s41 updated.
+
+
+## 3.50.0
+Practice progress on the Interview practice page (V7 WS-11). No database change: everything is worked out from the customer's own mock interviews and practice visits (one `interview_practice` activity event per role per day).
+- **Levels**: Beginner, Developing, Confident, Interview ready, from the latest mock interview, with "up from last time" when it changes. Always labelled as a practice guide, not a prediction.
+- **Streak with rest days**: a practice day is a day the customer opens practice questions or finishes a mock interview; one rest day between practice days keeps the streak. Current and best streak are shown.
+- **Six badges**: First step, Explorer (3 roles), Real examples (full marks for evidence), Steady practice (5-day streak), Well prepared (3 mock interviews), Interview ready.
+- Private to each customer: no rankings or leaderboards. Test suite `s59_practice_progress`.
+
+
+## 3.49.0
+Second V7 release: interview practice. New tables only (additive migration `2026_11_17_000001_interview_practice`: career_occupations, interview_questions, interview_question_versions, interview_sessions, interview_answers, interview_evaluations, usage_ledger) plus `2026_11_17_000002_interview_bank_seed`, which loads the starter bank as drafts. **Off until the owner approves questions and switches it on** (console > Interview practice).
+- **Question practice** (workspace > Interview practice): pick a role and experience to see approved questions with what a good answer covers. Free and Quick Download see 3 per role; plans with mock interviews see all. Stored content only.
+- **Mock interviews**: a locked set of 5 approved questions (an introduction, about two for the role, the rest general; least-recently-seen first), written answers saved as typed, then written feedback against a fixed rubric (relevance, structure, evidence, communication, role fit, each 1-4), strengths, improvements, a rewrite using only the customer's own facts, a next step and a level (Beginner, Developing, Confident, Interview ready; a practice guide, never a hiring prediction). Runs on the quick-task model when set. Customers can challenge feedback once; it opens a support ticket.
+- **Allowance** (owner decision 2026-11-11): Job Hunt 4 for 30 days, Pro and Complete Job Kit 12 for 90 days, one pool, no monthly reset (`mockInterviews` on the plan, editable in Pricing, frozen on each new order). Orders bought before 3.49.0 keep what they bought (no mock interviews); the owner can give complimentary ones with a reason.
+- **Credit ledger** (`usage_ledger`, append-only, idempotent): a credit is held at the start, used when feedback is ready, given back after 3 failed attempts (also written to the Error Log) or when a session is not submitted within a day. A held or used mock interview blocks the 7-day "unused" refund; a returned one does not.
+- **Owner console > Interview practice**: approve questions one by one or a whole role, edit (new version, back to draft, older sessions keep their wording), retire, on/off switch, questions per session, daily start limit, recent sessions with errors and challenges, complimentary credits.
+- Plan cards show "N mock interviews with written feedback" only while mock interviews are on. Customer guide chapter 10 added. Account deletion removes sessions, answers and feedback. Read-only support view can see the Interview practice page.
+- Starter bank: 12 non-technical roles (NCO 2015 codes to be verified), 90 original questions written for CVTara (18 general, 6 per role).
+
+
+## 3.48.0
+First V7 release (owner approved "all the updates as per the document step by step", 2026-11-11). Two small additive migrations: `ai_usage.prompt_version`, and a one-time update of the saved Expert Review tagline if it is still the old wording.
+- **Tara Expert Review wording is honest.** The review is written automatically, so the tagline, checkout line, delivery email, order note and customer guide now say "instant written review … prepared automatically" instead of "the CVTara team reviews your resume". The review itself no longer writes as a person. Still no mention of AI on the website (owner rule).
+- **Quick-task model.** Integrations > AI has a second box, "Quick-task model", for short routine jobs (SEO titles, chat summaries, and interview scoring and job parsing once built). Empty = the main model. Customer writing (reviews, tailoring, cover letters, chat answers) always uses the main model. Haiku requests are sent without the refusal fallback setting, which Haiku does not support. Emptying either model box now really goes back to the default.
+- **Cost log.** Each AI request is costed at the list price of the model that answered (Opus 5.5, Sonnet 5.5, Haiku 5.5 in `config/ai.php`; other models use the Growth page prices) and records a short fingerprint of the prompt wording (`prompt_version`).
+- Tara chat summaries are counted separately as `customer:chat_summary`.
+
+
+## 3.47.0
+Fixes from the owner's 8 November list. No database change.
+- Customer menu: one help entry (Help centre opens the customer guide; the extra "Customer guide" link is no longer added) and no separate "Ask Tara" item; Career assistance and the floating button open the chat.
+- "On this page" lists on guides and calculators no longer open the home page: in-page links keep the visitor on the page despite `<base href="/">`, and article tables of contents carry the article's own address.
+- User Mailer: Save templates no longer fails with "The selected trigger is invalid"; every trigger a built-in template uses is accepted (activation_nudge, ats_nudge, pricing_help, support_reply were missing).
+- Blog & SEO > Job, city & state pages: the list was empty ("No pages match") after visiting the Resume Library, whose grid used the same element ids. The list now has its own ids, 20 rows per page, a link to each live page, Google's index status (URL Inspection) with the date checked, 4-week clicks from Search Console, a filter by Google status, CSV export and "Ask Google about more pages" for the pages on screen.
+- Integrations > AI: new "Test the key" button asks Anthropic whether the saved key and model work and says why not (invalid key, model not available, no credit, busy). Business assistant and Tara errors point to it.
 
 ## 3.46.1
 - SEO pages: the trust line now says "Made by an HR team in Bangalore" instead of "Built by working recruiters" (owner decision 2026-11-08), matching the footer and emails. No database change.

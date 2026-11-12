@@ -29,7 +29,7 @@ class Reviews
         $rows = DB::table('feedback')->where('status', 'published')->where('consent', true)->orderByDesc('created_at')->limit(60)->get();
         $paid = self::buyers($rows->pluck('owner_id')->map(fn ($x) => (int) $x)->all());
 
-        return $rows->map(fn ($f) => ['id' => $f->id, 'display_name' => $f->display_name, 'company' => (string) ($f->company ?? ''), 'designation' => (string) ($f->designation ?? ''), 'rating' => (int) $f->rating, 'content' => $f->content, 'created_at' => $f->created_at,
+        return $rows->map(fn ($f) => ['id' => $f->id, 'display_name' => $f->display_name, 'company' => (string) ($f->company ?? ''), 'designation' => (string) ($f->designation ?? ''), 'rating' => (int) $f->rating, 'content' => $f->content, 'edited' => ! empty($f->edited_at), 'created_at' => $f->created_at,
             'verified' => $f->source === 'owner_verified' || ($f->source === 'user' && isset($paid[(int) $f->owner_id]))])->values()->all();
     }
 

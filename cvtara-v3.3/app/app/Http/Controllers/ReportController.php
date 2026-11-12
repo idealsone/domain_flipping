@@ -102,7 +102,7 @@ class ReportController extends Controller
                 ['key' => 'coupon', 'label' => 'Coupon'], ['key' => 'status', 'label' => 'Status'], ['key' => 'provider', 'label' => 'Payment source'], ['key' => 'reference', 'label' => 'Reference'], ['key' => 'live', 'label' => 'Real money'], ['key' => 'access_until', 'label' => 'Access until']]],
             'users' => ['label' => 'Users', 'filters' => ['q', 'status', 'from', 'to'], 'defaults' => ['id', 'name', 'email', 'joined', 'plan', 'status'], 'columns' => [
                 ['key' => 'id', 'label' => 'ID', 'num' => true], ['key' => 'name', 'label' => 'Name'], ['key' => 'email', 'label' => 'Email'], ['key' => 'phone', 'label' => 'Phone'], ['key' => 'city', 'label' => 'City'], ['key' => 'level', 'label' => 'Experience level'],
-                ['key' => 'profession', 'label' => 'Profession'], ['key' => 'joined', 'label' => 'Joined'], ['key' => 'plan', 'label' => 'Current plan'], ['key' => 'paid', 'label' => 'Paid now'], ['key' => 'status', 'label' => 'Status'], ['key' => 'resumes', 'label' => 'Resumes', 'num' => true]]],
+                ['key' => 'profession', 'label' => 'Profession'], ['key' => 'joined', 'label' => 'Joined'], ['key' => 'plan', 'label' => 'Current plan'], ['key' => 'paid', 'label' => 'Paid now'], ['key' => 'status', 'label' => 'Status'], ['key' => 'resumes', 'label' => 'Resumes', 'num' => true], ['key' => 'came_as', 'label' => 'Came as'], ['key' => 'campaign', 'label' => 'Signup campaign']]],
             'commissions' => ['label' => 'Referral commissions', 'filters' => ['q', 'from', 'to'], 'defaults' => ['date', 'referrer', 'buyer', 'amount_inr', 'rate', 'reversed_inr'], 'columns' => [
                 ['key' => 'date', 'label' => 'Date'], ['key' => 'referrer', 'label' => 'Referrer'], ['key' => 'referrer_email', 'label' => 'Referrer email'], ['key' => 'buyer', 'label' => 'Buyer'], ['key' => 'amount_inr', 'label' => 'Commission (INR)', 'num' => true], ['key' => 'rate', 'label' => 'Rate %', 'num' => true], ['key' => 'reversed_inr', 'label' => 'Reversed (INR)', 'num' => true], ['key' => 'purchase', 'label' => 'Order']]],
             'withdrawals' => ['label' => 'Withdrawals', 'filters' => ['q', 'status', 'from', 'to'], 'defaults' => ['date', 'customer', 'amount_inr', 'method', 'destination', 'status'], 'columns' => [
@@ -129,6 +129,10 @@ class ReportController extends Controller
             'ai_spend' => ['label' => 'AI spending', 'filters' => ['q', 'from', 'to'], 'defaults' => ['month', 'feature', 'model', 'calls', 'input_tokens', 'output_tokens', 'cost_inr', 'per_paying_user_inr'], 'columns' => [
                 ['key' => 'month', 'label' => 'Month'], ['key' => 'feature', 'label' => 'Feature'], ['key' => 'model', 'label' => 'Model'], ['key' => 'calls', 'label' => 'Requests', 'num' => true], ['key' => 'input_tokens', 'label' => 'Input tokens', 'num' => true], ['key' => 'output_tokens', 'label' => 'Output tokens', 'num' => true],
                 ['key' => 'cost_inr', 'label' => 'Cost (INR)', 'num' => true], ['key' => 'avg_inr', 'label' => 'Cost per request (INR)', 'num' => true], ['key' => 'paying_users', 'label' => 'Paying customers that month', 'num' => true], ['key' => 'per_paying_user_inr', 'label' => 'Cost per paying customer (INR)', 'num' => true]]],
+            'margin' => ['label' => 'Contribution margin', 'filters' => ['from', 'to'], 'defaults' => ['plan', 'orders', 'net_inr', 'fees_inr', 'ai_inr', 'margin_inr', 'margin_pct'], 'columns' => [
+                ['key' => 'plan', 'label' => 'Plan or add-on'], ['key' => 'orders', 'label' => 'Orders', 'num' => true], ['key' => 'gross_inr', 'label' => 'Collected (INR)', 'num' => true], ['key' => 'refunds_inr', 'label' => 'Refunds (INR)', 'num' => true], ['key' => 'net_inr', 'label' => 'Net (INR)', 'num' => true],
+                ['key' => 'gst_inr', 'label' => 'GST share (INR)', 'num' => true], ['key' => 'fees_inr', 'label' => 'Gateway fees (INR)', 'num' => true], ['key' => 'ai_inr', 'label' => 'AI cost (INR)', 'num' => true], ['key' => 'fulfilment_inr', 'label' => 'Fulfilment (INR)', 'num' => true], ['key' => 'support_inr', 'label' => 'Support (INR)', 'num' => true],
+                ['key' => 'margin_inr', 'label' => 'Margin (INR)', 'num' => true], ['key' => 'margin_pct', 'label' => 'Margin %', 'num' => true], ['key' => 'per_order_inr', 'label' => 'Margin per order (INR)', 'num' => true]]],
             'mail' => ['label' => 'Email queue', 'filters' => ['q', 'status', 'from', 'to'], 'defaults' => ['date', 'recipient', 'subject', 'trigger', 'status'], 'columns' => [
                 ['key' => 'date', 'label' => 'Created'], ['key' => 'recipient', 'label' => 'To'], ['key' => 'subject', 'label' => 'Subject'], ['key' => 'trigger', 'label' => 'Type'], ['key' => 'status', 'label' => 'Status'], ['key' => 'attempts', 'label' => 'Attempts', 'num' => true], ['key' => 'error', 'label' => 'Error'], ['key' => 'sent_at', 'label' => 'Sent']]],
         ];
@@ -182,7 +186,7 @@ class ReportController extends Controller
     }
 
     /** Data sets that are totals worked out per day / page / source rather than one row per record. */
-    private const SUMMARIES = ['daily', 'traffic', 'sources', 'activity', 'ai_spend'];
+    private const SUMMARIES = ['daily', 'traffic', 'sources', 'activity', 'ai_spend', 'margin'];
 
     private function file(Request $r, string $set, string $format, array $columns, array $rows, int $total)
     {
@@ -263,6 +267,12 @@ class ReportController extends Controller
                 $rows[] = ['month' => $a['month'], 'feature' => $a['feature'], 'model' => $a['model'], 'calls' => $a['calls'], 'input_tokens' => $a['input_tokens'], 'output_tokens' => $a['output_tokens'],
                     'cost_inr' => (float) self::inr($a['paise']), 'avg_inr' => round($a['paise'] / max(1, $a['calls']) / 100, 2), 'paying_users' => $n, 'per_paying_user_inr' => $n ? round($a['paise'] / $n / 100, 2) : 0];
             }
+        } elseif ($set === 'margin') {
+            $in = fn ($p) => round($p / 100, 2);
+            foreach (\App\Services\CostControls::margin($from, $to) as $m) {
+                $rows[] = ['plan' => $m['name'], 'orders' => $m['orders'], 'gross_inr' => $in($m['grossPaise']), 'refunds_inr' => $in($m['refundsPaise']), 'net_inr' => $in($m['netPaise']), 'gst_inr' => $in($m['gstPaise']), 'fees_inr' => $in($m['feesPaise']),
+                    'ai_inr' => $in($m['aiPaise']), 'fulfilment_inr' => $in($m['fulfilmentPaise']), 'support_inr' => $in($m['supportPaise']), 'margin_inr' => $in($m['marginPaise']), 'margin_pct' => $m['marginPct'] ?? 0, 'per_order_inr' => $in($m['perOrderPaise'])];
+            }
         } else {
             $q = $range(DB::table('activity_events'), 'created_at');
             if ($term !== '') {
@@ -282,10 +292,11 @@ class ReportController extends Controller
         if ($set === 'ai_spend') {
             $sums = ['calls' => array_sum(array_column($rows, 'calls')), 'input_tokens' => array_sum(array_column($rows, 'input_tokens')), 'output_tokens' => array_sum(array_column($rows, 'output_tokens')), 'cost_inr' => round(array_sum(array_column($rows, 'cost_inr')), 2)];
         }
-        if ($set === 'daily') {
+        if ($set === 'daily' || $set === 'margin') {
             foreach (array_filter($meta['columns'], fn ($c) => ! empty($c['num'])) as $c) {
                 $sums[$c['key']] = round(array_sum(array_column($rows, $c['key'])), 2);
             }
+            unset($sums['margin_pct'], $sums['per_order_inr']); // shares are not added up
         }
         Settings::audit($r->user()->id, 'report_'.($format === 'json' ? 'viewed' : 'exported'), $set.':'.$total);
         $rows = array_map(fn ($row) => array_intersect_key($row, array_flip($cols)), $rows);
@@ -380,7 +391,7 @@ class ReportController extends Controller
             }
             $count = clone $q;
 
-            return [$q->select(['u.id', 'u.name', 'u.email', 'u.created_at', 'u.blocked', 'u.is_admin', 'pr.phone', 'pr.city', 'pr.experience_level', 'pr.profession']), ['_default' => 'u.id', 'id' => 'u.id', 'name' => 'u.name', 'email' => 'u.email', 'joined' => 'u.created_at'], null, $count];
+            return [$q->select(['u.id', 'u.name', 'u.email', 'u.created_at', 'u.blocked', 'u.is_admin', 'pr.phone', 'pr.city', 'pr.experience_level', 'pr.profession', 'u.acq_class', 'u.acq_subtype', 'u.acq_campaign']), ['_default' => 'u.id', 'id' => 'u.id', 'name' => 'u.name', 'email' => 'u.email', 'joined' => 'u.created_at'], null, $count];
         }
         if ($set === 'commissions') {
             $q = DB::table('referral_commissions as c')->join('users as a', 'a.id', '=', 'c.referrer_id')->join('users as b', 'b.id', '=', 'c.buyer_id');
@@ -504,7 +515,7 @@ class ReportController extends Controller
         return $rows->map(function ($x) use ($set, $acc, $res, $plans) {
             return match ($set) {
                 'orders' => ['order' => 'ORD-'.strtoupper(substr($x->id, 0, 6)), 'date' => $x->created_at, 'customer' => $x->u_name, 'email' => $x->u_email, 'plan' => $x->plan, 'amount_inr' => (float) self::inr($x->amount_paise), 'discount_inr' => (float) self::inr($x->discount_paise), 'reversed_inr' => (float) self::inr($x->refunded_paise), 'net_inr' => (float) self::inr($x->amount_paise - $x->refunded_paise), 'coupon' => $x->coupon_code, 'status' => $x->status, 'provider' => $x->provider, 'reference' => $x->payment_reference ?: $x->provider_order_id, 'live' => $x->is_live ? 'Yes' : 'No', 'access_until' => $x->access_until, 'id' => $x->id],
-                'users' => ['id' => (int) $x->id, 'name' => $x->name, 'email' => $x->email, 'phone' => $x->phone, 'city' => $x->city, 'level' => $x->experience_level, 'profession' => $x->profession, 'joined' => $x->created_at, 'plan' => ($acc[$x->id]['paid'] ?? false) ? ($plans[$acc[$x->id]['plan']]['name'] ?? $acc[$x->id]['plan']) : 'Normal user', 'paid' => ($acc[$x->id]['paid'] ?? false) ? 'Yes' : 'No', 'status' => $x->blocked ? 'Blocked' : ($x->is_admin ? 'Owner' : 'Active'), 'resumes' => (int) ($res[$x->id] ?? 0)],
+                'users' => ['id' => (int) $x->id, 'name' => $x->name, 'email' => $x->email, 'phone' => $x->phone, 'city' => $x->city, 'level' => $x->experience_level, 'profession' => $x->profession, 'joined' => $x->created_at, 'plan' => ($acc[$x->id]['paid'] ?? false) ? ($plans[$acc[$x->id]['plan']]['name'] ?? $acc[$x->id]['plan']) : 'Normal user', 'paid' => ($acc[$x->id]['paid'] ?? false) ? 'Yes' : 'No', 'status' => $x->blocked ? 'Blocked' : ($x->is_admin ? 'Owner' : 'Active'), 'resumes' => (int) ($res[$x->id] ?? 0), 'came_as' => \App\Services\Attribution::label($x->acq_class ?? null, $x->acq_subtype ?? null), 'campaign' => $x->acq_campaign ?? ''],
                 'commissions' => ['date' => $x->created_at, 'referrer' => $x->a_name, 'referrer_email' => $x->a_email, 'buyer' => $x->b_name, 'amount_inr' => (float) self::inr($x->amount_paise), 'rate' => $x->rate_bps / 100, 'reversed_inr' => (float) self::inr($x->reversed_paise), 'purchase' => 'ORD-'.strtoupper(substr($x->purchase_id, 0, 6))],
                 'withdrawals' => ['date' => $x->created_at, 'customer' => $x->u_name, 'email' => $x->u_email, 'amount_inr' => (float) self::inr($x->amount_paise), 'method' => $x->method, 'destination' => $x->destination_masked, 'status' => $x->status, 'reference' => $x->reference, 'paid_at' => $x->paid_at],
                 'scans' => ['date' => $x->created_at, 'customer' => $x->u_name, 'email' => $x->u_email, 'job_title' => $x->job_title, 'company' => $x->company, 'source' => $x->source, 'score' => $x->score, 'status' => $x->status, 'job_url' => $x->job_url],

@@ -41,3 +41,23 @@ try {
     if (/onesignal/i.test(u)) r.unregister();
   })).catch(() => {});
 } catch (_) {}
+
+// "On this page" lists and other in-page links (href="#section") must stay on this page. Most pages carry <base href="/">,
+// which made the browser resolve "#section" against the site root and open the home page instead.
+try {
+  document.addEventListener('click', (e) => {
+    if (e.defaultPrevented || e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
+    const a = e.target && e.target.closest ? e.target.closest('a[href^="#"]') : null;
+    if (!a || a.target === '_blank' || !document.querySelector('base[href]')) return;
+    const hash = a.getAttribute('href');
+    if (!hash || hash === '#') return;
+    e.preventDefault();
+    if (location.hash === hash) {
+      let el = null;
+      try { el = document.getElementById(decodeURIComponent(hash.slice(1))); } catch (_) {}
+      if (el) el.scrollIntoView({ block: 'start' });
+    } else {
+      location.hash = hash; // changes only the part after #, so the page stays and scrolls to the section
+    }
+  });
+} catch (_) {}
