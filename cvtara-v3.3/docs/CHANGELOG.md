@@ -15,6 +15,7 @@ Owner's feedback of 12 Nov 2026, audited and approved ("approved", then "complet
 - **What's new**: eight notes for 6-12 Nov; the 26 Oct phone note is hidden.
 - **Templates**: Clinical Pharmacist resume and three letters (HR Generalist, Senior Staff Nurse, Assistant Professor). Coverage now counts letters in their real role group and adds a fresher / mid-career / experienced table; every role group and level has at least five resumes and five letters.
 - Test suite `s79_customer_journey`; s1, s14, s27, s32 and s65 updated for the 8-character password, verified reviews and the Job Hunt gate.
+
 # CVTara v3.66.0 — Interview question bulk upload
 
 ## 3.66.0
