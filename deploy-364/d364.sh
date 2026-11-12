@@ -3,9 +3,9 @@
 H=/home/u280039231/domains/cvtara.com; W=/home/u280039231/cvtara_deploy; L=$W/d364.log; mkdir -p $W
 if [ -f $W/d364.done ] || [ -f $W/d364.lock ]; then tail -c 4000 $L; exit 0; fi
 touch $W/d364.lock; exec >>$L 2>&1; echo "== start $(date -u)"
-SRC=https://raw.githubusercontent.com/idealsone/domain_flipping/409d33a11b8918cb66f07a66eab36ed0ff0288b2/deploy-364
+SRC=https://raw.githubusercontent.com/idealsone/domain_flipping/e44b7bf3f4dc678f318b0994f2f4b99fce64a899/deploy-364
 cd $W && curl -fsSL "$SRC/cvt364.tgz" -o cvt364.tgz && curl -fsSL "$SRC/rebuild.php" -o rebuild364.php && curl -fsSL "$SRC/checks.txt" -o checks364.txt || { echo "ABORT download"; touch $W/d364.done; exit 1; }
-echo "c7943e30159604a5bd11d2e21d3cdfceff706e7ba0f2b22f3d59db7e8016991b  cvt364.tgz" | sha256sum -c - || { echo "ABORT tgz checksum"; touch $W/d364.done; exit 1; }
+echo "b403cdd3de08c10f42a1100f35c5b92a7e74432d9a8371f07fbfb1663d2631d6  cvt364.tgz" | sha256sum -c - || { echo "ABORT tgz checksum"; touch $W/d364.done; exit 1; }
 cd $H; bad=0
 while read k p rest; do if [ -f "$p" ]; then cur=$(sha256sum "$p" | cut -c1-64); else cur=ABSENT; fi; ok=0; for x in $rest; do [ "$cur" = "$x" ] && ok=1; done
   if [ $ok = 0 ]; then echo "MISMATCH $p $cur"; bad=1; fi; done < $W/checks364.txt
