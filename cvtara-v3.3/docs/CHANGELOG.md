@@ -6,10 +6,15 @@ Owner's confirmed decisions (12 Nov 2026). Additive migrations `2026_11_27_00000
 - **Original uploaded resume file kept 90 days** (V7 §11 R1): after a resume is built from an upload, a private copy of the original PDF, Word or text file (up to 5 MB, checked by its first bytes) is kept outside the public folder. Account > Your data lists it with Download and Delete now; it is erased after 90 days (hourly check), with the account, or when a new file replaces it for the same resume. Listed in the data download; privacy policy default updated.
 - **Test payment review** (V4.8 §6): Costs & margin lists every order made up to 9 Nov 2026 (India time) with a suggestion from fixed rules (test mode, demo checkout, owner or staff account, ₹10 or less, test-looking email, full refund within 2 days; unfinished checkouts and ₹0 grants apart). The owner marks orders Test or Real (one by one, ticked, or accept the suggestion). Orders marked Test are left out of revenue figures; no order is changed or deleted. Owner only, audited, downloadable.
 - **Template import from a Word file** (V5.0 §6): Template quality accepts one .docx with design name, type, role group, licence, source and author. Its section headings and order, main font (closest available font, with a note), heading colour and one or two columns are read; it becomes a draft built on the closest CVTara design, takes the text-reading test and goes live only after approval. Macros, missing headings or missing licence details are refused; the sample text is not stored; the same design saved again is a duplicate.
-- Test suites `s71_full_mock`, `s72_resume_originals`, `s73_test_payments`, `s74_docx_templates`.
+- Test suites `s75_full_mock`, `s72_resume_originals`, `s73_test_payments`, `s74_docx_templates`.
 
 
-# CVTara v3.60.0 — Website and search
+## 3.60.1
+Search engine index status on the console Overview (owner request 2026-11-12). No migration.
+- **Search engines box** on the Overview, after Business numbers, for the owner and staff who may view SEO: **Google** pages indexed out of live pages (from the URL Inspection results the SEO agent stores), why the others are not indexed, pages not checked yet, and Search Console impressions and clicks; **Bing** pages in index, pages crawled, crawl errors and last-30-day impressions and clicks from Bing Webmaster Tools; **IndexNow** pages sent, pages waiting and the last send. Refresh button.
+- **Bing Webmaster Tools API key** field in Integrations > Analytics (owner only, stored encrypted, never sent back). Bing numbers are kept for six hours; a new key is used at once. Refused keys and unverified sites get a plain explanation.
+- New `App\Services\IndexStatus`, routes `GET admin/indexing/engines` (seo.view) and `POST admin/indexing/engines/refresh` (seo.approve), console script `indexing.js`. Test suite `s71_index_status`; the Google stand-in also answers the Bing Webmaster API.
+
 
 ## 3.60.0
 Website and search (V7 §31, §34; V5.0 §2, §9; V5.5 §2; V6 SEO §4-§5, §13). Additive migration `2026_11_26_000001_site_search_register`: new table `brand_profiles`, column `seo_keywords.cluster`; loads the keyword backlog and the listings register.
