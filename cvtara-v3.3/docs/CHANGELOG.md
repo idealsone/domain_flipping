@@ -1,3 +1,10 @@
+# CVTara v3.67.2 — Night mode readability
+
+## 3.67.2
+Owner report (12 Nov 2026): night mode looked wrong on the customer dashboard. No migration.
+- Cards that used `--panel` ("What would you like CVTara to help you with?" tiles, "What brings you to CVTara?", parts of Interview practice, Resume hub and Account) fell back to white with light text. `--panel` now follows the page colours in both modes.
+- Every secondary button turned pink in night mode; they now use the normal text colour, and only delete or danger buttons stay red. The dashboard banner's buttons use white text.
+
 # CVTara v3.67.1 — Review editor and What's new
 
 ## 3.67.1

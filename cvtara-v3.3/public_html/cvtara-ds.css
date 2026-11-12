@@ -481,3 +481,11 @@ dialog.ops-dlg textarea{resize:vertical;min-height:130px}
 dialog.ops-dlg .ops-form .wide:last-child{display:flex;flex-wrap:wrap;gap:8px;align-items:center;padding-top:4px}
 dialog.ops-dlg blockquote,dialog.ops-dlg p{overflow-wrap:anywhere}
 @media (max-width:560px){dialog.ops-dlg,dialog.ad-dialog{padding:18px 16px;border-radius:14px}}
+/* Night mode readability (owner, 12 Nov): cards that asked for --panel fell back to white with light text, and every
+   secondary button turned pink. Panels follow the page colours; secondary buttons use the normal text colour, and only
+   delete/danger buttons stay red. */
+:root,body,body.dark,html.dark,:root[data-theme=dark]{--panel:var(--paper)}
+body.dark .button.secondary,body.dark .workspace-main .button.secondary,body.dark .panel .button.secondary,body.dark .workspace-main button.button.secondary{color:var(--ink);border-color:var(--line)}
+body.dark .button.secondary:hover,body.dark .workspace-main button.button.secondary:hover{border-color:#60a5fa;color:#fff}
+body.dark .ws-hero .button.secondary,body.dark .workspace-main .ws-hero .button.secondary{color:#fff;background:rgba(255,255,255,.12);border-color:rgba(255,255,255,.35)}
+body.dark button.button.secondary.danger,body.dark .button.secondary[data-danger],body.dark button.button.secondary[style*="b91c1c"]{color:#fca5a5!important;border-color:rgba(252,165,165,.4)}
