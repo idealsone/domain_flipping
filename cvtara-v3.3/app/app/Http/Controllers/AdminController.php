@@ -133,7 +133,7 @@ class AdminController extends Controller
         if ($path === 'providers') {
             $p = Settings::providers();
             unset($p['push']);
-            $fields = ['jobreader' => ['enabled', 'provider', 'scrapingbeeApiKey', 'zenrowsApiKey', 'customUrlTemplate', 'customApiKey', 'dailyLimit'], 'payments' => ['provider', 'mode', 'razorpayKeyId', 'razorpayKeySecret', 'razorpayWebhookSecret', 'phonepeMode', 'phonepeClientId', 'phonepeClientVersion', 'phonepeClientSecret', 'phonepeWebhookUsername', 'phonepeWebhookPassword'], 'email' => ['provider', 'resendApiKey', 'smtpHost', 'smtpPort', 'smtpUser', 'smtpPassword', 'fromEmail', 'fromName', 'replyTo', 'postalAddress'], 'ai' => ['provider', 'claudeApiKey', 'model', 'quickModel', 'dailyLimit'], 'grammar' => ['url', 'username', 'premiumApiKey'], 'analytics' => ['measurementId', 'searchConsoleProperty', 'searchConsoleServiceAccount', 'cruxApiKey']];
+            $fields = ['jobreader' => ['enabled', 'provider', 'scrapingbeeApiKey', 'zenrowsApiKey', 'customUrlTemplate', 'customApiKey', 'dailyLimit'], 'payments' => ['provider', 'mode', 'razorpayKeyId', 'razorpayKeySecret', 'razorpayWebhookSecret', 'phonepeMode', 'phonepeClientId', 'phonepeClientVersion', 'phonepeClientSecret', 'phonepeWebhookUsername', 'phonepeWebhookPassword'], 'email' => ['provider', 'resendApiKey', 'smtpHost', 'smtpPort', 'smtpUser', 'smtpPassword', 'fromEmail', 'fromName', 'replyTo', 'postalAddress'], 'ai' => ['provider', 'claudeApiKey', 'model', 'quickModel', 'dailyLimit'], 'grammar' => ['url', 'username', 'premiumApiKey'], 'analytics' => ['measurementId', 'searchConsoleProperty', 'searchConsoleServiceAccount', 'cruxApiKey', 'bingApiKey']];
             $secret = fn ($k) => preg_match('/Secret|ApiKey|Password|ServiceAccount|AuthToken/', $k);
             if ($get) {
                 foreach ($p as &$service) {
@@ -503,6 +503,12 @@ class AdminController extends Controller
         }
         if ($path === 'indexing') {
             return $ok(FastIndex::status());
+        }
+        if ($path === 'indexing/engines') {
+            return $ok(\App\Services\IndexStatus::all());
+        }
+        if ($path === 'indexing/engines/refresh') {
+            return $ok(\App\Services\IndexStatus::all(true));
         }
         if ($path === 'indexing/settings') {
             $v = $r->validate(['auto' => 'required|boolean', 'google' => 'required|boolean']);

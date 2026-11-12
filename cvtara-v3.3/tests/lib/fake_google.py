@@ -11,6 +11,7 @@ class FakeGoogle:
         self.inspected = []  # URL Inspection calls; answer PASS unless the url is in not_indexed
         self.not_indexed = set()
         self.crux, self.crux_calls = {}, []  # path -> (lcp ms, inp ms, cls)
+        self.bing_calls, self.bing_key, self.bing_crawl = [], "bing-test", None  # Bing Webmaster API (3.60.1); None = default crawl rows
         outer = self
 
         class H(BaseHTTPRequestHandler):
@@ -52,6 +53,19 @@ class FakeGoogle:
 
             def do_GET(self):
                 outer.calls.append(("GET", self.path))
+                if self.path.startswith("/bing/"):
+                    outer.bing_calls.append(self.path)
+                    if "apikey=" + outer.bing_key not in self.path: return self._send(401, {"ErrorCode": 3, "Message": "ERROR!!! InvalidApiKey"})
+                    if "GetCrawlStats" in self.path:
+                        rows = outer.bing_crawl if outer.bing_crawl is not None else [
+                            {"Date": "/Date(1762732800000-0800)/", "InIndex": 40, "CrawledPages": 12, "CrawlErrors": 1, "BlockedByRobotsTxt": 0, "InLinks": 3},
+                            {"Date": "/Date(1762819200000-0800)/", "InIndex": 57, "CrawledPages": 20, "CrawlErrors": 2, "BlockedByRobotsTxt": 0, "InLinks": 4}]
+                        return self._send(200, {"d": rows})
+                    if "GetRankAndTrafficStats" in self.path:
+                        import time
+                        ms = int(time.time() * 1000)
+                        return self._send(200, {"d": [{"Date": "/Date(%d-0800)/" % (ms - 86400000), "Clicks": 3, "Impressions": 120}, {"Date": "/Date(%d-0800)/" % (ms - 2 * 86400000), "Clicks": 1, "Impressions": 30}, {"Date": "/Date(%d-0800)/" % (ms - 90 * 86400000), "Clicks": 50, "Impressions": 900}]})
+                    return self._send(404, {})
                 if self.headers.get("Authorization") != "Bearer g_tok": return self._send(401, {})
                 if self.path.endswith("/sitemaps"):
                     return self._send(200, {"sitemap": [{"path": "https://cvtara.com/sitemap.xml", "lastSubmitted": "2026-11-01T00:00:00Z", "lastDownloaded": "2026-11-02T00:00:00Z", "isPending": False, "errors": "0", "warnings": "1", "contents": [{"type": "web", "submitted": "596"}]}]})

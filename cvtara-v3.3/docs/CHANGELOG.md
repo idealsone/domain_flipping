@@ -1,4 +1,11 @@
-# CVTara v3.60.0 — Website and search
+# CVTara v3.60.1 — Search engines on the Overview
+
+## 3.60.1
+Search engine index status on the console Overview (owner request 2026-11-12). No migration.
+- **Search engines box** on the Overview, after Business numbers, for the owner and staff who may view SEO: **Google** pages indexed out of live pages (from the URL Inspection results the SEO agent stores), why the others are not indexed, pages not checked yet, and Search Console impressions and clicks; **Bing** pages in index, pages crawled, crawl errors and last-30-day impressions and clicks from Bing Webmaster Tools; **IndexNow** pages sent, pages waiting and the last send. Refresh button.
+- **Bing Webmaster Tools API key** field in Integrations > Analytics (owner only, stored encrypted, never sent back). Bing numbers are kept for six hours; a new key is used at once. Refused keys and unverified sites get a plain explanation.
+- New `App\Services\IndexStatus`, routes `GET admin/indexing/engines` (seo.view) and `POST admin/indexing/engines/refresh` (seo.approve), console script `indexing.js`. Test suite `s71_index_status`; the Google stand-in also answers the Bing Webmaster API.
+
 
 ## 3.60.0
 Website and search (V7 §31, §34; V5.0 §2, §9; V5.5 §2; V6 SEO §4-§5, §13). Additive migration `2026_11_26_000001_site_search_register`: new table `brand_profiles`, column `seo_keywords.cluster`; loads the keyword backlog and the listings register.
