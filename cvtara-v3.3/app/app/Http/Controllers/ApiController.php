@@ -322,7 +322,7 @@ class ApiController extends Controller
         if ($path === 'interviews/start' && $r->isMethod('POST')) {
             \App\Services\EmailVerification::guard($u);
             $cap('interview-start', 10, 3600, 'Please wait a while before starting another mock interview.');
-            $v = $r->validate(['occupation' => 'required|string|max:80', 'band' => 'required|string|max:10', 'objective' => 'nullable|string|max:20', 'company' => 'nullable|string|max:120']);
+            $v = $r->validate(['occupation' => 'required|string|max:80', 'band' => 'required|string|max:10', 'objective' => 'nullable|string|max:20', 'company' => 'nullable|string|max:120', 'mode' => 'nullable|in:standard,full']);
 
             return $ok(['session' => \App\Services\Interviews::start($u, $v)]);
         }
@@ -336,7 +336,7 @@ class ApiController extends Controller
             abort_unless($r->isMethod('POST'), 405);
             $cap('interview-'.$act, 120, 600, 'Please wait a moment.');
             if ($act === 'answer') {
-                $v = $r->validate(['position' => 'required|integer|min:1|max:10', 'answer' => 'present|nullable|string|max:3000', 'seconds' => 'nullable|integer|min:0|max:7200']);
+                $v = $r->validate(['position' => 'required|integer|min:1|max:12', 'answer' => 'present|nullable|string|max:3000', 'seconds' => 'nullable|integer|min:0|max:7200']);
                 \App\Services\Interviews::answer($u, $m[1], (int) $v['position'], (string) ($v['answer'] ?? ''), isset($v['seconds']) ? (int) $v['seconds'] : null);
 
                 return $ok();
@@ -523,6 +523,27 @@ class ApiController extends Controller
             unset($a['purchase']);
 
             return $ok([...$a, 'emailVerified' => ! \App\Services\EmailVerification::required($r->user()), 'jobLinks' => (bool) (((array) Settings::get('speed', []))['jobLinks'] ?? false), 'planName' => $planName, 'daysLeft' => $a['accessUntil'] ? max(0, (int) ceil((strtotime($a['accessUntil']) - time()) / 86400)) : 0, 'credits' => $cs, 'caps' => ['resumes' => (int) $l['savedResumes'] + 1, 'letters' => (int) $l['savedLetters'], 'atsScans' => $cs['scans']['total'], 'exports' => null], 'used' => ['exports' => $exports, 'savedResumes' => DB::table('resume_drafts')->where('owner_id', $id)->count(), 'savedLetters' => DB::table('cover_letter_drafts')->where('owner_id', $id)->count(), 'atsScans' => $scans, 'dailyMatches' => DB::table('ats_scans')->where('owner_id', $id)->where('status', '!=', 'void')->whereDate('created_at', today())->count()]]);
+        }
+        // 3.61.0 The original uploaded file (kept 90 days, private to the customer, deletable).
+        if (preg_match('#^resumes/([a-f0-9-]{36})/original$#', $path, $m) && $r->isMethod('POST')) {
+            $cap('resume-original', 20, 600, 'Too many uploads in a few minutes. Wait a little and try again.');
+            $v = $r->validate(['file' => 'required|string|max:7100000', 'fileName' => 'nullable|string|max:200']);
+
+            return $ok(['original' => \App\Services\ResumeOriginals::store($r->user(), $m[1], $v['file'], (string) ($v['fileName'] ?? 'resume'))]);
+        }
+        if ($path === 'resumes/originals' && $get) {
+            return $ok(['originals' => \App\Services\ResumeOriginals::list($r->user()->id), 'days' => \App\Services\ResumeOriginals::DAYS]);
+        }
+        if (preg_match('#^resumes/originals/([a-f0-9-]{36})(/delete)?$#', $path, $m)) {
+            if (! empty($m[2])) {
+                abort_unless($r->isMethod('POST'), 405);
+                \App\Services\ResumeOriginals::delete($r->user(), $m[1]);
+
+                return $ok();
+            }
+            abort_unless($get, 405);
+
+            return \App\Services\ResumeOriginals::download($r->user(), $m[1]);
         }
         if ($path === 'resumes/import') {
             abort_unless($r->isMethod('POST'), 405);
@@ -993,7 +1014,7 @@ class ApiController extends Controller
             return $x;
         }, $list);
 
-        return ['generatedAt' => now()->toIso8601String(), 'account' => ['name' => $u->name, 'email' => $u->email, 'createdAt' => $u->created_at, 'referralCode' => $u->referral_code], 'profile' => (array) DB::table('profiles')->where('owner_id', $id)->first(), 'resumes' => $decode($rows('resume_drafts')), 'coverLetters' => $decode($rows('cover_letter_drafts')), 'applications' => $rows('applications'), 'taraChats' => DB::table('tara_messages')->where('owner_id', $id)->where('content', '!=', '')->orderBy('created_at')->get(['conversation_id', 'role', 'content', 'created_at'])->map(fn ($x) => (array) $x)->all(), 'purchases' => $rows('purchases', ['id', 'plan', 'amount_paise', 'refunded_paise', 'currency', 'status', 'coupon_code', 'purchased_at', 'access_until']), 'reviews' => $rows('feedback', ['display_name', 'rating', 'content', 'status', 'created_at']), 'referralCommissions' => DB::table('referral_commissions')->where('referrer_id', $id)->get(['amount_paise', 'rate_bps', 'created_at'])->map(fn ($x) => (array) $x)->all(), 'withdrawals' => $rows('withdrawals', ['amount_paise', 'destination_masked', 'status', 'reference', 'created_at']), 'payoutProfile' => (array) DB::table('payout_profiles')->where('owner_id', $id)->first(['status', 'destination_masked']), 'creatorApplication' => (array) DB::table('creator_applications')->where('owner_id', $id)->first(['status', 'audience', 'rate_bps', 'created_at']), 'refundRequests' => $rows('refund_requests', ['purchase_id', 'status', 'amount_paise', 'reason', 'note', 'created_at']), 'walletTransactions' => $rows('wallet_transactions', ['kind', 'amount_paise', 'note', 'earned_at', 'expires_at', 'created_at']), 'serviceOrders' => $rows('service_orders', ['service', 'status', 'note', 'created_at', 'delivered_at']), 'atsChecks' => $rows('ats_scans', ['id', 'source', 'job_url', 'job_title', 'company', 'score', 'result_json', 'status', 'created_at']), 'activity' => DB::table('activity_events')->where('owner_id', $id)->orderByDesc('created_at')->limit(500)->get(['event', 'reference', 'created_at'])->map(fn ($x) => (array) $x)->all(),
+        return ['generatedAt' => now()->toIso8601String(), 'account' => ['name' => $u->name, 'email' => $u->email, 'createdAt' => $u->created_at, 'referralCode' => $u->referral_code], 'profile' => (array) DB::table('profiles')->where('owner_id', $id)->first(), 'resumes' => $decode($rows('resume_drafts')), 'uploadedFiles' => \App\Services\ResumeOriginals::list($id), 'coverLetters' => $decode($rows('cover_letter_drafts')), 'applications' => $rows('applications'), 'taraChats' => DB::table('tara_messages')->where('owner_id', $id)->where('content', '!=', '')->orderBy('created_at')->get(['conversation_id', 'role', 'content', 'created_at'])->map(fn ($x) => (array) $x)->all(), 'purchases' => $rows('purchases', ['id', 'plan', 'amount_paise', 'refunded_paise', 'currency', 'status', 'coupon_code', 'purchased_at', 'access_until']), 'reviews' => $rows('feedback', ['display_name', 'rating', 'content', 'status', 'created_at']), 'referralCommissions' => DB::table('referral_commissions')->where('referrer_id', $id)->get(['amount_paise', 'rate_bps', 'created_at'])->map(fn ($x) => (array) $x)->all(), 'withdrawals' => $rows('withdrawals', ['amount_paise', 'destination_masked', 'status', 'reference', 'created_at']), 'payoutProfile' => (array) DB::table('payout_profiles')->where('owner_id', $id)->first(['status', 'destination_masked']), 'creatorApplication' => (array) DB::table('creator_applications')->where('owner_id', $id)->first(['status', 'audience', 'rate_bps', 'created_at']), 'refundRequests' => $rows('refund_requests', ['purchase_id', 'status', 'amount_paise', 'reason', 'note', 'created_at']), 'walletTransactions' => $rows('wallet_transactions', ['kind', 'amount_paise', 'note', 'earned_at', 'expires_at', 'created_at']), 'serviceOrders' => $rows('service_orders', ['service', 'status', 'note', 'created_at', 'delivered_at']), 'atsChecks' => $rows('ats_scans', ['id', 'source', 'job_url', 'job_title', 'company', 'score', 'result_json', 'status', 'created_at']), 'activity' => DB::table('activity_events')->where('owner_id', $id)->orderByDesc('created_at')->limit(500)->get(['event', 'reference', 'created_at'])->map(fn ($x) => (array) $x)->all(),
             'supportRequests' => \App\Services\SupportCentre::mine($u),
             'resumeAndLetterRequests' => \Illuminate\Support\Facades\Schema::hasTable('service_requests') ? DB::table('service_requests')->where('owner_id', $id)->get(['id', 'status', 'scan_id', 'output_json', 'created_at'])->map(fn ($x) => ['output' => json_decode((string) $x->output_json, true)] + array_diff_key((array) $x, ['output_json' => 1]))->all() : []];
     }

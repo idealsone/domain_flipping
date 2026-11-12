@@ -1,3 +1,14 @@
+# CVTara v3.61.0 — Owner decisions of 12 November
+
+## 3.61.0
+Owner's confirmed decisions (12 Nov 2026). Additive migrations `2026_11_27_000001_full_mock` (`interview_sessions.mode`, `sections_json`), `2026_11_27_000002_resume_originals` (new table `resume_originals`), `2026_11_27_000003_payment_marks` (new table `payment_marks`). Nothing existing changes.
+- **Full mock interview** (V5.8 §5, V5.10 §2, D04): an optional type of about 60 minutes in four 15-minute parts (about you and your motivation, knowledge of the role, your past experience, situations and closing), three questions each, least-seen first, ending with a closing question. Uses one mock interview credit, like a standard one. One part at a time with a guide clock per part; running over is shown, never marked down. Feedback covers every answer plus an average for each part from the rubric scores (no extra request). The owner can stop offering it (Interview practice > Switch and limits). Customer guide updated.
+- **Original uploaded resume file kept 90 days** (V7 §11 R1): after a resume is built from an upload, a private copy of the original PDF, Word or text file (up to 5 MB, checked by its first bytes) is kept outside the public folder. Account > Your data lists it with Download and Delete now; it is erased after 90 days (hourly check), with the account, or when a new file replaces it for the same resume. Listed in the data download; privacy policy default updated.
+- **Test payment review** (V4.8 §6): Costs & margin lists every order made up to 9 Nov 2026 (India time) with a suggestion from fixed rules (test mode, demo checkout, owner or staff account, ₹10 or less, test-looking email, full refund within 2 days; unfinished checkouts and ₹0 grants apart). The owner marks orders Test or Real (one by one, ticked, or accept the suggestion). Orders marked Test are left out of revenue figures; no order is changed or deleted. Owner only, audited, downloadable.
+- **Template import from a Word file** (V5.0 §6): Template quality accepts one .docx with design name, type, role group, licence, source and author. Its section headings and order, main font (closest available font, with a note), heading colour and one or two columns are read; it becomes a draft built on the closest CVTara design, takes the text-reading test and goes live only after approval. Macros, missing headings or missing licence details are refused; the sample text is not stored; the same design saved again is a duplicate.
+- Test suites `s71_full_mock`, `s72_resume_originals`, `s73_test_payments`, `s74_docx_templates`.
+
+
 # CVTara v3.60.0 — Website and search
 
 ## 3.60.0

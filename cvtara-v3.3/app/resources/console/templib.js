@@ -20,7 +20,11 @@
         <div class="ops-kpis" id="tlK"></div>
         <section class="panel panel-pad"><h3 style="margin-top:0">Import a template package</h3>
           <p class="muted" style="margin-top:0">Upload one ZIP with <code>manifest.json</code> and <code>templates/resume/…</code> or <code>templates/cover-letter/…</code> files. Each design must name a CVTara design to build on (<code>layout_family</code>), and carry licence, source and author. Scripts, macros, remote files and unsafe CSS are refused. Imported designs arrive as drafts and go live only when you approve them.</p>
-          <form id="tlUp" style="display:flex;gap:8px;flex-wrap:wrap;align-items:center"><input type="file" name="package" accept=".zip" required><button class="button primary small">Check and import</button><span class="ops-st" role="status"></span></form><div id="tlRep"></div></section>
+          <p class="muted">Or upload one <b>Word file (.docx)</b> of a resume or cover letter design. We read its section headings and their order, its main font, the colour of its headings and whether it uses one column or two, and build a draft on the closest CVTara design. The sample text in the file is not kept. Files with macros are refused.</p>
+          <form id="tlUp" style="display:flex;gap:8px;flex-wrap:wrap;align-items:center"><input type="file" name="package" accept=".zip,.docx" required>
+            <span id="tlDx" hidden style="display:flex;gap:8px;flex-wrap:wrap"><input name="name" placeholder="Design name" maxlength="160"><select name="kind"><option value="resume">Resume</option><option value="letter">Cover letter</option></select>
+            <input name="category" placeholder="Role group, e.g. Sales" maxlength="80"><input name="licence" placeholder="Licence (e.g. bought from …, or our own)" maxlength="160"><input name="source" placeholder="Source (where it came from)" maxlength="200"><input name="author" placeholder="Author or designer" maxlength="160"></span>
+            <button class="button primary small">Check and import</button><span class="ops-st" role="status"></span></form><div id="tlRep"></div></section>
         <section class="panel panel-pad"><h3 style="margin-top:0">Designs</h3>
           <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:8px"><input id="tlQ" type="search" placeholder="Search name, group or author">
             <select id="tlKind"><option value="all">Resumes and letters</option><option value="resume">Resumes</option><option value="letter">Cover letters</option></select>
@@ -38,14 +42,17 @@
       on('#tlKind', 'kind'); on('#tlSt', 'status'); on('#tlOr', 'origin'); on('#tlTe', 'test'); on('#tlLa', 'label');
       let t; $('#tlQ', h).oninput = e => { clearTimeout(t); t = setTimeout(() => { S.q = e.target.value.trim(); S.page = 1; list(h); }, 300); };
       $('#tlRun', h).onclick = async e => { e.target.disabled = true; try { const r = await api('/api/admin/template-library/test-due', { method: 'POST', body: {} }); toast(r.tested ? `Tested ${r.tested} design${r.tested === 1 ? '' : 's'}` : 'Every design is already tested'); list(h); } catch (x) { toast(err(x)); } e.target.disabled = false; };
+      $('input[name=package]', h).onchange = e => { const dx = /\.docx$/i.test(e.target.value); $('#tlDx', h).hidden = !dx; $('#tlDx', h).querySelectorAll('[name=licence],[name=source],[name=author]').forEach(i => { i.required = dx; }); };
       $('#tlUp', h).onsubmit = async e => {
         e.preventDefault(); const st = $('.ops-st', e.target); st.textContent = 'Checking…';
         try {
           const res = await fetch('/api/admin/template-library/import', { method: 'POST', credentials: 'same-origin', body: new FormData(e.target), headers: { Accept: 'application/json', 'X-CVTara-Request': '1', 'X-CSRF-TOKEN': document.querySelector('meta[name=csrf-token]')?.content || '' } });
           const j = await res.json().catch(() => ({})); if (!res.ok) throw new Error(j.message || j.error || 'Upload failed.');
           const r = j.report; st.textContent = r.ok ? 'Imported as drafts' : 'Not imported';
-          $('#tlRep', h).innerHTML = r.ok ? table(['Design', 'Result', 'Version', 'Reading test'], r.templates.map(x => `<tr><td>${E(x.name)}</td><td>${E({ new: 'New draft', new_version: 'New version (draft)', duplicate: 'Duplicate, skipped' }[x.result] || x.result)}</td><td>${E(x.version || '')}</td><td>${x.testPassed === undefined ? '—' : x.testPassed ? '<span class="pill ok">Passed</span>' : '<span class="pill bad">Failed</span> ' + E((x.problems || []).join('; '))}</td></tr>`), 'Nothing in the package.')
-            : `<div role="alert"><p><b>The package was not imported.</b> Fix these and upload it again:</p><ul>${r.errors.map(x => `<li>${E(x)}</li>`).join('')}</ul></div>`;
+          const rd = r.read ? `<p class="muted">Read from the Word file: sections ${E((r.read.sections || []).join(', ') || 'none')}; font ${E(r.read.font || 'default')}; heading colour ${E(r.read.accent || 'none')}; ${r.read.twoColumn ? 'two columns' : 'one column'}; built on ${E(r.read.base || '—')}.</p>` : '';
+          const wn = (r.warnings || []).length ? `<ul class="muted">${r.warnings.map(x => `<li>${E(x)}</li>`).join('')}</ul>` : '';
+          $('#tlRep', h).innerHTML = rd + wn + (r.ok ? table(['Design', 'Result', 'Version', 'Reading test'], r.templates.map(x => `<tr><td>${E(x.name)}</td><td>${E({ new: 'New draft', new_version: 'New version (draft)', duplicate: 'Duplicate, skipped' }[x.result] || x.result)}</td><td>${E(x.version || '')}</td><td>${x.testPassed === undefined ? '—' : x.testPassed ? '<span class="pill ok">Passed</span>' : '<span class="pill bad">Failed</span> ' + E((x.problems || []).join('; '))}</td></tr>`), 'Nothing in the package.')
+            : `<div role="alert"><p><b>The package was not imported.</b> Fix these and upload it again:</p><ul>${r.errors.map(x => `<li>${E(x)}</li>`).join('')}</ul></div>`);
           list(h); packages(h);
         } catch (x) { st.textContent = err(x); }
       };

@@ -457,6 +457,168 @@ class TemplateLibrary
         return $report;
     }
 
+    private const DOCX_HEADINGS = [
+        'summary' => '/^(professional\s+|career\s+)?(summary|profile|objective|about( me)?|career objective|personal statement)$/i',
+        'experience' => '/^(work\s+|professional\s+|relevant\s+)?(experience|employment( history)?|work history|career history|internships?)$/i',
+        'education' => '/^(education|academic( background| qualifications)?|qualifications|educational qualifications)$/i',
+        'projects' => '/^(academic\s+|key\s+)?projects?$/i',
+        'skills' => '/^(key\s+|technical\s+|core\s+)?(skills|competencies|expertise|strengths)$/i',
+        'certifications' => '/^(certifications?|certificates?|courses|trainings?|licen[cs]es)( (and|&) (courses|trainings?))?$/i',
+        'languages' => '/^languages?( known)?$/i',
+        'awards' => '/^(awards?|achievements?|honou?rs|accomplishments|volunteering|extra[- ]curricular( activities)?)(\s*(and|&)\s*\w+)?$/i',
+    ];
+
+    /**
+     * 3.61.0 Import a design from a Word file (V5.0 §6; owner OK 12 Nov 2026). The file is checked (no macros or
+     * embedded programs, size), then its look is read: section order from its headings, the main font, the accent
+     * colour of the headings, and whether it is laid out in one column or two. It becomes a draft built on the closest
+     * CVTara design, tested like any other, and goes live only when the owner approves it. Text in the Word file is a
+     * sample and is not stored.
+     */
+    public static function importDocx(string $path, array $meta, ?int $by = null): array
+    {
+        self::sync();
+        $errors = $warnings = [];
+        abort_unless(filesize($path) <= 10 * 1024 * 1024, 422, 'The Word file is larger than 10 MB.');
+        $z = new \ZipArchive();
+        abort_unless($z->open($path) === true && $z->locateName('word/document.xml') !== false, 422, 'This is not a Word (.docx) file.');
+        for ($k = 0; $k < $z->numFiles; $k++) {
+            if (preg_match('#vbaProject\.bin|activeX|\.bin$|oleObject#i', (string) $z->getNameIndex($k))) {
+                $errors[] = 'Word files with macros or embedded programs are not allowed';
+                break;
+            }
+        }
+        $doc = (string) $z->getFromName('word/document.xml');
+        $styles = (string) $z->getFromName('word/styles.xml');
+        $z->close();
+        $kind = ($meta['kind'] ?? 'resume') === 'letter' ? 'letter' : 'resume';
+        foreach (['licence', 'source', 'author'] as $k) {
+            if (trim((string) ($meta[$k] ?? '')) === '') {
+                $errors[] = "Enter the $k for this design";
+            }
+        }
+        $read = self::readDocx($doc, $styles);
+        if ($kind === 'resume' && count($read['sections']) < 2) {
+            $errors[] = 'Fewer than two section headings were found (for example Experience, Education, Skills). Use plain headings in the Word file.';
+        }
+        if ($read['images']) {
+            $warnings[] = 'The Word file has pictures or text boxes; they are not copied. Customers add their own photo where the design allows it.';
+        }
+        if ($read['fontNote']) {
+            $warnings[] = $read['fontNote'];
+        }
+        $cat = self::catalog();
+        $resumes = collect($cat['templates'] ?? []);
+        $letters = collect($cat['coverLetters'] ?? []);
+        $base = $read['twoColumn']
+            ? ($resumes->first(fn ($t) => self::twoColumn($t['slug']) && empty($t['photo']))['slug'] ?? $resumes->first(fn ($t) => self::twoColumn($t['slug']))['slug'] ?? null)
+            : ($resumes->first(fn ($t) => ! self::twoColumn($t['slug']) && ! empty($t['ats']) && empty($t['photo']) && empty($t['creative']))['slug'] ?? null);
+        if ($kind === 'letter') {
+            $base = $base && $letters->contains('slug', 'letter-'.Str::after($base, 'suite-')) ? 'letter-'.Str::after($base, 'suite-') : ($letters->first()['slug'] ?? null);
+        }
+        if (! $base) {
+            $errors[] = 'No CVTara design is available to build on.';
+        }
+        $name = trim((string) ($meta['name'] ?? '')) ?: Str::headline(pathinfo((string) ($meta['fileName'] ?? 'Word design'), PATHINFO_FILENAME));
+        $hash = hash_file('sha256', $path);
+        // The id follows what was read (not the file bytes), so the same design saved again is found as a duplicate.
+        $id = Str::slug(mb_substr($name, 0, 40)).'-'.substr(hash('sha256', json_encode([$kind, $name, $read['sections'], $read['font'], $read['accent'], $read['twoColumn']])), 0, 8);
+        $order = $kind === 'resume' ? array_values(array_unique(array_merge($read['sections'], array_diff(['summary', 'experience', 'education', 'skills'], $read['sections'])))) : [];
+        $t = ['template_id' => 'docx-'.$id, 'name' => mb_substr($name, 0, 160), 'version' => 1, 'document_type' => $kind === 'letter' ? 'cover_letter' : 'resume', 'industry_ids' => [], 'job_family_ids' => [],
+            'occupation_ids' => [], 'experience_band' => 'all', 'layout_family' => $base, 'ATS_mode' => ! $read['twoColumn'] && ! $read['images'], 'section_order' => $order, 'field_bindings' => [],
+            'conditional_sections' => [], 'style_tokens' => array_filter(['font' => $read['font'], 'accent' => $read['accent']]), 'export_formats' => self::FORMATS, 'preview_asset' => '', 'status' => 'draft',
+            'changelog' => 'Imported from the Word file '.mb_substr((string) ($meta['fileName'] ?? ''), 0, 120), 'category' => mb_substr(trim((string) ($meta['category'] ?? '')) ?: 'General', 0, 80),
+            'licence' => trim((string) ($meta['licence'] ?? '')), 'source' => trim((string) ($meta['source'] ?? '')), 'author' => trim((string) ($meta['author'] ?? ''))];
+        $manifest = ['package_name' => 'Word file: '.mb_substr((string) ($meta['fileName'] ?? $name), 0, 120), 'vendor' => $t['author'], 'package_schema_version' => 'docx-1'];
+        $pid = DB::table('template_packages')->insertGetId(['name' => mb_substr($manifest['package_name'], 0, 160), 'vendor' => mb_substr($t['author'], 0, 160), 'schema_version' => 'docx-1', 'file_hash' => $hash,
+            'manifest_json' => json_encode($manifest + ['read' => $read]), 'status' => $errors ? 'rejected' : 'imported', 'uploaded_by' => $by, 'created_at' => now(), 'updated_at' => now()]);
+        $result = $errors ? [] : [self::store($kind, $t, $manifest, $pid, $by)];
+        $report = ['packageId' => $pid, 'ok' => ! $errors, 'errors' => $errors, 'warnings' => $warnings, 'templates' => $result,
+            'read' => ['sections' => $read['sections'], 'font' => $read['font'], 'accent' => $read['accent'], 'twoColumn' => $read['twoColumn'], 'base' => $base]];
+        DB::table('template_packages')->where('id', $pid)->update(['report_json' => json_encode($report)]);
+        Settings::audit($by, 'template_docx_'.($errors ? 'rejected' : 'imported'), $name);
+
+        return $report;
+    }
+
+    /** Reads the look of a Word file: headings in order, main font, heading colour, columns, pictures. */
+    public static function readDocx(string $doc, string $styles = ''): array
+    {
+        $prev = libxml_use_internal_errors(true);
+        $x = new \DOMDocument();
+        $okDoc = $doc !== '' && $x->loadXML($doc, LIBXML_NONET);
+        $sections = [];
+        $fonts = [];
+        $accent = null;
+        $twoColumn = false;
+        $images = false;
+        if ($okDoc) {
+            $xp = new \DOMXPath($x);
+            $xp->registerNamespace('w', 'http://schemas.openxmlformats.org/wordprocessingml/2006/main');
+            $images = $xp->query('//w:drawing|//w:pict|//w:txbxContent')->length > 0;
+            foreach ($xp->query('//w:sectPr/w:cols[@w:num]') as $c) {
+                $twoColumn = $twoColumn || (int) $c->getAttribute('w:num') > 1;
+            }
+            foreach ($xp->query('//w:body/w:tbl') as $tbl) {
+                // A table whose row holds two cells with real text is a two-column layout.
+                foreach ($xp->query('w:tr', $tbl) as $tr) {
+                    $filled = 0;
+                    foreach ($xp->query('w:tc', $tr) as $tc) {
+                        $filled += mb_strlen(trim($tc->textContent)) > 20 ? 1 : 0;
+                    }
+                    if ($filled >= 2) {
+                        $twoColumn = true;
+                        break 2;
+                    }
+                }
+            }
+            foreach ($xp->query('//w:rFonts/@w:ascii') as $f) {
+                $fonts[$f->value] = ($fonts[$f->value] ?? 0) + 1;
+            }
+            foreach ($xp->query('//w:p') as $p) {
+                $text = trim(preg_replace('/\s+/u', ' ', $p->textContent));
+                $text = trim($text, " :•-–|");
+                if ($text === '' || mb_strlen($text) > 45) {
+                    continue;
+                }
+                foreach (self::DOCX_HEADINGS as $sec => $re) {
+                    if (preg_match($re, $text) && ! in_array($sec, $sections, true)) {
+                        $sections[] = $sec;
+                        if (! $accent) {
+                            foreach ($xp->query('.//w:color/@w:val', $p) as $c) {
+                                $v = strtolower($c->value);
+                                if (preg_match('/^[0-9a-f]{6}$/', $v) && ! (substr($v, 0, 2) === substr($v, 2, 2) && substr($v, 2, 2) === substr($v, 4, 2))) {
+                                    $accent = '#'.$v; // a real colour, not black, white or grey
+                                    break;
+                                }
+                            }
+                        }
+                        break;
+                    }
+                }
+            }
+        }
+        if ($styles !== '' && preg_match('#<w:docDefaults>.*?w:ascii="([^"]+)"#s', $styles, $m)) {
+            $fonts[$m[1]] = ($fonts[$m[1]] ?? 0) + 1000; // the document's default font weighs most
+        }
+        libxml_use_internal_errors($prev);
+        arsort($fonts);
+        $raw = (string) (array_key_first($fonts) ?? '');
+        $font = null;
+        $note = null;
+        foreach (self::FONTS as $f) {
+            if ($raw !== '' && stripos($raw, $f) === 0) {
+                $font = $f;
+            }
+        }
+        if (! $font && $raw !== '') {
+            $font = preg_match('/times|garamond|cambria|georgia|book|serif/i', $raw) ? 'Georgia' : 'Calibri';
+            $note = "The font $raw is not available on CVTara, so $font is used instead.";
+        }
+
+        return ['sections' => $sections, 'font' => $font, 'fontNote' => $note, 'accent' => $accent, 'twoColumn' => $twoColumn, 'images' => $images];
+    }
+
     /** One template from a package: new (draft), a duplicate (skipped) or a new version of an imported one (draft). */
     private static function store(string $kind, array $t, array $manifest, int $pid, ?int $by): array
     {

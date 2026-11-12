@@ -54,10 +54,27 @@
     const s = document.createElement('section');
     s.id = 'privacyTools'; s.className = 'panel panel-pad'; s.style.marginTop = '18px';
     s.innerHTML = `<span class="eyebrow">YOUR DATA</span><h3>Download or delete your data</h3><p style="color:var(--muted)">You can download everything CVTara holds about you, or permanently erase your account. Purchase records are kept for legal and tax reasons but are detached from your identity.</p>
+      <div data-originals></div>
       <p style="display:flex;gap:10px;flex-wrap:wrap"><button class="button secondary" data-export-data>Download my data (JSON)</button><button class="button secondary" data-open-delete style="color:#b91c1c">Delete my account…</button></p><p role="status" data-privacy-status></p>
       <form data-delete-form hidden class="pr-form open"><b>This cannot be undone.</b><label>Current password<input type="password" name="password" autocomplete="current-password" required></label><label>Type DELETE to confirm<input name="confirm" autocomplete="off" required></label><div class="pr-actions"><button class="button primary" style="background:#b91c1c">Permanently delete</button><button class="button secondary" type="button" data-cancel-delete>Cancel</button></div></form>`;
     acct.append(s);
     const st = $('[data-privacy-status]', s), form = $('[data-delete-form]', s);
+    // 3.61.0 Original files uploaded to build a resume: kept 90 days, the customer can download or delete each one.
+    const esc = v => String(v ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+    const originals = async () => {
+      const box = $('[data-originals]', s); if (!box) return;
+      try {
+        const d = await api('/api/resumes/originals');
+        box.innerHTML = d.originals.length ? `<h4 style="margin:12px 0 6px">Your uploaded files</h4><p style="color:var(--muted);margin:0 0 8px">The original files you uploaded to build a resume. Each is kept for ${d.days} days and then erased automatically.</p>
+          <ul style="list-style:none;padding:0;margin:0 0 12px">${d.originals.map(o => `<li style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;padding:6px 0;border-top:1px solid var(--line,#e2e8f0)"><span><b>${esc(o.fileName)}</b> · ${Math.max(1, Math.round(o.size / 1024))} KB${o.resumeTitle ? ' · for ' + esc(o.resumeTitle) : ''} · erased on ${esc(o.deleteOn)}</span><a class="button secondary small" href="/api/resumes/originals/${esc(o.id)}" download>Download</a><button class="button secondary small" data-original-delete="${esc(o.id)}">Delete now</button></li>`).join('')}</ul>` : '';
+      } catch { box.innerHTML = ''; }
+    };
+    originals();
+    s.addEventListener('click', async e => {
+      const b = e.target.closest('[data-original-delete]'); if (!b) return;
+      if (!confirm('Delete this file now? Your resume stays as it is.')) return;
+      try { await api(`/api/resumes/originals/${b.dataset.originalDelete}/delete`, { method: 'POST', body: {} }); st.textContent = 'The file was deleted.'; originals(); } catch (err) { st.textContent = err.message; }
+    });
     $('[data-export-data]', s).onclick = async () => {
       st.textContent = 'Preparing your data…';
       try {

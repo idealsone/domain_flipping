@@ -31,6 +31,7 @@
       try {
         if (!window.CVTaraImport) throw Error('The document reader did not load. Refresh the page and try again.');
         const text = await window.CVTaraImport.readFile(file);
+        this.file = file;
         await this.send(text, file.name);
       } catch (e) { this.failed(e); }
     },
@@ -44,13 +45,25 @@
           ${(r.warnings || []).length ? `<div class="rh-warn" role="status"><b>Please check:</b><ul>${r.warnings.map(w => `<li>${E(w)}</li>`).join('')}</ul></div>` : ''}
           ${q.tips.length ? `<div class="rh-tips"><b>To score higher</b><ul>${q.tips.map(t => `<li>${E(t)}</li>`).join('')}</ul></div>` : '<p class="rh-ok">Nicely done. Your resume is ATS-friendly.</p>'}
           <p class="rh-note">We read the text of your file and filled the builder. Pick a template, check every section and download when you are happy.</p>
+          ${this.file ? '<p class="rh-note" data-rh-kept>We keep a copy of your original file for 90 days so you can download it again from Account &gt; Your data. You can delete it there at any time.</p>' : ''}
           <div class="rh-actions"><button class="button primary" data-rh-edit="${E(r.id)}">Review and edit</button><button class="button secondary" data-rh-close>Later</button></div></div>`);
         $('[data-rh-edit]', $('#rhDialog')).onclick = () => open(r.id);
         document.dispatchEvent(new CustomEvent('cvtara-resume-saved'));
+        if (this.file) this.keep(this.file, r.id);
       } catch (e) {
         if (e.data && e.data.needsReplace) return this.replace(e.data, text, fileName);
         this.failed(e);
       }
+    },
+    // 3.61.0 Keep the original file (private, 90 days, deletable). A failure here never affects the resume itself.
+    keep(file, id) {
+      this.file = null;
+      const note = () => $('[data-rh-kept]', $('#rhDialog'));
+      if (file.size > 5 * 1024 * 1024) { const n = note(); if (n) n.textContent = 'Your original file is larger than 5 MB, so a copy was not kept. Your resume was filled in as usual.'; return; }
+      const fr = new FileReader();
+      fr.onload = () => api(`/api/resumes/${id}/original`, { method: 'POST', body: { file: String(fr.result).split(',')[1] || '', fileName: file.name } })
+        .catch(e => { const n = note(); if (n) n.textContent = 'A copy of your original file could not be kept (' + e.message + '). Your resume was filled in as usual.'; });
+      fr.readAsDataURL(file);
     },
     // The file was read, but the plan has no room for another resume: let the customer put it into one they already have.
     replace(d, text, fileName) {

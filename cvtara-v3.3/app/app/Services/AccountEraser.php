@@ -44,6 +44,7 @@ class AccountEraser
             return;
         }
         $files = [];
+        ResumeOriginals::eraseOwner($id); // 3.61.0 original uploaded resume files
         DB::transaction(function () use ($id, $user, &$files) {
             $keep = self::placeholder();
             // Support reports carry the name, email, message and screenshots: the files go after the transaction commits.

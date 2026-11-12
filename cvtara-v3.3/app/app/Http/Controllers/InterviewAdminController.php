@@ -52,7 +52,7 @@ class InterviewAdminController extends Controller
         }
         if ($path === 'interviews/settings') {
             AccountSecurity::requireRecent($r);
-            $v = $r->validate(['enabled' => 'required|boolean', 'questions' => 'nullable|integer|min:3|max:8', 'dailySessions' => 'nullable|integer|min:1|max:20']);
+            $v = $r->validate(['enabled' => 'required|boolean', 'questions' => 'nullable|integer|min:3|max:8', 'dailySessions' => 'nullable|integer|min:1|max:20', 'fullMock' => 'sometimes|boolean']);
 
             return $ok(['settings' => Interviews::saveSettings(array_filter($v, fn ($x) => $x !== null)), 'available' => Interviews::available()]);
         }

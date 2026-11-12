@@ -48,6 +48,8 @@ Artisan::command('cvtara:cron', function () {
     $safe(fn () => \Illuminate\Support\Facades\Cache::add('agent-cadence', 1, 600) && \App\Services\AgentCadence::due());
     // 3.59.0 text-reading test for designs never tested or changed since (a few a minute)
     $safe(fn () => \App\Services\TemplateLibrary::testDue(6));
+    // 3.61.0 original uploaded resume files are erased after 90 days (checked once an hour)
+    $safe(fn () => \Illuminate\Support\Facades\Cache::add('originals-purge', 1, 3600) && \App\Services\ResumeOriginals::purge());
     if (\Illuminate\Support\Facades\Cache::add('retention-run', 1, 86400)) {
         \App\Services\Retention::run();
     }

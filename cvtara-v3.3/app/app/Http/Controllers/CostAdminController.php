@@ -38,6 +38,21 @@ class CostAdminController extends Controller
 
             return $ok(['invoices' => CostControls::reconcile()]);
         }
+        // 3.61.0 Test payment review: orders up to 9 Nov with a suggested class; the owner marks each test or real.
+        if ($path === 'costs/test-payments' && $get) {
+            $rows = \App\Services\TestPayments::rows();
+
+            return $ok(\App\Services\AdminTable::rows($r, $rows, ['search' => ['email', 'id', 'reference', 'plan'], 'filters' => ['suggested' => 'suggested', 'mark' => 'mark', 'live' => fn ($x, $v) => ($x['live'] ? '1' : '0') === $v],
+                'sorts' => ['created' => 'createdAt', 'amount' => 'amountPaise'], 'sort' => 'created', 'dir' => 'asc', 'key' => 'id',
+                'export' => ['title' => 'Test payment review', 'map' => fn ($rows) => array_map(fn ($x) => ['Order' => $x['id'], 'Created' => $x['createdAt'], 'Customer' => $x['email'], 'Plan' => $x['plan'], 'Amount (₹)' => $x['amountPaise'] / 100,
+                    'Refunded (₹)' => $x['refundedPaise'] / 100, 'Status' => $x['status'], 'Gateway' => $x['provider'], 'Live mode' => $x['live'] ? 'Yes' : 'No', 'Suggested' => \App\Services\TestPayments::CLASSES[$x['suggested']] ?? $x['suggested'],
+                    'Why' => $x['reasons'], 'Your mark' => $x['mark'], 'Note' => $x['note']], $rows)]]) + ['summary' => \App\Services\TestPayments::summary($rows), 'classes' => \App\Services\TestPayments::CLASSES]);
+        }
+        if ($path === 'costs/test-payments/mark' && ! $get) {
+            $v = $r->validate(['ids' => 'required|array|min:1|max:500', 'ids.*' => 'string|max:36', 'mark' => 'required|in:test,real,clear', 'note' => 'nullable|string|max:300']);
+
+            return $ok(['marked' => \App\Services\TestPayments::mark($u, $v['ids'], $v['mark'], $v['note'] ?? null)]);
+        }
         abort(404);
     }
 }

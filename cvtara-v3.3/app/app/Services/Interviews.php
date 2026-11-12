@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 
@@ -40,6 +41,19 @@ class Interviews
 
     public const MAX_ATTEMPTS = 3;
 
+    /**
+     * 3.61.0 Full mock: about 60 minutes in four 15-minute parts, three questions each, one mock interview credit.
+     * Each part lists the competencies it draws from, in order of preference: [competencies, role questions first?].
+     */
+    public const FULL_SECTIONS = [
+        ['title' => 'About you and your motivation', 'minutes' => 15, 'pick' => [['introduction'], ['motivation', 'career', 'self']], 'role' => false],
+        ['title' => 'Knowledge of the role', 'minutes' => 15, 'pick' => [['role'], ['customer', 'problem', 'learning']], 'role' => true],
+        ['title' => 'Your past experience', 'minutes' => 15, 'pick' => [['achievement', 'teamwork', 'conflict', 'leadership', 'learning', 'problem']], 'role' => null],
+        ['title' => 'Situations and closing', 'minutes' => 15, 'pick' => [['customer', 'ethics', 'pressure', 'problem'], ['closing']], 'role' => null],
+    ];
+
+    public const FULL_PER_SECTION = 3;
+
     /** Free and Quick Download accounts see this many questions per role in question practice. */
     public const SAMPLE = 3;
 
@@ -59,7 +73,8 @@ class Interviews
     {
         $s = (array) Settings::get('interviews', []);
 
-        return ['enabled' => (bool) ($s['enabled'] ?? false), 'questions' => max(3, min(8, (int) ($s['questions'] ?? 5))), 'dailySessions' => max(1, min(20, (int) ($s['dailySessions'] ?? 3)))];
+        return ['enabled' => (bool) ($s['enabled'] ?? false), 'questions' => max(3, min(8, (int) ($s['questions'] ?? 5))), 'dailySessions' => max(1, min(20, (int) ($s['dailySessions'] ?? 3))),
+            'fullMock' => (bool) ($s['fullMock'] ?? true)];
     }
 
     /** Customers can start mock interviews only while the owner has switched the feature on and feedback writing works. */
@@ -144,10 +159,10 @@ class Interviews
         $pools = UsageLedger::pools($u->id, self::RESOURCE, self::FIELD);
         $open = DB::table('interview_sessions')->where('owner_id', $u->id)->whereIn('status', ['in_progress', 'submitted', 'evaluating'])->orderByDesc('created_at')->first();
         $past = DB::table('interview_sessions as s')->leftJoin('career_occupations as o', 'o.slug', '=', 's.occupation')->leftJoin('interview_evaluations as e', 'e.session_id', '=', 's.id')
-            ->where('s.owner_id', $u->id)->orderByDesc('s.created_at')->limit(30)->get(['s.id', 's.occupation', 'o.name as role', 's.band', 's.status', 's.created_at', 's.evaluated_at', 'e.level'])->map(fn ($r) => (array) $r)->all();
+            ->where('s.owner_id', $u->id)->orderByDesc('s.created_at')->limit(30)->get(array_merge(['s.id', 's.occupation', 'o.name as role', 's.band', 's.status', 's.created_at', 's.evaluated_at', 'e.level'], Schema::hasColumn('interview_sessions', 'mode') ? ['s.mode'] : []))->map(fn ($r) => (array) $r)->all();
 
         return [
-            'enabled' => self::available(), 'roles' => self::occupations(), 'bands' => self::BANDS, 'objectives' => self::OBJECTIVES,
+            'enabled' => self::available(), 'fullMock' => self::settings()['fullMock'], 'roles' => self::occupations(), 'bands' => self::BANDS, 'objectives' => self::OBJECTIVES,
             'left' => array_sum(array_column($pools, 'left')), 'pools' => array_map(fn ($p) => ['plan' => $p['plan'], 'left' => $p['left'], 'allowance' => $p['allowance'], 'until' => $p['until']], $pools),
             'fullBank' => self::fullBank($u), 'open' => $open ? self::session($u, $open->id) : null, 'past' => $past, 'progress' => self::progress($u->id),
         ];
@@ -189,12 +204,24 @@ class Interviews
         if (DB::table('interview_sessions')->where('owner_id', $u->id)->where('created_at', '>=', now()->startOfDay())->count() >= $s['dailySessions']) {
             throw ValidationException::withMessages(['interview' => 'You have started '.$s['dailySessions'].' mock interviews today. Take a break and come back tomorrow.']);
         }
-        $picked = self::pick($u->id, $v['occupation'], $v['band'], $s['questions']);
+        $full = ($v['mode'] ?? 'standard') === 'full';
+        if ($full && ! $s['fullMock']) {
+            throw ValidationException::withMessages(['interview' => 'The full mock interview is not open right now. Try a standard mock interview.']);
+        }
+        $sections = null;
+        if ($full) {
+            [$picked, $sections] = self::pickFull($u->id, $v['occupation'], $v['band']);
+            if (count($picked) < 8) {
+                throw ValidationException::withMessages(['interview' => 'There are not enough questions for a full mock interview for this role yet. Try a standard mock interview.']);
+            }
+        } else {
+            $picked = self::pick($u->id, $v['occupation'], $v['band'], $s['questions']);
+        }
         if (count($picked) < 3) {
             throw ValidationException::withMessages(['interview' => 'There are not enough questions for this role and experience yet. Try another role.']);
         }
         $id = (string) Str::uuid();
-        DB::transaction(function () use ($u, $v, $picked, $id) {
+        DB::transaction(function () use ($u, $v, $picked, $id, $full, $sections) {
             DB::table('users')->where('id', $u->id)->lockForUpdate()->first(); // one start at a time per customer
             $pool = collect(UsageLedger::pools($u->id, self::RESOURCE, self::FIELD))->first(fn ($p) => $p['left'] > 0);
             if (! $pool) {
@@ -202,13 +229,14 @@ class Interviews
             }
             DB::table('interview_sessions')->insert(['id' => $id, 'owner_id' => $u->id, 'occupation' => $v['occupation'], 'band' => $v['band'], 'objective' => $v['objective'] ?? 'first_job',
                 'company' => isset($v['company']) ? mb_substr(trim((string) $v['company']), 0, 120) : null, 'questions_json' => json_encode(array_map(fn ($r) => ['q' => $r->id, 'v' => $r->vid], $picked)),
-                'status' => 'in_progress', 'purchase_id' => $pool['purchase'], 'grant' => $pool['purchase'] ? 'plan' : 'complimentary', 'created_at' => now(), 'updated_at' => now()]);
+                'status' => 'in_progress', 'purchase_id' => $pool['purchase'], 'grant' => $pool['purchase'] ? 'plan' : 'complimentary', 'created_at' => now(), 'updated_at' => now()]
+                + (Schema::hasColumn('interview_sessions', 'mode') ? ['mode' => $full ? 'full' : 'standard', 'sections_json' => $sections ? json_encode($sections) : null] : []));
             foreach (array_values($picked) as $i => $r) {
                 DB::table('interview_answers')->insert(['session_id' => $id, 'question_version_id' => $r->vid, 'position' => $i + 1, 'answer' => null, 'created_at' => now(), 'updated_at' => now()]);
             }
-            UsageLedger::add($u->id, self::RESOURCE, 'reserve', -1, 'reserve:'.$id, $pool['purchase'], $id, $u->id, 'Mock interview started');
+            UsageLedger::add($u->id, self::RESOURCE, 'reserve', -1, 'reserve:'.$id, $pool['purchase'], $id, $u->id, $full ? 'Full mock interview started' : 'Mock interview started');
         });
-        Settings::audit($u->id, 'interview_started', $id);
+        Settings::audit($u->id, $full ? 'interview_started_full' : 'interview_started', $id);
 
         return self::session($u, $id);
     }
@@ -245,6 +273,86 @@ class Interviews
         return array_slice($out, 0, $n);
     }
 
+    /**
+     * Full mock: three questions for each of the four parts, least-seen first (same rotation as pick()). A part that
+     * runs short is topped up from any unused question that suits the customer, so the session still has 12 when the
+     * bank allows. Returns [questions, sections].
+     */
+    private static function pickFull(int $uid, string $occupation, string $band): array
+    {
+        $rows = self::eligible($occupation, $band);
+        $seen = DB::table('interview_answers as a')->join('interview_sessions as s', 's.id', '=', 'a.session_id')->join('interview_question_versions as v', 'v.id', '=', 'a.question_version_id')
+            ->where('s.owner_id', $uid)->whereIn('s.id', DB::table('interview_sessions')->where('owner_id', $uid)->orderByDesc('created_at')->limit(5)->pluck('id'))
+            ->pluck('v.question_id')->countBy()->all();
+        $rows = $rows->sortBy(fn ($r) => [($seen[$r->id] ?? 0), crc32($uid.':'.$r->id.':'.date('Y-m-d'))])->values();
+        $used = [];
+        $parts = [];
+        foreach (self::FULL_SECTIONS as $i => $sec) {
+            $got = [];
+            foreach ($sec['pick'] as $gi => $comps) {
+                $reserve = in_array(['closing'], array_slice($sec['pick'], $gi + 1), true) ? 1 : 0; // keep a place for the closing question
+                $want = $comps === ['closing'] || $comps === ['introduction'] ? 1 : self::FULL_PER_SECTION - count($got) - $reserve;
+                $c = $rows->filter(fn ($r) => ! isset($used[$r->id]) && in_array($r->competency, $comps, true)
+                    && ($sec['role'] === null || ($sec['role'] ? $r->occupation !== null : $r->occupation === null)));
+                if ($sec['role'] === null) {
+                    $c = $c->sortBy(fn ($r) => $r->occupation === null ? 1 : 0)->values(); // role questions first where both exist
+                }
+                foreach ($c as $r) {
+                    if (count($got) >= self::FULL_PER_SECTION || $want-- <= 0) {
+                        break;
+                    }
+                    $got[] = $r;
+                    $used[$r->id] = true;
+                }
+            }
+            $parts[$i] = $got;
+        }
+        // Top up short parts (closing stays last) from anything unused that is not an introduction or closing question.
+        foreach ($parts as $i => $got) {
+            foreach ($rows as $r) {
+                if (count($parts[$i]) >= self::FULL_PER_SECTION) {
+                    break;
+                }
+                if (! isset($used[$r->id]) && ! in_array($r->competency, ['introduction', 'closing'], true)) {
+                    $closing = $parts[$i] && end($parts[$i])->competency === 'closing' ? array_pop($parts[$i]) : null;
+                    $parts[$i][] = $r;
+                    $used[$r->id] = true;
+                    if ($closing) {
+                        $parts[$i][] = $closing;
+                    }
+                }
+            }
+        }
+        $out = [];
+        $sections = [];
+        foreach (self::FULL_SECTIONS as $i => $sec) {
+            if (! $parts[$i]) {
+                continue;
+            }
+            $sections[] = ['title' => $sec['title'], 'minutes' => $sec['minutes'], 'from' => count($out) + 1, 'to' => count($out) + count($parts[$i])];
+            array_push($out, ...$parts[$i]);
+        }
+
+        return [$out, $sections];
+    }
+
+    /** Average rubric score (1-4) for each part of a full mock, worked out from the stored feedback: no extra request. */
+    public static function sectionScores(array $sections, array $result): array
+    {
+        $out = [];
+        foreach ($sections as $sec) {
+            $all = [];
+            foreach ($result['answers'] ?? [] as $a) {
+                if ($a['position'] >= $sec['from'] && $a['position'] <= $sec['to']) {
+                    $all = array_merge($all, array_values($a['scores']));
+                }
+            }
+            $out[] = ['title' => $sec['title'], 'from' => $sec['from'], 'to' => $sec['to'], 'average' => $all ? round(array_sum($all) / count($all), 1) : null];
+        }
+
+        return $out;
+    }
+
     /** One session with its questions, answers and (when ready) feedback. Only the owner of the session can read it. */
     public static function session(User $u, string $id): array
     {
@@ -255,9 +363,14 @@ class Interviews
         $e = DB::table('interview_evaluations')->where('session_id', $id)->first();
         $role = DB::table('career_occupations')->where('slug', $s->occupation)->value('name');
 
+        $mode = $s->mode ?? 'standard';
+        $sections = $mode === 'full' ? (json_decode((string) ($s->sections_json ?? ''), true) ?: []) : [];
+        $result = $e ? json_decode($e->result_json, true) : null;
+
         return ['id' => $s->id, 'role' => $role ?: $s->occupation, 'occupation' => $s->occupation, 'band' => $s->band, 'bandLabel' => self::BANDS[$s->band] ?? $s->band, 'objective' => $s->objective,
-            'company' => $s->company, 'status' => $s->status, 'createdAt' => (string) $s->created_at, 'answers' => $answers,
-            'feedback' => $e ? ['level' => $e->level, 'result' => json_decode($e->result_json, true), 'dimensions' => self::DIMENSIONS, 'challenged' => (bool) $e->challenged_at] : null];
+            'company' => $s->company, 'status' => $s->status, 'createdAt' => (string) $s->created_at, 'answers' => $answers, 'mode' => $mode, 'sections' => $sections,
+            'feedback' => $e ? ['level' => $e->level, 'result' => $result, 'dimensions' => self::DIMENSIONS, 'challenged' => (bool) $e->challenged_at,
+                'sections' => $sections ? self::sectionScores($sections, $result) : []] : null];
     }
 
     public static function answer(User $u, string $id, int $position, string $text, ?int $seconds = null): void
@@ -408,7 +521,8 @@ class Interviews
             if (! TaraAI::enabled()) {
                 throw new \RuntimeException('Feedback writing is switched off (Integrations > AI).');
             }
-            $raw = TaraAI::ask(self::SYSTEM, "<session>\n".$body."</session>", 6000, 120, self::PURPOSE, $s->owner_id);
+            $long = $qa->count() > 8; // a full mock has up to 12 answers
+            $raw = TaraAI::ask(self::SYSTEM, "<session>\n".$body."</session>", $long ? 12000 : 6000, $long ? 180 : 120, self::PURPOSE, $s->owner_id);
             $result = self::validate($raw, $qa->count());
         } catch (\Throwable $e) {
             $why = $e instanceof \RuntimeException && str_starts_with($e->getMessage(), 'Feedback') ? $e->getMessage() : TaraAI::failure($e);
@@ -563,7 +677,7 @@ class Interviews
 
     public static function saveSettings(array $v): array
     {
-        Settings::put('interviews', array_merge((array) Settings::get('interviews', []), array_intersect_key($v, array_flip(['enabled', 'questions', 'dailySessions']))));
+        Settings::put('interviews', array_merge((array) Settings::get('interviews', []), array_intersect_key($v, array_flip(['enabled', 'questions', 'dailySessions', 'fullMock']))));
 
         return self::settings();
     }

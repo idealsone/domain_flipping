@@ -27,6 +27,7 @@
         <form class="ops-form" id="ivSet"><label>Mock interviews<select name="enabled"><option value="1" ${st.enabled ? 'selected' : ''}>On</option><option value="0" ${st.enabled ? '' : 'selected'}>Off</option></select></label>
         <label>Questions per mock interview<input type="number" name="questions" min="3" max="8" value="${st.questions}"></label>
         <label>Mock interviews one customer may start a day<input type="number" name="dailySessions" min="1" max="20" value="${st.dailySessions}"></label>
+        <label>Full mock interview (about 60 minutes, 4 parts of 15 minutes, uses one credit)<select name="fullMock"><option value="1" ${st.fullMock !== false ? 'selected' : ''}>Offered</option><option value="0" ${st.fullMock === false ? 'selected' : ''}>Not offered</option></select></label>
         <button class="button primary" type="submit">Save</button></form></div>
       <div class="panel panel-pad" style="margin:12px 0"><h3 style="margin-top:0">Question bank</h3>
         <div class="ops-form" style="margin-bottom:10px"><label>Role<select id="ivRole"><option value="">All</option><option value="general" ${F.occupation === 'general' ? 'selected' : ''}>Every role (general)</option>${S.occupations.map(o => `<option value="${E(o.slug)}" ${F.occupation === o.slug ? 'selected' : ''}>${E(o.name)}</option>`).join('')}</select></label>
@@ -50,7 +51,7 @@
     $('#ivSet', h).onsubmit = async ev => {
       ev.preventDefault(); const f = ev.target;
       if (!(await ensureRecent())) return;
-      act(() => post('/api/admin/interviews/settings', { enabled: f.enabled.value === '1', questions: +f.questions.value, dailySessions: +f.dailySessions.value }), 'Saved', true);
+      act(() => post('/api/admin/interviews/settings', { enabled: f.enabled.value === '1', questions: +f.questions.value, dailySessions: +f.dailySessions.value, fullMock: f.fullMock.value === '1' }), 'Saved', true);
     };
     $('#ivGrant', h).onsubmit = ev => {
       ev.preventDefault(); const f = ev.target;

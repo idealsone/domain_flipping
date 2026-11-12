@@ -49,8 +49,16 @@ class TemplateAdminController extends Controller
         }
         if ($path === 'template-library/import' && ! $get) {
             $f = $r->file('package');
-            abort_unless($f && $f->isValid(), 422, 'Choose a ZIP package to upload.');
-            abort_unless(strtolower($f->getClientOriginalExtension()) === 'zip', 422, 'The package must be a .zip file.');
+            abort_unless($f && $f->isValid(), 422, 'Choose a ZIP package or a Word file to upload.');
+            $ext = strtolower($f->getClientOriginalExtension());
+            if ($ext === 'docx') {
+                // 3.61.0 one design from a Word file
+                $v = $r->validate(['name' => 'nullable|string|max:160', 'kind' => 'nullable|in:resume,letter', 'licence' => 'nullable|string|max:160', 'source' => 'nullable|string|max:200',
+                    'author' => 'nullable|string|max:160', 'category' => 'nullable|string|max:80']);
+
+                return $ok(['report' => TemplateLibrary::importDocx($f->getRealPath(), $v + ['fileName' => $f->getClientOriginalName()], $u->id)]);
+            }
+            abort_unless($ext === 'zip', 422, 'Upload a .zip package or a .docx Word file.');
 
             return $ok(['report' => TemplateLibrary::import($f->getRealPath(), $u->id)]);
         }

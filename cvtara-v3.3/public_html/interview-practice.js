@@ -76,7 +76,9 @@
         <label>Role<select data-ip="occupation">${roleOptions(state.pick || new URLSearchParams(location.search).get('role') || '')}</select></label>
         <label>Your experience<select data-ip="band">${opts(s.bands, 'fresher')}</select></label>
         <label>Your goal<select data-ip="objective">${opts(s.objectives, 'first_job')}</select></label>
-        <label>Company (optional)<input data-ip="company" maxlength="120" placeholder="e.g. a bank or retail chain"></label></div>
+        <label>Company (optional)<input data-ip="company" maxlength="120" placeholder="e.g. a bank or retail chain"></label>
+        ${s.fullMock ? `<label>Type<select data-ip="mode"><option value="standard">Standard mock interview (about 15 minutes)</option><option value="full">Full mock interview (about 60 minutes, 4 parts)</option></select></label>` : ''}</div>
+        ${s.fullMock ? '<p class="ip-muted">A full mock interview has four parts of about 15 minutes each, like a real interview round: about you, the role, your past experience, and situations. Each uses one mock interview credit, the same as a standard one.</p>' : ''}
         ${can ? '<button class="button mint" data-ip-start>Start mock interview</button>' : (!s.enabled ? '<p class="ip-muted">Mock interviews will open soon. You can practise questions below in the meantime.</p>' : '<p class="ip-muted">Job Hunt includes 4 mock interviews and Pro includes 12, for the whole plan.</p><button class="button secondary" data-workspace-view="billing">See plans</button>')}
         <button class="button secondary" data-ip-browse>Practise questions</button>${s.progress.completed ? ' <button class="button secondary" data-ip-revise>Revision: practise your past questions</button>' : ''}</div><div data-ip-bank></div>
         <div class="ip-card"><h3>Research a company</h3><p class="ip-muted">Paste the company's own website (for example its About page). We read that one public page, show a short summary with its source, and give you practice questions about the company. ${E(RESEARCH_LABEL)}</p>
@@ -84,7 +86,7 @@
         <button class="button secondary" data-ip-research>Research this company</button><div data-ip-research-out></div></div>`;
     }
     if (s.past.length) {
-      out += `<div class="ip-card"><h3>Your mock interviews</h3>${s.past.map(p => `<div class="ip-row" style="padding:6px 0"><span>${E(p.role || p.occupation)} · ${E(when(p.created_at))}</span><span class="ip-pill">${E(label(p.status, p.level))}</span>${p.status === 'evaluated' ? `<button class="button secondary small" data-ip-open="${E(p.id)}">Read feedback</button>` : ''}</div>`).join('')}</div>`;
+      out += `<div class="ip-card"><h3>Your mock interviews</h3>${s.past.map(p => `<div class="ip-row" style="padding:6px 0"><span>${E(p.role || p.occupation)}${p.mode === 'full' ? ' · Full mock' : ''} · ${E(when(p.created_at))}</span><span class="ip-pill">${E(label(p.status, p.level))}</span>${p.status === 'evaluated' ? `<button class="button secondary small" data-ip-open="${E(p.id)}">Read feedback</button>` : ''}</div>`).join('')}</div>`;
     }
     h.innerHTML = out;
   }
@@ -103,7 +105,9 @@
 
   function sessionHtml(x) {
     let out = `<div class="ip-card" data-ip-session="${E(x.id)}"><h3>${E(x.role)} · ${E(x.bandLabel)}</h3>`;
-    if (x.status === 'in_progress') {
+    if (x.status === 'in_progress' && x.mode === 'full' && x.sections && x.sections.length) {
+      out += fullHtml(x);
+    } else if (x.status === 'in_progress') {
       out += `<p class="ip-muted">Answer each question as you would say it in the interview, in a few sentences. Your answers save as you type. Submit when you are done; the session closes after a day without submitting and your credit is returned.</p>`;
       out += `<label class="ip-row ip-muted" style="margin:6px 0"><input type="checkbox" data-ip-clock${clock.on ? ' checked' : ''}> Use a timer (aim for about 2 minutes per answer, as in a real interview)</label>`;
       out += x.answers.map(a => `<div class="ip-q"><b>${a.position}. ${E(a.question)}</b>${clock.on ? `<span class="ip-pill" data-ip-time="${a.position}">${mmss(secs(a.position))}</span>` : ''}<textarea data-ip-answer="${a.position}" maxlength="3000">${E(a.answer)}</textarea><details><summary class="ip-guide">What a good answer covers</summary><p class="ip-guide">${E(a.guidance)}</p></details></div>`).join('');
@@ -116,11 +120,32 @@
     return out + '</div>';
   }
 
+  // 3.61.0 Full mock: one part at a time with a 15-minute guide clock per part. Moving on is the customer's choice;
+  // running over is shown, never penalised, and answers in every part stay editable until submitted.
+  const part = { idx: 0, ends: 0, tick: null };
+  function fullHtml(x) {
+    const secs = x.sections, i = Math.min(part.idx, secs.length - 1), sec = secs[i];
+    if (!part.ends) part.ends = Date.now() + sec.minutes * 60000;
+    clearInterval(part.tick);
+    part.tick = setInterval(() => { const el = document.querySelector('[data-ip-part-clock]'); if (!el) { clearInterval(part.tick); return; } const n = Math.round((part.ends - Date.now()) / 1000); el.textContent = n > 0 ? mmss(n) + ' left in this part' : 'Time for this part is up. Move on when you are ready.'; el.style.background = n <= 0 ? 'rgba(234,179,8,.18)' : ''; }, 1000);
+    const left = Math.max(0, Math.round((part.ends - Date.now()) / 1000));
+    let out = `<p class="ip-muted">Full mock interview: ${secs.length} parts of about 15 minutes each. Answer as you would say it in the interview. Your answers save as you type, and you can go back to any part before you submit.</p>
+      <div class="ip-steps">${secs.map((p, k) => `<span class="ip-step${k === i ? ' on' : ''}">${k + 1}. ${E(p.title)}</span>`).join('')}</div>
+      <p><b>Part ${i + 1} of ${secs.length}: ${E(sec.title)}</b> <span class="ip-pill" data-ip-part-clock>${left > 0 ? mmss(left) + ' left in this part' : 'Time for this part is up. Move on when you are ready.'}</span></p>`;
+    out += x.answers.filter(a => a.position >= sec.from && a.position <= sec.to).map(a => `<div class="ip-q"><b>${a.position}. ${E(a.question)}</b><textarea data-ip-answer="${a.position}" maxlength="3000">${E(a.answer)}</textarea><details><summary class="ip-guide">What a good answer covers</summary><p class="ip-guide">${E(a.guidance)}</p></details></div>`).join('');
+    out += `<div class="ip-row">${i > 0 ? '<button class="button secondary" data-ip-part="-1">Previous part</button>' : ''}${i < secs.length - 1 ? '<button class="button mint" data-ip-part="1">Next part</button>' : '<button class="button mint" data-ip-submit>Submit for feedback</button>'}</div>`;
+    return out;
+  }
+
   function feedbackHtml(x) {
     const f = x.feedback, r = f.result || {};
     let out = `<p><span class="ip-pill">Level: ${E(f.level)}</span></p><p class="ip-muted">${E(LEVEL_NOTE)}</p><p>${E(r.summary)}</p>`;
+    const parts = f.sections || [];
+    if (parts.length) out += `<div class="ip-scores">${parts.map((p, k) => `<span>Part ${k + 1}, ${E(p.title)}: <b>${p.average == null ? '–' : p.average + '/4'}</b></span>`).join('')}</div>`;
     (r.answers || []).forEach((a, i) => {
       const q = x.answers[i] || {};
+      const head = parts.find(p => p.from === a.position);
+      if (head) out += `<h4 style="margin:16px 0 0">Part ${parts.indexOf(head) + 1}: ${E(head.title)}</h4>`;
       out += `<div class="ip-q ip-fb"><b>${a.position}. ${E(q.question)}</b><p class="ip-guide">Your answer: ${E(q.answer)}</p>
         <div class="ip-scores">${Object.entries(f.dimensions).map(([k, v]) => `<span>${E(v)}: <b>${a.scores[k]}/4</b></span>`).join('')}</div>
         ${a.strengths.length ? `<div>What worked<ul>${a.strengths.map(t => `<li>${E(t)}</li>`).join('')}</ul></div>` : ''}
@@ -163,13 +188,15 @@
     try {
       if (b.matches('[data-ip-start]')) {
         b.disabled = true;
-        const j = await api('interviews/start', { occupation: val('occupation'), band: val('band'), objective: val('objective'), company: val('company') || null });
-        state.open = j.session; render();
+        const j = await api('interviews/start', { occupation: val('occupation'), band: val('band'), objective: val('objective'), company: val('company') || null, mode: val('mode') || 'standard' });
+        state.open = j.session; part.idx = 0; part.ends = 0; render();
       } else if (b.matches('[data-ip-submit]')) {
         b.disabled = true;
         const id = state.open.id;
         for (const a of state.open.answers) await api(`interviews/${id}/answer`, { position: a.position, answer: a.answer });
         state.open = (await api(`interviews/${id}/submit`, {})).session; render();
+      } else if (b.matches('[data-ip-part]')) {
+        part.idx = Math.max(0, part.idx + +b.dataset.ipPart); part.ends = 0; render(); host()?.scrollIntoView({ behavior: 'smooth', block: 'start' });
       } else if (b.matches('[data-ip-refresh]')) {
         await load();
       } else if (b.matches('[data-ip-open]')) {

@@ -252,6 +252,11 @@ class Settings
     public static function sinceStart($q, string $col)
     {
         $s = self::statsSince();
+        // 3.61.0 orders the owner marked as test payments are left out of revenue figures (they are never deleted).
+        $test = TestPayments::testIds();
+        if ($test) {
+            $q->whereNotIn(str_contains($col, '.') ? strstr($col, '.', true).'.id' : 'id', $test);
+        }
 
         return $s ? $q->where($col, '>=', $s) : $q;
     }
