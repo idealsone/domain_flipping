@@ -1,3 +1,12 @@
+# CVTara v3.66.0 — Interview question bulk upload
+
+## 3.66.0
+Owner request (12 Nov 2026): bulk upload and bulk approval for the interview question bank. No migration.
+- **Bulk upload** in console Interview practice > Question bank: a CSV or Excel (.xlsx) sheet, one question per row (Role, Question, Guidance, Example, Skill, Difficulty, From, To). Role is a role name or slug, or "general" for every role; blank experience means fresher to 12+. Choose "Keep as drafts" or "Approve straight away". Rows with an unknown role, wrong length, wrong experience range or wording that mentions AI are listed by row number; wording already in the bank is skipped. Up to 2,000 rows per file. A blank sheet with two example rows downloads from the same panel.
+- **Approve all drafts (every role)** next to the role filter (the per-role button stays).
+- **Load any new starter questions** is always shown and safe to press again: it adds starter questions that are missing on the site and never duplicates.
+- Routes `GET admin/interviews/template`, `POST admin/interviews/import` (content.edit); `interviews/approve` takes `occupation: "*"` for every role. Test suite `s78_question_upload`.
+
 # CVTara v3.64.0 — Lower AI costs
 
 ## 3.64.0
