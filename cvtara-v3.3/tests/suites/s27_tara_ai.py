@@ -68,6 +68,7 @@ def run(ctx, t):
         # the whole resume tailored for one checked job: a proposal only, numbers not in the resume are pointed out
         o.api("POST", "admin/providers", {"service": "ai", "values": {"dailyLimit": "0"}})
         w = Client(inst.base); w.register("tara-c@test.local"); w.page("/workspace.html")
+        from lib.plans import give_job_hunt; give_job_hunt(db, "tara-c@test.local")
         doc = {"version": "1", "title": "Mine", "template": "suite-prism", "accent": "#1557d2", "font": "Arial", "personal": {"name": "Ann", "email": "ann@example.com"}, "summary": "Recruiter for retail stores in Pune.", "skills": "Excel", "order": ["summary", "experience"],
                "experience": [{"role": "Recruiter", "company": "Acme", "start": "2021", "current": True, "bullets": "Hired staff for 14 stores.\nKept weekly reports in Excel."}], "education": [], "projects": [], "certifications": []}
         s, j = w.api("POST", "resumes", {"data": doc}); rid = j["id"]
@@ -82,6 +83,7 @@ def run(ctx, t):
         t.check("tailoring uses one suggestion and saves nothing by itself", tl.get("left") == 2 and w.api("GET", f"resumes/{rid}")[1]["resume"]["data"]["summary"] == "Recruiter for retail stores in Pune.")
         MODE["v"] = "junk"; s, j = w.api("POST", f"resumes/{rid}/tailor", {"scanId": sid, "consent": True})
         t.check("an unreadable answer changes nothing and gives the suggestion back", s == 422 and "Nothing was changed" in str(j) and w.api("GET", "ai/status")[1]["ai"]["left"] == 2, (s, str(j)[:200]))
+        give_job_hunt(db, "tara-b@test.local")
         t.check("someone else's resume cannot be tailored", v.api("POST", f"resumes/{rid}/tailor", {"scanId": sid, "consent": True})[0] in (404, 422))
         MODE["v"] = "ok"
         ws = u.page("/workspace.html")[2]

@@ -127,7 +127,8 @@ class ApiController extends Controller
                 }
             }
 
-            return $ok(['content' => $content, 'reviews' => \App\Services\Reviews::published()]);
+            // 3.65.0 (owner approval 2026-11-12): the public site shows reviews from verified buyers only.
+            return $ok(['content' => $content, 'reviews' => array_values(array_filter(\App\Services\Reviews::published(), fn ($x) => $x['verified']))]);
         }
         if ($path === 'traffic') {
             $cap('traffic', 60, 60, 'Too many requests. Please wait.');
@@ -431,7 +432,7 @@ class ApiController extends Controller
             return $ok(['profile' => $p, 'isOwner' => \App\Services\Access::isStaff($u), 'consoleRole' => \App\Services\Access::role($u), 'isPaid' => (bool) (Settings::access($id)['paid'] ?? false) || (bool) $u->is_admin, 'user' => ['id' => $id, 'email' => $u->email]]);
         }
         if ($path === 'profile') {
-            $v = $r->validate(['name' => 'required|string|max:120', 'phone' => 'nullable|string|max:40', 'language' => 'sometimes|in:en', 'experienceLevel' => 'required|in:fresher,experienced', 'profession' => 'required|string|max:120', 'category' => 'required|in:Technology,HR & Recruitment,Sales & Marketing,Finance,Operations,Education,Healthcare,Design,Other', 'experienceYears' => 'required|integer|min:0|max:60', 'city' => 'nullable|string|max:120', 'marketingConsent' => 'required|boolean']);
+            $v = $r->validate(['name' => 'required|string|max:120', 'phone' => 'nullable|string|max:40', 'language' => 'sometimes|in:en', 'experienceLevel' => 'required|in:fresher,experienced', 'profession' => 'required|string|max:120', 'category' => ['required', \Illuminate\Validation\Rule::in(\App\Services\JobFields::CATEGORIES)], 'experienceYears' => 'required|integer|min:0|max:60', 'city' => 'nullable|string|max:120', 'marketingConsent' => 'required|boolean']);
             DB::table('profiles')->where('owner_id', $id)->update(['name' => $v['name'], 'phone' => $v['phone'] ?? '', 'language' => 'en', 'experience_level' => $v['experienceLevel'], 'profession' => $v['profession'], 'category' => $v['category'], 'experience_years' => $v['experienceLevel'] === 'fresher' ? 0 : $v['experienceYears'], 'city' => $v['city'] ?? '', 'marketing_consent' => $v['marketingConsent'], 'onboarding_done' => true, 'updated_at' => now()]);
             $u->name = $v['name'];
             $u->save();
@@ -458,6 +459,9 @@ class ApiController extends Controller
         if ($path === 'letters/draft' && $r->isMethod('POST')) {
             $v = $r->validate(['resumeId' => ['required', 'regex:/^[a-f0-9-]{36}$/'], 'scanId' => ['nullable', 'regex:/^[a-f0-9-]{36}$/'], 'role' => 'nullable|string|max:160', 'company' => 'nullable|string|max:160', 'recipient' => 'nullable|string|max:180', 'jobText' => 'nullable|string|max:40000']);
             abort_unless(Settings::get('features')['letter']['enabled'], 403);
+            if (! Settings::careerTools($u)) {
+                return response()->json(['ok' => false, 'plan' => 'career', 'error' => 'One-click cover letters come with Job Hunt and Pro. You can still write a letter yourself in the editor.'], 402);
+            }
             $key = 'letter-draft:'.$id;
             if (\Illuminate\Support\Facades\RateLimiter::tooManyAttempts($key, 8)) {
                 throw ValidationException::withMessages(['letter' => 'Please wait a moment before writing another letter.']);
@@ -579,6 +583,9 @@ class ApiController extends Controller
         }
         if (preg_match('#^resumes/([a-f0-9-]{36})/tailor$#', $path, $m) && $r->isMethod('POST')) {
             // the CVTara team rewrites this resume for one checked job; the builder shows it for review, nothing is saved here
+            if (! Settings::careerTools($u)) {
+                return response()->json(['ok' => false, 'plan' => 'career', 'error' => 'Tailoring your whole resume in one click comes with Job Hunt and Pro. You can still add the keywords yourself.'], 402);
+            }
             $v = $r->validate(['scanId' => ['required', 'regex:/^[a-f0-9-]{36}$/'], 'consent' => 'accepted']);
             $row = DB::table('resume_drafts')->where('id', $m[1])->where('owner_id', $id)->first();
             abort_unless($row, 404);
@@ -876,10 +883,23 @@ class ApiController extends Controller
 
             return $ok(\App\Services\EvidenceCheck::forDocument($id, $m[1], $row) + ['revision' => (int) $row->revision]);
         }
+        // 3.65.0 The resume journey card: V1 as it arrived, V2 primary, V3 one copy per job (with its letter).
+        if ($path === 'resumes/journey' && $get) {
+            return $ok(['journey' => \App\Services\ResumeJourney::for($id)]);
+        }
         // 3.55.0 Ask for feedback after a resume save (V7 §28), not while editing.
         if ($path === 'feedback/ask') {
             if ($get) {
                 return $ok(['ask' => \App\Services\ReviewEdits::shouldAsk($id)]);
+            }
+            // 3.65.0: one tap on "Is the price fair?" in the same card (too_high, fair or great_value), kept for the owner's Reviews page.
+            if ($r->input('action') === 'price') {
+                $pv = (string) $r->input('value');
+                abort_unless(in_array($pv, \App\Services\ReviewEdits::PRICE_VIEWS, true), 422);
+                DB::table('activity_events')->where('owner_id', $id)->where('event', 'price_view')->where('created_at', '>=', now()->subDays(30))->delete();
+                Settings::audit($id, 'price_view', $pv);
+
+                return $ok();
             }
             $act = $r->input('action') === 'dismissed' ? 'feedback_prompt_dismissed' : 'feedback_prompt_shown';
             Settings::audit($id, $act);

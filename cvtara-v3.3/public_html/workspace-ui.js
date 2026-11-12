@@ -125,3 +125,21 @@
   }
   addEventListener('load', () => setTimeout(boot, 400));
 })();
+
+/* 3.64.0: one "My account" menu in the top bar (Account, Billing, Refer & Earn, Wallet, Referral history), so these pages
+   are no longer also listed in the left menu. Opens on click, closes on a choice, Escape or a click elsewhere. */
+(() => {
+  'use strict';
+  const wrap = document.querySelector('.acct-menu'); if (!wrap) return;
+  const btn = wrap.querySelector('[data-acct-toggle]'), pop = wrap.querySelector('.acct-pop');
+  const set = open => { pop.hidden = !open; btn.setAttribute('aria-expanded', String(open)); if (open) pop.querySelector('button')?.focus(); };
+  btn.addEventListener('click', e => { e.stopPropagation(); set(pop.hidden); });
+  pop.addEventListener('click', e => { if (e.target.closest('[data-workspace-view]')) set(false); });
+  document.addEventListener('click', e => { if (!pop.hidden && !wrap.contains(e.target)) set(false); });
+  wrap.addEventListener('keydown', e => {
+    if (e.key === 'Escape' && !pop.hidden) { set(false); btn.focus(); }
+    if ((e.key === 'ArrowDown' || e.key === 'ArrowUp') && !pop.hidden) { e.preventDefault(); const items = [...pop.querySelectorAll('button')], i = items.indexOf(document.activeElement); items[(i + (e.key === 'ArrowDown' ? 1 : items.length - 1)) % items.length].focus(); }
+  });
+  // The button shows which account page is open.
+  document.addEventListener('cvtara-workspace-view', e => btn.classList.toggle('active', !!pop.querySelector(`[data-workspace-view="${e.detail}"]`)));
+})();

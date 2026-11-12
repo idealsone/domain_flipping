@@ -193,6 +193,21 @@ class Settings
     }
 
     /**
+     * 3.64.0 (owner approval 2026-11-12): one-click tailoring of a whole resume and one-click cover letters are part of the
+     * Job Hunt and Pro packs. Free and Quick Download (Rs 99) accounts see the upgrade dialog instead. A package counts when
+     * it includes cover letters of its own (add-on letters alone do not). Owner and staff accounts are never blocked.
+     */
+    public static function careerTools($user): bool
+    {
+        if (! $user || ! empty($user->is_admin) || Access::isStaff($user)) {
+            return (bool) $user;
+        }
+        $a = self::access((int) $user->id);
+
+        return ! empty($a['paid']) && ((int) ($a['limits']['savedLetters'] ?? 0) - (int) ($a['extras']['letters'] ?? 0)) > 0;
+    }
+
+    /**
      * The name a customer sees for their current package. A paid purchase must never read "Free":
      * use the package's current name, then the name stored on the purchase itself (a package
      * from an older price list), then the package that replaced it, then a readable key.

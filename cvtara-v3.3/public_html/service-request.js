@@ -15,7 +15,7 @@
     if (!r.ok || j.ok === false) throw Error(j.error || (j.errors && Object.values(j.errors)[0]?.[0]) || j.message || 'That did not work. Please try again.');
     return j;
   }
-  const go = view => { const b = document.querySelector(`.side-nav [data-workspace-view="${view}"]`); if (b) b.click(); else location.href = '/workspace.html?view=' + view; };
+  const go = view => { const b = document.querySelector(`.side-nav [data-workspace-view="${view}"], .acct-pop [data-workspace-view="${view}"]`); if (b) b.click(); else location.href = '/workspace.html?view=' + view; };
 
   const css = document.createElement('style');
   css.textContent = `

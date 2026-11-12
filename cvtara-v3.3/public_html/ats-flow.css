@@ -83,3 +83,15 @@
 .jf-ba{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:6px;font-size:13px;line-height:1.5}.jf-ba small{color:var(--muted);font-weight:700}.jf-ba p{margin:2px 0 0}
 .jf-actions{display:flex;gap:8px;flex-wrap:wrap}
 @media (max-width:700px){.jf-ba{grid-template-columns:1fr}}
+/* 3.64.0 compact "Fix for this job" */
+.job-fix .jf-head{align-items:center;gap:16px}.jf-title{flex:1;min-width:0}.jf-title h3{font-size:17px}.jf-up{margin:0;color:var(--success);font-weight:700;font-size:13px}
+.jf-ring{--c:var(--danger);flex:0 0 auto;width:68px;height:68px;border-radius:50%;display:grid;place-items:center;align-content:center;background:radial-gradient(closest-side,var(--surface,#fff) 78%,transparent 80% 100%),conic-gradient(var(--c) calc(var(--p)*1%),var(--line,#e2e8f0) 0)}
+.jf-ring.mid{--c:var(--warn)}.jf-ring.good{--c:var(--success)}.jf-ring b{font-size:17px;line-height:1}.jf-ring small{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em}
+.jf-steps{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:18px;margin-top:14px}
+.jf-steps h4{display:flex;align-items:center;gap:8px;margin:0 0 8px;font-size:14px}.jf-n{width:22px;height:22px;border-radius:50%;display:inline-grid;place-items:center;background:var(--soft,#eef2f7);font-size:12px}
+.jf-req{list-style:none;margin:0;padding:0;display:flex;flex-wrap:wrap;gap:6px}.jf-req li{display:inline-flex;align-items:center;gap:6px;padding:5px 10px;border:1px solid var(--line);border-radius:999px;font-size:13px;background:var(--paper)}
+.jf-req li small{color:var(--muted);font-size:11px}.jf-dot{width:8px;height:8px;border-radius:50%;background:var(--warn)}.jf-dot.miss{background:var(--danger)}
+.jf-why{margin-top:8px;font-size:13px;color:var(--ink2)}.jf-why summary{cursor:pointer;font-weight:600}.jf-why p{margin:6px 0 0}
+.jf-ok{margin:0;color:var(--success);font-weight:700;font-size:13px}
+.job-fix .jf-actions{margin-top:14px;align-items:center}.job-fix .jf-actions small{font-weight:500;opacity:.8}.job-fix .jf-consent{flex-basis:100%;margin:0}
+@media (max-width:800px){.jf-steps{grid-template-columns:1fr}}

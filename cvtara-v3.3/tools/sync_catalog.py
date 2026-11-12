@@ -4,7 +4,7 @@ app/resources/data/catalog.json, which the server uses to validate template slug
 
   python3 tools/sync_catalog.py          (needs node)
 
-Existing catalogue entries are left exactly as they are; only entries with an `audience`, new sample profiles
+Existing catalogue entries are left exactly as they are; only entries with an `audience` or a `level` (3.67.0 role-group fillers), new sample profiles
 and the `audiences` list are added or refreshed."""
 import json, subprocess, sys
 from pathlib import Path
@@ -27,7 +27,7 @@ def merged():
     cat = json.loads(path.read_text(encoding="utf8"))
     rt = runtime()
     for key in ("templates", "coverLetters"):
-        fresh = [x for x in rt[key] if x.get("audience")]
+        fresh = [x for x in rt[key] if x.get("audience") or x.get("level")]
         slugs = {x["slug"] for x in fresh}
         cat[key] = [x for x in cat[key] if x["slug"] not in slugs] + fresh
     shared = {t["profile"] for t in rt["templates"] if not t.get("audience")}

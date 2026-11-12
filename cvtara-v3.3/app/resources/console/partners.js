@@ -58,7 +58,7 @@
     const dates = c => c && (c.startsOn || c.endsOn) ? `${day(c.startsOn)} – ${c.endsOn ? day(c.endsOn) : 'open'}` : 'No end date';
     const links = `<table class="ops-table"><thead><tr><th>Link</th><th>Campaign dates</th><th>Seats</th><th>Clicks</th><th></th></tr></thead><tbody>${d.links.map(l => `<tr><td><code>${E(l.url)}</code><br><small>${E(l.campaign || '')}${l.label ? ' · ' + E(l.label) : ''}${l.seats && l.seats.open ? '' : ' · <b>not taking sign-ups</b>'}</small></td><td>${dates(l.seats)}</td><td>${seat(l.seats)}</td><td>${l.clicks}</td><td><button type="button" class="button small secondary" data-camp="${l.id}">Campaign</button> <button type="button" class="button small secondary" data-link="${l.id}" data-on="${l.active ? 0 : 1}">${l.active ? 'Pause' : 'Turn on'}</button></td></tr>`).join('') || '<tr><td colspan="5">No links yet.</td></tr>'}</tbody></table>`;
     const agreements = d.agreements.length ? `<ul>${d.agreements.map(a => `<li>Version ${a.version}: <b>${E({ sent: 'waiting for the partner', accepted: 'accepted', superseded: 'replaced' }[a.status] || a.status)}</b>${a.accepted_at ? ' on ' + day(a.accepted_at) + ' by ' + E(a.accepted_name || '') : a.sent_at ? ' · sent ' + day(a.sent_at) : ''} <small class="muted">${E((a.body_hash || '').slice(0, 12))}</small></li>`).join('')}</ul>` : `<p class="muted">${p.agreement_ref ? 'Signed agreement recorded: ' + E(p.agreement_ref) : 'No agreement yet. Links will not take sign-ups until one is accepted or a signed reference is recorded.'}</p>`;
-    const members = d.members.map(m => `<li>${E(m.name)} &lt;${E(m.email)}&gt; · ${E(m.role)} <button type="button" class="button small ops-no" data-rm="${E(m.email)}">Remove</button></li>`).join('') || '<li class="muted">Nobody can open the partner portal yet.</li>';
+    const members = d.members.map(m => `<li>${E(m.name)} &lt;${E(m.email)}&gt; · ${E(m.role)} <button type="button" class="button small secondary" data-viewas="${E(m.user_id)}" title="See this partner portal exactly as they see it (read-only, logged)">👁 View portal</button> <button type="button" class="button small ops-no" data-rm="${E(m.email)}">Remove</button></li>`).join('') || '<li class="muted">Nobody can open the partner portal yet.</li>';
     const m = modal(p.name, `<div class="ops-kpis"><div class="kpi"><span>Sign-ups</span><b>${d.signups}</b></div><div class="kpi"><span>Buyers</span><b>${d.buyers}</b></div><div class="kpi"><span>Revenue</span><b>${rs(d.revenuePaise)}</b></div><div class="kpi"><span>Pending</span><b>${rs(d.commission.pendingPaise)}</b></div><div class="kpi"><span>Ready to pay</span><b>${rs(d.commission.availablePaise)}</b></div><div class="kpi"><span>Paid</span><b>${rs(d.commission.paidPaise)}</b></div></div>
       <p><button type="button" class="button small secondary" id="ptEdit">Edit partner details</button> <button type="button" class="button small secondary" id="ptView">View as partner</button></p>
       <h4>Agreement</h4>${agreements}
@@ -73,6 +73,14 @@
     $('#ptView', B).onclick = async () => { try { const v = await api(`/api/admin/partners/${id}/portal`); const w = modal('Partner portal: ' + p.name + ' (read-only)', portalPreview(v), { wide: true }); } catch (x) { toast(err(x), true); } };
     $('#ptAgr', B).onsubmit = async ev => { ev.preventDefault(); const st = $('.ops-st', ev.target); try { if (!(await ensureRecent())) return; const r = await post(`/api/admin/partners/${id}/agreements`, Object.fromEntries(new FormData(ev.target))); toast('Version ' + r.version + ' sent'); m.close(); open(id); } catch (x) { st.textContent = err(x); } };
     B.addEventListener('click', async e => {
+      const va = e.target.closest('[data-viewas]');
+      if (va) {
+        const reason = prompt('Why do you need to see this partner portal? (kept in the audit log)', 'Checking a partner question'); if (reason === null) return;
+        if (reason.trim().length < 10) { toast('Write a short reason (at least 10 characters).', true); return; }
+        if (!(await ensureRecent())) return;
+        try { await post('/api/admin/support/view/start', { customerId: Number(va.dataset.viewas), reason: reason.trim() }); window.open('/workspace.html?view=partner', '_blank', 'noopener'); toast('Read-only view opened in a new tab for 30 minutes.'); } catch (x) { toast(err(x), true); }
+        return;
+      }
       const l = e.target.closest('[data-link]'); const rm = e.target.closest('[data-rm]'); const cp = e.target.closest('[data-camp]');
       if (cp) { campaign(d.links.find(x => String(x.id) === cp.dataset.camp), d.durations || [15, 30, 45, 60, 90], () => { m.close(); open(id); }); return; }
       try {

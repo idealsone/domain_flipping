@@ -64,6 +64,7 @@ def run(ctx, t):
 
         s, j = o.api("GET", "admin/reviews/history?id=" + fid)
         t.check("the history shows every change with editor, reason and before/after", s == 200 and [e["status"] for e in j["edits"]] == ["applied", "applied", "declined", "approved"] and j["review"]["original_content"] == base and all(e["reason"] and e["before_text"] and e["after_text"] for e in j["edits"]), [e["status"] for e in j.get("edits", [])])
+        db.q("update feedback set source='owner_verified' where id=?", fid)  # 3.65.0: only verified reviews are public
         ps = o.api("POST", "admin/reviews", {"id": fid, "status": "published"})
         cs, cj = Client(inst.base).api("GET", "public-content")
         pub = [x for x in cj.get("reviews", []) if x["id"] == fid]

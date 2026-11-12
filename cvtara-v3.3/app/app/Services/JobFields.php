@@ -9,6 +9,9 @@ namespace App\Services;
  */
 class JobFields
 {
+    /** Work categories offered at sign-up and in the profile (3.63.0: tech and non-tech). The first nine are the pre-3.63 values, kept so saved profiles stay valid. */
+    public const CATEGORIES = ['Technology', 'Data & Analytics', 'Design', 'HR & Recruitment', 'Sales & Marketing', 'Finance', 'Banking & Insurance', 'Accounting & Audit', 'Operations', 'Supply Chain & Logistics', 'Manufacturing & Engineering', 'Customer Support & BPO', 'Retail & E-commerce', 'Hospitality & Travel', 'Healthcare', 'Pharma & Life Sciences', 'Education', 'Legal & Compliance', 'Government & Public Sector', 'Media & Content', 'Administration & Office', 'Construction & Real Estate', 'Telecom', 'Consulting', 'Other'];
+
     public static function read(string $text, string $title = '', string $company = '', string $url = '', array $details = []): array
     {
         $t = AtsEngine::clean($text);
