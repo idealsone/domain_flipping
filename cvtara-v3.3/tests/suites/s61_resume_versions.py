@@ -68,7 +68,7 @@ def run(ctx, t):
             s, j = c.api("POST", "resumes", {"id": rid, "revision": r, "data": resume(f"Bulk edit number {i} for the history limit.")}); r = j["revision"]
         kinds = db.q("select kind, count(*) from resume_versions where resume_id=? group by kind", rid)
         k = dict(kinds)
-        t.check("only the last 30 edit versions are kept; the application copy stays", k.get("edit") == 30 and k.get("application") == 1, k)
+        t.check("only the last 30 edit versions (plus the first one, shown as V1) are kept; the application copy stays", k.get("edit") == 31 and k.get("application") == 1, k)
 
         # Letters remember what they were made from.
         s, j = c.api("POST", "letters", {"data": letter(), "source": {"resumeId": rid, "applicationId": aid, "scanId": "00000000-0000-0000-0000-000000000000"}})

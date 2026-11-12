@@ -75,14 +75,15 @@ def run(ctx, t):
         s, j = w.api("POST", "ats/scan", {"resumeId": rid, "source": "text", "text": "We are hiring a recruiter. Responsibilities: source candidates, screen candidates, schedule interviews, use Workday. Required: 2+ years of recruitment experience."}); sid = j.get("scanId")
         t.check("a check to tailor against", s == 200, (s, str(j)[:200]))
         t.check("tailoring needs the customer's agreement", w.api("POST", f"resumes/{rid}/tailor", {"scanId": sid})[0] == 422)
+        left0 = w.api("GET", "ai/status")[1]["ai"]["left"]  # Job Hunt has its own daily number of suggestions
         MODE["v"] = "tailor"; n = len(HITS); s, j = w.api("POST", f"resumes/{rid}/tailor", {"scanId": sid, "consent": True}); tl = j.get("tailored", {})
         t.check("the whole resume comes back tailored for the job", s == 200 and tl.get("summary", "").startswith("Recruiter who hires") and tl.get("skills") == "Recruitment, Excel" and tl.get("experience") == [{"i": 0, "bullets": "Hired staff for 14 stores\nCut hiring time by 99%"}] and tl.get("notShown") == ["Workday"], (s, str(j)[:300]))
         t.check("a number that is not in the resume is flagged for the customer", any("99" in c for c in tl.get("check", [])), tl.get("check"))
         h = HITS[-1] if len(HITS) > n else {"body": {"messages": [{"content": ""}], "system": ""}}
         t.check("the resume, the job and the missing keywords are sent inside tags", all(k in h["body"]["messages"][0]["content"] for k in ("<resume>", "<job>", "<missing>")) and "Never invent" in json.dumps(h["body"].get("system")))
-        t.check("tailoring uses one suggestion and saves nothing by itself", tl.get("left") == 2 and w.api("GET", f"resumes/{rid}")[1]["resume"]["data"]["summary"] == "Recruiter for retail stores in Pune.")
+        t.check("tailoring uses one suggestion and saves nothing by itself", tl.get("left") == left0 - 1 and w.api("GET", f"resumes/{rid}")[1]["resume"]["data"]["summary"] == "Recruiter for retail stores in Pune.")
         MODE["v"] = "junk"; s, j = w.api("POST", f"resumes/{rid}/tailor", {"scanId": sid, "consent": True})
-        t.check("an unreadable answer changes nothing and gives the suggestion back", s == 422 and "Nothing was changed" in str(j) and w.api("GET", "ai/status")[1]["ai"]["left"] == 2, (s, str(j)[:200]))
+        t.check("an unreadable answer changes nothing and gives the suggestion back", s == 422 and "Nothing was changed" in str(j) and w.api("GET", "ai/status")[1]["ai"]["left"] == left0 - 1, (s, str(j)[:200]))
         give_job_hunt(db, "tara-b@test.local")
         t.check("someone else's resume cannot be tailored", v.api("POST", f"resumes/{rid}/tailor", {"scanId": sid, "consent": True})[0] in (404, 422))
         MODE["v"] = "ok"

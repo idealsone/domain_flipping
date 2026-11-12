@@ -36,7 +36,7 @@ def run(ctx, t):
     new = {"date": "2026-11-02", "tag": "new", "title": "Download in Word format", "body": "You can now download your resume as a Word file.", "published": True}
     hidden = {"date": "2026-11-02", "tag": "fixed", "title": "Draft note", "body": "Not ready yet.", "published": False}
     s, j = o.api("POST", "admin/whats-new/save", {"entries": [new, hidden] + entries})
-    t.check("owner adds a note", s == 200 and any(e["title"] == "Download in Word format" for e in j["entries"]), f"{s} {str(j)[:200]}")
+    t.check("owner adds a note", s == 200 and any(e["title"] == "Download in Word format" for e in j["entries"]) and any(e["title"] == "Draft note" for e in j["entries"]), f"{s} {str(j)[:200]}")
     s, j = c.api("GET", "whats-new")
     t.check("a newly shown note pops up for a customer who already closed the window", s == 200 and len(j["unseen"]) == 1 and next(e for e in j["entries"] if e["id"] == j["unseen"][0])["title"] == "Download in Word format", j.get("unseen"))
     t.check("hidden notes are not sent to customers", all(e["title"] != "Draft note" for e in j["entries"]))
