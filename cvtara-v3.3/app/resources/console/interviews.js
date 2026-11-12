@@ -48,7 +48,7 @@
       <div class="panel panel-pad" style="margin:12px 0"><h3 style="margin-top:0">Give complimentary mock interviews</h3>
         <form class="ops-form" id="ivGrant"><label>Customer email<input type="email" name="email" required></label><label>How many<input type="number" name="count" min="1" max="50" value="1" required></label><label class="wide">Reason (kept in the record)<input name="reason" required minlength="3" maxlength="300" placeholder="Feedback failed twice, goodwill"></label><button class="button primary" type="submit">Give</button></form></div>
       <div class="panel panel-pad"><h3 style="margin-top:0">Recent mock interviews</h3><div style="overflow:auto"><table class="ops-table"><thead><tr><th>When</th><th>Customer</th><th>Role</th><th>Status</th><th>Level</th><th>Customer's challenge</th></tr></thead><tbody>
-        ${S.sessions.map(s => `<tr><td>${E(K.dmy ? K.dmy(s.created_at) : s.created_at)}</td><td>${E(s.email)}</td><td>${E(roleName(s.occupation))} · ${E(s.band)}</td><td>${E(s.status)}${s.error ? `<br><small class="muted">${E(s.error)}</small>` : ''}</td><td>${E(s.level || '')}</td><td>${E(s.challenge || '')}</td></tr>`).join('') || '<tr><td colspan="6">None yet.</td></tr>'}
+        ${S.sessions.map(s => `<tr><td>${E(K.dmy ? K.dmy(K.parse(s.created_at)) : s.created_at)}</td><td>${E(s.email)}</td><td>${E(roleName(s.occupation))} · ${E(s.band)}</td><td>${E(s.status)}${s.error ? `<br><small class="muted">${E(s.error)}</small>` : ''}</td><td>${E(s.level || '')}</td><td>${E(s.challenge || '')}</td></tr>`).join('') || '<tr><td colspan="6">None yet.</td></tr>'}
       </tbody></table></div></div>`;
 
     $('#ivRole', h).onchange = e => { F.occupation = e.target.value; load(); };

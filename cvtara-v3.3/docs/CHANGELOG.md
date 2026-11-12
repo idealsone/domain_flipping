@@ -1,4 +1,15 @@
-# CVTara v3.67.0 — Simpler customer journey
+# CVTara v3.67.1 — Review editor and What's new
+
+## 3.67.1
+Review editor and What's new, on 3.67.0 (PR #55).
+Owner report (12 Nov 2026): the console "Edit review" window had no card, and customers had seen no update notes since 1 Nov. No migration.
+- **Console pop-ups fixed**: Edit review, Review history and "Confirm it's you" had no styles of their own, so the site-wide rule that makes every `<dialog>` transparent with no padding (for the template windows) left the form floating over the page with a sideways scrollbar. They now get a card, backdrop, phone layout and dark mode (`cvtara-ds.css`).
+- **Why customers got no updates**: notes were only ever added by hand in the console, and none had been added since 1 Nov, so the pop-up had nothing new to show (and customers who joined after 1 Nov had never seen one).
+- **Release notes ship with the code**: `WhatsNew::shipped()` holds each release's customer-facing notes. After a deploy they are added on the first page load, stamped with that time, so every customer who joined before sees them once. The owner can edit, hide or delete them; a deleted one never comes back (`removed` list in the `whatsNew` setting).
+- Shipped notes (alongside the eight 6-12 Nov notes 3.67.0 added to the seed, no duplicate ids): for 3.67.0 (account menu moved, resume journey, one-question-at-a-time mock interviews, shorter Fix for this job), for 12 Nov (interview practice, full mock interview, company research, check before download, tested ATS labels) and catch-up notes for 7-8 Nov (help centre, support replies, Ask Tara).
+- Console What's new warns when the newest note is more than 14 days old. The customer pop-up waits up to 3 minutes (was 30 seconds) for another window to close before giving up for that visit.
+- Test suite `s40_whats_new` extended.
+- **Blog & SEO page error** "e.toLocaleDateString is not a function": the Job, city & state pages list passed the Google check time to the date formatter as text once a page had been checked. Fixed there and in the Interview practice recent sessions list.
 
 ## 3.67.0
 Owner's feedback of 12 Nov 2026, audited and approved ("approved", then "complete"). Built on 3.65.0 and 3.66.0. Additive migrations `2026_12_01_000001_whats_new_november` (adds the 6-12 Nov notes to a saved What's new list and hides the old phone note) and `2026_12_01_000002_template_letter_domains` (files each built-in cover letter under its real role group). No tables change.
@@ -17,15 +28,6 @@ Owner's feedback of 12 Nov 2026, audited and approved ("approved", then "complet
 - Test suite `s79_customer_journey`; s1, s14, s27, s32, s40, s61 and s65 updated for the 8-character password, verified reviews, the Job Hunt gate, newer What's new notes and the kept first version.
 
 # CVTara v3.66.0 — Interview question bulk upload
-
-## Review editor and What's new (version number set at deploy, after 3.67.0; built on PR #54)
-Owner report (12 Nov 2026): the console "Edit review" window had no card, and customers had seen no update notes since 1 Nov. No migration.
-- **Console pop-ups fixed**: Edit review, Review history and "Confirm it's you" had no styles of their own, so the site-wide rule that makes every `<dialog>` transparent with no padding (for the template windows) left the form floating over the page with a sideways scrollbar. They now get a card, backdrop, phone layout and dark mode (`cvtara-ds.css`).
-- **Why customers got no updates**: notes were only ever added by hand in the console, and none had been added since 1 Nov, so the pop-up had nothing new to show (and customers who joined after 1 Nov had never seen one).
-- **Release notes ship with the code**: `WhatsNew::shipped()` holds each release's customer-facing notes. After a deploy they are added on the first page load, stamped with that time, so every customer who joined before sees them once. The owner can edit, hide or delete them; a deleted one never comes back (`removed` list in the `whatsNew` setting).
-- Shipped notes (alongside the eight 6-12 Nov notes 3.67.0 added to the seed, no duplicate ids): for 3.67.0 (account menu moved, resume journey, one-question-at-a-time mock interviews, shorter Fix for this job), for 12 Nov (interview practice, full mock interview, company research, check before download, tested ATS labels) and catch-up notes for 7-8 Nov (help centre, support replies, Ask Tara).
-- Console What's new warns when the newest note is more than 14 days old. The customer pop-up waits up to 3 minutes (was 30 seconds) for another window to close before giving up for that visit.
-- Test suite `s40_whats_new` extended.
 
 ## 3.66.0
 Owner request (12 Nov 2026): bulk upload and bulk approval for the interview question bank. No migration.
