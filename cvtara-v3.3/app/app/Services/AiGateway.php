@@ -30,22 +30,66 @@ class AiGateway
     }
 
     /**
-     * Model: the given override (Tara's own setting), then, for short routine tasks listed in config ai.quick_purposes,
-     * the owner's "quick-task model" (3.48.0, empty = same as the main model), then the owner's AI setting, then the
-     * documented default. Writing for customers (reviews, tailoring, letters, chat answers) always uses the main model.
+     * Model: the given override (Tara's own setting), else the model for the purpose's tier (3.64.0): "chat" (customer
+     * Tara) uses the chat model, "quick" (short routine jobs in config ai.quick_purposes) the quick-task model, and
+     * everything else (customer writing, the Business assistant) the writing model. Each tier is the owner's box in
+     * Integrations > AI when filled, else config/ai.php. Before 3.64.0 one model (Opus) answered everything.
      */
     public static function model(?string $override = null, ?string $purpose = null): string
     {
-        $main = trim((string) (TaraAI::config()['model'] ?? '')) ?: (string) config('ai.default_model');
-        $quick = trim((string) (TaraAI::config()['quickModel'] ?? ''));
+        if (trim((string) $override) !== '') {
+            return trim((string) $override);
+        }
+        $c = TaraAI::config();
+        [$box, $default] = match (self::tier($purpose)) {
+            'chat' => ['chatModel', 'ai.chat_model'],
+            'quick' => ['quickModel', 'ai.quick_model'],
+            default => ['model', 'ai.default_model'],
+        };
 
-        return trim((string) $override) ?: ($quick !== '' && $purpose !== null && self::quick($purpose) ? $quick : $main);
+        return trim((string) ($c[$box] ?? '')) ?: (string) config($default);
     }
 
-    /** Whether a purpose is a short routine task that may run on the cheaper quick-task model. */
+    /** The cost tier of a purpose: chat, quick or writing. */
+    public static function tier(?string $purpose): string
+    {
+        return match (true) {
+            $purpose !== null && in_array($purpose, (array) config('ai.chat_purposes', []), true) => 'chat',
+            $purpose !== null && self::quick($purpose) => 'quick',
+            default => 'writing',
+        };
+    }
+
+    /** Whether a purpose is a short routine task that runs on the quick-task model. */
     public static function quick(string $purpose): bool
     {
         return in_array($purpose, (array) config('ai.quick_purposes', []), true);
+    }
+
+    /** Thinking effort for a purpose (thinking is billed as output, so routine work thinks less). */
+    public static function effort(?string $purpose): string
+    {
+        return (string) (((array) config('ai.effort', []))[self::tier($purpose)] ?? 'medium');
+    }
+
+    /** The three models in use now, for the console (Costs & margin and Integrations). */
+    public static function models(): array
+    {
+        return ['writing' => self::model(null, null), 'chat' => self::model(null, 'customer:tara_chat'), 'quick' => self::model(null, 'seo')];
+    }
+
+    /**
+     * System prompt as cacheable blocks (3.64.0): the fixed part first with a cache marker, then the part that changes
+     * per customer or per minute (date, name, conversation summary) after it, so the fixed part is read from cache.
+     */
+    public static function system(string $fixed, string $changing = ''): array
+    {
+        $blocks = [['type' => 'text', 'text' => $fixed] + (config('ai.cache') ? ['cacheControl' => ['type' => 'ephemeral']] : [])];
+        if (trim($changing) !== '') {
+            $blocks[] = ['type' => 'text', 'text' => trim($changing)];
+        }
+
+        return $blocks;
     }
 
     /** Server-side refusal fallback is offered for the larger models, not for Haiku (the request would be refused). */
@@ -98,7 +142,8 @@ class AiGateway
             throw $e;
         }
         $status = ($m->stopReason ?? '') === 'refusal' ? 'refusal' : 'ok';
-        self::record($purpose, (string) ($m->model ?? ''), (int) ($m->usage->inputTokens ?? 0), (int) ($m->usage->outputTokens ?? 0), $ownerId, $status, $t0, '', $promptVersion);
+        self::record($purpose, (string) ($m->model ?? ''), (int) ($m->usage->inputTokens ?? 0), (int) ($m->usage->outputTokens ?? 0), $ownerId, $status, $t0, '', $promptVersion,
+            (int) ($m->usage->cacheReadInputTokens ?? 0), (int) ($m->usage->cacheCreationInputTokens ?? 0));
 
         return $m;
     }
@@ -173,6 +218,13 @@ class AiGateway
         return $has ??= Schema::hasColumn('ai_usage', 'prompt_version');
     }
 
+    private static function hasCacheColumns(): bool
+    {
+        static $has = null;
+
+        return $has ??= Schema::hasColumn('ai_usage', 'cache_read_tokens');
+    }
+
     private static function hasColumns(): bool
     {
         static $has = null;
@@ -180,12 +232,16 @@ class AiGateway
         return $has ??= Schema::hasColumn('ai_usage', 'status');
     }
 
-    private static function record(string $purpose, string $model, int $in, int $out, ?int $ownerId, string $status, int $t0, string $error = '', ?string $promptVersion = null): void
+    private static function record(string $purpose, string $model, int $in, int $out, ?int $ownerId, string $status, int $t0, string $error = '', ?string $promptVersion = null, int $cacheRead = 0, int $cacheWrite = 0): void
     {
         try {
             $extra = self::hasColumns() ? ['status' => $status, 'latency_ms' => (int) round((hrtime(true) - $t0) / 1e6), 'request_id' => RequestId::current(), 'error' => $error] : [];
             if ($promptVersion !== null && self::hasPromptVersion()) {
                 $extra['prompt_version'] = $promptVersion;
+            }
+            if (self::hasCacheColumns()) {
+                $extra['cache_read_tokens'] = $cacheRead;
+                $extra['cache_write_tokens'] = $cacheWrite;
             }
             Growth::recordAi($purpose, $model, $in, $out, $ownerId, $extra);
         } catch (\Throwable $e) {

@@ -246,7 +246,16 @@ class Growth
     {
         $s = self::settings();
         [$pin, $pout] = self::prices($model, $s);
-        $usd = ($in * $pin + $out * $pout) / 1e6;
+        // 3.64.0 cached input: a write costs 1.25x the input price, a read the model's cache-read price (about a tenth)
+        $read = (int) ($extra['cache_read_tokens'] ?? 0);
+        $write = (int) ($extra['cache_write_tokens'] ?? 0);
+        $pread = $pin * 0.1;
+        foreach ((array) config('ai.cache_read', []) as $id => $p) {
+            if ($model !== '' && str_starts_with($model, (string) $id)) {
+                $pread = (float) $p;
+            }
+        }
+        $usd = ($in * $pin + $out * $pout + $write * $pin * 1.25 + $read * $pread) / 1e6;
         DB::table('ai_usage')->insert(['purpose' => mb_substr($purpose, 0, 40), 'model' => mb_substr($model, 0, 60), 'input_tokens' => $in, 'output_tokens' => $out, 'cost_paise' => (int) ceil($usd * (float) $s['usdInr'] * 100), 'created_at' => now()] + ($ownerId ? ['owner_id' => $ownerId] : []) + $extra);
         CostControls::afterUsage($purpose, $ownerId); // 3.56.0 per-customer, per-feature and per-order alerts
         $b = self::budget();

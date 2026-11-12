@@ -29,7 +29,7 @@
       <section class="panel panel-pad"><h3 style="margin-top:0">Settings</h3>
         <form id="taForm" class="ops-form">
           <label class="wide" style="display:flex;gap:8px;align-items:center"><input type="checkbox" name="enabled" ${s.enabled ? 'checked' : ''} ${D.aiReady ? '' : 'disabled'}> Tara is on for customers</label>
-          <label>Model (blank = the AI model in Integrations)<input name="model" maxlength="80" value="${E(s.model)}" placeholder="claude-opus-5-5"></label>
+          <label>Model (blank = the Tara chat model in Integrations, claude-haiku-5-5 unless changed)<input name="model" maxlength="80" value="${E(s.model)}" placeholder="claude-haiku-5-5"></label>
           <label>Longest answer (tokens)<input name="maxTokens" type="number" min="300" max="4000" value="${E(s.maxTokens)}"></label>
           <label>Messages a day: free account<input name="freeDaily" type="number" min="0" max="500" value="${E(s.freeDaily)}"></label>
           <label>Messages a day: paid account<input name="paidDaily" type="number" min="0" max="2000" value="${E(s.paidDaily)}"></label>
