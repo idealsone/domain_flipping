@@ -157,6 +157,7 @@ class SeoPages
             default => null,
         };
         if ($page) {
+            $page['sections'] = array_values(array_filter($page['sections'] ?? [], fn ($x) => $x[2] !== '')); // a section with no content for this page is left out
             $page['path'] = '/'.implode('/', $s).'/';
             // Changes the owner approved from the SEO agent (Growth page): a new title and description, and links to pages it is pushing up.
             if ($o = SeoAgent::override($page['path'])) {
@@ -591,6 +592,8 @@ class SeoPages
             'sample' => $letter,
             'sections' => [['highlight', 'What to highlight', self::ul($cat['h'], 'sp-check')],
                 ['employers', 'Who you may be writing to', self::ul($cat['e'])],
+                ['fresher', 'If you are a fresher', isset($cat['fr']) ? '<p>An opening for a fresher in '.self::e(self::lc($n)).':</p><blockquote class="sp-quote">'.self::e($cat['fr']).'</blockquote><p>Swap in your own project, internship or result. One real example beats a list of qualities.</p>' : ''],
+                ['mistakes', 'Mistakes to avoid', isset($cat['mx']) ? self::ul($cat['mx']) : ''],
                 ['tips', 'Tips', self::ul(['Name the exact role and where you saw it.', 'Pick 2 results that match the job post and give numbers.', 'Do not repeat your whole resume.', 'Keep the tone polite and simple.']).'<p>Recruiters often read the letter only after an '.self::ATS_DEF.' has shortlisted your resume, so use the job post’s key skills in both.</p>'],
                 ['roles', 'Resume examples for this field', self::links(array_map(fn ($r, $k) => [self::rolePath($k), $r['t']], $roles, array_keys($roles)))]],
             'faq' => [['How do I start a '.self::lc($n).' cover letter?', 'Name the role and give one line on why you fit, as in the sample above.'], ['Should I mention salary?', 'Only if the job post asks. Otherwise discuss it later in the process.'], ['How do I end the letter?', 'Thank them, say you would like to talk, and mention your notice period if relevant.']],
@@ -631,12 +634,15 @@ class SeoPages
         $r = $d['roles'][$k];
         $t = $r['t'];
         $lt = self::lc($t);
-        $qa = '<ol class="sp-qa">'.implode('', array_map(fn ($q) => '<li><h3>'.self::e($q[0]).'</h3><p><b>How to answer:</b> '.self::e($q[1]).'</p></li>', $r['q'])).'</ol>';
+        // 3.69.0: every role question carries a sample answer of its own, written for that role.
+        $qa = '<ol class="sp-qa">'.implode('', array_map(fn ($q, $i) => '<li><h3>'.self::e($q[0]).'</h3><p><b>How to answer:</b> '.self::e($q[1]).'</p>'
+            .(isset($r['a'][$i]) ? '<p class="sp-sample-answer"><b>Sample answer:</b> '.self::e($r['a'][$i]).'</p>' : '').'</li>', $r['q'], array_keys($r['q']))).'</ol>'
+            .'<p class="sp-note">The sample answers show one way to answer. Use your own real examples and numbers; interviewers notice memorised lines.</p>';
         $common = '<ol class="sp-qa"><li><h3>Tell me about yourself.</h3><p><b>How to answer:</b> In about a minute: your current role or degree, 1 or 2 results that fit this job, and why you want it.</p></li><li><h3>Why should we hire you?</h3><p><b>How to answer:</b> Match 3 of your strengths to the job post, for example '.self::e(self::and(array_slice($r['k'], 0, 3))).', with proof.</p></li><li><h3>What is your notice period?</h3><p><b>How to answer:</b> Give the exact period and whether early release is possible.</p></li></ol>';
         $siblings = self::siblings($k, 5);
 
-        return ['kind' => 'interview', 'eyebrow' => 'INTERVIEW QUESTIONS', 'title' => self::pick(["$t Interview Questions & Answers", "$t Interview Questions", "$t Interview Q&A"]), 'description' => self::sentences("$t interview questions with tips on how to answer, such as “".rtrim($r['q'][0][0], '.?').'”.', 'Plus common HR questions.', 'Prepare with examples from your own resume.'),
-            'h1' => "$t interview questions and answers", 'lead' => 'Questions that come up often for this role, with a short tip on how to answer each one. Use examples from your own work, not memorised lines.',
+        return ['kind' => 'interview', 'eyebrow' => 'INTERVIEW QUESTIONS', 'title' => self::pick(["$t Interview Questions & Answers", "$t Interview Questions", "$t Interview Q&A"]), 'description' => self::sentences("$t interview questions with sample answers, such as “".rtrim($r['q'][0][0], '.?').'”.', 'Plus common HR questions.', 'Prepare with examples from your own resume.'),
+            'h1' => "$t interview questions and answers", 'lead' => 'Questions that come up often for this role, with a tip on how to answer each one and a sample answer. Use examples from your own work, not memorised lines.',
             'crumbs' => self::crumbs(['Interview questions', '/interview-questions/'], [$t, "/interview-questions/$k/"]), 'image' => self::image('interview', "$t interview questions with answer tips"),
             'sections' => [['role-questions', 'Questions about the role', $qa], ['hr-questions', 'Common HR questions', $common],
                 // 3.57.0 (V7 §31): the public sample links to practice; the full question bank stays inside the account.
@@ -856,6 +862,8 @@ class SeoPages
             'crumbs' => self::crumbs(['Resume words', '/resume-words/'], [$w['w'], "/resume-words/$k/"]), 'image' => self::image('words', "Alternatives to the word $lw on a resume"),
             'sections' => [['synonyms', 'Words to use instead', self::chips($s)],
                 ['example', 'Before and after', '<div class="sp-before-after"><p><span>Before</span>'.self::e($w['ex'][0]).'</p><p><span>After</span>'.self::e($w['ex'][1]).'</p></div><p>The better line names the task and gives a result. Use your own real numbers.</p>'],
+                ['more-examples', 'More before-and-after lines', isset($w['more']) ? '<div class="sp-before-after">'.implode('', array_map(fn ($x) => '<p><span>Before</span>'.self::e($x[0]).'</p><p><span>After</span>'.self::e($x[1]).'</p>', $w['more'])).'</div><p>Each better line starts with an action, names the task and ends with a number. The numbers here are examples; use your own.</p>' : ''],
+                ['when-fine', "When “{$lw}” is still fine", isset($w['ok']) ? '<p>'.self::e($w['ok']).'</p>' : ''],
                 ['how', 'Choosing between them', '<p>Pick the most accurate one. '.self::e($s[0]).' and '.self::e($s[1]).' are strong when you can show a result; '.self::e(mb_strtolower($s[2])).' or '.self::e(mb_strtolower($s[3])).' suit plainer lines. Put the word at the start of the line, follow it with the task and a measurable result, and avoid using any one word more than twice on a page.</p>']],
             'faq' => [["Is “{$lw}” a bad word for a resume?", 'Not bad, but often vague. A more specific word such as '.mb_strtolower($s[0]).', plus a result, reads stronger.'], ['Can I use these words in a cover letter?', 'Yes. The same rule applies: be specific and give proof.'], ['Will these words help with an applicant tracking system?', 'Matching depends mostly on skills and job titles. Strong verbs help the person who reads your resume next.']],
             'related' => [['More resume words', array_map(fn ($key) => ["/resume-words/$key/", '“'.$all[$key]['w'].'”'], $others)], ['Guides', self::guides('verbs', 'bullets')]]];

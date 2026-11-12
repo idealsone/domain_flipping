@@ -1,3 +1,18 @@
+# CVTara v3.69.0 — Stronger pages for the 60-day index push
+
+## 3.69.0
+Owner (12 Nov 2026, 18:31 UTC): "all pages should rank on the engine so do what you want but it should be there in 60 days". Built on 3.68.0. No migration.
+- **Every page in the sitemap stays in.** The open idea of dropping the 130 city+role pages for 4 weeks is not used, because the goal is every page indexed.
+- **More words of each page's own** on the most templated sections (measured as 6-word phrases not shared with other pages in the section):
+  - Interview questions (82 pages): every role question now has a sample answer written for that role (410 answers, about 11,000 words). Own words per page, median 204 → 354.
+  - Resume words (28 pages): three more before-and-after lines from different fields and a "When it is still fine" note. Median 131 → 227.
+  - Cover letter examples (26 pages): an opening for freshers in that field and three mistakes letters in that field often make. Median 196 → 275.
+  - Content lives in `tools/seo/answers_*.py`, `words_more.py` and `cover_more.py`; `build_seo_data.py` refuses to build if a role, word or field is missing its new content.
+- **The sprint runs 60 days** instead of 30. A sprint started under 3.68.0 runs the full 60 days from its start (the live one now ends 11 Jan 2027). The plan has 8 weeks: weeks 5 to 8 cover a second wave for pages still not indexed, more outside links, a second position 4-30 review and the two-month report.
+- **One hop to /pricing/**: `/pricing.html` and `/plans` now go straight to `/pricing/` (they went to `/pricing` first, then `/pricing/`).
+- A page section with no content for that page is left out instead of showing an empty heading.
+- `s80_index_sprint` covers the sample answers, word examples, cover letter notes, one-hop redirect and the 60-day sprint.
+
 # CVTara v3.68.0 — Index sprint and pricing pages
 
 ## 3.68.0

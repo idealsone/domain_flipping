@@ -268,7 +268,8 @@ class ContentController extends Controller
         // Addresses people type or guess that have no page of their own: send them, and any links Google already holds, to the right page for good.
         $moved = ['guides' => 'guides.html', 'calculators' => 'guides.html', 'blog' => 'blog.html', 'pricing.html' => 'pricing/', 'plans' => 'pricing/', 'templates' => 'templates.html', 'cover-letters' => 'cover-letters.html', 'about' => 'about.html', 'contact' => 'contact.html', 'privacy' => 'privacy.html', 'terms' => 'terms.html', 'refund' => 'refund.html', 'refund-policy' => 'refund.html'];
         if (isset($moved[$path])) {
-            return redirect('/'.$moved[$path], 301);
+            // A relative Location keeps a trailing slash (redirect() drops it, which made /pricing.html take two hops to /pricing/).
+            return str_ends_with($moved[$path], '/') ? response('', 301, ['Location' => '/'.$moved[$path]]) : redirect('/'.$moved[$path], 301);
         }
         // /resume-builder/ is the free resume builder's landing page for visitors and search engines; signed-in customers go straight to the builder.
         if ($path === 'resume-builder' && ! $r->user()) {
