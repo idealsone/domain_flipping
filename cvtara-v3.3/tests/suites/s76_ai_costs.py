@@ -97,6 +97,6 @@ def run(ctx, t):
         js = open(os.path.join(ctx.public, "tara-chat.js"), encoding="utf8").read()
         t.check("while waiting, the chat shows 'CVTara team is typing…'", "CVTara team is typing" in js)
         ad = open(os.path.join(ctx.app, "resources", "console", "advanced.js"), encoding="utf8").read()
-        t.check("Integrations > AI has a box for each model tier", "chatModel:[" in ad and "quickModel:[" in ad and "claude-sonnet-5-5" in ad)
+        t.check("Integrations > AI has a box for each model tier", "chatModel:[" in ad and "quickModel:[" in ad and "mid-priced" in ad)
     finally:
         inst.stop(); srv.shutdown()
