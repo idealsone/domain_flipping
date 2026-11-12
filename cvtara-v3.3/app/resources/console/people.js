@@ -32,18 +32,26 @@
         { label: 'Resumes', html: u => `${u.resumes ?? 0}<small> · ${u.applications ?? 0} apps</small>` },
         { label: 'Joined', sort: 'joined', html: u => dmy(parse(u.created_at)) },
         { label: 'Status', html: u => u.isAdmin ? '<span class="pill st-queued">Owner</span>' : u.blocked ? '<span class="pill st-failed">Blocked</span>' : '<span class="pill st-paid">Active</span>' },
-        { label: 'Actions', cls: 'r', html: u => u.isAdmin ? '' : `<button class="button small secondary" data-act="edit" title="Edit details">✏️ Edit</button> <button class="button small ${u.paid ? 'secondary' : 'primary'}" data-act="sub" title="Subscription">${u.paid ? '💳 Manage' : '💳 Mark paid'}</button> <button class="button small secondary" data-act="block" title="${u.blocked ? 'Unblock' : 'Block'}">${u.blocked ? '✔ Unblock' : '🚫 Block'}</button> <button class="button small ops-no" data-act="delete" title="Delete account">🗑</button>` }
+        { label: 'Actions', cls: 'r', html: u => u.isAdmin ? '' : `<button class="button small secondary" data-act="view" title="See this account exactly as the customer sees it (read-only, logged)">👁 View</button> <button class="button small secondary" data-act="edit" title="Edit details">✏️ Edit</button> <button class="button small ${u.paid ? 'secondary' : 'primary'}" data-act="sub" title="Subscription">${u.paid ? '💳 Manage' : '💳 Mark paid'}</button> <button class="button small secondary" data-act="block" title="${u.blocked ? 'Unblock' : 'Block'}">${u.blocked ? '✔ Unblock' : '🚫 Block'}</button> <button class="button small ops-no" data-act="delete" title="Delete account">🗑</button>` }
       ],
       empty: 'No users yet.',
       onData: d => { $('#pkpi').innerHTML = [['Total users', d.totalUsers], ['Paid (active)', d.paidUsers], ['Normal users', d.totalUsers - d.paidUsers], ['Blocked', d.blockedUsers ?? 0]].map(([l, v]) => `<div class="kpi"><span>${l}</span><b>${Number(v || 0).toLocaleString('en-IN')}</b></div>`).join(''); },
       onClick: (e, g) => {
         const b = e.target.closest('[data-act]'); if (!b || !g.data) return;
         const u = (g.data.users || []).find(x => String(x.owner_id) === b.closest('tr').dataset.uid); if (!u) return;
-        ({ edit: editUser, sub: subscription, block: blockUser, delete: deleteUser })[b.dataset.act](u);
+        ({ view: viewAs, edit: editUser, sub: subscription, block: blockUser, delete: deleteUser })[b.dataset.act](u);
       }
     });
   }
   const refresh = () => (U.grid && document.contains(U.grid.host) ? U.grid.reload() : people());
+  // 3.65.0: View as customer (read-only, 30 minutes, every page logged). Also shows a B2B partner's portal to the owner.
+  async function viewAs(u) {
+    const reason = prompt(`Why do you need to see ${u.name || u.email}'s account? (kept in the audit log)`, 'Checking a reported problem');
+    if (reason === null) return;
+    if (reason.trim().length < 10) { toast('Write a short reason (at least 10 characters).', true); return; }
+    if (!(await ensureRecent())) return;
+    try { await api('/api/admin/support/view/start', { method: 'POST', body: { customerId: Number(u.owner_id), reason: reason.trim() } }); window.open('/workspace.html', '_blank', 'noopener'); toast('Read-only view opened in a new tab for 30 minutes. Exit it from the banner at the top.'); } catch (x) { toast(err(x), true); }
+  }
   function editUser(u) {
     const m = modal('Edit user', `<form class="ops-form"><label>Full name<input name="name" required maxlength="120" value="${E(u.name)}"></label><label>Email<input name="email" type="email" required value="${E(u.email)}"></label><label>Phone<input name="phone" maxlength="40" value="${E(u.phone || '')}"></label><label>City<input name="city" maxlength="120" value="${E(u.city || '')}"></label><label>Profession / target role<input name="profession" maxlength="120" value="${E(u.profession || '')}"></label><label>Level<select name="experienceLevel"><option value="fresher" ${u.experience_level === 'fresher' ? 'selected' : ''}>Fresher</option><option value="experienced" ${u.experience_level === 'experienced' ? 'selected' : ''}>Experienced</option></select></label><div class="wide"><button class="button primary">Save changes</button> <span role="status" class="ops-st"></span></div></form>`);
     m.body.querySelector('form').onsubmit = async ev => {

@@ -59,6 +59,7 @@ def run(ctx, t):
     try:
         db = Db(inst.db); Client.verify_db = inst.db
         u = Client(inst.base); u.register("letter-a@test.local"); u.page("/workspace.html")
+        from lib.plans import give_job_hunt; give_job_hunt(db, "letter-a@test.local")
         s, j = u.api("POST", "resumes", {"data": RESUME}); rid = j.get("id")
         t.check("the test resume saves", s == 200 and rid, (s, str(j)[:200]))
         draft = lambda c=u, **kw: c.api("POST", "letters/draft", {"resumeId": rid, **kw})
@@ -80,7 +81,7 @@ def run(ctx, t):
         s, j = draft(role="Operations Lead", company="Acme Pvt Ltd")
         t.check("without a job description the letter still comes out whole", s == 200 and "Operations Lead" in j["letter"]["opening"] and "Acme" in j["letter"]["closing"] and j["letter"]["evidence"], (s, str(j)[:300]))
         t.check("a visitor who is not signed in cannot write a letter", Client(inst.base).api("POST", "letters/draft", {"resumeId": rid})[0] in (401, 419))
-        b = Client(inst.base); b.register("letter-b@test.local"); b.page("/workspace.html")
+        b = Client(inst.base); b.register("letter-b@test.local"); b.page("/workspace.html"); give_job_hunt(db, "letter-b@test.local")
         t.check("someone else's resume is refused", b.api("POST", "letters/draft", {"resumeId": rid})[0] == 422)
 
         # Switch writing help on: Claude writes it, within the daily allowance.

@@ -28,9 +28,13 @@ def run(ctx, t):
     s, _ = o.api("POST", "admin/reviews", {"id": row.get("id"), "status": "published"})
     pc = ctx.client().api("GET", "public-content")[1]
     pr = next((r for r in pc.get("reviews", []) if "keywords I missed" in r.get("content", "")), {})
-    t.check("published review shows job title and company; not marked verified without a paid order", pr.get("company") == "Infosys" and pr.get("designation") == "Data Analyst" and pr.get("verified") is False, pr)
+    t.check("a published review without a paid order is not shown on the public site (verified only since 3.65.0)", pr == {}, pr)
+    ctx.db().q("update feedback set source='owner_verified' where content like '%keywords I missed%'")
+    pc = ctx.client().api("GET", "public-content")[1]
+    pr = next((r for r in pc.get("reviews", []) if "keywords I missed" in r.get("content", "")), {})
+    t.check("once verified it shows with job title and company and the verified mark", pr.get("company") == "Infosys" and pr.get("designation") == "Data Analyst" and pr.get("verified") is True, pr)
     home = open(os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "public_html", "home-ui.js"), encoding="utf8").read()
-    t.check("homepage review card shows the Verified buyer badge", "Verified buyer" in home and "r.designation" in home)
+    t.check("homepage review card shows the Verified customer badge", "Verified customer" in home and "r.designation" in home)
     s, _, g = ctx.client().page("/customer-guide.html")
     low = g.lower()
     t.check("customer guide loads", s == 200 and "customer guide" in low)

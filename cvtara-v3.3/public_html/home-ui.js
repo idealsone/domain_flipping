@@ -49,10 +49,10 @@
   // approved reviews only
   const box = $('#lpReviews');
   if (box) fetch('/api/public-content', { headers: { Accept: 'application/json' } }).then(r => r.json()).then(d => {
-    const rev = (d.reviews || []).slice(0, 6);
+    const rev = (d.reviews || []).filter(r => r.verified).slice(0, 6);
     // the section stays hidden until there is at least one approved review, so a new site never shows an empty wall
     if (!rev.length) return;
-    box.innerHTML = rev.map(r => `<article class="lp-review"><div class="stars" aria-label="${r.rating} out of 5">${'★'.repeat(r.rating)}${'☆'.repeat(5 - r.rating)}</div><p>“${E(r.content)}”</p><b>${E(r.display_name)}</b>${r.designation || r.company ? `<small>${E([r.designation, r.company].filter(Boolean).join(', '))}</small>` : ''}${r.verified ? '<span class="lp-verified">✓ Verified buyer</span>' : ''}</article>`).join('');
+    box.innerHTML = rev.map(r => `<article class="lp-review"><div class="stars" aria-label="${r.rating} out of 5">${'★'.repeat(r.rating)}${'☆'.repeat(5 - r.rating)}</div><p>“${E(r.content)}”</p><b>${E(r.display_name)}</b>${r.designation || r.company ? `<small>${E([r.designation, r.company].filter(Boolean).join(', '))}</small>` : ''}<span class="lp-verified">✓ Verified customer${r.created_at ? ' · ' + E(new Date(String(r.created_at).replace(' ', 'T')).toLocaleDateString('en-IN', { month: 'short', year: 'numeric' })) : ''}</span></article>`).join('');
     const sec = $('#reviews'); if (sec) sec.hidden = false;
   }).catch(() => { box.innerHTML = ''; });
   // owner-editable homepage copy (Owner console → Templates & site design)

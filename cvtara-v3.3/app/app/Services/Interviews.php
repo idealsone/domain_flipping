@@ -243,13 +243,14 @@ class Interviews
 
     /**
      * Picks the questions: about two from the role and the rest that suit every role, least-seen first, then a stable
-     * shuffle per customer and day (deterministic rotation; V7 §18). Questions seen in the last 5 sessions go last.
+     * shuffle per customer and day (deterministic rotation; V7 §18). 3.66.0: every question this customer was ever asked goes
+     * last, so nothing repeats until the bank for that role and level is used up.
      */
     private static function pick(int $uid, string $occupation, string $band, int $n): array
     {
         $rows = self::eligible($occupation, $band);
         $seen = DB::table('interview_answers as a')->join('interview_sessions as s', 's.id', '=', 'a.session_id')->join('interview_question_versions as v', 'v.id', '=', 'a.question_version_id')
-            ->where('s.owner_id', $uid)->whereIn('s.id', DB::table('interview_sessions')->where('owner_id', $uid)->orderByDesc('created_at')->limit(5)->pluck('id'))
+            ->where('s.owner_id', $uid)->whereIn('s.id', DB::table('interview_sessions')->where('owner_id', $uid)->orderByDesc('created_at')->limit(200)->pluck('id'))
             ->pluck('v.question_id')->countBy()->all();
         $order = fn ($c) => $c->sortBy(fn ($r) => [($seen[$r->id] ?? 0), crc32($uid.':'.$r->id.':'.date('Y-m-d'))])->values();
         $role = $order($rows->whereNotNull('occupation'));
@@ -282,7 +283,7 @@ class Interviews
     {
         $rows = self::eligible($occupation, $band);
         $seen = DB::table('interview_answers as a')->join('interview_sessions as s', 's.id', '=', 'a.session_id')->join('interview_question_versions as v', 'v.id', '=', 'a.question_version_id')
-            ->where('s.owner_id', $uid)->whereIn('s.id', DB::table('interview_sessions')->where('owner_id', $uid)->orderByDesc('created_at')->limit(5)->pluck('id'))
+            ->where('s.owner_id', $uid)->whereIn('s.id', DB::table('interview_sessions')->where('owner_id', $uid)->orderByDesc('created_at')->limit(200)->pluck('id'))
             ->pluck('v.question_id')->countBy()->all();
         $rows = $rows->sortBy(fn ($r) => [($seen[$r->id] ?? 0), crc32($uid.':'.$r->id.':'.date('Y-m-d'))])->values();
         $used = [];

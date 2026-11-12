@@ -133,16 +133,32 @@
     } catch (e) { box.textContent = e.message; delete box.dataset.loaded; }
   }
 
+  // 3.65.0 V1 (as it arrived) -> V2 (your main resume) -> V3 (one copy per job). Real scores only.
+  const stageName = { saved: 'Saved', applied: 'Applied', interview: 'Interview', offer: 'Offer', rejected: 'Closed', wishlist: 'Saved' };
+  function journey(j) {
+    if (!j || !j.primary) return '';
+    const v3 = j.v3 || [], gain = j.v2.gain;
+    return `<section class="rj" aria-label="Your resume journey">
+      <div class="rj-step"><span class="rj-tag">V1 · As it arrived</span>${ring(j.v1.score)}<small>${j.v1.same ? 'Not edited yet' : 'First version, ' + E(when(j.v1.date))}${j.v1.file ? ` · <a href="/api/resumes/originals/${E(j.v1.file.id)}" download>original file</a>` : ''}</small></div>
+      <div class="rj-arrow" aria-hidden="true">→</div>
+      <div class="rj-step main"><span class="rj-tag">V2 · Your main resume</span>${ring(j.v2.score)}<small>${gain > 0 ? `<b class="rj-up">+${gain} points</b> since V1` : gain < 0 ? `${gain} points since V1` : 'Edit it to raise the score'}</small><button class="button secondary small" data-open="${E(j.primary.id)}">Improve</button></div>
+      <div class="rj-arrow" aria-hidden="true">→</div>
+      <div class="rj-step jobs"><span class="rj-tag">V3 · One copy per job</span>${v3.length ? `<ul>${v3.slice(0, 5).map(c => `<li><b>${E(c.company || c.title || 'Job')}</b><span>${E(c.role || '')}</span>${c.stage ? `<em class="rj-st">${E(stageName[c.stage] || c.stage)}</em>` : ''}${c.frozen ? '<em title="The copy sent with this application never changes">🔒 kept as sent</em>' : ''}${c.letterId ? `<a href="/workspace.html?view=letter&letter=${encodeURIComponent(c.letterId)}" title="Cover letter for this job">✉ letter</a>` : ''}${c.kind === 'tailored' ? `<button class="linklike" data-open="${E(c.resumeId)}">open</button>` : ''}</li>`).join('')}</ul>${v3.length > 5 ? `<small>and ${v3.length - 5} more below</small>` : ''}` : '<p>Tailor your main resume for a job. Each job keeps its own copy and letter.</p>'}</div>
+    </section>`;
+  }
+
   async function render() {
     const host = $('#view-resumes');
     if (!host) return;
     host.innerHTML = '<div class="pr-panel"><p>Loading your resumes…</p></div>';
     let list;
     try { list = await api('/api/resumes'); } catch (e) { host.innerHTML = `<div class="pr-panel" role="alert">${E(e.message)}</div>`; return; }
+    let jr = null; try { jr = (await api('/api/resumes/journey')).journey; } catch { jr = null; }
     const rows = (list.resumes || []).slice().sort((a, b) => (b.is_primary ? 1 : 0) - (a.is_primary ? 1 : 0) || a.number - b.number);
     const primary = rows.find(r => r.is_primary), cr = list.credits || { resumes: { used: 0, total: 0, remaining: 0 } };
     const full = rows.length >= list.limit;
     host.innerHTML = `<div class="admin-heading"><div><h2>My resumes</h2><p>Every resume you make here shows how ATS-friendly it is. Edit it, download it, or check it against a job.</p></div></div>
+      ${journey(jr)}
       <div class="rh-start" role="group" aria-label="Create a resume">
         <button class="rh-opt" data-upload><i>📤</i><b>Upload your resume</b><small>Word, PDF or text. We fill the builder for you.</small></button>
         <button class="rh-opt" data-new><i>🎨</i><b>Choose a template</b><small>Pick a design, add your details, download.</small></button>

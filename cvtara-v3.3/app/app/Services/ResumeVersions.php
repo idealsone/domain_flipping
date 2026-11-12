@@ -33,7 +33,9 @@ class ResumeVersions
         DB::table('resume_versions')->insert(['id' => $id, 'resume_id' => $row->id, 'owner_id' => $row->owner_id, 'revision' => (int) $row->revision, 'kind' => $kind,
             'title' => mb_substr((string) $row->title, 0, 180), 'template' => mb_substr((string) $row->template, 0, 120), 'content_json' => (string) $row->content_json, 'application_id' => $applicationId, 'created_at' => now()]);
         if ($kind === 'edit') {
-            $old = DB::table('resume_versions')->where('resume_id', $row->id)->where('kind', 'edit')->orderByDesc('created_at')->orderByDesc('revision')->skip(self::KEEP)->take(500)->pluck('id');
+            // 3.65.0: the oldest version (the resume as it first arrived, "V1") is always kept, so its score stays visible.
+            $firstId = DB::table('resume_versions')->where('resume_id', $row->id)->where('kind', 'edit')->orderBy('created_at')->orderBy('revision')->value('id');
+            $old = DB::table('resume_versions')->where('resume_id', $row->id)->where('kind', 'edit')->where('id', '!=', $firstId)->orderByDesc('created_at')->orderByDesc('revision')->skip(self::KEEP)->take(500)->pluck('id');
             if ($old->isNotEmpty()) {
                 DB::table('resume_versions')->whereIn('id', $old)->delete();
             }

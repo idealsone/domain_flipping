@@ -353,3 +353,12 @@ body.dark .ws-notice{background:#3a2412;border-color:#7a4a1c;color:#fdba74}
 
 .workspace-top>div:first-child{display:flex;align-items:center;gap:10px;min-width:0}.workspace-top>div:first-child h1{margin:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.workspace-top .mobile-menu{margin-left:0;flex:none}
 @media(min-width:761px){.workspace-top .mobile-menu{display:none!important}}
+
+/* 3.64.0 My account menu (top bar) */
+.acct-menu{position:relative}
+.acct-menu [data-acct-toggle].active{border-color:var(--cv-accent,#0f766e);color:var(--cv-accent,#0f766e)}
+.acct-pop{position:absolute;right:0;top:calc(100% + 6px);z-index:60;min-width:230px;padding:6px;border-radius:12px;background:var(--surface,#fff);border:1px solid var(--line,#e2e8f0);box-shadow:0 12px 32px rgba(15,23,42,.16);display:grid;gap:2px}
+.acct-pop[hidden]{display:none}
+.acct-pop button{display:flex;align-items:center;gap:10px;width:100%;padding:10px 12px;border:0;border-radius:8px;background:none;color:inherit;font:inherit;font-weight:600;text-align:left;cursor:pointer}
+.acct-pop button i{width:18px;text-align:center;font-style:normal;opacity:.75}
+.acct-pop button:hover,.acct-pop button:focus-visible,.acct-pop button.active{background:var(--soft,#f1f5f9);outline:none}

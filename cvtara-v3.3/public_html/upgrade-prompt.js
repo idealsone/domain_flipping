@@ -19,6 +19,7 @@
   #cvUp .up-cta{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
   #cvUp .up-cta a.up-main{padding:13px 22px;border-radius:12px;background:#1557d2;color:#fff;font-weight:800;text-decoration:none}
   #cvUp .up-cta button{padding:12px 16px;border:0;background:transparent;color:var(--muted,#475569);font-weight:700;cursor:pointer;border-radius:10px}
+  #cvUp .up-icons{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:0 0 18px}#cvUp .up-icons div{display:grid;gap:6px;justify-items:center;text-align:center;font-size:13px;font-weight:700;padding:12px 8px;border-radius:14px;background:var(--soft,#f1f5f9)}#cvUp .up-icons span{font-size:24px}
   #cvUp small{display:block;margin-top:14px;color:var(--muted,#64748b);font-size:13px}
   .cv-domain[hidden]{display:none}.cv-domain{margin:0 0 16px;padding:16px 18px;border:1px solid var(--line,#e2e8f0);border-radius:16px;background:var(--surface,#fff);display:flex;flex-wrap:wrap;gap:12px;align-items:end}
   .cv-domain div{flex:1 1 200px}.cv-domain b{display:block;margin-bottom:4px}.cv-domain p{margin:0;color:var(--muted,#64748b);font-size:14px}
@@ -29,6 +30,7 @@
   const copy = {
     download: { tag: 'Clean download', title: 'Your resume is ready to download', lead: 'Building, saving and previewing stay free. Pick how you want the watermark-free PDF and Word files.', choices: true, steps: [] },
     ats: { tag: 'ATS check', title: 'Run more ATS Match scans with Job Hunt', lead: 'Free accounts get 3 checks a day. Job Hunt adds 20 ATS Match scans with a gap report for each job.', steps: ['Choose Job Hunt or Pro (paid once, no auto-renewal)', 'Run ATS checks against the jobs you are applying for', 'Fix the missing requirements and download a clean copy'] },
+    career: { tag: 'Job Hunt and Pro', title: 'Tailor, write and practise in one click', lead: 'Whole-resume tailoring, one-click cover letters and mock interviews come with Job Hunt and Pro.', icons: [['✎', 'Resume tailored to each job'], ['✉', 'Cover letter in one click'], ['🎤', 'Timed mock interviews']], steps: [], cta: ['See Job Hunt and Pro', '/checkout.html?plan=job-hunt'] },
     verify: { tag: 'Confirm your email', title: 'Confirm your email to continue', lead: 'We sent a 6-digit code to your email. It takes a minute and keeps your account safe.', steps: ['Open the email from CVTara (check spam once)', 'Enter the 6-digit code', 'Come back and carry on where you stopped'], cta: ['Enter my code', '/verify-email'] },
   };
   function show(kind) {
@@ -43,7 +45,7 @@
     const inr = n => '₹' + Number(n || 0).toLocaleString('en-IN');
     const pl = window.CVTaraBusiness?.plans || {}, quick = pl.quick, hunt = pl['job-hunt'];
     const choices = c.choices && quick && hunt && quick.sale !== false && hunt.sale !== false ? `<div class="cv-up-choices"><a href="/checkout.html?plan=quick"><span>Download this resume</span><b>${inr(quick.price)}</b><span>Clean PDF + Word, edit and re-download for ${E(quick.accessDays)} days</span></a><a class="pop" href="/checkout.html?plan=job-hunt"><em>Most popular</em><span>Job Hunt</span><b>${inr(hunt.price)}</b><span>${E(hunt.savedResumes)} tailored resumes, ${E(hunt.savedLetters)} cover letters, ${E(hunt.atsScans)} ATS Match scans · ≈ ${inr(Math.round(hunt.price / hunt.accessDays))}/day</span></a></div>` : '';
-    d.innerHTML = `<div class="up-top"><span>${E(c.tag)}</span><h2 id="cvUpT">${E(c.title)}</h2></div><div class="up-body"><p>${E(c.lead)}</p>${choices}${c.steps.length ? `<ol>${c.steps.map(s => `<li>${E(s)}</li>`).join('')}</ol>` : ''}<div class="up-cta">${choices ? '' : `<a class="up-main" href="${E(cta[1])}">${E(cta[0])}</a>`}<button type="button" data-x>Not now</button></div><small>7-day refund if unused · Pay once, no auto-renewal · UPI, cards and net banking. Your saved work stays in your account either way.</small></div>`;
+    d.innerHTML = `<div class="up-top"><span>${E(c.tag)}</span><h2 id="cvUpT">${E(c.title)}</h2></div><div class="up-body"><p>${E(c.lead)}</p>${c.icons ? `<div class="up-icons">${c.icons.map(([i, t]) => `<div><span aria-hidden="true">${i}</span>${E(t)}</div>`).join('')}</div>` : ''}${choices}${c.steps.length ? `<ol>${c.steps.map(s => `<li>${E(s)}</li>`).join('')}</ol>` : ''}<div class="up-cta">${choices ? '' : `<a class="up-main" href="${E(cta[1])}">${E(cta[0])}</a>`}<button type="button" data-x>Not now</button></div><small>7-day refund if unused · Pay once, no auto-renewal · UPI, cards and net banking. Your saved work stays in your account either way.</small></div>`;
     d.querySelector('[data-x]').onclick = () => d.close();
     document.querySelectorAll('dialog[open]').forEach(o => { if (o !== d && o.id === 'exportDialog') o.close(); });
     if (!d.open) d.showModal();
@@ -56,11 +58,15 @@
     const res = await nativeFetch(input, init);
     try {
       const url = String(typeof input === 'string' ? input : input?.url || '');
-      if (res.status === 402 && /\/export\//.test(url)) show('download');
+      if (res.status === 402 && /\/api\/(letters\/draft|resumes\/[a-f0-9-]{36}\/tailor)/.test(url)) show('career');
+      else if (res.status === 402 && /\/export\//.test(url)) show('download');
       else if (res.status === 402 && /\/api\/ats\//.test(url)) show('ats');
       else if (res.status === 403 && /\/api\/(ats\/scan|checkout)/.test(url)) {
         const j = await res.clone().json().catch(() => null);
         if (j && j.verify) show('verify');
+      } else if (res.status === 422 && /\/api\/interviews\/start/.test(url)) {
+        const j = await res.clone().json().catch(() => null);
+        if (j && /no mock interviews left/i.test(JSON.stringify(j.errors || j.message || ''))) show('career');
       } else if (res.status === 422 && /\/api\/ats\/scan/.test(url)) {
         const j = await res.clone().json().catch(() => null);
         if (j && j.errors && j.errors.limit && /free ATS checks|All your ATS scans/i.test(String(j.errors.limit))) show('ats');
@@ -71,7 +77,7 @@
 
   // "Target field" for the primary resume: moving from a non-technical to a technical job (or the reverse) updates the profile so
   // recommendations, examples and the next resume start from the right field.
-  const FIELDS = ['Technology', 'HR & Recruitment', 'Sales & Marketing', 'Finance', 'Operations', 'Education', 'Healthcare', 'Design', 'Other'];
+  const FIELDS = ['Technology', 'Data & Analytics', 'Design', 'HR & Recruitment', 'Sales & Marketing', 'Finance', 'Banking & Insurance', 'Accounting & Audit', 'Operations', 'Supply Chain & Logistics', 'Manufacturing & Engineering', 'Customer Support & BPO', 'Retail & E-commerce', 'Hospitality & Travel', 'Healthcare', 'Pharma & Life Sciences', 'Education', 'Legal & Compliance', 'Government & Public Sector', 'Media & Content', 'Administration & Office', 'Construction & Real Estate', 'Telecom', 'Consulting', 'Other'];
   async function mountDomain() {
     if (document.body.dataset.page !== 'workspace' || !window.CVTaraAPI || document.getElementById('cvDomain')) return;
     if ((document.querySelector('meta[name=cvtara-user]')?.content || 'guest') === 'guest') return;

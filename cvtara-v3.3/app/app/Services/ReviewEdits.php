@@ -124,10 +124,31 @@ class ReviewEdits
     }
 
     /** Ask for feedback only after a resume was saved, at most once every 14 days, and never after feedback was sent. */
+    /** 3.65.0 answers to "Is the price fair?" in the after-save card. */
+    public const PRICE_VIEWS = ['too_high', 'fair', 'great_value'];
+
+    /** How customers answered "Is the price fair?" in the last 90 days (latest answer per customer). */
+    public static function priceViews(int $days = 90): array
+    {
+        $rows = DB::table('activity_events')->where('event', 'price_view')->where('created_at', '>=', now()->subDays($days))->orderBy('created_at')->get(['owner_id', 'reference']);
+        $last = [];
+        foreach ($rows as $x) {
+            $last[(int) $x->owner_id] = (string) $x->reference;
+        }
+        $out = array_fill_keys(self::PRICE_VIEWS, 0);
+        foreach ($last as $v) {
+            if (isset($out[$v])) {
+                $out[$v]++;
+            }
+        }
+
+        return $out + ['days' => $days];
+    }
+
     public static function shouldAsk(int $ownerId): bool
     {
         return DB::table('resume_drafts')->where('owner_id', $ownerId)->exists()
             && ! DB::table('feedback')->where('owner_id', $ownerId)->exists()
-            && ! DB::table('activity_events')->where('owner_id', $ownerId)->whereIn('event', ['feedback_prompt_shown', 'feedback_prompt_dismissed'])->where('created_at', '>=', now()->subDays(14))->exists();
+            && ! DB::table('activity_events')->where('owner_id', $ownerId)->whereIn('event', ['feedback_prompt_shown', 'feedback_prompt_dismissed'])->where('created_at', '>=', now()->subDays(30))->exists();
     }
 }
