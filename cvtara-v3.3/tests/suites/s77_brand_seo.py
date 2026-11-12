@@ -1,4 +1,4 @@
-"""3.62.0 brand search and SEO playbook (owner brief 2026-11-12): Organization + WebSite structured data with stable ids,
+"""3.65.0 (built as 3.62.0) brand search and SEO playbook (owner brief 2026-11-12): Organization + WebSite structured data with stable ids,
 alternate spellings and the official profiles; permanent redirects for typed addresses of public pages; the SEO agent's
 close-to-page-one range 4-30; the larger keyword backlog and the page playbook shown in the console."""
 import json

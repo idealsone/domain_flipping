@@ -52,7 +52,7 @@ def run(ctx, t):
         t.check("an unknown task is refused", ask(u, task="hack")[0] == 422)
         s, j = ask(u); h = HITS[-1] if HITS else {"body": {}, "headers": {}}
         t.check("a suggestion comes back with the count left", s == 200 and "14 retail stores" in j.get("suggestion", "") and j.get("left") == 2, (s, str(j)[:200]))
-        t.check("Claude gets the default model, the key and the fallback setting", h["path"].startswith("/v1/messages") and h["body"].get("model") == "claude-opus-5-5" and h["headers"].get("x-api-key") == "sk-ant-test-1" and h["body"].get("fallbacks") == "default" and "server-side-fallback-2026-07-01" in h["headers"].get("anthropic-beta", ""), (h["path"], h["body"].get("model"), h["body"].get("fallbacks"), h["headers"].get("anthropic-beta")))
+        t.check("Claude gets the default model, the key and the fallback setting", h["path"].startswith("/v1/messages") and h["body"].get("model") == "claude-sonnet-5-5" and h["headers"].get("x-api-key") == "sk-ant-test-1" and h["body"].get("fallbacks") == "default" and "server-side-fallback-2026-07-01" in h["headers"].get("anthropic-beta", ""), (h["path"], h["body"].get("model"), h["body"].get("fallbacks"), h["headers"].get("anthropic-beta")))
         t.check("the text goes inside tags with the rules in the system prompt", "<text>" in h["body"]["messages"][0]["content"] and "Never invent" in json.dumps(h["body"].get("system")))
         t.check("job-based tasks send the job description too", ask(u, task="tailor", context="Need Excel and walk-in drives")[0] == 200 and "<job>" in HITS[-1]["body"]["messages"][0]["content"])
         MODE["v"] = "refusal"; s, j = ask(u)

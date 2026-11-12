@@ -93,8 +93,8 @@
     $('.tara-chips', box).innerHTML = '';
     bubble('user', text);
     const wait = note('');
-    wait.className = 'tara-typing'; wait.innerHTML = '<span></span><span></span><span></span> <em>Tara is looking into it…</em>';
-    const slow = setTimeout(() => { const em = wait.querySelector('em'); if (em) em.textContent = 'Still working: checking your account and documents…'; }, 6000);
+    wait.className = 'tara-typing'; wait.innerHTML = '<span></span><span></span><span></span> <em>CVTara team is typing…</em>';
+    const slow = setTimeout(() => { const em = wait.querySelector('em'); if (em) em.textContent = 'CVTara team is typing… checking your account and documents'; }, 6000);
     try {
       const r = await api('/api/tara/message', { body: { text, ...(conv ? { conversationId: conv } : {}) } });
       conv = r.conversationId;
