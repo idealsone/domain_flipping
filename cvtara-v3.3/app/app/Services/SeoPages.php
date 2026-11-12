@@ -19,7 +19,7 @@ class SeoPages
     private static ?array $data = null;
 
     /** Path prefixes owned by this class (used by the controller and the page cache). */
-    public const PREFIXES = ['resume-examples', 'resume-templates', 'cover-letter-examples', 'cover-letter-generator', 'interview-questions', 'resume-builder', 'resume', 'resume-words', 'ats-checker'];
+    public const PREFIXES = ['pricing', 'resume-examples', 'resume-templates', 'cover-letter-examples', 'cover-letter-generator', 'interview-questions', 'resume-builder', 'resume', 'resume-words', 'ats-checker'];
 
     /** Existing guides and calculators that the programmatic pages link to. */
     private const GUIDES = [
@@ -75,6 +75,13 @@ class SeoPages
     {
         $d = self::data();
         $p = ['resume-examples/', 'resume-templates/', 'cover-letter-examples/', 'cover-letter-examples/how-to-write/', 'cover-letter-generator/', 'interview-questions/', 'resume-builder/', 'resume-builder/india/', 'resume-words/', 'ats-checker/'];
+        $p[] = 'pricing/';
+        $p[] = 'pricing/free-vs-paid/';
+        foreach (self::PLAN_PAGES as $slug => $key) {
+            if (self::sold($key)) {
+                $p[] = "pricing/$slug/";
+            }
+        }
         foreach ($d['categories'] as $c => $_) {
             $p[] = "resume-examples/$c/";
             if (self::rolesIn($c)) {
@@ -149,6 +156,9 @@ class SeoPages
             $s[0] === 'resume-words' && $n === 1 => self::wordsHub(),
             $s[0] === 'resume-words' && $n === 2 && isset($d['words'][$s[1]]) => self::word($s[1]),
             $s[0] === 'ats-checker' && $n === 1 => self::atsChecker(),
+            $s[0] === 'pricing' && $n === 1 => self::pricing(),
+            $s[0] === 'pricing' && $n === 2 && $s[1] === 'free-vs-paid' => self::freeVsPaid(),
+            $s[0] === 'pricing' && $n === 2 && isset(self::PLAN_PAGES[$s[1]]) && self::sold(self::PLAN_PAGES[$s[1]]) => self::planPage($s[1]),
             default => null,
         };
         if ($page) {
@@ -171,7 +181,7 @@ class SeoPages
             $page['description'] = self::fit($page['description'], 155);
             $page['index'] ??= true;
             $page['cta'] ??= self::cta();
-            $page['related'][] = ['Tools', [['/ats-checker/', 'Free ATS resume check'], ['/#pricing', 'Plans and pricing'], ['/templates.html', 'Template gallery'], ['/register', 'Build my resume free']]];
+            $page['related'][] = ['Tools', [['/ats-checker/', 'Free ATS resume check'], ['/pricing/', 'Plans and pricing'], ['/templates.html', 'Template gallery'], ['/register', 'Build my resume free']]];
             // tools and word lists are not template pages: their first button is their own action, not "Use this template"
             $page['picker'] = in_array($s[0], ['ats-checker', 'resume-words'], true) ? '' : self::pickerLink($s);
             $page['reviewedAt'] = SeoContent::reviewedAt($page['path']); // 3.45.0: shown only when a person really reviewed it
@@ -345,7 +355,7 @@ class SeoPages
      */
     private static function cta(array $primary = ['/register', 'Build my resume free'], array $secondary = ['/ats-checker/', 'Check my resume for ATS'], string $note = ''): array
     {
-        return ['primary' => $primary, 'secondary' => $secondary, 'pricing' => ['/#pricing', 'See plans and pricing'], 'note' => $note ?: 'Start from a template or upload your old resume. Building and previewing is free.'];
+        return ['primary' => $primary, 'secondary' => $secondary, 'pricing' => ['/pricing/', 'See plans from ₹'.self::price('quick')], 'note' => $note ?: 'Start from a template or upload your old resume. Building and previewing is free.'];
     }
 
     /** A filled sample resume rendered as a document, so readers (and search engines) see real text, not a picture. */
@@ -879,12 +889,140 @@ class SeoPages
             'h1' => 'Free resume builder for India', 'lead' => 'Make your resume in a few guided steps: choose a template, add your details, and download a clean PDF. Keep one main resume and make a sharper copy for every job you apply to.',
             'crumbs' => self::crumbs(['Resume builder', '/resume-builder/']), 'image' => self::image('resume-template', 'CVTara resume builder with a template on the left and the filled resume on the right'),
             'sections' => [['steps', 'How to create a resume', '<ol class="sp-steps"><li><b>Pick a template.</b> Start from an <a href="/resume-templates/ats-friendly/">ATS-friendly</a>, <a href="/resume-templates/simple/">simple</a> or <a href="/resume-templates/professional/">professional</a> design.</li><li><b>Fill guided sections.</b> Contact details, a short summary, experience, education, skills and projects, with examples for your role.</li><li><b>Upload instead, if you like.</b> Import an old PDF or Word resume and edit it.</li><li><b>Tailor it to the job.</b> Compare it with a job post and add the skills you really have.</li><li><b>Download.</b> A clean, text-based PDF that applicant tracking systems can read.</li></ol>'],
-                ['free', 'What is free', self::ul(['Building, editing and previewing your resume', 'Templates, colours and fonts', 'A few job-match checks every day', 'Saving one resume to your account'], 'sp-check').'<p>Paid plans start at ₹99 for a single download and add more downloads, scans and cover letters. See <a href="/#pricing">plans and pricing</a>.</p>'],
+                ['free', 'What is free', self::ul(['Building, editing and previewing your resume', 'Templates, colours and fonts', 'A few job-match checks every day', 'Saving one resume to your account'], 'sp-check').'<p>Paid plans start at ₹99 for a single download and add more downloads, scans and cover letters. See <a href="/pricing/">plans and pricing</a>.</p>'],
                 ['india', 'Made for Indian job seekers', '<p>Formats that recruiters in India expect, examples for freshers and experienced professionals, and guides for '.self::e(self::and(array_column($cities, 1))).' and more.</p>'.self::links($cities)],
                 ['next', 'Before you apply', self::links([['/ats-checker/', 'Check your resume score free'], ['/resume-examples/', 'Resume examples by job'], ['/resume-words/', 'Stronger resume words'], ['/cover-letter-generator/', 'Write a matching cover letter']])]],
             'faq' => [['Is the resume builder really free?', 'Yes. You can build, edit and preview your resume with every template free. You pay only when you download, from ₹99.'], ['Can I make a resume on my phone?', 'Yes. The builder works in the browser on phones, tablets and computers.'], ['Will my resume pass an ATS?', 'The templates use standard sections and readable text. No tool can promise a shortlist, but you can check your resume score before you apply.'], ['Can I upload my old resume?', 'Yes. Upload a text-based PDF or Word file and edit it in the builder.']],
             'cta' => self::cta(['/register', 'Build my resume free'], ['/resume-templates/', 'See templates']),
             'related' => [['Related', [['/resume-templates/', 'Resume templates'], ['/resume-examples/', 'Resume examples'], ['/resume-builder/india/', 'Resume help by city']]], ['Guides', self::guides('fresher', 'summary', 'ats')]]];
+    }
+
+    // ---------------------------------------------------------------- 3.68.0 pricing pages (buyers' searches)
+    /** /pricing/{slug}/ => plan key. Prices, limits and validity are read from the live plan settings, never typed here. */
+    public const PLAN_PAGES = ['quick-download' => 'quick', 'job-hunt' => 'job-hunt', 'pro' => 'pro'];
+
+    private static function plan(string $key): array
+    {
+        return Settings::plans()[$key] ?? [];
+    }
+
+    private static function sold(string $key): bool
+    {
+        return ! empty(self::plan($key)['sale']);
+    }
+
+    private static function price(string $key): string
+    {
+        return number_format((int) (self::plan($key)['price'] ?? 0));
+    }
+
+    /** One line per plan for the comparison table: what a buyer actually compares. */
+    private static function planFacts(string $key): array
+    {
+        $p = self::plan($key);
+        $days = (int) ($p['accessDays'] ?? 0);
+
+        return [
+            'Price' => $key === 'free' ? '₹0' : '₹'.self::price($key).' once',
+            'Clean downloads (no watermark)' => $key === 'free' ? 'No' : ($key === 'quick' ? '1 resume' : (int) $p['savedResumes'].' resumes + '.(int) $p['savedLetters'].' cover letters'),
+            'ATS Match scans with a gap report' => $key === 'free' ? (int) ($p['dailyMatches'] ?? 3).' quick checks a day' : ((int) ($p['atsScans'] ?? 0) ? (int) $p['atsScans'].' scans' : (int) ($p['dailyMatches'] ?? 3).' quick checks a day'),
+            'Mock interviews with written feedback' => (int) ($p['mockInterviews'] ?? 0) ? (string) (int) $p['mockInterviews'] : '—',
+            'Access' => $key === 'free' ? 'Always' : $days.' days',
+            'Auto-renewal' => 'Never',
+        ];
+    }
+
+    private static function compareTable(array $keys): string
+    {
+        $cols = array_values(array_filter($keys, fn ($k) => $k === 'free' || self::sold($k)));
+        $rows = array_keys(self::planFacts('free'));
+        $head = '<tr><th scope="col">What you get</th>'.implode('', array_map(fn ($k) => '<th scope="col">'.($k === 'free' ? 'Free' : '<a href="/pricing/'.array_search($k, self::PLAN_PAGES, true).'/">'.self::e((string) self::plan($k)['name']).'</a>').'</th>', $cols)).'</tr>';
+        $body = '';
+        foreach ($rows as $r) {
+            $body .= '<tr><th scope="row">'.self::e($r).'</th>'.implode('', array_map(fn ($k) => '<td>'.self::e((string) self::planFacts($k)[$r]).'</td>', $cols)).'</tr>';
+        }
+
+        return '<div class="sp-table-wrap"><table class="sp-table"><thead>'.$head.'</thead><tbody>'.$body.'</tbody></table></div>';
+    }
+
+    private static function buyFaq(): array
+    {
+        return [
+            ['Is it a subscription?', 'No. You pay once by UPI, card or net banking. Nothing renews and nothing is charged again.'],
+            ['Can I get a refund?', 'Yes, within 7 days of buying, if you have not used anything you paid for yet (no clean download, paid ATS scan or tailored resume). See the refund policy.'],
+            ['Can I try it before paying?', 'Yes. Building, editing and previewing your resume with every template is free. You pay only when you want the clean download.'],
+            ['Which payment methods work?', 'UPI apps, debit and credit cards and net banking, through a secure Indian payment gateway. CVTara never sees your card or UPI PIN.'],
+        ];
+    }
+
+    /** /pricing/: the price page buyers search for ("resume builder price", "resume download price"). */
+    private static function pricing(): array
+    {
+        $keys = array_values(array_filter(self::PLAN_PAGES, fn ($k) => self::sold($k)));
+        $cards = array_map(fn ($k) => ['/pricing/'.array_search($k, self::PLAN_PAGES, true).'/', self::plan($k)['name'].' · ₹'.self::price($k), (string) self::plan($k)['tagline']], $keys);
+
+        return ['kind' => 'pricing', 'eyebrow' => 'PLANS AND PRICING', 'title' => 'Resume Builder Price in India: Plans from ₹'.self::price('quick'), 'description' => 'CVTara pricing: build and preview free, download a clean resume for ₹'.self::price('quick').', or get tailored resumes, cover letters and ATS scans from ₹'.self::price('job-hunt').'. Pay once, no auto-renewal.',
+            'h1' => 'Plans and pricing', 'lead' => 'Build, edit and preview your resume free. Pay once only when you are ready to download: ₹'.self::price('quick').' for one clean resume, or a pack for a whole job search. No subscription, no auto-renewal, 7-day refund if unused.',
+            'crumbs' => self::crumbs(['Pricing', '/pricing/']), 'image' => self::image('resume-template', 'CVTara plans: Free, Quick Download, Job Hunt and Pro'),
+            'sections' => [['plans', 'Choose a plan', self::cards($cards)],
+                ['compare', 'Compare plans', self::compareTable(array_merge(['free'], $keys))],
+                ['which', 'Which plan is right for you', self::ul(['Applying to one job this week and your resume is ready: Quick Download (₹'.self::price('quick').').', 'Applying to many jobs over the next month: Job Hunt (₹'.self::price('job-hunt').'), a tailored resume and cover letter for each.', 'Long search, career change or senior role: Pro (₹'.self::price('pro').'), 90 days and twice the tailored documents.'], 'sp-check').'<p>Not sure yet? <a href="/pricing/free-vs-paid/">See what is free and what is paid</a>.</p>'],
+                ['pay', 'How paying works', '<ol class="sp-steps"><li><b>Build free.</b> Make your resume and preview it with a light watermark.</li><li><b>Pick a plan</b> on this page or when you click Download.</li><li><b>Pay once</b> by UPI, card or net banking.</li><li><b>Download</b> a clean, text-based PDF straight away.</li></ol><p>Read the <a href="/refund.html">refund policy</a> and <a href="/terms.html">terms</a>.</p>']],
+            'faq' => self::buyFaq(),
+            'cta' => self::cta(['/register', 'Start free, pay later'], ['/checkout.html?plan=quick', 'Download one resume for ₹'.self::price('quick')], 'Building is free. You pay only when you download.'),
+            'offers' => $keys,
+            'related' => [['Plans', array_map(fn ($c) => [$c[0], $c[1]], $cards)], ['Start here', [['/resume-builder/', 'Free resume builder'], ['/ats-checker/', 'Free ATS resume check'], ['/resume-templates/', 'Resume templates']]]]];
+    }
+
+    /** /pricing/{quick-download|job-hunt|pro}/: one page per plan, for searches with the price or the need in them. */
+    private static function planPage(string $slug): array
+    {
+        $key = self::PLAN_PAGES[$slug];
+        $p = self::plan($key);
+        $price = self::price($key);
+        $name = (string) $p['name'];
+        $copy = [
+            'quick' => ['Download Your Resume as PDF for ₹'.$price, 'Download one finished resume as a clean PDF and Word file for ₹'.$price.'. No watermark, edit and re-download for '.(int) $p['accessDays'].' days. Pay once by UPI or card.', 'Download your resume for ₹'.$price,
+                'Your resume is ready and you need a clean copy today. Quick Download removes the watermark from one resume, as PDF and Word, and lets you fix and re-download it for '.(int) $p['accessDays'].' days.',
+                ['You have one resume to send this week', 'You already built your resume and only need the clean file', 'You are a fresher applying to campus drives or walk-ins']],
+            'job-hunt' => ['Job Hunt Pack ₹'.$price.': Tailored Resume + Cover Letter', 'Apply with a tailored resume and cover letter for every job: '.(int) $p['savedResumes'].' resumes, '.(int) $p['savedLetters'].' cover letters, '.(int) $p['atsScans'].' ATS Match scans for ₹'.$price.', '.(int) $p['accessDays'].' days.', 'Job Hunt pack: tailor every application',
+                'Recruiters compare your resume with their job post. Job Hunt gives you a tailored copy and a matching cover letter for each job you apply to, with an ATS Match scan that shows the skills you are missing.',
+                ['You are applying to many jobs this month', 'Different jobs ask for different skills and you want each resume to match', 'You want a cover letter for each application without starting from zero']],
+            'pro' => ['Pro Plan ₹'.$price.': 90-Day Resume + Cover Letter Pack', 'For a long job search: '.(int) $p['savedResumes'].' tailored resumes, '.(int) $p['savedLetters'].' cover letters, '.(int) $p['atsScans'].' ATS Match scans and '.(int) $p['mockInterviews'].' mock interviews for ₹'.$price.'. Pay once.', 'Pro: a 90-day job search pack',
+                'Senior roles, career changes and searches across cities take longer. Pro gives you '.(int) $p['accessDays'].' days, twice the tailored documents of Job Hunt and '.(int) $p['mockInterviews'].' mock interviews with written feedback.',
+                ['Your search will take more than a month', 'You are changing field or applying across several roles', 'You want interview practice with written feedback as well']],
+        ][$key];
+        [$title, $desc, $h1, $lead, $for] = $copy;
+        $others = array_values(array_filter(self::PLAN_PAGES, fn ($k) => $k !== $key && self::sold($k)));
+
+        return ['kind' => 'pricing', 'eyebrow' => strtoupper($name).' · ₹'.$price, 'title' => $title, 'description' => $desc, 'h1' => $h1, 'lead' => $lead,
+            'crumbs' => self::crumbs(['Pricing', '/pricing/'], [$name, '/pricing/'.$slug.'/']), 'image' => self::image($key === 'quick' ? 'resume-template' : 'cover-letter', $name.' plan on CVTara'),
+            'sections' => [['get', 'What you get for ₹'.$price, self::ul(array_merge((array) $p['perks'], [(int) $p['accessDays'].' days of access from the day you pay', 'Pay once, no auto-renewal']), 'sp-check')],
+                ['for', 'Who it is for', self::ul($for)],
+                ['compare', 'Compare with other plans', self::compareTable(array_merge(['free', $key], $others))],
+                ['how', 'How to buy', '<ol class="sp-steps"><li><b>Create a free account</b> and build or upload your resume.</li><li><b>Pay ₹'.$price.'</b> by UPI, card or net banking.</li><li><b>Download</b> your clean resume'.($key === 'quick' ? '' : ' and tailor it for each job').' straight away.</li></ol><p>7-day refund if you have not used anything you paid for. See the <a href="/refund.html">refund policy</a>.</p>']],
+            'faq' => self::buyFaq(),
+            'cta' => self::cta(['/checkout.html?plan='.$key, 'Get '.$name.' for ₹'.$price], ['/register', 'Build free first'], 'Not ready to pay? Build and preview free, and choose a plan when you download.'),
+            'offers' => [$key],
+            'related' => [['Other plans', array_map(fn ($k) => ['/pricing/'.array_search($k, self::PLAN_PAGES, true).'/', self::plan($k)['name'].' · ₹'.self::price($k)], $others)], ['Before you buy', [['/pricing/free-vs-paid/', 'What is free and what is paid'], ['/ats-checker/', 'Free ATS resume check'], ['/resume-templates/', 'Resume templates']]]]];
+    }
+
+    /** /pricing/free-vs-paid/: answers "is it really free" honestly, which is what stops most buyers. */
+    private static function freeVsPaid(): array
+    {
+        $keys = array_values(array_filter(self::PLAN_PAGES, fn ($k) => self::sold($k)));
+
+        return ['kind' => 'pricing', 'eyebrow' => 'FREE OR PAID', 'title' => 'Free vs Paid Resume Builder: What You Get', 'description' => 'What is free on CVTara and what is paid: build, edit and preview free; pay ₹'.self::price('quick').' once only for a clean download. Compare free and paid plans side by side.',
+            'h1' => 'Free vs paid: what you get on CVTara', 'lead' => 'Many "free" resume builders ask for money only at the last step. Here is exactly what is free on CVTara, what is paid, and when paying is worth it.',
+            'crumbs' => self::crumbs(['Pricing', '/pricing/'], ['Free vs paid', '/pricing/free-vs-paid/']), 'image' => self::image('resume-template', 'Free and paid resume plans compared'),
+            'sections' => [['free', 'Free, always', self::ul(['Every template, colour and font', 'Building, editing and previewing your resume (preview has a light watermark)', 'Uploading an old PDF or Word resume to edit', 'A few ATS quick checks every day', 'All guides, examples, interview questions and calculators on this site'], 'sp-check')],
+                ['paid', 'Paid, once', self::ul(['A clean resume without the watermark, as PDF and Word (from ₹'.self::price('quick').')', 'Tailored resumes and cover letters for each job (Job Hunt and Pro)', 'ATS Match scans with a full gap report', 'Mock interviews with written feedback (Job Hunt and Pro)'], 'sp-check')],
+                ['compare', 'Side by side', self::compareTable(array_merge(['free'], $keys))],
+                ['worth', 'When paying is worth it', '<p>If you are sending one resume, the free builder and a ₹'.self::price('quick').' download is enough. If you are applying to many jobs, a tailored resume for each one usually matters more than the template, and that is what Job Hunt and Pro are for.</p>']],
+            'faq' => array_merge([['Is the free plan really free?', 'Yes. There is no trial that ends and no card needed to build or preview. You only pay if you want the clean download or the tailoring tools.']], self::buyFaq()),
+            'cta' => self::cta(['/register', 'Build my resume free'], ['/pricing/', 'See all plans'], 'Start free. Decide about paying when your resume is ready.'),
+            'offers' => $keys,
+            'related' => [['Plans', array_map(fn ($k) => ['/pricing/'.array_search($k, self::PLAN_PAGES, true).'/', self::plan($k)['name'].' · ₹'.self::price($k)], $keys)], ['Start here', [['/resume-builder/', 'Free resume builder'], ['/ats-checker/', 'Free ATS resume check']]]]];
     }
 
     /** /cover-letter-generator/: write a cover letter from a saved resume and a job post. */
@@ -935,6 +1073,14 @@ class SeoPages
             $page['mainEntity'] = ['@type' => 'ItemList', 'numberOfItems' => count($p['itemList']), 'itemListElement' => array_map(fn ($x, $i) => ['@type' => 'ListItem', 'position' => $i + 1, 'url' => $base.$x[0], 'name' => $x[1]], $p['itemList'], array_keys($p['itemList']))];
         }
         $ld[] = $page;
+        // 3.68.0: price pages describe each plan as a product with its live price, so search results can show it.
+        foreach ($p['offers'] ?? [] as $k) {
+            $pl = self::plan($k);
+            $slug = array_search($k, self::PLAN_PAGES, true);
+            $ld[] = ['@context' => 'https://schema.org', '@type' => 'Product', 'name' => 'CVTara '.$pl['name'], 'description' => (string) $pl['tagline'], 'brand' => ['@type' => 'Brand', 'name' => 'CVTara'], 'image' => $base.$p['image'][0],
+                'url' => $base.'/pricing/'.$slug.'/', 'offers' => ['@type' => 'Offer', 'price' => (string) (int) $pl['price'], 'priceCurrency' => 'INR', 'availability' => 'https://schema.org/InStock', 'url' => $base.'/pricing/'.$slug.'/',
+                    'hasMerchantReturnPolicy' => ['@type' => 'MerchantReturnPolicy', 'applicableCountry' => 'IN', 'returnPolicyCategory' => 'https://schema.org/MerchantReturnFiniteReturnWindow', 'merchantReturnDays' => 7, 'returnFees' => 'https://schema.org/FreeReturn']]];
+        }
         foreach ($p['extraSchema'] ?? [] as $x) { // 3.45.0: approved structured data, built only from the page's own content
             if ($x['type'] === 'Article') {
                 $ld[] = ['@context' => 'https://schema.org', '@type' => 'Article', 'headline' => mb_substr($p['h1'], 0, 110), 'description' => $p['description'], 'mainEntityOfPage' => $base.$p['path'], 'image' => $base.$p['image'][0], 'inLanguage' => 'en-IN',

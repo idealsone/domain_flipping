@@ -47,7 +47,8 @@ class Approvals
                     'meta' => 'Change the title and description of '.$p->path, 'h1' => 'Change the main heading of '.$p->path, 'faq' => 'Add '.count($d['items'] ?? []).' FAQ question(s) to '.$p->path,
                     'schema' => 'Add '.($d['type'] ?? '').' structured data to '.$p->path, 'brief' => 'Approve a content brief: '.($d['topic'] ?? ''), default => 'Add an internal link to '.$p->path,
                 };
-                $out[] = $item('seo', $p->id, ['submittedBy' => ($p->creator ?? null) ?: 'SEO agent', 'agent' => 'SEO', 'action' => $action, 'kind' => $p->kind,
+                $where = self::seoWhere($p->kind, (string) $p->path, $d);
+                $out[] = $item('seo', $p->id, ['submittedBy' => ($p->creator ?? null) ?: 'SEO agent', 'agent' => 'SEO', 'action' => $action, 'kind' => $p->kind, 'where' => $where,
                     'justification' => (string) $p->reason, 'cost' => $p->kind === 'brief' ? 'Writing time for the content team' : 'None', 'impact' => $p->impressions ? $p->impressions.' Google impressions in 28 days, position '.round((float) $p->position, 1) : 'Not measured yet',
                     'risk' => $p->kind === 'brief' ? 'None until the guide is written and approved' : 'Low: can be undone from SEO with one click; checked on the live page after it goes live',
                     'changes' => ['before' => $b, 'after' => $d], 'evidence' => array_values(array_filter([$p->query ? 'Search: '.$p->query : null])), 'createdAt' => (string) $p->created_at]);
@@ -82,6 +83,32 @@ class Approvals
         usort($out, fn ($a, $b) => strcmp($b['createdAt'], $a['createdAt']));
 
         return $out;
+    }
+
+    /**
+     * 3.68.0 (owner rule 2026-11-12): every SEO approval says exactly which address and which part of the page changes,
+     * and, for links, every page the link is added to and the words it uses, so nothing is approved blind.
+     */
+    public static function seoWhere(string $kind, string $path, array $d): array
+    {
+        $base = rtrim(Settings::get('seo')['siteUrl'] ?: config('app.url'), '/');
+        $lines = ['Page: '.$base.$path];
+        $lines[] = 'Section: '.match ($kind) {
+            'meta' => 'Search result title (the <title> tag) and meta description, in the page code; the visible page text does not change',
+            'h1' => 'Main heading (H1) at the top of the page',
+            'faq' => '"Frequently asked questions" box near the end of the page, '.count($d['items'] ?? []).' new question(s)',
+            'schema' => 'Structured data ('.($d['type'] ?? 'schema').') in the page code; nothing visible changes',
+            'brief' => 'No live change: a writing brief for a new or rewritten guide',
+            default => '"Popular with job seekers" link box near the end of each page listed below',
+        };
+        if ($kind === 'links') {
+            foreach ((array) ($d['from'] ?? []) as $from) {
+                $lines[] = 'Link added on: '.$base.$from;
+            }
+            $lines[] = 'Link text: "'.($d['label'] ?? '').'" pointing to '.$base.$path;
+        }
+
+        return $lines;
     }
 
     public static function counts(User $u): array

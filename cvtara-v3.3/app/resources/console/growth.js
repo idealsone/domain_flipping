@@ -94,11 +94,15 @@
   const P = { page: 1, per: 20, status: 'pending', kind: 'all', from: '', to: '' };
   async function seo(h) {
     const box = $('#grSeo', h); if (!box) return;
-    let d, cov = []; try { const j = await api('/api/admin/growth/seo'); d = j.seo; cov = j.coverage || []; } catch (e) { box.innerHTML = `<h3 style="margin-top:0">SEO agent</h3><p role="alert">${E(err(e))}</p>`; return; }
+    let d, cov = [], sp = null; try { const j = await api('/api/admin/growth/seo'); d = j.seo; cov = j.coverage || []; sp = j.sprint || null; } catch (e) { box.innerHTML = `<h3 style="margin-top:0">SEO agent</h3><p role="alert">${E(err(e))}</p>`; return; }
     const kw = (rows, f) => rows.length ? `<table class="ad-table"><tbody>${rows.map(f).join('')}</tbody></table>` : '<p class="muted">Nothing yet.</p>';
     box.innerHTML = `<h3 style="margin-top:0">SEO agent</h3>
       <p class="muted" style="margin-top:0">Every day from 11 AM (Monday to Saturday) it reads Search Console, finds searches close to page 1, pages that are seen but rarely clicked and searches split across pages, and proposes changes. Nothing goes live until you approve it, and every live change can be undone.</p>
       ${d.ready ? '' : '<div class="panel panel-pad" role="alert" style="border-left:4px solid #d97706;margin-bottom:10px">Search Console is not connected, so rankings are unavailable. Add the property and service-account key in Integrations → Analytics.</div>'}
+      ${sp ? `<div class="panel panel-pad" id="spSprint" style="margin-bottom:10px;border-left:4px solid ${sp.active ? '#16a34a' : '#64748b'}"><b>30-day index sprint: ${sp.active ? `day ${n(sp.day)} of ${n(sp.days)} (ends ${E(String(sp.until || '').slice(0, 10))})` : 'off'}</b>
+        <p class="muted" style="margin:4px 0">While it runs the agents do about ten times their daily work: pages scanned ${n(sp.limits.usual.scanPerRun)} → ${n(sp.limits.now.scanPerRun)} per run, Google checks ${n(sp.limits.usual.inspectPerDay)} → ${n(sp.limits.now.inspectPerDay)} a day, recrawl requests ${n(sp.limits.usual.requestPerRun)} → ${n(sp.limits.now.requestPerRun)} per run, title and link drafts ${n(sp.limits.usual.metaPerDay)} → ${n(sp.limits.now.metaPerDay)} a day. Every live change still waits for your approval and names the page and section.</p>
+        ${sp.week ? `<p style="margin:4px 0"><b>This week: ${E(sp.week.title)}</b><br>${(sp.week.tasks || []).map(t => '• ' + E(t)).join('<br>')}</p>` : ''}
+        <button type="button" class="button ${sp.active ? 'secondary' : 'primary'} small" id="spGo">${sp.active ? 'Stop the sprint' : 'Start the 30-day sprint'}</button></div>` : ''}
       <div class="ops-kpis"><div class="kpi"><small>Google clicks (4 weeks)</small><b>${n(d.clicks)}</b><small>${d.endDate ? 'data up to ' + E(d.endDate) : ''}</small></div><div class="kpi"><small>Impressions</small><b>${n(d.impressions)}</b><small>times CVTara was shown</small></div><div class="kpi"><small>Waiting for you</small><b>${n(d.pending)}</b><small>${n(d.live)} live</small></div></div>
       <div class="ops-two"><div><h4>Close to page 1</h4>${kw(d.striking, r => `<tr><td>${E(r.query)}<br><small class="muted">${E(r.path)}</small></td><td>#${r.position}</td><td>${n(r.impressions)}</td></tr>`)}</div>
         <div><h4>Seen but rarely clicked</h4>${kw(d.lowCtr, r => `<tr><td>${E(r.path)}</td><td>#${Math.round(r.position * 10) / 10}</td><td>${(Math.round(r.ctr * 1000) / 10)}% clicked</td></tr>`)}
@@ -125,6 +129,7 @@
     K.wireDownload(spBar, fmt => K.exportUrl('/api/admin/growth/seo/proposals', { status: P.status, kind: P.kind, from: P.from, to: P.to }, fmt));
     K.wireDownload($('#stK', box).closest('.ops-filterbox'), fmt => K.exportUrl('/api/admin/growth/seo/tracked', { kind: TR.kind, band: TR.band, q: TR.q }, fmt));
     const cd = $('#covDl', box); if (cd) cd.onclick = () => K.download('cvtara-google-coverage.csv', K.csv(cov.map(c => ({ Section: c.section, 'Pages in sitemap': c.pages, 'Shown by Google (4 weeks)': c.seen, Impressions: c.impressions })), ['Section', 'Pages in sitemap', 'Shown by Google (4 weeks)', 'Impressions']), 'text/csv');
+    const spGo = $('#spGo', box); if (spGo) spGo.onclick = async e => { e.target.disabled = true; try { await api('/api/admin/growth/seo/sprint', { method: 'POST', body: { on: !(sp && sp.active) } }); toast(sp && sp.active ? 'Sprint stopped' : 'Sprint started for 30 days'); seo(h); } catch (x) { toast(err(x)); e.target.disabled = false; } };
     $('#spRun', box).onclick = async e => { e.target.disabled = true; try { const r = await api('/api/admin/growth/seo/run', { method: 'POST', body: {} }); toast(`Read ${n(r.pairs)} searches · ${r.meta} title and ${r.links} link proposals`); seo(h); } catch (x) { toast(err(x)); e.target.disabled = false; } };
     proposals(box); track(box);
   }

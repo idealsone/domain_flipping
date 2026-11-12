@@ -23,9 +23,16 @@ class SeoAgent
     /** Typical click rate by position on page 1 and 2, used to spot titles that underperform. */
     private const CTR = [1 => 0.28, 2 => 0.15, 3 => 0.1, 4 => 0.07, 5 => 0.05, 6 => 0.04, 7 => 0.03, 8 => 0.025, 9 => 0.02, 10 => 0.02];
 
-    public static function settings(): array
+    /** The owner's own limits, before any index sprint boost: what the settings form shows and saves. */
+    public static function baseSettings(): array
     {
         return array_replace(self::DEFAULTS, array_intersect_key((array) Settings::get('seoAgent', []), self::DEFAULTS));
+    }
+
+    public static function settings(): array
+    {
+        // 3.68.0: raised for 30 days while the index sprint runs (SeoSprint)
+        return SeoSprint::apply(array_replace(self::DEFAULTS, array_intersect_key((array) Settings::get('seoAgent', []), self::DEFAULTS)));
     }
 
     public static function branded(string $q): bool
@@ -218,6 +225,13 @@ class SeoAgent
         $a = self::analyse();
         $pairs = collect(Settings::get('seoPairs', [])['rows'] ?? []);
         $made = ['meta' => 0, 'links' => 0];
+        // 3.68.0: never bury the owner: no new drafts while a long list already waits for a decision.
+        $room = SeoSprint::MAX_PENDING - DB::table('seo_proposals')->where('status', 'pending')->count();
+        if ($room <= 0) {
+            return $made;
+        }
+        $s['metaPerDay'] = min($s['metaPerDay'], (int) ceil($room / 2));
+        $s['linksPerDay'] = min($s['linksPerDay'], $room - $s['metaPerDay']);
         foreach ($a['lowCtr'] as $r) {
             if ($made['meta'] >= $s['metaPerDay']) {
                 break;

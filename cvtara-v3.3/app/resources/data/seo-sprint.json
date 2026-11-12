@@ -1,0 +1,54 @@
+{
+  "version": "2026-11-12",
+  "goal": "In 30 days: every public page read by Google and Bing, the strongest ~150 pages indexed first, impressions growing week on week, and search visitors reaching the pricing page and buying.",
+  "rules": [
+    "White-hat only: no bought links, link networks, link farms, mass directory blasts or comment spam. These can get the whole site penalised.",
+    "Every live page change is an approval card that names the full page address, the section of the page and the exact new text.",
+    "Every outreach email is a draft the owner reads and sends. Nothing is sent automatically to people outside CVTara.",
+    "No page or email mentions AI, model names or the companies behind them.",
+    "Do not ask Google to index thin pages. Strengthen or merge them first."
+  ],
+  "weeks": [
+    {
+      "title": "Week 1: make every page worth indexing",
+      "tasks": [
+        "Scan all ~600 pages daily; fix any page that is slow, has a duplicate title or has fewer than 300 words of its own.",
+        "Offer the 4 pricing pages and the 30 strongest guides to Google first (Indexing API 200 a day, IndexNow for Bing and Yandex).",
+        "Owner: add the site in Bing Webmaster Tools (import from Search Console) and submit sitemap.xml there.",
+        "Owner: create the Google Business Profile (service-area business, Bangalore) and the LinkedIn company page link to cvtara.com."
+      ]
+    },
+    {
+      "title": "Week 2: links from real, relevant sites",
+      "tasks": [
+        "Send 10 placement-cell partnership drafts a day (owner approves each one): free resume sessions for students, a resource link on the college site.",
+        "Submit to the free, editor-reviewed listings in the sprint list (startup and software directories, one per day, no bulk tools).",
+        "Pitch writers of 'best resume builder in India' articles with an honest product note and the ₹99 price.",
+        "Daily: Google URL Inspection on up to 600 pages, recrawl requests for pages that changed."
+      ]
+    },
+    {
+      "title": "Week 3: pages close to page 1",
+      "tasks": [
+        "For every search at position 4 to 30: one approval card with a better title, a sharper first paragraph or links from 3 to 5 related pages.",
+        "Add FAQ answers for real questions people searched (from Search Console) to the pages that rank for them.",
+        "Follow up pitches from week 2 once, 5 days after the first email. Never more than one follow-up."
+      ]
+    },
+    {
+      "title": "Week 4: turn visits into revenue",
+      "tasks": [
+        "Compare which pages bring visitors who open the pricing page and who buy; give those pages more internal links.",
+        "Test one change at a time on the pricing page (headline or order of plans), never fake urgency or fake reviews.",
+        "Month report: pages indexed, impressions, clicks, sign-ups and purchases from search, compared with day 1."
+      ]
+    }
+  ],
+  "engines": [
+    {"name": "Google", "how": "Sitemap in Search Console (done), Indexing API for changed pages (200 a day), internal links and backlinks. Google stopped accepting sitemap pings in 2023."},
+    {"name": "Bing (also feeds Yahoo, DuckDuckGo and Ecosia)", "how": "IndexNow (done, automatic), Bing Webmaster Tools: owner imports the site from Search Console and submits the sitemap."},
+    {"name": "Yandex", "how": "IndexNow (done, automatic); optional Yandex Webmaster account."},
+    {"name": "Seznam, Naver, Yep", "how": "IndexNow (done, automatic)."},
+    {"name": "Answer engines", "how": "llms.txt (done) and pages that answer one question clearly near the top."}
+  ]
+}

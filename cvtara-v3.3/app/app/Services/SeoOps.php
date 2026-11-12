@@ -54,7 +54,8 @@ class SeoOps
 
     public static function settings(): array
     {
-        return array_replace(self::DEFAULTS, array_intersect_key((array) Settings::get('seoOps', []), self::DEFAULTS));
+        // 3.68.0: raised for 30 days while the index sprint runs (SeoSprint)
+        return SeoSprint::apply(array_replace(self::DEFAULTS, array_intersect_key((array) Settings::get('seoOps', []), self::DEFAULTS)));
     }
 
     public static function brandQuery(string $q): bool
