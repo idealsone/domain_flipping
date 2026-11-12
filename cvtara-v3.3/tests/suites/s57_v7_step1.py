@@ -38,7 +38,7 @@ def run(ctx, t):
         u = Client(inst.base); u.register("v7-a@test.local"); u.page("/workspace.html")
         s, j = u.api("POST", "ai/suggest", {"task": "bullets", "text": "Responsible for hiring store staff across 14 stores in Pune.", "consent": True})
         h = HITS[-1] if HITS else {"body": {}, "headers": {}}
-        t.check("customer writing still uses the main model with the refusal fallback", s == 200 and h["body"].get("model") == "claude-opus-5-5" and h["body"].get("fallbacks") == "default", (s, h["body"].get("model"), h["body"].get("fallbacks")))
+        t.check("customer writing still uses the main model with the refusal fallback", s == 200 and h["body"].get("model") == "claude-sonnet-5-5" and h["body"].get("fallbacks") == "default", (s, h["body"].get("model"), h["body"].get("fallbacks")))
 
         n = len(HITS)
         r = php("echo App\\Services\\TaraAI::ask('Write one SEO title.', 'Page: resume builder', 200, 20, 'seo');")
@@ -50,8 +50,8 @@ def run(ctx, t):
         row = db.q("select prompt_version, model, cost_paise from ai_usage where purpose='seo' order by id desc limit 1")
         t.check("the request records which prompt wording it used", row and row[0][0] == pv and row[0][1] == "claude-haiku-5-5", row)
         opus = db.q("select cost_paise from ai_usage where purpose='customer:writing_help' order by id desc limit 1")
-        # 1,000 + 1,000 tokens: Haiku 5.5 $0.60 per million pairs vs Opus 5.5 $24, at ₹88 a dollar
-        t.check("each request is costed at its own model's price", row and opus and row[0][2] == 6 and opus[0][0] == 212, (row, opus))
+        # 1,000 + 1,000 tokens: Haiku 5.5 $0.60 per million pairs vs Sonnet 5.5 $12 (the writing model since 3.64.0), at ₹88 a dollar
+        t.check("each request is costed at its own model's price", row and opus and row[0][2] == 6 and opus[0][0] == 106, (row, opus))
 
         o.api("POST", "admin/providers", {"service": "ai", "values": {"quickModel": " "}})
         r = php("echo App\\Services\\AiGateway::model(null, 'seo');")

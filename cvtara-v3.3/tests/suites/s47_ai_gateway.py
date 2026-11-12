@@ -52,9 +52,9 @@ def run(ctx, t):
         last = lambda: db.q("select purpose, status, latency_ms, request_id, model, input_tokens, error from ai_usage order by id desc limit 1")[0]
         s, rid, j = ask(); row = last()
         t.check("a successful request is recorded as ok with its time, tokens and the request reference", s == 200 and row[1] == "ok" and row[2] is not None and row[3] == rid and row[5] == 100 and row[0] == "customer:writing_help", (s, row, rid))
-        t.check("the model comes from config/ai.php when the owner left it blank", HITS[-1].get("model") == "claude-opus-5-5" and row[4] == "claude-opus-5-5", HITS[-1].get("model"))
-        o.api("POST", "admin/providers", {"service": "ai", "values": {"model": "claude-sonnet-5-5"}})
-        ask(); t.check("the owner's model choice wins", HITS[-1].get("model") == "claude-sonnet-5-5", HITS[-1].get("model"))
+        t.check("the model comes from config/ai.php when the owner left it blank", HITS[-1].get("model") == "claude-sonnet-5-5" and row[4] == "claude-sonnet-5-5", HITS[-1].get("model"))
+        o.api("POST", "admin/providers", {"service": "ai", "values": {"model": "claude-opus-5-5"}})
+        ask(); t.check("the owner's model choice wins", HITS[-1].get("model") == "claude-opus-5-5", HITS[-1].get("model"))
         o.api("POST", "admin/providers", {"service": "ai", "values": {"model": ""}})
 
         plain = lambda j: all(w not in json.dumps(j) for w in ("Claude", "Anthropic", "HTTP", "api_error", "exception", "Exception"))

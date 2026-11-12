@@ -28,7 +28,7 @@ class TaraOwner
 
     public const ACTION_MINUTES = 30;
 
-    public const DEFAULTS = ['model' => '', 'instructions' => '', 'monthlySpendInr' => 3000, 'maxTokens' => 2500, 'historyMessages' => 20, 'maxSteps' => 8];
+    public const DEFAULTS = ['model' => '', 'instructions' => '', 'monthlySpendInr' => 3000, 'maxTokens' => 2500, 'historyMessages' => 12, 'maxSteps' => 6];
 
     /** Read-only tools: they run straight away. */
     public const TOOLS = [
@@ -142,9 +142,10 @@ class TaraOwner
             @set_time_limit(200);
             try {
                 [$messages] = TaraChat::history($conversationId, (int) $s['historyMessages']);
-                $system = self::RULES."\n\nNow: ".now()->tz(Growth::TZ)->format('l, j F Y, g:i A').' India time. The owner\'s name is '.Str::before(trim((string) $owner->name), ' ').'.'
-                    .(trim((string) $s['instructions']) !== '' ? "\n\nThe owner's standing instructions:\n".trim((string) $s['instructions']) : '');
-                [$answer, $links, $cards] = TaraChat::loop(TaraChat::model($s), $system, $messages, self::toolDefs(), (int) $s['maxTokens'], (int) $s['maxSteps'], self::PURPOSE, $owner->id,
+                $system = AiGateway::system( // 3.64.0: fixed rules cached, the time and name after them
+                    self::RULES.(trim((string) $s['instructions']) !== '' ? "\n\nThe owner's standing instructions:\n".trim((string) $s['instructions']) : ''),
+                    'Now: '.now()->tz(Growth::TZ)->format('l, j F Y, g:i A').' India time. The owner\'s name is '.Str::before(trim((string) $owner->name), ' ').'.');
+                [$answer, $links, $cards] = TaraChat::loop(AiGateway::model($s['model'] ?? '', self::PURPOSE), $system, $messages, self::toolDefs(), (int) $s['maxTokens'], (int) $s['maxSteps'], self::PURPOSE, $owner->id,
                     fn ($name, $input) => self::runTool($owner, $conversationId, $name, $input),
                     'I gathered part of the data but ran out of steps. Ask a narrower question (one period, one area) and I will finish it.',
                     'I can\'t help with that request.');
@@ -155,7 +156,7 @@ class TaraOwner
                 ErrorLog::record('error', 'tara', 'Business assistant could not answer: '.TaraAI::failure($e));
                 throw ValidationException::withMessages(['tara' => 'Tara could not answer just now ('.TaraAI::failure($e).'). Please try again in a minute.']);
             }
-            $meta = array_filter(['links' => $links, 'actions' => array_column($cards, 'id'), 'rules' => self::RULES_VERSION, 'model' => TaraChat::model($s)]);
+            $meta = array_filter(['links' => $links, 'actions' => array_column($cards, 'id'), 'rules' => self::RULES_VERSION, 'model' => AiGateway::model($s['model'] ?? '', self::PURPOSE)]);
             $msgId = TaraChat::store($conversationId, $owner->id, 'assistant', $answer, $meta ?: null, 'owner');
             DB::table('tara_conversations')->where('id', $conversationId)->update(['messages' => DB::raw('messages + 2'), 'last_at' => now(), 'updated_at' => now()]);
 

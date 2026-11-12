@@ -1,3 +1,16 @@
+# CVTara v3.64.0 — Lower AI costs
+
+## 3.64.0
+Owner report (12 Nov 2026): a few chats on claude-opus-5-5 cost about Rs 100. Cause: every request (customer Tara chat, writing, SEO titles) ran on Opus at $4/$20 per million tokens, with no prompt caching, and one chat answer can take up to 5 requests that each re-send the rules (~2,000 tokens), 15 tool definitions (~2,500), the history and every tool result read so far (the customer guide alone is ~4,000). Thinking is billed as output. Additive migration `2026_11_30_000001_ai_cache_tokens` (`ai_usage.cache_read_tokens`, `cache_write_tokens`).
+- **Model per kind of work** (config/ai.php, owner boxes in Integrations > AI): customer Tara chat on the chat model (default claude-haiku-5-5, about 40x cheaper than Opus), customer writing and the Business assistant on the writing model (default claude-sonnet-5-5, half the Opus price), SEO titles, chat summaries, job parsing and interview scoring on the quick model (default claude-haiku-5-5). A model the owner types in a box wins; Tara's own model box still wins for the chat.
+- **Thinking effort per tier**: chat and quick jobs low, writing medium (Sonnet's own default would be high).
+- **Prompt caching**: Tara's and the Business assistant's fixed rules (with the tool list ahead of them) are sent as one cached block; the date, name and conversation summary follow it, so steps 2-5 of an answer and the next message within 5 minutes read it at a tenth of the price or less.
+- **Smaller requests**: customer chat keeps the last 10 messages (was 16) and at most 4 steps (was 5); the Business assistant 12 messages and 6 steps (was 20 and 8). Saved console settings are kept. A tool result longer than 6,000 characters is cut (the customer guide is kept whole).
+- **Exact spending**: cached input is recorded per request and costed at 1.25x input for a cache write and the model's cache-read price for a read.
+- **SEO agent**: title and description drafts run on the quick model at low effort with room to finish (1,500 tokens instead of 400, which thinking could use up and leave an empty answer, so the plain rule was used instead).
+- Tara chat shows "CVTara team is typing…" while she works. The separate "CVTara team writing help" pop-up was already retired in 3.51.0 (its actions are Tara's writing_help).
+- Test suite `s76_ai_costs`; s27, s28, s47 and s57 expect the new default models.
+
 # CVTara v3.61.0 — Owner decisions of 12 November
 
 ## 3.61.0
