@@ -362,3 +362,23 @@ body.dark .ws-notice{background:#3a2412;border-color:#7a4a1c;color:#fdba74}
 .acct-pop button{display:flex;align-items:center;gap:10px;width:100%;padding:10px 12px;border:0;border-radius:8px;background:none;color:inherit;font:inherit;font-weight:600;text-align:left;cursor:pointer}
 .acct-pop button i{width:18px;text-align:center;font-style:normal;opacity:.75}
 .acct-pop button:hover,.acct-pop button:focus-visible,.acct-pop button.active{background:var(--soft,#f1f5f9);outline:none}
+
+/* 3.67.0 colour refresh (owner approval 2026-11-12): deep teal with a warm coral accent for the customer workspace and
+   the owner console, replacing the flat navy and indigo. Text contrast stays at WCAG AA (white on #0f766e is 5.4:1). */
+:root{--cv-teal-900:#0b2f2e;--cv-teal-800:#0f3d3b;--cv-teal-700:#0f766e;--cv-teal-300:#5eead4;--cv-coral:#f97362;--cv-accent:#0f766e}
+html body[data-page=workspace] .side-panel.side-panel,html body[data-page=admin] .side-panel.side-panel,html body[data-page=admin] .admin-side.admin-side{background:linear-gradient(180deg,var(--cv-teal-900) 0%,#10233a 100%)}
+html body.dark[data-page=workspace] .side-panel.side-panel,html body.dark[data-page=admin] .side-panel.side-panel{background:linear-gradient(180deg,#071f1e 0%,#0b1626 100%);border-right:1px solid #16413e}
+html body[data-page=workspace] .side-nav.side-nav button.active,html body[data-page=workspace] .side-nav.side-nav a.active,
+html body[data-page=admin] .side-nav.side-nav button.active,html body[data-page=admin] .side-nav.side-nav a.active{background:var(--cv-teal-700);color:#fff;border-left-color:var(--cv-teal-300)}
+html body[data-page=workspace] .side-nav .nav-group,html body[data-page=admin] .side-nav .nav-group{color:var(--cv-teal-300)}
+html body[data-page=workspace] .ws-hero{background:radial-gradient(circle at 88% 20%,rgba(94,234,212,.22) 0,transparent 42%),linear-gradient(135deg,var(--cv-teal-800) 0%,#12324f 100%);border-radius:18px}
+html body[data-page=workspace] .ws-hero .button,html body[data-page=workspace] .ws-hero button{border-radius:10px}
+html body[data-page=workspace] .ws-use{border-top:4px solid var(--cv-teal-700);border-radius:14px}
+html body[data-page=workspace] .ws-use:nth-child(2){border-top-color:var(--cv-coral)}
+html body[data-page=workspace] .ws-use:nth-child(3){border-top-color:#6366f1}
+html body[data-page=workspace] .side-plan{background:rgba(94,234,212,.08);border:1px solid rgba(94,234,212,.25)}
+html body[data-page=workspace] .workspace-content{background:radial-gradient(circle at 100% 0,rgba(15,118,110,.06) 0,transparent 38%)}
+/* A faint CVTara pattern only behind the chat (the WhatsApp-style idea), never behind page text. */
+.tara-log{background-color:var(--panel,#fff);background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120' viewBox='0 0 120 120'%3E%3Cg fill='none' stroke='%230f766e' stroke-opacity='.07' stroke-width='2'%3E%3Crect x='14' y='12' width='22' height='28' rx='3'/%3E%3Cpath d='M19 20h12M19 26h12M19 32h8'/%3E%3Cpath d='M84 18l3 6 7 1-5 5 1 7-6-3-6 3 1-7-5-5 7-1z'/%3E%3Crect x='70' y='76' width='30' height='20' rx='4'/%3E%3Cpath d='M80 76v-4h10v4'/%3E%3Ccircle cx='30' cy='88' r='9'/%3E%3Cpath d='M26 88l3 3 6-6'/%3E%3C/g%3E%3C/svg%3E")}
+html[data-theme=dark] .tara-log,:root[data-theme=dark] .tara-log{background-color:transparent}
+@media (prefers-color-scheme:dark){:root:not([data-theme=light]) .tara-log{background-color:transparent}}

@@ -1,3 +1,21 @@
+# CVTara v3.67.0 — Simpler customer journey
+
+## 3.67.0
+Owner's feedback of 12 Nov 2026, audited and approved ("approved", then "complete"). Built on 3.65.0. Additive migrations `2026_12_01_000001_whats_new_november` (adds the 6-12 Nov notes to a saved What's new list and hides the old phone note) and `2026_12_01_000002_template_letter_domains` (files each built-in cover letter under its real role group). No tables change.
+- **Sign-up**: passwords need 8 characters (was 6) on sign-up and reset; 25 job categories (was 9) on sign-up, profile and onboarding, checked on the server.
+- **My account menu** (top right): Account, Billing, Refer & earn, Wallet and Referral history live only there; the sidebar group and the duplicate referral links are gone. Keyboard and Escape work.
+- **Fix for this job**: a score ring, two steps (keywords to add, what the job asks for) and one action row, in about half the height.
+- **Career tools need Job Hunt or Pro**: one-click cover letters, whole-resume tailoring and mock interviews answer 402 for Free and Quick Download (Rs 99) accounts, and an upgrade card with icons opens. Staff are not limited.
+- **Resume journey card**: V1 (first version, real score, original file) → V2 (primary now, score and gain) → V3 (one copy per job: tailored copies and frozen application copies, with their cover letter). Scores are the normal strict ATS-friendly score; nothing is adjusted. The oldest version is never pruned.
+- **Price question after a save**: Great value / Fair / Too high, at most once in 30 days; the owner sees the latest answer per customer on the Reviews page.
+- **Reviews**: only verified reviews show on the home page, with a "Verified customer" badge.
+- **View as customer or partner** (owner choice: view only, logged): People and Partners have a View button that asks for a reason and opens a 30-minute read-only view; partner portals are owner-only.
+- **Interview room**: one question at a time with an interviewer panel, Previous/Next and progress dots; questions are not repeated across the last 200 sessions (was 5); practice tiles show streak, minutes today and this week, and mock interviews done.
+- **Colours**: teal sidebar and hero, coral and indigo accents, faint pattern behind the chat only.
+- **What's new**: eight notes for 6-12 Nov; the 26 Oct phone note is hidden.
+- **Templates**: Clinical Pharmacist resume and three letters (HR Generalist, Senior Staff Nurse, Assistant Professor). Coverage now counts letters in their real role group and adds a fresher / mid-career / experienced table; every role group and level has at least five resumes and five letters.
+- Test suite `s78_customer_journey`; s1, s14, s27, s32 and s65 updated for the 8-character password, verified reviews and the Job Hunt gate.
+
 # CVTara v3.64.0 — Lower AI costs
 
 ## 3.64.0

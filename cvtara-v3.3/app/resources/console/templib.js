@@ -36,7 +36,7 @@
             <button type="button" class="button secondary small" id="tlRun">Test untested designs now</button></div>
           <div id="tlT"></div><div class="ops-pager" id="tlP"></div></section>
         <section class="panel panel-pad"><h3 style="margin-top:0">Coverage by role group</h3><p class="muted" style="margin-top:0">Target: five resume designs and five cover letters for each group. Colour-only changes do not count as new designs.</p>
-          <div style="margin-bottom:8px"><a class="button secondary small" id="cvCsv" href="#">Download CSV</a></div><div id="cvT"></div><div class="ops-pager" id="cvP"></div></section>
+          <div style="margin-bottom:8px"><a class="button secondary small" id="cvCsv" href="#">Download CSV</a></div><div id="cvT"></div><div class="ops-pager" id="cvP"></div><div id="cvL"></div></section>
         <section class="panel panel-pad"><h3 style="margin-top:0">Uploaded packages</h3><div id="pkT"></div></section>`;
       const on = (id, k) => { $(id, h).onchange = e => { S[k] = e.target.value; S.page = 1; list(h); }; };
       on('#tlKind', 'kind'); on('#tlSt', 'status'); on('#tlOr', 'origin'); on('#tlTe', 'test'); on('#tlLa', 'label');
@@ -79,6 +79,8 @@
       const d = await api('/api/admin/template-library/coverage?' + q);
       $('#cvT', h).innerHTML = table(['Role group', 'Resume designs', 'With ATS label', 'Cover letters', 'Resumes needed', 'Letters needed'], d.rows.map(r => `<tr><td>${E(r.cluster)}</td><td>${E(r.resumes)}</td><td>${E(r.atsReady)}</td><td>${E(r.letters)}</td><td>${r.resumeGap ? `<span class="pill mid">${E(r.resumeGap)}</span>` : '<span class="pill ok">0</span>'}</td><td>${r.letterGap ? `<span class="pill mid">${E(r.letterGap)}</span>` : '<span class="pill ok">0</span>'}</td></tr>`), 'No designs yet.');
       K.pager($('#cvP', h), d, (p, per) => { CV.page = p; CV.per = per; coverage(h); });
+      const LV = { fresher: 'Fresher', mid: 'Mid-career', experienced: 'Experienced' }, gap = n => n ? `<span class="pill mid">${E(n)}</span>` : '<span class="pill ok">0</span>';
+      $('#cvL', h).innerHTML = '<h4 style="margin:14px 0 6px">By career level</h4>' + table(['Level', 'Resume designs', 'Cover letters', 'Resumes needed', 'Letters needed'], (d.levels || []).map(l => `<tr><td>${E(LV[l.level] || l.level)}</td><td>${E(l.resumes)}</td><td>${E(l.letters)}</td><td>${gap(l.resumeGap)}</td><td>${gap(l.letterGap)}</td></tr>`), 'No designs yet.');
     } catch (e) { $('#cvT', h).innerHTML = `<p role="alert">${E(err(e))}</p>`; }
   }
 

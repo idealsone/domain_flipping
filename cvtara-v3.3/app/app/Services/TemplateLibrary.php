@@ -34,6 +34,88 @@ class TemplateLibrary
         return (bool) preg_match('/sidebar|suite-(prism|folio|vector|forma)/', $slug);
     }
 
+    /** Role group of each built-in cover letter (3.67.0). Before this, letters without a design family all counted as Technology. */
+    public const LETTER_DOMAIN = [
+        'letter-prism' => 'Product & Design',
+        'letter-canvas' => 'Product & Design',
+        'letter-folio' => 'Product & Design',
+        'letter-gallery' => 'Product & Design',
+        'letter-atelier' => 'Product & Design',
+        'letter-studio' => 'Product & Design',
+        'us-standard' => 'Product & Design',
+        'freelance-project-proposal' => 'Product & Design',
+        'career-change-engineer-to-product' => 'Product & Design',
+        'internship-design' => 'Product & Design',
+        'letter-portrait' => 'HR & People',
+        'letter-forma' => 'HR & People',
+        'india-experienced' => 'HR & People',
+        'senior-people-leader' => 'HR & People',
+        'letter-chroma' => 'Sales & Marketing',
+        'letter-apex' => 'Sales & Marketing',
+        'canada' => 'Sales & Marketing',
+        'experienced-return' => 'Sales & Marketing',
+        'freelance-consulting-intro' => 'Sales & Marketing',
+        'career-change-why-switch' => 'Sales & Marketing',
+        'career-change-hospitality' => 'Sales & Marketing',
+        'senior-growth-leader' => 'Sales & Marketing',
+        'internship-marketing' => 'Sales & Marketing',
+        'freelance-retainer-pitch' => 'Sales & Marketing',
+        'fresher-no-experience' => 'Sales & Marketing',
+        'freelance-agency-collab' => 'Sales & Marketing',
+        'letter-meridian' => 'Technology',
+        'eu' => 'Technology',
+        'referral' => 'Technology',
+        'experienced-industry-fit' => 'Technology',
+        'freelance-short-bid' => 'Technology',
+        'senior-tech-leader' => 'Technology',
+        'internship-short' => 'Technology',
+        'experienced-switch-company' => 'Technology',
+        'letter-vector' => 'Data & Analytics',
+        'uk-concise' => 'Data & Analytics',
+        'experienced-concise-email' => 'Data & Analytics',
+        'career-change-transferable' => 'Data & Analytics',
+        'career-switch' => 'Data & Analytics',
+        'letter-ledger' => 'Finance & Operations',
+        'australia' => 'Finance & Operations',
+        'gcc' => 'Finance & Operations',
+        'experienced-results' => 'Finance & Operations',
+        'senior-leadership' => 'Finance & Operations',
+        'senior-turnaround' => 'Finance & Operations',
+        'internship-finance' => 'Finance & Operations',
+        'fresher-first-job' => 'Finance & Operations',
+        'letter-origin' => 'Campus & Fresher',
+        'india-fresher' => 'Campus & Fresher',
+        'fresher-campus-eager' => 'Campus & Fresher',
+        'fresher-campus-placement' => 'Campus & Fresher',
+        'internship-legal' => 'Campus & Fresher',
+        'teacher' => 'Education & Healthcare',
+        'fresher-referral' => 'Education & Healthcare',
+        'career-change-teacher' => 'Education & Healthcare',
+        'email-body' => 'General',
+    ];
+
+    /** Career level of a catalogue design or letter: fresher, mid or experienced. */
+    public static function level(array $t): string
+    {
+        if (! empty($t['level'])) {
+            return (string) $t['level'];
+        }
+        if (in_array($t['audience'] ?? '', ['fresher', 'internship'], true) || ($t['category'] ?? '') === 'Campus & Fresher' || preg_match('/\\b(fresher|graduate|intern)\\b/i', (string) ($t['role'] ?? $t['name'] ?? ''))) {
+            return 'fresher';
+        }
+        if (($t['audience'] ?? '') === 'senior' || preg_match('/\\b(senior|head|chief|director|vice president|lead|architect|manager|principal)\\b/i', ($t['role'] ?? '').' '.($t['name'] ?? '').' '.($t['badge'] ?? ''))) {
+            return 'experienced';
+        }
+
+        return 'mid';
+    }
+
+    /** Role group a catalogue letter belongs to. */
+    public static function letterCategory(array $t, array $family = []): string
+    {
+        return (string) ($t['category'] ?? self::LETTER_DOMAIN[$t['slug']] ?? ($family[$t['premiumFamily'] ?? ''] ?? null) ?: 'General');
+    }
+
     public static function ready(): bool
     {
         return Schema::hasTable('template_library');
@@ -65,7 +147,7 @@ class TemplateLibrary
                     continue;
                 }
                 $rows[] = self::BUILTIN + ['slug' => $t['slug'], 'kind' => $kind, 'name' => mb_substr($t['name'], 0, 160), 'base' => $t['slug'],
-                    'category' => mb_substr((($kind === 'resume' ? (string) ($t['category'] ?? '') : (string) ($family[$t['premiumFamily'] ?? ''] ?? '')) ?: 'General'), 0, 80),
+                    'category' => mb_substr((($kind === 'resume' ? (string) ($t['category'] ?? '') : self::letterCategory($t, $family)) ?: 'General'), 0, 80),
                     'preview' => ($kind === 'resume' ? '/templates.html#' : '/cover-letters.html#').$t['slug'], 'compat_json' => json_encode(self::FORMATS),
                     'ats_layout' => $kind === 'letter' ? true : ! empty($t['ats']), 'single_column' => ! self::twoColumn($t['slug']), 'status' => 'published', 'origin' => 'builtin',
                     'content_hash' => hash('sha256', json_encode($t)), 'created_at' => now(), 'updated_at' => now()];
@@ -250,7 +332,27 @@ class TemplateLibrary
     public static function coverage(): array
     {
         self::sync();
-        $rows = DB::table('template_library')->where('status', 'published')->select('category', 'kind', 'ats_layout', 'single_column', 'test_passed')->get();
+        $rows = DB::table('template_library')->where('status', 'published')->select('slug', 'category', 'kind', 'ats_layout', 'single_column', 'test_passed')->get();
+        $cat = self::catalog();
+        $bySlug = [];
+        foreach ([['resume', $cat['templates'] ?? []], ['letter', $cat['coverLetters'] ?? []]] as [$k, $list]) {
+            foreach ($list as $t) {
+                $bySlug[$k.':'.$t['slug']] = self::level($t);
+            }
+        }
+        $levels = [];
+        foreach (['fresher', 'mid', 'experienced'] as $lv) {
+            $levels[$lv] = ['level' => $lv, 'resumes' => 0, 'letters' => 0];
+        }
+        foreach ($rows as $r) {
+            $lv = $bySlug[$r->kind.':'.$r->slug] ?? 'mid';
+            $levels[$lv][$r->kind === 'resume' ? 'resumes' : 'letters']++;
+        }
+        foreach ($levels as &$l) {
+            $l['resumeGap'] = max(0, self::TARGET_PER_CLUSTER - $l['resumes']);
+            $l['letterGap'] = max(0, self::TARGET_PER_CLUSTER - $l['letters']);
+        }
+        unset($l);
         $out = [];
         foreach ($rows as $r) {
             $c = $r->category ?: 'General';
@@ -267,7 +369,7 @@ class TemplateLibrary
         unset($o);
         usort($out, fn ($a, $b) => ($b['resumeGap'] + $b['letterGap']) <=> ($a['resumeGap'] + $a['letterGap']) ?: strcmp($a['cluster'], $b['cluster']));
 
-        return ['target' => self::TARGET_PER_CLUSTER, 'clusters' => $out,
+        return ['target' => self::TARGET_PER_CLUSTER, 'clusters' => $out, 'levels' => array_values($levels),
             'totals' => ['resumes' => $rows->where('kind', 'resume')->count(), 'letters' => $rows->where('kind', 'letter')->count(), 'tested' => DB::table('template_library')->whereNotNull('tested_at')->count(),
                 'failed' => DB::table('template_library')->where('test_passed', false)->count(), 'atsReady' => array_sum(array_column($out, 'atsReady'))]];
     }

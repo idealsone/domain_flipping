@@ -39,7 +39,7 @@ class TemplateAdminController extends Controller
 
             return $ok(AdminTable::rows($r, $c['clusters'], ['search' => ['cluster'], 'sorts' => ['cluster' => 'cluster', 'resumes' => 'resumes', 'letters' => 'letters', 'gap' => 'resumeGap'], 'sort' => 'gap', 'dir' => 'desc',
                 'export' => ['title' => 'Template coverage', 'columns' => ['cluster' => 'Role group', 'resumes' => 'Resume designs', 'letters' => 'Cover letter designs', 'atsReady' => 'Resume designs with ATS label', 'resumeGap' => 'Resume designs needed', 'letterGap' => 'Cover letters needed']]])
-                + ['target' => $c['target'], 'totals' => $c['totals']]);
+                + ['target' => $c['target'], 'totals' => $c['totals'], 'levels' => $c['levels']]);
         }
         if ($path === 'template-library/packages' && $get) {
             return $ok(AdminTable::query($r, DB::table('template_packages'), ['search' => ['name', 'vendor'], 'filters' => ['status' => 'status'], 'date' => 'created_at', 'sorts' => ['sort' => 'id'], 'key' => 'id',

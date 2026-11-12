@@ -18,6 +18,20 @@
 
   const css = document.createElement('style');
   css.textContent = `
+.ip-badges .ip-badge small{display:none}.ip-badges .ip-badge{min-width:0}
+  .ip-tiles{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin:12px 0 8px}.ip-tiles div{display:grid;justify-items:center;gap:2px;padding:12px 6px;border-radius:14px;background:var(--soft,#f1f5f9);text-align:center}.ip-tiles span{font-size:20px}.ip-tiles b{font-size:22px}.ip-tiles small{font-size:12px;color:var(--muted,#64748b)}
+  @media (max-width:600px){.ip-tiles{grid-template-columns:repeat(2,1fr)}}
+  .ip-room{margin:12px 0;border-radius:18px;overflow:hidden;border:1px solid var(--line,#e2e8f0);background:linear-gradient(180deg,#0f2e2b 0,#0f2e2b 92px,var(--panel,#fff) 92px)}
+  .ip-panel{display:flex;align-items:center;gap:12px;padding:16px 18px;color:#e6fffa}.ip-panel small{display:block;color:#99f6e4;font-size:12.5px}
+  .ip-avatar{width:52px;height:52px;border-radius:50%;display:grid;place-items:center;font-size:28px;background:#134e4a;box-shadow:0 0 0 3px #5eead4}
+  .ip-live{margin-left:auto;font-size:12px;font-weight:700;color:#fda4af;animation:ipPulse 1.6s ease-in-out infinite}@keyframes ipPulse{50%{opacity:.45}}
+  .ip-room > .ip-q,.ip-room .ip-q{display:none;padding:22px 20px 6px}.ip-room .ip-q.on{display:block}
+  .ip-room .ip-q > b{display:block;font-size:19px;line-height:1.4;margin-bottom:12px}.ip-room .ip-q textarea{min-height:170px;width:100%}
+  .ip-room > p,.ip-room > .ip-steps,.ip-room > .ip-row{padding:0 20px}
+  .ip-nav{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:12px 20px 18px}
+  .ip-dots{display:flex;gap:6px;flex-wrap:wrap;justify-content:center}.ip-dots button{width:11px;height:11px;border-radius:50%;border:0;padding:0;background:var(--line,#cbd5e1);cursor:pointer}
+  .ip-dots button.done{background:#5eead4}.ip-dots button.on{background:#0f766e;transform:scale(1.35)}
+  @media (prefers-reduced-motion:reduce){.ip-live{animation:none}}
   .ip-card{border:1px solid var(--line,#e2e8f0);border-radius:12px;padding:16px 18px;margin:0 0 16px;background:var(--panel,#fff)}
   .ip-card h3{margin:0 0 6px;font-size:17px}.ip-muted{color:var(--muted,#64748b);font-size:13.5px;line-height:1.5}
   .ip-form{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px;margin:12px 0}
@@ -96,21 +110,24 @@
     const trend = p.level && p.previousLevel && p.level !== p.previousLevel ? (p.levels.indexOf(p.level) > p.levels.indexOf(p.previousLevel) ? ' Up from your last mock interview.' : ' A little lower than last time, which is normal with harder questions.') : '';
     return `<div class="ip-card"><h3>Your progress</h3>
       <div class="ip-steps">${steps}</div><p class="ip-muted">${p.level ? `Latest level: <b>${E(p.level)}</b>.${trend}` : 'Finish a mock interview to see your level.'} ${E(LEVEL_NOTE)}</p>
-      <p style="margin:10px 0 4px"><b>Practice streak: ${p.streak} day${p.streak === 1 ? '' : 's'}</b>${p.bestStreak > p.streak ? ` <span class="ip-muted">(best ${p.bestStreak})</span>` : ''}</p>
-      <p class="ip-muted" style="margin:0">A practice day is any day you open practice questions or finish a mock interview. You can rest ${p.restDays} day between practice days without losing your streak.${p.practisedToday ? ' You have practised today.' : ''}</p>
+      <div class="ip-tiles"><div><span aria-hidden="true">🔥</span><b>${p.streak}</b><small>day streak${p.bestStreak > p.streak ? ` · best ${p.bestStreak}` : ''}</small></div><div><span aria-hidden="true">⏱</span><b>${(p.minutes || {}).today || 0}</b><small>minutes today</small></div><div><span aria-hidden="true">📅</span><b>${(p.minutes || {}).week || 0}</b><small>minutes this week</small></div><div><span aria-hidden="true">🎤</span><b>${p.completed}</b><small>mock interviews done</small></div></div>
+      <p class="ip-muted" style="margin:0" title="A practice day is any day you open practice questions or finish a mock interview. You can rest ${p.restDays} day between practice days without losing your streak.">${p.practisedToday ? '✓ You have practised today.' : 'Practise today to keep your streak.'} Minutes count when the answer timer is on.</p>
       <div class="ip-badges">${p.badges.map(b => `<span class="ip-badge${b.earned ? ' on' : ''}" title="${E(b.about)}"><b>${b.earned ? '★' : '☆'} ${E(b.name)}</b><small>${E(b.about)}</small></span>`).join('')}</div>
       <p class="ip-muted" style="margin:8px 0 0">Your progress is private to you. There are no rankings.</p></div>`;
   }
   const label = (st, lvl) => ({ in_progress: 'In progress', submitted: 'Preparing feedback', evaluating: 'Preparing feedback', evaluated: lvl || 'Feedback ready', failed: 'Credit returned', abandoned: 'Not finished, credit returned' }[st] || st);
 
+  // 3.67.0 Interview room: an interviewer panel, one question at a time, progress dots and Previous / Next, so a mock
+  // interview looks and feels like the real thing instead of a long form. All answers stay in the page and save as before.
+  const room = (x, inner) => `<div class="ip-room"><div class="ip-panel"><div class="ip-avatar" aria-hidden="true">🧑‍💼</div><div><b>Interview panel</b><small>${E(x.role)} · ${E(x.bandLabel)}</small></div><span class="ip-live">● Interview in progress</span></div>${inner}<div class="ip-nav"><button type="button" class="button secondary" data-ip-go="-1">← Previous</button><span class="ip-dots" aria-label="Questions"></span><button type="button" class="button mint" data-ip-go="1">Next question →</button></div></div>`;
   function sessionHtml(x) {
     let out = `<div class="ip-card" data-ip-session="${E(x.id)}"><h3>${E(x.role)} · ${E(x.bandLabel)}</h3>`;
     if (x.status === 'in_progress' && x.mode === 'full' && x.sections && x.sections.length) {
-      out += fullHtml(x);
+      out += room(x, fullHtml(x));
     } else if (x.status === 'in_progress') {
       out += `<p class="ip-muted">Answer each question as you would say it in the interview, in a few sentences. Your answers save as you type. Submit when you are done; the session closes after a day without submitting and your credit is returned.</p>`;
       out += `<label class="ip-row ip-muted" style="margin:6px 0"><input type="checkbox" data-ip-clock${clock.on ? ' checked' : ''}> Use a timer (aim for about 2 minutes per answer, as in a real interview)</label>`;
-      out += x.answers.map(a => `<div class="ip-q"><b>${a.position}. ${E(a.question)}</b>${clock.on ? `<span class="ip-pill" data-ip-time="${a.position}">${mmss(secs(a.position))}</span>` : ''}<textarea data-ip-answer="${a.position}" maxlength="3000">${E(a.answer)}</textarea><details><summary class="ip-guide">What a good answer covers</summary><p class="ip-guide">${E(a.guidance)}</p></details></div>`).join('');
+      out += room(x, x.answers.map(a => `<div class="ip-q"><b>${a.position}. ${E(a.question)}</b>${clock.on ? `<span class="ip-pill" data-ip-time="${a.position}">${mmss(secs(a.position))}</span>` : ''}<textarea data-ip-answer="${a.position}" maxlength="3000">${E(a.answer)}</textarea><details><summary class="ip-guide">What a good answer covers</summary><p class="ip-guide">${E(a.guidance)}</p></details></div>`).join(''));
       out += `<button class="button mint" data-ip-submit>Submit for feedback</button>`;
     } else if (x.status === 'submitted' || x.status === 'evaluating') {
       out += `<p class="ip-muted">Your feedback is being prepared. This usually takes a minute or two; we will also let you know in your notifications.</p><button class="button secondary" data-ip-refresh>Check again</button>`;
@@ -228,4 +245,25 @@
 
   document.addEventListener('cvtara-workspace-view', e => { if (e.detail === 'interview') load(); });
   if (window.CVTaraWorkspaceView === 'interview') load();
+
+  // Interview room: show one question at a time.
+  const roomIdx = new WeakMap();
+  const showQ = (r, i) => {
+    const qs = [...r.querySelectorAll('.ip-q')]; if (!qs.length) return;
+    i = Math.max(0, Math.min(qs.length - 1, i)); roomIdx.set(r, i);
+    qs.forEach((q, k) => q.classList.toggle('on', k === i));
+    const dots = r.querySelector('.ip-dots');
+    if (dots) dots.innerHTML = qs.map((q, k) => `<button type="button" class="${k === i ? 'on' : ''}${q.querySelector('textarea')?.value.trim() ? ' done' : ''}" data-ip-dot="${k}" aria-label="Question ${k + 1}"></button>`).join('');
+    const prev = r.querySelector('[data-ip-go="-1"]'), next = r.querySelector('[data-ip-go="1"]');
+    if (prev) prev.disabled = i === 0;
+    if (next) next.hidden = i === qs.length - 1;
+    qs[i].querySelector('textarea')?.focus({ preventScroll: true });
+  };
+  new MutationObserver(() => document.querySelectorAll('.ip-room:not([data-ready])').forEach(r => { r.dataset.ready = '1'; showQ(r, 0); })).observe(document.body, { childList: true, subtree: true });
+  document.addEventListener('click', e => {
+    const r = e.target.closest('.ip-room'); if (!r) return;
+    const go = e.target.closest('[data-ip-go]'), dot = e.target.closest('[data-ip-dot]');
+    if (go) showQ(r, (roomIdx.get(r) || 0) + Number(go.dataset.ipGo));
+    if (dot) showQ(r, Number(dot.dataset.ipDot));
+  });
 })();
