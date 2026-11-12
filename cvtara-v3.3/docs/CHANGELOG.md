@@ -1,5 +1,14 @@
 # CVTara v3.66.0 — Interview question bulk upload
 
+## Review editor and What's new (version number set at deploy, after 3.67.0)
+Owner report (12 Nov 2026): the console "Edit review" window had no card, and customers had seen no update notes since 1 Nov. No migration.
+- **Console pop-ups fixed**: Edit review, Review history and "Confirm it's you" had no styles of their own, so the site-wide rule that makes every `<dialog>` transparent with no padding (for the template windows) left the form floating over the page with a sideways scrollbar. They now get a card, backdrop, phone layout and dark mode (`cvtara-ds.css`).
+- **Why customers got no updates**: notes were only ever added by hand in the console, and none had been added since 1 Nov, so the pop-up had nothing new to show (and customers who joined after 1 Nov had never seen one).
+- **Release notes ship with the code**: `WhatsNew::shipped()` holds each release's customer-facing notes. After a deploy they are added on the first page load, stamped with that time, so every customer who joined before sees them once. The owner can edit, hide or delete them; a deleted one never comes back (`removed` list in the `whatsNew` setting).
+- Notes added for 12 Nov (interview practice, full mock interview, company research, resume history, ATS Match job check, check before download, original file kept 90 days, tested ATS labels) and catch-up notes for 7-8 Nov (help centre, Job Hunt 10 + 10, support replies, Ask Tara).
+- Console What's new warns when the newest note is more than 14 days old. The customer pop-up waits up to 3 minutes (was 30 seconds) for another window to close before giving up for that visit.
+- Test suite `s40_whats_new` extended.
+
 ## 3.66.0
 Owner request (12 Nov 2026): bulk upload and bulk approval for the interview question bank. No migration.
 - **Bulk upload** in console Interview practice > Question bank: a CSV or Excel (.xlsx) sheet, one question per row (Role, Question, Guidance, Example, Skill, Difficulty, From, To). Role is a role name or slug, or "general" for every role; blank experience means fresher to 12+. Choose "Keep as drafts" or "Approve straight away". Rows with an unknown role, wrong length, wrong experience range or wording that mentions AI are listed by row number; wording already in the bank is skipped. Up to 2,000 rows per file. A blank sheet with two example rows downloads from the same panel.

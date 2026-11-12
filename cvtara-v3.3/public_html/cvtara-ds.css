@@ -469,3 +469,15 @@ html{overflow-y:scroll;scrollbar-gutter:stable}
 .cv-grid-wrap{overflow:auto}
 .cv-grid tbody[aria-busy=true]{opacity:.55;transition:opacity .15s}
 @media (max-width:640px){.cv-pager{justify-content:center}.cv-pager .gp-info{width:100%;text-align:center}}
+/* Console pop-up windows (Edit review, Review history, Confirm it's you). styles.css makes every <dialog> transparent with
+   no padding for the template windows, so these need their own card, backdrop and no sideways scrolling. */
+dialog.ops-dlg,dialog.ad-dialog{width:min(640px,calc(100vw - 32px));max-width:640px!important;max-height:min(88vh,860px);margin:auto;padding:24px 26px;overflow-x:hidden;overflow-y:auto;background:var(--paper);color:var(--ink);border:1px solid var(--line);border-radius:16px;box-shadow:0 24px 70px rgba(15,23,42,.35)}
+dialog.ops-dlg::backdrop,dialog.ad-dialog::backdrop{background:rgba(15,23,42,.55);backdrop-filter:blur(2px)}
+dialog.ops-dlg h3{font-size:19px;margin:0 0 6px;padding-right:8px}
+dialog.ops-dlg .ops-form{grid-template-columns:minmax(0,1fr)}
+dialog.ops-dlg .ops-form label{min-width:0}
+dialog.ops-dlg :is(input,select,textarea),dialog.ad-dialog :is(input,select,textarea){width:100%;max-width:100%;box-sizing:border-box}
+dialog.ops-dlg textarea{resize:vertical;min-height:130px}
+dialog.ops-dlg .ops-form .wide:last-child{display:flex;flex-wrap:wrap;gap:8px;align-items:center;padding-top:4px}
+dialog.ops-dlg blockquote,dialog.ops-dlg p{overflow-wrap:anywhere}
+@media (max-width:560px){dialog.ops-dlg,dialog.ad-dialog{padding:18px 16px;border-radius:14px}}

@@ -11,6 +11,10 @@ use Illuminate\Support\Str;
  * and can open the full list from the workspace top bar at any time. The owner adds and edits notes in the console.
  * Stored in site_settings under "whatsNew"; when nothing is saved yet, the seeded notes below are used.
  * The time a customer closed the window is kept in activity_events as "whats_new_seen" (no new table needed).
+ *
+ * Release notes ship with the code (shipped()): each release adds its customer-facing notes there, and they appear on the
+ * site by themselves after the deploy, stamped with the time they first went out, so customers are told about every update
+ * without the owner having to type it. The owner can still edit, hide or delete them; a deleted one never comes back.
  */
 class WhatsNew
 {
@@ -45,11 +49,48 @@ class WhatsNew
         ];
     }
 
-    /** Every note, newest first. */
+    /**
+     * Notes that ship with each release, newest first. Customer-facing changes only, in plain words, signed as the CVTara team,
+     * never naming AI or the tools behind it. Add a release's notes here in the same change as the release itself.
+     */
+    public static function shipped(): array
+    {
+        $n = fn ($id, $date, $tag, $title, $body) => ['id' => $id, 'date' => $date, 'tag' => $tag, 'title' => $title, 'body' => $body];
+
+        return [
+            $n('2026-11-12-interview-practice', '2026-11-12', 'new', 'Practise for your interviews', 'Open Interview practice in your account, pick your role and experience, and read real interview questions with what a good answer covers. Job Hunt includes 4 mock interviews and Pro includes 12, each with written feedback on your answers.'),
+            $n('2026-11-12-full-mock', '2026-11-12', 'new', 'A full 60-minute mock interview', 'Try a complete mock interview in four short parts: about you, the role, your past experience, and real situations. It uses one mock interview from your plan, just like a standard one.'),
+            $n('2026-11-12-company-research', '2026-11-12', 'new', 'Prepare for a specific company', 'Paste the company\'s website and get a short summary plus six practice questions about that company. Revision mode brings back your earlier mock interview answers so you can write a better one.'),
+            $n('2026-11-12-resume-history', '2026-11-12', 'new', 'Your resume keeps its history', 'Every save keeps the earlier version (the last 30). Open History on a resume to view an older version or put it back. The copy you send with a job application is kept exactly as it was.'),
+            $n('2026-11-12-right-job', '2026-11-12', 'improved', 'ATS Match checks it has the right job', 'Before a scan is used, ATS Match shows the job title, company and skills it read from the job post, so you can correct them first.'),
+            $n('2026-11-12-fact-check', '2026-11-12', 'safety', 'A quick check before you download', 'When you download a resume or cover letter tailored for a job, we list any number, year, tool or name that is not in your own resume, so you can remove it or confirm it is true.'),
+            $n('2026-11-12-original-file', '2026-11-12', 'new', 'Your uploaded file is kept for 90 days', 'When you build a resume from an upload, we keep a private copy of your original file for 90 days. Find it under Account, Your data, to download or delete it any time.'),
+            $n('2026-11-12-ats-label', '2026-11-12', 'improved', 'Honest ATS-friendly labels on templates', 'Every template is now tested by exporting it and reading the text back. Only single-column designs that pass the test show the ATS-friendly label.'),
+            $n('2026-11-08-help-centre', '2026-11-08', 'new', 'A new help centre', 'The customer guide is rewritten in 16 short chapters with search. The ? button in the top bar opens the chapter for the page you are on.'),
+            $n('2026-11-07-job-hunt', '2026-11-07', 'improved', 'More in the Job Hunt plan', 'Job Hunt (₹299, 30 days) now includes 10 tailored resumes and 10 cover letters, up from 5 and 5. Customers already on Job Hunt got the extra ones too.'),
+            $n('2026-11-07-support-replies', '2026-11-07', 'new', 'Talk to support inside your account', 'Every support request gets a reference number. See the team\'s replies and answer them from Support requests in the menu.'),
+            $n('2026-11-07-ask-tara', '2026-11-07', 'new', 'Ask Tara for quick help', 'Tara, the CVTara help chat, answers questions about your resume, cover letters, plans and the site. Open it from the button at the bottom of your workspace.'),
+        ];
+    }
+
+    /** Every note, newest first. Release notes from shipped() that the site does not have yet are added and stamped now. */
     public static function all(): array
     {
         $saved = Settings::get(self::KEY, null);
-        $list = is_array($saved) && isset($saved['entries']) && is_array($saved['entries']) ? $saved['entries'] : self::seed();
+        $has = is_array($saved) && isset($saved['entries']) && is_array($saved['entries']);
+        $list = $has ? $saved['entries'] : self::seed();
+        $removed = $has && is_array($saved['removed'] ?? null) ? $saved['removed'] : [];
+        $known = array_flip(array_merge(array_column($list, 'id'), $removed));
+        $add = [];
+        foreach (self::shipped() as $e) {
+            if (! isset($known[$e['id']])) {
+                $add[] = $e + ['published' => true, 'publishedAt' => now()->toIso8601String()];
+            }
+        }
+        if ($add) {
+            $list = array_merge($add, $list);
+            Settings::put(self::KEY, ['entries' => $list, 'removed' => $removed]);
+        }
         usort($list, fn ($a, $b) => [$b['date'] ?? '', $b['publishedAt'] ?? ''] <=> [$a['date'] ?? '', $a['publishedAt'] ?? '']);
 
         return array_values($list);
@@ -103,6 +144,8 @@ class WhatsNew
         foreach (self::all() as $e) {
             $old[$e['id']] = $e;
         }
+        $saved = Settings::get(self::KEY, null);
+        $removed = is_array($saved) && is_array($saved['removed'] ?? null) ? $saved['removed'] : [];
         $out = [];
         foreach ($entries as $e) {
             $id = isset($e['id']) && preg_match('/^[a-z0-9-]{3,60}$/', (string) $e['id']) ? $e['id'] : ($e['date'].'-'.Str::lower(Str::random(6)));
@@ -114,7 +157,9 @@ class WhatsNew
             }
             $out[] = ['id' => $id, 'date' => $e['date'], 'tag' => $e['tag'], 'title' => trim($e['title']), 'body' => trim($e['body']), 'published' => $published, 'publishedAt' => $publishedAt];
         }
-        Settings::put(self::KEY, ['entries' => $out]);
+        // a release note the owner deleted must not come back with the next page load
+        $removed = array_values(array_unique(array_merge($removed, array_diff(array_keys($old), array_column($out, 'id')))));
+        Settings::put(self::KEY, ['entries' => $out, 'removed' => array_slice($removed, -300)]);
         Settings::audit($ownerId, 'whats_new_saved', count($out).' notes');
 
         return self::all();
