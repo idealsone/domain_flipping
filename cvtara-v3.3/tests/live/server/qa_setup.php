@@ -15,11 +15,11 @@ $mk=function(string $email,string $name,bool $admin=false) {
     DB::table('profiles')->insert(['owner_id'=>$u->id,'name'=>$name,'experience_level'=>'fresher','profession'=>'Data Analyst','category'=>'Data & Analytics','onboarding_done'=>true,'marketing_consent'=>false,'created_at'=>now(),'updated_at'=>now()]);
   return [$u,$pw];
 };
-for($i=1;$i<=10;$i++){ [$u,$pw]=$mk(sprintf('%stester-%02d@%s',QA_PREFIX,$i,QA_DOMAIN),sprintf('QA Tester %02d',$i)); $out['customers'][]=['id'=>$u->id,'email'=>$u->email,'password'=>$pw,'referral'=>$u->referral_code]; }
+for($i=1;$i<=20;$i++){ [$u,$pw]=$mk(sprintf('%stester-%02d@%s',QA_PREFIX,$i,QA_DOMAIN),sprintf('QA Tester %02d',$i)); $out['customers'][]=['id'=>$u->id,'email'=>$u->email,'password'=>$pw,'referral'=>$u->referral_code]; }
 // Testers 5, 6 and 7 get a free Job Hunt grant (provider manual, ₹0, not live) so paid tools can be tested
 // without any payment. qa_cleanup.php deletes these ₹0 grants before erasing the accounts.
 $plans=\App\Services\Settings::plans(); $out['grants']=[];
-foreach([5,6,7] as $i){ $t=User::where('email',sprintf('%stester-%02d@%s',QA_PREFIX,$i,QA_DOMAIN))->first();
+foreach([5,6,7,12,13,14] as $i){ $t=User::where('email',sprintf('%stester-%02d@%s',QA_PREFIX,$i,QA_DOMAIN))->first();
   if(DB::table('purchases')->where('owner_id',$t->id)->where('provider','manual')->exists()) continue;
   $plan=$plans['job-hunt']??null; if(!$plan){ $out['grants'][]='no job-hunt plan'; break; }
   $id=(string)\Illuminate\Support\Str::uuid(); $order='manual_'.str_replace('-','',$id);
@@ -31,6 +31,10 @@ foreach([5,6,7] as $i){ $t=User::where('email',sprintf('%stester-%02d@%s',QA_PRE
 $sec=\App\Services\Totp::newSecret();
 DB::table('users')->where('id',$o->id)->update(['totp_secret'=>Crypt::encryptString($sec),'totp_enabled_at'=>now(),'totp_last_step'=>null]);
 $out['owner']=['id'=>$o->id,'email'=>$o->email,'password'=>$opw,'totp'=>$sec,'paths'=>config('app.owner_paths')];
+// a second QA owner so the scripted console check and the hands-on owner tester never share authenticator codes
+[$o2,$opw2]=$mk(QA_PREFIX.'owner2@'.QA_DOMAIN,'QA Test Owner 2',true); $sec2=\App\Services\Totp::newSecret();
+DB::table('users')->where('id',$o2->id)->update(['totp_secret'=>Crypt::encryptString($sec2),'totp_enabled_at'=>now(),'totp_last_step'=>null]);
+$out['owner2']=['id'=>$o2->id,'email'=>$o2->email,'password'=>$opw2,'totp'=>$sec2,'paths'=>config('app.owner_paths')];
 // B2B: a paused QA partner with one link; tester 10 is its manager.
 $pid=DB::table('partners')->where('name','QA TEST Partner (delete me)')->value('id');
 if(!$pid) $pid=DB::table('partners')->insertGetId(['name'=>'QA TEST Partner (delete me)','kind'=>'college','status'=>'active','contact_name'=>'QA','contact_email'=>QA_PREFIX.'partner@'.QA_DOMAIN,'plan_bps'=>3000,'addon_bps'=>4000,'agreement_ref'=>'QA-TEST','notes'=>'Live QA run, removed by qa_cleanup.php','created_by'=>$o->id,'created_at'=>now(),'updated_at'=>now()]);
@@ -38,6 +42,8 @@ DB::table('partners')->where('id',$pid)->update(['status'=>'active','agreement_r
 if(!DB::table('partner_links')->where('code','qa-test-partner')->exists()) DB::table('partner_links')->insert(['partner_id'=>$pid,'code'=>'qa-test-partner','campaign'=>'qa','label'=>'QA','active'=>true,'clicks'=>0,'created_at'=>now(),'updated_at'=>now()]);
 $t10=User::where('email',sprintf('%stester-10@%s',QA_PREFIX,QA_DOMAIN))->first();
 DB::table('partner_members')->updateOrInsert(['user_id'=>$t10->id],['partner_id'=>$pid,'role'=>'manager','created_at'=>now()]);
+$t20=User::where('email',sprintf('%stester-20@%s',QA_PREFIX,QA_DOMAIN))->first();
+DB::table('partner_members')->updateOrInsert(['user_id'=>$t20->id],['partner_id'=>$pid,'role'=>'manager','created_at'=>now()]);
 $out['partner']=['id'=>$pid,'link'=>'qa-test-partner'];
 $out['settings']=['emailVerification'=>\App\Services\EmailVerification::enabled(),'ownerCode'=>\App\Http\Controllers\AuthController::ownerCodeRequired(),'gateways'=>array_column(\App\Services\Payments::publicGateways(),'id')];
 $out['errorLogBaseline']=DB::table('error_logs')->max('id');
