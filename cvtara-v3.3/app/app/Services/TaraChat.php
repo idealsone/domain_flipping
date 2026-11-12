@@ -24,7 +24,7 @@ class TaraChat
 
     public const DEFAULTS = [
         'enabled' => false, 'model' => '', 'instructions' => '', 'freeDaily' => 10, 'paidDaily' => 60, 'siteDaily' => 2000,
-        'dailySpendInr' => 300, 'monthlySpendInr' => 5000, 'maxTokens' => 1500, 'historyMessages' => 16, 'maxSteps' => 5,
+        'dailySpendInr' => 300, 'monthlySpendInr' => 5000, 'maxTokens' => 1500, 'historyMessages' => 10, 'maxSteps' => 4,
         'tools' => [], 'handoff' => 'I have passed this to the CVTara support team. They reply by email, usually within one working day.',
         'suggestions' => true, 'nudges' => true, 'peerMin' => 3, 'greet' => true, 'toolsKnown' => [],
     ];
@@ -197,11 +197,12 @@ class TaraChat
         if ($older > 0) {
             self::summarise($conv, $s);
         }
-        $system = self::RULES."\n\nToday is ".now()->tz(Growth::TZ)->format('l, j F Y').'. The customer\'s first name is '.Str::before(trim((string) $u->name), ' ').'. '
-            .self::facts()
+        // 3.64.0: the fixed rules come first and are cached; today's date, the name and the summary follow them.
+        $system = AiGateway::system(
+            self::RULES."\n\n".self::facts().(trim((string) $s['instructions']) !== '' ? "\n\nThe CVTara team's extra instructions:\n".trim((string) $s['instructions']) : ''),
+            'Today is '.now()->tz(Growth::TZ)->format('l, j F Y').'. The customer\'s first name is '.Str::before(trim((string) $u->name), ' ').'.'
             .(($sum = (string) DB::table('tara_conversations')->where('id', $conv->id)->value('summary')) !== '' && $older > 0 ? "\n\nEarlier in this conversation (summary): ".$sum : '')
-            .(trim((string) $s['instructions']) !== '' ? "\n\nThe CVTara team's extra instructions:\n".trim((string) $s['instructions']) : '')
-            .$note;
+            .$note);
         [$text, $links] = self::loop(self::model($s), $system, $messages, self::toolDefs($s['tools']), (int) $s['maxTokens'], (int) $s['maxSteps'], self::PURPOSE, $u->id,
             fn ($name, $input) => self::runTool($u, $conv->id, $name, $input, $s['tools']),
             'I have looked into this but need a little more from you. Could you tell me which resume or job you mean?',
@@ -210,9 +211,10 @@ class TaraChat
         return [$text, $links];
     }
 
+    /** The customer chat model: Tara's own model box when filled, else the cheaper chat model (3.64.0). */
     public static function model(array $s): string
     {
-        return AiGateway::model($s['model'] ?? '');
+        return AiGateway::model($s['model'] ?? '', self::PURPOSE);
     }
 
     /** The recent messages of a conversation in the shape the AI service expects (starting with the person, roles alternating). */
@@ -242,10 +244,13 @@ class TaraChat
      * repeat until she answers in words. $run returns the tool's result; "_links" become buttons and "_cards" become
      * confirmation cards under the answer. Every request is counted in AI spending under $purpose (and the account).
      */
-    public static function loop(string $model, string $system, array $messages, array $tools, int $maxTokens, int $maxSteps, string $purpose, ?int $uid, callable $run, string $fallback, string $refusal): array
+    public static function loop(string $model, string|array $system, array $messages, array $tools, int $maxTokens, int $maxSteps, string $purpose, ?int $uid, callable $run, string $fallback, string $refusal): array
     {
         $links = [];
         $cards = [];
+        $system = is_array($system) ? $system : AiGateway::system($system);
+        $version = AiGateway::promptVersion((string) $system[0]['text']);
+        $cap = max(1000, (int) config('ai.tool_result_chars', 6000));
         for ($step = 0; $step < max(1, $maxSteps); $step++) {
             $m = AiGateway::send($purpose, $uid, fn ($c) => $c->beta->messages->create(
                 model: $model,
@@ -256,7 +261,7 @@ class TaraChat
                 outputConfig: ['effort' => 'low'],
                 fallbacks: AiGateway::fallbacks($model) ? 'default' : null,
                 betas: AiGateway::fallbacks($model) ? ['server-side-fallback-2026-07-01'] : null,
-            ), null, AiGateway::promptVersion($system));
+            ), null, $version);
             if ($m->stopReason === 'refusal') {
                 return [$refusal, $links, $cards];
             }
@@ -277,7 +282,11 @@ class TaraChat
                         $cards[] = $c;
                     }
                     unset($out['_links'], $out['_cards']);
-                    $results[] = ['type' => 'tool_result', 'toolUseID' => $b->id, 'content' => json_encode($out, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES), 'isError' => empty($out['ok'])];
+                    $json = (string) json_encode($out, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+                    if ($b->name !== 'product_guide' && mb_strlen($json) > $cap) {
+                        $json = mb_substr($json, 0, $cap).' …(cut to save space; ask for one item if you need more)'; // 3.64.0: every step re-sends what she read
+                    }
+                    $results[] = ['type' => 'tool_result', 'toolUseID' => $b->id, 'content' => $json, 'isError' => empty($out['ok'])];
                 }
             }
             if (! $results) {

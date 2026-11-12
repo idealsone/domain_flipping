@@ -18,6 +18,39 @@ class SeoBacklog
         return (array) json_decode((string) file_get_contents(resource_path('data/keyword-backlog.json')), true);
     }
 
+    /** The page playbook (3.62.0): rules, page template, answer-engine checklist and pillar map the agents work from. */
+    public static function playbook(): array
+    {
+        $f = resource_path('data/seo-playbook.json');
+
+        return is_file($f) ? (array) json_decode((string) file_get_contents($f), true) : [];
+    }
+
+    /**
+     * Missing pillar links from the last page scan: each supporting page should link up to its pillar and each pillar
+     * down to its supporting pages. Returns only gaps that the scan can prove (both pages scanned).
+     */
+    public static function linkPlan(): array
+    {
+        if (! Schema::hasTable('seo_pages')) {
+            return [];
+        }
+        $links = DB::table('seo_pages')->whereNotNull('scanned_at')->get(['path', 'links_json'])->mapWithKeys(fn ($r) => [$r->path => (array) json_decode((string) $r->links_json, true)]);
+        $out = [];
+        foreach (self::playbook()['pillars'] ?? [] as $p) {
+            foreach ($p['clusters'] as $c) {
+                if (isset($links[$c]) && ! in_array($p['url'], $links[$c], true)) {
+                    $out[] = ['from' => $c, 'to' => $p['url'], 'anchor' => $p['pillar'], 'why' => 'Supporting page does not link up to its pillar.'];
+                }
+                if (isset($links[$p['url']]) && ! in_array($c, $links[$p['url']], true)) {
+                    $out[] = ['from' => $p['url'], 'to' => $c, 'anchor' => '', 'why' => 'Pillar does not link down to this supporting page.'];
+                }
+            }
+        }
+
+        return $out;
+    }
+
     /** Adds missing keywords (never overwrites a target someone has set). Returns how many were added. */
     public static function load(): int
     {
@@ -84,10 +117,19 @@ class SeoBacklog
             $before = DB::table('ai_tasks')->count();
             AgentTasks::create(null, ['agent' => 'seo', 'priority' => 'normal', 'fingerprint' => 'seo:backlog:'.sha1($c['cluster']),
                 'title' => mb_substr('Plan pages for '.count($c['gaps']).' '.$c['cluster'].' searches', 0, 200),
-                'detail' => "These searches from the keyword backlog have no page yet:\n- ".implode("\n- ", $c['gaps'])."\n\nFirst check demand in Search Console or a keyword tool. Then either add a section to the closest existing page or draft one useful page for a group of them. Do not make one thin page per search."]);
+                'detail' => "These searches from the keyword backlog have no page yet:\n- ".implode("\n- ", $c['gaps'])."\n\nFirst check demand in Search Console or a keyword tool. Then either add a section to the closest existing page or draft one useful page for a group of them. Do not make one thin page per search."
+                    .self::templateNote()]);
             $n += DB::table('ai_tasks')->count() - $before;
         }
 
         return $n;
+    }
+
+    /** The page template in a few lines, so every planning task carries the same structure. */
+    private static function templateNote(): string
+    {
+        $t = self::playbook()['pageTemplate'] ?? [];
+
+        return $t ? "\n\nPage structure to follow:\n- ".implode("\n- ", array_map(fn ($x) => $x[0].': '.$x[1], $t)) : '';
     }
 }

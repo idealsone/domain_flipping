@@ -414,7 +414,8 @@
         <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:8px"><select id="brS"><option value="all">Any state</option>${Object.entries(BS).map(([k, v]) => `<option value="${k}">${v[0]}</option>`).join('')}</select><select id="brK"><option value="all">Any type</option>${Object.entries(BK).map(([k, v]) => `<option value="${k}">${v}</option>`).join('')}</select>
           <a class="button secondary small" id="brCsv" href="#">Download CSV</a><a class="button secondary small" id="brXl" href="#">Download Excel</a><button type="button" class="button primary small" id="brAdd">Add a listing</button></div>
         <div id="brT"></div><div class="ops-pager" id="brP"></div></section>
-        <section class="panel panel-pad" data-nokit><h3 style="margin-top:0">Keyword backlog</h3><p class="muted" style="margin-top:0" id="kbSrc"></p><div id="kbT"></div></section>`;
+        <section class="panel panel-pad" data-nokit><h3 style="margin-top:0">Keyword backlog</h3><p class="muted" style="margin-top:0" id="kbSrc"></p><div id="kbT"></div></section>
+        <section class="panel panel-pad" data-nokit><h3 style="margin-top:0">How the agents write and link pages</h3><p class="muted" style="margin-top:0">The playbook every planning task follows, and pillar links the last page scan found missing.</p><div id="kbPb"></div><div id="kbLp"></div></section>`;
       $('#brS', h).onchange = e => { BR.status = e.target.value; BR.page = 1; brands(h); };
       $('#brK', h).onchange = e => { BR.kind = e.target.value; BR.page = 1; brands(h); };
       $('#brAdd', h).onclick = () => brandForm(h, {});
@@ -423,6 +424,12 @@
     try {
       const b = await api('/api/admin/growth/seo/backlog'); $('#kbSrc', h).textContent = b.source;
       $('#kbT', h).innerHTML = table(['Cluster', 'Searches', 'With a page', 'Without a page yet'], b.clusters.map(c => `<tr><td>${E(c.cluster)}</td><td>${n(c.keywords)}</td><td>${n(c.mapped)}</td><td>${c.gaps.length ? `<details><summary>${n(c.gaps.length)}</summary><ul>${c.gaps.map(g => `<li>${E(g)}</li>`).join('')}</ul></details>` : '0'}</td></tr>`), 'No backlog loaded.');
+      const pb = b.playbook || {};
+      $('#kbPb', h).innerHTML = (pb.rules || []).length ? `<details><summary>Rules (${n(pb.rules.length)})</summary><ul>${pb.rules.map(r => `<li>${E(r)}</li>`).join('')}</ul></details>
+        <details><summary>Page template (${n((pb.pageTemplate || []).length)} blocks)</summary><ol>${(pb.pageTemplate || []).map(x => `<li><b>${E(x[0])}</b>: ${E(x[1])}</li>`).join('')}</ol></details>
+        <details><summary>Answer-engine checklist</summary><ul>${(pb.aiSearch || []).map(r => `<li>${E(r)}</li>`).join('')}</ul></details>
+        <details><summary>Pillars (${n((pb.pillars || []).length)})</summary><ul>${(pb.pillars || []).map(p => `<li><a href="${E(p.url)}" target="_blank" rel="noopener">${E(p.pillar)}</a>: ${n(p.clusters.length)} supporting pages</li>`).join('')}</ul></details>` : '';
+      $('#kbLp', h).innerHTML = table(['From', 'To', 'Why'], (b.linkPlan || []).slice(0, 50).map(l => `<tr><td>${E(l.from)}</td><td>${E(l.to)}${l.anchor ? `<br><small class="muted">Link text: ${E(l.anchor)}</small>` : ''}</td><td>${E(l.why)}</td></tr>`), 'No missing pillar links in the last scan.');
     } catch (e) { $('#kbT', h).innerHTML = `<p role="alert">${E(err(e))}</p>`; }
   }
   async function brands(h) {
