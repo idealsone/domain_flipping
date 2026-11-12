@@ -27,12 +27,28 @@ class InterviewAdminController extends Controller
 
             return $ok(Interviews::adminList($f));
         }
+        if ($path === 'interviews/template' && $r->isMethod('GET')) {
+            return response(Interviews::importTemplate(), 200, ['Content-Type' => 'text/csv; charset=utf-8', 'Content-Disposition' => 'attachment; filename="interview-questions-blank.csv"']);
+        }
         abort_unless($r->isMethod('POST'), 405);
+        if ($path === 'interviews/import') {
+            $v = $r->validate(['text' => 'nullable|string|max:3000000', 'sheet' => 'nullable|string|max:11000000', 'approve' => 'sometimes|boolean']);
+            if (! empty($v['sheet'])) {
+                // An Excel (.xlsx) file, sent as base64: its first sheet becomes tab-separated rows.
+                $v['text'] = \App\Services\Outreach::sheetText((string) base64_decode($v['sheet'], true));
+                abort_if($v['text'] === '', 422, 'That Excel file could not be read. Save it as .xlsx or CSV and try again.');
+            }
+            abort_if(trim((string) ($v['text'] ?? '')) === '', 422, 'Choose a file first.');
+            $res = Interviews::import($u, (string) $v['text'], (bool) ($v['approve'] ?? false));
+            Settings::audit($u->id, 'interview_questions_imported', $res['added'].' added, '.$res['approved'].' approved');
+
+            return $ok(['import' => $res] + Interviews::adminList([]));
+        }
         if ($path === 'interviews/seed') {
             return $ok(['added' => Interviews::seed()] + Interviews::adminList([]));
         }
         if ($path === 'interviews/approve') {
-            $v = $r->validate(['ids' => 'nullable|array|max:500', 'ids.*' => 'integer', 'occupation' => 'nullable|string|max:80']);
+            $v = $r->validate(['ids' => 'nullable|array|max:2000', 'ids.*' => 'integer', 'occupation' => 'nullable|string|max:80']);
             $n = Interviews::approve($u, $v['ids'] ?? [], $v['occupation'] ?? null);
             Settings::audit($u->id, 'interview_questions_approved', (string) $n);
 

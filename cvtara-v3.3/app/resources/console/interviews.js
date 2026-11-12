@@ -33,7 +33,14 @@
         <div class="ops-form" style="margin-bottom:10px"><label>Role<select id="ivRole"><option value="">All</option><option value="general" ${F.occupation === 'general' ? 'selected' : ''}>Every role (general)</option>${S.occupations.map(o => `<option value="${E(o.slug)}" ${F.occupation === o.slug ? 'selected' : ''}>${E(o.name)}</option>`).join('')}</select></label>
         <label>Status<select id="ivStatus"><option value="">All</option>${['draft', 'approved', 'retired'].map(s => `<option ${F.status === s ? 'selected' : ''}>${s}</option>`).join('')}</select></label>
         <button class="button secondary" id="ivApproveAll" ${F.occupation ? '' : 'disabled title="Pick a role first"'}>Approve all drafts for this role</button>
-        ${(c.draft || c.approved || c.retired) ? '' : '<button class="button secondary" id="ivSeed">Load the starter questions</button>'}</div>
+        <button class="button primary" id="ivApproveEvery" ${c.draft ? '' : 'disabled title="No drafts waiting"'}>Approve all ${c.draft || 0} drafts (every role)</button>
+        <button class="button secondary" id="ivSeed">Load any new starter questions</button></div>
+        <details class="panel panel-pad" style="margin:0 0 12px" id="ivUp"><summary><b>Bulk upload questions (Excel or CSV)</b></summary>
+          <p class="muted" style="margin:8px 0">One question per row. Columns: Role, Question, Guidance, Example, Skill, Difficulty (1 to 3), From and To (experience: ${Object.keys(S.bands || {}).join(', ') || 'fresher, 1-3, 3-5, 5-8, 8-12, 12+'}). Role can be a role name from the list above, or "general" for every role. A question already in the bank is skipped.</p>
+          <div class="ops-form"><label class="grow">File<input type="file" id="ivFile" accept=".csv,.txt,.xlsx,text/csv,text/plain,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"></label>
+          <label>After upload<select id="ivUpMode"><option value="0">Keep as drafts for me to check</option><option value="1">Approve straight away</option></select></label>
+          <button class="button secondary small" type="button" id="ivBlank">⬇ Download blank sheet</button><button class="button primary" type="button" id="ivUpload">Upload</button></div>
+          <div id="ivUpRes" role="status" style="margin-top:8px"></div></details>
         <div style="overflow:auto"><table class="ops-table"><thead><tr><th>Code</th><th>Role</th><th>Question</th><th>Skill</th><th>Experience</th><th>Status</th><th></th></tr></thead><tbody>
         ${S.questions.map(q => `<tr><td>${E(q.code)}<br><small class="muted">v${E(q.version)}</small></td><td>${E(roleName(q.occupation))}</td><td style="min-width:280px">${E(q.text)}<br><small class="muted">${E(q.guidance)}</small></td><td>${E(q.competency)}</td><td>${E(q.min_band)} to ${E(q.max_band)}</td><td>${E(q.status)}${q.approvedBy ? `<br><small class="muted">${E(q.approvedBy)}</small>` : ''}</td>
           <td style="white-space:nowrap">${q.status === 'draft' ? `<button class="button small primary" data-iv-approve="${q.id}">Approve</button> ` : ''}<button class="button small secondary" data-iv-edit="${q.id}">Edit</button> ${q.status !== 'retired' ? `<button class="button small secondary" data-iv-retire="${q.id}">Retire</button>` : ''}</td></tr>`).join('') || '<tr><td colspan="7">No questions match.</td></tr>'}
@@ -46,7 +53,22 @@
 
     $('#ivRole', h).onchange = e => { F.occupation = e.target.value; load(); };
     $('#ivStatus', h).onchange = e => { F.status = e.target.value; load(); };
-    const seed = $('#ivSeed', h); if (seed) seed.onclick = () => act(() => post('/api/admin/interviews/seed', {}), 'Starter questions loaded as drafts');
+    $('#ivSeed', h).onclick = () => act(() => post('/api/admin/interviews/seed', {}).then(j => { toast(j.added ? `${j.added} new starter questions loaded as drafts` : 'Every starter question is already loaded'); return j; }));
+    $('#ivApproveEvery', h).onclick = () => { if (confirm(`Approve all ${c.draft || 0} draft questions for every role? Customers will see them once mock interviews are on.`)) act(() => post('/api/admin/interviews/approve', { occupation: '*' }).then(j => { toast(`${j.approved} questions approved`); return j; })); };
+    $('#ivBlank', h).onclick = () => { location.href = '/api/admin/interviews/template'; };
+    $('#ivUpload', h).onclick = async ev => {
+      const f = $('#ivFile', h).files[0], out = $('#ivUpRes', h); if (!f) { out.textContent = 'Choose a file first.'; return; }
+      if (!/\.(csv|txt|xlsx)$/i.test(f.name)) { out.textContent = 'Save the sheet as Excel .xlsx or as CSV, then choose that file.'; return; }
+      if (f.size > 8e6) { out.textContent = 'That file is over 8 MB. Split it into smaller files.'; return; }
+      const body = { approve: $('#ivUpMode', h).value === '1' };
+      if (/\.xlsx$/i.test(f.name)) { const b = new Uint8Array(await f.arrayBuffer()); let bin = ''; for (let k = 0; k < b.length; k += 0x8000) bin += String.fromCharCode.apply(null, b.subarray(k, k + 0x8000)); body.sheet = btoa(bin); } else body.text = await f.text();
+      ev.target.disabled = true; out.textContent = 'Reading the file…';
+      try {
+        const j = await post('/api/admin/interviews/import', body), r = j.import;
+        S = j; draw(); const o = $('#ivUpRes'); $('#ivUp').open = true;
+        o.innerHTML = `<b>${r.added} added</b>${r.approved ? ` and approved` : ' as drafts'} from ${r.received} rows. ${r.duplicate ? r.duplicate + ' already in the bank, skipped. ' : ''}${r.errors.length ? `<br>Not added:<ul>${r.errors.map(x => `<li>${E(x)}</li>`).join('')}</ul>` : ''}`;
+      } catch (e) { out.textContent = err(e); ev.target.disabled = false; }
+    };
     $('#ivApproveAll', h).onclick = () => { if (confirm(`Approve every draft question for ${roleName(F.occupation === 'general' ? null : F.occupation)}? Customers will see them once mock interviews are on.`)) act(() => post('/api/admin/interviews/approve', { occupation: F.occupation }), 'Approved'); };
     $('#ivSet', h).onsubmit = async ev => {
       ev.preventDefault(); const f = ev.target;

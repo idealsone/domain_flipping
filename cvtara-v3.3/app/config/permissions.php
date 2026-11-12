@@ -112,7 +112,8 @@ return [
 
         // 3.49.0 interview practice: question bank, sessions and complimentary mock interviews.
         ['GET', '#^interviews$#', 'content.edit|customers.view'],
-        ['POST', '#^interviews/(seed|approve|questions/\d+(/retire)?)$#', 'content.edit'],
+        ['GET', '#^interviews/template$#', 'content.edit'],
+        ['POST', '#^interviews/(seed|approve|import|questions/\d+(/retire)?)$#', 'content.edit'],
         ['POST', '#^interviews/grant$#', 'customers.manage'],
 
         // 3.54.0 PartnerHub. Marking commissions paid is owner only (no rule).
