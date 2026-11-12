@@ -106,6 +106,17 @@ class AdminController extends Controller
                 User::whereKey($id)->lockForUpdate()->first();
                 abort_unless(Settings::revision($key) === $r->integer('revision'), 409);
                 $old = Settings::get($key);
+                if ($key === 'blog') { // 3.68.0: a guide whose words changed shows today's date as "Updated"; an unchanged one keeps its date
+                    foreach ($data as $slug => &$post) {
+                        $was = $old[$slug] ?? [];
+                        $same = array_intersect_key($post, array_flip(['title', 'description', 'body', 'faq', 'imageUrl', 'category'])) == array_intersect_key($was, array_flip(['title', 'description', 'body', 'faq', 'imageUrl', 'category']));
+                        $post['updatedAt'] = $same && ! empty($was['updatedAt']) ? $was['updatedAt'] : ($same ? ($post['updatedAt'] ?? null) : now()->toIso8601String());
+                        if ($post['updatedAt'] === null) {
+                            unset($post['updatedAt']);
+                        }
+                    }
+                    unset($post);
+                }
                 Settings::put($key, $data);
                 if ($key === 'blog') {
                     foreach ($data as $slug => $post) {

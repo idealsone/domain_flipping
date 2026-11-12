@@ -394,6 +394,9 @@ class ContentController extends Controller
             $minutes = max(1, (int) ceil($words / 200));
             $kind = $isCalc ? 'Calculator' : 'Guide';
             $meta = 'By <b>'.e($post['author'] ?? 'CVTara Editorial Team').'</b> · '.$minutes.' min read · '.$kind.(! empty($post['category']) ? ' · '.e($post['category']) : '');
+            if ($upd = \App\Services\SeoContent::updatedAt('/'.($isCalc ? 'calculators' : 'guides').'/'.$slug.'/', $post)) { // 3.68.0
+                $meta .= ' · Updated <time datetime="'.substr($upd, 0, 10).'">'.e(\Carbon\Carbon::parse($upd)->tz('Asia/Kolkata')->format('j M Y')).'</time>';
+            }
             if ($rev = \App\Services\SeoContent::reviewedAt('/'.($isCalc ? 'calculators' : 'guides').'/'.$slug.'/')) { // 3.45.0: only a review a person recorded
                 $meta .= ' · Reviewed '.e(\Carbon\Carbon::parse($rev)->tz('Asia/Kolkata')->format('j M Y'));
             }
@@ -502,6 +505,9 @@ class ContentController extends Controller
         if ($post) {
             $image = $post['imageUrl'] ?? '';
             $schema = ['@context' => 'https://schema.org', '@type' => 'BlogPosting', 'headline' => $post['title'], 'description' => $post['description'], 'url' => $siteBase.$uri, 'author' => ['@type' => 'Organization', 'name' => $post['author'] ?? 'CVTara'], 'publisher' => ['@type' => 'Organization', 'name' => 'CVTara']];
+            if ($upd = \App\Services\SeoContent::updatedAt('/'.(($post['type'] ?? '') === 'Calculator' ? 'calculators' : 'guides').'/'.$slug.'/', $post)) {
+                $schema['dateModified'] = substr($upd, 0, 10); // 3.68.0
+            }
             if ($image) {
                 $schema['image'] = $abs($image);
             }$schema['mainEntityOfPage'] = $siteBase.$uri;
