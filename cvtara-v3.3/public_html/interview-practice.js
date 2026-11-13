@@ -209,7 +209,7 @@
       try { const { roles } = await api('interviews/roles?q=' + encodeURIComponent(f.value.trim())); box.innerHTML = roles.length ? roles.map(r => `<button type="button" class="button secondary small" data-ip-pick="${E(r.slug)}">${E(r.name)}${r.matched ? ` <small>(${E(r.matched)})</small>` : ''}</button>`).join('') : '<span class="ip-muted">No match yet. Choose the closest role from the list.</span>'; } catch { box.innerHTML = ''; } }, 250);
   });
 
-  // 3.72.0 the customer's own question bank: every question for their role and level, by category and skill, 20 a page,
+  // 3.73.0 the customer's own question bank: every question for their role and level, by category and skill, 20 a page,
   // with progress. Free accounts see a few questions and the full size of their bank, and how Job Hunt and Pro open it up.
   const bank = { occ: '', band: '', cat: '', skill: '', page: 1, todo: false, last: null };
   const lakhs = n => Number(n || 0).toLocaleString('en-IN');

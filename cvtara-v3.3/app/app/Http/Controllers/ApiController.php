@@ -305,7 +305,7 @@ class ApiController extends Controller
 
             return $ok(\App\Services\Interviews::questions($u, $v['occupation'], $v['band'], $v));
         }
-        // 3.72.0 tick a bank question as practised (progress by category).
+        // 3.73.0 tick a bank question as practised (progress by category).
         if ($path === 'interviews/practised' && $r->isMethod('POST')) {
             $cap('interview-practised', 600, 3600, 'Please slow down a little.');
             $v = $r->validate(['code' => 'required|string|max:40', 'done' => 'required|boolean']);

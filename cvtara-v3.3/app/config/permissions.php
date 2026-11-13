@@ -115,7 +115,7 @@ return [
         ['GET', '#^interviews/template$#', 'content.edit'],
         ['POST', '#^interviews/(seed|approve|import|questions/\d+(/retire)?)$#', 'content.edit'],
         ['POST', '#^interviews/grant$#', 'customers.manage'],
-        // 3.72.0 the large question bank (switching it on or off is owner only, above).
+        // 3.73.0 the large question bank (switching it on or off is owner only, above).
         ['GET', '#^interviews/bank/patterns(/[PR]\d{2})?$#', 'content.edit|customers.view'],
         ['POST', '#^interviews/bank/(status|sync)$#', 'content.edit'],
 

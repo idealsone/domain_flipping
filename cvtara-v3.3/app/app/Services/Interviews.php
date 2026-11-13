@@ -201,7 +201,7 @@ class Interviews
     }
 
     /**
-     * Question practice: stored questions and guidance only (no AI). 3.72.0: the customer's own bank for the role and
+     * Question practice: stored questions and guidance only (no AI). 3.73.0: the customer's own bank for the role and
      * level, the starter questions plus the large generated bank, by category or skill, 20 a page, with progress.
      */
     public static function questions(User $u, string $occupation, string $band, array $f = []): array
@@ -378,7 +378,7 @@ class Interviews
     public static function modelAnswer(User $u, string $code): array
     {
         if (str_starts_with($code, 'G-') && ! DB::table('interview_questions')->where('code', $code)->exists() && ($g = InterviewBank::resolve($code)) && self::fullBank($u)) {
-            InterviewBank::materialize([$g]); // 3.72.0 a generated question is stored the first time someone asks for its model answer
+            InterviewBank::materialize([$g]); // 3.73.0 a generated question is stored the first time someone asks for its model answer
         }
         $q = DB::table('interview_questions as q')->join('interview_question_versions as v', 'v.id', '=', 'q.current_version_id')->where('q.code', $code)->where('q.status', 'approved')->first(['q.occupation', 'v.id as vid', 'v.text', 'v.guidance']);
         abort_unless($q, 404, 'This question is not available.');
@@ -538,7 +538,7 @@ class Interviews
             ->where('s.owner_id', $uid)->whereIn('s.id', DB::table('interview_sessions')->where('owner_id', $uid)->orderByDesc('created_at')->limit(200)->pluck('id'))
             ->pluck('v.question_id')->countBy()->all();
         $order = fn ($c) => $c->sortBy(fn ($r) => [($seen[$r->id] ?? 0), crc32($uid.':'.$r->id.':'.date('Y-m-d'))])->values();
-        // 3.72.0 questions from the large bank join the role's own: new ones before anything this customer was asked before.
+        // 3.73.0 questions from the large bank join the role's own: new ones before anything this customer was asked before.
         $rows = $rows->filter(fn ($r) => ! str_starts_with($r->code, 'G-'));
         $gen = collect(InterviewBank::pick($uid, $occupation, $band, $n, ['introduction', 'closing'], self::askedCodes($uid)));
         $fresh = fn ($c) => $c->filter(fn ($r) => ! isset($seen[$r->id]));
@@ -586,7 +586,7 @@ class Interviews
             ->pluck('v.question_id')->countBy()->all();
         $rows = $rows->filter(fn ($r) => ! str_starts_with($r->code, 'G-'));
         $rows = $rows->sortBy(fn ($r) => [($seen[$r->id] ?? 0), crc32($uid.':'.$r->id.':'.date('Y-m-d'))])->values();
-        // 3.72.0 new questions from the large bank go after the unseen starter questions and before repeats.
+        // 3.73.0 new questions from the large bank go after the unseen starter questions and before repeats.
         $gen = collect(InterviewBank::pick($uid, $occupation, $band, 24, ['introduction', 'closing'], self::askedCodes($uid)));
         $rows = $rows->filter(fn ($r) => ! isset($seen[$r->id]))->concat($gen)->concat($rows->filter(fn ($r) => isset($seen[$r->id])))->values()
             ->each(function ($r, $i) { $r->id = $r->id ?: 'g'.$i; });

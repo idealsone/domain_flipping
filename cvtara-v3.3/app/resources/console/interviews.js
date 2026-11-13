@@ -98,7 +98,7 @@
     };
   }
 
-  // 3.72.0 the large question bank: about 5.8 lakh questions made from approved patterns, only when a customer needs one.
+  // 3.73.0 the large question bank: about 5.8 lakh questions made from approved patterns, only when a customer needs one.
   const lakh = n => n >= 100000 ? (n / 100000).toFixed(2).replace(/\.?0+$/, '') + ' lakh' : Number(n || 0).toLocaleString('en-IN');
   const TIER = { entry: 'Fresher to 3 years', mid: '3 to 8 years', senior: '8 years or more' };
   function bankPanel() {

@@ -1,9 +1,9 @@
-"""3.72.0 the large interview question bank (owner, 13-14 Nov 2026): 352 roles in 22 job families, 10 skills each, 66 patterns
+"""3.73.0 the large interview question bank (owner, 13-14 Nov 2026): 352 roles in 22 job families, 10 skills each, 66 patterns
 written for CVTara in the standard interview categories, worded for three experience tiers: about 5.8 lakh questions. A question
 is made only when needed and only from patterns the owner approved; the customer gets a personal bank by category and skill
 with progress; free accounts see samples and how Job Hunt and Pro open the bank; mock interviews draw new questions from it."""
 import http.server, json, re, threading, time
-NAME = "3.72.0 large question bank"
+NAME = "3.73.0 large question bank"
 
 
 class Fake(http.server.BaseHTTPRequestHandler):

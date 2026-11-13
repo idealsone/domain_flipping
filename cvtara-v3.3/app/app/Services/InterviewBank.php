@@ -7,7 +7,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 
 /**
- * 3.72.0 The large interview question bank (owner, 12-13 Nov 2026: "5 lakh questions", personal to each customer).
+ * 3.73.0 The large interview question bank (owner, 12-13 Nov 2026: "5 lakh questions", personal to each customer).
  *
  * Questions are made from resources/data/interview-catalogue.json (built by tools/interview/build_catalogue.py):
  * 352 roles in 22 job families, 10 skills per role, three experience tiers and 66 question patterns written for CVTara,

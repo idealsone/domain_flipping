@@ -33,7 +33,7 @@ class InterviewAdminController extends Controller
         if ($path === 'interviews/sessions' && $r->isMethod('GET')) {
             return $ok(Interviews::sessionsPage($r));
         }
-        // 3.72.0 the large question bank: patterns, sample questions, approval and the on/off switch.
+        // 3.73.0 the large question bank: patterns, sample questions, approval and the on/off switch.
         if ($path === 'interviews/bank/patterns' && $r->isMethod('GET')) {
             return $ok(\App\Services\InterviewBank::patternsPage($r));
         }

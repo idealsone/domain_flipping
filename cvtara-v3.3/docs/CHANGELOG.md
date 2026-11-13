@@ -1,7 +1,7 @@
-# CVTara v3.72.0 — Large interview question bank
+# CVTara v3.73.0 — Large interview question bank
 
-## 3.72.0
-Owner (12-14 Nov 2026): "5 lakh questions", personal to each customer's background, in the categories real interviews use, interactive enough that customers keep practising, with a clear way to Pro. Built on 3.71.0. **Migration:** `2026_12_04_000001_interview_bank` (additive: `interview_bank_patterns`, `interview_practised`, and the catalogue's roles added to `career_occupations`).
+## 3.73.0
+Owner (12-14 Nov 2026): "5 lakh questions", personal to each customer's background, in the categories real interviews use, interactive enough that customers keep practising, with a clear way to Pro. Built on 3.71.0 (numbered 3.73.0 because the brand sitelinks release took 3.72.0). **Migration:** `2026_12_04_000001_interview_bank` (additive: `interview_bank_patterns`, `interview_practised`, and the catalogue's roles added to `career_occupations`).
 - **Catalogue.** `resources/data/interview-catalogue.json`, built by `tools/interview/build_catalogue.py` from `roles.py` and `patterns.py`: 22 job families, 352 roles (the 24 starter roles keep their slugs), 10 skills each, and 66 question patterns written for CVTara (54 asked per skill, 12 per role: HR round, job switch, salary and notice period, gaps). Every pattern has fresher, mid-level and senior wording and its own "what a good answer covers". 352 x 10 x 3 x 54 + 352 x 3 x 12 = **5,82,912 distinct questions**. Nothing is copied from other sites.
 - **Made when needed.** `Services/InterviewBank.php` works a question out from its code (`G-{role}-{skill}-{tier}-{pattern}`) and stores it in the bank only the first time it is asked in a mock interview or a model answer is requested. Only owner-approved patterns are used (all 66 start as drafts); the bank has an on/off switch.
 - **Categories.** HR round, Behavioural, Situational, Role skills and knowledge, Customer and stakeholder handling, Leadership and management, Integrity and rules, Motivation and career. Starter questions are placed in the same categories.

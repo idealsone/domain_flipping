@@ -45,7 +45,7 @@ def run(ctx, t):
         # Starter bank arrives as drafts from the migration; nothing is shown before approval.
         s, a = o.api("GET", "admin/interviews")
         t.check("the starter question bank is loaded as drafts", s == 200 and int(a["counts"].get("draft", 0)) >= 80 and not a["counts"].get("approved"), (s, a.get("counts") if isinstance(a, dict) else a))
-        t.check("the 24 starter roles plus the 3.72 catalogue roles are listed", len(a["occupations"]) >= 352, len(a.get("occupations", [])))
+        t.check("the 24 starter roles plus the 3.73 catalogue roles are listed", len(a["occupations"]) >= 352, len(a.get("occupations", [])))
 
         def customer(e, plan=None):
             c = Client(inst.base); c.register(e); c.page("/workspace.html")

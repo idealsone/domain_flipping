@@ -5,7 +5,7 @@ use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
 /**
- * 3.72.0 The large interview question bank (owner, 12-14 Nov 2026). Additive only:
+ * 3.73.0 The large interview question bank (owner, 12-14 Nov 2026). Additive only:
  *  - interview_bank_patterns: the question patterns and whether the owner approved each one (all start as drafts);
  *  - interview_practised: questions a customer ticked as practised, for progress by category;
  *  - career_occupations: the catalogue's 352 roles are added (existing roles and the owner's edits are kept).

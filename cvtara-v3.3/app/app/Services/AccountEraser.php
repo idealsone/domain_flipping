@@ -74,7 +74,7 @@ class AccountEraser
             if (Schema::hasTable('interview_model_answers')) {
                 DB::table('interview_model_answers')->where('owner_id', $id)->delete();
             }
-            // 3.72.0 which bank questions the customer ticked as practised.
+            // 3.73.0 which bank questions the customer ticked as practised.
             if (Schema::hasTable('interview_practised')) {
                 DB::table('interview_practised')->where('owner_id', $id)->delete();
             }

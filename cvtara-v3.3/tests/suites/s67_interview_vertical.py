@@ -36,7 +36,7 @@ def run(ctx, t):
         db = Db(inst.db); Client.verify_db = inst.db
         roles = db.q("select slug, domain, isco_code, seniority, synonyms from career_occupations order by slug")
         starter = ("customer-support", "sales-executive", "hr-recruiter", "inside-sales", "teacher", "data-entry", "event-coordinator")
-        t.check("every role (24 starter + 3.72 catalogue) has a domain, seniority ladder and synonyms; starter roles keep their ISCO-08 code", len(roles) >= 352 and all(r[1] and r[3] and r[4] for r in roles)
+        t.check("every role (24 starter + 3.73 catalogue) has a domain, seniority ladder and synonyms; starter roles keep their ISCO-08 code", len(roles) >= 352 and all(r[1] and r[3] and r[4] for r in roles)
                 and all(r[2] for r in roles if r[0] in starter), [r for r in roles if not (r[1] and r[3] and r[4])][:3])
         t.check("the 12 new roles arrive with draft questions only", db.q("select count(*) from interview_questions where occupation='inside-sales' and status='draft'")[0][0] == 2)
         c = Client(inst.base); c.register("iv-a@test.local"); c.page("/workspace.html")
