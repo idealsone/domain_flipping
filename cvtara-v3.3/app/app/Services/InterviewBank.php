@@ -110,7 +110,7 @@ class InterviewBank
         foreach ($c['roles'] ?? [] as $r) {
             $f = $c['families'][$r['family']];
             $n += DB::table('career_occupations')->insertOrIgnore(['slug' => $r['slug'], 'name' => $r['name'], 'family' => $f['name'], 'industry' => $f['industry'], 'synonyms' => $r['synonyms'], 'active' => true, 'created_at' => now(), 'updated_at' => now()]
-                + ($tax ? ['domain' => $f['domain'], 'seniority' => ''] : []));
+                + ($tax ? ['domain' => $f['domain'], 'seniority' => 'Fresher, Executive, Senior executive, Team leader, Manager'] : []));
         }
 
         return $n;
