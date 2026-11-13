@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Http\Controllers\ContentController;
 use Carbon\Carbon;
 use Illuminate\Http\Client\RequestException;
 use Illuminate\Support\Facades\DB;
@@ -18,12 +19,13 @@ use Illuminate\Support\Facades\Http;
 class SeoOps
 {
     /** The pages that matter most for search and for the brand result (Google may choose some of them as sitelinks). */
-    public const IMPORTANT = ['/', '/resume-builder/', '/ats-checker/', '/cover-letter-generator/', '/templates.html', '/resume-templates/', '/resume-examples/', '/cover-letter-examples/', '/cover-letter-examples/how-to-write/',
+    public const IMPORTANT = ['/', '/resume-builder/', '/ats-checker/', '/pricing/', '/cover-letter-generator/', '/templates.html', '/resume-templates/', '/resume-examples/', '/cover-letter-examples/', '/cover-letter-examples/how-to-write/',
         '/cover-letters.html', '/guides.html', '/blog.html', '/interview-questions/', '/resume-words/', '/resume-builder/india/', '/about.html', '/contact.html', '/partners.html'];
 
     /** The brand result the owner wants: main pages Google may show under the CVTara result. null = no page for it yet. */
-    public const SITELINKS = ['Resume Builder' => '/resume-builder/', 'ATS Resume Checker' => '/ats-checker/', 'Resume vs JD Matcher' => null, 'Cover Letter Generator' => '/cover-letter-generator/',
-        'Resume Templates' => '/resume-templates/', 'Career Resources' => '/guides.html', 'Pricing and Plans' => null, 'About CVTara' => '/about.html', 'Contact and Support' => '/contact.html'];
+    public const SITELINKS = ['Resume Builder' => '/resume-builder/', 'ATS Resume Checker' => '/ats-checker/', 'Resume Templates' => '/resume-templates/', 'Cover Letter Generator' => '/cover-letter-generator/',
+        'Interview Questions' => '/interview-questions/', 'Resume Examples' => '/resume-examples/', 'Pricing and Plans' => '/pricing/', 'Career Resources' => '/guides.html', 'About CVTara' => '/about.html',
+        'Contact and Support' => '/contact.html', 'Resume vs JD Matcher' => null];
 
     /** Topic clusters: a main product page and the guides that support it. Missing topics are suggestions for the owner, never auto-published. */
     public const CLUSTERS = [
@@ -40,7 +42,12 @@ class SeoOps
     /** Seed keywords from the owner's plan: research targets, not claims of search volume. */
     public const SEED = ['cvtara' => '/', 'cv tara' => '/', 'cvtara.com' => '/', 'cvtara resume builder' => '/resume-builder/', 'cvtara ats resume checker' => '/ats-checker/', 'cvtara career solutions' => '/', 'cvtara resume services' => '/',
         'online resume builder' => '/resume-builder/', 'free resume builder' => '/resume-builder/', 'ats resume checker' => '/ats-checker/', 'ats resume scanner' => '/ats-checker/', 'resume vs job description matcher' => '',
-        'cover letter generator' => '/cover-letter-generator/', 'resume builder for freshers' => '/resume-builder/', 'professional resume builder' => '/resume-builder/', 'resume templates for experienced professionals' => '/resume-templates/'];
+        'cover letter generator' => '/cover-letter-generator/', 'resume builder for freshers' => '/resume-builder/', 'professional resume builder' => '/resume-builder/', 'resume templates for experienced professionals' => '/resume-templates/',
+        // 3.72.0 owner list: the brand spellings people type and the main product searches the brand result should cover
+        'cvtara resume' => '/', 'cvtara ats check' => '/ats-checker/', 'cvtara ats checker' => '/ats-checker/', 'cvtara resume template' => '/resume-templates/', 'cvtara cover letter' => '/cover-letter-generator/',
+        'cvtara pricing' => '/pricing/', 'cvtara login' => '/', 'cvtara interview questions' => '/interview-questions/', 'resume builder' => '/resume-builder/', 'ats check' => '/ats-checker/', 'ats checker' => '/ats-checker/',
+        'ats resume check' => '/ats-checker/', 'resume template' => '/resume-templates/', 'resume templates' => '/resume-templates/', 'resume format' => '/resume-templates/', 'cv maker' => '/resume-builder/',
+        'resume maker' => '/resume-builder/', 'cover letter' => '/cover-letter-generator/', 'interview questions' => '/interview-questions/', 'resume examples' => '/resume-examples/'];
 
     public const DEFAULTS = ['scanPerRun' => 40, 'inspectPerRun' => 15, 'inspectPerDay' => 60, 'requestPerRun' => 10];
 
@@ -522,7 +529,7 @@ class SeoOps
             $p = $path ? $pages->get($path) : null;
             $links[] = ['label' => $label, 'path' => $path, 'exists' => (bool) $p && (int) $p->http_status === 200, 'linkedFromHome' => $path ? in_array($path, $homeLinks, true) : false,
                 'indexed' => $p && $p->verdict !== '' ? $p->verdict === 'PASS' : null, 'title' => $p->title ?? null,
-                'note' => $path === null ? ($label === 'Pricing and Plans' ? 'Plans live inside the home page (/#pricing). A separate plans page would give Google a page to show; it needs your approval.' : 'No page for this yet. A product page would need your approval.') : null];
+                'note' => $path === null ? 'No page for this yet. A product page would need your approval.' : null];
         }
         $checks = $home ? [
             ['check' => 'Home page title names CVTara', 'ok' => (bool) preg_match(self::BRAND, (string) $home->title), 'detail' => $home->title],
@@ -530,6 +537,9 @@ class SeoOps
             ['check' => 'WebSite structured data on the home page', 'ok' => isset(array_flip($schema)['WebSite']), 'detail' => ''],
             ['check' => 'Home page indexed by Google', 'ok' => $home->verdict === '' ? null : $home->verdict === 'PASS', 'detail' => $home->coverage],
             ['check' => 'Favicon available', 'ok' => is_file(public_path('favicon.ico')) || is_file(public_path('favicon.svg')), 'detail' => ''],
+            ['check' => 'Logo for search results (square, at least 112 px)', 'ok' => is_file(public_path('favicon-512.png')), 'detail' => '/favicon-512.png in Organization logo'],
+            ['check' => 'Official social profiles listed (sameAs)', 'ok' => (bool) count(ContentController::brandSchema(self::origin())[0]['sameAs'] ?? []), 'detail' => implode(', ', ContentController::brandSchema(self::origin())[0]['sameAs'] ?? [])],
+            ['check' => 'Top menu links the main pages in the page HTML', 'ok' => collect(ContentController::MAIN_MENU)->every(fn ($m) => in_array($m[0], $homeLinks, true)) ?: ($homeLinks ? false : null), 'detail' => collect(ContentController::MAIN_MENU)->reject(fn ($m) => in_array($m[0], $homeLinks, true))->pluck(1)->implode(', ')],
             ['check' => 'Main pages linked from the home page', 'ok' => collect($links)->where('path', '!=', null)->every(fn ($l) => $l['linkedFromHome']), 'detail' => collect($links)->filter(fn ($l) => $l['path'] && ! $l['linkedFromHome'])->pluck('label')->implode(', ')],
         ] : [];
 
@@ -537,7 +547,7 @@ class SeoOps
             'nonBrandClicks' => $q->isEmpty() ? null : (int) $nb->sum('clicks'), 'nonBrandImpressions' => $q->isEmpty() ? null : (int) $nb->sum('impressions'),
             'brandSearches' => $b->sortByDesc('impressions')->take(10)->map(fn ($r) => ['query' => $r['key'], 'clicks' => (int) $r['clicks'], 'impressions' => (int) $r['impressions'], 'position' => round((float) $r['position'], 1)])->values()->all(),
             'sitelinks' => $links, 'checks' => $checks,
-            'note' => 'Google chooses which sitelinks to show. A clear page structure, links from the home page and distinct titles make the main pages eligible; nothing can force a layout.'];
+            'note' => 'Google chooses which sitelinks to show. A clear page structure, links from the home page and distinct titles make the main pages eligible; nothing can force a layout. Sitelinks usually appear once the main pages are indexed and people search the brand name regularly.'];
     }
 
     public static function clusters(): array

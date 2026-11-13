@@ -53,7 +53,7 @@ def run(ctx, t):
 
         s, w = c.api("GET", "whats-new")
         ids = [e["id"] for e in (w or {}).get("entries", [])]
-        t.check("customers see the November notes, newest first", ids[:1] and ids[0].startswith("2026-11-12") and "2026-11-07-job-hunt" in ids, ids[:6])
+        t.check("customers see the November notes, newest first", ids[:1] and ids[0] >= "2026-11-12" and "2026-11-07-job-hunt" in ids, ids[:6])
         t.check("the phone note is no longer shown", "2026-10-26-phone" not in ids)
         t.check("the notes mention no AI", not re.search(r"\b(ai|artificial intelligence|claude|anthropic)\b", json.dumps(w).lower()))
 

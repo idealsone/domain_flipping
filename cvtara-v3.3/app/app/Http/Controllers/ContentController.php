@@ -139,7 +139,7 @@ class ContentController extends Controller
         $legal = (array) Settings::get('legal');
         $same = array_values(array_filter(array_map(fn ($k) => trim((string) ($legal[$k] ?? '')), ['linkedin', 'instagram', 'facebook', 'x']), fn ($u) => str_starts_with($u, 'https://')));
         $email = trim((string) ($legal['supportEmail'] ?? '')) ?: 'support@cvtara.com';
-        $org = ['@context' => 'https://schema.org', '@type' => 'Organization', '@id' => $siteBase.'/#organization', 'name' => 'CVTara', 'alternateName' => ['CV Tara', 'CVTara Resume Builder', 'cvtara.com'],
+        $org = ['@context' => 'https://schema.org', '@type' => 'Organization', '@id' => $siteBase.'/#organization', 'name' => 'CVTara', 'alternateName' => ['CV Tara', 'CVTara Resume Builder', 'CVTara ATS Resume Builder', 'cvtara.com'],
             'url' => $siteBase.'/', 'logo' => ['@type' => 'ImageObject', 'url' => $siteBase.'/favicon-512.png', 'width' => 512, 'height' => 512], 'image' => $siteBase.'/assets/brand/cvtara-social.png',
             'description' => 'CVTara is a resume builder, ATS resume checker, cover letter writer and interview practice service for job seekers in India, made by an HR team in Bangalore.',
             'email' => $email, 'contactPoint' => ['@type' => 'ContactPoint', 'contactType' => 'customer support', 'email' => $email, 'areaServed' => 'IN', 'availableLanguage' => ['English']],
@@ -147,10 +147,25 @@ class ContentController extends Controller
         if ($same) {
             $org['sameAs'] = $same;
         }
-        $site = ['@context' => 'https://schema.org', '@type' => 'WebSite', '@id' => $siteBase.'/#website', 'name' => 'CVTara', 'alternateName' => ['CV Tara', 'CVTara Resume Builder'], 'url' => $siteBase.'/',
+        $site = ['@context' => 'https://schema.org', '@type' => 'WebSite', '@id' => $siteBase.'/#website', 'name' => 'CVTara', 'alternateName' => ['CV Tara', 'CVTara Resume Builder', 'cvtara.com'], 'url' => $siteBase.'/',
             'inLanguage' => 'en-IN', 'publisher' => ['@id' => $siteBase.'/#organization']];
 
         return [$org, $site];
+    }
+
+    /** The main menu, in the order shown in the header (3.72.0). Google often picks sitelinks from these pages. */
+    public const MAIN_MENU = [['/resume-builder/', 'Resume Builder'], ['/ats-checker/', 'ATS Checker'], ['/templates.html', 'Templates'],
+        ['/cover-letters.html', 'Cover Letters'], ['/interview-questions/', 'Interview Prep'], ['/pricing/', 'Pricing'], ['/blog.html', 'Blog']];
+
+    /** The visitor's header as plain HTML (what preview.js and business-ui.js draw for a signed-out visitor, logo included). */
+    public static function siteHeader(): string
+    {
+        $menu = implode('', array_map(fn ($l) => '<a href="'.e($l[0]).'">'.e($l[1]).'</a>', self::MAIN_MENU));
+
+        return '<header class="site-header" id="siteHeader"><div class="nav-shell"><a class="brand" href="/" aria-label="CVTara home"><img class="cv-brand-logo" src="/assets/brand/cvtara-logo.webp" width="174" height="52" alt="CVTara"></a>'
+            .'<button class="icon-button mobile-menu" data-mobile-menu aria-label="Open navigation" aria-expanded="false" aria-controls="mobileNav">☰</button>'
+            .'<nav class="main-nav" aria-label="Primary navigation">'.$menu.'</nav>'
+            .'<div class="nav-actions"><button class="icon-button" data-theme aria-label="Toggle light and dark mode">◐</button><a class="button secondary sign-in-link" href="/login">Sign in</a><a class="button primary small desktop-cta" href="/register">Start free</a></div></div></header>';
     }
 
     private function serverLinks(string $path, string $html): string
@@ -158,6 +173,10 @@ class ContentController extends Controller
         $hubs = array_merge(\App\Services\SeoPages::HUBS, [['/templates.html', 'Template gallery'], ['/cover-letters.html', 'Cover letter designs'], ['/blog.html', 'Career blog'], ['/guides.html', 'Guides and calculators'], ['/pricing/', 'Pricing'], ['/about.html', 'About us'], ['/partners.html', 'For colleges and partners'], ['/contact.html', 'Contact'], ['/privacy.html', 'Privacy policy'], ['/terms.html', 'Terms'], ['/refund.html', 'Refund policy']]);
         $nav = '<nav class="footer-links" aria-label="Site links"><ul>'.implode('', array_map(fn ($l) => '<li><a href="'.e($l[0]).'">'.e($l[1]).'</a></li>', $hubs)).'</ul></nav>';
         $html = preg_replace('#<div data-footer>\s*</div>#', '<div data-footer>'.addcslashes($nav, '\\$').'</div>', $html, 1);
+        // 3.72.0 brand result: the top menu is in the page itself, not only drawn by the script, so every crawler sees the
+        // main pages (builder, ATS checker, templates, cover letters, interview prep, pricing) linked from the top of each
+        // page. The markup matches what preview.js draws for a visitor, so nothing moves when the script takes over.
+        $html = preg_replace('#<div data-header>\s*</div>#', '<div data-header>'.addcslashes(self::siteHeader(), '\\$').'</div>', $html, 1);
         if (in_array($path, ['blog.html', 'guides.html'], true)) {
             $catalog = json_decode(file_get_contents(resource_path('data/catalog.json')), true);
             $custom = Settings::get('blog');
@@ -233,7 +252,7 @@ class ContentController extends Controller
         if ($path === 'sitemap.xml') {
             $seo = Settings::get('seo');
             abort_unless($seo['sitemapEnabled'], 404);
-            $xml = '<?xml version="1.0" encoding="UTF-8"?><urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">';
+            $xml = '<?xml version="1.0" encoding="UTF-8"?><urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:image="http://www.google.com/schemas/sitemap-image/1.1">';
             // 3.68.0: <lastmod> from the agent's page scan (the day the page's content last changed), so search engines
             // re-read changed pages first. Google uses it only while it stays accurate, so it is never just "today".
             $mod = [];
@@ -246,7 +265,11 @@ class ContentController extends Controller
             }
             foreach ($this->pages() as $p) {
                 if ($p['included']) {
-                    $xml .= '<url><loc>'.e(rtrim($seo['siteUrl'] ?: config('app.url'), '/').$p['path']).'</loc>'.(isset($mod[$p['path']]) ? '<lastmod>'.substr((string) $mod[$p['path']], 0, 10).'</lastmod>' : '').'</url>';
+                    $root = rtrim($seo['siteUrl'] ?: config('app.url'), '/');
+                    // 3.72.0: the design pictures each page shows, so image search finds them (logo on the home page)
+                    $imgs = $p['path'] === '/' ? ['/favicon-512.png', '/assets/brand/cvtara-social.png'] : array_column(\App\Services\TemplateImages::forPage($p['path']), 'src');
+                    $xml .= '<url><loc>'.e($root.$p['path']).'</loc>'.(isset($mod[$p['path']]) ? '<lastmod>'.substr((string) $mod[$p['path']], 0, 10).'</lastmod>' : '')
+                        .implode('', array_map(fn ($i) => '<image:image><image:loc>'.e($root.$i).'</image:loc></image:image>', $imgs)).'</url>';
                 }
             }
 
