@@ -46,7 +46,7 @@
     return shell({ ...o, type: 'bars' }, H, `<line class="cvc-axis" x1="10" x2="${W - 10}" y1="${base}" y2="${base}"/>` + pts.map((p, i) => {
       const v = num(p.value), h = Math.max(v ? 3 : 1, (v / max) * (base - top)), x = 10 + i * slot + (slot - bw) / 2;
       const tip = p.tip || `${p.label}: ${o.format ? o.format(v) : v.toLocaleString('en-IN')}`;
-      return `<g class="cvc-pt" tabindex="0" role="img" aria-label="${E(tip)}" data-tip="${E(tip)}"${act(p)} style="--i:${i}"><rect class="cvc-hit" x="${10 + i * slot}" y="0" width="${slot}" height="${H}"/><rect class="cvc-bar" x="${x}" y="${base - h}" width="${bw}" height="${h}" rx="4"/>${i % every === 0 ? `<text class="cvc-x" x="${x + bw / 2}" y="${H - 7}" text-anchor="middle">${E(p.short ?? p.label)}</text>` : ''}</g>`;
+      return `<g class="cvc-pt" tabindex="0" role="img" aria-label="${E(tip)}" data-tip="${E(tip)}"${act(p)} style="--i:${i}"><rect class="cvc-hit" x="${10 + i * slot}" y="0" width="${slot}" height="${H}"/><rect class="cvc-bar" x="${x}" y="${base - h}" width="${bw}" height="${h}" rx="4"/>${n <= 12 && v ? `<text class="cvc-v" x="${x + bw / 2}" y="${base - h - 6}" text-anchor="middle">${E(o.format ? o.format(v) : v.toLocaleString('en-IN'))}</text>` : ''}${i % every === 0 ? `<text class="cvc-x" x="${x + bw / 2}" y="${H - 7}" text-anchor="middle">${E(p.short ?? p.label)}</text>` : ''}</g>`;
     }).join(''));
   }
   function line(o) {
@@ -59,7 +59,7 @@
       (n > 1 ? `<path class="cvc-area" d="${d} L${x(n - 1).toFixed(1)},${base} L${x(0).toFixed(1)},${base} Z"/><path class="cvc-line" d="${d}" pathLength="1"/>` : '') +
       pts.map((p, i) => {
         const v = num(p.value), tip = p.tip || `${p.label}: ${o.format ? o.format(v) : v.toLocaleString('en-IN')}`;
-        return `<g class="cvc-pt" tabindex="0" role="img" aria-label="${E(tip)}" data-tip="${E(tip)}"${act(p)} style="--i:${i}"><rect class="cvc-hit" x="${x(i) - slot / 2}" y="0" width="${slot}" height="${H}"/><circle class="cvc-dot" cx="${x(i)}" cy="${y(v)}" r="5"/>${i % every === 0 || i === n - 1 ? `<text class="cvc-x" x="${x(i)}" y="${H - 7}" text-anchor="middle">${E(p.short ?? p.label)}</text>` : ''}</g>`;
+        return `<g class="cvc-pt" tabindex="0" role="img" aria-label="${E(tip)}" data-tip="${E(tip)}"${act(p)} style="--i:${i}"><rect class="cvc-hit" x="${x(i) - slot / 2}" y="0" width="${slot}" height="${H}"/><circle class="cvc-dot${n > 14 && !v ? ' cvc-dot-0' : ''}" cx="${x(i)}" cy="${y(v)}" r="${n > 14 ? 3.5 : 5}"/>${(i % every === 0 && (n - 1 - i >= every || i === n - 1)) || i === n - 1 ? `<text class="cvc-x" x="${x(i)}" y="${H - 7}" text-anchor="middle">${E(p.short ?? p.label)}</text>` : ''}</g>`;
       }).join(''));
   }
 

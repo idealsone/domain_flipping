@@ -28,3 +28,6 @@
 html.dark .cvc{--cvc-c:#60a5fa;--cvc-hi:#93c5fd;--cvc-ink:#94a3b8}html.dark .cvc-tip{background:#e2e8f0;color:#0f172a}
 @media(prefers-reduced-motion:reduce){.cv-motion [data-reveal]{opacity:1!important;transform:none!important}.cvc *{transition:none!important}}
 @media print{[data-reveal]{opacity:1!important;transform:none!important}}
+.cvc-v{fill:var(--ink,#0f172a);font:700 11px/1 Inter,system-ui,sans-serif}html.dark .cvc-v{fill:#e2e8f0}
+.cvc-dot-0{opacity:0}.cvc-pt.on .cvc-dot-0,.cvc-pt:focus-visible .cvc-dot-0{opacity:1}
+.cv-motion .cvc:not(.cv-in) .cvc-v{opacity:0}.cv-motion .cvc .cvc-v{transition:opacity .4s ease .5s}
