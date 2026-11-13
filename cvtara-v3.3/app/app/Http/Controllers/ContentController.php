@@ -588,7 +588,7 @@ class ContentController extends Controller
             return $m[1].'="'.$m[2].($version ? '?v='.$version : '').'"';
         }, $html);
 
-        if (! $admin && $path !== 'workspace.html') {
+        if (! $admin) { // 3.70.2: the customer dashboard too (it linked 23 separate stylesheets)
             $html = $this->bundleStyles($html);
         }
 

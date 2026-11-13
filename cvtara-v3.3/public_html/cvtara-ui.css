@@ -389,3 +389,9 @@ html[data-theme=dark] .tara-log,:root[data-theme=dark] .tara-log{background-colo
 @media(max-width:1099px){body[data-page=checkout] #coPlans:empty{min-height:1920px;border-radius:16px;background:linear-gradient(90deg,var(--soft,#f1f5f9) 0%,var(--line,#e2e8f0) 50%,var(--soft,#f1f5f9) 100%);background-size:200% 100%;animation:coSk 1.4s linear infinite}}
 @media(max-width:600px){body[data-page=checkout] #coPlans:empty{min-height:2086px}}
 @media(prefers-reduced-motion:reduce){body[data-page=checkout] #coPlans:empty{animation:none}}
+/* 3.70.2 templates and cover-letter pages: the guided picker fills in after the role list loads (20 px, then about 380-850 px), so keep its final room from the start */
+#picker>[data-template-picker]{min-height:376px}
+@media(max-width:1100px){#picker>[data-template-picker]{min-height:397px}}
+@media(max-width:760px){#picker>[data-template-picker]{min-height:495px}}
+@media(max-width:520px){#picker>[data-template-picker]{min-height:764px}}
+@media(max-width:400px){#picker>[data-template-picker]{min-height:854px}}

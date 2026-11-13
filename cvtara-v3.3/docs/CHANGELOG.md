@@ -1,4 +1,10 @@
-# CVTara v3.70.1 — Smoother, lighter, more visual
+# CVTara v3.70.2 — Smoother, lighter, more visual
+
+## 3.70.2
+The three leftovers from the testers (owner chose "Fix the three leftovers", 13 Nov 2026). No migration.
+- **Templates and cover-letter pages**: the guided picker grows from 20 px to about 380-850 px once the role list loads; it now keeps that room from the start (laptop layout shift 0.086 → 0.000 locally; live was 0.12 laptop / 0.37 phone).
+- **Customer dashboard, fewer requests (112 → 75)**: its 23 stylesheets are joined into one file like every other page (screenshots identical in day and night mode), and `csrf-lazy.js` lets callers that ask for the same account data within 2 s share one request (allowance was fetched 5 times, profile and resumes 4); any POST/PUT/DELETE clears this.
+- **Owner console Overview**: the second "Overview" title and its six tiles (members, paid users, revenue, scans, resumes, conversion) repeated the Business numbers box; they are hidden when that box is shown. Download reports, the counting line, both charts and the recent lists stay.
 
 ## 3.70.1
 Found in the live check after 3.70.0 went live (13 Nov 2026, 15:25 UTC). CSS only, no migration.

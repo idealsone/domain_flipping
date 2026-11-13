@@ -46,7 +46,11 @@ def run(ctx, t):
     cust = ctx.client(); cust.register("ui370@test.local")
     s, _, w = cust.page("/workspace.html")
     t.check("workspace has a skip link to the main content", s == 200 and 'class="ws-skip" href="#wsMain"' in w and 'id="wsMain"' in w)
-    t.check("workspace loads the dashboard and motion styles", "/dash-v4.css" in w and "/cv-motion.css" in w and "/cv-motion.js" in w)
+    b = re.search(r'href="(/assets/bundle/[a-f0-9]+\.css)', w)
+    css = cust.page(b.group(1))[2] if b else ""
+    t.check("workspace loads the dashboard and motion styles as one combined file", bool(b) and "/* /dash-v4.css */" in css and "/* /cv-motion.css */" in css and "/* /styles.css */" in css and "/cv-motion.js" in w, b and b.group(1))
+    own = [l for l in re.findall(r'<link rel="stylesheet" href="(/[^"]+)"', w.split("</head>")[0])]
+    t.check("workspace makes one stylesheet request for its own styles (was 23)", len(own) == 1, own)
     s, d = cust.api("GET", "whats-new")
     if s == 200 and isinstance(d, dict):
         txt = str(d)
@@ -56,3 +60,9 @@ def run(ctx, t):
     ui, hv3 = rd(PUB, "cvtara-ui.css"), rd(PUB, "home-v3.css")
     t.check("checkout keeps room for the stacked plan cards on phones and tablets", "@media(max-width:1099px){body[data-page=checkout] #coPlans:empty{min-height:1920px" in ui)
     t.check("home sample rows keep their final height while they load", ".lp-spot:empty{min-height:1209px}" in hv3 and ".lp-letters{min-height:1560px}" in hv3 and ".lp-spot .template-card{content-visibility:visible}" in hv3)
+
+    # 3.70.2
+    lazy = rd(PUB, "csrf-lazy.js")
+    t.check("account data asked for twice within 2 s shares one request, and any change clears that", "Date.now() - hit.t > 2000" in lazy and "method !== 'HEAD') recent = {};" in lazy)
+    t.check("templates and cover-letter pickers keep their room while they load", "#picker>[data-template-picker]{min-height:376px}" in rd(PUB, "cvtara-ui.css"))
+    t.check("the console Overview shows one set of business numbers", "#admin-dashboard:has(#kpiPanel)>.ops-kpis.six{display:none}" in rd(PUB, "cvtara-ds.css"))
