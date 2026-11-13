@@ -19,7 +19,7 @@ class SeoPages
     private static ?array $data = null;
 
     /** Path prefixes owned by this class (used by the controller and the page cache). */
-    public const PREFIXES = ['resume-examples', 'resume-templates', 'cover-letter-examples', 'cover-letter-generator', 'interview-questions', 'resume-builder', 'resume', 'resume-words', 'ats-checker'];
+    public const PREFIXES = ['pricing', 'resume-examples', 'resume-templates', 'cover-letter-examples', 'cover-letter-generator', 'interview-questions', 'resume-builder', 'resume', 'resume-words', 'ats-checker'];
 
     /** Existing guides and calculators that the programmatic pages link to. */
     private const GUIDES = [
@@ -75,6 +75,7 @@ class SeoPages
     {
         $d = self::data();
         $p = ['resume-examples/', 'resume-templates/', 'cover-letter-examples/', 'cover-letter-examples/how-to-write/', 'cover-letter-generator/', 'interview-questions/', 'resume-builder/', 'resume-builder/india/', 'resume-words/', 'ats-checker/'];
+        $p[] = 'pricing/';
         foreach ($d['categories'] as $c => $_) {
             $p[] = "resume-examples/$c/";
             if (self::rolesIn($c)) {
@@ -113,6 +114,9 @@ class SeoPages
     {
         $s = explode('/', trim($path, '/'));
         $d = self::data();
+        if ($s[0] === 'pricing') {
+            return '/pricing/'.(count($s) === 2 && (isset(self::PLAN_PAGES[$s[1]]) || $s[1] === 'free-vs-paid') ? '#'.$s[1] : ''); // one price page, a section per plan
+        }
         if ($s[0] === 'resume' && count($s) <= 2) {
             $place = $s[1] ?? '';
 
@@ -149,9 +153,11 @@ class SeoPages
             $s[0] === 'resume-words' && $n === 1 => self::wordsHub(),
             $s[0] === 'resume-words' && $n === 2 && isset($d['words'][$s[1]]) => self::word($s[1]),
             $s[0] === 'ats-checker' && $n === 1 => self::atsChecker(),
+            $s[0] === 'pricing' && $n === 1 => self::pricing(),
             default => null,
         };
         if ($page) {
+            $page['sections'] = array_values(array_filter($page['sections'] ?? [], fn ($x) => $x[2] !== '')); // a section with no content for this page is left out
             $page['path'] = '/'.implode('/', $s).'/';
             // Changes the owner approved from the SEO agent (Growth page): a new title and description, and links to pages it is pushing up.
             if ($o = SeoAgent::override($page['path'])) {
@@ -171,10 +177,11 @@ class SeoPages
             $page['description'] = self::fit($page['description'], 155);
             $page['index'] ??= true;
             $page['cta'] ??= self::cta();
-            $page['related'][] = ['Tools', [['/ats-checker/', 'Free ATS resume check'], ['/#pricing', 'Plans and pricing'], ['/templates.html', 'Template gallery'], ['/register', 'Build my resume free']]];
+            $page['related'][] = ['Tools', [['/ats-checker/', 'Free ATS resume check'], ['/pricing/', 'Plans and pricing'], ['/templates.html', 'Template gallery'], ['/register', 'Build my resume free']]];
             // tools and word lists are not template pages: their first button is their own action, not "Use this template"
             $page['picker'] = in_array($s[0], ['ats-checker', 'resume-words'], true) ? '' : self::pickerLink($s);
             $page['reviewedAt'] = SeoContent::reviewedAt($page['path']); // 3.45.0: shown only when a person really reviewed it
+            $page['updatedAt'] = SeoContent::updatedAt($page['path']); // 3.68.0: "Updated <date>" and dateModified
         }
 
         return $page;
@@ -345,7 +352,7 @@ class SeoPages
      */
     private static function cta(array $primary = ['/register', 'Build my resume free'], array $secondary = ['/ats-checker/', 'Check my resume for ATS'], string $note = ''): array
     {
-        return ['primary' => $primary, 'secondary' => $secondary, 'pricing' => ['/#pricing', 'See plans and pricing'], 'note' => $note ?: 'Start from a template or upload your old resume. Building and previewing is free.'];
+        return ['primary' => $primary, 'secondary' => $secondary, 'pricing' => ['/pricing/', 'See plans from ₹'.self::price('quick')], 'note' => $note ?: 'Start from a template or upload your old resume. Building and previewing is free.'];
     }
 
     /** A filled sample resume rendered as a document, so readers (and search engines) see real text, not a picture. */
@@ -585,6 +592,8 @@ class SeoPages
             'sample' => $letter,
             'sections' => [['highlight', 'What to highlight', self::ul($cat['h'], 'sp-check')],
                 ['employers', 'Who you may be writing to', self::ul($cat['e'])],
+                ['fresher', 'If you are a fresher', isset($cat['fr']) ? '<p>An opening for a fresher in '.self::e(self::lc($n)).':</p><blockquote class="sp-quote">'.self::e($cat['fr']).'</blockquote><p>Swap in your own project, internship or result. One real example beats a list of qualities.</p>' : ''],
+                ['mistakes', 'Mistakes to avoid', isset($cat['mx']) ? self::ul($cat['mx']) : ''],
                 ['tips', 'Tips', self::ul(['Name the exact role and where you saw it.', 'Pick 2 results that match the job post and give numbers.', 'Do not repeat your whole resume.', 'Keep the tone polite and simple.']).'<p>Recruiters often read the letter only after an '.self::ATS_DEF.' has shortlisted your resume, so use the job post’s key skills in both.</p>'],
                 ['roles', 'Resume examples for this field', self::links(array_map(fn ($r, $k) => [self::rolePath($k), $r['t']], $roles, array_keys($roles)))]],
             'faq' => [['How do I start a '.self::lc($n).' cover letter?', 'Name the role and give one line on why you fit, as in the sample above.'], ['Should I mention salary?', 'Only if the job post asks. Otherwise discuss it later in the process.'], ['How do I end the letter?', 'Thank them, say you would like to talk, and mention your notice period if relevant.']],
@@ -625,12 +634,15 @@ class SeoPages
         $r = $d['roles'][$k];
         $t = $r['t'];
         $lt = self::lc($t);
-        $qa = '<ol class="sp-qa">'.implode('', array_map(fn ($q) => '<li><h3>'.self::e($q[0]).'</h3><p><b>How to answer:</b> '.self::e($q[1]).'</p></li>', $r['q'])).'</ol>';
+        // 3.69.0: every role question carries a sample answer of its own, written for that role.
+        $qa = '<ol class="sp-qa">'.implode('', array_map(fn ($q, $i) => '<li><h3>'.self::e($q[0]).'</h3><p><b>How to answer:</b> '.self::e($q[1]).'</p>'
+            .(isset($r['a'][$i]) ? '<p class="sp-sample-answer"><b>Sample answer:</b> '.self::e($r['a'][$i]).'</p>' : '').'</li>', $r['q'], array_keys($r['q']))).'</ol>'
+            .'<p class="sp-note">The sample answers show one way to answer. Use your own real examples and numbers; interviewers notice memorised lines.</p>';
         $common = '<ol class="sp-qa"><li><h3>Tell me about yourself.</h3><p><b>How to answer:</b> In about a minute: your current role or degree, 1 or 2 results that fit this job, and why you want it.</p></li><li><h3>Why should we hire you?</h3><p><b>How to answer:</b> Match 3 of your strengths to the job post, for example '.self::e(self::and(array_slice($r['k'], 0, 3))).', with proof.</p></li><li><h3>What is your notice period?</h3><p><b>How to answer:</b> Give the exact period and whether early release is possible.</p></li></ol>';
         $siblings = self::siblings($k, 5);
 
-        return ['kind' => 'interview', 'eyebrow' => 'INTERVIEW QUESTIONS', 'title' => self::pick(["$t Interview Questions & Answers", "$t Interview Questions", "$t Interview Q&A"]), 'description' => self::sentences("$t interview questions with tips on how to answer, such as “".rtrim($r['q'][0][0], '.?').'”.', 'Plus common HR questions.', 'Prepare with examples from your own resume.'),
-            'h1' => "$t interview questions and answers", 'lead' => 'Questions that come up often for this role, with a short tip on how to answer each one. Use examples from your own work, not memorised lines.',
+        return ['kind' => 'interview', 'eyebrow' => 'INTERVIEW QUESTIONS', 'title' => self::pick(["$t Interview Questions & Answers", "$t Interview Questions", "$t Interview Q&A"]), 'description' => self::sentences("$t interview questions with sample answers, such as “".rtrim($r['q'][0][0], '.?').'”.', 'Plus common HR questions.', 'Prepare with examples from your own resume.'),
+            'h1' => "$t interview questions and answers", 'lead' => 'Questions that come up often for this role, with a tip on how to answer each one and a sample answer. Use examples from your own work, not memorised lines.',
             'crumbs' => self::crumbs(['Interview questions', '/interview-questions/'], [$t, "/interview-questions/$k/"]), 'image' => self::image('interview', "$t interview questions with answer tips"),
             'sections' => [['role-questions', 'Questions about the role', $qa], ['hr-questions', 'Common HR questions', $common],
                 // 3.57.0 (V7 §31): the public sample links to practice; the full question bank stays inside the account.
@@ -850,6 +862,8 @@ class SeoPages
             'crumbs' => self::crumbs(['Resume words', '/resume-words/'], [$w['w'], "/resume-words/$k/"]), 'image' => self::image('words', "Alternatives to the word $lw on a resume"),
             'sections' => [['synonyms', 'Words to use instead', self::chips($s)],
                 ['example', 'Before and after', '<div class="sp-before-after"><p><span>Before</span>'.self::e($w['ex'][0]).'</p><p><span>After</span>'.self::e($w['ex'][1]).'</p></div><p>The better line names the task and gives a result. Use your own real numbers.</p>'],
+                ['more-examples', 'More before-and-after lines', isset($w['more']) ? '<div class="sp-before-after">'.implode('', array_map(fn ($x) => '<p><span>Before</span>'.self::e($x[0]).'</p><p><span>After</span>'.self::e($x[1]).'</p>', $w['more'])).'</div><p>Each better line starts with an action, names the task and ends with a number. The numbers here are examples; use your own.</p>' : ''],
+                ['when-fine', "When “{$lw}” is still fine", isset($w['ok']) ? '<p>'.self::e($w['ok']).'</p>' : ''],
                 ['how', 'Choosing between them', '<p>Pick the most accurate one. '.self::e($s[0]).' and '.self::e($s[1]).' are strong when you can show a result; '.self::e(mb_strtolower($s[2])).' or '.self::e(mb_strtolower($s[3])).' suit plainer lines. Put the word at the start of the line, follow it with the task and a measurable result, and avoid using any one word more than twice on a page.</p>']],
             'faq' => [["Is “{$lw}” a bad word for a resume?", 'Not bad, but often vague. A more specific word such as '.mb_strtolower($s[0]).', plus a result, reads stronger.'], ['Can I use these words in a cover letter?', 'Yes. The same rule applies: be specific and give proof.'], ['Will these words help with an applicant tracking system?', 'Matching depends mostly on skills and job titles. Strong verbs help the person who reads your resume next.']],
             'related' => [['More resume words', array_map(fn ($key) => ["/resume-words/$key/", '“'.$all[$key]['w'].'”'], $others)], ['Guides', self::guides('verbs', 'bullets')]]];
@@ -879,12 +893,107 @@ class SeoPages
             'h1' => 'Free resume builder for India', 'lead' => 'Make your resume in a few guided steps: choose a template, add your details, and download a clean PDF. Keep one main resume and make a sharper copy for every job you apply to.',
             'crumbs' => self::crumbs(['Resume builder', '/resume-builder/']), 'image' => self::image('resume-template', 'CVTara resume builder with a template on the left and the filled resume on the right'),
             'sections' => [['steps', 'How to create a resume', '<ol class="sp-steps"><li><b>Pick a template.</b> Start from an <a href="/resume-templates/ats-friendly/">ATS-friendly</a>, <a href="/resume-templates/simple/">simple</a> or <a href="/resume-templates/professional/">professional</a> design.</li><li><b>Fill guided sections.</b> Contact details, a short summary, experience, education, skills and projects, with examples for your role.</li><li><b>Upload instead, if you like.</b> Import an old PDF or Word resume and edit it.</li><li><b>Tailor it to the job.</b> Compare it with a job post and add the skills you really have.</li><li><b>Download.</b> A clean, text-based PDF that applicant tracking systems can read.</li></ol>'],
-                ['free', 'What is free', self::ul(['Building, editing and previewing your resume', 'Templates, colours and fonts', 'A few job-match checks every day', 'Saving one resume to your account'], 'sp-check').'<p>Paid plans start at ₹99 for a single download and add more downloads, scans and cover letters. See <a href="/#pricing">plans and pricing</a>.</p>'],
+                ['free', 'What is free', self::ul(['Building, editing and previewing your resume', 'Templates, colours and fonts', 'A few job-match checks every day', 'Saving one resume to your account'], 'sp-check').'<p>Paid plans start at ₹99 for a single download and add more downloads, scans and cover letters. See <a href="/pricing/">plans and pricing</a>.</p>'],
                 ['india', 'Made for Indian job seekers', '<p>Formats that recruiters in India expect, examples for freshers and experienced professionals, and guides for '.self::e(self::and(array_column($cities, 1))).' and more.</p>'.self::links($cities)],
                 ['next', 'Before you apply', self::links([['/ats-checker/', 'Check your resume score free'], ['/resume-examples/', 'Resume examples by job'], ['/resume-words/', 'Stronger resume words'], ['/cover-letter-generator/', 'Write a matching cover letter']])]],
             'faq' => [['Is the resume builder really free?', 'Yes. You can build, edit and preview your resume with every template free. You pay only when you download, from ₹99.'], ['Can I make a resume on my phone?', 'Yes. The builder works in the browser on phones, tablets and computers.'], ['Will my resume pass an ATS?', 'The templates use standard sections and readable text. No tool can promise a shortlist, but you can check your resume score before you apply.'], ['Can I upload my old resume?', 'Yes. Upload a text-based PDF or Word file and edit it in the builder.']],
             'cta' => self::cta(['/register', 'Build my resume free'], ['/resume-templates/', 'See templates']),
             'related' => [['Related', [['/resume-templates/', 'Resume templates'], ['/resume-examples/', 'Resume examples'], ['/resume-builder/india/', 'Resume help by city']]], ['Guides', self::guides('fresher', 'summary', 'ats')]]];
+    }
+
+    // ---------------------------------------------------------------- 3.68.0 pricing pages (buyers' searches)
+    /** /pricing/{slug}/ => plan key. Prices, limits and validity are read from the live plan settings, never typed here. */
+    public const PLAN_PAGES = ['quick-download' => 'quick', 'job-hunt' => 'job-hunt', 'pro' => 'pro'];
+
+    private static function plan(string $key): array
+    {
+        return Settings::plans()[$key] ?? [];
+    }
+
+    private static function sold(string $key): bool
+    {
+        return ! empty(self::plan($key)['sale']);
+    }
+
+    private static function price(string $key): string
+    {
+        return number_format((int) (self::plan($key)['price'] ?? 0));
+    }
+
+    /** One line per plan for the comparison table: what a buyer actually compares. */
+    private static function planFacts(string $key): array
+    {
+        $p = self::plan($key);
+        $days = (int) ($p['accessDays'] ?? 0);
+
+        return [
+            'Price' => $key === 'free' ? '₹0' : '₹'.self::price($key).' once',
+            'Clean downloads (no watermark)' => $key === 'free' ? 'No' : ($key === 'quick' ? '1 resume' : (int) $p['savedResumes'].' resumes + '.(int) $p['savedLetters'].' cover letters'),
+            'ATS Match scans with a gap report' => $key === 'free' ? (int) ($p['dailyMatches'] ?? 3).' quick checks a day' : ((int) ($p['atsScans'] ?? 0) ? (int) $p['atsScans'].' scans' : (int) ($p['dailyMatches'] ?? 3).' quick checks a day'),
+            'Mock interviews with written feedback' => (int) ($p['mockInterviews'] ?? 0) ? (string) (int) $p['mockInterviews'] : '—',
+            'Access' => $key === 'free' ? 'Always' : $days.' days',
+            'Auto-renewal' => 'Never',
+        ];
+    }
+
+    private static function compareTable(array $keys): string
+    {
+        $cols = array_values(array_filter($keys, fn ($k) => $k === 'free' || self::sold($k)));
+        $rows = array_keys(self::planFacts('free'));
+        $head = '<tr><th scope="col">What you get</th>'.implode('', array_map(fn ($k) => '<th scope="col">'.($k === 'free' ? 'Free' : '<a href="#'.array_search($k, self::PLAN_PAGES, true).'">'.self::e((string) self::plan($k)['name']).'</a>').'</th>', $cols)).'</tr>';
+        $body = '';
+        foreach ($rows as $r) {
+            $body .= '<tr><th scope="row">'.self::e($r).'</th>'.implode('', array_map(fn ($k) => '<td>'.self::e((string) self::planFacts($k)[$r]).'</td>', $cols)).'</tr>';
+        }
+
+        return '<div class="sp-table-wrap"><table class="sp-table"><thead>'.$head.'</thead><tbody>'.$body.'</tbody></table></div>';
+    }
+
+    private static function buyFaq(): array
+    {
+        return [
+            ['Is it a subscription?', 'No. You pay once by UPI, card or net banking. Nothing renews and nothing is charged again.'],
+            ['Can I get a refund?', 'Yes, within 7 days of buying, if you have not used anything you paid for yet (no clean download, paid ATS scan or tailored resume). See the refund policy.'],
+            ['Can I try it before paying?', 'Yes. Building, editing and previewing your resume with every template is free. You pay only when you want the clean download.'],
+            ['Which payment methods work?', 'UPI apps, debit and credit cards and net banking, through a secure Indian payment gateway. CVTara never sees your card or UPI PIN.'],
+        ];
+    }
+
+    /** /pricing/: ONE price page (owner, 12 Nov 2026) for buyers' searches ("resume builder price", "download resume pdf"). Each plan has its own section and anchor. */
+    private static function pricing(): array
+    {
+        $keys = array_values(array_filter(self::PLAN_PAGES, fn ($k) => self::sold($k)));
+        $copy = [
+            'quick' => ['Your resume is ready and you need a clean copy today.', ['You have one resume to send this week', 'You already built your resume and only need the clean file', 'You are a fresher applying to campus drives or walk-ins']],
+            'job-hunt' => ['A tailored resume and a matching cover letter for every job you apply to, with an ATS Match scan that shows the skills you are missing.', ['You are applying to many jobs this month', 'Different jobs ask for different skills', 'You want a cover letter for each application']],
+            'pro' => ['For long searches, career changes and senior roles: more time, twice the tailored documents and more interview practice.', ['Your search will take more than a month', 'You are changing field or applying across several roles', 'You want interview practice with written feedback']],
+        ];
+        $planSection = function (string $k) use ($copy) {
+            $p = self::plan($k);
+            $price = self::price($k);
+
+            return [array_search($k, self::PLAN_PAGES, true), $p['name'].': ₹'.$price.' once',
+                '<p>'.self::e($copy[$k][0]).'</p>'.self::ul(array_merge((array) $p['perks'], [(int) $p['accessDays'].' days of access from the day you pay', 'Pay once, no auto-renewal']), 'sp-check')
+                .'<p><b>Best for:</b> '.self::e(implode('; ', $copy[$k][1])).'.</p>'
+                .'<p><a class="sp-cta" href="/checkout.html?plan='.self::e($k).'">Get '.self::e((string) $p['name']).' for ₹'.$price.'</a></p>'];
+        };
+
+        return ['kind' => 'pricing', 'eyebrow' => 'PLANS AND PRICING', 'title' => 'Resume Builder Price in India: Plans from ₹'.self::price('quick'),
+            'description' => 'CVTara pricing: build and preview free, download a clean resume for ₹'.self::price('quick').', or get tailored resumes, cover letters and ATS scans from ₹'.self::price('job-hunt').'. Pay once, no auto-renewal.',
+            'h1' => 'Plans and pricing', 'lead' => 'Build, edit and preview your resume free. Pay once only when you are ready to download: ₹'.self::price('quick').' for one clean resume, or a pack for a whole job search. No subscription, no auto-renewal, 7-day refund if unused.',
+            'crumbs' => self::crumbs(['Pricing', '/pricing/']), 'image' => self::image('resume-template', 'CVTara plans: Free, Quick Download, Job Hunt and Pro'),
+            'sections' => array_merge(
+                [['compare', 'Compare plans', self::compareTable(array_merge(['free'], $keys))]],
+                array_map($planSection, $keys),
+                [['free-vs-paid', 'What is free and what is paid', '<p>Many "free" resume builders ask for money only at the last step. Here is exactly what you get on CVTara.</p><p><b>Free, always:</b></p>'
+                    .self::ul(['Every template, colour and font', 'Building, editing and previewing your resume (preview has a light watermark)', 'Uploading an old PDF or Word resume to edit', 'A few ATS quick checks every day', 'All guides, examples, interview questions and calculators on this site'], 'sp-check')
+                    .'<p><b>Paid, once:</b> a clean resume without the watermark (from ₹'.self::price('quick').'), tailored resumes and cover letters for each job, ATS Match scans with a full gap report, and mock interviews with written feedback.</p>'],
+                    ['which', 'Which plan is right for you', self::ul(['One job this week and your resume is ready: Quick Download (₹'.self::price('quick').').', 'Many jobs over the next month: Job Hunt (₹'.self::price('job-hunt').').', 'Long search, career change or senior role: Pro (₹'.self::price('pro').').'], 'sp-check')],
+                    ['pay', 'How paying works', '<ol class="sp-steps"><li><b>Build free.</b> Make your resume and preview it with a light watermark.</li><li><b>Pick a plan</b> on this page or when you click Download.</li><li><b>Pay once</b> by UPI, card or net banking.</li><li><b>Download</b> a clean, text-based PDF straight away.</li></ol><p>Read the <a href="/refund.html">refund policy</a> and <a href="/terms.html">terms</a>.</p>']]),
+            'faq' => array_merge([['Is the free plan really free?', 'Yes. There is no trial that ends and no card needed to build or preview. You only pay if you want the clean download or the tailoring tools.']], self::buyFaq()),
+            'cta' => self::cta(['/register', 'Start free, pay later'], ['/checkout.html?plan=quick', 'Download one resume for ₹'.self::price('quick')], 'Building is free. You pay only when you download.'),
+            'offers' => $keys,
+            'related' => [['Start here', [['/resume-builder/', 'Free resume builder'], ['/ats-checker/', 'Free ATS resume check'], ['/resume-templates/', 'Resume templates']]]]];
     }
 
     /** /cover-letter-generator/: write a cover letter from a saved resume and a job post. */
@@ -931,10 +1040,21 @@ class SeoPages
             $ld[] = ['@context' => 'https://schema.org', '@type' => 'FAQPage', 'mainEntity' => array_map(fn ($q) => ['@type' => 'Question', 'name' => $q[0], 'acceptedAnswer' => ['@type' => 'Answer', 'text' => $q[1]]], $p['faq'])];
         }
         $page = ['@context' => 'https://schema.org', '@type' => empty($p['itemList']) ? 'WebPage' : 'CollectionPage', 'name' => $p['h1'], 'description' => $p['description'], 'url' => $base.$p['path'], 'image' => $base.$p['image'][0], 'inLanguage' => 'en-IN', 'publisher' => ['@type' => 'Organization', 'name' => 'CVTara', 'logo' => $base.'/assets/brand/cvtara-logo.webp']];
+        if (! empty($p['updatedAt'])) {
+            $page['dateModified'] = substr((string) $p['updatedAt'], 0, 10);
+        }
         if (! empty($p['itemList'])) {
             $page['mainEntity'] = ['@type' => 'ItemList', 'numberOfItems' => count($p['itemList']), 'itemListElement' => array_map(fn ($x, $i) => ['@type' => 'ListItem', 'position' => $i + 1, 'url' => $base.$x[0], 'name' => $x[1]], $p['itemList'], array_keys($p['itemList']))];
         }
         $ld[] = $page;
+        // 3.68.0: price pages describe each plan as a product with its live price, so search results can show it.
+        foreach ($p['offers'] ?? [] as $k) {
+            $pl = self::plan($k);
+            $slug = array_search($k, self::PLAN_PAGES, true);
+            $ld[] = ['@context' => 'https://schema.org', '@type' => 'Product', 'name' => 'CVTara '.$pl['name'], 'description' => (string) $pl['tagline'], 'brand' => ['@type' => 'Brand', 'name' => 'CVTara'], 'image' => $base.$p['image'][0],
+                'url' => $base.'/pricing/#'.$slug, 'offers' => ['@type' => 'Offer', 'price' => (string) (int) $pl['price'], 'priceCurrency' => 'INR', 'availability' => 'https://schema.org/InStock', 'url' => $base.'/pricing/#'.$slug,
+                    'hasMerchantReturnPolicy' => ['@type' => 'MerchantReturnPolicy', 'applicableCountry' => 'IN', 'returnPolicyCategory' => 'https://schema.org/MerchantReturnFiniteReturnWindow', 'merchantReturnDays' => 7, 'returnFees' => 'https://schema.org/FreeReturn']]];
+        }
         foreach ($p['extraSchema'] ?? [] as $x) { // 3.45.0: approved structured data, built only from the page's own content
             if ($x['type'] === 'Article') {
                 $ld[] = ['@context' => 'https://schema.org', '@type' => 'Article', 'headline' => mb_substr($p['h1'], 0, 110), 'description' => $p['description'], 'mainEntityOfPage' => $base.$p['path'], 'image' => $base.$p['image'][0], 'inLanguage' => 'en-IN',

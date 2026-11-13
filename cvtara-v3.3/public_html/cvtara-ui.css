@@ -382,3 +382,16 @@ html body[data-page=workspace] .workspace-content{background:radial-gradient(cir
 .tara-log{background-color:var(--panel,#fff);background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120' viewBox='0 0 120 120'%3E%3Cg fill='none' stroke='%230f766e' stroke-opacity='.07' stroke-width='2'%3E%3Crect x='14' y='12' width='22' height='28' rx='3'/%3E%3Cpath d='M19 20h12M19 26h12M19 32h8'/%3E%3Cpath d='M84 18l3 6 7 1-5 5 1 7-6-3-6 3 1-7-5-5 7-1z'/%3E%3Crect x='70' y='76' width='30' height='20' rx='4'/%3E%3Cpath d='M80 76v-4h10v4'/%3E%3Ccircle cx='30' cy='88' r='9'/%3E%3Cpath d='M26 88l3 3 6-6'/%3E%3C/g%3E%3C/svg%3E")}
 html[data-theme=dark] .tara-log,:root[data-theme=dark] .tara-log{background-color:transparent}
 @media (prefers-color-scheme:dark){:root:not([data-theme=light]) .tara-log{background-color:transparent}}
+/* 3.70.0 checkout: keep room for the plan cards while they load, so "Your selection" does not jump (testers measured CLS 0.49 on laptops) */
+@media(min-width:861px){body[data-page=checkout] #coPlans:empty{min-height:540px;border-radius:16px;background:linear-gradient(90deg,var(--soft,#f1f5f9) 0%,var(--line,#e2e8f0) 50%,var(--soft,#f1f5f9) 100%);background-size:200% 100%;animation:coSk 1.4s linear infinite}}
+@keyframes coSk{to{background-position:-200% 0}}
+/* 3.70.1 phones and tablets: the three plan cards stack (about 1,920-2,380px tall), so keep that room too (measured CLS 0.64 on phones) */
+@media(max-width:1099px){body[data-page=checkout] #coPlans:empty{min-height:1920px;border-radius:16px;background:linear-gradient(90deg,var(--soft,#f1f5f9) 0%,var(--line,#e2e8f0) 50%,var(--soft,#f1f5f9) 100%);background-size:200% 100%;animation:coSk 1.4s linear infinite}}
+@media(max-width:600px){body[data-page=checkout] #coPlans:empty{min-height:2086px}}
+@media(prefers-reduced-motion:reduce){body[data-page=checkout] #coPlans:empty{animation:none}}
+/* 3.70.2 templates and cover-letter pages: the guided picker fills in after the role list loads (20 px, then about 380-850 px), so keep its final room from the start */
+#picker>[data-template-picker]{min-height:376px}
+@media(max-width:1100px){#picker>[data-template-picker]{min-height:397px}}
+@media(max-width:760px){#picker>[data-template-picker]{min-height:495px}}
+@media(max-width:520px){#picker>[data-template-picker]{min-height:764px}}
+@media(max-width:400px){#picker>[data-template-picker]{min-height:854px}}
