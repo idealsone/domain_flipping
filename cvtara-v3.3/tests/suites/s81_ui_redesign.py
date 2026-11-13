@@ -51,3 +51,8 @@ def run(ctx, t):
     if s == 200 and isinstance(d, dict):
         txt = str(d)
         t.check("customers hear about the calmer dashboard, without AI wording", "A calmer, quicker dashboard" in txt and not re.search(r"\bAI\b|Claude|Anthropic", txt), s)
+
+    # 3.70.1: room kept for content that loads late
+    ui, hv3 = rd(PUB, "cvtara-ui.css"), rd(PUB, "home-v3.css")
+    t.check("checkout keeps room for the stacked plan cards on phones and tablets", "@media(max-width:1099px){body[data-page=checkout] #coPlans:empty{min-height:1920px" in ui)
+    t.check("home sample rows keep their final height while they load", ".lp-spot:empty{min-height:1209px}" in hv3 and ".lp-letters{min-height:1560px}" in hv3 and ".lp-spot .template-card{content-visibility:visible}" in hv3)

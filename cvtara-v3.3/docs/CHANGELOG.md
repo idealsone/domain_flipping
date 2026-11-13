@@ -1,4 +1,9 @@
-# CVTara v3.70.0 — Smoother, lighter, more visual
+# CVTara v3.70.1 — Smoother, lighter, more visual
+
+## 3.70.1
+Found in the live check after 3.70.0 went live (13 Nov 2026, 15:25 UTC). CSS only, no migration.
+- **Checkout on phones and tablets**: the three plan cards stack to about 1,920-2,380 px, so the loading placeholder now keeps that room below 1,100 px wide (it kept 540 px only on laptops). Phone layout shift 0.64 → 0.000.
+- **Home page after a fast scroll**: the six template samples and three cover-letter samples load as you scroll. Their rows keep their final height (1,209 / 1,821 / 3,264 px for 3 / 2 / 1 columns; letters 510 / 1,035 / 1,560 px) and the six home template cards render at full size instead of a 420 px estimate. Laptop layout shift 0.24 → 0.006.
 
 ## 3.70.0
 Owner (12 Nov 2026): smoother, lighter, more attractive UI across the site, dashboard and console; a landing page that sells; less text, more visuals and motion; charts that respond; fast on every device; collect the 10 testers' feedback first. Built on 3.69.0 + 3.69.1. One migration (`2026_12_02_000001_simpler_homepage_copy`, copy only).

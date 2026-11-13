@@ -385,4 +385,7 @@ html[data-theme=dark] .tara-log,:root[data-theme=dark] .tara-log{background-colo
 /* 3.70.0 checkout: keep room for the plan cards while they load, so "Your selection" does not jump (testers measured CLS 0.49 on laptops) */
 @media(min-width:861px){body[data-page=checkout] #coPlans:empty{min-height:540px;border-radius:16px;background:linear-gradient(90deg,var(--soft,#f1f5f9) 0%,var(--line,#e2e8f0) 50%,var(--soft,#f1f5f9) 100%);background-size:200% 100%;animation:coSk 1.4s linear infinite}}
 @keyframes coSk{to{background-position:-200% 0}}
+/* 3.70.1 phones and tablets: the three plan cards stack (about 1,920-2,380px tall), so keep that room too (measured CLS 0.64 on phones) */
+@media(max-width:1099px){body[data-page=checkout] #coPlans:empty{min-height:1920px;border-radius:16px;background:linear-gradient(90deg,var(--soft,#f1f5f9) 0%,var(--line,#e2e8f0) 50%,var(--soft,#f1f5f9) 100%);background-size:200% 100%;animation:coSk 1.4s linear infinite}}
+@media(max-width:600px){body[data-page=checkout] #coPlans:empty{min-height:2086px}}
 @media(prefers-reduced-motion:reduce){body[data-page=checkout] #coPlans:empty{animation:none}}
