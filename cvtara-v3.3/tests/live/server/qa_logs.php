@@ -13,4 +13,9 @@ if(is_file($f)){ $fh=fopen($f,'r'); $sz=filesize($f); if($sz>4000000) fseek($fh,
 foreach([$APP.'/error_log',$APP.'/../public_html/error_log'] as $e) if(is_file($e)&&filemtime($e)>=strtotime($since.' UTC')){ echo "== $e\n"; foreach(array_slice(file($e),-30) as $x) echo mb_substr(rtrim($x),0,300)."\n"; }
 echo "== mail to QA addresses since: ".json_encode(DB::table('mail_outbox')->where('created_at','>=',$since)->where('recipient','like',QA_PREFIX.'%')->selectRaw('`trigger`, status, count(*) n')->groupBy('trigger','status')->get())."\n";
 echo "== mail to NON-QA addresses since (should be only owner notices): ".json_encode(DB::table('mail_outbox')->where('created_at','>=',$since)->where('recipient','not like',QA_PREFIX.'%')->selectRaw('`trigger`, count(*) n')->groupBy('trigger')->get())."\n";
+$pp=App\Services\Settings::plans(); $pro=$pp['pro']??null;
+echo "== live pro plan: ".json_encode($pro?array_intersect_key((array)$pro,array_flip(['price','savedResumes','savedLetters','atsScans','mockInterviews','perks'])):null)."\n";
+$qp=DB::table('partners')->where('name','QA TEST Partner (delete me)')->value('id');
+echo "== QA partner $qp members: ".json_encode($qp?DB::table('partner_members as m')->join('users as u','u.id','=','m.user_id')->where('m.partner_id',$qp)->get(['u.email','m.role']):[])."\n";
+echo "== QA grants: ".json_encode(DB::table('purchases as p')->join('users as u','u.id','=','p.owner_id')->where('u.email','like',QA_PREFIX.'%')->get(['u.email','p.plan','p.status','p.provider','p.amount_paise']))."\n";
 echo "== done ".date('c')."\n";
