@@ -79,7 +79,7 @@
   function render(msg) {
     const h = host(); const s = state;
     const open = s.open;
-    let out = `<div class="ip-card"><h3>Interview practice</h3><p class="ip-muted">Practise common interview questions for your role, then try a mock interview: answer in writing and get feedback on what went well and what to improve. Written feedback is prepared automatically against a fixed checklist; it does not predict any interview result.</p>
+    let out = `<div class="ip-card"><h3>Interview practice</h3><p class="ip-muted">Practise common interview questions for your role, then sit a ${s.minutes || 30}-minute mock interview with a practice panel. Some questions come from your own resume. Your results, with a model answer for each question, are released ${s.releaseDelay ? s.releaseDelay + ' minutes after the interview' : 'when they are ready'}. Feedback is prepared automatically against a fixed checklist; it does not predict any interview result.</p>
       <div class="ip-row" style="margin-top:10px"><span class="ip-pill">Mock interviews left: ${s.left}</span>${s.progress.completed ? `<span class="ip-pill">Completed: ${s.progress.completed}</span>` : ''}</div></div>${progressHtml(s.progress)}`;
     if (msg) out += `<p class="ip-err">${E(msg)}</p>`;
     if (open) out += sessionHtml(open);
@@ -87,11 +87,14 @@
       const can = s.enabled && s.left > 0;
       out += `<div class="ip-card"><h3>Start a mock interview</h3>
         <div class="ip-form"><label>Find your role<input data-ip-find maxlength="60" placeholder="Type your job title, e.g. telecaller" autocomplete="off"></label><div data-ip-found class="ip-row" style="grid-column:1/-1"></div>
-        <label>Role<select data-ip="occupation">${roleOptions(state.pick || new URLSearchParams(location.search).get('role') || '')}</select></label>
-        <label>Your experience<select data-ip="band">${opts(s.bands, 'fresher')}</select></label>
-        <label>Your goal<select data-ip="objective">${opts(s.objectives, 'first_job')}</select></label>
+        <label>Role<select data-ip="occupation">${roleOptions(state.pick || new URLSearchParams(location.search).get('role') || (s.profile || {}).occupation || '')}</select></label>
+        <label>Your experience<select data-ip="band">${opts(s.bands, (s.profile || {}).band || 'fresher')}</select></label>
+        <label>Your situation<select data-ip="track">${opts(s.tracks || { same: 'Growing in my field', switch: 'Switching to a new kind of job' }, (s.profile || {}).track || 'same')}</select></label>
+        <label data-ip-switch${(s.profile || {}).track === 'switch' ? '' : ' hidden'}>Your current role<input data-ip="currentRole" maxlength="120" value="${E((s.profile || {}).currentRole || '')}" placeholder="e.g. Sales Executive"></label>
+        <label>Your goal<select data-ip="objective">${opts(s.objectives, (s.profile || {}).track === 'switch' ? 'career_change' : 'first_job')}</select></label>
         <label>Company (optional)<input data-ip="company" maxlength="120" placeholder="e.g. a bank or retail chain"></label>
         ${s.fullMock ? `<label>Type<select data-ip="mode"><option value="standard">Standard mock interview (about 15 minutes)</option><option value="full">Full mock interview (about 60 minutes, 4 parts)</option></select></label>` : ''}</div>
+        <p class="ip-muted">${s.hasResume ? 'The panel will ask a few questions about your own resume, so keep it up to date.' : 'Add a resume first and the panel will also ask about your own experience. Without one, you get questions for your role only.'} One mock interview a day, ${s.minutes || 30} minutes each.</p>
         ${s.fullMock ? '<p class="ip-muted">A full mock interview has four parts of about 15 minutes each, like a real interview round: about you, the role, your past experience, and situations. Each uses one mock interview credit, the same as a standard one.</p>' : ''}
         ${can ? '<button class="button mint" data-ip-start>Start mock interview</button>' : (!s.enabled ? '<p class="ip-muted">Mock interviews will open soon. You can practise questions below in the meantime.</p>' : '<p class="ip-muted">Job Hunt includes 4 mock interviews and Pro includes 12, for the whole plan.</p><button class="button secondary" data-workspace-view="billing">See plans</button>')}
         <button class="button secondary" data-ip-browse>Practise questions</button>${s.progress.completed ? ' <button class="button secondary" data-ip-revise>Revision: practise your past questions</button>' : ''}</div><div data-ip-bank></div>
@@ -100,7 +103,7 @@
         <button class="button secondary" data-ip-research>Research this company</button><div data-ip-research-out></div></div>`;
     }
     if (s.past.length) {
-      out += `<div class="ip-card"><h3>Your mock interviews</h3>${s.past.map(p => `<div class="ip-row" style="padding:6px 0"><span>${E(p.role || p.occupation)}${p.mode === 'full' ? ' · Full mock' : ''} · ${E(when(p.created_at))}</span><span class="ip-pill">${E(label(p.status, p.level))}</span>${p.status === 'evaluated' ? `<button class="button secondary small" data-ip-open="${E(p.id)}">Read feedback</button>` : ''}</div>`).join('')}</div>`;
+      out += `<div class="ip-card"><h3>Your mock interviews</h3>${s.past.map(p => `<div class="ip-row" style="padding:6px 0"><span>${E(p.role || p.occupation)}${p.mode === 'full' ? ' · Full mock' : ''} · ${E(when(p.created_at))}</span><span class="ip-pill">${E(label(p.status, p.level))}</span>${p.status === 'releasing' && p.release_at ? `<small class="ip-muted">ready at ${E(clockAt(p.release_at))}</small>` : ''}${p.status === 'evaluated' ? `<button class="button secondary small" data-ip-open="${E(p.id)}">Read feedback</button>` : ''}</div>`).join('')}</div>`;
     }
     h.innerHTML = out;
   }
@@ -115,22 +118,26 @@
       <div class="ip-badges">${p.badges.map(b => `<span class="ip-badge${b.earned ? ' on' : ''}" title="${E(b.about)}"><b>${b.earned ? '★' : '☆'} ${E(b.name)}</b><small>${E(b.about)}</small></span>`).join('')}</div>
       <p class="ip-muted" style="margin:8px 0 0">Your progress is private to you. There are no rankings.</p></div>`;
   }
-  const label = (st, lvl) => ({ in_progress: 'In progress', submitted: 'Preparing feedback', evaluating: 'Preparing feedback', evaluated: lvl || 'Feedback ready', failed: 'Credit returned', abandoned: 'Not finished, credit returned' }[st] || st);
+  const clockAt = s => { const d = new Date(String(s).replace(' ', 'T') + (/Z|[+-]\d\d:?\d\d$/.test(s) ? '' : 'Z')); return isNaN(d) ? '' : d.toLocaleTimeString('en-IN', { hour: 'numeric', minute: '2-digit' }); };
+  const label = (st, lvl) => ({ in_progress: 'In progress', submitted: 'Results on the way', evaluating: 'Results on the way', releasing: 'Results on the way', evaluated: lvl || 'Feedback ready', failed: 'Credit returned', abandoned: 'Not finished, credit returned' }[st] || st);
 
   // 3.67.0 Interview room: an interviewer panel, one question at a time, progress dots and Previous / Next, so a mock
   // interview looks and feels like the real thing instead of a long form. All answers stay in the page and save as before.
-  const room = (x, inner) => `<div class="ip-room"><div class="ip-panel"><div class="ip-avatar" aria-hidden="true">🧑‍💼</div><div><b>Interview panel</b><small>${E(x.role)} · ${E(x.bandLabel)}</small></div><span class="ip-live">● Interview in progress</span></div>${inner}<div class="ip-nav"><button type="button" class="button secondary" data-ip-go="-1">← Previous</button><span class="ip-dots" aria-label="Questions"></span><button type="button" class="button mint" data-ip-go="1">Next question →</button></div></div>`;
+  // 3.71.0 a named practice panel of two and a countdown to the interview's end.
+  const panelNames = x => (x.panel || []).length ? x.panel.map(p => `${E(p.name)} (${E(p.title)})`).join(' and ') : 'Interview panel';
+  const asker = (x, a) => { const p = (x.panel || [])[a.askedBy]; return p ? `<span class="ip-guide" style="display:block;margin:0 0 6px">${E(p.name)}, ${E(p.title)}, asks:</span>` : ''; };
+  const room = (x, inner) => `<div class="ip-room"><div class="ip-panel"><div class="ip-avatar" aria-hidden="true">🧑‍💼</div><div><b>Practice panel: ${panelNames(x)}</b><small>${E(x.role)} · ${E(x.bandLabel)}</small></div><span class="ip-live" ${x.deadlineAt ? `data-ip-countdown="${E(x.deadlineAt)}"` : ''}>● Interview in progress</span></div>${inner}<div class="ip-nav"><button type="button" class="button secondary" data-ip-go="-1">← Previous</button><span class="ip-dots" aria-label="Questions"></span><button type="button" class="button mint" data-ip-go="1">Next question →</button></div></div>`;
   function sessionHtml(x) {
     let out = `<div class="ip-card" data-ip-session="${E(x.id)}"><h3>${E(x.role)} · ${E(x.bandLabel)}</h3>`;
     if (x.status === 'in_progress' && x.mode === 'full' && x.sections && x.sections.length) {
       out += room(x, fullHtml(x));
     } else if (x.status === 'in_progress') {
-      out += `<p class="ip-muted">Answer each question as you would say it in the interview, in a few sentences. Your answers save as you type. Submit when you are done; the session closes after a day without submitting and your credit is returned.</p>`;
+      out += `<p class="ip-muted">Answer each question as you would say it in the interview, in a few sentences. Your answers save as you type. ${x.deadlineAt ? 'When the time is up, the interview is submitted with the answers you have written.' : 'Submit when you are done; the session closes after a day without submitting and your credit is returned.'} The panel members are practice interviewers, not real people.</p>`;
       out += `<label class="ip-row ip-muted" style="margin:6px 0"><input type="checkbox" data-ip-clock${clock.on ? ' checked' : ''}> Use a timer (aim for about 2 minutes per answer, as in a real interview)</label>`;
-      out += room(x, x.answers.map(a => `<div class="ip-q"><b>${a.position}. ${E(a.question)}</b>${clock.on ? `<span class="ip-pill" data-ip-time="${a.position}">${mmss(secs(a.position))}</span>` : ''}<textarea data-ip-answer="${a.position}" maxlength="3000">${E(a.answer)}</textarea><details><summary class="ip-guide">What a good answer covers</summary><p class="ip-guide">${E(a.guidance)}</p></details></div>`).join(''));
+      out += room(x, x.answers.map(a => `<div class="ip-q">${asker(x, a)}<b>${a.position}. ${E(a.question)}</b>${a.personal ? ' <span class="ip-pill">From your resume</span>' : ''}${clock.on ? `<span class="ip-pill" data-ip-time="${a.position}">${mmss(secs(a.position))}</span>` : ''}<textarea data-ip-answer="${a.position}" maxlength="3000">${E(a.answer)}</textarea><details><summary class="ip-guide">What a good answer covers</summary><p class="ip-guide">${E(a.guidance)}</p></details></div>`).join(''));
       out += `<button class="button mint" data-ip-submit>Submit for feedback</button>`;
-    } else if (x.status === 'submitted' || x.status === 'evaluating') {
-      out += `<p class="ip-muted">Your feedback is being prepared. This usually takes a minute or two; we will also let you know in your notifications.</p><button class="button secondary" data-ip-refresh>Check again</button>`;
+    } else if (x.status === 'submitted' || x.status === 'evaluating' || x.status === 'releasing') {
+      out += `<p class="ip-muted">Thank you, your interview is over. ${x.releaseAt ? `Your results, with a model answer for each question, will be ready at <b>${E(clockAt(x.releaseAt))}</b>.` : 'Your feedback is being prepared. This usually takes a minute or two.'} We will email you and let you know in your notifications.</p><button class="button secondary" data-ip-refresh>Check again</button>`;
     } else if (x.feedback) {
       out += feedbackHtml(x);
     }
@@ -163,12 +170,12 @@
       const q = x.answers[i] || {};
       const head = parts.find(p => p.from === a.position);
       if (head) out += `<h4 style="margin:16px 0 0">Part ${parts.indexOf(head) + 1}: ${E(head.title)}</h4>`;
-      out += `<div class="ip-q ip-fb"><b>${a.position}. ${E(q.question)}</b><p class="ip-guide">Your answer: ${E(q.answer)}</p>
+      out += `<div class="ip-q ip-fb">${asker(x, q)}<b>${a.position}. ${E(q.question)}</b><p class="ip-guide">Your answer: ${E(q.answer)}</p>
         <div class="ip-scores">${Object.entries(f.dimensions).map(([k, v]) => `<span>${E(v)}: <b>${a.scores[k]}/4</b></span>`).join('')}</div>
         ${a.strengths.length ? `<div>What worked<ul>${a.strengths.map(t => `<li>${E(t)}</li>`).join('')}</ul></div>` : ''}
         ${a.improve.length ? `<div>To improve<ul>${a.improve.map(t => `<li>${E(t)}</li>`).join('')}</ul></div>` : ''}
         ${a.missing ? `<p class="ip-guide">Not covered: ${E(a.missing)}</p>` : ''}
-        ${a.rewrite ? `<p style="margin:6px 0 4px;font-weight:600">A stronger version using your own facts</p><div class="ip-rewrite">${E(a.rewrite)}</div>` : ''}</div>`;
+        ${a.rewrite ? `<p style="margin:6px 0 4px;font-weight:600">Model answer for you</p><p class="ip-guide" style="margin:0 0 4px">Built from your answer and your own resume. Fill in anything in [brackets] with your real example.</p><div class="ip-rewrite">${E(a.rewrite)}</div>` : ''}</div>`;
     });
     if (r.next_step) out += `<p><b>Practise next:</b> ${E(r.next_step)}</p>`;
     out += f.challenged ? '<p class="ip-muted">Thanks, your note about this feedback was sent to our support team.</p>'
@@ -205,7 +212,9 @@
     try {
       if (b.matches('[data-ip-start]')) {
         b.disabled = true;
-        const j = await api('interviews/start', { occupation: val('occupation'), band: val('band'), objective: val('objective'), company: val('company') || null, mode: val('mode') || 'standard' });
+        const track = val('track') || 'same', currentRole = val('currentRole');
+        if (state.profile && (track !== state.profile.track || currentRole !== (state.profile.currentRole || ''))) state.profile = (await api('interviews/profile', { track, currentRole })).profile;
+        const j = await api('interviews/start', { occupation: val('occupation'), band: val('band'), objective: val('objective'), company: val('company') || null, mode: val('mode') || 'standard', track, currentRole: currentRole || null });
         state.open = j.session; part.idx = 0; part.ends = 0; render();
       } else if (b.matches('[data-ip-submit]')) {
         b.disabled = true;
@@ -231,17 +240,37 @@
           const r = (await api('interviews/research', { company: h.querySelector('[data-ip-rc=company]').value, url: h.querySelector('[data-ip-rc=url]').value, occupation: val('occupation') || null })).research;
           out.innerHTML = r.status !== 'ready' ? `<p class="ip-muted">${E(r.message || r.note || 'That page could not be read.')}</p>` : `<div style="margin-top:12px"><p><b>${E(r.company)}</b> · <a href="${E(r.source)}" rel="nofollow noopener" target="_blank">source</a> · read ${E(when(r.readAt))}</p>${r.summary ? `<blockquote class="ip-guide" style="margin:6px 0 10px">${E(r.summary)}</blockquote>` : ''}<p class="ip-muted"><b>${E(r.label)}</b></p>${r.questions.map((q, i) => `<div class="ip-q"><b>${i + 1}. ${E(q.text)}</b><span class="ip-pill">${E(q.type)}</span><p class="ip-guide">${E(q.tip)}</p><textarea maxlength="3000" placeholder="Practise your answer here (not saved)"></textarea></div>`).join('')}</div>`;
         } catch (err) { out.innerHTML = `<p class="ip-err">${E(err.message)}</p>`; } finally { b.disabled = false; }
+      } else if (b.matches('[data-ip-model]')) {
+        const out = h.querySelector(`[data-ip-model-out="${CSS.escape(b.dataset.ipModel)}"]`); b.disabled = true; out.innerHTML = '<p class="ip-muted">Writing your model answer…</p>';
+        try { const j = await api('interviews/model-answer', { code: b.dataset.ipModel }); out.innerHTML = `<div class="ip-rewrite" style="margin-top:8px">${E(j.answer)}</div><p class="ip-guide">Made from your resume. Fill in anything in [brackets] with your real example, then say it in your own words.</p>`; b.hidden = true; }
+        catch (err) { out.innerHTML = `<p class="ip-err">${E(err.message)}</p>`; b.disabled = false; }
+        return;
       } else if (b.matches('[data-ip-revise]')) {
         const j = await api('interviews/revision'); const box = h.querySelector('[data-ip-bank]');
         box.innerHTML = `<div class="ip-card"><h3>Revision</h3><p class="ip-muted">${E(j.note)}</p>${j.questions.map((q, i) => `<div class="ip-q"><b>${i + 1}. ${E(q.question)}</b><details><summary class="ip-guide">Your earlier answer and what to improve</summary><p class="ip-guide">${E(q.earlier)}</p>${q.improve.length ? `<ul class="ip-guide">${q.improve.map(t => `<li>${E(t)}</li>`).join('')}</ul>` : ''}</details><textarea maxlength="3000" placeholder="Write a better answer (not saved)"></textarea></div>`).join('') || '<p class="ip-muted">Finish a mock interview first; its questions appear here.</p>'}</div>`;
       } else if (b.matches('[data-ip-browse]')) {
         const j = await api(`interviews/questions?occupation=${encodeURIComponent(val('occupation'))}&band=${encodeURIComponent(val('band'))}`);
         const box = h.querySelector('[data-ip-bank]');
-        box.innerHTML = `<div class="ip-card"><h3>Practice questions</h3>${j.questions.length ? j.questions.map((q, i) => `<div class="ip-q"><b>${i + 1}. ${E(q.text)}</b><p class="ip-guide">${E(q.guidance)}</p></div>`).join('') : '<p class="ip-muted">Questions for this role are being prepared. Please check back soon.</p>'}
+        box.innerHTML = `<div class="ip-card"><h3>Practice questions</h3>${j.full ? '<p class="ip-muted">Tap "Show a model answer" to see how you could answer, built from your own resume and cover letter.</p>' : ''}${j.questions.length ? j.questions.map((q, i) => `<div class="ip-q"><b>${i + 1}. ${E(q.text)}</b><p class="ip-guide">${E(q.guidance)}</p>${j.full ? `<button type="button" class="button secondary small" data-ip-model="${E(q.code)}">Show a model answer</button><div data-ip-model-out="${E(q.code)}"></div>` : ''}</div>`).join('') : '<p class="ip-muted">Questions for this role are being prepared. Please check back soon.</p>'}
           ${!j.full && j.total > j.questions.length ? `<p class="ip-muted">Showing ${j.questions.length} of ${j.total} questions. Job Hunt and Pro show every question and include mock interviews.</p><button class="button secondary small" data-workspace-view="billing">See plans</button>` : ''}</div>`;
       }
     } catch (err) { b.disabled = false; render(err.message); }
   });
+
+  // 30-minute countdown: shown in the panel bar; at zero the answers are saved and the interview is submitted.
+  let ending = false;
+  setInterval(async () => {
+    const el = document.querySelector('[data-ip-countdown]'); if (!el || !state?.open || state.open.status !== 'in_progress') return;
+    const n = Math.round((Date.parse(el.dataset.ipCountdown) - Date.now()) / 1000);
+    el.textContent = n > 0 ? `⏱ ${mmss(n)} left` : 'Time is up';
+    el.style.color = n <= 120 ? '#fde68a' : '';
+    if (n <= 0 && !ending) {
+      ending = true; const id = state.open.id;
+      try { for (const a of state.open.answers) await api(`interviews/${id}/answer`, { position: a.position, answer: a.answer || '' }).catch(() => {}); state.open = (await api(`interviews/${id}/submit`, {})).session; await load(); }
+      catch (err) { render(err.message); } finally { ending = false; }
+    }
+  }, 1000);
+  document.addEventListener('change', e => { if (!e.target.matches?.('[data-ip="track"]')) return; const w = host()?.querySelector('[data-ip-switch]'); if (w) w.hidden = e.target.value !== 'switch'; const g = host()?.querySelector('[data-ip="objective"]'); if (g && e.target.value === 'switch') g.value = 'career_change'; });
 
   document.addEventListener('cvtara-workspace-view', e => { if (e.detail === 'interview') load(); });
   if (window.CVTaraWorkspaceView === 'interview') load();

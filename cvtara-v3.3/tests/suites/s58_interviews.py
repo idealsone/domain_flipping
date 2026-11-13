@@ -82,7 +82,7 @@ def run(ctx, t):
         o.api("POST", "admin/providers", {"service": "ai", "values": {"provider": "claude", "claudeApiKey": "sk-ant-test-1", "dailyLimit": "0"}})
         s, g = o.api("GET", "admin/content/integrations"); d = g["data"]; d["ai"] = True
         o.api("POST", "admin/content/integrations", {"data": d, "revision": g["revision"]})
-        s, j = o.api("POST", "admin/interviews/settings", {"enabled": True, "questions": 5, "dailySessions": 3})
+        s, j = o.api("POST", "admin/interviews/settings", {"enabled": True, "questions": 5, "dailySessions": 3, "releaseDelay": 0})
         t.check("the owner switches mock interviews on", s == 200 and j["available"] is True, (s, j))
         s, pub = Client(inst.base).api("GET", "business-public")
         t.check("Job Hunt and Pro cards now list their mock interviews", "4 mock interviews with written feedback" in pub["plans"]["job-hunt"]["perks"] and "12 mock interviews with written feedback" in pub["plans"]["pro"]["perks"], pub["plans"]["job-hunt"]["perks"])

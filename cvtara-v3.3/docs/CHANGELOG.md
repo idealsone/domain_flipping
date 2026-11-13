@@ -1,3 +1,16 @@
+# CVTara v3.71.0 — Personal mock interviews
+
+## 3.71.0
+Owner (12-13 Nov 2026): personalised interview questions and answers from the resume and cover letter, a "switching jobs" path, 30-minute mock interviews one a day, a named panel, results 30 minutes after the interview; console lists paged. Owner picked "core first, bank later" (the 5 lakh question bank is the next release). Built on 3.69.0. **Migration:** `2026_12_02_000001_interview_personal` (additive; also sets the saved interview settings to 8 questions, 1 a day, 30 minutes, 30-minute release, full mock off).
+- **Interview profile.** The interview page starts from the sign-up answers (target role matched to a practice role, experience band). Sign-up and the interview page have an optional "switching to a new kind of job" choice with the current role.
+- **Personal questions.** After the introduction, up to 3 questions come from the customer's own resume (their latest job, a resume line with a number, a project or degree) and, for job switchers, "You are moving from X to Y. Why this change?". Fixed patterns, no extra cost. Bank questions fill the rest (8 in all).
+- **Model answers for you.** Feedback now reads the customer's resume, latest cover letter and profile, and each answer's "better version" becomes a first-person model answer built from those facts (introductions start "My name is ..."), never inventing anything. In question practice, Job Hunt and Pro customers can ask for a model answer to any question; it is made once, kept, and capped per day (default 10, console setting).
+- **30-minute interviews, one a day.** A countdown in the panel bar; at zero the answers are saved and submitted with whatever was written (nothing written: credit returned). Late answers are refused after a 2-minute grace. The 60-minute full mock stays available but is off by default.
+- **Practice panel.** Two named practice interviewers per interview (12 in the pool, a different pair from the customer's last interview) ask the questions in turn. The page says they are practice interviewers, not real people.
+- **Results released 30 minutes after the interview.** Feedback is written as before but hidden until the release time; then a bell notification and an email ("Your mock interview results are ready"). Level, badges and revision wait for the release too.
+- **Console.** Question bank and mock interview lists are paged (20 per page) with search, filters, dates, sorting and CSV/Excel/PDF download; approved-question count per role; settings for minutes, release delay and model answers per day; the practice panel list.
+- Account deletion also removes kept model answers. `s81_personal_interviews` covers all of the above; `s58` and `s75` set the release delay to 0 and switch the full mock on where they test it.
+
 # CVTara v3.69.0 — Stronger pages for the 60-day index push
 
 ## 3.69.0

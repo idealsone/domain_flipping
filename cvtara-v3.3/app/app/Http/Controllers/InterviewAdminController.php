@@ -27,6 +27,12 @@ class InterviewAdminController extends Controller
 
             return $ok(Interviews::adminList($f));
         }
+        if ($path === 'interviews/questions' && $r->isMethod('GET')) {
+            return $ok(Interviews::questionsPage($r));
+        }
+        if ($path === 'interviews/sessions' && $r->isMethod('GET')) {
+            return $ok(Interviews::sessionsPage($r));
+        }
         if ($path === 'interviews/template' && $r->isMethod('GET')) {
             return response(Interviews::importTemplate(), 200, ['Content-Type' => 'text/csv; charset=utf-8', 'Content-Disposition' => 'attachment; filename="interview-questions-blank.csv"']);
         }
@@ -68,7 +74,8 @@ class InterviewAdminController extends Controller
         }
         if ($path === 'interviews/settings') {
             AccountSecurity::requireRecent($r);
-            $v = $r->validate(['enabled' => 'required|boolean', 'questions' => 'nullable|integer|min:3|max:8', 'dailySessions' => 'nullable|integer|min:1|max:20', 'fullMock' => 'sometimes|boolean']);
+            $v = $r->validate(['enabled' => 'required|boolean', 'questions' => 'nullable|integer|min:3|max:10', 'dailySessions' => 'nullable|integer|min:1|max:20', 'fullMock' => 'sometimes|boolean',
+                'minutes' => 'nullable|integer|min:10|max:60', 'releaseDelay' => 'nullable|integer|min:0|max:120', 'modelAnswersDaily' => 'nullable|integer|min:0|max:50']);
 
             return $ok(['settings' => Interviews::saveSettings(array_filter($v, fn ($x) => $x !== null)), 'available' => Interviews::available()]);
         }

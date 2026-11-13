@@ -320,10 +320,24 @@ class ApiController extends Controller
 
             return $ok(['research' => \App\Services\InterviewPrep::research($u, $v['company'], $v['url'], $v['occupation'] ?? null)]);
         }
+        // 3.71.0 interview profile (job switch) and personal model answers.
+        if ($path === 'interviews/profile' && $r->isMethod('POST')) {
+            $v = $r->validate(['track' => 'required|in:same,switch', 'currentRole' => 'nullable|string|max:120', 'skills' => 'nullable|string|max:500', 'target' => 'nullable|string|max:120']);
+
+            return $ok(['profile' => \App\Services\Interviews::saveProfile($u, $v)]);
+        }
+        if ($path === 'interviews/model-answer' && $r->isMethod('POST')) {
+            \App\Services\EmailVerification::guard($u);
+            $cap('interview-model', 30, 3600, 'Please wait a while before asking for more model answers.');
+            $v = $r->validate(['code' => 'required|string|max:40']);
+
+            return $ok(\App\Services\Interviews::modelAnswer($u, $v['code']));
+        }
         if ($path === 'interviews/start' && $r->isMethod('POST')) {
             \App\Services\EmailVerification::guard($u);
             $cap('interview-start', 10, 3600, 'Please wait a while before starting another mock interview.');
-            $v = $r->validate(['occupation' => 'required|string|max:80', 'band' => 'required|string|max:10', 'objective' => 'nullable|string|max:20', 'company' => 'nullable|string|max:120', 'mode' => 'nullable|in:standard,full']);
+            $v = $r->validate(['occupation' => 'required|string|max:80', 'band' => 'required|string|max:10', 'objective' => 'nullable|string|max:20', 'company' => 'nullable|string|max:120', 'mode' => 'nullable|in:standard,full',
+                'track' => 'nullable|in:same,switch', 'currentRole' => 'nullable|string|max:120']);
 
             return $ok(['session' => \App\Services\Interviews::start($u, $v)]);
         }
