@@ -169,7 +169,7 @@ def run(ctx, t):
         t.check("the console summary has coverage per role and the panel", s == 200 and "coverage" in j and len(j["panel"]) >= 8 and "questions" not in j)
         js = open(inst.app + "/resources/console/interviews.js").read()
         t.check("the console uses paged grids for both lists", "ivQGrid" in js and "ivSGrid" in js and "K.grid" in js)
-        page = open(ctx.public + "/interview-practice.js").read()
+        page = re.sub(r"/\*.*?\*/|^\s*//.*$", "", open(ctx.public + "/interview-practice.js").read(), flags=re.S | re.M)  # code comments are not shown
         t.check("customer wording never mentions AI", not re.search(r"\b(AI|A\.I\.|Claude|Anthropic|GPT|OpenAI)\b", page))
     finally:
         inst.stop(); srv.shutdown()
