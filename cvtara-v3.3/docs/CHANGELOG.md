@@ -1,7 +1,7 @@
 # CVTara v3.70.0 — Smoother, lighter, more visual
 
 ## 3.70.0
-Owner (12 Nov 2026): smoother, lighter, more attractive UI across the site, dashboard and console; a landing page that sells; less text, more visuals and motion; charts that respond; fast on every device; collect the 10 testers' feedback first. Built on 3.69.0. One migration (`2026_12_02_000001_simpler_homepage_copy`, copy only).
+Owner (12 Nov 2026): smoother, lighter, more attractive UI across the site, dashboard and console; a landing page that sells; less text, more visuals and motion; charts that respond; fast on every device; collect the 10 testers' feedback first. Built on 3.69.0 + 3.69.1. One migration (`2026_12_02_000001_simpler_homepage_copy`, copy only).
 - **Tester feedback first**: the 10 hands-on reviews of 13 Nov (`/mnt/project-files/qa-2026-11-13/`) drove the list below. Bug-level findings (Pro 20 vs 30, console revenue counts, ?view crash) are in 3.69.1 from the testing thread.
 - **Tara stays quiet**: the chat never opens by itself (6 of 10 testers); a small greeting bubble shows once a day for 8 s. On phones the button is a 48 px round icon and the page keeps 72 px free above it. The closed panel is `inert`, so it is no longer a hidden Tab stop; focus returns to the button on close.
 - **Dashboard: one next step**: the welcome card holds the single next step (`#wsNext`); Tara's nudge replaces its text in place instead of adding a box. The "One application, a clear next step" roadmap and the tips box are hidden. Layout shift on the dashboard: phone 0.97 → 0.002, laptop 0.46 → 0.015 (throttled, measured locally).
@@ -14,6 +14,21 @@ Owner (12 Nov 2026): smoother, lighter, more attractive UI across the site, dash
 - **Accessibility**: "Skip to main content" in the workspace; choosing a sidebar section moves focus to its heading; a new ATS Match report takes focus; dark-mode Tara link contrast.
 - Night mode checked on the homepage and dashboard.
 - Customer What's new: two notes (calmer dashboard, quiet chat).
+
+# CVTara v3.69.1 — Fixes from the 13 Nov live test
+
+## 3.69.1
+Owner (12-13 Nov 2026): 10 testers over every page and function on the live site, then fix what they found. Built on 3.69.0. One data migration (owner decisions below).
+- **Pro is 30 tailored resumes and 30 cover letters for 90 days** (owner, 13 Nov). The live plan already had 30/30, but its perk line still said 20 and 20, so the cards contradicted themselves. The migration sets 30/30 and 90 days and rewrites that line. Defaults, the customer guide and the admin guide now say 30.
+- **Diwali offer switched off** (owner, 13 Nov). The migration sets any Diwali campaign that is still running to Off; the campaign is kept for reuse next year.
+- **Order totals count real money only.** Orders and Reports showed "Billed/Net" as the sum of every row, including checkouts that were opened and never paid. Totals now add only paid, partly refunded and refunded orders; unpaid checkouts appear on their own "Opened, not paid" tile.
+- **Overview time label is India time.** "Worked out at" now always shows IST, whatever the browser's time zone.
+- **Sign-in guessing is capped per account too.** Besides 5 wrong passwords per email and network address, 10 wrong passwords for one email in 15 minutes now pause sign-in for that email from any address (behind the CDN the address can change between tries). The email stays filled in after a wrong password.
+- **Friendly "too many requests" page.** A rate-limited visitor saw a blank white page; now they see a short explanation that retries by itself after 30 seconds.
+- **Workspace links:** `?view=` with an unknown or malformed value opens the dashboard instead of throwing a script error; `?view=ats` opens ATS Match; `?view=partner` opens the partner portal for partner members.
+- **No more /api/partner 404 on every workspace load:** customers who are not partner members get `partner: null`.
+- **Template sample text is flagged.** A guided template fills in a fictional example person. Example entries the customer has not edited no longer count towards "Content completeness", and the builder now shows how many are left with a "Remove example entries" button.
+- Contact page: the link to the refund policy said "No-Refund Policy"; it now says "Refund Policy".
 
 # CVTara v3.69.0 — Stronger pages for the 60-day index push
 
