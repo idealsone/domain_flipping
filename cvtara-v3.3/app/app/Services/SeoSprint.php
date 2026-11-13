@@ -5,7 +5,7 @@ namespace App\Services;
 use Carbon\Carbon;
 
 /**
- * Index sprint (3.68.0, owner request 2026-11-12): for 30 days the SEO and Growth agents do about ten times their usual
+ * Index sprint (3.68.0, owner request 2026-11-12; 60 days since 3.69.0, owner: "it should be there in 60 days"): for 60 days the SEO and Growth agents do about ten times their usual
  * daily work, so the ~600 public pages get read, checked and offered to every search engine as fast as the engines allow.
  *
  * What is multiplied: pages scanned, Google URL Inspection checks (Google allows 2,000 a day per site; the sprint stays at
@@ -13,11 +13,11 @@ use Carbon\Carbon;
  * the Google Indexing API (Google's own 200-a-day quota), outreach sends (each still needs the owner's approval), and any
  * live page change (every change is still an approval card that names the page, the section and the exact text).
  *
- * The sprint ends by itself after 30 days. The owner can stop it early from Growth > SEO agent.
+ * The sprint ends by itself after 60 days. The owner can stop it early from Growth > SEO agent.
  */
 class SeoSprint
 {
-    public const DAYS = 30;
+    public const DAYS = 60;
 
     /** Multipliers per setting, and a hard ceiling so a busy day cannot hurt the host or break an engine's quota. */
     public const BOOST = [
@@ -30,7 +30,13 @@ class SeoSprint
 
     public static function state(): array
     {
-        return array_merge(['on' => false, 'startedAt' => null, 'until' => null, 'by' => null], (array) Settings::get('seoSprint', []));
+        $s = array_merge(['on' => false, 'startedAt' => null, 'until' => null, 'by' => null], (array) Settings::get('seoSprint', []));
+        // 3.69.0: a sprint started under the 30-day rule runs the full 60 days from its start.
+        if ($s['startedAt'] && $s['until'] && Carbon::parse($s['until'])->lt($full = Carbon::parse($s['startedAt'])->addDays(self::DAYS))) {
+            $s['until'] = $full->toIso8601String();
+        }
+
+        return $s;
     }
 
     public static function active(?Carbon $now = null): bool
@@ -73,7 +79,7 @@ class SeoSprint
         return $limits;
     }
 
-    /** Day of the sprint (1-30), or 0 when it is not running. */
+    /** Day of the sprint (1-60), or 0 when it is not running. */
     public static function day(?Carbon $now = null): int
     {
         $s = self::state();
@@ -84,7 +90,7 @@ class SeoSprint
         return min(self::DAYS, (int) floor(Carbon::parse($s['startedAt'])->diffInDays($now ?? now())) + 1);
     }
 
-    /** The 30-day plan: what each week is for, so the daily runs and the owner's to-dos follow one order. */
+    /** The 60-day plan: what each week is for, so the daily runs and the owner's to-dos follow one order. */
     public static function plan(): array
     {
         $f = resource_path('data/seo-sprint.json');

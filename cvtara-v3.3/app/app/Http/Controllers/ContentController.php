@@ -268,7 +268,8 @@ class ContentController extends Controller
         // Addresses people type or guess that have no page of their own: send them, and any links Google already holds, to the right page for good.
         $moved = ['guides' => 'guides.html', 'calculators' => 'guides.html', 'blog' => 'blog.html', 'pricing.html' => 'pricing/', 'plans' => 'pricing/', 'templates' => 'templates.html', 'cover-letters' => 'cover-letters.html', 'about' => 'about.html', 'contact' => 'contact.html', 'privacy' => 'privacy.html', 'terms' => 'terms.html', 'refund' => 'refund.html', 'refund-policy' => 'refund.html'];
         if (isset($moved[$path])) {
-            return redirect('/'.$moved[$path], 301);
+            // A relative Location keeps a trailing slash (redirect() drops it, which made /pricing.html take two hops to /pricing/).
+            return str_ends_with($moved[$path], '/') ? response('', 301, ['Location' => '/'.$moved[$path]]) : redirect('/'.$moved[$path], 301);
         }
         // /resume-builder/ is the free resume builder's landing page for visitors and search engines; signed-in customers go straight to the builder.
         if ($path === 'resume-builder' && ! $r->user()) {
@@ -394,6 +395,9 @@ class ContentController extends Controller
             $minutes = max(1, (int) ceil($words / 200));
             $kind = $isCalc ? 'Calculator' : 'Guide';
             $meta = 'By <b>'.e($post['author'] ?? 'CVTara Editorial Team').'</b> · '.$minutes.' min read · '.$kind.(! empty($post['category']) ? ' · '.e($post['category']) : '');
+            if ($upd = \App\Services\SeoContent::updatedAt('/'.($isCalc ? 'calculators' : 'guides').'/'.$slug.'/', $post)) { // 3.68.0
+                $meta .= ' · Updated <time datetime="'.substr($upd, 0, 10).'">'.e(\Carbon\Carbon::parse($upd)->tz('Asia/Kolkata')->format('j M Y')).'</time>';
+            }
             if ($rev = \App\Services\SeoContent::reviewedAt('/'.($isCalc ? 'calculators' : 'guides').'/'.$slug.'/')) { // 3.45.0: only a review a person recorded
                 $meta .= ' · Reviewed '.e(\Carbon\Carbon::parse($rev)->tz('Asia/Kolkata')->format('j M Y'));
             }
@@ -502,6 +506,9 @@ class ContentController extends Controller
         if ($post) {
             $image = $post['imageUrl'] ?? '';
             $schema = ['@context' => 'https://schema.org', '@type' => 'BlogPosting', 'headline' => $post['title'], 'description' => $post['description'], 'url' => $siteBase.$uri, 'author' => ['@type' => 'Organization', 'name' => $post['author'] ?? 'CVTara'], 'publisher' => ['@type' => 'Organization', 'name' => 'CVTara']];
+            if ($upd = \App\Services\SeoContent::updatedAt('/'.(($post['type'] ?? '') === 'Calculator' ? 'calculators' : 'guides').'/'.$slug.'/', $post)) {
+                $schema['dateModified'] = substr($upd, 0, 10); // 3.68.0
+            }
             if ($image) {
                 $schema['image'] = $abs($image);
             }$schema['mainEntityOfPage'] = $siteBase.$uri;
