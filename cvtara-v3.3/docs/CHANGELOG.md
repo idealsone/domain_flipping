@@ -1,3 +1,18 @@
+# CVTara v3.69.1 — Fixes from the 13 Nov live test
+
+## 3.69.1
+Owner (12-13 Nov 2026): 10 testers over every page and function on the live site, then fix what they found. Built on 3.69.0. One data migration (owner decisions below).
+- **Pro is 30 tailored resumes and 30 cover letters for 90 days** (owner, 13 Nov). The live plan already had 30/30, but its perk line still said 20 and 20, so the cards contradicted themselves. The migration sets 30/30 and 90 days and rewrites that line. Defaults, the customer guide and the admin guide now say 30.
+- **Diwali offer switched off** (owner, 13 Nov). The migration sets any Diwali campaign that is still running to Off; the campaign is kept for reuse next year.
+- **Order totals count real money only.** Orders and Reports showed "Billed/Net" as the sum of every row, including checkouts that were opened and never paid. Totals now add only paid, partly refunded and refunded orders; unpaid checkouts appear on their own "Opened, not paid" tile.
+- **Overview time label is India time.** "Worked out at" now always shows IST, whatever the browser's time zone.
+- **Sign-in guessing is capped per account too.** Besides 5 wrong passwords per email and network address, 10 wrong passwords for one email in 15 minutes now pause sign-in for that email from any address (behind the CDN the address can change between tries). The email stays filled in after a wrong password.
+- **Friendly "too many requests" page.** A rate-limited visitor saw a blank white page; now they see a short explanation that retries by itself after 30 seconds.
+- **Workspace links:** `?view=` with an unknown or malformed value opens the dashboard instead of throwing a script error; `?view=ats` opens ATS Match; `?view=partner` opens the partner portal for partner members.
+- **No more /api/partner 404 on every workspace load:** customers who are not partner members get `partner: null`.
+- **Template sample text is flagged.** A guided template fills in a fictional example person. Example entries the customer has not edited no longer count towards "Content completeness", and the builder now shows how many are left with a "Remove example entries" button.
+- Contact page: the link to the refund policy said "No-Refund Policy"; it now says "Refund Policy".
+
 # CVTara v3.69.0 — Stronger pages for the 60-day index push
 
 ## 3.69.0

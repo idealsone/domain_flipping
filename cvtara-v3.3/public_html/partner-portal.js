@@ -89,5 +89,5 @@
     navigator.clipboard?.writeText(b.dataset.ppCopy).then(() => { b.textContent = 'Copied'; setTimeout(() => { b.textContent = 'Copy'; }, 1500); });
   });
   document.addEventListener('cvtara-workspace-view', async e => { if (e.detail === 'partner') { data = await get().catch(() => null) || data; draw(); } });
-  get().then(j => { if (j && j.partner) { data = j; addNav(); } }).catch(() => {});
+  get().then(j => { if (j && j.partner) { data = j; addNav(); if (new URLSearchParams(location.search).get('view') === 'partner') document.querySelector('[data-workspace-view="partner"]')?.click(); } }).catch(() => {});
 })();
