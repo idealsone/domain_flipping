@@ -254,6 +254,11 @@ class ApiController extends Controller
         }
         // 3.54.0 Partner portal: the signed-in member's own organisation, numbers only.
         if ($path === 'partner' && $get) {
+            // Not a partner member: answer 200 with partner null, so every customer workspace load is not a logged 404.
+            if (! \App\Services\Partners::membership($u)) {
+                return $ok(['partner' => null]);
+            }
+
             return $ok(\App\Services\Partners::portal($u));
         }
         if (str_starts_with($path, 'partner/')) {

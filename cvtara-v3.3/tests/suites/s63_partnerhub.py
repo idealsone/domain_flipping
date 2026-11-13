@@ -68,7 +68,8 @@ def run(ctx, t):
 
         # Partner portal.
         tpo = Client(inst.base); tpo.register("ph-tpo@test.local")
-        t.check("someone who is not a partner member has no portal", tpo.api("GET", "partner")[0] == 404)
+        _s, _j = tpo.api("GET", "partner")
+        t.check("someone who is not a partner member has no portal", _s == 200 and _j.get("partner") is None)
         s, j = o.api("POST", f"admin/partners/{pid}/members", {"email": "ph-tpo@test.local", "role": "viewer"})
         t.check("the owner adds a portal member", s == 200, (s, j))
         s, j = tpo.api("GET", "partner")
