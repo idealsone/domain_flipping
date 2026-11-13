@@ -89,7 +89,7 @@ return [
         ['POST', '#^tasks(/[a-f0-9-]{36}/(move|evidence))?$#', 'seo.draft|growth.draft|seo.approve|growth.approve'],
 
         // Owner only: keys, prices, business switches, setup, roles, the business assistant, deletes and blocks.
-        ['*', '#^(settings|providers|plans|business-controls|setup/.*|team(/.*)?|tara(/.*)?|users/(block|delete)|refunds/settings|services/settings|referrals/settings|campaigns/settings|outreach/(settings|senders)|speed/(save|test-reader)|report/fresh-start|media|indexing/settings|growth/(settings|costs|levels)|interviews/settings|errors/clear|audit(/.*)?)$#', 'owner'],
+        ['*', '#^(settings|providers|plans|business-controls|setup/.*|team(/.*)?|tara(/.*)?|users/(block|delete)|refunds/settings|services/settings|referrals/settings|campaigns/settings|outreach/(settings|senders)|speed/(save|test-reader)|report/fresh-start|media|indexing/settings|growth/(settings|costs|levels)|interviews/settings|interviews/bank/settings|errors/clear|audit(/.*)?)$#', 'owner'],
 
         ['GET', '#^(overview|live|letter-summary)$#', 'overview.view'],
         ['GET', '#^(users|users/grants|purchases)$#', 'customers.view'],
@@ -115,6 +115,9 @@ return [
         ['GET', '#^interviews/template$#', 'content.edit'],
         ['POST', '#^interviews/(seed|approve|import|questions/\d+(/retire)?)$#', 'content.edit'],
         ['POST', '#^interviews/grant$#', 'customers.manage'],
+        // 3.72.0 the large question bank (switching it on or off is owner only, above).
+        ['GET', '#^interviews/bank/patterns(/[PR]\d{2})?$#', 'content.edit|customers.view'],
+        ['POST', '#^interviews/bank/(status|sync)$#', 'content.edit'],
 
         // 3.54.0 PartnerHub. Marking commissions paid is owner only (no rule).
         ['GET', '#^costs(/margin)?$#', 'orders.view|growth.view'],
