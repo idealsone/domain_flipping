@@ -5,11 +5,11 @@
 [data-count]{font-variant-numeric:tabular-nums}
 
 /* charts */
-.cvc{display:block;width:100%;height:auto;max-height:240px;overflow:visible;--cvc-c:var(--blue,#1557d2);--cvc-ink:var(--muted,#64748b)}
+.cvc{display:block;width:100%;height:auto;overflow:visible;--cvc-c:var(--blue,#1557d2);--cvc-ink:var(--muted,#64748b)}
 .cvc-axis{stroke:var(--line,#e2e8f0);stroke-width:1}
 .cvc-x{fill:var(--cvc-ink);font:500 11px/1 Inter,system-ui,sans-serif}
 .cvc-hit{fill:transparent}
-.cvc-pt{cursor:default;outline:none}.cvc-pt[data-href],.cvc-pt[data-admin-view],.cvc-pt[data-workspace-view]{cursor:pointer}
+.cvc-pt{cursor:default;outline:none}.cvc-pt[data-href],.cvc-pt[data-go]{cursor:pointer}
 .cvc-bar{fill:var(--cvc-c);opacity:.85;transform-box:fill-box;transform-origin:50% 100%;transition:opacity .15s}
 .cvc-pt.on .cvc-bar,.cvc-pt:focus-visible .cvc-bar{opacity:1;fill:var(--cvc-hi,#0f3a91)}
 .cvc-pt:focus-visible .cvc-hit{stroke:#93c5fd;stroke-width:2}

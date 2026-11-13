@@ -36,7 +36,9 @@
 
   /* ---------- charts ---------- */
   const W = 560;
-  const shell = (o, h, inner) => `<svg class="cvc cvc-${o.type}" viewBox="0 0 ${W} ${h}" role="group" aria-label="${E(o.label || 'Chart')}" preserveAspectRatio="none">${inner}</svg>`;
+  // a click goes to a link, or opens a console / workspace section by pressing that section's own menu button
+  const act = p => (p.href ? ` data-href="${E(p.href)}"` : '') + (p.view ? ` data-go="admin:${E(p.view)}"` : '') + (p.wsView ? ` data-go="workspace:${E(p.wsView)}"` : '');
+  const shell = (o, h, inner) => `<svg class="cvc cvc--${o.type}" viewBox="0 0 ${W} ${h}" role="group" aria-label="${E(o.label || 'Chart')}">${inner}</svg>`;
   function bars(o) {
     const pts = o.points || [], H = o.height || 190, base = H - 26, top = 22, max = Math.max(1, ...pts.map(p => num(p.value)));
     const n = Math.max(1, pts.length), slot = (W - 20) / n, bw = Math.min(42, slot * 0.62);
@@ -44,7 +46,7 @@
     return shell({ ...o, type: 'bars' }, H, `<line class="cvc-axis" x1="10" x2="${W - 10}" y1="${base}" y2="${base}"/>` + pts.map((p, i) => {
       const v = num(p.value), h = Math.max(v ? 3 : 1, (v / max) * (base - top)), x = 10 + i * slot + (slot - bw) / 2;
       const tip = p.tip || `${p.label}: ${o.format ? o.format(v) : v.toLocaleString('en-IN')}`;
-      return `<g class="cvc-pt" tabindex="0" role="img" aria-label="${E(tip)}" data-tip="${E(tip)}"${p.href ? ` data-href="${E(p.href)}"` : ''}${p.view ? ` data-admin-view="${E(p.view)}"` : ''} style="--i:${i}"><rect class="cvc-hit" x="${10 + i * slot}" y="0" width="${slot}" height="${H}"/><rect class="cvc-bar" x="${x}" y="${base - h}" width="${bw}" height="${h}" rx="4"/>${i % every === 0 ? `<text class="cvc-x" x="${x + bw / 2}" y="${H - 7}" text-anchor="middle">${E(p.short ?? p.label)}</text>` : ''}</g>`;
+      return `<g class="cvc-pt" tabindex="0" role="img" aria-label="${E(tip)}" data-tip="${E(tip)}"${act(p)} style="--i:${i}"><rect class="cvc-hit" x="${10 + i * slot}" y="0" width="${slot}" height="${H}"/><rect class="cvc-bar" x="${x}" y="${base - h}" width="${bw}" height="${h}" rx="4"/>${i % every === 0 ? `<text class="cvc-x" x="${x + bw / 2}" y="${H - 7}" text-anchor="middle">${E(p.short ?? p.label)}</text>` : ''}</g>`;
     }).join(''));
   }
   function line(o) {
@@ -57,7 +59,7 @@
       (n > 1 ? `<path class="cvc-area" d="${d} L${x(n - 1).toFixed(1)},${base} L${x(0).toFixed(1)},${base} Z"/><path class="cvc-line" d="${d}" pathLength="1"/>` : '') +
       pts.map((p, i) => {
         const v = num(p.value), tip = p.tip || `${p.label}: ${o.format ? o.format(v) : v.toLocaleString('en-IN')}`;
-        return `<g class="cvc-pt" tabindex="0" role="img" aria-label="${E(tip)}" data-tip="${E(tip)}"${p.href ? ` data-href="${E(p.href)}"` : ''}${p.view ? ` data-workspace-view="${E(p.view)}"` : ''} style="--i:${i}"><rect class="cvc-hit" x="${x(i) - slot / 2}" y="0" width="${slot}" height="${H}"/><circle class="cvc-dot" cx="${x(i)}" cy="${y(v)}" r="5"/>${i % every === 0 || i === n - 1 ? `<text class="cvc-x" x="${x(i)}" y="${H - 7}" text-anchor="middle">${E(p.short ?? p.label)}</text>` : ''}</g>`;
+        return `<g class="cvc-pt" tabindex="0" role="img" aria-label="${E(tip)}" data-tip="${E(tip)}"${act(p)} style="--i:${i}"><rect class="cvc-hit" x="${x(i) - slot / 2}" y="0" width="${slot}" height="${H}"/><circle class="cvc-dot" cx="${x(i)}" cy="${y(v)}" r="5"/>${i % every === 0 || i === n - 1 ? `<text class="cvc-x" x="${x(i)}" y="${H - 7}" text-anchor="middle">${E(p.short ?? p.label)}</text>` : ''}</g>`;
       }).join(''));
   }
 
@@ -80,9 +82,15 @@
   document.addEventListener('focusin', e => { const g = e.target.closest && e.target.closest('.cvc-pt'); if (g) show(g); else hide(); });
   document.addEventListener('keydown', e => { const g = e.target.closest && e.target.closest('.cvc-pt'); if (!g) return;
     if (e.key === 'ArrowRight' || e.key === 'ArrowLeft') { const n = e.key === 'ArrowRight' ? g.nextElementSibling : g.previousElementSibling; if (n && n.classList.contains('cvc-pt')) { e.preventDefault(); n.focus(); } }
-    else if ((e.key === 'Enter' || e.key === ' ') && (g.dataset.href || g.dataset.adminView || g.dataset.workspaceView)) { e.preventDefault(); g.dispatchEvent(new MouseEvent('click', { bubbles: true })); }
+    else if ((e.key === 'Enter' || e.key === ' ') && (g.dataset.href || g.dataset.go)) { e.preventDefault(); g.dispatchEvent(new MouseEvent('click', { bubbles: true })); }
     else if (e.key === 'Escape') hide(); });
-  document.addEventListener('click', e => { const g = e.target.closest && e.target.closest('.cvc-pt'); if (g && g.dataset.href) location.href = g.dataset.href; });
+  document.addEventListener('click', e => {
+    const g = e.target.closest && e.target.closest('.cvc-pt'); if (!g) return;
+    if (g.dataset.href) { location.href = g.dataset.href; return; }
+    if (!g.dataset.go) { show(g); return; } // a tap on a phone shows the value
+    const [k, v] = g.dataset.go.split(':'), b = document.querySelector(`nav [data-${k}-view="${v}"], aside [data-${k}-view="${v}"], [data-${k}-view="${v}"]:not(.cvc-pt)`);
+    if (b) b.click();
+  });
   addEventListener('scroll', hide, { passive: true });
 
   window.CVChart = { bars, line, watch };

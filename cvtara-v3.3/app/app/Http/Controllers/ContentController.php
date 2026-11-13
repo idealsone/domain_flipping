@@ -479,6 +479,7 @@ class ContentController extends Controller
         if ($path === 'workspace.html') {
             $head .= '<link rel="stylesheet" href="/support-widget.css">'; // the feedback button belongs to signed-in customers only
             $head .= '<link rel="stylesheet" href="/tara-chat.css">'; // Tara chat shows only when the owner has switched it on
+            $head .= '<link rel="stylesheet" href="/dash-v4.css">'; // 3.70.0 dashboard: one next step, progress charts, no layout jumps
         }
         $kw = trim((string) ($custom['keywords'] ?? $post['keywords'] ?? ''));
         if ($kw !== '') {

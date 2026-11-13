@@ -158,6 +158,27 @@
     try { if (localStorage.getItem(key)) return; } catch (e) { /* storage blocked */ }
     let n; try { n = (await api('/api/tara/nudge')).nudge; } catch (e) { return; }
     if (!n) return;
+    // 3.70.0 The next step lives inside the welcome card (#wsNext), replacing its default text in place, so the page does not jump.
+    for (let i = 0; i < 20 && !document.getElementById('wsNext'); i++) await new Promise(r => setTimeout(r, 150));
+    const slot = document.getElementById('wsNext');
+    if (slot) {
+      const fill = el => {
+        el.dataset.nudge = '1';
+        el.innerHTML = `<h2>${E(n.title)}</h2><p>${E(n.line)}</p><p class="ws-acts">${n.actions.map((x, i) => x.url ? `<a class="button ${i ? 'secondary' : 'mint'}" href="${E(x.url)}">${E(x.label)}</a>` : `<button type="button" class="button ${i ? 'secondary' : 'mint'}" data-n="${i}">${E(x.label)}</button>`).join('')}</p>${n.offer ? `<p class="ws-offer"><b>${E(n.offer.name)} · ₹${E(n.offer.price)}</b> ${E(n.offer.why)} <a href="${E(n.offer.url)}">Get ${E(n.offer.name)}</a></p>` : ''}`;
+      };
+      fill(slot);
+      // the welcome card is redrawn when the customer comes back to the dashboard: put the next step back each time
+      new MutationObserver(() => { const el = document.getElementById('wsNext'); if (el && !el.dataset.nudge) fill(el); }).observe(host, { childList: true, subtree: true });
+      host.addEventListener('click', e => {
+        if (!e.target.closest('#wsNext')) return;
+        if (e.target.closest('.ws-offer a') && n.offer) track(n.offer.plan, 'dashboard');
+        const b = e.target.closest('[data-n]'); if (!b) return;
+        const x = n.actions[Number(b.dataset.n)];
+        if (x.upload) { if (window.CVTaraResumeImport && window.CVTaraResumeImport.pick) window.CVTaraResumeImport.pick(); else location.href = '/workspace.html?view=resumes'; }
+        else if (x.ask && box) { toggle(true); send(x.ask); }
+      });
+      return;
+    }
     const c = document.createElement('section');
     c.className = 'tara-nudge'; c.setAttribute('aria-label', 'Your next step');
     c.innerHTML = `<span class="tara-dot" aria-hidden="true">T</span><div class="tn-body"><small>${E(n.greeting)}</small><h3>${E(n.title)}</h3><p>${E(n.line)}</p>
