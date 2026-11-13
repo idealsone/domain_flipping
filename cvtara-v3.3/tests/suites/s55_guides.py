@@ -25,7 +25,7 @@ def run(ctx, t):
     t.check("the customer guide shows when it was last reviewed, is searchable and has video slots", re.search(r'Last reviewed <time datetime="\d{4}-\d\d-\d\d">', h) and 'id="gq"' in h and h.count('data-video=') == 17)
     text = re.sub(r"<script.*?</script>|<style.*?</style>", "", h, flags=re.S)
     t.check("the customer guide never mentions AI or the provider", not re.search(r"\bAI\b|artificial intelligence|Claude|Anthropic", text), re.findall(r".{30}\bAI\b.{30}", text)[:3])
-    t.check("the customer guide states the packages as they are", all(x in text for x in ("10 tailored resumes and 10 cover letters", "20 tailored resumes and 20 cover letters", "One-time payment", "7-day refund if unused")))
+    t.check("the customer guide states the packages as they are", all(x in text for x in ("10 tailored resumes and 10 cover letters", "30 tailored resumes and 30 cover letters", "One-time payment", "7-day refund if unused")))
     t.check("old package names and rules are gone", not any(x in text for x in ("Fresher Basic", "Standard 40", "No-Refund Policy", "commission")))
     t.check("every chapter link in the menu has its chapter", all(f'href="#{i}"' in h for i in CUST))
 
