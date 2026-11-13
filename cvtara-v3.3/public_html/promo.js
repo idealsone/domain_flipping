@@ -101,8 +101,10 @@
     // top bar
     if (v.triggers.banner && sess.get('cvtara-promo-bar:' + v.id) !== 'off') {
       const wrap = document.createElement('div'); wrap.className = 'cvp-bar-wrap'; wrap.innerHTML = barHtml(v);
-      const a = document.getElementById('lpAnnounce'); if (a) a.hidden = true;
-      document.body.prepend(wrap);
+      const a = null; // 3.70.0 the floating bar no longer replaces the home announcement, so hiding it would only move the page
+      // 3.70.0 The bar floats at the bottom of the screen: it never pushes the page down after it has drawn (testers measured
+      // a layout shift of 0.5 from the top bar), and keyboard users meet "Skip to content" before it.
+      wrap.classList.add('cvp-float'); document.body.append(wrap);
       wrap.addEventListener('click', e => {
         if (e.target.closest('[data-close]')) { sess.set('cvtara-promo-bar:' + v.id, 'off'); wrap.remove(); send(v.id, 'close'); if (a) a.hidden = false; }
         else if (e.target.closest('[data-copy]')) copyCode(v, e.target.closest('[data-copy]').querySelector('span'));

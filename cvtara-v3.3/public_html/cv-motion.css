@@ -27,3 +27,4 @@
 .cvc-tip.on{opacity:1}
 html.dark .cvc{--cvc-c:#60a5fa;--cvc-hi:#93c5fd;--cvc-ink:#94a3b8}html.dark .cvc-tip{background:#e2e8f0;color:#0f172a}
 @media(prefers-reduced-motion:reduce){.cv-motion [data-reveal]{opacity:1!important;transform:none!important}.cvc *{transition:none!important}}
+@media print{[data-reveal]{opacity:1!important;transform:none!important}}

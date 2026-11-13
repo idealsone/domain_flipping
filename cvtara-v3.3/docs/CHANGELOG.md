@@ -1,3 +1,20 @@
+# CVTara v3.70.0 — Smoother, lighter, more visual
+
+## 3.70.0
+Owner (12 Nov 2026): smoother, lighter, more attractive UI across the site, dashboard and console; a landing page that sells; less text, more visuals and motion; charts that respond; fast on every device; collect the 10 testers' feedback first. Built on 3.69.0. One migration (`2026_12_02_000001_simpler_homepage_copy`, copy only).
+- **Tester feedback first**: the 10 hands-on reviews of 13 Nov (`/mnt/project-files/qa-2026-11-13/`) drove the list below. Bug-level findings (Pro 20 vs 30, console revenue counts, ?view crash) are in 3.69.1 from the testing thread.
+- **Tara stays quiet**: the chat never opens by itself (6 of 10 testers); a small greeting bubble shows once a day for 8 s. On phones the button is a 48 px round icon and the page keeps 72 px free above it. The closed panel is `inert`, so it is no longer a hidden Tab stop; focus returns to the button on close.
+- **Dashboard: one next step**: the welcome card holds the single next step (`#wsNext`); Tara's nudge replaces its text in place instead of adding a box. The "One application, a clear next step" roadmap and the tips box are hidden. Layout shift on the dashboard: phone 0.97 → 0.002, laptop 0.46 → 0.015 (throttled, measured locally).
+- **Your progress** (new, dashboard): a line chart of ATS match scores (hover, tap or Tab onto a point for the job, score and date; click opens ATS Match) and an applications funnel (Saved → Applied → Interview → Offer, click opens the tracker). Drawn last on the page so nothing moves.
+- **Reminder cards** show one at a time and step aside after 12 s (they stay under the bell); on phones they sit above the chat button instead of over content.
+- **Interactive charts, no library** (`cv-motion.js`, ~5 KB): `CVChart.bars/line` SVG with one tooltip, keyboard arrows, click-through, and draw-in animation. Used on the console Overview (signups by day, revenue by day), console traffic (page views by day) and the customer dashboard.
+- **Landing page**: shorter headline and intro (moved by migration only if the owner never edited them), one solid button plus a text link, three proof ticks, floating documents with keyword chips, a "numbers at a glance" strip (templates, cover letters, from-price, 7-day refund) with icons, icon cards for How it works, shorter ATS copy, an animated sample report ring and ticks that now pass contrast (green was 2.3:1). Sections fade in as you scroll; all motion is off under reduced motion. On phones the bottom "Check free / View plans" bar waits until the hero has scrolled away.
+- **Offer bar floats** at the bottom instead of pushing the page down (homepage shift 0.5 → 0.03 on laptops) and comes after "Skip to content" for keyboard users.
+- **Checkout** keeps room for the plan cards while they load (shift 0.49 → 0.002).
+- **Accessibility**: "Skip to main content" in the workspace; choosing a sidebar section moves focus to its heading; a new ATS Match report takes focus; dark-mode Tara link contrast.
+- Night mode checked on the homepage and dashboard.
+- Customer What's new: two notes (calmer dashboard, quiet chat).
+
 # CVTara v3.69.0 — Stronger pages for the 60-day index push
 
 ## 3.69.0

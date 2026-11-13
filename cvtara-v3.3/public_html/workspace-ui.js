@@ -46,6 +46,9 @@
   let prog = null;
   async function progress(host) {
     let box = $('#wsProgress');
+    // it goes last on the page, after the "What brings you" block has drawn, so nothing is ever pushed down under the reader
+    if (!box) for (let i = 0; i < 25 && !$('#srDash'); i++) await new Promise(r => setTimeout(r, 160));
+    box = $('#wsProgress');
     if (!box) { box = document.createElement('section'); box.id = 'wsProgress'; box.className = 'ws-progress'; host.append(box); }
     else if (box.parentNode !== host || box !== host.lastElementChild) host.append(box);
     if (!prog) {
@@ -151,6 +154,15 @@
     sidebar(); dashboard(); billing(); privacy(); referralNotice();
     // other scripts re-render some views; put our blocks back if they were replaced
     new MutationObserver(() => { if ($('#view-dashboard') && !$('#wsDash')) dashboard(); if ($('#view-account') && !$('#privacyTools')) privacy(); }).observe($('.workspace-content') || document.body, { childList: true, subtree: true });
+    // 3.70.0 a11y: when an ATS Match report (or another result heading) appears, move focus to it so screen-reader and keyboard users hear it.
+    const match = $('#view-match');
+    if (match) new MutationObserver(ms => {
+      for (const m of ms) for (const n of m.addedNodes) {
+        if (n.nodeType !== 1) continue;
+        const h = n.matches('.evidence-report-header') ? n.querySelector('h2,h3') : n.querySelector && n.querySelector('.evidence-report-header h2, .evidence-report-header h3');
+        if (h && (document.activeElement === document.body || match.contains(document.activeElement))) { h.tabIndex = -1; h.focus({ preventScroll: false }); return; }
+      }
+    }).observe(match, { childList: true, subtree: true });
     // 3.70.0 a11y: after choosing a section in the sidebar, focus moves to that section's heading so keyboard and screen-reader users land on it.
     document.addEventListener('cvtara-workspace-view', e => {
       const v = document.getElementById('view-' + e.detail), a = document.activeElement;
