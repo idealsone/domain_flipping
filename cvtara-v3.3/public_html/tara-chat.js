@@ -35,7 +35,7 @@
     box = document.createElement('div');
     box.id = 'cvTara';
     box.innerHTML = `<button type="button" class="tara-fab" aria-haspopup="dialog" aria-controls="taraPanel"><span class="tara-dot" aria-hidden="true">T</span><b>Ask Tara</b></button>
-      <section class="tara-panel" id="taraPanel" role="dialog" aria-label="Tara, your CVTara career assistant" hidden>
+      <section class="tara-panel" id="taraPanel" role="dialog" aria-label="Tara, your CVTara career assistant" hidden inert>
         <header class="tara-head"><span class="tara-dot" aria-hidden="true">T</span><div><h2>Tara</h2><small>Your CVTara career assistant</small></div>
           <button type="button" class="tara-ic" data-t="history" title="Past conversations" aria-label="Past conversations">☰</button>
           <button type="button" class="tara-ic" data-t="new" title="New conversation" aria-label="New conversation">＋</button>
@@ -128,7 +128,8 @@
   }
 
   function toggle(open, full) {
-    const p = $('#taraPanel'); p.hidden = !open; box.classList.toggle('open', open);
+    const p = $('#taraPanel'); p.hidden = !open; p.inert = !open; box.classList.toggle('open', open);
+    if (!open) { const f = $('.tara-fab', box); if (f && box.contains(document.activeElement)) f.focus(); }
     if (full !== undefined) box.classList.toggle('full', !!full);
     if (open) { $('#taraIn').focus(); if (!$('.tara-log', box).children.length) welcome(); }
   }
@@ -175,21 +176,20 @@
     });
   }
 
-  // Once a day after sign-in, Tara says hello by name and asks what the customer is working on (a small bubble on phones).
+  // Once a day after sign-in, Tara says hello in a small bubble beside the button. It never opens the chat by itself
+  // (testers on 13 Nov 2026: the auto-opening panel covered the page). The bubble goes away after 8 seconds.
   function greet() {
     const key = 'cvtara-tara-hi-' + new Date().toISOString().slice(0, 10);
     try { if (localStorage.getItem(key)) return; } catch (e) { return; }
     let tries = 0;
     const go = () => {
-      if (!box || !$('#taraPanel').hidden) return;
+      if (!box || !$('#taraPanel').hidden || $('.tara-peek', box)) return;
       if (document.querySelector('.ad-modal, [role=dialog][aria-modal=true]:not([hidden])')) { if (++tries < 6) setTimeout(go, 4000); return; } // wait for another pop-up to close
       try { localStorage.setItem(key, '1'); } catch (e) { /* storage blocked */ } // counted only once it is really shown
-      if (window.matchMedia('(max-width: 600px)').matches) {
-        const b = document.createElement('button'); b.type = 'button'; b.className = 'tara-peek'; b.textContent = S.greeting.split('. ')[0] + '. Tap to chat.';
-        b.onclick = () => { b.remove(); toggle(true); }; box.append(b); setTimeout(() => b.remove(), 15000);
-      } else toggle(true);
+      const b = document.createElement('button'); b.type = 'button'; b.className = 'tara-peek'; b.textContent = S.greeting.split('. ')[0] + '. Tap to chat.';
+      b.onclick = () => { b.remove(); toggle(true); }; box.append(b); setTimeout(() => b.remove(), 8000);
     };
-    setTimeout(go, 2500);
+    setTimeout(go, 4000);
   }
 
   async function start() {

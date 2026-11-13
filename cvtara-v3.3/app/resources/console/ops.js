@@ -78,11 +78,14 @@
   const dmy = d => d.toLocaleDateString('en-IN', { day: 'numeric', month: 'short' });
     const planName = p => { try { return JSON.parse(p.limits_json).name; } catch (e) { return p.plan; } };
   const pill = st => `<span class="pill ${/paid|success|published|active/i.test(st) ? 'st-paid' : /refund|hidden|fail/i.test(st) ? 'st-failed' : /pending/i.test(st) ? 'st-started' : 'st-free'}">${E(st === 'paid' ? 'success' : st)}</span>`;
-  function barChart(vals, labels) {
+  // 3.70.0 interactive charts: hover, tap or Tab onto a bar or point to read its day and value (cv-motion.js); plain SVG if that script is missing.
+  function barChart(vals, labels, full) {
+    if (window.CVChart) return window.CVChart.bars({ label: 'Signups, last 7 days', points: vals.map((v, i) => ({ label: full ? full[i] : labels[i], short: labels[i], value: v, tip: `${full ? full[i] : labels[i]}: ${v} signup${v === 1 ? '' : 's'}`, view: 'users' })) });
     const W = 560, H = 190, max = Math.max(...vals, 1), bw = 38, gap = (W - bw * vals.length) / (vals.length + 1);
     return `<svg viewBox="0 0 ${W} ${H}" class="ops-svg" role="img" aria-label="Signups last 7 days">${vals.map((v, i) => { const h = Math.max(4, (v / max) * 120), x = gap + i * (bw + gap); return `<text x="${x + bw / 2}" y="${H - 36 - h}" text-anchor="middle" class="ops-t">${v}</text><rect x="${x}" y="${H - 28 - h}" width="${bw}" height="${h}" rx="3" fill="#1557d2"/><text x="${x + bw / 2}" y="${H - 8}" text-anchor="middle" class="ops-t2">${E(labels[i])}</text>`; }).join('')}</svg>`;
   }
-  function lineChart(vals) {
+  function lineChart(vals, dates) {
+    if (window.CVChart && dates) return window.CVChart.line({ label: 'Revenue, last 30 days', points: vals.map((v, i) => ({ label: dmy(dates[i]), short: dmy(dates[i]), value: v, tip: `${dmy(dates[i])}: ₹${Math.round(v).toLocaleString('en-IN')}`, view: 'commerce' })) });
     const W = 560, H = 190, max = Math.max(...vals, 1), step = (W - 40) / (vals.length - 1 || 1);
     const pts = vals.map((v, i) => [20 + i * step, H - 26 - (v / max) * 130]);
     const line = pts.map(p => p.join(',')).join(' ');
@@ -117,8 +120,8 @@
           <div class="kpi"><span>Conversion</span><b>${conv.toFixed(1)}%</b><small>paid ÷ members</small></div>
         </div>
         <div class="ops-two">
-          <section class="panel panel-pad"><h3>Signups — Last 7 Days</h3>${barChart(signups, days.map(x => x.toLocaleDateString('en-US', { weekday: 'short' })))}</section>
-          <section class="panel panel-pad"><h3>Revenue — Last 30 Days</h3>${lineChart(rev30)}</section>
+          <section class="panel panel-pad"><h3>Signups — Last 7 Days</h3>${barChart(signups, days.map(x => x.toLocaleDateString('en-IN', { weekday: 'short' })), days.map(x => x.toLocaleDateString('en-IN', { weekday: 'short', day: 'numeric', month: 'short' })))}</section>
+          <section class="panel panel-pad"><h3>Revenue — Last 30 Days</h3>${lineChart(rev30, k.series.map(x => new Date(x.date + 'T00:00:00')))}</section>
         </div>
         <div class="ops-two">
           <div><h3 class="ops-h3">Recent Orders</h3><section class="panel"><table class="ad-table"><thead><tr><th>User</th><th>Plan</th><th>Amount</th><th>Status</th><th>Date</th></tr></thead><tbody>${recent.map(p => `<tr><td>${E(p.customer || 'Customer')}</td><td>${E(p.plan)}</td><td><b>${short(p.amount_inr * 100)}</b></td><td>${pill(p.status)}</td><td>${dmy(parse(p.date))}</td></tr>`).join('') || '<tr><td colspan="5">No orders yet.</td></tr>'}</tbody></table></section></div>
