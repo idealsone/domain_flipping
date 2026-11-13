@@ -67,6 +67,8 @@ class WhatsNew
         $n = fn ($id, $date, $tag, $title, $body) => ['id' => $id, 'date' => $date, 'tag' => $tag, 'title' => $title, 'body' => $body];
 
         return [
+            $n('2026-11-13-dashboard', '2026-11-13', 'improved', 'A calmer, quicker dashboard', 'Your dashboard now shows one clear next step at the top, and a chart of your ATS match scores and where your applications stand. Tap a point to see the job and score. The page no longer jumps while it loads.'),
+            $n('2026-11-13-quiet-chat', '2026-11-13', 'improved', 'Tara waits until you ask', 'The help chat no longer opens by itself. On phones its button is a small round icon that does not cover your buttons.'),
             $n('2026-11-12-account-menu', '2026-11-12', 'improved', 'Your account menu has moved', 'Billing, Wallet, Refer & earn and your account settings are now together under My account at the top right.'),
             $n('2026-11-12-resume-growth', '2026-11-12', 'new', 'See how your resume has grown', 'My Resumes shows your first version, your main resume today and the copy you made for each job, each with its score.'),
             $n('2026-11-12-mock-real', '2026-11-12', 'improved', 'Practise interviews like the real thing', 'Mock interviews show one question at a time, never repeat a question you have already answered, and count your practice minutes for today and this week.'),

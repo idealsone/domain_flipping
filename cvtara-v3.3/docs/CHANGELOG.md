@@ -1,7 +1,7 @@
 # CVTara v3.71.0 — Personal mock interviews
 
 ## 3.71.0
-Owner (12-13 Nov 2026): personalised interview questions and answers from the resume and cover letter, a "switching jobs" path, 30-minute mock interviews one a day, a named panel, results 30 minutes after the interview; console lists paged. Owner picked "core first, bank later" (the 5 lakh question bank is the next release). Built on 3.69.0. **Migration:** `2026_12_02_000001_interview_personal` (additive; also sets the saved interview settings to 8 questions, 1 a day, 30 minutes, 30-minute release, full mock off).
+Owner (12-13 Nov 2026): personalised interview questions and answers from the resume and cover letter, a "switching jobs" path, 30-minute mock interviews one a day, a named panel, results 30 minutes after the interview; console lists paged. Owner picked "core first, bank later" (the 5 lakh question bank is the next release). Built on 3.70.2. **Migration:** `2026_12_03_000001_interview_personal` (additive; also sets the saved interview settings to 8 questions, 1 a day, 30 minutes, 30-minute release, full mock off).
 - **Interview profile.** The interview page starts from the sign-up answers (target role matched to a practice role, experience band). Sign-up and the interview page have an optional "switching to a new kind of job" choice with the current role.
 - **Personal questions.** After the introduction, up to 3 questions come from the customer's own resume (their latest job, a resume line with a number, a project or degree) and, for job switchers, "You are moving from X to Y. Why this change?". Fixed patterns, no extra cost. Bank questions fill the rest (8 in all).
 - **Model answers for you.** Feedback now reads the customer's resume, latest cover letter and profile, and each answer's "better version" becomes a first-person model answer built from those facts (introductions start "My name is ..."), never inventing anything. In question practice, Job Hunt and Pro customers can ask for a model answer to any question; it is made once, kept, and capped per day (default 10, console setting).
@@ -10,6 +10,48 @@ Owner (12-13 Nov 2026): personalised interview questions and answers from the re
 - **Results released 30 minutes after the interview.** Feedback is written as before but hidden until the release time; then a bell notification and an email ("Your mock interview results are ready"). Level, badges and revision wait for the release too.
 - **Console.** Question bank and mock interview lists are paged (20 per page) with search, filters, dates, sorting and CSV/Excel/PDF download; approved-question count per role; settings for minutes, release delay and model answers per day; the practice panel list.
 - Account deletion also removes kept model answers. `s81_personal_interviews` covers all of the above; `s58` and `s75` set the release delay to 0 and switch the full mock on where they test it.
+# CVTara v3.70.2 — Smoother, lighter, more visual
+
+## 3.70.2
+The three leftovers from the testers (owner chose "Fix the three leftovers", 13 Nov 2026). No migration.
+- **Templates and cover-letter pages**: the guided picker grows from 20 px to about 380-850 px once the role list loads; it now keeps that room from the start (laptop layout shift 0.086 → 0.000 locally; live was 0.12 laptop / 0.37 phone).
+- **Customer dashboard, fewer requests (112 → 75)**: its 23 stylesheets are joined into one file like every other page (screenshots identical in day and night mode), and `csrf-lazy.js` lets callers that ask for the same account data within 2 s share one request (allowance was fetched 5 times, profile and resumes 4); any POST/PUT/DELETE clears this.
+- **Owner console Overview**: the second "Overview" title and its six tiles (members, paid users, revenue, scans, resumes, conversion) repeated the Business numbers box; they are hidden when that box is shown. Download reports, the counting line, both charts and the recent lists stay.
+
+## 3.70.1
+Found in the live check after 3.70.0 went live (13 Nov 2026, 15:25 UTC). CSS only, no migration.
+- **Checkout on phones and tablets**: the three plan cards stack to about 1,920-2,380 px, so the loading placeholder now keeps that room below 1,100 px wide (it kept 540 px only on laptops). Phone layout shift 0.64 → 0.000.
+- **Home page after a fast scroll**: the six template samples and three cover-letter samples load as you scroll. Their rows keep their final height (1,209 / 1,821 / 3,264 px for 3 / 2 / 1 columns; letters 510 / 1,035 / 1,560 px) and the six home template cards render at full size instead of a 420 px estimate. Laptop layout shift 0.24 → 0.006.
+
+## 3.70.0
+Owner (12 Nov 2026): smoother, lighter, more attractive UI across the site, dashboard and console; a landing page that sells; less text, more visuals and motion; charts that respond; fast on every device; collect the 10 testers' feedback first. Built on 3.69.0 + 3.69.1. One migration (`2026_12_02_000001_simpler_homepage_copy`, copy only).
+- **Tester feedback first**: the 10 hands-on reviews of 13 Nov (`/mnt/project-files/qa-2026-11-13/`) drove the list below. Bug-level findings (Pro 20 vs 30, console revenue counts, ?view crash) are in 3.69.1 from the testing thread.
+- **Tara stays quiet**: the chat never opens by itself (6 of 10 testers); a small greeting bubble shows once a day for 8 s. On phones the button is a 48 px round icon and the page keeps 72 px free above it. The closed panel is `inert`, so it is no longer a hidden Tab stop; focus returns to the button on close.
+- **Dashboard: one next step**: the welcome card holds the single next step (`#wsNext`); Tara's nudge replaces its text in place instead of adding a box. The "One application, a clear next step" roadmap and the tips box are hidden. Layout shift on the dashboard: phone 0.97 → 0.002, laptop 0.46 → 0.015 (throttled, measured locally).
+- **Your progress** (new, dashboard): a line chart of ATS match scores (hover, tap or Tab onto a point for the job, score and date; click opens ATS Match) and an applications funnel (Saved → Applied → Interview → Offer, click opens the tracker). Drawn last on the page so nothing moves.
+- **Reminder cards** show one at a time and step aside after 12 s (they stay under the bell); on phones they sit above the chat button instead of over content.
+- **Interactive charts, no library** (`cv-motion.js`, ~5 KB): `CVChart.bars/line` SVG with one tooltip, keyboard arrows, click-through, and draw-in animation. Used on the console Overview (signups by day, revenue by day), console traffic (page views by day) and the customer dashboard.
+- **Landing page**: shorter headline and intro (moved by migration only if the owner never edited them), one solid button plus a text link, three proof ticks, floating documents with keyword chips, a "numbers at a glance" strip (templates, cover letters, from-price, 7-day refund) with icons, icon cards for How it works, shorter ATS copy, an animated sample report ring and ticks that now pass contrast (green was 2.3:1). Sections fade in as you scroll; all motion is off under reduced motion. On phones the bottom "Check free / View plans" bar waits until the hero has scrolled away.
+- **Offer bar floats** at the bottom instead of pushing the page down (homepage shift 0.5 → 0.03 on laptops) and comes after "Skip to content" for keyboard users.
+- **Checkout** keeps room for the plan cards while they load (shift 0.49 → 0.002).
+- **Accessibility**: "Skip to main content" in the workspace; choosing a sidebar section moves focus to its heading; a new ATS Match report takes focus; dark-mode Tara link contrast.
+- Night mode checked on the homepage and dashboard.
+- Customer What's new: two notes (calmer dashboard, quiet chat).
+
+# CVTara v3.69.1 — Fixes from the 13 Nov live test
+
+## 3.69.1
+Owner (12-13 Nov 2026): 10 testers over every page and function on the live site, then fix what they found. Built on 3.69.0. One data migration (owner decisions below).
+- **Pro is 30 tailored resumes and 30 cover letters for 90 days** (owner, 13 Nov). The live plan already had 30/30, but its perk line still said 20 and 20, so the cards contradicted themselves. The migration sets 30/30 and 90 days and rewrites that line. Defaults, the customer guide and the admin guide now say 30.
+- **Diwali offer switched off** (owner, 13 Nov). The migration sets any Diwali campaign that is still running to Off; the campaign is kept for reuse next year.
+- **Order totals count real money only.** Orders and Reports showed "Billed/Net" as the sum of every row, including checkouts that were opened and never paid. Totals now add only paid, partly refunded and refunded orders; unpaid checkouts appear on their own "Opened, not paid" tile.
+- **Overview time label is India time.** "Worked out at" now always shows IST, whatever the browser's time zone.
+- **Sign-in guessing is capped per account too.** Besides 5 wrong passwords per email and network address, 10 wrong passwords for one email in 15 minutes now pause sign-in for that email from any address (behind the CDN the address can change between tries). The email stays filled in after a wrong password.
+- **Friendly "too many requests" page.** A rate-limited visitor saw a blank white page; now they see a short explanation that retries by itself after 30 seconds.
+- **Workspace links:** `?view=` with an unknown or malformed value opens the dashboard instead of throwing a script error; `?view=ats` opens ATS Match; `?view=partner` opens the partner portal for partner members.
+- **No more /api/partner 404 on every workspace load:** customers who are not partner members get `partner: null`.
+- **Template sample text is flagged.** A guided template fills in a fictional example person. Example entries the customer has not edited no longer count towards "Content completeness", and the builder now shows how many are left with a "Remove example entries" button.
+- Contact page: the link to the refund policy said "No-Refund Policy"; it now says "Refund Policy".
 
 # CVTara v3.69.0 — Stronger pages for the 60-day index push
 

@@ -11,7 +11,7 @@ def run(ctx, t):
         t.check(f"{k} costs Rs {price} for {days} days and is on sale", p.get("price") == price and p.get("accessDays") == days and p.get("sale") is True, p)
     t.check("Quick Download is 1 resume, no cover letters, bound to one resume", plans["quick"]["savedResumes"] == 1 and plans["quick"]["savedLetters"] == 0 and plans["quick"].get("oneResume") is True)
     t.check("Job Hunt is 10 + 10 + 20 ATS scans and marked most popular", (plans["job-hunt"]["savedResumes"], plans["job-hunt"]["savedLetters"], plans["job-hunt"]["atsScans"], plans["job-hunt"]["popular"]) == (10, 10, 20, True))
-    t.check("Pro is 20 + 20 + 60 ATS scans and marked best value", (plans["pro"]["savedResumes"], plans["pro"]["savedLetters"], plans["pro"]["atsScans"], plans["pro"]["bestValue"]) == (20, 20, 60, True))
+    t.check("Pro is 30 + 30 + 60 ATS scans and marked best value", (plans["pro"]["savedResumes"], plans["pro"]["savedLetters"], plans["pro"]["atsScans"], plans["pro"]["bestValue"]) == (30, 30, 60, True))
     for k, price, with_plan in (("expert-review", 499, 399), ("profile-boost", 699, 599)):
         p = plans.get(k, {})
         t.check(f"{k} is Rs {price} alone, Rs {with_plan} with a plan, off sale by default", p.get("price") == price and p.get("planPrice") == with_plan and p.get("sale") is False, p)
