@@ -16,7 +16,9 @@ class CustomerEvents
     public const TYPES = ['registered' => 'Signed up', 'verified' => 'Verified email', 'resume_created' => 'Created a resume', 'resume_downloaded' => 'Downloaded a resume', 'ats_check' => 'Ran an ATS / job match check',
         'cover_letter' => 'Created a cover letter', 'pricing_view' => 'Viewed checkout / pricing', 'checkout_started' => 'Started checkout', 'payment_failed' => 'Payment failed', 'payment_paid' => 'Payment confirmed',
         'refunded' => 'Refunded', 'disputed' => 'Chargeback opened', 'plan_expired' => 'Plan ended', 'referred_signup' => 'A friend signed up with their link', 'referral_paid' => 'A referred friend paid',
-        'support_request' => 'Asked for help', 'journey_mail' => 'Lifecycle email sent', 'unsubscribed' => 'Turned off emails'];
+        'support_request' => 'Asked for help', 'journey_mail' => 'Lifecycle email sent', 'unsubscribed' => 'Turned off emails',
+        // 3.75.0: interview practice and the application tracker show up in each customer's timeline too.
+        'interview_questions' => 'Practised an interview question', 'mock_interview' => 'Took a mock interview', 'model_answer' => 'Got a personal model answer', 'application_added' => 'Tracked a job application'];
 
     /** Customer pages that mean "looking at prices". */
     public const PRICING_PATHS = ['/checkout.html', '/checkout', '/pricing', '/plans', '/pricing/', '/pricing/quick-download/', '/pricing/job-hunt/', '/pricing/pro/', '/pricing/free-vs-paid/'];
@@ -47,6 +49,10 @@ class CustomerEvents
             'referral_paid' => fn ($s) => DB::table('referral_commissions')->where('created_at', '>=', $s)->selectRaw("referrer_id as owner, purchase_id as ref, '' as meta, created_at as at"),
             'support_request' => fn ($s) => DB::table('support_reports')->whereNotNull('owner_id')->where('created_at', '>=', $s)->selectRaw("owner_id as owner, id as ref, area as meta, created_at as at"),
             'journey_mail' => fn ($s) => DB::table('mail_outbox')->whereNotNull('owner_id')->where('status', 'sent')->whereIn('trigger', array_merge(EmailRenderer::MARKETING, ['purchase_verified']))->where('trigger', '!=', 'campaign')->where('sent_at', '>=', $s)->selectRaw('owner_id as owner, id as ref, `trigger` as meta, sent_at as at'),
+            'interview_questions' => fn ($s) => DB::table('interview_practised')->where('created_at', '>=', $s)->selectRaw("owner_id as owner, id as ref, code as meta, created_at as at"),
+            'mock_interview' => fn ($s) => DB::table('interview_sessions')->where('created_at', '>=', $s)->selectRaw("owner_id as owner, id as ref, occupation as meta, created_at as at"),
+            'model_answer' => fn ($s) => DB::table('interview_model_answers')->where('created_at', '>=', $s)->selectRaw("owner_id as owner, id as ref, '' as meta, created_at as at"),
+            'application_added' => fn ($s) => DB::table('applications')->where('created_at', '>=', $s)->selectRaw("owner_id as owner, id as ref, stage as meta, created_at as at"),
             'unsubscribed' => fn ($s) => DB::table('activity_events')->whereNotNull('owner_id')->where('event', 'unsubscribed')->where('created_at', '>=', $s)->selectRaw("owner_id as owner, id as ref, '' as meta, created_at as at"),
         ];
     }

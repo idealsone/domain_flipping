@@ -16,7 +16,7 @@ def run(ctx, t):
         p = plans.get(k, {})
         t.check(f"{k} is Rs {price} alone, Rs {with_plan} with a plan, off sale by default", p.get("price") == price and p.get("planPrice") == with_plan and p.get("sale") is False, p)
     kit = plans.get("complete-kit", {})
-    t.check("Complete Job Kit is Rs 1,299, shown as worth Rs 1,797, off sale by default", kit.get("price") == 1299 and kit.get("mrp") == 1797 and kit.get("sale") is False, kit)
+    t.check("Complete Job Kit is Rs 1,299, shown as worth Rs 1,797, on sale as the top pack (owner 14 Nov 2026)", kit.get("price") == 1299 and kit.get("mrp") == 1797 and kit.get("sale") is True and kit.get("rank") == 4 and kit.get("savedResumes") == 30 and kit.get("savedLetters") == 30, kit)
     t.check("the old fresher/professional plans are gone", not any(k in plans for k in ("fresher-basic", "fresher-standard", "fresher-pro", "pro-basic", "pro-standard", "pro-pro")))
     t.check("credit packs exist but are off sale", all(plans.get(k, {}).get("sale") is False for k in ("addon-10", "addon-20", "addon-30")))
     t.check("only Free costs nothing, and it cannot be bought", [k for k, v in plans.items() if v.get("price") == 0] == ["free"] and plans["free"]["name"] == "Free")

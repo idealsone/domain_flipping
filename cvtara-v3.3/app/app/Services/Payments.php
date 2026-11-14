@@ -165,7 +165,9 @@ class Payments
             Services::open($p);
             Settings::audit($p->owner_id, 'purchase_verified', $p->id);
             $pl = json_decode((string) $p->limits_json, true) ?: [];
-            MailAutomation::queue(User::findOrFail($p->owner_id), 'purchase_verified', $entity['id'], ['plan_name' => $pl['name'] ?? $p->plan, 'paid_with' => self::GATEWAYS[$p->provider] ?? 'CVTara checkout', 'access_until' => $p->access_until ? \Illuminate\Support\Carbon::parse($p->access_until)->format('j F Y') : '', 'amount' => '₹'.number_format($p->amount_paise / 100, 2), 'resumes' => (string) ($pl['savedResumes'] ?? ''), 'letters' => (string) ($pl['savedLetters'] ?? '')]);
+            // 3.75.0: the receipt is essential mail (sent even if the template was switched off), and services and add-ons get a receipt that describes them instead of the plan text.
+            $kind = (string) ($pl['type'] ?? 'plan');
+            MailAutomation::queue(User::findOrFail($p->owner_id), 'purchase_verified', $entity['id'], ['plan_name' => $pl['name'] ?? $p->plan, 'paid_with' => self::GATEWAYS[$p->provider] ?? 'CVTara checkout', 'access_until' => $p->access_until ? \Illuminate\Support\Carbon::parse($p->access_until)->format('j F Y') : '', 'amount' => '₹'.number_format($p->amount_paise / 100, 2), 'resumes' => (string) ($pl['savedResumes'] ?? ''), 'letters' => (string) ($pl['savedLetters'] ?? ''), 'mocks' => (string) (int) ($pl['mockInterviews'] ?? 0), 'order' => 'ORD-'.strtoupper(substr((string) $p->id, 0, 6))], true, $kind === 'plan' ? 'purchase' : 'purchase-service');
         });
     }
 

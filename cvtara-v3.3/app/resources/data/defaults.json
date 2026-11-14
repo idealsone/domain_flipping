@@ -169,7 +169,16 @@
       "enabled": true,
       "delayHours": 0,
       "subject": "Your CVTara {{plan_name}} plan is active",
-      "body": "# Thank you, {{name}}\n[preheader: Your {{plan_name}} plan is active. This email is your receipt.]\nYour {{plan_name}} plan is active now. This email is your receipt.\n\n- Plan: {{plan_name}}\n- Amount paid: {{amount}}\n- Valid until: {{access_until}}\n- Payment reference: {{payment_reference}}\n- Paid with: {{paid_with}}\n\n[button: Open my workspace | {{site_url}}/workspace.html?view=resumes]\n\n## What you can do now\n- Download clean PDF and Word files without the watermark\n- Use up to {{resumes}} tailored resumes and {{letters}} cover letters\n- Run ATS Match scans and track every application\n\n[note: Paid once: this plan does not renew by itself. Changed your mind? Get a full refund within 7 days if you have not used the package: open Account and press Request refund.]\n\nIf anything looks wrong, reply to this email with your payment reference and we will help."
+      "body": "# Thank you, {{name}}\n[preheader: Your {{plan_name}} plan is active. This email is your receipt.]\nYour {{plan_name}} plan is active now. This email is your receipt.\n\n- Order: {{order}}\n- Plan: {{plan_name}}\n- Amount paid: {{amount}}\n- Valid until: {{access_until}}\n- Payment reference: {{payment_reference}}\n- Paid with: {{paid_with}}\n\n[button: Open my workspace | {{site_url}}/workspace.html?view=resumes]\n\n## Your first three steps\n- Download your resume as a clean PDF or Word file, without the watermark\n- Paste a job you want into ATS Match, then tailor your resume and write the cover letter for it in one click (up to {{resumes}} resumes and {{letters}} cover letters)\n- Book your first mock interview in Interview practice when an interview is coming up\n\n[note: Paid once: this plan does not renew by itself. Changed your mind? Get a full refund within 7 days if you have not used the package: open Account and press Request refund.]\n\nIf anything looks wrong, reply to this email with your payment reference and we will help."
+    },
+    {
+      "id": "purchase-service",
+      "trigger": "purchase_verified",
+      "subject": "Your CVTara receipt: {{plan_name}}",
+      "delayHours": 0,
+      "enabled": true,
+      "body": "# Thank you, {{name}}\n[preheader: We received your payment for {{plan_name}}. This email is your receipt.]\nWe received your payment for {{plan_name}}. This email is your receipt.\n\n- Order: {{order}}\n- Bought: {{plan_name}}\n- Amount paid: {{amount}}\n- Payment reference: {{payment_reference}}\n- Paid with: {{paid_with}}\n\n[button: Open my account | {{site_url}}/workspace.html?view=account]\n\nYou will find it under Account in your workspace. We email you again as soon as it is ready.\n\n[note: Paid once, nothing renews. Changed your mind? Get a full refund within 7 days if work on it has not started: open Account and press Request refund.]\n\nIf anything looks wrong, reply to this email with your payment reference and we will help.",
+      "name": "Subscription thank-you"
     },
     {
       "id": "expert-review",

@@ -188,6 +188,13 @@ class GrowthAdminController extends Controller
             return $ok(['days' => $days, 'events' => CustomerEvents::counts($days), 'segments' => CustomerEvents::segments(), 'journeys' => Lifecycle::report($days), 'referrals' => Lifecycle::referrals($days),
                 'lastSync' => DB::table('agent_runs')->where('agent', 'growth')->where('task', 'customer-events')->orderByDesc('id')->value('finished_at')]);
         }
+        // 3.75.0: which features people use, and how many of them go on to pay (owner ask 14 Nov 2026).
+        if ($path === 'growth/features' && $get) {
+            return $ok(\App\Services\FeatureFunnel::report($days));
+        }
+        if ($path === 'growth/features/people' && $get) {
+            return $ok(\App\Services\FeatureFunnel::people($r, (string) $r->query('feature', 'resume'), $days));
+        }
         if ($path === 'growth/checkout' && $get) {
             $c = Lifecycle::checkout($days);
             $t = AdminTable::rows($r, $c['rows'], ['search' => ['email', 'plan'], 'sorts' => ['at' => 'at', 'amount' => 'amountPaise'], 'sort' => 'at', 'filters' => ['outcome' => 'outcome'],

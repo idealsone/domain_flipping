@@ -27,6 +27,7 @@
     let D; try { D = await api('/api/admin/growth/customers?days=' + C.days); } catch (e) { fail(h, e); return; }
     const J = D.journeys, R = D.referrals;
     h.innerHTML = `<div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:8px">${daysPick('cuDays', C.days)} <button class="button secondary small" id="cuSync">Refresh customer events now</button> <span class="muted">Last refresh: ${E(when(D.lastSync))}</span></div>
+      <section class="panel panel-pad" data-nokit id="ffBox"><h3 style="margin-top:0">Feature use → purchase</h3><div class="ops-skel"></div></section>
       ${panel('Look up one customer', `<form id="cuF" style="display:flex;gap:8px;flex-wrap:wrap"><input type="search" name="q" placeholder="Customer email" required style="min-width:260px"><button class="button secondary small">Show their timeline</button></form><div id="cuT"></div>`, 'Every action they took, the segments they are in now, where they first came from and what they have paid. No resume text is stored in events.')}
       ${panel('Behaviour segments (now)', table(['Segment', 'People', 'Can be emailed', 'What the agent does'], D.segments.map(s => `<tr><td>${E(s.label)}</td><td>${n(s.people)}</td><td>${n(s.reachable)}</td><td class="muted">${E(s.action)}</td></tr>`), ''), 'Worked out from what people did, every time you open this page. Someone who buys leaves the free-user segments at once. "Can be emailed" = opted in, verified and not unsubscribed. The same segments are offered as audiences in Campaigns.')}
       ${panel('Customer journeys', `${table(['Journey', 'Switched on', 'Sent', 'Waiting', 'Stopped before sending', 'Did it within 7 days', 'Bought within 14 days', 'Their revenue (attributed)'], J.journeys.map(j => `<tr><td>${E(j.label)}<br><small class="muted">template ${E(j.template)}</small></td><td>${j.on ? '<span class="pill ok">On</span>' : '<span class="pill mid">Off</span>'}</td><td>${n(j.sent)}</td><td>${n(j.queued)}</td><td>${n(j.stopped)}</td><td>${n(j.didGoal)} <small class="muted">${E(j.goalLabel)}</small></td><td>${n(j.buyers)}</td><td>${inr(j.attributedNetPaise)}</td></tr>`), '')}
@@ -52,6 +53,38 @@
     $('#coQ', h).onchange = e => { C.q = e.target.value.trim(); C.page = 1; checkout(h); };
     $('#coO', h).onchange = e => { C.outcome = e.target.value; C.page = 1; checkout(h); };
     checkout(h);
+    features(h);
+  }
+
+  // 3.75.0: who uses which feature, and how many of them pay (resume, ATS, letters, interview questions, mocks, applications).
+  const F = { feature: 'resume', page: 1, per: 20, q: '', paid: 'all' };
+  async function features(h) {
+    const box = $('#ffBox', h); if (!box) return;
+    let D; try { D = await api('/api/admin/growth/features?days=' + C.days); } catch (e) { box.innerHTML = `<h3 style="margin-top:0">Feature use → purchase</h3><p role="alert">${E(err(e))}</p>`; return; }
+    const bar = v => v === null || v === undefined ? '' : `<span aria-hidden="true" style="display:inline-block;vertical-align:middle;margin-left:6px;height:8px;width:${Math.max(2, Math.min(100, v))}px;border-radius:4px;background:#1557d2;opacity:.75"></span>`;
+    const tracked = D.features.filter(f => f.tracked);
+    box.innerHTML = `<h3 style="margin-top:0">Feature use → purchase</h3><p class="muted" style="margin-top:0">${E(D.note)} Period: last ${n(D.days)} days · ${n(D.activePeople)} people used at least one feature.</p>
+      <h4>Sign-ups of this period, step by step</h4>
+      ${table(['Step', 'People', 'Of sign-ups', 'From the step before'], D.funnel.map(s => `<tr><td>${E(s.label)}</td><td>${n(s.value)}</td><td>${pct(s.ofSignups)}${bar(s.ofSignups)}</td><td>${pct(s.fromPrevious)}</td></tr>`), 'No sign-ups in this period.')}
+      <h4>Each feature: who used it and who paid</h4>
+      ${table(['Feature', 'People', 'Times used', 'Paid (any order)', 'Paid after using it', 'Bought ₹299+ pack', 'Bought add-on or Kit', 'Paid rate', ''], D.features.map(f => f.tracked ? `<tr><td>${E(f.label)}</td><td>${n(f.people)}</td><td>${n(f.uses)}</td><td>${n(f.paid)}</td><td>${n(f.paidAfter)}</td><td>${n(f.packs)}</td><td>${n(f.addons)}</td><td>${pct(f.paidRate)}${bar(f.paidRate)}</td><td><button class="button secondary small" data-ff="${E(f.key)}">Who</button></td></tr>` : `<tr><td>${E(f.label)}</td><td colspan="8" class="muted">Not on this site yet</td></tr>`), '')}
+      <h4>What people bought in this period</h4>
+      ${table(['Package or add-on', 'Orders', 'Share of orders', 'Net revenue'], D.mix.map(m => `<tr><td>${E(m.name)}</td><td>${n(m.orders)}</td><td>${pct(m.share)}${bar(m.share)}</td><td>${inr(m.netPaise)}</td></tr>`), 'No paid orders in this period.')}
+      <div id="ffWho" style="margin-top:12px"></div>`;
+    box.querySelectorAll('[data-ff]').forEach(b => { b.onclick = () => { F.feature = b.dataset.ff; F.page = 1; who(h, tracked); }; });
+  }
+  async function who(h, tracked) {
+    const box = $('#ffWho', h); if (!box) return;
+    const q = new URLSearchParams({ feature: F.feature, days: String(C.days), page: String(F.page), per: String(F.per) }); if (F.q) q.set('q', F.q); if (F.paid !== 'all') q.set('paid', F.paid);
+    const label = (tracked.find(f => f.key === F.feature) || {}).label || F.feature;
+    box.innerHTML = `<h4>${E(label)}: people</h4><div style="display:flex;flex-wrap:wrap;gap:8px;margin:8px 0"><input type="search" id="ffQ" placeholder="Search email or name" value="${E(F.q)}"><select id="ffPaid">${opt({ all: 'Paid or not', yes: 'Has paid', no: 'Never paid' }, F.paid)}</select><a class="button secondary small" href="/api/admin/growth/features/people?${q}&export=csv">Download CSV</a><a class="button secondary small" href="/api/admin/growth/features/people?${q}&export=xlsx">Excel</a><a class="button secondary small" href="/api/admin/growth/features/people?${q}&export=pdf">PDF</a></div><div id="ffT"><div class="ops-skel"></div></div><div class="ops-pager" id="ffP"></div>`;
+    $('#ffQ', h).onchange = e => { F.q = e.target.value.trim(); F.page = 1; who(h, tracked); };
+    $('#ffPaid', h).onchange = e => { F.paid = e.target.value; F.page = 1; who(h, tracked); };
+    try {
+      const d = await api('/api/admin/growth/features/people?' + q);
+      $('#ffT', h).innerHTML = table(['Customer', 'Plan now', 'Times used', 'First use', 'Last use', 'Paid orders', 'Paid in total'], d.rows.map(r => `<tr><td>${E(r.email)}<br><small class="muted">${E(r.name || '')} · joined ${E(when(r.joined))}</small></td><td>${E(r.planNow)}</td><td>${n(r.uses)}</td><td>${E(when(r.firstAt))}</td><td>${E(when(r.lastAt))}</td><td>${n(r.orders)}</td><td>${inr(r.netPaise)}</td></tr>`), 'Nobody used this feature in this period.');
+      K.pager($('#ffP', h), d, (p, per) => { F.page = p; F.per = per; who(h, tracked); });
+    } catch (e) { $('#ffT', h).innerHTML = `<p role="alert">${E(err(e))}</p>`; }
   }
 
   function timeline(t) {

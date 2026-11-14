@@ -102,3 +102,4 @@ html.dark .article-explore a{color:#8EA0F2}
 .sp-gallery span{font-size:14px;font-weight:600;line-height:1.35}
 .sp-gallery a:hover img{border-color:var(--sp-primary)}
 @media(max-width:480px){.sp-gallery{grid-template-columns:repeat(2,1fr);gap:10px}}
+.sp-tag{display:inline-block;margin:0 0 8px;padding:3px 10px;border-radius:999px;background:#e8f0ff;color:#1546b0;font-size:12.5px;font-weight:700;letter-spacing:.02em}@media (prefers-color-scheme:dark){:root:not([data-theme=light]) .sp-tag{background:#16213a;color:#a9c4ff}}:root[data-theme=dark] .sp-tag{background:#16213a;color:#a9c4ff}

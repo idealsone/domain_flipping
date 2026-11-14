@@ -31,6 +31,7 @@
     const prices = Object.values(d.plans || {}).filter(p => p.type === 'plan' && p.price > 0).map(p => p.price);
     if (prices.length) {
       const min = Math.min(...prices), inr = n => '₹' + n.toLocaleString('en-IN');
+      const jh = (d.plans || {})['job-hunt']; if (jh && jh.sale !== false) { if ($('#stHunt')) $('#stHunt').textContent = inr(jh.price); if ($('#stHuntJobs')) $('#stHuntJobs').textContent = jh.savedResumes; }
       if ($('#stFrom')) $('#stFrom').textContent = inr(min); document.querySelectorAll('[data-st=from]').forEach(n => { n.textContent = inr(min); }); if ($('#getFrom')) $('#getFrom').textContent = inr(min);
       const a = $('#lpAnnounce');
       if (a) a.innerHTML = announceHtml(inr(min));

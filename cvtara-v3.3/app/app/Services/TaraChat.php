@@ -690,10 +690,16 @@ class TaraChat
         }
         $offer = null;
         if (! $f['paid'] && $primary) {
-            $key = ($f['atsChecks'] >= 2 || $f['resumes'] >= 2) && in_array('job-hunt', $onSale, true) ? 'job-hunt' : (in_array('quick', $onSale, true) ? 'quick' : ($onSale[0] ?? null));
+            // 3.75.0 (owner decision 14 Nov 2026, lead with Job Hunt): experienced people, and freshers who already checked a job or keep
+            // more than one resume, are offered Job Hunt; Quick Download only for a fresher with one resume and no job check yet.
+            $wantsPack = $f['experience'] !== 'fresher' || $f['atsChecks'] >= 1 || $f['resumes'] >= 2;
+            $key = $wantsPack && in_array('job-hunt', $onSale, true) ? 'job-hunt' : (in_array('quick', $onSale, true) ? 'quick' : ($onSale[0] ?? null));
             if ($key && isset($plans[$key])) {
                 $p = $plans[$key];
-                $offer = ['plan' => $key, 'name' => $p['name'], 'price' => (int) $p['price'], 'why' => $key === 'quick' ? 'Download this resume without the watermark, and keep editing it for '.$p['accessDays'].' days.' : 'You are applying to more than one job: '.$p['name'].' gives '.$p['savedResumes'].' tailored resumes and '.$p['savedLetters'].' cover letters.', 'url' => '/checkout.html?plan='.rawurlencode($key)];
+                $credit = $key === 'quick' && in_array('job-hunt', $onSale, true) ? ' If you move up to '.$plans['job-hunt']['name'].' within 7 days, these ₹'.(int) $p['price'].' count toward it.' : '';
+                $why = $key === 'quick' ? 'Download this resume without the watermark, and keep editing it for '.$p['accessDays'].' days.'.$credit
+                    : ($last ? 'Tailor this resume and write the cover letter for this job in one click. ' : 'One resume rarely fits every job. ').$p['name'].' gives '.$p['savedResumes'].' tailored resumes, '.$p['savedLetters'].' cover letters'.((int) ($p['mockInterviews'] ?? 0) ? ' and '.(int) $p['mockInterviews'].' mock interviews' : '').', about ₹'.(int) ceil($p['price'] / max(1, (int) $p['savedResumes'])).' per job.';
+                $offer = ['plan' => $key, 'name' => $p['name'], 'price' => (int) $p['price'], 'why' => $why, 'url' => '/checkout.html?plan='.rawurlencode($key)];
             }
         }
         if ($offer) {

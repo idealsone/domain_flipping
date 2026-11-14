@@ -29,13 +29,13 @@
 
   const copy = {
     download: { tag: 'Clean download', title: 'Your resume is ready to download', lead: 'Building, saving and previewing stay free. Pick how you want the watermark-free PDF and Word files.', choices: true, steps: [] },
-    ats: { tag: 'ATS check', title: 'Run more ATS Match scans with Job Hunt', lead: 'Free accounts get 3 checks a day. Job Hunt adds 20 ATS Match scans with a gap report for each job.', steps: ['Choose Job Hunt or Pro (paid once, no auto-renewal)', 'Run ATS checks against the jobs you are applying for', 'Fix the missing requirements and download a clean copy'] },
-    career: { tag: 'Job Hunt and Pro', title: 'Tailor, write and practise in one click', lead: 'Whole-resume tailoring, one-click cover letters and mock interviews come with Job Hunt and Pro.', icons: [['✎', 'Resume tailored to each job'], ['✉', 'Cover letter in one click'], ['🎤', 'Timed mock interviews']], steps: [], cta: ['See Job Hunt and Pro', '/checkout.html?plan=job-hunt'] },
+    ats: { tag: 'ATS check', title: 'Run more ATS Match scans with Job Hunt', lead: 'Free accounts get 3 checks a day. Job Hunt and Pro add ATS Match scans with a gap report for each job, and tailor your resume to it in one click.', packs: ['job-hunt', 'pro'], steps: [] },
+    career: { tag: 'Job Hunt and Pro', title: 'Tailor, write and practise in one click', lead: 'Whole-resume tailoring, one-click cover letters and mock interviews come with Job Hunt and Pro.', icons: [['✎', 'Resume tailored to each job'], ['✉', 'Cover letter in one click'], ['🎤', 'Timed mock interviews']], packs: ['job-hunt', 'pro'], steps: [], cta: ['See Job Hunt and Pro', '/checkout.html?plan=job-hunt'] },
     verify: { tag: 'Confirm your email', title: 'Confirm your email to continue', lead: 'We sent a 6-digit code to your email. It takes a minute and keeps your account safe.', steps: ['Open the email from CVTara (check spam once)', 'Enter the 6-digit code', 'Come back and carry on where you stopped'], cta: ['Enter my code', '/verify-email'] },
   };
   function show(kind) {
     const c = copy[kind] || copy.download;
-    if (c.choices && !window.CVTaraBusiness?.plans) {
+    if ((c.choices || c.packs) && !window.CVTaraBusiness?.plans) {
       fetch('/api/business-public', { headers: { Accept: 'application/json' }, credentials: 'same-origin' }).then(r => r.json()).then(d => { window.CVTaraBusiness = d; show(kind); }).catch(() => { window.CVTaraBusiness = { plans: {} }; show(kind); });
       return;
     }
@@ -44,7 +44,12 @@
     const cta = c.cta || ['See plans', '/checkout.html'];
     const inr = n => '₹' + Number(n || 0).toLocaleString('en-IN');
     const pl = window.CVTaraBusiness?.plans || {}, quick = pl.quick, hunt = pl['job-hunt'];
-    const choices = c.choices && quick && hunt && quick.sale !== false && hunt.sale !== false ? `<div class="cv-up-choices"><a href="/checkout.html?plan=quick"><span>Download this resume</span><b>${inr(quick.price)}</b><span>Clean PDF + Word, edit and re-download for ${E(quick.accessDays)} days</span></a><a class="pop" href="/checkout.html?plan=job-hunt"><em>Most popular</em><span>Job Hunt</span><b>${inr(hunt.price)}</b><span>${E(hunt.savedResumes)} tailored resumes, ${E(hunt.savedLetters)} cover letters, ${E(hunt.atsScans)} ATS Match scans · ≈ ${inr(Math.round(hunt.price / hunt.accessDays))}/day</span></a></div>` : '';
+    // 3.75.0: every "plan needed" moment shows real prices, Job Hunt first, with what one job application costs inside the pack.
+    const onSale = k => pl[k] && pl[k].sale !== false;
+    const pack = (k, pop) => { const p = pl[k]; const mocks = Number(p.mockInterviews || 0); return `<a${pop ? ' class="pop"' : ''} href="/checkout.html?plan=${E(k)}">${pop ? '<em>Most popular</em>' : ''}<span>${E(p.name)}</span><b>${inr(p.price)}</b><span>${E(p.savedResumes)} tailored resumes, ${E(p.savedLetters)} cover letters${mocks ? `, ${mocks} mock interviews` : ''} · ${E(p.accessDays)} days · about ${inr(Math.ceil(p.price / Math.max(1, p.savedResumes)))} per job</span></a>`; };
+    let choices = '';
+    if (c.choices && quick && hunt && onSale('quick') && onSale('job-hunt')) choices = `<div class="cv-up-choices">${pack('job-hunt', true)}<a href="/checkout.html?plan=quick"><span>Just this resume</span><b>${inr(quick.price)}</b><span>Clean PDF + Word, edit and re-download for ${E(quick.accessDays)} days. Counts toward Job Hunt if you upgrade within 7 days.</span></a></div>`;
+    else if (c.packs) { const ks = c.packs.filter(onSale); if (ks.length) choices = `<div class="cv-up-choices">${ks.map((k, i) => pack(k, i === 0 && k === 'job-hunt')).join('')}</div>`; }
     d.innerHTML = `<div class="up-top"><span>${E(c.tag)}</span><h2 id="cvUpT">${E(c.title)}</h2></div><div class="up-body"><p>${E(c.lead)}</p>${c.icons ? `<div class="up-icons">${c.icons.map(([i, t]) => `<div><span aria-hidden="true">${i}</span>${E(t)}</div>`).join('')}</div>` : ''}${choices}${c.steps.length ? `<ol>${c.steps.map(s => `<li>${E(s)}</li>`).join('')}</ol>` : ''}<div class="up-cta">${choices ? '' : `<a class="up-main" href="${E(cta[1])}">${E(cta[0])}</a>`}<button type="button" data-x>Not now</button></div><small>7-day refund if unused · Pay once, no auto-renewal · UPI, cards and net banking. Your saved work stays in your account either way.</small></div>`;
     d.querySelector('[data-x]').onclick = () => d.close();
     document.querySelectorAll('dialog[open]').forEach(o => { if (o !== d && o.id === 'exportDialog') o.close(); });

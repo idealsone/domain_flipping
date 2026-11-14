@@ -179,7 +179,7 @@ class SeoPages
             $page['cta'] ??= self::cta();
             $page['related'][] = ['Tools', [['/ats-checker/', 'Free ATS resume check'], ['/pricing/', 'Plans and pricing'], ['/templates.html', 'Template gallery'], ['/register', 'Build my resume free']]];
             // tools and word lists are not template pages: their first button is their own action, not "Use this template"
-            $page['picker'] = in_array($s[0], ['ats-checker', 'resume-words'], true) ? '' : self::pickerLink($s);
+            $page['picker'] = in_array($s[0], ['ats-checker', 'resume-words', 'pricing'], true) ? '' : self::pickerLink($s);
             $page['reviewedAt'] = SeoContent::reviewedAt($page['path']); // 3.45.0: shown only when a person really reviewed it
             $page['updatedAt'] = SeoContent::updatedAt($page['path']); // 3.68.0: "Updated <date>" and dateModified
         }
@@ -352,7 +352,7 @@ class SeoPages
      */
     private static function cta(array $primary = ['/register', 'Build my resume free'], array $secondary = ['/ats-checker/', 'Check my resume for ATS'], string $note = ''): array
     {
-        return ['primary' => $primary, 'secondary' => $secondary, 'pricing' => ['/pricing/', 'See plans from ₹'.self::price('quick')], 'note' => $note ?: 'Start from a template or upload your old resume. Building and previewing is free.'];
+        return ['primary' => $primary, 'secondary' => $secondary, 'pricing' => ['/pricing/', 'Plans: ₹'.self::price('quick').' download, ₹'.self::price('job-hunt').' job-search pack'], 'note' => $note ?: 'Start from a template or upload your old resume. Building and previewing is free.'];
     }
 
     /** A filled sample resume rendered as a document, so readers (and search engines) see real text, not a picture. */
@@ -905,7 +905,33 @@ class SeoPages
 
     // ---------------------------------------------------------------- 3.68.0 pricing pages (buyers' searches)
     /** /pricing/{slug}/ => plan key. Prices, limits and validity are read from the live plan settings, never typed here. */
-    public const PLAN_PAGES = ['quick-download' => 'quick', 'job-hunt' => 'job-hunt', 'pro' => 'pro'];
+    public const PLAN_PAGES = ['quick-download' => 'quick', 'job-hunt' => 'job-hunt', 'pro' => 'pro', 'complete-job-kit' => 'complete-kit'];
+
+    /** 3.75.0: what one tailored application costs inside a pack (price / tailored resumes), e.g. "about ₹30 per job". */
+    private static function perJob(string $key): string
+    {
+        $p = self::plan($key);
+        $n = (int) ($p['savedResumes'] ?? 0);
+
+        return $n > 1 && ($p['type'] ?? '') === 'plan' && $key !== 'quick' && empty($p['includes']) ? 'about ₹'.number_format((int) ceil(((int) $p['price']) / $n)).' per job you apply to' : '';
+    }
+
+    /** 3.75.0: a kit in one line: "Pro + ₹1,198 of add-ons for ₹700 more". */
+    private static function kitValue(string $key): string
+    {
+        $plans = Settings::plans();
+        $p = $plans[$key] ?? [];
+        $worth = array_sum(array_map(fn ($k) => (int) ($plans[$k]['price'] ?? 0), (array) ($p['includes'] ?? [])));
+        $more = (int) ($p['price'] ?? 0) - (int) ($plans['pro']['price'] ?? 0);
+
+        return $worth && $more > 0 ? 'As Pro, plus ₹'.number_format($worth).' of add-ons for ₹'.number_format($more).' more' : 'Add-ons included';
+    }
+
+    /** 3.75.0: the services on sale (Expert Review, Profile Boost), with the lower price they cost alongside Job Hunt or Pro. */
+    private static function servicesOnSale(): array
+    {
+        return array_filter(Settings::plans(), fn ($p) => ($p['type'] ?? '') === 'service' && ! empty($p['sale']));
+    }
 
     private static function plan(string $key): array
     {
@@ -930,9 +956,11 @@ class SeoPages
 
         return [
             'Price' => $key === 'free' ? '₹0' : '₹'.self::price($key).' once',
-            'Clean downloads (no watermark)' => $key === 'free' ? 'No' : ($key === 'quick' ? '1 resume' : (int) $p['savedResumes'].' resumes + '.(int) $p['savedLetters'].' cover letters'),
+            'Clean downloads (no watermark)' => $key === 'free' ? 'No' : ($key === 'quick' ? '1 resume' : (int) $p['savedResumes'].' tailored resumes + '.(int) $p['savedLetters'].' cover letters'),
             'ATS Match scans with a gap report' => $key === 'free' ? (int) ($p['dailyMatches'] ?? 3).' quick checks a day' : ((int) ($p['atsScans'] ?? 0) ? (int) $p['atsScans'].' scans' : (int) ($p['dailyMatches'] ?? 3).' quick checks a day'),
             'Mock interviews with written feedback' => (int) ($p['mockInterviews'] ?? 0) ? (string) (int) $p['mockInterviews'] : '—',
+            'Expert Review and Profile Boost' => ! empty($p['includes']) ? 'Included' : '—',
+            'Cost per job you apply to' => $key === 'free' ? '—' : ($key === 'quick' ? '₹'.self::price($key).' (one resume)' : (! empty($p['includes']) ? self::kitValue($key) : '₹'.number_format((int) ceil(((int) $p['price']) / max(1, (int) $p['savedResumes']))))),
             'Access' => $key === 'free' ? 'Always' : $days.' days',
             'Auto-renewal' => 'Never',
         ];
@@ -961,39 +989,71 @@ class SeoPages
         ];
     }
 
-    /** /pricing/: ONE price page (owner, 12 Nov 2026) for buyers' searches ("resume builder price", "download resume pdf"). Each plan has its own section and anchor. */
+    /**
+     * /pricing/: ONE price page (owner, 12 Nov 2026) for buyers' searches ("resume builder price", "download resume pdf"). Each plan has its own section and anchor.
+     * 3.75.0 (owner decision 14 Nov 2026): the page leads with Job Hunt, shows what one application costs inside each pack, says that a
+     * Quick Download counts toward Job Hunt or Pro within 7 days (BusinessControls::upgradeSource), lists the services on sale, and sells the
+     * Complete Job Kit as the top tier. No price is typed here: every number comes from the live plan settings.
+     */
     private static function pricing(): array
     {
         $keys = array_values(array_filter(self::PLAN_PAGES, fn ($k) => self::sold($k)));
         $copy = [
-            'quick' => ['Your resume is ready and you need a clean copy today.', ['You have one resume to send this week', 'You already built your resume and only need the clean file', 'You are a fresher applying to campus drives or walk-ins']],
-            'job-hunt' => ['A tailored resume and a matching cover letter for every job you apply to, with an ATS Match scan that shows the skills you are missing.', ['You are applying to many jobs this month', 'Different jobs ask for different skills', 'You want a cover letter for each application']],
-            'pro' => ['For long searches, career changes and senior roles: more time, twice the tailored documents and more interview practice.', ['Your search will take more than a month', 'You are changing field or applying across several roles', 'You want interview practice with written feedback']],
+            'quick' => ['Your resume is ready and you need one clean copy today.', ['You have one resume to send this week', 'You already built your resume and only need the clean file', 'You are a fresher applying to campus drives or walk-ins']],
+            'job-hunt' => ['A tailored resume and a matching cover letter for every job you apply to, an ATS Match scan that shows the skills you are missing, and mock interviews to prepare.', ['You are applying to many jobs this month', 'Different jobs ask for different skills', 'You want a cover letter for each application']],
+            'pro' => ['For long searches, career changes and senior roles: three months, three times the tailored documents and more interview practice.', ['Your search will take more than a month', 'You are changing field or applying across several roles', 'You are a manager or senior professional with interviews coming up']],
+            'complete-kit' => ['Everything in Pro, plus an Expert Review of your resume and your LinkedIn and Naukri profile rewritten, for less than buying them one by one.', ['You want your resume and your online profiles to tell the same story', 'You are a senior professional and recruiters will look you up', 'You want the whole job search handled in one purchase']],
         ];
+        $order = array_values(array_filter(['job-hunt', 'pro', 'complete-kit', 'quick'], fn ($k) => in_array($k, $keys, true)));
         $planSection = function (string $k) use ($copy) {
             $p = self::plan($k);
             $price = self::price($k);
+            $tag = $k === 'job-hunt' ? '<p class="sp-tag">Most popular</p>' : ($k === 'pro' ? '<p class="sp-tag">Best value for senior roles</p>' : '');
+            $mrp = (int) ($p['mrp'] ?? 0) > (int) ($p['price'] ?? 0) ? ' <s>₹'.number_format((int) $p['mrp']).'</s>' : '';
+            $per = self::perJob($k);
+            $perks = (array) $p['perks'];
+            if ((int) ($p['mockInterviews'] ?? 0) && Interviews::available() && ! preg_grep('/mock interview/i', $perks)) {
+                $perks[] = (int) $p['mockInterviews'].' mock interviews with written feedback';
+            }
 
             return [array_search($k, self::PLAN_PAGES, true), $p['name'].': ₹'.$price.' once',
-                '<p>'.self::e($copy[$k][0]).'</p>'.self::ul(array_merge((array) $p['perks'], [(int) $p['accessDays'].' days of access from the day you pay', 'Pay once, no auto-renewal']), 'sp-check')
+                $tag.'<p>'.self::e($copy[$k][0]).'</p>'.($per ? '<p><b>That is '.self::e($per).'.</b>'.$mrp.'</p>' : ($mrp ? '<p><b>'.self::e(self::kitValue($k)).'.</b> Worth'.$mrp.' if bought one by one.</p>' : ''))
+                .self::ul(array_merge($perks, [(int) $p['accessDays'].' days of access from the day you pay', 'Pay once, no auto-renewal']), 'sp-check')
                 .'<p><b>Best for:</b> '.self::e(implode('; ', $copy[$k][1])).'.</p>'
                 .'<p><a class="sp-cta" href="/checkout.html?plan='.self::e($k).'">Get '.self::e((string) $p['name']).' for ₹'.$price.'</a></p>'];
         };
+        $lead = self::sold('job-hunt') ? 'job-hunt' : ($keys[0] ?? 'quick');
+        $services = self::servicesOnSale();
+        $extra = [];
+        if (self::sold('quick') && (self::sold('job-hunt') || self::sold('pro'))) {
+            $extra[] = ['upgrade', 'Start small, upgrade later', '<p>Not sure yet? Buy Quick Download for ₹'.self::price('quick').'. If you move up to Job Hunt or Pro within 7 days, the ₹'.self::price('quick').' you paid is taken off the price automatically at checkout, so you never pay twice.</p>'];
+        }
+        if ($services) {
+            $extra[] = ['add-ons', 'Add-ons for your resume and profiles', '<p>Buy these on their own, or get both inside the Complete Job Kit.</p>'.self::ul(array_map(fn ($sv) => $sv['name'].': ₹'.number_format((int) $sv['price']).(! empty($sv['planPrice']) && $sv['planPrice'] < $sv['price'] ? ' (₹'.number_format((int) $sv['planPrice']).' while Job Hunt or Pro is active)' : '').'. '.rtrim((string) $sv['tagline'], '.').'.', array_values($services)), 'sp-check')
+                .'<p>Add-ons are bought from Billing in your account or at <a href="/checkout.html">checkout</a>. They do not count toward the referral bonus.</p>'];
+        }
 
         return ['kind' => 'pricing', 'eyebrow' => 'PLANS AND PRICING', 'title' => 'Resume Builder Price in India: Plans from ₹'.self::price('quick'),
-            'description' => 'CVTara pricing: build and preview free, download a clean resume for ₹'.self::price('quick').', or get tailored resumes, cover letters and ATS scans from ₹'.self::price('job-hunt').'. Pay once, no auto-renewal.',
-            'h1' => 'Plans and pricing', 'lead' => 'Build, edit and preview your resume free. Pay once only when you are ready to download: ₹'.self::price('quick').' for one clean resume, or a pack for a whole job search. No subscription, no auto-renewal, 7-day refund if unused.',
-            'crumbs' => self::crumbs(['Pricing', '/pricing/']), 'image' => self::image('resume-template', 'CVTara plans: Free, Quick Download, Job Hunt and Pro'),
+            'description' => 'CVTara pricing: build and preview free. Job Hunt ₹'.self::price('job-hunt').' gives tailored resumes, cover letters, ATS scans and mock interviews for a month. Clean single download ₹'.self::price('quick').'. Pay once, no auto-renewal.',
+            'h1' => 'Plans and pricing', 'lead' => 'Build, edit and preview your resume free. When you start applying, Job Hunt gives you a tailored resume and cover letter for each job, ATS Match scans and mock interviews for ₹'.self::price('job-hunt').' once. Need just one clean file? That is ₹'.self::price('quick').'. No subscription, no auto-renewal, 7-day refund if unused.',
+            'crumbs' => self::crumbs(['Pricing', '/pricing/']), 'image' => self::image('resume-template', 'CVTara plans: Free, Quick Download, Job Hunt, Pro and Complete Job Kit'),
             'sections' => array_merge(
                 [['compare', 'Compare plans', self::compareTable(array_merge(['free'], $keys))]],
-                array_map($planSection, $keys),
+                array_map($planSection, $order),
+                $extra,
                 [['free-vs-paid', 'What is free and what is paid', '<p>Many "free" resume builders ask for money only at the last step. Here is exactly what you get on CVTara.</p><p><b>Free, always:</b></p>'
-                    .self::ul(['Every template, colour and font', 'Building, editing and previewing your resume (preview has a light watermark)', 'Uploading an old PDF or Word resume to edit', 'A few ATS quick checks every day', 'All guides, examples, interview questions and calculators on this site'], 'sp-check')
+                    .self::ul(['Every template, colour and font', 'Building, editing and previewing your resume (preview has a watermark)', 'Uploading an old PDF or Word resume to edit', 'A few ATS quick checks every day', 'All guides, examples, interview questions and calculators on this site'], 'sp-check')
                     .'<p><b>Paid, once:</b> a clean resume without the watermark (from ₹'.self::price('quick').'), tailored resumes and cover letters for each job, ATS Match scans with a full gap report, and mock interviews with written feedback.</p>'],
-                    ['which', 'Which plan is right for you', self::ul(['One job this week and your resume is ready: Quick Download (₹'.self::price('quick').').', 'Many jobs over the next month: Job Hunt (₹'.self::price('job-hunt').').', 'Long search, career change or senior role: Pro (₹'.self::price('pro').').'], 'sp-check')],
-                    ['pay', 'How paying works', '<ol class="sp-steps"><li><b>Build free.</b> Make your resume and preview it with a light watermark.</li><li><b>Pick a plan</b> on this page or when you click Download.</li><li><b>Pay once</b> by UPI, card or net banking.</li><li><b>Download</b> a clean, text-based PDF straight away.</li></ol><p>Read the <a href="/refund.html">refund policy</a> and <a href="/terms.html">terms</a>.</p>']]),
-            'faq' => array_merge([['Is the free plan really free?', 'Yes. There is no trial that ends and no card needed to build or preview. You only pay if you want the clean download or the tailoring tools.']], self::buyFaq()),
-            'cta' => self::cta(['/register', 'Start free, pay later'], ['/checkout.html?plan=quick', 'Download one resume for ₹'.self::price('quick')], 'Building is free. You pay only when you download.'),
+                    ['which', 'Which plan is right for you', self::ul(array_values(array_filter([
+                        self::sold('job-hunt') ? 'Applying to several jobs over the next month: Job Hunt (₹'.self::price('job-hunt').'). Most people choose this.' : '',
+                        self::sold('pro') ? 'Long search, career change, or a manager or senior role: Pro (₹'.self::price('pro').').' : '',
+                        self::sold('complete-kit') ? 'Senior role where recruiters will check your LinkedIn and Naukri too: Complete Job Kit (₹'.self::price('complete-kit').').' : '',
+                        self::sold('quick') ? 'One job this week and your resume is already finished: Quick Download (₹'.self::price('quick').').' : '',
+                    ])), 'sp-check')],
+                    ['pay', 'How paying works', '<ol class="sp-steps"><li><b>Build free.</b> Make your resume and preview it with a watermark.</li><li><b>Pick a plan</b> on this page or when you click Download.</li><li><b>Pay once</b> by UPI, card or net banking.</li><li><b>Download</b> a clean, text-based PDF straight away. Your receipt arrives by email.</li></ol><p>Read the <a href="/refund.html">refund policy</a> and <a href="/terms.html">terms</a>.</p>']]),
+            'faq' => array_merge([['Is the free plan really free?', 'Yes. There is no trial that ends and no card needed to build or preview. You only pay if you want the clean download or the tailoring tools.'],
+                ['If I buy Quick Download now, can I upgrade later?', 'Yes. Within 7 days of buying Quick Download, its price is taken off Job Hunt or Pro automatically at checkout.']], self::buyFaq()),
+            'cta' => self::cta(['/checkout.html?plan='.$lead, 'Get '.self::plan($lead)['name'].' for ₹'.self::price($lead)], ['/register', 'Start free, pay later'], 'Building is free. Pay once when you start applying.'),
             'offers' => $keys,
             'related' => [['Start here', [['/resume-builder/', 'Free resume builder'], ['/ats-checker/', 'Free ATS resume check'], ['/resume-templates/', 'Resume templates']]]]];
     }

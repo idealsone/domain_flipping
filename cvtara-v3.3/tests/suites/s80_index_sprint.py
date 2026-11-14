@@ -27,7 +27,7 @@ def run(ctx, t):
         s, h, b = c.page("/pricing/")
         prods = [x for x in blocks(b) if x.get("@type") == "Product"]
         t.check("/pricing/ answers 200 and lists every plan on sale as a Product with its INR price",
-                s == 200 and sorted(p["offers"]["price"] for p in prods) == ["299", "599", "99"] and all(p["offers"]["priceCurrency"] == "INR" for p in prods), (s, [p.get("offers") for p in prods]))
+                s == 200 and sorted(p["offers"]["price"] for p in prods) == ["1299", "299", "599", "99"] and all(p["offers"]["priceCurrency"] == "INR" for p in prods), (s, [p.get("offers") for p in prods]))
         t.check("/pricing/ has a comparison table and buy links to checkout", 'class="sp-table"' in b and "/checkout.html?plan=quick" in b, s)
         for anchor, price in (("quick-download", "99"), ("job-hunt", "299"), ("pro", "599")):
             t.check(f"/pricing/ has its own section for the ₹{price} plan with a buy button", f'id="{anchor}"' in b and f"₹{price} once" in b, anchor)

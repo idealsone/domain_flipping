@@ -44,10 +44,10 @@ class MailAutomation
     public const RESERVE = 100;
 
     /**
-     * Fingerprints of the ready-made template texts shipped before 3.20. A saved template that still has one of these
+     * Fingerprints of the ready-made template texts shipped before 3.20 (plus the 3.20-3.74 receipt, reworded in 3.75.0). A saved template that still has one of these
      * (the owner saved the list without changing that mail) gets the current wording; mails the owner rewrote stay theirs.
      */
-    private const OLD_DEFAULTS = ['69930cace806a957', '0e9beb2b379c6f45', '121a1323cb7f8c6e', '15f01e04b4a1f527', '1a0a2d0fe8656347', '1b786670e26db375', '1e1fa935c24bb8cd', '20c12f055186c63e', '22226f5760aa66c2', '2ad703b6187e321e', '301969a83f780ca5', '34340dbdc3adaa67', '350f81515b68d4b6', '38a7b377d07ef64e', '43ee5fc3895d71cc', '44f6cc954b9bab37', '468f39c27dffe39f', '47189b11304ac4be', '4a2e4b43a6f14154', '530d447bc0487fae', '5837eacb55b2bf34', '5969de550b2cc894', '5c5ad1d564ab506b', '5f8e81477fbf58a6', '69774f38455ba7fc', '6a50173668f9d84f', '6ffe69b9a069ed6d', '71c5254ee37f3e2d', '7352caa80d3b9bfd', '739183cfb874c9a1', '74b9452bc8e360ed', '76e97211eece049f', '811d70b27e2ce3b6', '83bfc725750b2ddd', '8e25e1f5f3d05be8', '966aba9eea62cb11', '9865ce1fdcb4025b', '9a718f4bfb3905ef', '9da28846a37919cf', 'a1dca5c1b1f3eacb', 'a5d28fc84054b947', 'b4dce094be9faa3a', 'b514af29fe94762f', 'b7a0479e439776cc', 'bddf46b18dc47eac', 'cb9c255e7963f7d2', 'cba90649bdf20a0a', 'd111d1e45f5e1627', 'dd94ed800a0c7801', 'e6c1df3b151197e8', 'e98871faf1a2fd9c'];
+    private const OLD_DEFAULTS = ['665bd9970e630419', '69930cace806a957', '0e9beb2b379c6f45', '121a1323cb7f8c6e', '15f01e04b4a1f527', '1a0a2d0fe8656347', '1b786670e26db375', '1e1fa935c24bb8cd', '20c12f055186c63e', '22226f5760aa66c2', '2ad703b6187e321e', '301969a83f780ca5', '34340dbdc3adaa67', '350f81515b68d4b6', '38a7b377d07ef64e', '43ee5fc3895d71cc', '44f6cc954b9bab37', '468f39c27dffe39f', '47189b11304ac4be', '4a2e4b43a6f14154', '530d447bc0487fae', '5837eacb55b2bf34', '5969de550b2cc894', '5c5ad1d564ab506b', '5f8e81477fbf58a6', '69774f38455ba7fc', '6a50173668f9d84f', '6ffe69b9a069ed6d', '71c5254ee37f3e2d', '7352caa80d3b9bfd', '739183cfb874c9a1', '74b9452bc8e360ed', '76e97211eece049f', '811d70b27e2ce3b6', '83bfc725750b2ddd', '8e25e1f5f3d05be8', '966aba9eea62cb11', '9865ce1fdcb4025b', '9a718f4bfb3905ef', '9da28846a37919cf', 'a1dca5c1b1f3eacb', 'a5d28fc84054b947', 'b4dce094be9faa3a', 'b514af29fe94762f', 'b7a0479e439776cc', 'bddf46b18dc47eac', 'cb9c255e7963f7d2', 'cba90649bdf20a0a', 'd111d1e45f5e1627', 'dd94ed800a0c7801', 'e6c1df3b151197e8', 'e98871faf1a2fd9c'];
 
     public static function isOldDefault(array $t): bool
     {
@@ -139,7 +139,13 @@ class MailAutomation
             return null;
         }
         if (in_array($trigger, self::IMMEDIATE, true)) {
-            self::sendNow($id);
+            // 3.75.0: in a web request the code is sent right after the page has been returned (Symfony finishes the response
+            // first on PHP-FPM and LiteSpeed), so signing up no longer waits ~7 s for the mail server. The minute cron is the fallback.
+            if (! app()->runningInConsole() && ! app()->runningUnitTests()) {
+                app()->terminating(fn () => self::sendNow($id));
+            } else {
+                self::sendNow($id);
+            }
         }
 
         return $id;
