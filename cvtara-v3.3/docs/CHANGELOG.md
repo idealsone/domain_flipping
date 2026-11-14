@@ -1,3 +1,13 @@
+# CVTara v3.79.0 — A picture for every SEO page, and senior role pages
+
+## 3.79.0
+Owner (14 Nov 2026, citing Google's 10 Nov update): give each programmatic SEO page a unique, relevant picture with a CVTara copyright mark; the senior tester round got 404 for HR business partner and area sales manager. Built on 3.78.0. No migration; ready-made pages must be rebuilt.
+- **One picture per SEO page (532).** `tools/seo/page_images.py` (+ `page_images.cjs`, Playwright) draws a 1200x675 WebP from each page's own content in the brand style (paper, ink, CVTara blue, Fraunces/Inter): role pages show a sample resume with that role's summary, results and skills; interview pages their first three questions with tips; city pages a local tip, main employers and a skyline; state pages their hiring hubs; word pages the weak word, stronger choices and a before/after; template pages the style's layout and rules; hubs, ATS checker and pricing their own cards. Every picture carries the CVTara mark and "© 2026 CVTara · cvtara.com", says "Sample" where it shows a resume (names invented), and has XMP copyright data inside the file (creator, credit line, copyright notice, rights page). About 40 KB each, 21 MB in all, in `public_html/assets/seo/pages/`. Index with alt text: `resources/data/seo-images.json`.
+- **On the page:** the picture replaces the shared illustration in the hero, with width/height set (no layout shift) and loaded first because it is the main visible image; alt text names the role/place and what the picture shows. `SeoPages::picture()`, `SeoPages::imageObject()`.
+- **For search and sharing:** WebPage `image` and `primaryImageOfPage` are an ImageObject with creator, creditText, copyrightNotice, copyrightHolder, license (/terms.html) and acquireLicensePage; og:image/twitter:image use the page picture with its size and alt; the image sitemap lists each page's picture first.
+- **7 senior roles** (resume example + interview page each, 14 new pages): HR Business Partner, Area Sales Manager, Key Account Manager, Finance Manager, IT Project Manager, Digital Marketing Manager, Brand Manager (`tools/seo/roles_d.py`, `answers_d.py`, search words moved from the broader roles in `role_library.py`). Interview pages pull bank questions from the matching bank roles (`InterviewBank::PUBLIC_MAP` adds it-project-manager and digital-marketing-manager).
+- `s86_page_images` (24 checks).
+
 # CVTara v3.78.0 — Each workspace page shows its own content
 
 ## 3.78.0

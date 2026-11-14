@@ -1,4 +1,4 @@
-# 3.78.x: sample interview answers for the senior roles in roles_d.py. Same order as each role's q list. Invented samples.
+# 3.79.0: sample interview answers for the senior roles in roles_d.py. Same order as each role's q list. Invented samples.
 
 ANSWERS = {
     'hr-business-partner': [

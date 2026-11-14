@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""One picture per SEO page (3.78.x): a 1200x675 WebP drawn from the page's own content, with the CVTara mark and a
+"""One picture per SEO page (3.79.0): a 1200x675 WebP drawn from the page's own content, with the CVTara mark and a
 copyright line, plus copyright metadata inside the file (XMP: creator, credit line, copyright notice, rights page).
 
   python3 tools/seo/page_images.py            # all pages

@@ -1,9 +1,9 @@
-"""3.78.0 a picture for every SEO page (owner, 14 Nov 2026, after Google's 10 Nov update): each programmatic page shows its own
+"""3.79.0 a picture for every SEO page (owner, 14 Nov 2026, after Google's 10 Nov update): each programmatic page shows its own
 WebP drawn from its content with the CVTara mark and a copyright line, sized so nothing shifts, with alt text, an ImageObject
 carrying creator/credit/copyright, og:image and an image sitemap entry. Also the senior roles testers could not find
 (HR business partner, area sales manager and five more) get resume example and interview pages."""
 import json, os, re
-NAME = "3.78.0 SEO page pictures and senior roles"
+NAME = "3.79.0 SEO page pictures and senior roles"
 
 
 def run(ctx, t):

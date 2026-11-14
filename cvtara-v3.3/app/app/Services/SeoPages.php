@@ -161,7 +161,7 @@ class SeoPages
         if ($page) {
             $page['sections'] = array_values(array_filter($page['sections'] ?? [], fn ($x) => $x[2] !== '')); // a section with no content for this page is left out
             $page['path'] = '/'.implode('/', $s).'/';
-            // 3.78.0: the page's own picture (tools/seo/page_images.py), drawn from its content with the CVTara mark and a
+            // 3.79.0: the page's own picture (tools/seo/page_images.py), drawn from its content with the CVTara mark and a
             // copyright line. The shared illustration stays only as a fallback for a page that has no picture yet.
             if ($pic = self::picture($page['path'])) {
                 $page['image'] = [$pic[0], $pic[3], $pic[1], $pic[2]];

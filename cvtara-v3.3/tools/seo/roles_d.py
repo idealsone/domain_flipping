@@ -1,4 +1,4 @@
-# 3.78.x senior roles (2026-11-14): pages the senior tester round looked for and did not find (HR business partner, area
+# 3.79.0 senior roles (2026-11-14): pages the senior tester round looked for and did not find (HR business partner, area
 # sales manager) and the other senior titles those personas search for. Same shape as roles_a/b/c. Samples are invented.
 ROLES = {
     'hr-business-partner': dict(

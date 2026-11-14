@@ -379,7 +379,7 @@ class InterviewBank
         'chef' => 'kitchen-supervisor', 'logistics-executive' => 'logistics-coordinator', 'driver' => 'driver-company-or-personal', 'lab-technician' => 'lab-technician-assistant',
         'pharmacist' => 'pharmacy-assistant', 'it-support-engineer' => 'it-helpdesk-executive', 'data-analyst' => 'data-analyst-business', 'project-manager' => 'project-coordinator',
         'construction-supervisor' => 'site-administrator-construction',
-        'it-project-manager' => 'project-coordinator', 'digital-marketing-manager' => 'digital-marketing-executive']; // 3.78.0 senior pages
+        'it-project-manager' => 'project-coordinator', 'digital-marketing-manager' => 'digital-marketing-executive']; // 3.79.0 senior pages
 
     /** Patterns that read naturally with any skill, used on public pages (all role-level patterns are used too). */
     public const PUBLIC_PATTERNS = ['P01', 'P02', 'P04', 'P05', 'P06', 'P08', 'P09', 'P10', 'P12', 'P14', 'P17', 'P19', 'P20', 'P24', 'P27', 'P29', 'P30', 'P35', 'P36', 'P39', 'P43', 'P45', 'P52'];

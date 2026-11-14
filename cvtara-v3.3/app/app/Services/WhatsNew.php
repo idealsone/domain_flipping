@@ -68,6 +68,7 @@ class WhatsNew
         $n = fn ($id, $date, $tag, $title, $body) => ['id' => $id, 'date' => $date, 'tag' => $tag, 'title' => $title, 'body' => $body];
 
         return [
+            $n('2026-11-14-senior-roles', '2026-11-14', 'new', 'Guides for senior roles', 'New resume examples and interview questions with sample answers for HR business partners, area sales managers, key account managers, finance managers, IT project managers, digital marketing managers and brand managers. Every guide page now has its own picture too.'),
             $n('2026-11-14-plans-clearer', '2026-11-14', 'improved', 'Plans that are easier to compare', 'The pricing page now shows what one job application costs in each pack, and that a ₹99 Quick Download counts toward Job Hunt if you upgrade within 7 days. The Complete Job Kit adds an Expert Review and a LinkedIn and Naukri profile rewrite to Pro. Your payment receipt now lists your order number and the first three things to do.'),
             $n('2026-11-14-support-email', '2026-11-14', 'improved', 'Write to us and get answers by email', 'Email support@cvtara.com or use the contact page, and our replies now reach your inbox in the same conversation. Just reply to our email to continue, with or without a CVTara account.'),
             $n('2026-11-14-design-pictures', '2026-11-14', 'improved', 'See every design at a glance', 'The resume template and cover letter pages now show a picture of every design, and the top menu takes you straight to the resume builder, ATS checker, interview prep and pricing.'),

@@ -287,7 +287,7 @@ class ContentController extends Controller
                     $root = rtrim($seo['siteUrl'] ?: config('app.url'), '/');
                     // 3.74.0: the design pictures each page shows, so image search finds them (logo on the home page)
                     $imgs = $p['path'] === '/' ? ['/favicon-512.png', '/assets/brand/cvtara-social.png'] : array_column(\App\Services\TemplateImages::forPage($p['path']), 'src');
-                    if ($pic = \App\Services\SeoPages::picture($p['path'])) { // 3.78.0: each SEO page's own picture first
+                    if ($pic = \App\Services\SeoPages::picture($p['path'])) { // 3.79.0: each SEO page's own picture first
                         array_unshift($imgs, $pic[0]);
                     }
                     $xml .= '<url><loc>'.e($root.$p['path']).'</loc>'.(isset($mod[$p['path']]) ? '<lastmod>'.substr((string) $mod[$p['path']], 0, 10).'</lastmod>' : '')
@@ -542,7 +542,7 @@ class ContentController extends Controller
         $shareImage = ! empty($post['imageUrl']) ? $post['imageUrl'] : '/assets/brand/cvtara-social.png';
         $shareAlt = 'CVTara — Your next move starts here.';
         $shareSize = '';
-        if ($seoPage && str_ends_with((string) $seoPage['image'][0], '.webp')) { // 3.78.0: the page's own picture when it is shared
+        if ($seoPage && str_ends_with((string) $seoPage['image'][0], '.webp')) { // 3.79.0: the page's own picture when it is shared
             $shareImage = $seoPage['image'][0];
             $shareAlt = $seoPage['image'][1];
             $shareSize = '<meta property="og:image:type" content="image/webp"><meta property="og:image:width" content="'.(int) $seoPage['image'][2].'"><meta property="og:image:height" content="'.(int) $seoPage['image'][3].'">';
