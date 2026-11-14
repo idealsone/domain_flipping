@@ -96,7 +96,7 @@ def _run(t, inst, db, Client, imap, smtp):
     text = next((p.get_payload(decode=True).decode() for p in m.walk() if p.get_content_type() == "text/plain"), "")
     t.check("it goes to the customer from the support address, with replies coming back to it", smtp.messages[-1]["to"] == ["ravi@example.in"] if len(smtp.messages) > before else False)
     t.check("From reads CVTara Support and Reply-To is support@cvtara.com", "CVTara Support" in m.get("From", "") and "support@cvtara.com" in m.get("From", "") and "support@cvtara.com" in m.get("Reply-To", ""), (m.get("From"), m.get("Reply-To")))
-    t.check("the subject answers theirs and carries the ticket reference", m.get("Subject", "") == f"Re: Paid but no download [{ref}]", m.get("Subject"))
+    t.check("the subject is exactly Re: their subject, so Gmail keeps one conversation", m.get("Subject", "") == "Re: Paid but no download", m.get("Subject"))
     t.check("it threads under their email (In-Reply-To and References)", m.get("In-Reply-To") == "<a1@example.in>" and "<a1@example.in>" in m.get("References", ""), (m.get("In-Reply-To"), m.get("References")))
     sent_id = db.q("select email_message_id from support_ticket_messages where ticket_id=? and author_type='staff'", a[0])[0][0]
     t.check("its Message-ID is kept on the ticket", sent_id and m.get("Message-ID") == sent_id, (sent_id, m.get("Message-ID")))
@@ -104,7 +104,7 @@ def _run(t, inst, db, Client, imap, smtp):
     s, j = o.api("GET", "admin/support/" + a[0])
     t.check("the conversation shows the email as delivered and the used suggestion is cleared", j["messages"][-1].get("mail", {}).get("status") == "sent" and not j["report"]["draft"], str(j["messages"][-1])[:200])
 
-    imap.add(mail("Ravi Kumar <ravi@example.in>", f"Re: Paid but no download [{ref}]", "UPI ref 123456789, paid 10:05 AM.\n\nOn Sat, 14 Nov 2026 at 11:20, CVTara Support <support@cvtara.com> wrote:\n> Thanks Ravi. Please send the UPI reference", "<a2@example.in>", f"In-Reply-To: {sent_id}\nReferences: <a1@example.in> {sent_id}\n"))
+    imap.add(mail("Ravi Kumar <ravi@example.in>", "Re: Paid but no download", "UPI ref 123456789, paid 10:05 AM.\n\nOn Sat, 14 Nov 2026 at 11:20, CVTara Support <support@cvtara.com> wrote:\n> Thanks Ravi. Please send the UPI reference", "<a2@example.in>", f"In-Reply-To: {sent_id}\nReferences: <a1@example.in> {sent_id}\n"))
     s, j = o.api("POST", "admin/support/inbox/check", {})
     last = db.q("select body, author_type from support_ticket_messages where ticket_id=? order by created_at desc limit 1", a[0])[0]
     t.check("the customer's answer by email joins the same ticket without the quoted mail", j["result"].get("replies") == 1 and last[1] == "customer" and "123456789" in last[0] and "wrote:" not in last[0] and "Thanks Ravi" not in last[0], (j, last))

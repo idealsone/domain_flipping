@@ -166,7 +166,7 @@ class MailAutomation
         $domain = substr(strrchr(self::sender($p)['from'], '@') ?: '@cvtara.com', 1) ?: 'cvtara.com';
         $mid = '<'.$id.'@'.$domain.'>';
         $subj = $subject ?: self::fill($template['subject'], $vars);
-        if (! preg_match('/\bS-[0-9A-F]{6}\b/i', $subj) && ! empty($vars['ticket_ref'])) {
+        if ($subject === null && ! preg_match('/\bS-[0-9A-F]{6}\b/i', $subj) && ! empty($vars['ticket_ref'])) {
             $subj .= ' ['.$vars['ticket_ref'].']';
         }
         DB::table('mail_outbox')->insert(['id' => $id, 'dedupe' => 'support:'.$id, 'owner_id' => $ownerId, 'trigger' => 'support_reply', 'recipient' => $email, 'subject' => mb_substr($subj, 0, 250), 'body' => $body,

@@ -91,7 +91,9 @@ class SupportCentre
         $thread = [];
         if (($ticket->channel ?? '') === 'email') {
             $orig = trim(preg_replace('/^((re|fwd?|aw)\s*:\s*)+/i', '', (string) ($ticket->email_subject ?? '')));
-            $subject = 'Re: '.($orig !== '' ? mb_substr($orig, 0, 180) : 'Your CVTara request').' ['.$ref.']';
+            // Exactly "Re: <their subject>": Gmail only keeps a reply in the same conversation when the subject matches. The
+            // ticket reference is in the email text; their answer finds the ticket through In-Reply-To/References.
+            $subject = 'Re: '.($orig !== '' ? mb_substr($orig, 0, 200) : 'Your CVTara request');
             $ids = DB::table('support_ticket_messages')->where('ticket_id', $ticket->id)->whereNotNull('email_message_id')->orderBy('created_at')->pluck('email_message_id')->all();
             $ids = array_values(array_unique(array_filter(array_merge([(string) ($ticket->email_message_id ?? '')], $ids))));
             if ($ids) {
