@@ -1,0 +1,9 @@
+S cvtara_app/app/Http/Controllers/ContentController.php c3833ccaa1a3997f9a6bbf0f3330d70ca369c9da38fc7441a904664ac8f72d07
+S cvtara_app/app/Services/InterviewBank.php ea226578c10db83b10d98a996349841019d438694ef583c5b11aa35e885f37fd
+S cvtara_app/app/Services/SeoPages.php de0d2721b27837fc11fea4f571775b925b5df93e09fe0c0c9e8d83003b9f2a75
+S cvtara_app/app/Services/WhatsNew.php 631200ebc637f48159b61dc5bb7e8d2f3c1af2f0496d949baac32837b6e18cf2
+S cvtara_app/resources/data/seo-images.json ABSENT
+S cvtara_app/resources/data/seo-pages.json 6a885fba0786757632e7bc95eea042626f337b4c18205dd89f160d85dfafbfd4
+S cvtara_app/resources/views/seo/page.blade.php de8f1ffc4e0fac30b13a12a8d62c1f920ba803de5d268ce5d7b34af042c68e6e
+S public_html/role-library.json 3fd3c4d04910c6feddbc56ebf4035d05b0854371c29294599d3b23ee7ad94afb
+S public_html/assets/seo/pages/resume-builder-bangalore.webp ABSENT
