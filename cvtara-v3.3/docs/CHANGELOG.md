@@ -1,4 +1,7 @@
-# CVTara v3.75.0 — Support by email
+# CVTara v3.75.1 — Support by email
+
+## 3.75.1
+From the live end-to-end test (owner's Gmail to support@cvtara.com and back): a reply's subject is now exactly "Re: <their subject>" (the [S-XXXXXX] suffix made Gmail start a new conversation; the reference stays in the email text and their answer is matched by In-Reply-To/References). Support reply template gets a preview line; console and prompt wording name no provider.
 
 ## 3.75.0
 Owner (14 Nov 2026, urgent): when anyone contacts support, reply from the console with a drafted reply, make sure the customer receives it, from the support address, and check first whether a mail needs a reply at all.
