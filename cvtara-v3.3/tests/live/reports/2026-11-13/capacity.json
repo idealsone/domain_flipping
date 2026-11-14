@@ -1,0 +1,256 @@
+{
+ "base": "https://cvtara.com",
+ "at": "2026-11-13T04:21:31.519Z",
+ "seconds": 20,
+ "targets": {
+  "ready-made page (home)": [
+   {
+    "users": 2,
+    "requests": 79,
+    "perSecond": 4,
+    "p50": 275,
+    "p95": 527,
+    "max": 20425,
+    "errors": 0,
+    "errorRate": 0,
+    "codes": {
+     "200": 79
+    }
+   },
+   {
+    "users": 5,
+    "requests": 240,
+    "perSecond": 12,
+    "p50": 276,
+    "p95": 487,
+    "max": 23666,
+    "errors": 0,
+    "errorRate": 0,
+    "codes": {
+     "200": 240
+    }
+   },
+   {
+    "users": 10,
+    "requests": 463,
+    "perSecond": 23.1,
+    "p50": 283,
+    "p95": 519,
+    "max": 25342,
+    "errors": 0,
+    "errorRate": 0,
+    "codes": {
+     "200": 463
+    }
+   },
+   {
+    "users": 20,
+    "requests": 846,
+    "perSecond": 42.3,
+    "p50": 470,
+    "p95": 612,
+    "max": 61736,
+    "errors": 1,
+    "errorRate": 0.12,
+    "codes": {
+     "200": 845,
+     "-1": 1
+    }
+   },
+   {
+    "users": 30,
+    "requests": 1236,
+    "perSecond": 61.8,
+    "p50": 472,
+    "p95": 661,
+    "max": 61897,
+    "errors": 1,
+    "errorRate": 0.08,
+    "codes": {
+     "200": 1234,
+     "307": 1,
+     "-1": 1
+    }
+   },
+   {
+    "users": 40,
+    "requests": 1607,
+    "perSecond": 80.3,
+    "p50": 474,
+    "p95": 685,
+    "max": 27922,
+    "errors": 0,
+    "errorRate": 0,
+    "codes": {
+     "200": 1607
+    }
+   }
+  ],
+  "SEO page": [
+   {
+    "users": 2,
+    "requests": 67,
+    "perSecond": 3.4,
+    "p50": 322,
+    "p95": 540,
+    "max": 25076,
+    "errors": 0,
+    "errorRate": 0,
+    "codes": {
+     "200": 67
+    }
+   },
+   {
+    "users": 5,
+    "requests": 269,
+    "perSecond": 13.4,
+    "p50": 339,
+    "p95": 530,
+    "max": 977,
+    "errors": 0,
+    "errorRate": 0,
+    "codes": {
+     "200": 269
+    }
+   },
+   {
+    "users": 10,
+    "requests": 440,
+    "perSecond": 22,
+    "p50": 362,
+    "p95": 710,
+    "max": 14704,
+    "errors": 0,
+    "errorRate": 0,
+    "codes": {
+     "200": 440
+    }
+   },
+   {
+    "users": 20,
+    "requests": 736,
+    "perSecond": 36.8,
+    "p50": 511,
+    "p95": 763,
+    "max": 62508,
+    "errors": 1,
+    "errorRate": 0.14,
+    "codes": {
+     "200": 735,
+     "-1": 1
+    }
+   },
+   {
+    "users": 30,
+    "requests": 1061,
+    "perSecond": 53,
+    "p50": 518,
+    "p95": 813,
+    "max": 33018,
+    "errors": 0,
+    "errorRate": 0,
+    "codes": {
+     "200": 1061
+    }
+   },
+   {
+    "users": 40,
+    "requests": 1187,
+    "perSecond": 59.4,
+    "p50": 564,
+    "p95": 864,
+    "max": 38601,
+    "errors": 0,
+    "errorRate": 0,
+    "codes": {
+     "200": 1183,
+     "403": 4
+    }
+   }
+  ],
+  "app page run by PHP (sign-in)": [
+   {
+    "users": 2,
+    "requests": 97,
+    "perSecond": 4.8,
+    "p50": 320,
+    "p95": 570,
+    "max": 915,
+    "errors": 0,
+    "errorRate": 0,
+    "codes": {
+     "200": 97
+    }
+   },
+   {
+    "users": 5,
+    "requests": 225,
+    "perSecond": 11.3,
+    "p50": 320,
+    "p95": 711,
+    "max": 19408,
+    "errors": 0,
+    "errorRate": 0,
+    "codes": {
+     "200": 225
+    }
+   },
+   {
+    "users": 10,
+    "requests": 346,
+    "perSecond": 17.3,
+    "p50": 501,
+    "p95": 733,
+    "max": 43505,
+    "errors": 0,
+    "errorRate": 0,
+    "codes": {
+     "200": 342,
+     "403": 4
+    }
+   },
+   {
+    "users": 20,
+    "requests": 780,
+    "perSecond": 39,
+    "p50": 505,
+    "p95": 731,
+    "max": 19091,
+    "errors": 0,
+    "errorRate": 0,
+    "codes": {
+     "200": 780
+    }
+   },
+   {
+    "users": 30,
+    "requests": 1087,
+    "perSecond": 54.4,
+    "p50": 509,
+    "p95": 727,
+    "max": 61993,
+    "errors": 2,
+    "errorRate": 0.18,
+    "codes": {
+     "200": 1049,
+     "403": 36,
+     "-1": 2
+    }
+   },
+   {
+    "users": 40,
+    "requests": 1304,
+    "perSecond": 65.2,
+    "p50": 528,
+    "p95": 837,
+    "max": 25536,
+    "errors": 0,
+    "errorRate": 0,
+    "codes": {
+     "200": 1301,
+     "403": 3
+    }
+   }
+  ]
+ }
+}

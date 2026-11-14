@@ -1,3 +1,107 @@
+# CVTara v3.74.0 — Brand search result and design pictures
+
+## 3.74.0
+Owner (13 Nov 2026): show up in Google like a big brand (name, logo, sitelinks) for "cvtara", "cv tara" and "CVTara resume builder", rank for resume builder / ATS check / resume template, and get the site's images into image search. Built as 3.72.0 (PR #60), renumbered after 3.73.0 went live first. Google decides sitelinks; this gives it the signals.
+- **Top menu in the page HTML.** `ContentController::siteHeader()` renders the visitor header (same markup as `preview.js`, logo included) so crawlers see the main pages from every page. Menu: Resume Builder, ATS Checker, Templates, Cover Letters, Interview Prep, Pricing (`/pricing/`), Blog. Footer product links point at indexable pages.
+- **Brand data.** Alternate names add "CVTara ATS Resume Builder" and "cvtara.com".
+- **SEO agent.** Sitelink list adds Pricing, Interview Questions, Resume Examples; brand and product searches seeded; brand check reports logo, social profiles and the menu in the HTML.
+- **Design pictures.** 164 WebP previews (`TemplateImages`, `tools/seo/template_images.cjs`) on `/resume-templates/`, its style pages and `/cover-letter-examples/`, with "... template by CVTara" alt text; `sitemap.xml` lists them as image entries.
+- **Business listing and questions (owner's Intellipaat screenshot, 14 Nov).** Organization data carries the full street address, PIN code and phone (when saved under Site details) to match a Google Business Profile. About answers 5 questions people ask about the brand, shown on the page and as FAQ data.
+- New suite `s83_brand_sitelinks`.
+
+
+## 3.73.0
+Owner (12-14 Nov 2026): "5 lakh questions", personal to each customer's background, in the categories real interviews use, interactive enough that customers keep practising, with a clear way to Pro. Built on 3.71.0 (numbered 3.73.0 because the brand sitelinks release took 3.72.0). **Migration:** `2026_12_04_000001_interview_bank` (additive: `interview_bank_patterns`, `interview_practised`, and the catalogue's roles added to `career_occupations`).
+- **Catalogue.** `resources/data/interview-catalogue.json`, built by `tools/interview/build_catalogue.py` from `roles.py` and `patterns.py`: 22 job families, 352 roles (the 24 starter roles keep their slugs), 10 skills each, and 66 question patterns written for CVTara (54 asked per skill, 12 per role: HR round, job switch, salary and notice period, gaps). Every pattern has fresher, mid-level and senior wording and its own "what a good answer covers". 352 x 10 x 3 x 54 + 352 x 3 x 12 = **5,82,912 distinct questions**. Nothing is copied from other sites.
+- **Made when needed.** `Services/InterviewBank.php` works a question out from its code (`G-{role}-{skill}-{tier}-{pattern}`) and stores it in the bank only the first time it is asked in a mock interview or a model answer is requested. Only owner-approved patterns are used (all 66 start as drafts); the bank has an on/off switch.
+- **Categories.** HR round, Behavioural, Situational, Role skills and knowledge, Customer and stakeholder handling, Leadership and management, Integrity and rules, Motivation and career. Starter questions are placed in the same categories.
+- **The customer's own bank.** Question practice shows every question for their role and level (about 550-570), 20 a page, filtered by category or by one of the role's 10 skills, with "Mark as practised", progress bars per category, a "not practised yet" view, "Surprise me" and a box to practise each answer. Model answers from the resume work for every bank question (Job Hunt and Pro).
+- **Way to Pro.** Free and Quick Download accounts see 3 questions and the full size of their bank, with what Pro (every question for 90 days, 12 mock interviews, model answers) and Job Hunt (30 days, 4 mock interviews, model answers) add.
+- **Mock interviews.** New, never-asked bank questions are mixed in with the starter questions, a different skill and pattern each time, so customers do not get repeats across their 4 or 12 interviews. All 352 roles can now be practised.
+- **Console.** "Large question bank" panel: questions possible and live, patterns approved, questions asked so far, practice ticks; the patterns list (paged, filters, CSV/Excel/PDF) with 6 sample questions per pattern across roles, skills and levels; approve or withdraw one or all; add new roles and patterns; on/off (owner only).
+- Account deletion also removes practice ticks. New suite `s82_question_bank` (50 checks); `s58` now expects the larger role list.
+# CVTara v3.71.0 — Personal mock interviews
+
+## 3.71.0
+Owner (12-13 Nov 2026): personalised interview questions and answers from the resume and cover letter, a "switching jobs" path, 30-minute mock interviews one a day, a named panel, results 30 minutes after the interview; console lists paged. Owner picked "core first, bank later" (the 5 lakh question bank is the next release). Built on 3.70.2. **Migration:** `2026_12_03_000001_interview_personal` (additive; also sets the saved interview settings to 8 questions, 1 a day, 30 minutes, 30-minute release, full mock off).
+- **Interview profile.** The interview page starts from the sign-up answers (target role matched to a practice role, experience band). Sign-up and the interview page have an optional "switching to a new kind of job" choice with the current role.
+- **Personal questions.** After the introduction, up to 3 questions come from the customer's own resume (their latest job, a resume line with a number, a project or degree) and, for job switchers, "You are moving from X to Y. Why this change?". Fixed patterns, no extra cost. Bank questions fill the rest (8 in all).
+- **Model answers for you.** Feedback now reads the customer's resume, latest cover letter and profile, and each answer's "better version" becomes a first-person model answer built from those facts (introductions start "My name is ..."), never inventing anything. In question practice, Job Hunt and Pro customers can ask for a model answer to any question; it is made once, kept, and capped per day (default 10, console setting).
+- **30-minute interviews, one a day.** A countdown in the panel bar; at zero the answers are saved and submitted with whatever was written (nothing written: credit returned). Late answers are refused after a 2-minute grace. The 60-minute full mock stays available but is off by default.
+- **Practice panel.** Two named practice interviewers per interview (12 in the pool, a different pair from the customer's last interview) ask the questions in turn. The page says they are practice interviewers, not real people.
+- **Results released 30 minutes after the interview.** Feedback is written as before but hidden until the release time; then a bell notification and an email ("Your mock interview results are ready"). Level, badges and revision wait for the release too.
+- **Console.** Question bank and mock interview lists are paged (20 per page) with search, filters, dates, sorting and CSV/Excel/PDF download; approved-question count per role; settings for minutes, release delay and model answers per day; the practice panel list.
+- Account deletion also removes kept model answers. `s81_personal_interviews` covers all of the above; `s58` and `s75` set the release delay to 0 and switch the full mock on where they test it.
+# CVTara v3.70.2 — Smoother, lighter, more visual
+
+## 3.70.2
+The three leftovers from the testers (owner chose "Fix the three leftovers", 13 Nov 2026). No migration.
+- **Templates and cover-letter pages**: the guided picker grows from 20 px to about 380-850 px once the role list loads; it now keeps that room from the start (laptop layout shift 0.086 → 0.000 locally; live was 0.12 laptop / 0.37 phone).
+- **Customer dashboard, fewer requests (112 → 75)**: its 23 stylesheets are joined into one file like every other page (screenshots identical in day and night mode), and `csrf-lazy.js` lets callers that ask for the same account data within 2 s share one request (allowance was fetched 5 times, profile and resumes 4); any POST/PUT/DELETE clears this.
+- **Owner console Overview**: the second "Overview" title and its six tiles (members, paid users, revenue, scans, resumes, conversion) repeated the Business numbers box; they are hidden when that box is shown. Download reports, the counting line, both charts and the recent lists stay.
+
+## 3.70.1
+Found in the live check after 3.70.0 went live (13 Nov 2026, 15:25 UTC). CSS only, no migration.
+- **Checkout on phones and tablets**: the three plan cards stack to about 1,920-2,380 px, so the loading placeholder now keeps that room below 1,100 px wide (it kept 540 px only on laptops). Phone layout shift 0.64 → 0.000.
+- **Home page after a fast scroll**: the six template samples and three cover-letter samples load as you scroll. Their rows keep their final height (1,209 / 1,821 / 3,264 px for 3 / 2 / 1 columns; letters 510 / 1,035 / 1,560 px) and the six home template cards render at full size instead of a 420 px estimate. Laptop layout shift 0.24 → 0.006.
+
+## 3.70.0
+Owner (12 Nov 2026): smoother, lighter, more attractive UI across the site, dashboard and console; a landing page that sells; less text, more visuals and motion; charts that respond; fast on every device; collect the 10 testers' feedback first. Built on 3.69.0 + 3.69.1. One migration (`2026_12_02_000001_simpler_homepage_copy`, copy only).
+- **Tester feedback first**: the 10 hands-on reviews of 13 Nov (`/mnt/project-files/qa-2026-11-13/`) drove the list below. Bug-level findings (Pro 20 vs 30, console revenue counts, ?view crash) are in 3.69.1 from the testing thread.
+- **Tara stays quiet**: the chat never opens by itself (6 of 10 testers); a small greeting bubble shows once a day for 8 s. On phones the button is a 48 px round icon and the page keeps 72 px free above it. The closed panel is `inert`, so it is no longer a hidden Tab stop; focus returns to the button on close.
+- **Dashboard: one next step**: the welcome card holds the single next step (`#wsNext`); Tara's nudge replaces its text in place instead of adding a box. The "One application, a clear next step" roadmap and the tips box are hidden. Layout shift on the dashboard: phone 0.97 → 0.002, laptop 0.46 → 0.015 (throttled, measured locally).
+- **Your progress** (new, dashboard): a line chart of ATS match scores (hover, tap or Tab onto a point for the job, score and date; click opens ATS Match) and an applications funnel (Saved → Applied → Interview → Offer, click opens the tracker). Drawn last on the page so nothing moves.
+- **Reminder cards** show one at a time and step aside after 12 s (they stay under the bell); on phones they sit above the chat button instead of over content.
+- **Interactive charts, no library** (`cv-motion.js`, ~5 KB): `CVChart.bars/line` SVG with one tooltip, keyboard arrows, click-through, and draw-in animation. Used on the console Overview (signups by day, revenue by day), console traffic (page views by day) and the customer dashboard.
+- **Landing page**: shorter headline and intro (moved by migration only if the owner never edited them), one solid button plus a text link, three proof ticks, floating documents with keyword chips, a "numbers at a glance" strip (templates, cover letters, from-price, 7-day refund) with icons, icon cards for How it works, shorter ATS copy, an animated sample report ring and ticks that now pass contrast (green was 2.3:1). Sections fade in as you scroll; all motion is off under reduced motion. On phones the bottom "Check free / View plans" bar waits until the hero has scrolled away.
+- **Offer bar floats** at the bottom instead of pushing the page down (homepage shift 0.5 → 0.03 on laptops) and comes after "Skip to content" for keyboard users.
+- **Checkout** keeps room for the plan cards while they load (shift 0.49 → 0.002).
+- **Accessibility**: "Skip to main content" in the workspace; choosing a sidebar section moves focus to its heading; a new ATS Match report takes focus; dark-mode Tara link contrast.
+- Night mode checked on the homepage and dashboard.
+- Customer What's new: two notes (calmer dashboard, quiet chat).
+
+# CVTara v3.69.1 — Fixes from the 13 Nov live test
+
+## 3.69.1
+Owner (12-13 Nov 2026): 10 testers over every page and function on the live site, then fix what they found. Built on 3.69.0. One data migration (owner decisions below).
+- **Pro is 30 tailored resumes and 30 cover letters for 90 days** (owner, 13 Nov). The live plan already had 30/30, but its perk line still said 20 and 20, so the cards contradicted themselves. The migration sets 30/30 and 90 days and rewrites that line. Defaults, the customer guide and the admin guide now say 30.
+- **Diwali offer switched off** (owner, 13 Nov). The migration sets any Diwali campaign that is still running to Off; the campaign is kept for reuse next year.
+- **Order totals count real money only.** Orders and Reports showed "Billed/Net" as the sum of every row, including checkouts that were opened and never paid. Totals now add only paid, partly refunded and refunded orders; unpaid checkouts appear on their own "Opened, not paid" tile.
+- **Overview time label is India time.** "Worked out at" now always shows IST, whatever the browser's time zone.
+- **Sign-in guessing is capped per account too.** Besides 5 wrong passwords per email and network address, 10 wrong passwords for one email in 15 minutes now pause sign-in for that email from any address (behind the CDN the address can change between tries). The email stays filled in after a wrong password.
+- **Friendly "too many requests" page.** A rate-limited visitor saw a blank white page; now they see a short explanation that retries by itself after 30 seconds.
+- **Workspace links:** `?view=` with an unknown or malformed value opens the dashboard instead of throwing a script error; `?view=ats` opens ATS Match; `?view=partner` opens the partner portal for partner members.
+- **No more /api/partner 404 on every workspace load:** customers who are not partner members get `partner: null`.
+- **Template sample text is flagged.** A guided template fills in a fictional example person. Example entries the customer has not edited no longer count towards "Content completeness", and the builder now shows how many are left with a "Remove example entries" button.
+- Contact page: the link to the refund policy said "No-Refund Policy"; it now says "Refund Policy".
+
+# CVTara v3.69.0 — Stronger pages for the 60-day index push
+
+## 3.69.0
+Owner (12 Nov 2026, 18:31 UTC): "all pages should rank on the engine so do what you want but it should be there in 60 days". Built on 3.68.0. No migration.
+- **Every page in the sitemap stays in.** The open idea of dropping the 130 city+role pages for 4 weeks is not used, because the goal is every page indexed.
+- **More words of each page's own** on the most templated sections (measured as 6-word phrases not shared with other pages in the section):
+  - Interview questions (82 pages): every role question now has a sample answer written for that role (410 answers, about 11,000 words). Own words per page, median 204 → 354.
+  - Resume words (28 pages): three more before-and-after lines from different fields and a "When it is still fine" note. Median 131 → 227.
+  - Cover letter examples (26 pages): an opening for freshers in that field and three mistakes letters in that field often make. Median 196 → 275.
+  - Content lives in `tools/seo/answers_*.py`, `words_more.py` and `cover_more.py`; `build_seo_data.py` refuses to build if a role, word or field is missing its new content.
+- **The sprint runs 60 days** instead of 30. A sprint started under 3.68.0 runs the full 60 days from its start (the live one now ends 11 Jan 2027). The plan has 8 weeks: weeks 5 to 8 cover a second wave for pages still not indexed, more outside links, a second position 4-30 review and the two-month report.
+- **One hop to /pricing/**: `/pricing.html` and `/plans` now go straight to `/pricing/` (they went to `/pricing` first, then `/pricing/`).
+- A page section with no content for that page is left out instead of showing an empty heading.
+- `s80_index_sprint` covers the sample answers, word examples, cover letter notes, one-hop redirect and the 60-day sprint.
+
+# CVTara v3.68.0 — Index sprint and pricing pages
+
+## 3.68.0
+Owner brief (12 Nov 2026): the SEO and Growth agents should work about 10x harder for one month so ~600 pages get indexed and rank; every approval must say which page, which section and which link; build transactional pages because revenue is the goal. Built on 3.67.2. No migration.
+- **Search Console review** (exports of 12 Nov): 456 of 526 sitemap pages are "Discovered - currently not indexed" and Google has not crawled any of them yet (resume 130, resume-examples 108, resume-builder 46, interview-questions 42, guides 34, calculators 31, resume-words 29, cover-letter-examples 21, resume-templates 15). A full crawl of the live site found no technical blocker: every page answers 200, one H1, self canonical, index,follow, valid structured data, no duplicate titles or descriptions. The cause is a new domain with almost no outside links, so Google is slow to spend crawl time; the fix is authority (links), stronger pages and a clear crawl priority.
+- **One pricing page** (owner, 12 Nov: "make one page /pricing"): `/pricing/` has a section per plan (`#quick-download`, `#job-hunt`, `#pro`, each with what you get, who it is for and a buy button), a comparison table, `#free-vs-paid`, how paying works and a refund FAQ. Prices, limits and validity come from the live plan settings; a plan taken off sale drops out. Each plan is Product structured data with its INR price and the 7-day return window. `/pricing`, `/pricing.html` and `/plans` move permanently to `/pricing/`, and `/pricing/{plan}/` addresses to their section. The footer and every programmatic page link to `/pricing/` ("See plans from ₹99"). Pricing visits count as pricing views for the customer journeys.
+- **"Updated <date>"** (owner: show the current date when a page or post is updated): guides, calculators and all programmatic pages show "Updated 12 Nov 2026" from the last content change (owner edit of a guide, approved SEO change, a person's review, or the page scan noticing new content) and send it as `dateModified`. Saving a guide whose words changed stamps it with today; saving without changes keeps the old date. No date is shown when none is known.
+- **30-day index sprint** (Growth > SEO agent, Start/Stop): raises pages scanned per run 40→200, Google URL Inspection 60→600 a day (Google allows 2,000), recrawl requests 10→50 per run, title and link drafts 10→50 a day, and acts on smaller signals (5 impressions). Not raised: Google Indexing API (Google's 200 a day), outreach sends. Ends by itself after 30 days. The settings form still shows and saves the owner's own numbers. New drafts pause while 60 already wait for a decision. Week-by-week plan in `resources/data/seo-sprint.json` shown on the tab.
+- **Approval detail**: every SEO approval card has a Where row: the full page address, the section of the page that changes (title tag and meta description, main heading, FAQ box, structured data, or the "Popular with job seekers" link box), every page a link is added on and the link text.
+- **Sitemap `<lastmod>`**: each page's last content change from the agent's page scan, so engines re-read changed pages first.
+- Test suite `s80_index_sprint`; `s23` updated for the pricing redirect and link.
+
 # CVTara v3.67.2 — Night mode readability
 
 ## 3.67.2

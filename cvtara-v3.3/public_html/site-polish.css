@@ -137,3 +137,4 @@ html.dark body[data-page] .legal-shell a,html.dark .cover-letter-card em{color:#
 @media(max-width:600px){.letter-canvas-toolbar label,.studio-zoom label+select,#studioZoom{display:none}.letter-canvas,#resumeStudio .studio-preview-stage{overflow-x:hidden}}
 
 .lp-review small{display:block;color:var(--muted,#5b6b7f);font-size:13px;margin-top:2px}.lp-review .lp-verified{display:inline-block;margin-top:8px;padding:2px 9px;border-radius:10px;background:#e7f6ec;color:#17663a;font-size:12px;font-weight:600}
+.about-faq{border:1px solid var(--line);border-radius:12px;padding:4px 16px;margin:10px 0;background:var(--paper)}.about-faq summary{cursor:pointer;font-weight:700;padding:10px 0}.about-faq p{margin:0 0 12px}

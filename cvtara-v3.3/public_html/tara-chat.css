@@ -52,3 +52,15 @@ html.dark .tara-msg.her{background:#1e293b}html.dark .tara-fab{background:#1e3a8
 
 .tara-peek{position:fixed;right:12px;bottom:66px;z-index:901;max-width:260px;padding:10px 14px;border:0;border-radius:14px 14px 4px 14px;background:#fff;color:#0f172a;font:500 13px/1.4 inherit;text-align:left;box-shadow:0 8px 24px rgba(15,23,42,.25);cursor:pointer}
 html.dark .tara-peek{background:#1e293b;color:#e2e8f0}
+/* 3.70: quieter Tara. Closed panel never takes focus; on phones the button is a small round icon and the page keeps room above it. */
+.tara-panel[hidden]{display:none!important}
+.tara-peek{animation:taraPeek .35s ease-out both}
+@keyframes taraPeek{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+@media(max-width:600px){
+  .tara-fab{padding:0;width:48px;height:48px;justify-content:center;bottom:max(12px,env(safe-area-inset-bottom));opacity:.94}
+  .tara-fab b{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
+  .tara-fab .tara-dot{width:36px;height:36px}
+  body:has(#cvTara){padding-bottom:72px}
+}
+@media(prefers-reduced-motion:reduce){.tara-peek{animation:none}}
+html.dark .tara-link{color:#93c5fd}

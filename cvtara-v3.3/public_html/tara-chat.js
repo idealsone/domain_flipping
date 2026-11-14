@@ -35,7 +35,7 @@
     box = document.createElement('div');
     box.id = 'cvTara';
     box.innerHTML = `<button type="button" class="tara-fab" aria-haspopup="dialog" aria-controls="taraPanel"><span class="tara-dot" aria-hidden="true">T</span><b>Ask Tara</b></button>
-      <section class="tara-panel" id="taraPanel" role="dialog" aria-label="Tara, your CVTara career assistant" hidden>
+      <section class="tara-panel" id="taraPanel" role="dialog" aria-label="Tara, your CVTara career assistant" hidden inert>
         <header class="tara-head"><span class="tara-dot" aria-hidden="true">T</span><div><h2>Tara</h2><small>Your CVTara career assistant</small></div>
           <button type="button" class="tara-ic" data-t="history" title="Past conversations" aria-label="Past conversations">☰</button>
           <button type="button" class="tara-ic" data-t="new" title="New conversation" aria-label="New conversation">＋</button>
@@ -128,7 +128,8 @@
   }
 
   function toggle(open, full) {
-    const p = $('#taraPanel'); p.hidden = !open; box.classList.toggle('open', open);
+    const p = $('#taraPanel'); p.hidden = !open; p.inert = !open; box.classList.toggle('open', open);
+    if (!open) { const f = $('.tara-fab', box); if (f && box.contains(document.activeElement)) f.focus(); }
     if (full !== undefined) box.classList.toggle('full', !!full);
     if (open) { $('#taraIn').focus(); if (!$('.tara-log', box).children.length) welcome(); }
   }
@@ -157,6 +158,27 @@
     try { if (localStorage.getItem(key)) return; } catch (e) { /* storage blocked */ }
     let n; try { n = (await api('/api/tara/nudge')).nudge; } catch (e) { return; }
     if (!n) return;
+    // 3.70.0 The next step lives inside the welcome card (#wsNext), replacing its default text in place, so the page does not jump.
+    for (let i = 0; i < 20 && !document.getElementById('wsNext'); i++) await new Promise(r => setTimeout(r, 150));
+    const slot = document.getElementById('wsNext');
+    if (slot) {
+      const fill = el => {
+        el.dataset.nudge = '1';
+        el.innerHTML = `<h2>${E(n.title)}</h2><p>${E(n.line)}</p><p class="ws-acts">${n.actions.map((x, i) => x.url ? `<a class="button ${i ? 'secondary' : 'mint'}" href="${E(x.url)}">${E(x.label)}</a>` : `<button type="button" class="button ${i ? 'secondary' : 'mint'}" data-n="${i}">${E(x.label)}</button>`).join('')}</p>${n.offer ? `<p class="ws-offer"><b>${E(n.offer.name)} · ₹${E(n.offer.price)}</b> ${E(n.offer.why)} <a href="${E(n.offer.url)}">Get ${E(n.offer.name)}</a></p>` : ''}`;
+      };
+      fill(slot);
+      // the welcome card is redrawn when the customer comes back to the dashboard: put the next step back each time
+      new MutationObserver(() => { const el = document.getElementById('wsNext'); if (el && !el.dataset.nudge) fill(el); }).observe(host, { childList: true, subtree: true });
+      host.addEventListener('click', e => {
+        if (!e.target.closest('#wsNext')) return;
+        if (e.target.closest('.ws-offer a') && n.offer) track(n.offer.plan, 'dashboard');
+        const b = e.target.closest('[data-n]'); if (!b) return;
+        const x = n.actions[Number(b.dataset.n)];
+        if (x.upload) { if (window.CVTaraResumeImport && window.CVTaraResumeImport.pick) window.CVTaraResumeImport.pick(); else location.href = '/workspace.html?view=resumes'; }
+        else if (x.ask && box) { toggle(true); send(x.ask); }
+      });
+      return;
+    }
     const c = document.createElement('section');
     c.className = 'tara-nudge'; c.setAttribute('aria-label', 'Your next step');
     c.innerHTML = `<span class="tara-dot" aria-hidden="true">T</span><div class="tn-body"><small>${E(n.greeting)}</small><h3>${E(n.title)}</h3><p>${E(n.line)}</p>
@@ -175,21 +197,20 @@
     });
   }
 
-  // Once a day after sign-in, Tara says hello by name and asks what the customer is working on (a small bubble on phones).
+  // Once a day after sign-in, Tara says hello in a small bubble beside the button. It never opens the chat by itself
+  // (testers on 13 Nov 2026: the auto-opening panel covered the page). The bubble goes away after 8 seconds.
   function greet() {
     const key = 'cvtara-tara-hi-' + new Date().toISOString().slice(0, 10);
     try { if (localStorage.getItem(key)) return; } catch (e) { return; }
     let tries = 0;
     const go = () => {
-      if (!box || !$('#taraPanel').hidden) return;
+      if (!box || !$('#taraPanel').hidden || $('.tara-peek', box)) return;
       if (document.querySelector('.ad-modal, [role=dialog][aria-modal=true]:not([hidden])')) { if (++tries < 6) setTimeout(go, 4000); return; } // wait for another pop-up to close
       try { localStorage.setItem(key, '1'); } catch (e) { /* storage blocked */ } // counted only once it is really shown
-      if (window.matchMedia('(max-width: 600px)').matches) {
-        const b = document.createElement('button'); b.type = 'button'; b.className = 'tara-peek'; b.textContent = S.greeting.split('. ')[0] + '. Tap to chat.';
-        b.onclick = () => { b.remove(); toggle(true); }; box.append(b); setTimeout(() => b.remove(), 15000);
-      } else toggle(true);
+      const b = document.createElement('button'); b.type = 'button'; b.className = 'tara-peek'; b.textContent = S.greeting.split('. ')[0] + '. Tap to chat.';
+      b.onclick = () => { b.remove(); toggle(true); }; box.append(b); setTimeout(() => b.remove(), 8000);
     };
-    setTimeout(go, 2500);
+    setTimeout(go, 4000);
   }
 
   async function start() {

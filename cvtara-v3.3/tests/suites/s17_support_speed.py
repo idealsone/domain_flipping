@@ -1,5 +1,5 @@
 """Feedback button for signed-in customers (screenshots, limits, safety, owner inbox) and traffic protection (ready-made pages, busy mode)."""
-import json, os, struct, urllib.error, urllib.request, uuid, zlib
+import re, json, os, struct, urllib.error, urllib.request, uuid, zlib
 NAME = "Feedback inbox and traffic protection"
 
 
@@ -34,7 +34,11 @@ def run(ctx, t):
     base_all = db.q("select count(*) from support_reports")[0][0]; base_new = db.q("select count(*) from support_reports where status='new'")[0][0]; base_bill = db.q("select count(*) from support_reports where area='billing'")[0][0]
     cust = ctx.client(); cust.register("sup-a@test.local")
     s, _, home = ctx.client().page("/"); s2, _, ws = cust.page("/workspace.html")
-    t.check("the Feedback button is in the customer portal only (not on public pages)", "support-widget.js" in ws and "support-widget.css" in ws and "support-widget.js" not in home and "support-widget.css" not in home)
+    wb = re.search(r'href="(/assets/bundle/[a-f0-9]+\.css)', ws)  # 3.70.2: the dashboard's stylesheets are joined into one file
+    ws_css = "support-widget.css" in ws or bool(wb and "/* /support-widget.css */" in cust.page(wb.group(1))[2])
+    hb = re.search(r'href="(/assets/bundle/[a-f0-9]+\.css)', home)
+    home_css = "support-widget.css" in home or bool(hb and "/* /support-widget.css */" in ctx.client().page(hb.group(1))[2])
+    t.check("the Feedback button is in the customer portal only (not on public pages)", "support-widget.js" in ws and ws_css and "support-widget.js" not in home and not home_css)
     pr = ctx.client(); pr.page("/templates.html"); t.check("public pages stay free of the Feedback button", "support-widget" not in pr.page("/templates.html")[2] and "support-widget" not in pr.page("/customer-guide.html")[2])
     t.check("a visitor cannot send or load feedback options", ctx.client().raw("POST", "/support/report", {}, {"Accept": "application/json"})[0] in (401, 419) and ctx.client().raw("GET", "/support/options", None, {"Accept": "application/json"})[0] in (401, 302))
     jsw = open(os.path.join(src, "support-widget.js"), encoding="utf8").read()

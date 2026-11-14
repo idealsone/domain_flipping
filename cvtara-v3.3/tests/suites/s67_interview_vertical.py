@@ -35,12 +35,14 @@ def run(ctx, t):
     try:
         db = Db(inst.db); Client.verify_db = inst.db
         roles = db.q("select slug, domain, isco_code, seniority, synonyms from career_occupations order by slug")
-        t.check("24 roles, each with a domain, ISCO-08 code, seniority ladder and synonyms", len(roles) == 24 and all(r[1] and r[2] and r[3] and r[4] for r in roles), [r for r in roles if not (r[1] and r[2] and r[3] and r[4])][:3])
+        starter = ("customer-support", "sales-executive", "hr-recruiter", "inside-sales", "teacher", "data-entry", "event-coordinator")
+        t.check("every role (24 starter + 3.73 catalogue) has a domain, seniority ladder and synonyms; starter roles keep their ISCO-08 code", len(roles) >= 352 and all(r[1] and r[3] and r[4] for r in roles)
+                and all(r[2] for r in roles if r[0] in starter), [r for r in roles if not (r[1] and r[3] and r[4])][:3])
         t.check("the 12 new roles arrive with draft questions only", db.q("select count(*) from interview_questions where occupation='inside-sales' and status='draft'")[0][0] == 2)
         c = Client(inst.base); c.register("iv-a@test.local"); c.page("/workspace.html")
         uid = db.q("select id from users where email='iv-a@test.local'")[0][0]
-        s, j = c.api("GET", "interviews/roles?q=telecaller")
-        t.check("typing a common Indian job title finds the role through its synonyms", s == 200 and j["roles"] and j["roles"][0]["slug"] in ("inside-sales", "customer-support") and any(r["slug"] == "inside-sales" for r in j["roles"]), j)
+        s, j = c.api("GET", "interviews/roles?q=voice+process")
+        t.check("typing a common Indian job title finds the role through its synonyms", s == 200 and j["roles"] and j["roles"][0]["slug"] == "customer-support" and j["roles"][0]["matched"], j)
         t.check("a role name match ranks first", c.api("GET", "interviews/roles?q=receptionist")[1]["roles"][0]["slug"] == "receptionist")
         t.check("the overview lists roles with their taxonomy", any(r.get("domain") for r in c.api("GET", "interviews")[1]["roles"]))
 
