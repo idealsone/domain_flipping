@@ -287,6 +287,9 @@ class ContentController extends Controller
                     $root = rtrim($seo['siteUrl'] ?: config('app.url'), '/');
                     // 3.74.0: the design pictures each page shows, so image search finds them (logo on the home page)
                     $imgs = $p['path'] === '/' ? ['/favicon-512.png', '/assets/brand/cvtara-social.png'] : array_column(\App\Services\TemplateImages::forPage($p['path']), 'src');
+                    if ($pic = \App\Services\SeoPages::picture($p['path'])) { // 3.78.0: each SEO page's own picture first
+                        array_unshift($imgs, $pic[0]);
+                    }
                     $xml .= '<url><loc>'.e($root.$p['path']).'</loc>'.(isset($mod[$p['path']]) ? '<lastmod>'.substr((string) $mod[$p['path']], 0, 10).'</lastmod>' : '')
                         .implode('', array_map(fn ($i) => '<image:image><image:loc>'.e($root.$i).'</image:loc></image:image>', $imgs)).'</url>';
                 }
@@ -537,12 +540,19 @@ class ContentController extends Controller
         $pageTitle = html_entity_decode($titleMatch[1] ?? 'CVTara — Resume and cover-letter builder', ENT_QUOTES, 'UTF-8');
         $pageDescription = html_entity_decode($descriptionMatch[1] ?? 'Create your resume, write a matching cover letter and prepare your next application with CVTara.', ENT_QUOTES, 'UTF-8');
         $shareImage = ! empty($post['imageUrl']) ? $post['imageUrl'] : '/assets/brand/cvtara-social.png';
+        $shareAlt = 'CVTara — Your next move starts here.';
+        $shareSize = '';
+        if ($seoPage && str_ends_with((string) $seoPage['image'][0], '.webp')) { // 3.78.0: the page's own picture when it is shared
+            $shareImage = $seoPage['image'][0];
+            $shareAlt = $seoPage['image'][1];
+            $shareSize = '<meta property="og:image:type" content="image/webp"><meta property="og:image:width" content="'.(int) $seoPage['image'][2].'"><meta property="og:image:height" content="'.(int) $seoPage['image'][3].'">';
+        }
         if ($seoPage) {
             foreach (\App\Services\SeoPages::schema($seoPage, $siteBase) as $block) {
                 $head .= '<script type="application/ld+json">'.json_encode($block, JSON_HEX_TAG | JSON_HEX_AMP | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE).'</script>';
             }
         }
-        $head .= '<meta property="og:site_name" content="CVTara"><meta property="og:locale" content="en_IN"><meta property="og:title" content="'.e($pageTitle).'"><meta property="og:description" content="'.e($pageDescription).'"><meta property="og:url" content="'.e($siteBase.$uri).'"><meta property="og:type" content="'.($post ? 'article' : 'website').'"><meta property="og:image" content="'.e($abs($shareImage)).'"><meta property="og:image:alt" content="CVTara — Your next move starts here."><meta name="twitter:card" content="summary_large_image"><meta name="twitter:image" content="'.e($abs($shareImage)).'">';
+        $head .= '<meta property="og:site_name" content="CVTara"><meta property="og:locale" content="en_IN"><meta property="og:title" content="'.e($pageTitle).'"><meta property="og:description" content="'.e($pageDescription).'"><meta property="og:url" content="'.e($siteBase.$uri).'"><meta property="og:type" content="'.($post ? 'article' : 'website').'"><meta property="og:image" content="'.e($abs($shareImage)).'">'.$shareSize.'<meta property="og:image:alt" content="'.e($shareAlt).'"><meta name="twitter:card" content="summary_large_image"><meta name="twitter:image" content="'.e($abs($shareImage)).'">';
         if ($path === '' || $path === 'about.html') {
             // 3.62.0 brand result: one Organization and one WebSite, each with a stable @id, the spellings people search
             // (cvtara, cv tara, CVTara resume builder) and the official social profiles, so Google can tie them to cvtara.com.

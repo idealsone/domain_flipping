@@ -11,20 +11,22 @@ sys.path.insert(0, str(HERE))
 from roles_a import ROLES as A
 from roles_b import ROLES as B
 from roles_c import ROLES as C
+from roles_d import ROLES as D
 from categories import CATEGORIES
 from templates_places import TEMPLATES, STATES, CITIES, CITY_ROLES, TIER2_ROLES, FRESHER_NOTES, TIER2_NOTES, STATE_LANG
 from words import WORDS
 from answers_a import ANSWERS as ANS_A
 from answers_b import ANSWERS as ANS_B
 from answers_c import ANSWERS as ANS_C
+from answers_d import ANSWERS as ANS_D
 from words_more import MORE as WORDS_MORE
 from cover_more import COVER as COVER_MORE
 
-roles = {**A, **B, **C}
-assert len(roles) == len(A) + len(B) + len(C), 'duplicate role slug'
+roles = {**A, **B, **C, **D}
+assert len(roles) == len(A) + len(B) + len(C) + len(D), 'duplicate role slug'
 errors = []
 # 3.69.0: sample answers, more word examples and field notes for cover letters, so each page carries more of its own words.
-answers = {**ANS_A, **ANS_B, **ANS_C}
+answers = {**ANS_A, **ANS_B, **ANS_C, **ANS_D}
 for slug, r in roles.items():
     a = answers.get(slug)
     if not a or len(a) != len(r['q']): errors.append(f'{slug}: needs one sample answer per interview question')

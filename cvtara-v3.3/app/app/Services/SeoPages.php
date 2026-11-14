@@ -58,6 +58,8 @@ class SeoPages
         ['/cover-letter-generator/', 'Cover letter writer'],
     ];
 
+    private const YEAR = '2026'; // year on the page pictures' copyright line
+
     private const ATS_DEF = 'ATS (applicant tracking system, the software many employers use to store, search and filter resumes)';
 
     public static function data(): array
@@ -159,6 +161,11 @@ class SeoPages
         if ($page) {
             $page['sections'] = array_values(array_filter($page['sections'] ?? [], fn ($x) => $x[2] !== '')); // a section with no content for this page is left out
             $page['path'] = '/'.implode('/', $s).'/';
+            // 3.78.0: the page's own picture (tools/seo/page_images.py), drawn from its content with the CVTara mark and a
+            // copyright line. The shared illustration stays only as a fallback for a page that has no picture yet.
+            if ($pic = self::picture($page['path'])) {
+                $page['image'] = [$pic[0], $pic[3], $pic[1], $pic[2]];
+            }
             // Changes the owner approved from the SEO agent (Growth page): a new title and description, and links to pages it is pushing up.
             if ($o = SeoAgent::override($page['path'])) {
                 $page['title'] = $o['title'] ?? $page['title'];
@@ -371,7 +378,26 @@ class SeoPages
 
     private static function image(string $kind, string $alt): array
     {
-        return ['/assets/seo/'.$kind.'.svg', $alt];
+        return ['/assets/seo/'.$kind.'.svg', $alt, 520, 390];
+    }
+
+    private static ?array $pictures = null;
+
+    /** The page's own picture as [src, width, height, alt], or null (resources/data/seo-images.json, file must exist). */
+    public static function picture(string $path): ?array
+    {
+        self::$pictures ??= json_decode((string) @file_get_contents(resource_path('data/seo-images.json')), true) ?: [];
+        $p = self::$pictures[$path] ?? null;
+
+        return $p && is_file(public_path(ltrim($p[0], '/'))) ? $p : null;
+    }
+
+    /** schema.org ImageObject for a page picture, with the creator, credit and copyright notice image search shows. */
+    public static function imageObject(array $image, string $base): array
+    {
+        return ['@type' => 'ImageObject', 'url' => $base.$image[0], 'contentUrl' => $base.$image[0], 'width' => (int) ($image[2] ?? 520), 'height' => (int) ($image[3] ?? 390), 'caption' => $image[1],
+            'creator' => ['@type' => 'Organization', 'name' => 'CVTara', 'url' => $base.'/'], 'creditText' => 'CVTara', 'copyrightNotice' => '© '.self::YEAR.' CVTara. All rights reserved.',
+            'copyrightHolder' => ['@type' => 'Organization', 'name' => 'CVTara'], 'license' => $base.'/terms.html', 'acquireLicensePage' => $base.'/contact.html'];
     }
 
     /** Up to $n other roles in the same field, then the rest of the site's roles, for "related roles" lists. */
@@ -1113,7 +1139,7 @@ class SeoPages
         if (! empty($p['faq'])) {
             $ld[] = ['@context' => 'https://schema.org', '@type' => 'FAQPage', 'mainEntity' => array_map(fn ($q) => ['@type' => 'Question', 'name' => $q[0], 'acceptedAnswer' => ['@type' => 'Answer', 'text' => $q[1]]], $p['faq'])];
         }
-        $page = ['@context' => 'https://schema.org', '@type' => empty($p['itemList']) ? 'WebPage' : 'CollectionPage', 'name' => $p['h1'], 'description' => $p['description'], 'url' => $base.$p['path'], 'image' => $base.$p['image'][0], 'inLanguage' => 'en-IN', 'publisher' => ['@type' => 'Organization', 'name' => 'CVTara', 'logo' => $base.'/assets/brand/cvtara-logo.webp']];
+        $page = ['@context' => 'https://schema.org', '@type' => empty($p['itemList']) ? 'WebPage' : 'CollectionPage', 'name' => $p['h1'], 'description' => $p['description'], 'url' => $base.$p['path'], 'image' => self::imageObject($p['image'], $base), 'primaryImageOfPage' => self::imageObject($p['image'], $base), 'inLanguage' => 'en-IN', 'publisher' => ['@type' => 'Organization', 'name' => 'CVTara', 'logo' => $base.'/assets/brand/cvtara-logo.webp']];
         if (! empty($p['updatedAt'])) {
             $page['dateModified'] = substr((string) $p['updatedAt'], 0, 10);
         }

@@ -24,7 +24,7 @@
 {{-- SEO-CTA:hero end --}}
 <p class="sp-trust">Free to build and preview · Pay once, no auto-renewal · Secure UPI and cards · Made by an HR team in Bangalore</p>
 </div>
-<img class="sp-hero-img" src="{{ $p['image'][0] }}" alt="{{ $p['image'][1] }}" width="520" height="390" loading="eager" decoding="async" fetchpriority="high">
+<img class="sp-hero-img" src="{{ $p['image'][0] }}" alt="{{ $p['image'][1] }}" width="{{ $p['image'][2] ?? 520 }}" height="{{ $p['image'][3] ?? 390 }}" loading="eager" decoding="async" fetchpriority="high">
 </header>
 <div class="sp-layout">
 @php($toc = array_merge(!empty($p['sample']) ? [['sample', 'Sample']] : [], array_map(fn($s) => [$s[0], $s[1]], $p['sections']), !empty($p['faq']) ? [['faq', 'FAQ']] : []))
