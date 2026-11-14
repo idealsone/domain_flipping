@@ -1,3 +1,23 @@
+# CVTara v3.76.0 — Turn visitors into paying customers
+
+## 3.76.0
+Owner (14 Nov 2026): senior (10+ yr) persona test round; get most visitors to buy ₹299/₹599 plus add-ons; check every module; audit transactional mail; full tracking of who uses which feature. Owner decision (14 Nov, 05:59 UTC): keep all prices, lead with Job Hunt everywhere, show the ₹99 upgrade credit, put Complete Job Kit (₹1,299, worth ₹1,797) on sale as the top pack.
+- **Pricing page leads with Job Hunt.** `/pricing/` orders Job Hunt (Most popular), Pro (Best value for senior roles), Complete Job Kit, Quick Download; each pack shows what one job application costs ("about ₹30 per job"), mock interviews (only while switched on), a "Start small, upgrade later" section for the ₹99 credit, the add-ons on sale and a "which plan" list. SEO page calls to action name ₹99 and the ₹299 pack. Home hero trust line shows Job Hunt.
+- **Complete Job Kit on sale.** Defaults: 30/30/60, 12 mock interviews, 90 days, rank 4, includes Expert Review and Profile Boost. Migration `2026_12_05_000002_complete_kit_on_sale` puts it on sale on sites that saved a plan list.
+- **Upgrade moments.** Locked ATS/career tools show Job Hunt and Pro with real prices; the download dialog shows Job Hunt first and "Just this resume ₹99, counts toward Job Hunt within 7 days". Checkout cards add cost per job, kit contents and the credit note. Dashboard offer: Job Hunt for anyone not a fresher (or with a past employer, 2+ years, a job check or 2+ resumes); Quick Download names the credit. Dashboard card no longer reads "Your match for : 61%" when a check had no job title.
+- **Mail.** The purchase receipt is essential (sent even if the template is off) with an order number and first three steps; services get their own receipt `purchase-service`. Immediate mails (sign-up code) are sent right after the page is returned in web requests, so sign-up no longer waits ~8 s for SMTP.
+- **Feature use → purchase (owner console, Customers).** `FeatureFunnel`: per feature (resume, ATS check, tailored resume, cover letter, download, interview questions, mock interview, model answer, application) how many people used it and how many paid / bought a ₹299+ pack / an add-on; sign-up funnel; plan mix; "Who" list per feature, 20 a page, search and paid filter, CSV/Excel/PDF. Customer timelines add interview practice and applications.
+
+# CVTara v3.75.0 — Support by email
+
+## 3.75.0
+Owner (14 Nov 2026, urgent): when anyone contacts support, reply from the console with a drafted reply, make sure the customer receives it, from the support address, and check first whether a mail needs a reply at all.
+- **Support mailbox.** `SupportInbox` reads support@cvtara.com over IMAP every two minutes (cron), read-only (EXAMINE + BODY.PEEK; nothing stored, moved or flagged), with its own small client `ImapReader` and parser `MimeMessage` (no imap extension needed). Uses the sending password when the mailbox is the sending mailbox; otherwise the owner types it in Support > Mailbox settings. Each mail is read once (`support_inbox_seen`).
+- **Sorting.** DMARC/delivery reports, bounces, auto-replies and no-reply senders never become tickets. Other mail becomes a ticket (area "Email to support"); `SupportAssist::triage` sorts it as customer / sales pitch / automatic / spam (account holders are customers; otherwise the quick model, with a bulk-mail rule as fallback). No-reply mail is closed with the reason; the owner can reopen it. List filter "Needs a reply".
+- **Suggested replies.** Written for new email tickets and new website questions (2 a minute), and on "Suggest a reply". Signed CVTara team, never mentions AI, uses only the account facts, plans and policies. Nothing is sent until a person presses Send.
+- **Replies by email.** Any ticket with an email (also people without an account) can be answered. Sent at once (`support_reply` is immediate) as "CVTara Support", Reply-To support@, subject "Re: <their subject> [S-XXXXXX]", In-Reply-To/References so it threads in their mail app; the Message-ID is kept so their answer joins the ticket (or the reference in the subject, only from the same sender). Each staff message shows whether its email was delivered.
+- New suite `s84_support_email` (fake IMAP, SMTP and Claude).
+
 # CVTara v3.74.0 — Brand search result and design pictures
 
 ## 3.74.0

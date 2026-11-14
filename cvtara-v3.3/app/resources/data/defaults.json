@@ -492,8 +492,8 @@
       "trigger": "support_reply",
       "enabled": true,
       "delayHours": 0,
-      "subject": "We replied to your request {{ticket_ref}}",
-      "body": "# We replied to your request\n[preheader: The CVTara team answered your request {{ticket_ref}}.]\nHi {{name}},\n\nThe CVTara team replied to your request {{ticket_ref}}:\n\n{{reply}}\n\n[button: Read and reply | {{ticket_url}}]\n\nYou can also reply from Feedback → My requests in your account."
+      "subject": "Re: Your CVTara request {{ticket_ref}}",
+      "body": "{{reply}}\n\n{{continue_line}}"
     }
   ],
   "popup": {

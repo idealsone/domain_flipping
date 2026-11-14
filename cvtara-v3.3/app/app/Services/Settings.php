@@ -105,7 +105,7 @@ class Settings
             'quick' => $mk('Quick Download', 'Download one finished resume without the watermark', 99, 7, 1, 0, 0, 1, ['1 resume as clean PDF and Word', 'Edit and re-download that resume as often as you like for 7 days', '3 free ATS checks a day'], ['oneResume' => true, 'dailyMatches' => 3]),
             'job-hunt' => $mk('Job Hunt', 'Tailor your resume and a cover letter for each job you apply to', 299, 30, 10, 10, 20, 2, ['10 tailored resumes and 10 cover letters', '20 ATS Match scans with a gap report', 'Application tracker with reminders'], ['popular' => true, 'mockInterviews' => 4]),
             'pro' => $mk('Pro', 'For a longer search across many jobs', 599, 90, 30, 30, 60, 3, ['30 tailored resumes and 30 cover letters', '60 ATS Match scans with a gap report', 'Application tracker with reminders'], ['bestValue' => true, 'mockInterviews' => 12]),
-            // 3.75.0 (owner decision 14 Nov 2026): on sale as the top tier; same allowances as Pro (30/30/60, 12 mocks, 90 days) plus both services.
+            // 3.76.0 (owner decision 14 Nov 2026): on sale as the top tier; same allowances as Pro (30/30/60, 12 mocks, 90 days) plus both services.
             'complete-kit' => $mk('Complete Job Kit', 'Pro, plus a Tara Expert Review and a LinkedIn and Naukri profile rewrite', 1299, 90, 30, 30, 60, 4, ['Everything in Pro: 30 tailored resumes, 30 cover letters, 60 ATS Match scans', 'Tara Expert Review of your resume', 'Profile Boost for LinkedIn and Naukri'], ['mrp' => 1797, 'includes' => ['expert-review', 'profile-boost'], 'mockInterviews' => 12]),
         ] + self::serviceDefaults() + self::addonDefaults();
     }

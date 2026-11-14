@@ -907,7 +907,7 @@ class SeoPages
     /** /pricing/{slug}/ => plan key. Prices, limits and validity are read from the live plan settings, never typed here. */
     public const PLAN_PAGES = ['quick-download' => 'quick', 'job-hunt' => 'job-hunt', 'pro' => 'pro', 'complete-job-kit' => 'complete-kit'];
 
-    /** 3.75.0: what one tailored application costs inside a pack (price / tailored resumes), e.g. "about ₹30 per job". */
+    /** 3.76.0: what one tailored application costs inside a pack (price / tailored resumes), e.g. "about ₹30 per job". */
     private static function perJob(string $key): string
     {
         $p = self::plan($key);
@@ -916,7 +916,7 @@ class SeoPages
         return $n > 1 && ($p['type'] ?? '') === 'plan' && $key !== 'quick' && empty($p['includes']) ? 'about ₹'.number_format((int) ceil(((int) $p['price']) / $n)).' per job you apply to' : '';
     }
 
-    /** 3.75.0: a kit in one line: "Pro + ₹1,198 of add-ons for ₹700 more". */
+    /** 3.76.0: a kit in one line: "Pro + ₹1,198 of add-ons for ₹700 more". */
     private static function kitValue(string $key): string
     {
         $plans = Settings::plans();
@@ -927,7 +927,7 @@ class SeoPages
         return $worth && $more > 0 ? 'As Pro, plus ₹'.number_format($worth).' of add-ons for ₹'.number_format($more).' more' : 'Add-ons included';
     }
 
-    /** 3.75.0: the services on sale (Expert Review, Profile Boost), with the lower price they cost alongside Job Hunt or Pro. */
+    /** 3.76.0: the services on sale (Expert Review, Profile Boost), with the lower price they cost alongside Job Hunt or Pro. */
     private static function servicesOnSale(): array
     {
         return array_filter(Settings::plans(), fn ($p) => ($p['type'] ?? '') === 'service' && ! empty($p['sale']));
@@ -991,7 +991,7 @@ class SeoPages
 
     /**
      * /pricing/: ONE price page (owner, 12 Nov 2026) for buyers' searches ("resume builder price", "download resume pdf"). Each plan has its own section and anchor.
-     * 3.75.0 (owner decision 14 Nov 2026): the page leads with Job Hunt, shows what one application costs inside each pack, says that a
+     * 3.76.0 (owner decision 14 Nov 2026): the page leads with Job Hunt, shows what one application costs inside each pack, says that a
      * Quick Download counts toward Job Hunt or Pro within 7 days (BusinessControls::upgradeSource), lists the services on sale, and sells the
      * Complete Job Kit as the top tier. No price is typed here: every number comes from the live plan settings.
      */

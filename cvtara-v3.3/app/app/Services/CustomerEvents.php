@@ -17,7 +17,7 @@ class CustomerEvents
         'cover_letter' => 'Created a cover letter', 'pricing_view' => 'Viewed checkout / pricing', 'checkout_started' => 'Started checkout', 'payment_failed' => 'Payment failed', 'payment_paid' => 'Payment confirmed',
         'refunded' => 'Refunded', 'disputed' => 'Chargeback opened', 'plan_expired' => 'Plan ended', 'referred_signup' => 'A friend signed up with their link', 'referral_paid' => 'A referred friend paid',
         'support_request' => 'Asked for help', 'journey_mail' => 'Lifecycle email sent', 'unsubscribed' => 'Turned off emails',
-        // 3.75.0: interview practice and the application tracker show up in each customer's timeline too.
+        // 3.76.0: interview practice and the application tracker show up in each customer's timeline too.
         'interview_questions' => 'Practised an interview question', 'mock_interview' => 'Took a mock interview', 'model_answer' => 'Got a personal model answer', 'application_added' => 'Tracked a job application'];
 
     /** Customer pages that mean "looking at prices". */

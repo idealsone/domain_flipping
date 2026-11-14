@@ -4,7 +4,7 @@ use App\Services\Settings;
 use Illuminate\Database\Migrations\Migration;
 
 /**
- * 3.75.0, owner decision of 14 Nov 2026 ("Same, plus sell Complete Job Kit"): prices stay as they are, and the Complete Job Kit
+ * 3.76.0, owner decision of 14 Nov 2026 ("Same, plus sell Complete Job Kit"): prices stay as they are, and the Complete Job Kit
  * (₹1,299, worth ₹1,797) goes on sale as the top tier. It now carries Pro's allowances (30 tailored resumes, 30 cover letters,
  * 60 ATS scans, 12 mock interviews, 90 days) plus Tara Expert Review and Profile Boost, and ranks above Pro so it wins when both
  * are active. Only the kit's saved settings change; the price and anything else the owner set are kept.

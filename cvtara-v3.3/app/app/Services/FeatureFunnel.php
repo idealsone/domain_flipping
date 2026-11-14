@@ -7,7 +7,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 
 /**
- * 3.75.0 (owner ask 14 Nov 2026): "full track" of who uses which feature, through to purchase.
+ * 3.76.0 (owner ask 14 Nov 2026): "full track" of who uses which feature, through to purchase.
  *
  * Read straight from the tables that already hold each fact (resumes, ATS checks, cover letters, interview questions ticked,
  * mock interviews, personal model answers, applications), so it is exact and needs no new tracking code or cookies.

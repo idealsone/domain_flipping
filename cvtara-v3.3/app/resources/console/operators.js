@@ -56,7 +56,7 @@
     features(h);
   }
 
-  // 3.75.0: who uses which feature, and how many of them pay (resume, ATS, letters, interview questions, mocks, applications).
+  // 3.76.0: who uses which feature, and how many of them pay (resume, ATS, letters, interview questions, mocks, applications).
   const F = { feature: 'resume', page: 1, per: 20, q: '', paid: 'all' };
   async function features(h) {
     const box = $('#ffBox', h); if (!box) return;

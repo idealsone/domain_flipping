@@ -54,7 +54,7 @@
     const url = new URL(location.href); url.searchParams.set('plan', active); history.replaceState(null, '', url);
     const addon = p.type === 'addon', service = p.type === 'service';
     set('checkoutPlanName', p.name);
-    // 3.75.0: say what one job application costs inside a pack, what a kit includes, and that Quick Download counts toward an upgrade.
+    // 3.76.0: say what one job application costs inside a pack, what a kit includes, and that Quick Download counts toward an upgrade.
     const perJob = p.type === 'plan' && !p.oneResume && p.savedResumes > 1 ? ` About ${inr(Math.ceil(p.price / p.savedResumes))} per job you apply to${p.mockInterviews ? `, with ${p.mockInterviews} mock interviews` : ''}.` : '';
     const kit = Array.isArray(p.includes) && p.includes.length ? ' Includes ' + p.includes.map(k => plans[k]?.name || k).join(' and ') + '.' : '';
     const credit = p.oneResume && plans['job-hunt'] && plans['job-hunt'].sale !== false ? ` If you move up to ${plans['job-hunt'].name} within 7 days, the ${inr(p.price)} you pay now is taken off.` : '';

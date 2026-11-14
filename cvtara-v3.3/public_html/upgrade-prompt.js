@@ -44,7 +44,7 @@
     const cta = c.cta || ['See plans', '/checkout.html'];
     const inr = n => '₹' + Number(n || 0).toLocaleString('en-IN');
     const pl = window.CVTaraBusiness?.plans || {}, quick = pl.quick, hunt = pl['job-hunt'];
-    // 3.75.0: every "plan needed" moment shows real prices, Job Hunt first, with what one job application costs inside the pack.
+    // 3.76.0: every "plan needed" moment shows real prices, Job Hunt first, with what one job application costs inside the pack.
     const onSale = k => pl[k] && pl[k].sale !== false;
     const pack = (k, pop) => { const p = pl[k]; const mocks = Number(p.mockInterviews || 0); return `<a${pop ? ' class="pop"' : ''} href="/checkout.html?plan=${E(k)}">${pop ? '<em>Most popular</em>' : ''}<span>${E(p.name)}</span><b>${inr(p.price)}</b><span>${E(p.savedResumes)} tailored resumes, ${E(p.savedLetters)} cover letters${mocks ? `, ${mocks} mock interviews` : ''} · ${E(p.accessDays)} days · about ${inr(Math.ceil(p.price / Math.max(1, p.savedResumes)))} per job</span></a>`; };
     let choices = '';
