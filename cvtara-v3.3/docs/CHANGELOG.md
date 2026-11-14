@@ -6,6 +6,7 @@ Owner (13 Nov 2026): show up in Google like a big brand (name, logo, sitelinks) 
 - **Brand data.** Alternate names add "CVTara ATS Resume Builder" and "cvtara.com".
 - **SEO agent.** Sitelink list adds Pricing, Interview Questions, Resume Examples; brand and product searches seeded; brand check reports logo, social profiles and the menu in the HTML.
 - **Design pictures.** 164 WebP previews (`TemplateImages`, `tools/seo/template_images.cjs`) on `/resume-templates/`, its style pages and `/cover-letter-examples/`, with "... template by CVTara" alt text; `sitemap.xml` lists them as image entries.
+- **Business listing and questions (owner's Intellipaat screenshot, 14 Nov).** Organization data carries the full street address, PIN code and phone (when saved under Site details) to match a Google Business Profile. About answers 5 questions people ask about the brand, shown on the page and as FAQ data.
 - New suite `s83_brand_sitelinks`.
 
 

@@ -144,6 +144,16 @@ class ContentController extends Controller
             'description' => 'CVTara is a resume builder, ATS resume checker, cover letter writer and interview practice service for job seekers in India, made by an HR team in Bangalore.',
             'email' => $email, 'contactPoint' => ['@type' => 'ContactPoint', 'contactType' => 'customer support', 'email' => $email, 'areaServed' => 'IN', 'availableLanguage' => ['English']],
             'address' => ['@type' => 'PostalAddress', 'addressLocality' => 'Bengaluru', 'addressRegion' => 'Karnataka', 'addressCountry' => 'IN'], 'areaServed' => 'IN'];
+        // 3.74.0: the full address and phone saved under Site details, written the same way as on the Google Business
+        // Profile, so Google can tie the business listing (the panel on the right of a brand search) to this site
+        $addr = trim(preg_replace('/\s*\R\s*/', ', ', (string) ($legal['address'] ?? '')));
+        if (preg_match('/^(.*?),\s*Bengaluru,\s*Karnataka\s*(\d{6})$/i', $addr, $m)) {
+            $org['address'] += ['streetAddress' => $m[1], 'postalCode' => $m[2]];
+        }
+        if ($phone = trim((string) ($legal['phone'] ?? ''))) {
+            $org['telephone'] = $phone;
+            $org['contactPoint']['telephone'] = $phone;
+        }
         if ($same) {
             $org['sameAs'] = $same;
         }
@@ -152,6 +162,15 @@ class ContentController extends Controller
 
         return [$org, $site];
     }
+
+    /** 3.74.0: short answers to what people ask about the brand, shown on About and given to search engines as FAQ data. */
+    public const ABOUT_FAQ = [
+        ['What kind of company is CVTara?', 'CVTara is a career software company in Bengaluru, India. It makes an online resume builder, an ATS resume checker, a cover letter writer and interview practice for job seekers in India.'],
+        ['Is CVTara free to use?', 'Building, editing and previewing your resume are free. A clean PDF or Word download needs a plan, from ₹99 paid once. Nothing renews on its own, and unused plans can be refunded within 7 days.'],
+        ['Where is CVTara based?', 'CVTara is based at IndiQube Park, Domlur 1st Stage, Bengaluru, Karnataka 560071.'],
+        ['Is it safe to pay on CVTara?', 'Payments go through a licensed payment gateway by UPI, card or net banking. CVTara never sees or stores your card details.'],
+        ['How do I contact the CVTara team?', 'Write to support@cvtara.com or use the contact page. The team replies Monday to Friday, 10 AM to 6 PM IST.'],
+    ];
 
     /** The main menu, in the order shown in the header (3.74.0). Google often picks sitelinks from these pages. */
     public const MAIN_MENU = [['/resume-builder/', 'Resume Builder'], ['/ats-checker/', 'ATS Checker'], ['/templates.html', 'Templates'],
@@ -459,6 +478,10 @@ class ContentController extends Controller
                 ? preg_replace_callback('#(<main[^>]*class="legal-shell"[^>]*>).*?(</main>)#s', fn ($m) => $m[1].$legalHtml.$m[2], $html)
                 : preg_replace_callback('#(<article[^>]*>).*?(</article>)#s', fn ($m) => $m[1].$legalHtml.$m[2], $html);
         }
+        if ($path === 'about.html') {
+            $faq = '<section class="about-faq-list" id="faq"><h2>Questions people ask about CVTara</h2>'.implode('', array_map(fn ($q) => '<details class="about-faq"><summary>'.e($q[0]).'</summary><p>'.e($q[1]).'</p></details>', self::ABOUT_FAQ)).'</section>';
+            $html = preg_replace('#</main>#', addcslashes($faq, '\\$').'</main>', $html, 1);
+        }
         $seo = Settings::get('seo');
         $siteBase = rtrim($seo['siteUrl'] ?: config('app.url'), '/');
         $abs = fn ($u) => preg_match('#^https?://#', $u) ? $u : $siteBase.$u;
@@ -560,6 +583,9 @@ class ContentController extends Controller
         if ($pageType) {
             $ld = [['@context' => 'https://schema.org', '@type' => $pageType[0], 'name' => $pageTitle, 'description' => $pageDescription, 'url' => $siteBase.'/'.$path, 'inLanguage' => 'en-IN', 'isPartOf' => ['@type' => 'WebSite', 'name' => 'CVTara', 'url' => $siteBase.'/']],
                 ['@context' => 'https://schema.org', '@type' => 'BreadcrumbList', 'itemListElement' => [['@type' => 'ListItem', 'position' => 1, 'name' => 'Home', 'item' => $siteBase.'/'], ['@type' => 'ListItem', 'position' => 2, 'name' => $pageType[1], 'item' => $siteBase.'/'.$path]]]];
+            if ($path === 'about.html') { // 3.74.0: the questions Google shows under a brand search ("People also ask")
+                $ld[] = ['@context' => 'https://schema.org', '@type' => 'FAQPage', 'mainEntity' => array_map(fn ($q) => ['@type' => 'Question', 'name' => $q[0], 'acceptedAnswer' => ['@type' => 'Answer', 'text' => $q[1]]], self::ABOUT_FAQ)];
+            }
             if ($path === 'contact.html') {
                 $ld[0]['mainEntity'] = ['@type' => 'Organization', 'name' => 'CVTara', 'url' => $siteBase.'/', 'email' => 'support@cvtara.com', 'contactPoint' => ['@type' => 'ContactPoint', 'contactType' => 'customer support', 'email' => 'support@cvtara.com', 'areaServed' => 'IN', 'availableLanguage' => 'English']];
             }
