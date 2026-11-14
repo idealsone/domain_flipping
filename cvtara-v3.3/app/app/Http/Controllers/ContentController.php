@@ -153,7 +153,7 @@ class ContentController extends Controller
         return [$org, $site];
     }
 
-    /** The main menu, in the order shown in the header (3.72.0). Google often picks sitelinks from these pages. */
+    /** The main menu, in the order shown in the header (3.74.0). Google often picks sitelinks from these pages. */
     public const MAIN_MENU = [['/resume-builder/', 'Resume Builder'], ['/ats-checker/', 'ATS Checker'], ['/templates.html', 'Templates'],
         ['/cover-letters.html', 'Cover Letters'], ['/interview-questions/', 'Interview Prep'], ['/pricing/', 'Pricing'], ['/blog.html', 'Blog']];
 
@@ -173,7 +173,7 @@ class ContentController extends Controller
         $hubs = array_merge(\App\Services\SeoPages::HUBS, [['/templates.html', 'Template gallery'], ['/cover-letters.html', 'Cover letter designs'], ['/blog.html', 'Career blog'], ['/guides.html', 'Guides and calculators'], ['/pricing/', 'Pricing'], ['/about.html', 'About us'], ['/partners.html', 'For colleges and partners'], ['/contact.html', 'Contact'], ['/privacy.html', 'Privacy policy'], ['/terms.html', 'Terms'], ['/refund.html', 'Refund policy']]);
         $nav = '<nav class="footer-links" aria-label="Site links"><ul>'.implode('', array_map(fn ($l) => '<li><a href="'.e($l[0]).'">'.e($l[1]).'</a></li>', $hubs)).'</ul></nav>';
         $html = preg_replace('#<div data-footer>\s*</div>#', '<div data-footer>'.addcslashes($nav, '\\$').'</div>', $html, 1);
-        // 3.72.0 brand result: the top menu is in the page itself, not only drawn by the script, so every crawler sees the
+        // 3.74.0 brand result: the top menu is in the page itself, not only drawn by the script, so every crawler sees the
         // main pages (builder, ATS checker, templates, cover letters, interview prep, pricing) linked from the top of each
         // page. The markup matches what preview.js draws for a visitor, so nothing moves when the script takes over.
         $html = preg_replace('#<div data-header>\s*</div>#', '<div data-header>'.addcslashes(self::siteHeader(), '\\$').'</div>', $html, 1);
@@ -266,7 +266,7 @@ class ContentController extends Controller
             foreach ($this->pages() as $p) {
                 if ($p['included']) {
                     $root = rtrim($seo['siteUrl'] ?: config('app.url'), '/');
-                    // 3.72.0: the design pictures each page shows, so image search finds them (logo on the home page)
+                    // 3.74.0: the design pictures each page shows, so image search finds them (logo on the home page)
                     $imgs = $p['path'] === '/' ? ['/favicon-512.png', '/assets/brand/cvtara-social.png'] : array_column(\App\Services\TemplateImages::forPage($p['path']), 'src');
                     $xml .= '<url><loc>'.e($root.$p['path']).'</loc>'.(isset($mod[$p['path']]) ? '<lastmod>'.substr((string) $mod[$p['path']], 0, 10).'</lastmod>' : '')
                         .implode('', array_map(fn ($i) => '<image:image><image:loc>'.e($root.$i).'</image:loc></image:image>', $imgs)).'</url>';

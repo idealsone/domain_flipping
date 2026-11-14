@@ -301,9 +301,16 @@ class ApiController extends Controller
             return $ok(\App\Services\Interviews::overview($u));
         }
         if ($path === 'interviews/questions' && $get) {
-            $v = $r->validate(['occupation' => 'required|string|max:80', 'band' => 'required|string|max:10']);
+            $v = $r->validate(['occupation' => 'required|string|max:80', 'band' => 'required|string|max:10', 'category' => 'nullable|string|max:20', 'skill' => 'nullable|string|max:120', 'page' => 'nullable|integer|min:1|max:1000', 'todo' => 'nullable|boolean']);
 
-            return $ok(\App\Services\Interviews::questions($u, $v['occupation'], $v['band']));
+            return $ok(\App\Services\Interviews::questions($u, $v['occupation'], $v['band'], $v));
+        }
+        // 3.73.0 tick a bank question as practised (progress by category).
+        if ($path === 'interviews/practised' && $r->isMethod('POST')) {
+            $cap('interview-practised', 600, 3600, 'Please slow down a little.');
+            $v = $r->validate(['code' => 'required|string|max:40', 'done' => 'required|boolean']);
+
+            return $ok(\App\Services\InterviewBank::markPractised($u, $v['code'], (bool) $v['done']));
         }
         // 3.57.0 role search, Research a company and revision mode.
         if ($path === 'interviews/roles' && $get) {

@@ -95,7 +95,7 @@ html.dark .article-explore a{color:#8EA0F2}
 .sp-table thead th a{color:var(--sp-primary)}
 .sp-table tbody th{font-weight:600;color:var(--sp-muted)}
 .sp-table tr:last-child th,.sp-table tr:last-child td{border-bottom:0}
-/* 3.72.0 design pictures (image search): a light grid of linked previews */
+/* 3.74.0 design pictures (image search): a light grid of linked previews */
 .sp-gallery{list-style:none;margin:16px 0;padding:0;display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:14px}
 .sp-gallery a{display:grid;gap:8px;text-decoration:none;color:var(--sp-ink)}
 .sp-gallery img{display:block;width:100%;height:auto;aspect-ratio:480/560;object-fit:cover;object-position:top;border:1px solid var(--sp-border);border-radius:10px;background:#fff}

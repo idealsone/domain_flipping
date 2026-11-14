@@ -1,4 +1,4 @@
-/* 3.72.0: still pictures of every resume and cover letter design, for image search (see App\Services\TemplateImages).
+/* 3.74.0: still pictures of every resume and cover letter design, for image search (see App\Services\TemplateImages).
  *
  * Usage: start a preview instance, then
  *   node tools/seo/template_images.cjs http://127.0.0.1:PORT

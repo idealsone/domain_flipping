@@ -43,7 +43,7 @@ class SeoOps
     public const SEED = ['cvtara' => '/', 'cv tara' => '/', 'cvtara.com' => '/', 'cvtara resume builder' => '/resume-builder/', 'cvtara ats resume checker' => '/ats-checker/', 'cvtara career solutions' => '/', 'cvtara resume services' => '/',
         'online resume builder' => '/resume-builder/', 'free resume builder' => '/resume-builder/', 'ats resume checker' => '/ats-checker/', 'ats resume scanner' => '/ats-checker/', 'resume vs job description matcher' => '',
         'cover letter generator' => '/cover-letter-generator/', 'resume builder for freshers' => '/resume-builder/', 'professional resume builder' => '/resume-builder/', 'resume templates for experienced professionals' => '/resume-templates/',
-        // 3.72.0 owner list: the brand spellings people type and the main product searches the brand result should cover
+        // 3.74.0 owner list: the brand spellings people type and the main product searches the brand result should cover
         'cvtara resume' => '/', 'cvtara ats check' => '/ats-checker/', 'cvtara ats checker' => '/ats-checker/', 'cvtara resume template' => '/resume-templates/', 'cvtara cover letter' => '/cover-letter-generator/',
         'cvtara pricing' => '/pricing/', 'cvtara login' => '/', 'cvtara interview questions' => '/interview-questions/', 'resume builder' => '/resume-builder/', 'ats check' => '/ats-checker/', 'ats checker' => '/ats-checker/',
         'ats resume check' => '/ats-checker/', 'resume template' => '/resume-templates/', 'resume templates' => '/resume-templates/', 'resume format' => '/resume-templates/', 'cv maker' => '/resume-builder/',

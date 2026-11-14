@@ -1,4 +1,4 @@
-"""3.72.0 brand result (owner 2026-11-13: show up for cvtara / cv tara / CVTara resume builder like a big brand, with
+"""3.74.0 brand result (owner 2026-11-13: show up for cvtara / cv tara / CVTara resume builder like a big brand, with
 sitelinks): the top menu is in the page HTML and points at the main indexable pages, the brand data names CVTara with its
 spellings, and the SEO agent tracks the brand and main product searches and checks the sitelink signals."""
 import json, re

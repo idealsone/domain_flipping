@@ -3,7 +3,7 @@
 namespace App\Services;
 
 /**
- * Picture previews of the resume and cover letter designs (3.72.0), so the designs can be found in image search.
+ * Picture previews of the resume and cover letter designs (3.74.0), so the designs can be found in image search.
  *
  * The site draws its previews with scripts, which image search does not collect. These are still pictures of the same
  * designs with the same fictional sample content, saved as WebP in public_html/assets/templates and assets/cover-letters

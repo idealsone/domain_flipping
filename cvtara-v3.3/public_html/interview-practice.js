@@ -41,6 +41,10 @@
   .ip-q b{display:block;margin-bottom:6px}.ip-q textarea{width:100%;min-height:120px;box-sizing:border-box}
   .ip-guide{font-size:13px;color:var(--muted,#64748b);margin:6px 0 0}
   .ip-row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+  .ip-bcats{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:8px;margin-bottom:6px}
+  .ip-bcat{position:relative;overflow:hidden;text-align:left;font:inherit;padding:8px 10px 10px;border:1px solid var(--line,#e2e8f0);border-radius:10px;background:var(--panel,#fff);color:inherit;cursor:pointer}
+  .ip-bcat span{display:block;font-weight:700;font-size:13.5px}.ip-bcat small{color:var(--muted,#64748b)}.ip-bcat.on{border-color:var(--brand,#2563eb);box-shadow:0 0 0 2px rgba(37,99,235,.15)}
+  .ip-bcat i{position:absolute;left:0;bottom:0;height:3px;background:var(--brand,#2563eb)}
   .ip-pill{display:inline-block;padding:3px 10px;border-radius:999px;background:rgba(37,99,235,.08);font-size:12.5px;font-weight:700}
   .ip-scores{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:6px;margin:8px 0}
   .ip-scores span{font-size:12.5px;padding:6px 8px;border-radius:8px;background:rgba(15,23,42,.04)}
@@ -205,6 +209,40 @@
       try { const { roles } = await api('interviews/roles?q=' + encodeURIComponent(f.value.trim())); box.innerHTML = roles.length ? roles.map(r => `<button type="button" class="button secondary small" data-ip-pick="${E(r.slug)}">${E(r.name)}${r.matched ? ` <small>(${E(r.matched)})</small>` : ''}</button>`).join('') : '<span class="ip-muted">No match yet. Choose the closest role from the list.</span>'; } catch { box.innerHTML = ''; } }, 250);
   });
 
+  // 3.73.0 the customer's own question bank: every question for their role and level, by category and skill, 20 a page,
+  // with progress. Free accounts see a few questions and the full size of their bank, and how Job Hunt and Pro open it up.
+  const bank = { occ: '', band: '', cat: '', skill: '', page: 1, todo: false, last: null };
+  const lakhs = n => Number(n || 0).toLocaleString('en-IN');
+  function paintProgress() {
+    const j = bank.last, box = host()?.querySelector('[data-ip-bprog]'); if (!j || !box) return;
+    box.innerHTML = progressBars(j);
+  }
+  const progressBars = j => `<p class="ip-muted" style="margin:0 0 8px">You have practised <b>${lakhs(j.practised)}</b> of <b>${lakhs(j.total)}</b> questions for this role and level.</p><div class="ip-bcats">${j.categories.map(c => `<button type="button" class="ip-bcat${bank.cat === c.key ? ' on' : ''}" data-ip-bcat="${E(bank.cat === c.key ? '' : c.key)}"><span>${E(c.label)}</span><small>${lakhs(c.done)} / ${lakhs(c.total)}</small><i style="width:${c.total ? Math.round(100 * c.done / c.total) : 0}%"></i></button>`).join('')}</div>`;
+  async function showBank() {
+    const box = host()?.querySelector('[data-ip-bank]'); if (!box) return;
+    const q = new URLSearchParams({ occupation: bank.occ, band: bank.band, page: bank.page }); if (bank.cat) q.set('category', bank.cat); if (bank.skill) q.set('skill', bank.skill); if (bank.todo) q.set('todo', '1');
+    let j; try { j = await api('interviews/questions?' + q); } catch (err) { box.innerHTML = `<p class="ip-err">${E(err.message)}</p>`; return; }
+    bank.last = j;
+    const item = (x, i) => `<div class="ip-q"><b>${(j.page - 1) * 20 + i + 1}. ${E(x.text)}</b><span class="ip-pill">${E(x.categoryLabel)}</span>${x.skill ? ` <span class="ip-pill" style="background:rgba(16,185,129,.1)">${E(x.skill)}</span>` : ''}
+      <details><summary class="ip-guide">What a good answer covers</summary><p class="ip-guide">${E(x.guidance)}</p></details>
+      ${j.full ? `<details><summary class="ip-guide">Practise your answer here</summary><textarea maxlength="3000" placeholder="Type or say your answer out loud, then compare it with the guidance (not saved)"></textarea></details>
+      <div class="ip-row" style="margin-top:6px"><button type="button" class="button ${x.done ? 'primary' : 'secondary'} small" data-ip-done="${E(x.code)}" data-ip-cat="${E(x.category)}" data-ip-state="${x.done ? 1 : 0}">${x.done ? '✓ Practised' : 'Mark as practised'}</button>
+      <button type="button" class="button secondary small" data-ip-model="${E(x.code)}">Show a model answer</button></div><div data-ip-model-out="${E(x.code)}"></div>` : ''}</div>`;
+    const pager = j.pages > 1 ? `<div class="ip-row" style="margin-top:10px">${j.page > 1 ? `<button type="button" class="button secondary small" data-ip-bpage="${j.page - 1}">‹ Previous</button>` : ''}<span class="ip-muted">Page ${j.page} of ${j.pages} · ${lakhs(j.matching)} questions</span>${j.page < j.pages ? `<button type="button" class="button secondary small" data-ip-bpage="${j.page + 1}">Next ›</button>` : ''}<button type="button" class="button secondary small" data-ip-bpage="${1 + Math.floor(Math.random() * j.pages)}">Surprise me</button></div>` : '';
+    const filters = j.full ? `<div class="ip-form" style="margin:10px 0">${j.skills.length ? `<label>Skill<select data-ip-bskill><option value="">Every skill</option>${j.skills.map(k => `<option ${bank.skill === k ? 'selected' : ''}>${E(k)}</option>`).join('')}</select></label>` : ''}<label style="flex-direction:row;align-items:center;gap:6px"><input type="checkbox" data-ip-btodo ${bank.todo ? 'checked' : ''}> Only questions I have not practised</label></div>` : '';
+    const upsell = j.full ? '' : `<div class="ip-card" style="background:rgba(37,99,235,.05);border-color:rgba(37,99,235,.25)"><h3 style="margin-top:0">Your question bank has ${lakhs(j.total)} questions</h3>
+      <p>You are seeing ${j.questions.length} of them. They cover every interview round for this role and experience level: ${j.categories.map(c => E(c.label.replace(/ \(.*\)$/, ''))).join(', ')}.</p>
+      <ul class="ip-guide"><li><b>Pro</b>: every question for 90 days, 12 personal mock interviews with a practice panel, and model answers made from your own resume.</li><li><b>Job Hunt</b>: every question for 30 days, 4 personal mock interviews and model answers.</li></ul>
+      <button class="button primary" data-workspace-view="billing">See Pro and Job Hunt</button></div>`;
+    box.innerHTML = `<div class="ip-card"><h3>Your question bank</h3><div data-ip-bprog>${progressBars(j)}</div>${filters}
+      ${j.full ? '<p class="ip-muted">Tap "Show a model answer" to see how you could answer, built from your own resume and cover letter. Tick each question once you have practised it.</p>' : ''}
+      ${j.questions.length ? j.questions.map(item).join('') : '<p class="ip-muted">No questions match. Try another category or skill.</p>'}${pager}</div>${upsell}`;
+  }
+  document.addEventListener('change', async e => {
+    const sk = e.target.closest?.('[data-ip-bskill]'), td = e.target.closest?.('[data-ip-btodo]'); if (!sk && !td) return;
+    if (sk) bank.skill = sk.value; if (td) bank.todo = td.checked; bank.page = 1; await showBank();
+  });
+
   document.addEventListener('click', async e => {
     const h = host(); if (!h || !h.contains(e.target)) return;
     const b = e.target.closest('button'); if (!b) return;
@@ -249,10 +287,17 @@
         const j = await api('interviews/revision'); const box = h.querySelector('[data-ip-bank]');
         box.innerHTML = `<div class="ip-card"><h3>Revision</h3><p class="ip-muted">${E(j.note)}</p>${j.questions.map((q, i) => `<div class="ip-q"><b>${i + 1}. ${E(q.question)}</b><details><summary class="ip-guide">Your earlier answer and what to improve</summary><p class="ip-guide">${E(q.earlier)}</p>${q.improve.length ? `<ul class="ip-guide">${q.improve.map(t => `<li>${E(t)}</li>`).join('')}</ul>` : ''}</details><textarea maxlength="3000" placeholder="Write a better answer (not saved)"></textarea></div>`).join('') || '<p class="ip-muted">Finish a mock interview first; its questions appear here.</p>'}</div>`;
       } else if (b.matches('[data-ip-browse]')) {
-        const j = await api(`interviews/questions?occupation=${encodeURIComponent(val('occupation'))}&band=${encodeURIComponent(val('band'))}`);
-        const box = h.querySelector('[data-ip-bank]');
-        box.innerHTML = `<div class="ip-card"><h3>Practice questions</h3>${j.full ? '<p class="ip-muted">Tap "Show a model answer" to see how you could answer, built from your own resume and cover letter.</p>' : ''}${j.questions.length ? j.questions.map((q, i) => `<div class="ip-q"><b>${i + 1}. ${E(q.text)}</b><p class="ip-guide">${E(q.guidance)}</p>${j.full ? `<button type="button" class="button secondary small" data-ip-model="${E(q.code)}">Show a model answer</button><div data-ip-model-out="${E(q.code)}"></div>` : ''}</div>`).join('') : '<p class="ip-muted">Questions for this role are being prepared. Please check back soon.</p>'}
-          ${!j.full && j.total > j.questions.length ? `<p class="ip-muted">Showing ${j.questions.length} of ${j.total} questions. Job Hunt and Pro show every question and include mock interviews.</p><button class="button secondary small" data-workspace-view="billing">See plans</button>` : ''}</div>`;
+        bank.occ = val('occupation'); bank.band = val('band'); bank.cat = ''; bank.skill = ''; bank.page = 1; bank.todo = false; await showBank();
+      } else if (b.matches('[data-ip-bcat]')) {
+        bank.cat = b.dataset.ipBcat; bank.page = 1; await showBank();
+      } else if (b.matches('[data-ip-bpage]')) {
+        bank.page = +b.dataset.ipBpage; await showBank(); h.querySelector('[data-ip-bank]')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      } else if (b.matches('[data-ip-done]')) {
+        const done = b.dataset.ipState !== '1'; b.disabled = true;
+        const j = await api('interviews/practised', { code: b.dataset.ipDone, done }); b.disabled = false; b.dataset.ipState = done ? '1' : '0';
+        b.textContent = done ? '✓ Practised' : 'Mark as practised'; b.classList.toggle('primary', done); b.classList.toggle('secondary', !done);
+        const c = bank.last && bank.last.categories.find(x => x.key === b.dataset.ipCat); if (c) { c.done += done ? 1 : -1; bank.last.practised = (bank.last.practised || 0) + (done ? 1 : -1); paintProgress(); }
+        void j;
       }
     } catch (err) { b.disabled = false; render(err.message); }
   });

@@ -200,16 +200,17 @@ class Interviews
         return ($a['paid'] && (int) ($a['limits'][self::FIELD] ?? 0) > 0) || UsageLedger::left($u->id, self::RESOURCE, self::FIELD) > 0;
     }
 
-    /** Question practice: stored questions and guidance only (no AI). */
-    public static function questions(User $u, string $occupation, string $band): array
+    /**
+     * Question practice: stored questions and guidance only (no AI). 3.73.0: the customer's own bank for the role and
+     * level, the starter questions plus the large generated bank, by category or skill, 20 a page, with progress.
+     */
+    public static function questions(User $u, string $occupation, string $band, array $f = []): array
     {
         abort_unless(isset(self::BANDS[$band]) && DB::table('career_occupations')->where('slug', $occupation)->where('active', true)->exists(), 422, 'Choose a role and your experience.');
         self::notePractice($u->id, $occupation);
-        $rows = self::eligible($occupation, $band)->sortBy([['occupation', 'desc'], ['difficulty', 'asc'], ['code', 'asc']])->values();
-        $full = self::fullBank($u);
-        $shown = $full ? $rows : $rows->take(self::SAMPLE);
+        $rows = self::eligible($occupation, $band)->filter(fn ($r) => ! str_starts_with($r->code, 'G-'))->sortBy([['occupation', 'desc'], ['difficulty', 'asc'], ['code', 'asc']])->values();
 
-        return ['full' => $full, 'total' => $rows->count(), 'questions' => $shown->map(fn ($r) => ['code' => $r->code, 'competency' => $r->competency, 'text' => $r->text, 'guidance' => $r->guidance, 'example' => $r->example, 'roleSpecific' => $r->occupation !== null])->all()];
+        return InterviewBank::practice($u->id, $occupation, $band, $rows, self::fullBank($u), $f, self::SAMPLE);
     }
 
 
@@ -376,6 +377,9 @@ class Interviews
      */
     public static function modelAnswer(User $u, string $code): array
     {
+        if (str_starts_with($code, 'G-') && ! DB::table('interview_questions')->where('code', $code)->exists() && ($g = InterviewBank::resolve($code)) && self::fullBank($u)) {
+            InterviewBank::materialize([$g]); // 3.73.0 a generated question is stored the first time someone asks for its model answer
+        }
         $q = DB::table('interview_questions as q')->join('interview_question_versions as v', 'v.id', '=', 'q.current_version_id')->where('q.code', $code)->where('q.status', 'approved')->first(['q.occupation', 'v.id as vid', 'v.text', 'v.guidance']);
         abort_unless($q, 404, 'This question is not available.');
         $kept = DB::table('interview_model_answers')->where('owner_id', $u->id)->where('question_version_id', $q->vid)->value('answer');
@@ -534,8 +538,15 @@ class Interviews
             ->where('s.owner_id', $uid)->whereIn('s.id', DB::table('interview_sessions')->where('owner_id', $uid)->orderByDesc('created_at')->limit(200)->pluck('id'))
             ->pluck('v.question_id')->countBy()->all();
         $order = fn ($c) => $c->sortBy(fn ($r) => [($seen[$r->id] ?? 0), crc32($uid.':'.$r->id.':'.date('Y-m-d'))])->values();
-        $role = $order($rows->whereNotNull('occupation'));
-        $general = $order($rows->whereNull('occupation'));
+        // 3.73.0 questions from the large bank join the role's own: new ones before anything this customer was asked before.
+        $rows = $rows->filter(fn ($r) => ! str_starts_with($r->code, 'G-'));
+        $gen = collect(InterviewBank::pick($uid, $occupation, $band, $n, ['introduction', 'closing'], self::askedCodes($uid)));
+        $fresh = fn ($c) => $c->filter(fn ($r) => ! isset($seen[$r->id]));
+        $stale = fn ($c) => $c->filter(fn ($r) => isset($seen[$r->id]));
+        $roleAll = $order($rows->whereNotNull('occupation'));
+        $generalAll = $order($rows->whereNull('occupation'));
+        $role = $fresh($roleAll)->concat($gen->take(max(1, intdiv($n, 2))))->concat($stale($roleAll))->values();
+        $general = $fresh($generalAll)->concat($gen->slice(max(1, intdiv($n, 2))))->concat($stale($generalAll))->values();
         // An introduction question opens the session when one is available.
         $intro = $general->firstWhere('competency', 'introduction');
         $out = $intro ? [$intro] : [];
@@ -552,7 +563,14 @@ class Interviews
             }
         }
 
-        return array_slice($out, 0, $n);
+        return InterviewBank::materialize(array_slice($out, 0, $n));
+    }
+
+    /** Codes of every bank question this customer was asked in a mock interview. */
+    private static function askedCodes(int $uid): array
+    {
+        return DB::table('interview_answers as a')->join('interview_sessions as s', 's.id', '=', 'a.session_id')->join('interview_question_versions as v', 'v.id', '=', 'a.question_version_id')
+            ->join('interview_questions as q', 'q.id', '=', 'v.question_id')->where('s.owner_id', $uid)->where('q.code', 'like', 'G-%')->pluck('q.code')->all();
     }
 
     /**
@@ -566,7 +584,12 @@ class Interviews
         $seen = DB::table('interview_answers as a')->join('interview_sessions as s', 's.id', '=', 'a.session_id')->join('interview_question_versions as v', 'v.id', '=', 'a.question_version_id')
             ->where('s.owner_id', $uid)->whereIn('s.id', DB::table('interview_sessions')->where('owner_id', $uid)->orderByDesc('created_at')->limit(200)->pluck('id'))
             ->pluck('v.question_id')->countBy()->all();
+        $rows = $rows->filter(fn ($r) => ! str_starts_with($r->code, 'G-'));
         $rows = $rows->sortBy(fn ($r) => [($seen[$r->id] ?? 0), crc32($uid.':'.$r->id.':'.date('Y-m-d'))])->values();
+        // 3.73.0 new questions from the large bank go after the unseen starter questions and before repeats.
+        $gen = collect(InterviewBank::pick($uid, $occupation, $band, 24, ['introduction', 'closing'], self::askedCodes($uid)));
+        $rows = $rows->filter(fn ($r) => ! isset($seen[$r->id]))->concat($gen)->concat($rows->filter(fn ($r) => isset($seen[$r->id])))->values()
+            ->each(function ($r, $i) { $r->id = $r->id ?: 'g'.$i; });
         $used = [];
         $parts = [];
         foreach (self::FULL_SECTIONS as $i => $sec) {
@@ -615,7 +638,7 @@ class Interviews
             array_push($out, ...$parts[$i]);
         }
 
-        return [$out, $sections];
+        return [InterviewBank::materialize($out), $sections];
     }
 
     /** Average rubric score (1-4) for each part of a full mock, worked out from the stored feedback: no extra request. */
@@ -965,7 +988,7 @@ class Interviews
             'counts' => DB::table('interview_questions')->groupBy('status')->selectRaw('status, count(*) c')->pluck('c', 'status'),
             'coverage' => DB::table('interview_questions')->where('status', 'approved')->groupBy('occupation')->selectRaw('occupation, count(*) c')->pluck('c', 'occupation'),
             'occupations' => self::occupations(true), 'bands' => self::BANDS, 'settings' => $s, 'available' => self::available(), 'feedbackSwitchedOn' => TaraAI::enabled(),
-            'panel' => self::PANEL, 'modelAnswersToday' => Schema::hasTable('interview_model_answers') ? DB::table('interview_model_answers')->where('created_at', '>=', now('Asia/Kolkata')->startOfDay()->utc())->count() : 0,
+            'bank' => InterviewBank::stats(), 'panel' => self::PANEL, 'modelAnswersToday' => Schema::hasTable('interview_model_answers') ? DB::table('interview_model_answers')->where('created_at', '>=', now('Asia/Kolkata')->startOfDay()->utc())->count() : 0,
         ];
     }
 
