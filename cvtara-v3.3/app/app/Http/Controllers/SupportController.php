@@ -14,7 +14,7 @@ class SupportController extends Controller
 {
     public const AREAS = [
         'resume-builder' => 'Resume Builder', 'ats-match' => 'ATS Match', 'cover-letters' => 'Cover Letters', 'applications' => 'Applications',
-        'downloads' => 'Downloads & credits', 'billing' => 'Billing & Plans', 'account' => 'Account & login', 'website' => 'Website & pages', 'other' => 'Something else', 'contact' => 'Contact form', 'tara' => 'Tara chat',
+        'downloads' => 'Downloads & credits', 'billing' => 'Billing & Plans', 'account' => 'Account & login', 'website' => 'Website & pages', 'other' => 'Something else', 'contact' => 'Contact form', 'email' => 'Email to support', 'tara' => 'Tara chat',
     ];
 
     public const KINDS = ['bug' => 'Something is broken', 'idea' => 'Suggestion', 'question' => 'Question', 'praise' => 'What I like'];

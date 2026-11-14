@@ -67,6 +67,7 @@ class WhatsNew
         $n = fn ($id, $date, $tag, $title, $body) => ['id' => $id, 'date' => $date, 'tag' => $tag, 'title' => $title, 'body' => $body];
 
         return [
+            $n('2026-11-14-support-email', '2026-11-14', 'improved', 'Write to us and get answers by email', 'Email support@cvtara.com or use the contact page, and our replies now reach your inbox in the same conversation. Just reply to our email to continue, with or without a CVTara account.'),
             $n('2026-11-14-design-pictures', '2026-11-14', 'improved', 'See every design at a glance', 'The resume template and cover letter pages now show a picture of every design, and the top menu takes you straight to the resume builder, ATS checker, interview prep and pricing.'),
             $n('2026-11-14-question-bank', '2026-11-14', 'new', 'Your own interview question bank', 'Interview practice now has hundreds of questions for your role and experience, in every interview round: HR, behavioural, situational, role skills, customer handling, leadership, integrity and career. Filter by round or skill, tick each question as you practise it and watch your progress grow. More than 350 roles are covered.'),
             $n('2026-11-13-personal-interviews', '2026-11-13', 'new', 'Mock interviews made for you', 'Each mock interview now asks about your own resume, and about your move if you are switching jobs. Two practice interviewers take turns, the interview runs for 30 minutes, and your results, with a sample answer built from your resume for each question, arrive 30 minutes later.'),

@@ -1,3 +1,13 @@
+# CVTara v3.75.0 — Support by email
+
+## 3.75.0
+Owner (14 Nov 2026, urgent): when anyone contacts support, reply from the console with a drafted reply, make sure the customer receives it, from the support address, and check first whether a mail needs a reply at all.
+- **Support mailbox.** `SupportInbox` reads support@cvtara.com over IMAP every two minutes (cron), read-only (EXAMINE + BODY.PEEK; nothing stored, moved or flagged), with its own small client `ImapReader` and parser `MimeMessage` (no imap extension needed). Uses the sending password when the mailbox is the sending mailbox; otherwise the owner types it in Support > Mailbox settings. Each mail is read once (`support_inbox_seen`).
+- **Sorting.** DMARC/delivery reports, bounces, auto-replies and no-reply senders never become tickets. Other mail becomes a ticket (area "Email to support"); `SupportAssist::triage` sorts it as customer / sales pitch / automatic / spam (account holders are customers; otherwise the quick model, with a bulk-mail rule as fallback). No-reply mail is closed with the reason; the owner can reopen it. List filter "Needs a reply".
+- **Suggested replies.** Written for new email tickets and new website questions (2 a minute), and on "Suggest a reply". Signed CVTara team, never mentions AI, uses only the account facts, plans and policies. Nothing is sent until a person presses Send.
+- **Replies by email.** Any ticket with an email (also people without an account) can be answered. Sent at once (`support_reply` is immediate) as "CVTara Support", Reply-To support@, subject "Re: <their subject> [S-XXXXXX]", In-Reply-To/References so it threads in their mail app; the Message-ID is kept so their answer joins the ticket (or the reference in the subject, only from the same sender). Each staff message shows whether its email was delivered.
+- New suite `s84_support_email` (fake IMAP, SMTP and Claude).
+
 # CVTara v3.74.0 — Brand search result and design pictures
 
 ## 3.74.0

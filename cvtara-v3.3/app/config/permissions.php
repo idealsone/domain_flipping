@@ -107,6 +107,9 @@ return [
         ['*', '#^support/view/(start|end|sessions)$#', 'customers.view_as'],
         ['GET', '#^support(/summary|/[a-f0-9-]{36}|/file/[a-f0-9-]{36})?$#', 'support.view'],
         ['POST', '#^support/[a-f0-9-]{36}$#', 'support.manage'],
+        ['GET', '#^support/inbox$#', 'support.view'],
+        ['POST', '#^support/inbox/check$#', 'support.manage'],
+        ['POST', '#^support/inbox$#', 'owner'],
 
         ['GET', '#^(report|report/meta|report/kpis|reports)$#', 'reports.view'],
 
