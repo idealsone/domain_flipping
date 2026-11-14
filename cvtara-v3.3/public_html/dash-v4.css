@@ -1,0 +1,50 @@
+/* 3.70.0 Customer dashboard: one welcome card with one next step, then the usage tiles, then "Your progress" charts.
+   Space is kept for the late blocks so nothing jumps while the page loads (testers measured a layout shift of 0.97 on phones). */
+#view-dashboard>.application-roadmap,#view-dashboard>.connected-grid,#view-dashboard>.tara-nudge{display:none!important}
+#view-dashboard.active{display:flex;flex-direction:column}
+#wsDash{order:1;min-height:330px}#srDash{order:2}#wsProgress{order:3}
+.ws-hero.ws-hero4{position:relative;overflow:hidden;display:flex;align-items:center;justify-content:space-between;gap:24px;min-height:206px;padding:28px 32px;border-radius:18px;color:#fff;background:radial-gradient(120% 140% at 100% 0%,#3b5bdb 0%,rgba(59,91,219,0) 55%),linear-gradient(135deg,#0f2a5c,#16357a 60%,#1d4ed8)}
+.ws-hero4:after{content:"";position:absolute;right:-60px;bottom:-80px;width:260px;height:260px;border-radius:50%;background:rgba(255,255,255,.06);pointer-events:none}
+.ws-hero4 .ws-hero-main{flex:1;min-width:0;position:relative;z-index:1}
+.ws-hero4 .ws-hi{display:block;font-size:13px;font-weight:600;opacity:.8;letter-spacing:.01em}
+.ws-hero4 #wsNext h2{font-size:clamp(20px,2.3vw,26px);line-height:1.25;font-weight:800;margin:6px 0 6px;color:#fff;max-width:640px}
+.ws-hero4 #wsNext p{font-size:14px;line-height:1.55;opacity:.88;margin:0;max-width:620px;color:#e8eefc}
+.ws-hero4 .ws-acts{display:flex;gap:10px;flex-wrap:wrap;margin-top:16px!important;opacity:1!important}
+.ws-hero4 .ws-acts .button.secondary{background:rgba(255,255,255,.12);color:#fff;border:1px solid rgba(255,255,255,.28)}
+.ws-hero4 .ws-acts .button.secondary:hover{background:rgba(255,255,255,.2)}
+.ws-hero4 .ws-offer{margin-top:12px!important;font-size:13px!important}.ws-hero4 .ws-offer a{color:#fde68a;font-weight:700}
+.ws-hero4 #wsNext{animation:wsIn .45s ease both}
+@keyframes wsIn{from{opacity:.001;transform:translateY(6px)}to{opacity:1;transform:none}}
+.ws-hero4 .ws-ring,.ws-hero4 .ws-plan-chip{position:relative;z-index:1;flex:none}
+/* progress */
+.ws-progress{display:grid;grid-template-columns:1.4fr 1fr;gap:16px;margin:18px 0 6px;min-height:250px}
+.ws-prog-card header{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;margin-bottom:10px}
+.ws-prog-card header small{font-size:12px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.06em}
+.ws-prog-card h3{margin:4px 0 0;font-size:18px}.ws-prog-card h3 b{font-size:26px;color:var(--blue,#1557d2)}
+.ws-prog-empty,.ws-prog-one{color:var(--muted);font-size:14px;line-height:1.6;margin:18px 0 0}.ws-prog-one b{font-size:22px;color:var(--ink)}
+.ws-prog-skel{border-radius:14px;min-height:240px;background:linear-gradient(90deg,var(--soft,#f1f5f9) 0%,var(--line,#e2e8f0) 50%,var(--soft,#f1f5f9) 100%);background-size:200% 100%;animation:wsSk 1.4s linear infinite}
+@keyframes wsSk{to{background-position:-200% 0}}
+.ws-funnel{list-style:none;margin:14px 0 0;padding:0;display:grid;gap:10px}
+.ws-funnel button{display:grid;grid-template-columns:80px 1fr 32px;align-items:center;gap:10px;width:100%;border:0;background:none;padding:4px 0;color:var(--ink);font:inherit;font-size:13px;font-weight:600;cursor:pointer;text-align:left;border-radius:8px}
+.ws-funnel button:focus-visible{outline:3px solid #93c5fd;outline-offset:2px}
+.ws-funnel i{display:block;height:12px;border-radius:99px;background:var(--soft,#eef2f7);overflow:hidden;position:relative}
+.ws-funnel i:after{content:"";position:absolute;inset:0 auto 0 0;width:var(--w);border-radius:99px;background:linear-gradient(90deg,#1557d2,#4f7cf0);transform-origin:left;transition:transform .8s cubic-bezier(.2,.7,.2,1) calc(var(--i)*90ms)}
+.cv-motion .ws-prog-card:not(.cv-in) .ws-funnel i:after{transform:scaleX(0)}
+.ws-funnel b{text-align:right;font-variant-numeric:tabular-nums}
+.ws-funnel button:hover i:after{background:linear-gradient(90deg,#0f3a91,#1557d2)}
+html.dark .ws-funnel i{background:#1e293b}html.dark .ws-prog-card h3 b{color:#93c5fd}
+html.dark .ws-hero.ws-hero4{background:radial-gradient(120% 140% at 100% 0%,#1e3a8a 0%,rgba(30,58,138,0) 55%),linear-gradient(135deg,#0b1730,#102552)}
+/* skip link inside the workspace */
+.ws-skip{position:fixed;left:12px;top:-60px;z-index:2000;background:#0f172a;color:#fff;padding:10px 14px;border-radius:8px;font-weight:700;text-decoration:none;transition:top .15s}
+.ws-skip:focus{top:12px;outline:3px solid #93c5fd}
+@media(max-width:860px){.ws-progress{grid-template-columns:1fr}}
+@media(max-width:600px){#wsDash{min-height:420px}.ws-hero.ws-hero4{flex-direction:column;align-items:flex-start;padding:22px 20px;min-height:260px}.ws-hero4 .ws-ring,.ws-hero4 .ws-plan-chip{display:none}.ws-hero4 .ws-acts .button{flex:1 1 auto;justify-content:center}}
+@media(prefers-reduced-motion:reduce){.ws-hero4 #wsNext,.ws-prog-skel{animation:none}.ws-funnel i:after{transition:none}}
+@media(max-width:600px){.ws-usage{grid-template-columns:repeat(3,minmax(0,1fr))!important;gap:8px!important}.ws-usage .ws-use{padding:12px 10px!important}.ws-usage .ws-use b{font-size:18px!important}.ws-usage .ws-use span{font-size:10px!important;letter-spacing:.02em!important}.ws-usage .ws-use small{display:none}}
+/* reminder cards: one at a time, and they step aside after 12 s (they stay under the bell) so they never sit on top of buttons */
+#cvNotes .cv-note:nth-child(n+2){display:none}
+#cvNotes .cv-note{animation:cvNoteAway .4s ease 12s forwards}
+@keyframes cvNoteAway{to{opacity:0;transform:translateY(12px);visibility:hidden;pointer-events:none}}
+@media(max-width:860px){#cvNotes{left:12px;right:auto;bottom:max(76px,calc(env(safe-area-inset-bottom) + 76px));width:min(340px,calc(100vw - 88px))}#cvNotes .cv-note{padding:12px 34px 12px 14px}#cvNotes .cv-note p{margin:3px 0 8px}}
+@media(prefers-reduced-motion:reduce){#cvNotes .cv-note{animation-duration:.01s}}
+#wsDash .ws-usage{grid-template-columns:repeat(3,minmax(0,1fr))}

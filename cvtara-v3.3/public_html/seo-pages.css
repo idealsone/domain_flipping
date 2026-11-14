@@ -87,3 +87,19 @@ html.dark .article-explore a{color:#8EA0F2}
 @media (max-width:520px){.sp-shell{width:calc(100% - 32px)}.sp-doc{padding:18px}.sp-actions .sp-cta,.sp-actions .sp-secondary{width:100%;justify-content:center}}
 @media (prefers-reduced-motion:reduce){.sp-cta,.sp-card{transition:none}.sp-cta:hover,.sp-card:hover{transform:none}}
 .sp-editorial{margin:18px 0 0;padding:10px 14px;border-left:3px solid var(--sp-border);color:var(--sp-muted,#5b6472);font-size:14px}.sp-editorial a{color:var(--sp-primary)}
+/* 3.68.0 pricing pages: plan comparison table, scrolls sideways on small phones instead of squeezing */
+.sp-table-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch;border:1px solid var(--sp-border);border-radius:12px;background:var(--sp-surface)}
+.sp-table{width:100%;min-width:520px;border-collapse:collapse;font-size:.95rem}
+.sp-table th,.sp-table td{padding:10px 12px;border-bottom:1px solid var(--sp-border);text-align:left;vertical-align:top;color:var(--sp-ink)}
+.sp-table thead th{background:var(--sp-tint);font-family:var(--sp-head)}
+.sp-table thead th a{color:var(--sp-primary)}
+.sp-table tbody th{font-weight:600;color:var(--sp-muted)}
+.sp-table tr:last-child th,.sp-table tr:last-child td{border-bottom:0}
+/* 3.74.0 design pictures (image search): a light grid of linked previews */
+.sp-gallery{list-style:none;margin:16px 0;padding:0;display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:14px}
+.sp-gallery a{display:grid;gap:8px;text-decoration:none;color:var(--sp-ink)}
+.sp-gallery img{display:block;width:100%;height:auto;aspect-ratio:480/560;object-fit:cover;object-position:top;border:1px solid var(--sp-border);border-radius:10px;background:#fff}
+.sp-gallery span{font-size:14px;font-weight:600;line-height:1.35}
+.sp-gallery a:hover img{border-color:var(--sp-primary)}
+@media(max-width:480px){.sp-gallery{grid-template-columns:repeat(2,1fr);gap:10px}}
+.sp-tag{display:inline-block;margin:0 0 8px;padding:3px 10px;border-radius:999px;background:#e8f0ff;color:#1546b0;font-size:12.5px;font-weight:700;letter-spacing:.02em}@media (prefers-color-scheme:dark){:root:not([data-theme=light]) .sp-tag{background:#16213a;color:#a9c4ff}}:root[data-theme=dark] .sp-tag{background:#16213a;color:#a9c4ff}

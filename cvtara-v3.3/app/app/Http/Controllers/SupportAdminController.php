@@ -5,7 +5,10 @@ namespace App\Http\Controllers;
 use App\Models\User;
 use App\Services\Access;
 use App\Services\AdminTable;
+use App\Services\SupportAssist;
 use App\Services\SupportCentre;
+use App\Services\SupportInbox;
+use App\Services\TaraAI;
 use App\Services\SupportView;
 use App\Services\Settings;
 use Illuminate\Http\Request;
@@ -48,6 +51,12 @@ class SupportAdminController extends Controller
                     $q->where('s.'.$k, $r->query($k));
                 }
             }
+            if ($r->query('needs') === 'reply') {
+                $q->whereIn('s.status', ['new', 'seen', 'working'])->where(fn ($w) => $w->whereNull('s.reply_needed')->orWhere('s.reply_needed', true));
+            }
+            if ($r->query('channel') === 'email') {
+                $q->where('s.channel', 'email');
+            }
             if ($r->query('mine') === '1') {
                 $q->where('s.assigned_to', $id);
             }
@@ -64,10 +73,28 @@ class SupportAdminController extends Controller
             $per = min(50, max(5, (int) $r->query('per', 20)));
             $page = max(1, (int) $r->query('page', 1));
             $rows = $q->orderByRaw("case s.status when 'new' then 0 when 'seen' then 1 when 'working' then 2 else 3 end")->orderByDesc('s.created_at')->offset(($page - 1) * $per)->limit($per)
-                ->get(['s.id', 's.owner_id', 's.name', 's.email', 's.area', 's.kind', 's.page', 's.message', 's.rating', 's.status', 's.plan', 's.created_at', 's.resolved_at', 's.reference', 's.priority', 's.assigned_to', 's.last_customer_at', 's.first_response_at']);
+                ->get(['s.id', 's.owner_id', 's.name', 's.email', 's.area', 's.kind', 's.page', 's.message', 's.rating', 's.status', 's.plan', 's.created_at', 's.resolved_at', 's.reference', 's.priority', 's.assigned_to', 's.last_customer_at', 's.first_response_at', 's.channel', 's.triage', 's.reply_needed', 's.triage_reason', 's.draft_at']);
             $counts = DB::table('support_attachments')->whereIn('report_id', $rows->pluck('id'))->groupBy('report_id')->selectRaw('report_id, count(*) c')->pluck('c', 'report_id');
 
             return $ok(['total' => $total, 'page' => $page, 'per' => $per, 'rows' => $rows->map(fn ($x) => [...(array) $x, 'message' => mb_substr($x->message, 0, 220), 'images' => (int) ($counts[$x->id] ?? 0)])->all()]);
+        }
+        // 3.75.0 Support by email: the support mailbox, read every two minutes ---------------------------------
+        if ($path === 'support/inbox' && $r->isMethod('GET')) {
+            return $ok(['inbox' => SupportInbox::status(), 'assist' => TaraAI::enabled(), 'canEdit' => Access::isOwner($r->user())]);
+        }
+        if ($path === 'support/inbox' && $r->isMethod('POST')) {
+            abort_unless(Access::isOwner($r->user()), 403, 'Only the owner can change the support mailbox.');
+            $v = $r->validate(['enabled' => 'sometimes|boolean', 'autoDraft' => 'sometimes|boolean', 'host' => 'sometimes|string|max:120|regex:/^[a-z0-9.-]+$/i',
+                'port' => 'sometimes|integer|between:1,65535', 'user' => 'sometimes|email|max:190', 'password' => 'nullable|string|max:200']);
+            SupportInbox::save($v);
+            Settings::audit($id, 'support_inbox_saved', SupportInbox::settings()['user']);
+
+            return $ok(['inbox' => SupportInbox::status()]);
+        }
+        if ($path === 'support/inbox/check' && $r->isMethod('POST')) {
+            $res = SupportInbox::run(true);
+
+            return $ok(['result' => $res, 'inbox' => SupportInbox::status()]);
         }
         // 3.40.0 Support Centre ------------------------------------------------------------------------------
         if ($path === 'support/team' && $r->isMethod('GET')) {
@@ -149,14 +176,30 @@ class SupportAdminController extends Controller
 
                 return $ok(['report' => array_merge((array) $row, ['reference' => ($row->reference ?? '') ?: SupportCentre::ref($row->id)]), 'images' => $files, 'earlierFromSamePerson' => $history,
                     'messages' => SupportCentre::messages($row->id, true), 'errors' => $errors, 'canViewAs' => (bool) $row->owner_id && Access::can($r->user(), 'customers.view_as'),
-                    'canDelete' => Access::isOwner($r->user())]);
+                    'canDelete' => Access::isOwner($r->user()), 'assist' => TaraAI::enabled(), 'canReply' => (bool) $row->owner_id || filter_var((string) $row->email, FILTER_VALIDATE_EMAIL) !== false,
+                    'triageKinds' => SupportAssist::KINDS]);
             }
-            $v = $r->validate(['action' => 'required|in:update,delete,reply,note', 'status' => 'nullable|in:'.implode(',', self::STATUSES), 'adminNote' => 'nullable|string|max:3000',
+            $v = $r->validate(['action' => 'required|in:update,delete,reply,note,draft,sort', 'replyNeeded' => 'nullable|boolean', 'status' => 'nullable|in:'.implode(',', self::STATUSES), 'adminNote' => 'nullable|string|max:3000',
                 'body' => 'required_if:action,reply,note|nullable|string|min:2|max:5000', 'priority' => 'nullable|in:'.implode(',', SupportCentre::PRIORITIES), 'assignedTo' => 'nullable|integer']);
             if ($v['action'] === 'reply') {
-                abort_unless($row->owner_id, 422, 'This message came from the contact page without an account. Answer it by email.');
-                SupportCentre::staffReply($row, $r->user(), $v['body']);
+                abort_unless($row->owner_id || filter_var((string) $row->email, FILTER_VALIDATE_EMAIL), 422, 'This message has no email address to answer.');
+                $mail = SupportCentre::staffReply($row, $r->user(), $v['body']);
                 Settings::audit($id, 'support_reply', $row->id);
+
+                return $ok(['messages' => SupportCentre::messages($row->id, true), 'mail' => $mail]);
+            }
+            if ($v['action'] === 'draft') {
+                try {
+                    return $ok(['draft' => SupportAssist::draft($row->id)]);
+                } catch (\Throwable $e) {
+                    abort(422, $e instanceof \RuntimeException && str_contains($e->getMessage(), 'Integrations') ? $e->getMessage() : 'A suggested reply could not be written just now ('.TaraAI::failure($e).'). Try again, or write the reply yourself.');
+                }
+            }
+            if ($v['action'] === 'sort') {
+                $need = (bool) ($v['replyNeeded'] ?? true);
+                DB::table('support_reports')->where('id', $row->id)->update(['reply_needed' => $need, 'triage' => $need ? 'customer' : ($row->triage === 'customer' || ! $row->triage ? 'sales' : $row->triage), 'updated_at' => now()]
+                    + ($need ? ['status' => in_array($row->status, ['resolved', 'closed'], true) ? 'seen' : $row->status, 'resolved_at' => null] : ['status' => 'closed', 'resolved_at' => $row->resolved_at ?? now()]));
+                SupportCentre::add($row->id, $id, 'system', $r->user()->name.($need ? ' marked this as needing a reply.' : ' marked this as not needing a reply and closed it.'), true);
 
                 return $ok(['messages' => SupportCentre::messages($row->id, true)]);
             }

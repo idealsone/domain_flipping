@@ -254,6 +254,11 @@ class ApiController extends Controller
         }
         // 3.54.0 Partner portal: the signed-in member's own organisation, numbers only.
         if ($path === 'partner' && $get) {
+            // Not a partner member: answer 200 with partner null, so every customer workspace load is not a logged 404.
+            if (! \App\Services\Partners::membership($u)) {
+                return $ok(['partner' => null]);
+            }
+
             return $ok(\App\Services\Partners::portal($u));
         }
         if (str_starts_with($path, 'partner/')) {
@@ -296,9 +301,16 @@ class ApiController extends Controller
             return $ok(\App\Services\Interviews::overview($u));
         }
         if ($path === 'interviews/questions' && $get) {
-            $v = $r->validate(['occupation' => 'required|string|max:80', 'band' => 'required|string|max:10']);
+            $v = $r->validate(['occupation' => 'required|string|max:80', 'band' => 'required|string|max:10', 'category' => 'nullable|string|max:20', 'skill' => 'nullable|string|max:120', 'page' => 'nullable|integer|min:1|max:1000', 'todo' => 'nullable|boolean']);
 
-            return $ok(\App\Services\Interviews::questions($u, $v['occupation'], $v['band']));
+            return $ok(\App\Services\Interviews::questions($u, $v['occupation'], $v['band'], $v));
+        }
+        // 3.73.0 tick a bank question as practised (progress by category).
+        if ($path === 'interviews/practised' && $r->isMethod('POST')) {
+            $cap('interview-practised', 600, 3600, 'Please slow down a little.');
+            $v = $r->validate(['code' => 'required|string|max:40', 'done' => 'required|boolean']);
+
+            return $ok(\App\Services\InterviewBank::markPractised($u, $v['code'], (bool) $v['done']));
         }
         // 3.57.0 role search, Research a company and revision mode.
         if ($path === 'interviews/roles' && $get) {
@@ -320,10 +332,24 @@ class ApiController extends Controller
 
             return $ok(['research' => \App\Services\InterviewPrep::research($u, $v['company'], $v['url'], $v['occupation'] ?? null)]);
         }
+        // 3.71.0 interview profile (job switch) and personal model answers.
+        if ($path === 'interviews/profile' && $r->isMethod('POST')) {
+            $v = $r->validate(['track' => 'required|in:same,switch', 'currentRole' => 'nullable|string|max:120', 'skills' => 'nullable|string|max:500', 'target' => 'nullable|string|max:120']);
+
+            return $ok(['profile' => \App\Services\Interviews::saveProfile($u, $v)]);
+        }
+        if ($path === 'interviews/model-answer' && $r->isMethod('POST')) {
+            \App\Services\EmailVerification::guard($u);
+            $cap('interview-model', 30, 3600, 'Please wait a while before asking for more model answers.');
+            $v = $r->validate(['code' => 'required|string|max:40']);
+
+            return $ok(\App\Services\Interviews::modelAnswer($u, $v['code']));
+        }
         if ($path === 'interviews/start' && $r->isMethod('POST')) {
             \App\Services\EmailVerification::guard($u);
             $cap('interview-start', 10, 3600, 'Please wait a while before starting another mock interview.');
-            $v = $r->validate(['occupation' => 'required|string|max:80', 'band' => 'required|string|max:10', 'objective' => 'nullable|string|max:20', 'company' => 'nullable|string|max:120', 'mode' => 'nullable|in:standard,full']);
+            $v = $r->validate(['occupation' => 'required|string|max:80', 'band' => 'required|string|max:10', 'objective' => 'nullable|string|max:20', 'company' => 'nullable|string|max:120', 'mode' => 'nullable|in:standard,full',
+                'track' => 'nullable|in:same,switch', 'currentRole' => 'nullable|string|max:120']);
 
             return $ok(['session' => \App\Services\Interviews::start($u, $v)]);
         }
