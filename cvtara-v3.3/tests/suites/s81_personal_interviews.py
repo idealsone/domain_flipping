@@ -103,7 +103,8 @@ def run(ctx, t):
             time.sleep(0.25)
         else:
             cron()
-        sent = json.dumps(HITS[n]["messages"]) if len(HITS) > n else ""
+        # the minute cron may also run other writing jobs (3.75.0 suggested support replies), so pick the interview request
+        sent = next((json.dumps(h["messages"]) for h in HITS[n:] if "<candidate>" in json.dumps(h["messages"])), json.dumps(HITS[n]["messages"]) if len(HITS) > n else "")
         t.check("feedback uses the resume, cover letter and job switch", "<candidate>" in sent and "Bright Retail" in sent and "50 customer calls" in sent and "Changing jobs from: Sales Executive" in sent, sent[:300])
         s, j = c.api("GET", f"interviews/{sid}")
         t.check("before the release time the results stay hidden", j["session"]["status"] == "releasing" and j["session"]["feedback"] is None and j["session"]["releaseAt"], j["session"]["status"])
