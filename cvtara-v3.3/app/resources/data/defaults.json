@@ -493,7 +493,7 @@
       "enabled": true,
       "delayHours": 0,
       "subject": "Re: Your CVTara request {{ticket_ref}}",
-      "body": "{{reply}}\n\n{{continue_line}}"
+      "body": "[preheader: The CVTara team answered your request {{ticket_ref}}.]\n{{reply}}\n\n{{continue_line}}"
     }
   ],
   "popup": {
