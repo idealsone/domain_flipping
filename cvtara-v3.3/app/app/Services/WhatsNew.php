@@ -35,6 +35,7 @@ class WhatsNew
         $n = fn ($id, $date, $tag, $title, $body) => ['id' => $id, 'date' => $date, 'tag' => $tag, 'title' => $title, 'body' => $body, 'published' => true, 'publishedAt' => $date.'T00:00:00+05:30'];
 
         return [
+            $n('2026-11-14-workspace-pages', '2026-11-14', 'improved', 'Each page opens with what you came for', 'ATS Match, the resume builder, interview practice and your other workspace pages now open straight on their own tools, without the dashboard summary on top. Ask Tara now carries the CVTara logo.'),
             $n('2026-11-12-signup', '2026-11-12', 'improved', 'Easier sign-up', 'A password now needs 8 characters instead of 12, and you can pick from many more work areas, from banking and BPO to logistics, retail and government jobs.'),
             $n('2026-11-12-versions', '2026-11-12', 'new', 'Every resume keeps its history', 'Each save keeps the earlier version, so you can look back and restore it. The copy you used for a job application stays exactly as you sent it, even when you edit your main resume later.'),
             $n('2026-11-12-original', '2026-11-12', 'safety', 'Your uploaded file, kept safely for 90 days', 'The resume file you upload is kept for 90 days so you can compare it with your improved version. You can delete it any time from Account & downloads.'),

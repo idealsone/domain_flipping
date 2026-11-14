@@ -1,7 +1,7 @@
 /* 3.70.0 Customer dashboard: one welcome card with one next step, then the usage tiles, then "Your progress" charts.
    Space is kept for the late blocks so nothing jumps while the page loads (testers measured a layout shift of 0.97 on phones). */
 #view-dashboard>.application-roadmap,#view-dashboard>.connected-grid,#view-dashboard>.tara-nudge{display:none!important}
-#view-dashboard{display:flex;flex-direction:column}
+#view-dashboard.active{display:flex;flex-direction:column}
 #wsDash{order:1;min-height:330px}#srDash{order:2}#wsProgress{order:3}
 .ws-hero.ws-hero4{position:relative;overflow:hidden;display:flex;align-items:center;justify-content:space-between;gap:24px;min-height:206px;padding:28px 32px;border-radius:18px;color:#fff;background:radial-gradient(120% 140% at 100% 0%,#3b5bdb 0%,rgba(59,91,219,0) 55%),linear-gradient(135deg,#0f2a5c,#16357a 60%,#1d4ed8)}
 .ws-hero4:after{content:"";position:absolute;right:-60px;bottom:-80px;width:260px;height:260px;border-radius:50%;background:rgba(255,255,255,.06);pointer-events:none}
