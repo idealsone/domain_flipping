@@ -34,9 +34,9 @@
   function shell() {
     box = document.createElement('div');
     box.id = 'cvTara';
-    box.innerHTML = `<button type="button" class="tara-fab" aria-haspopup="dialog" aria-controls="taraPanel"><span class="tara-dot" aria-hidden="true">T</span><b>Ask Tara</b></button>
+    box.innerHTML = `<button type="button" class="tara-fab" aria-haspopup="dialog" aria-controls="taraPanel"><span class="tara-dot" aria-hidden="true"><img src="/assets/brand/cvtara-icon.webp" width="26" height="26" alt="" decoding="async"></span><b>Ask Tara</b></button>
       <section class="tara-panel" id="taraPanel" role="dialog" aria-label="Tara, your CVTara career assistant" hidden inert>
-        <header class="tara-head"><span class="tara-dot" aria-hidden="true">T</span><div><h2>Tara</h2><small>Your CVTara career assistant</small></div>
+        <header class="tara-head"><span class="tara-dot" aria-hidden="true"><img src="/assets/brand/cvtara-icon.webp" width="26" height="26" alt="" decoding="async"></span><div><h2>Tara</h2><small>Your CVTara career assistant</small></div>
           <button type="button" class="tara-ic" data-t="history" title="Past conversations" aria-label="Past conversations">☰</button>
           <button type="button" class="tara-ic" data-t="new" title="New conversation" aria-label="New conversation">＋</button>
           <button type="button" class="tara-ic" data-t="full" title="Full screen" aria-label="Full screen">⤢</button>
@@ -181,7 +181,7 @@
     }
     const c = document.createElement('section');
     c.className = 'tara-nudge'; c.setAttribute('aria-label', 'Your next step');
-    c.innerHTML = `<span class="tara-dot" aria-hidden="true">T</span><div class="tn-body"><small>${E(n.greeting)}</small><h3>${E(n.title)}</h3><p>${E(n.line)}</p>
+    c.innerHTML = `<span class="tara-dot" aria-hidden="true"><img src="/assets/brand/cvtara-icon.webp" width="26" height="26" alt="" decoding="async"></span><div class="tn-body"><small>${E(n.greeting)}</small><h3>${E(n.title)}</h3><p>${E(n.line)}</p>
       <div class="tn-acts">${n.actions.map((x, i) => x.url ? `<a class="button ${i ? 'secondary' : 'primary'} small" href="${E(x.url)}">${E(x.label)}</a>` : `<button type="button" class="button ${i ? 'secondary' : 'primary'} small" data-n="${i}">${E(x.label)}</button>`).join('')}</div>
       ${n.offer ? `<p class="tn-offer"><b>${E(n.offer.name)} · ₹${E(n.offer.price)}</b> ${E(n.offer.why)} <a href="${E(n.offer.url)}">Get ${E(n.offer.name)}</a></p>` : ''}
       ${n.proof.length || n.you ? `<ul class="tn-proof">${n.proof.map(p => `<li>${E(p)}</li>`).join('')}${n.you ? `<li>${E(n.you)}</li>` : ''}</ul>` : ''}</div>

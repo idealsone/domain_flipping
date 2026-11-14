@@ -64,3 +64,7 @@ html.dark .tara-peek{background:#1e293b;color:#e2e8f0}
 }
 @media(prefers-reduced-motion:reduce){.tara-peek{animation:none}}
 html.dark .tara-link{color:#93c5fd}
+/* 3.78.0 (owner 14 Nov): the CVTara logo on Tara's button instead of a "T", and room under the page so the button never covers the last card */
+.tara-dot{background:#fff;box-shadow:inset 0 0 0 1px rgba(15,42,92,.12)}
+.tara-dot img{display:block;width:78%;height:78%;object-fit:contain}
+.workspace-content{padding-bottom:88px}

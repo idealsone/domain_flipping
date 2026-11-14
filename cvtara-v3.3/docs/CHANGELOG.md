@@ -1,3 +1,11 @@
+# CVTara v3.78.0 — Each workspace page shows its own content
+
+## 3.78.0
+Owner (14 Nov 2026, screenshots): ATS Match, Resume Builder and Interview practice all opened with the same dashboard block (welcome card, usage tiles, "What would you like CVTara to help you with?", match chart); Ask Tara showed a "T" and covered the last card.
+- **Dashboard only on the Dashboard.** Cause: `dash-v4.css` (3.70.0) set `#view-dashboard{display:flex}`, an id rule that beat `.workspace-view{display:none}`, so the dashboard stayed visible above every view. Now `#view-dashboard.active{display:flex}`. Each view opens with its own content and the existing view animation.
+- **Ask Tara button** shows the CVTara logo mark (`assets/brand/cvtara-icon.webp`, cut from the site logo) on a white circle instead of a "T" (button, panel header, dashboard). The workspace keeps 88px under the content so the button never covers the last card.
+- Re-checked from the 3.76 tester report: checkout layout shift on live is now 0.002 laptop / 0.027 phone; the sign-in page sends the full security policy (the extra `upgrade-insecure-requests` header is added by the host, both apply); `?next=` only allows same-site paths.
+
 # CVTara v3.77.0 — Longer interview question pages
 
 ## 3.77.0

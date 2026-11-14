@@ -24,6 +24,8 @@ def run(ctx, t):
 
     ws, dash = rd(PUB, "workspace-ui.js"), rd(PUB, "dash-v4.css")
     t.check("the dashboard has one next-step slot and a progress section", 'id="wsNext"' in ws and "wsProgress" in ws and "CVChart.line" in ws)
+    t.check("3.78.0: the dashboard blocks show only on the Dashboard, not on ATS Match, the builder or interviews", "#view-dashboard.active{display:flex" in dash and "\n#view-dashboard{display:flex" not in dash)
+    t.check("3.78.0: Tara's button shows the CVTara logo, not a letter", 'tara-dot" aria-hidden="true">T<' not in tara and "/assets/brand/cvtara-icon.webp" in tara and os.path.isfile(os.path.join(PUB, "assets/brand/cvtara-icon.webp")))
     t.check("the old roadmap and duplicate next-step boxes are hidden", "#view-dashboard>.application-roadmap" in dash and "#view-dashboard>.tara-nudge" in dash)
     t.check("dashboard keeps room for late blocks", re.search(r"#wsDash\{order:1;min-height:\d+px\}", dash) is not None)
     t.check("reminder cards show one at a time and step aside", "#cvNotes .cv-note:nth-child(n+2){display:none}" in dash)
