@@ -31,15 +31,15 @@ Artisan::command('cvtara:cron', function () {
             \App\Services\ErrorLog::exception($e);
         }
     };
-    // 3.75.0 mail to the support address becomes tickets (every two minutes), and new web questions get a suggested reply
-    $safe(fn () => \Illuminate\Support\Facades\Schema::hasTable('support_inbox_seen') && \Illuminate\Support\Facades\Cache::add('support-inbox', 1, 110) && \App\Services\SupportInbox::run());
-    $safe(fn () => \Illuminate\Support\Facades\Schema::hasColumn('support_reports', 'draft') && \Illuminate\Support\Facades\Cache::add('support-drafts', 1, 110) && \App\Services\SupportAssist::draftWaiting(2));
     // finish resume + cover letter requests whose customer left the page (one each minute)
     $safe(fn () => \Illuminate\Support\Facades\Schema::hasTable('service_requests') && \App\Services\ServiceRequests::runDue(1));
     // 3.51.0 Profile Boost drafts and requested changes still waiting
     $safe(fn () => \App\Services\ProfileBoost::run(1));
     // 3.49.0 mock interview feedback still waiting, and credits of sessions left unanswered for a day
     $safe(fn () => \Illuminate\Support\Facades\Schema::hasTable('interview_sessions') && \App\Services\Interviews::runDue(2));
+    // 3.75.0 mail to the support address becomes tickets (every two minutes), and new web questions get a suggested reply (after the customers' paid jobs above)
+    $safe(fn () => \Illuminate\Support\Facades\Schema::hasTable('support_inbox_seen') && \Illuminate\Support\Facades\Cache::add('support-inbox', 1, 110) && \App\Services\SupportInbox::run());
+    $safe(fn () => \Illuminate\Support\Facades\Schema::hasColumn('support_reports', 'draft') && \Illuminate\Support\Facades\Cache::add('support-drafts', 1, 110) && \App\Services\SupportAssist::draftWaiting(2));
     $safe(fn () => \Illuminate\Support\Facades\Schema::hasTable('partner_commissions') && \App\Services\Partners::release());
     $safe(fn () => \Illuminate\Support\Facades\Schema::hasTable('partner_rankings') && \App\Services\PartnerOps::monthly());
     // approved / in-progress tasks past their due date are marked Overdue (once an hour)
