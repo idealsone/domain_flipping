@@ -17,7 +17,7 @@
   }
   window.CVTaraCSRF = token;
   var original = window.fetch;
-  var SHARED = { '/api/public-content': 1, '/api/business-public': 1, '/api/public-config': 1 }, shared = {};
+  var SHARED = { '/api/public-content': 1, '/api/business-public': 1, '/api/public-config': 1 }, shared = {}, recent = {};
   if (!original) return;
   window.fetch = function (input, init) {
     try {
@@ -41,6 +41,16 @@
           shared[key] = original.call(this, input, init).then(function (r) { if (!r.ok) delete shared[key]; return r; }, function (e) { delete shared[key]; throw e; });
         }
         return shared[key].then(function (r) { return r.clone(); });
+      }
+      // 3.70.2: on a signed-in page several scripts ask for the same account data while it loads (allowance 5 times, profile and
+      // resumes 4). Callers asking for the same address within 2 s share one request; any change (POST, PUT, DELETE) clears this.
+      if (url.origin === location.origin && method !== 'GET' && method !== 'HEAD') recent = {};
+      else if (url.origin === location.origin && method === 'GET' && url.pathname.indexOf('/api/') === 0 && !(init && (init.signal || init.cache === 'no-store'))) {
+        var rk = url.pathname + url.search, hit = recent[rk];
+        if (!hit || Date.now() - hit.t > 2000) {
+          hit = recent[rk] = { t: Date.now(), p: original.call(this, input, init).then(function (r) { if (!r.ok) delete recent[rk]; return r; }, function (e) { delete recent[rk]; throw e; }) };
+        }
+        return hit.p.then(function (r) { return r.clone(); });
       }
     } catch (e) { /* fall through to the normal request */ }
     return original.apply(this, arguments);

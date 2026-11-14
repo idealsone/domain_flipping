@@ -39,7 +39,7 @@ return [
 
     // 3.48.0: short routine tasks that may run on the owner's cheaper "quick-task model" (Integrations > AI). Customer
     // writing (reviews, tailoring, letters, chat answers) is not listed and always uses the main model.
-    'quick_purposes' => ['seo', 'customer:chat_summary', 'customer:jd_parse', 'customer:interview_eval'],
+    'quick_purposes' => ['seo', 'customer:chat_summary', 'customer:jd_parse', 'customer:interview_eval', 'customer:support_triage'],
 
     // 3.64.0: chat purposes run on the chat model (Tara for customers). The Business assistant stays on the writing model
     // because its answers are business numbers the owner acts on.

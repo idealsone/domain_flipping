@@ -70,6 +70,14 @@ class AccountEraser
                 DB::table('interview_sessions')->whereIn('id', $sessions)->delete();
                 DB::table('usage_ledger')->where('owner_id', $id)->update(['owner_id' => $keep, 'reason' => null]);
             }
+            // 3.71.0 personal model answers are made from the customer's resume.
+            if (Schema::hasTable('interview_model_answers')) {
+                DB::table('interview_model_answers')->where('owner_id', $id)->delete();
+            }
+            // 3.73.0 which bank questions the customer ticked as practised.
+            if (Schema::hasTable('interview_practised')) {
+                DB::table('interview_practised')->where('owner_id', $id)->delete();
+            }
             // 3.55.0 review edit history holds the customer's own words.
             if (Schema::hasTable('feedback_edits')) {
                 DB::table('feedback_edits')->whereIn('feedback_id', DB::table('feedback')->where('owner_id', $id)->pluck('id'))->delete();

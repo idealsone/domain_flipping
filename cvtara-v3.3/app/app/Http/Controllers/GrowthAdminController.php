@@ -54,7 +54,7 @@ class GrowthAdminController extends Controller
             return $ok(['report' => $row]);
         }
         if ($path === 'growth/seo' && $get) {
-            return $ok(['seo' => SeoAgent::summary(), 'settings' => SeoAgent::settings(), 'coverage' => SeoAgent::coverage()]);
+            return $ok(['seo' => SeoAgent::summary(), 'settings' => SeoAgent::baseSettings(), 'coverage' => SeoAgent::coverage(), 'sprint' => \App\Services\SeoSprint::status()]);
         }
         if ($path === 'growth/seo/proposals' && $get) {
             return $ok(AdminTable::query($r, DB::table('seo_proposals'), [
@@ -226,7 +226,7 @@ class GrowthAdminController extends Controller
         if ($path === 'growth/agents') {
             $v = $r->validate(['agent' => 'required|in:seo,growth', 'auto' => 'required|boolean']);
             if ($v['agent'] === 'seo') {
-                Settings::put('seoAgent', ['auto' => $v['auto']] + SeoAgent::settings());
+                Settings::put('seoAgent', ['auto' => $v['auto']] + SeoAgent::baseSettings());
             } else {
                 Settings::put('growthOps', ['auto' => $v['auto']] + GrowthOps::settings());
             }
@@ -455,12 +455,20 @@ class GrowthAdminController extends Controller
 
             return $ok($pulled + $made);
         }
+        if ($path === 'growth/seo/sprint') {
+            // 3.68.0: 30-day index sprint; the agents' daily work goes up about tenfold, every live change still needs approval.
+            $v = $r->validate(['on' => 'required|boolean']);
+            $st = $v['on'] ? \App\Services\SeoSprint::start($r->user()->id) : \App\Services\SeoSprint::stop();
+            Settings::audit($r->user()->id, 'seo_sprint_'.($v['on'] ? 'started' : 'stopped'), (string) $st['until']);
+
+            return $ok(['sprint' => $st]);
+        }
         if ($path === 'growth/seo/settings') {
             $v = $r->validate(['auto' => 'required|boolean', 'metaPerDay' => 'required|integer|min:0|max:50', 'linksPerDay' => 'required|integer|min:0|max:50', 'minImpressions' => 'required|integer|min:1|max:10000']);
             Settings::put('seoAgent', $v);
             Settings::audit($r->user()->id, 'seo_agent_settings', json_encode($v));
 
-            return $ok(['settings' => SeoAgent::settings()]);
+            return $ok(['settings' => SeoAgent::baseSettings()]);
         }
         if ($path === 'growth/settings') {
             AccountSecurity::requireRecent($r);

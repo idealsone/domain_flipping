@@ -326,7 +326,7 @@ class TaraChat
     }
 
     /** Things Tara should know without a tool call: refund rule, support hours, how credits work. */
-    private static function facts(): string
+    public static function facts(): string
     {
         $l = (array) Settings::get('legal', []);
 

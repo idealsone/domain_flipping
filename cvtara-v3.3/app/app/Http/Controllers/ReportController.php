@@ -164,8 +164,10 @@ class ReportController extends Controller
         $columns = array_values(array_map(fn ($k) => collect($columns)->firstWhere('key', $k), $cols));
         $sums = null;
         if ($set === 'orders') {
-            $agg = (clone $totalsQ)->selectRaw('COALESCE(SUM(p.amount_paise),0) a, COALESCE(SUM(p.refunded_paise),0) b, COALESCE(SUM(p.discount_paise),0) d')->first();
-            $sums = ['amount_inr' => (float) self::inr($agg->a), 'reversed_inr' => (float) self::inr($agg->b), 'discount_inr' => (float) self::inr($agg->d), 'net_inr' => (float) self::inr($agg->a - $agg->b)];
+            // Money totals count only orders that were actually paid; checkouts that were opened and never paid are shown apart.
+            $paid = "p.status IN ('paid','partially_refunded','refunded')";
+            $agg = (clone $totalsQ)->selectRaw("COALESCE(SUM(CASE WHEN $paid THEN p.amount_paise ELSE 0 END),0) a, COALESCE(SUM(CASE WHEN $paid THEN p.refunded_paise ELSE 0 END),0) b, COALESCE(SUM(CASE WHEN $paid THEN p.discount_paise ELSE 0 END),0) d, COALESCE(SUM(CASE WHEN p.status IN ('created','pending','failed') THEN p.amount_paise ELSE 0 END),0) u")->first();
+            $sums = ['amount_inr' => (float) self::inr($agg->a), 'reversed_inr' => (float) self::inr($agg->b), 'discount_inr' => (float) self::inr($agg->d), 'net_inr' => (float) self::inr($agg->a - $agg->b), 'unpaid_inr' => (float) self::inr($agg->u)];
         }
         Settings::audit($r->user()->id, 'report_'.($format === 'json' ? 'viewed' : 'exported'), $set.':'.$total);
         if ($format === 'json') {

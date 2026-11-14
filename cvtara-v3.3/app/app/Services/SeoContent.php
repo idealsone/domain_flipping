@@ -246,6 +246,30 @@ class SeoContent
     }
 
     /** For page templates: the date a person last reviewed this page, or null. */
+    /**
+     * 3.68.0 (owner, 12 Nov 2026): the day a public page's content last changed, shown as "Updated <date>" and sent to
+     * search engines as dateModified. The latest of: the owner's own edit of a guide (updatedAt), an approved SEO change,
+     * a person's review, and the agent's page scan noticing new content. Null when nothing is known, so no date is invented.
+     */
+    public static function updatedAt(string $path, ?array $post = null): ?string
+    {
+        $dates = [$post['updatedAt'] ?? null];
+        try {
+            if (Schema::hasTable('seo_pages')) {
+                $row = DB::table('seo_pages')->where('path', $path)->first();
+                $dates[] = $row->changed_at ?? null;
+                $dates[] = $row->reviewed_at ?? null;
+            }
+            if (Schema::hasTable('seo_proposals')) {
+                $dates[] = DB::table('seo_proposals')->where('path', $path)->where('status', 'approved')->max('decided_at');
+            }
+        } catch (\Throwable) {
+        }
+        $ts = array_filter(array_map(fn ($d) => $d ? strtotime((string) $d) : false, $dates));
+
+        return $ts ? date('c', min(max($ts), time())) : null;
+    }
+
     public static function reviewedAt(string $path): ?string
     {
         try {
