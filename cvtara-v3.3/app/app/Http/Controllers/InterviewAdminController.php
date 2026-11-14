@@ -27,6 +27,40 @@ class InterviewAdminController extends Controller
 
             return $ok(Interviews::adminList($f));
         }
+        if ($path === 'interviews/questions' && $r->isMethod('GET')) {
+            return $ok(Interviews::questionsPage($r));
+        }
+        if ($path === 'interviews/sessions' && $r->isMethod('GET')) {
+            return $ok(Interviews::sessionsPage($r));
+        }
+        // 3.73.0 the large question bank: patterns, sample questions, approval and the on/off switch.
+        if ($path === 'interviews/bank/patterns' && $r->isMethod('GET')) {
+            return $ok(\App\Services\InterviewBank::patternsPage($r));
+        }
+        if (preg_match('#^interviews/bank/patterns/([PR]\d{2})$#', $path, $m) && $r->isMethod('GET')) {
+            return $ok(\App\Services\InterviewBank::samples($m[1]));
+        }
+        if ($path === 'interviews/bank/status' && $r->isMethod('POST')) {
+            $v = $r->validate(['codes' => 'nullable|array|max:200', 'codes.*' => 'string|max:8', 'all' => 'sometimes|boolean', 'status' => 'required|in:approved,withdrawn']);
+            abort_if(empty($v['all']) && empty($v['codes']), 422, 'Choose at least one pattern.');
+            $n = \App\Services\InterviewBank::setStatus($u, ! empty($v['all']) ? '*' : $v['codes'], $v['status']);
+
+            return $ok(['changed' => $n] + Interviews::adminList([]));
+        }
+        if ($path === 'interviews/bank/settings' && $r->isMethod('POST')) {
+            AccountSecurity::requireRecent($r);
+            $v = $r->validate(['enabled' => 'required|boolean']);
+            \App\Services\InterviewBank::saveSettings($v);
+            Settings::audit($u->id, 'interview_bank_settings', $v['enabled'] ? 'on' : 'off');
+
+            return $ok(Interviews::adminList([]));
+        }
+        if ($path === 'interviews/bank/sync' && $r->isMethod('POST')) {
+            $p = \App\Services\InterviewBank::syncPatterns();
+            $ro = \App\Services\InterviewBank::syncRoles();
+
+            return $ok(['addedPatterns' => $p, 'addedRoles' => $ro] + Interviews::adminList([]));
+        }
         if ($path === 'interviews/template' && $r->isMethod('GET')) {
             return response(Interviews::importTemplate(), 200, ['Content-Type' => 'text/csv; charset=utf-8', 'Content-Disposition' => 'attachment; filename="interview-questions-blank.csv"']);
         }
@@ -68,7 +102,8 @@ class InterviewAdminController extends Controller
         }
         if ($path === 'interviews/settings') {
             AccountSecurity::requireRecent($r);
-            $v = $r->validate(['enabled' => 'required|boolean', 'questions' => 'nullable|integer|min:3|max:8', 'dailySessions' => 'nullable|integer|min:1|max:20', 'fullMock' => 'sometimes|boolean']);
+            $v = $r->validate(['enabled' => 'required|boolean', 'questions' => 'nullable|integer|min:3|max:10', 'dailySessions' => 'nullable|integer|min:1|max:20', 'fullMock' => 'sometimes|boolean',
+                'minutes' => 'nullable|integer|min:10|max:60', 'releaseDelay' => 'nullable|integer|min:0|max:120', 'modelAnswersDaily' => 'nullable|integer|min:0|max:50']);
 
             return $ok(['settings' => Interviews::saveSettings(array_filter($v, fn ($x) => $x !== null)), 'available' => Interviews::available()]);
         }

@@ -145,9 +145,19 @@ class InterviewPrep
     /** Questions from the customer's finished mock interviews, with their earlier answer and feedback, newest first. */
     public static function revision(User $u): array
     {
+        $custom = \Illuminate\Support\Facades\Schema::hasColumn('interview_answers', 'custom_text');
         $rows = DB::table('interview_sessions as s')->join('interview_evaluations as e', 'e.session_id', '=', 's.id')->join('interview_answers as a', 'a.session_id', '=', 's.id')
-            ->join('interview_question_versions as v', 'v.id', '=', 'a.question_version_id')->where('s.owner_id', $u->id)->orderByDesc('s.evaluated_at')->orderBy('a.position')->limit(60)
-            ->get(['s.id', 's.occupation', 's.evaluated_at', 'a.position', 'a.answer', 'v.text', 'v.guidance', 'e.result_json']);
+            ->leftJoin('interview_question_versions as v', 'v.id', '=', 'a.question_version_id')->where('s.owner_id', $u->id)
+            ->when($custom, fn ($q) => $q->where(fn ($w) => $w->whereNull('s.release_at')->orWhere('s.release_at', '<=', now())))
+            ->orderByDesc('s.evaluated_at')->orderBy('a.position')->limit(60)
+            ->get(array_merge(['s.id', 's.occupation', 's.evaluated_at', 'a.position', 'a.answer', 'v.text', 'v.guidance', 'e.result_json'], $custom ? ['a.custom_text', 'a.custom_guidance'] : []))
+            ->map(function ($r) {
+                if (! empty($r->custom_text)) {
+                    [$r->text, $r->guidance] = [$r->custom_text, $r->custom_guidance];
+                }
+
+                return $r;
+            });
         $out = [];
         $seen = [];
         foreach ($rows as $r) {

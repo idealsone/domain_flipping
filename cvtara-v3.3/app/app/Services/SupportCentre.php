@@ -33,8 +33,14 @@ class SupportCentre
             $q->where('m.internal', false);
         }
 
-        return $q->get(['m.id', 'm.author_type', 'm.body', 'm.internal', 'm.created_at', 'u.name as author', 'u.email as author_email'])
+        $mailCol = $staff && Schema::hasColumn('support_ticket_messages', 'mail_id');
+        if ($mailCol) {
+            $q->leftJoin('mail_outbox as o', 'o.id', '=', 'm.mail_id');
+        }
+
+        return $q->get(array_merge(['m.id', 'm.author_type', 'm.body', 'm.internal', 'm.created_at', 'u.name as author', 'u.email as author_email'], $mailCol ? ['o.status as mail_status', 'o.recipient as mail_to', 'o.sent_at as mail_sent_at'] : []))
             ->map(fn ($m) => ['id' => $m->id, 'from' => $m->author_type, 'body' => $m->body, 'internal' => (bool) $m->internal, 'at' => (string) $m->created_at]
+                + ($mailCol && ($m->mail_status ?? null) ? ['mail' => ['status' => $m->mail_status, 'to' => $m->mail_to, 'at' => (string) $m->mail_sent_at]] : [])
                 + ($staff ? ['author' => (string) ($m->author ?: ($m->author_type === 'customer' ? 'Customer' : 'CVTara team'))] : ['author' => $m->author_type === 'customer' ? 'You' : 'CVTara team']))->all();
     }
 
@@ -46,11 +52,14 @@ class SupportCentre
         return $id;
     }
 
-    /** A staff reply the customer can see: stored, response time recorded, the customer told by email. */
-    public static function staffReply(object $ticket, User $staff, string $body): void
+    /**
+     * A staff reply the customer can see: stored, response time recorded, and emailed to the customer at once (3.75.0: also
+     * to people without an account who emailed or used the contact page). Returns the delivery state of that email.
+     */
+    public static function staffReply(object $ticket, User $staff, string $body): array
     {
-        self::add($ticket->id, $staff->id, 'staff', $body);
-        $set = ['updated_at' => now()];
+        $mid = self::add($ticket->id, $staff->id, 'staff', $body);
+        $set = ['updated_at' => now(), 'draft' => null, 'draft_at' => null];
         if (! $ticket->first_response_at) {
             $set['first_response_at'] = now();
         }
@@ -59,12 +68,50 @@ class SupportCentre
         }
         DB::table('support_reports')->where('id', $ticket->id)->update($set);
         $customer = $ticket->owner_id ? User::find($ticket->owner_id) : null;
-        if ($customer && ! $customer->blocked) {
-            MailAutomation::queue($customer, 'support_reply', 'support-reply:'.$ticket->id.':'.now()->timestamp.':'.Str::random(4), [
-                'ticket_ref' => $ticket->reference ?: self::ref($ticket->id), 'reply' => mb_strimwidth($body, 0, 2000, '…'),
-                'ticket_url' => rtrim((string) config('app.url'), '/').'/workspace.html?support=mine',
-            ], true);
+        if ($customer && $customer->blocked) {
+            return ['mail' => 'not sent', 'why' => 'The account is blocked, so no email was sent.'];
         }
+        $to = $customer->email ?? (string) $ticket->email;
+        if (! filter_var($to, FILTER_VALIDATE_EMAIL)) {
+            return ['mail' => 'not sent', 'why' => 'This ticket has no email address.'];
+        }
+        $ref = $ticket->reference ?: self::ref($ticket->id);
+        $site = rtrim((string) config('app.url'), '/');
+        $first = trim(explode(' ', trim((string) ($customer->name ?? $ticket->name)))[0] ?? '') ?: 'there';
+        $text = trim($body);
+        if (! preg_match('/^(hi|hello|dear|hey|namaste|good (morning|afternoon|evening))\b/i', $text)) {
+            $text = 'Hi '.$first.",\n\n".$text;
+        }
+        if (! preg_match('/cvtara\s+(support\s+)?team\W*$/i', $text)) {
+            $text .= "\n\nRegards,\nCVTara team";
+        }
+        $vars = ['ticket_ref' => $ref, 'reply' => mb_substr($text, 0, 6000), 'ticket_url' => $site.'/workspace.html?support=mine',
+            'continue_line' => 'Just reply to this email to continue'.($customer ? ', or open Feedback → My requests in your CVTara account' : '').'. Your request number is '.$ref.'.'];
+        $subject = null;
+        $thread = [];
+        if (($ticket->channel ?? '') === 'email') {
+            $orig = trim(preg_replace('/^((re|fwd?|aw)\s*:\s*)+/i', '', (string) ($ticket->email_subject ?? '')));
+            // Exactly "Re: <their subject>": Gmail only keeps a reply in the same conversation when the subject matches. The
+            // ticket reference is in the email text; their answer finds the ticket through In-Reply-To/References.
+            $subject = 'Re: '.($orig !== '' ? mb_substr($orig, 0, 200) : 'Your CVTara request');
+            $ids = DB::table('support_ticket_messages')->where('ticket_id', $ticket->id)->whereNotNull('email_message_id')->orderBy('created_at')->pluck('email_message_id')->all();
+            $ids = array_values(array_unique(array_filter(array_merge([(string) ($ticket->email_message_id ?? '')], $ids))));
+            if ($ids) {
+                $thread = ['in_reply_to' => end($ids), 'references' => implode(' ', array_slice($ids, -10))];
+            }
+        }
+        $q = MailAutomation::queueSupport($to, $customer?->id, (string) ($customer->name ?? $ticket->name ?? ''), $vars, $subject, $thread);
+        if (! $q) {
+            return ['mail' => 'not sent', 'why' => 'The support reply email is switched off.'];
+        }
+        DB::table('support_ticket_messages')->where('id', $mid)->update(['mail_id' => $q['id'], 'email_message_id' => $q['messageId']]);
+        $st = (string) DB::table('mail_outbox')->where('id', $q['id'])->value('status');
+
+        return ['mail' => $st, 'to' => $to, 'why' => match ($st) {
+            'sent' => 'Emailed to '.$to.'.',
+            'failed' => 'The email could not be sent yet; it is retried every minute. Check Owner console → Integrations → Email if this stays.',
+            default => (Settings::get('integrations')['email'] ?? false) ? 'Queued for '.$to.'; it goes out within a minute.' : 'Email sending is switched off in Integrations, so it was only queued.',
+        }];
     }
 
     /** The customer's own tickets with what they may see. */
