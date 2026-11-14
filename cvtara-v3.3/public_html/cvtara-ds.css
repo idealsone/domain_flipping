@@ -489,3 +489,7 @@ body.dark .button.secondary,body.dark .workspace-main .button.secondary,body.dar
 body.dark .button.secondary:hover,body.dark .workspace-main button.button.secondary:hover{border-color:#60a5fa;color:#fff}
 body.dark .ws-hero .button.secondary,body.dark .workspace-main .ws-hero .button.secondary{color:#fff;background:rgba(255,255,255,.12);border-color:rgba(255,255,255,.35)}
 body.dark button.button.secondary.danger,body.dark .button.secondary[data-danger],body.dark button.button.secondary[style*="b91c1c"]{color:#fca5a5!important;border-color:rgba(252,165,165,.4)}
+/* 3.70.2 owner console Overview: the "Business numbers" box already shows members, paid users, revenue, scans, resumes and conversion,
+   so the second "Overview" title and its six tiles are hidden when that box is on the page (testers saw two overviews). */
+#admin-dashboard:has(#kpiPanel)>.pg-head>h2,#admin-dashboard:has(#kpiPanel)>.pg-head>p,#admin-dashboard:has(#kpiPanel)>.ops-kpis.six{display:none}
+#admin-dashboard:has(#kpiPanel)>.pg-head{margin:0 0 8px}

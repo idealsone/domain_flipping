@@ -37,8 +37,8 @@ def run(ctx, t):
         o.api("POST", "admin/providers", {"service": "ai", "values": {"provider": "claude", "claudeApiKey": "sk-ant-test-1", "dailyLimit": "0"}})
         s, g = o.api("GET", "admin/content/integrations"); d = g["data"]; d["ai"] = True
         o.api("POST", "admin/content/integrations", {"data": d, "revision": g["revision"]})
-        s, j = o.api("POST", "admin/interviews/settings", {"enabled": True, "questions": 5, "dailySessions": 3})
-        t.check("the full mock is offered by default once mock interviews are on", s == 200 and j["settings"]["fullMock"] is True, j)
+        s, j = o.api("POST", "admin/interviews/settings", {"enabled": True, "questions": 5, "dailySessions": 3, "releaseDelay": 0, "fullMock": True})
+        t.check("the full mock is offered once the owner switches it on (off by default since 3.71.0)", s == 200 and j["settings"]["fullMock"] is True, j)
 
         c = Client(inst.base); c.register("full-a@test.local"); c.page("/workspace.html")
         s, k = c.api("POST", "checkout/start", {"plan": "job-hunt"}); c.api("POST", "checkout/verify", {"provider": "demo", "orderId": k["orderId"]})

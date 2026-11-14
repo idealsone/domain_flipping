@@ -1,6 +1,6 @@
 """Tara chat: off until the owner switches it on, answers through the customer's own API (account, ATS check, tickets),
 never reaches another customer's documents, failures cost nothing, daily limits, conversations, ratings, owner console."""
-import http.server, json, os, threading
+import re, http.server, json, os, threading
 NAME = "Tara chat assistant"
 HITS = []
 SCRIPT = []  # responses to give, in order; each is ("tool", name, input) or ("text", words) or ("badkey",)
@@ -46,7 +46,8 @@ def run(ctx, t):
     try:
         db = Db(inst.db); Client.verify_db = inst.db
         u = Client(inst.base); u.register("tara-chat-a@test.local"); s, _, ws = u.page("/workspace.html")
-        t.check("the workspace loads Tara's chat script and style", "/tara-chat.js" in ws and "/tara-chat.css" in ws)
+        wb = re.search(r'href="(/assets/bundle/[a-f0-9]+\.css)', ws)  # 3.70.2: the dashboard's stylesheets are joined into one file
+        t.check("the workspace loads Tara's chat script and style", "/tara-chat.js" in ws and ("/tara-chat.css" in ws or bool(wb and "/* /tara-chat.css */" in u.page(wb.group(1))[2])))
         s, j = u.api("GET", "tara/status"); t.check("Tara is off by default", s == 200 and j["tara"]["enabled"] is False, j)
         t.check("a message while Tara is off is refused and sends nothing", u.api("POST", "tara/message", {"text": "hello"})[0] == 422 and HITS == [])
 

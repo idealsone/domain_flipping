@@ -326,7 +326,7 @@ class TaraChat
     }
 
     /** Things Tara should know without a tool call: refund rule, support hours, how credits work. */
-    private static function facts(): string
+    public static function facts(): string
     {
         $l = (array) Settings::get('legal', []);
 
@@ -617,7 +617,7 @@ class TaraChat
         $scans = DB::table('ats_scans')->where('owner_id', $u->id)->where('status', 'done');
 
         return [
-            'name' => (string) ($p->name ?? $u->name), 'city' => (string) ($p->city ?? ''), 'college' => $college, 'lastCompany' => $company, 'targetRole' => (string) ($p->target_role ?? ''), 'experience' => (string) ($p->experience_level ?? ''),
+            'name' => (string) ($p->name ?? $u->name), 'city' => (string) ($p->city ?? ''), 'college' => $college, 'lastCompany' => $company, 'targetRole' => (string) ($p->target_role ?? ''), 'experience' => (string) ($p->experience_level ?? ''), 'years' => (int) ($p->experience_years ?? 0),
             'daysWithCvtara' => (int) floor(abs(now()->diffInDays($u->created_at))), 'plan' => $access['paid'] ? (Settings::plans()[$access['plan']]['name'] ?? $access['plan']) : 'Free', 'paid' => $access['paid'],
             'resumes' => DB::table('resume_drafts')->where('owner_id', $u->id)->count(), 'coverLetters' => DB::table('cover_letter_drafts')->where('owner_id', $u->id)->count(), 'atsChecks' => (clone $scans)->count(), 'bestMatch' => (clone $scans)->max('score'),
             'downloadsLeft' => ['resume' => $cs['resumes']['remaining'], 'coverLetter' => $cs['letters']['remaining']],
@@ -665,7 +665,8 @@ class TaraChat
             $line = 'Paste a job link or description and get your ATS match, the missing keywords and what to fix.';
             $actions = [$ask('Check it with Tara', 'Check my resume against a job.') ?? ['label' => 'Check ATS match', 'url' => '/workspace.html?view=match'], ['label' => 'Improve my resume', 'url' => '/workspace.html?view=builder&draft='.$primary]];
         } else {
-            $job = trim($last->job_title.($last->company ? ' at '.$last->company : ''));
+            $job = trim(trim((string) $last->job_title).($last->company ? ' at '.$last->company : ''));
+            $job = $job === '' ? 'your last job' : $job; // 3.76.0: a check without a job title read "Your match for : 61%"
             $title = $last->score !== null ? 'Your match for '.$job.': '.$last->score.'%' : 'Your last check: '.$job;
             $line = $f['paid'] ? 'Make a version of your resume for this job and write the cover letter, both in one click.' : 'A tailored resume and cover letter for this job usually lift the match. Build them now; you pay only to download a clean copy.';
             $actions = [['label' => 'Tailor my resume for this job', 'url' => '/workspace.html?view=builder&draft='.$last->resume_id.'&fix='.$last->id], ['label' => 'Write the cover letter', 'url' => '/workspace.html?view=letter&write=1&resume='.$last->resume_id.'&scan='.$last->id]];
@@ -690,10 +691,16 @@ class TaraChat
         }
         $offer = null;
         if (! $f['paid'] && $primary) {
-            $key = ($f['atsChecks'] >= 2 || $f['resumes'] >= 2) && in_array('job-hunt', $onSale, true) ? 'job-hunt' : (in_array('quick', $onSale, true) ? 'quick' : ($onSale[0] ?? null));
+            // 3.76.0 (owner decision 14 Nov 2026, lead with Job Hunt): experienced people, and freshers who already checked a job or keep
+            // more than one resume (or name a past employer / 2+ years), are offered Job Hunt; Quick Download only for a fresher with one resume and no job check yet.
+            $wantsPack = $f['experience'] !== 'fresher' || ($f['years'] ?? 0) >= 2 || $f['lastCompany'] !== '' || $f['atsChecks'] >= 1 || $f['resumes'] >= 2;
+            $key = $wantsPack && in_array('job-hunt', $onSale, true) ? 'job-hunt' : (in_array('quick', $onSale, true) ? 'quick' : ($onSale[0] ?? null));
             if ($key && isset($plans[$key])) {
                 $p = $plans[$key];
-                $offer = ['plan' => $key, 'name' => $p['name'], 'price' => (int) $p['price'], 'why' => $key === 'quick' ? 'Download this resume without the watermark, and keep editing it for '.$p['accessDays'].' days.' : 'You are applying to more than one job: '.$p['name'].' gives '.$p['savedResumes'].' tailored resumes and '.$p['savedLetters'].' cover letters.', 'url' => '/checkout.html?plan='.rawurlencode($key)];
+                $credit = $key === 'quick' && in_array('job-hunt', $onSale, true) ? ' If you move up to '.$plans['job-hunt']['name'].' within 7 days, these ₹'.(int) $p['price'].' count toward it.' : '';
+                $why = $key === 'quick' ? 'Download this resume without the watermark, and keep editing it for '.$p['accessDays'].' days.'.$credit
+                    : ($last ? 'Tailor this resume and write the cover letter for this job in one click. ' : 'One resume rarely fits every job. ').$p['name'].' gives '.$p['savedResumes'].' tailored resumes, '.$p['savedLetters'].' cover letters'.((int) ($p['mockInterviews'] ?? 0) ? ' and '.(int) $p['mockInterviews'].' mock interviews' : '').', about ₹'.(int) ceil($p['price'] / max(1, (int) $p['savedResumes'])).' per job.';
+                $offer = ['plan' => $key, 'name' => $p['name'], 'price' => (int) $p['price'], 'why' => $why, 'url' => '/checkout.html?plan='.rawurlencode($key)];
             }
         }
         if ($offer) {

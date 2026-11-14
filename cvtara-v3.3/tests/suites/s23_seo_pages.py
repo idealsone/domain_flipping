@@ -50,7 +50,7 @@ def check(ctx, t):
             "Sitemap:" in robots and "Disallow: /\n" not in robots and "Disallow: /preview\n" not in robots and not re.search(r"Disallow: /(resume|interview|cover|ats|guides|calculators|templates)", robots), robots)
     t.check("robots.txt does not block the noindex pages that every page links to (Search Console: indexed, though blocked)",
             not re.search(r"Disallow: /(login|register|workspace|checkout|forgot|reset|r/)", robots), robots)
-    moved = {p: fetcher(ctx.inst.base, 0.27)(p) for p in ("/guides", "/calculators/", "/pricing", "/about", "/resume/")}
+    moved = {p: fetcher(ctx.inst.base, 0.27)(p) for p in ("/guides", "/calculators/", "/pricing", "/pricing.html", "/about", "/resume/")}
     t.check("common guessed addresses move permanently to a real page instead of 404",
             all(r[0] == 301 for r in moved.values()), {p: r[0] for p, r in moved.items()})
     t.check("the guides page is in the sitemap", any(u.endswith("/guides.html") for u in locs))
@@ -79,7 +79,7 @@ def check(ctx, t):
         if "LocalBusiness" in types: f.append("LocalBusiness")
         if 'class="sp-crumbs"' not in body or 'class="sp-toc"' not in body: f.append("breadcrumbs/toc")
         if '<img class="sp-hero-img"' not in body or 'alt=""' in main: f.append("image/alt")
-        if 'href="/ats-checker/"' not in body or 'href="/#pricing"' not in body: f.append("ats/pricing links")
+        if 'href="/ats-checker/"' not in body or 'href="/pricing/"' not in body: f.append("ats/pricing links")
         if body.count('data-seo-cta="hero"') != 1 or body.count('data-seo-cta="final"') != 1: f.append("CTA block")
         if "!" in re.sub(r"<!--.*?-->|<!doctype html>", "", visible, flags=re.S | re.I).replace("&#33;", ""): f.append("exclamation mark")
         if "ATS (applicant tracking system" not in body: f.append("ATS not explained")

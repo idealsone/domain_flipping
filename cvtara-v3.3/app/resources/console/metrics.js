@@ -6,7 +6,7 @@
   const { $, E, api, modal, toast, ensureRecent } = K;
   const err = e => (e && e.message) || 'Something went wrong.';
   const fmt = m => !m.tracked ? '<span class="muted" style="font-size:14px">not tracked</span>' : m.unit === 'money' ? '₹' + Math.round(m.value / 100).toLocaleString('en-IN') : m.unit === 'percent' ? m.value + '%' : Number(m.value).toLocaleString('en-IN');
-  const time = s => new Date(s).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' });
+  const time = s => new Date(s).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', timeZone: 'Asia/Kolkata' });
   let days = 30, busy = false;
   try { days = +localStorage.getItem('cvtara-kpi-days') || 30; } catch { /* private window */ }
 

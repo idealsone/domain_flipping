@@ -26,12 +26,13 @@
   const rich = t => E(t).replace(/\*\*(.+?)\*\*/g, '<b>$1</b>');
   // stats from real library + plan data
   const D = window.CVTARA_DATA;
-  if (D) { const counts = () => { const t = D.templates.filter(x => x.publicPublished !== false && !x.curatedHidden).length, l = D.coverLetters.filter(x => x.publicPublished !== false).length; if ($('#stTemplates')) $('#stTemplates').textContent = t; if ($('#stLetters')) $('#stLetters').textContent = l; }; counts(); addEventListener('load', () => { counts(); setTimeout(counts, 800); }); }
+  if (D) { const counts = () => { const t = D.templates.filter(x => x.publicPublished !== false && !x.curatedHidden).length, l = D.coverLetters.filter(x => x.publicPublished !== false).length; if ($('#stTemplates')) $('#stTemplates').textContent = t; if ($('#stLetters')) $('#stLetters').textContent = l; document.querySelectorAll('[data-st=templates]').forEach(n => { n.textContent = t; }); document.querySelectorAll('[data-st=letters]').forEach(n => { n.textContent = l; }); }; counts(); addEventListener('load', () => { counts(); setTimeout(counts, 800); }); }
   const apply = d => {
     const prices = Object.values(d.plans || {}).filter(p => p.type === 'plan' && p.price > 0).map(p => p.price);
     if (prices.length) {
       const min = Math.min(...prices), inr = n => '₹' + n.toLocaleString('en-IN');
-      if ($('#stFrom')) $('#stFrom').textContent = inr(min); if ($('#getFrom')) $('#getFrom').textContent = inr(min);
+      const jh = (d.plans || {})['job-hunt']; if (jh && jh.sale !== false) { if ($('#stHunt')) $('#stHunt').textContent = inr(jh.price); if ($('#stHuntJobs')) $('#stHuntJobs').textContent = jh.savedResumes; }
+      if ($('#stFrom')) $('#stFrom').textContent = inr(min); document.querySelectorAll('[data-st=from]').forEach(n => { n.textContent = inr(min); }); if ($('#getFrom')) $('#getFrom').textContent = inr(min);
       const a = $('#lpAnnounce');
       if (a) a.innerHTML = announceHtml(inr(min));
     }
@@ -69,4 +70,12 @@
     if ($('.lp-final .button') && s.ctaFinalButton) $('.lp-final .button').textContent = s.ctaFinalButton;
     const a = $('#lpAnnounce'), from = $('#stFrom') ? $('#stFrom').textContent : '₹99'; if (a) a.innerHTML = announceHtml(from);
   }).catch(() => {});
+})();
+// 3.70.0 On phones the bottom "Check free / View plans" bar waits until the hero (which has its own buttons) has scrolled away,
+// so the first screen has one clear button instead of three.
+(() => {
+  const hero = document.querySelector('.lp-hero');
+  if (!hero || !('IntersectionObserver' in window)) return;
+  document.documentElement.classList.add('lp-hero-in');
+  new IntersectionObserver(es => document.documentElement.classList.toggle('lp-hero-in', es[0].isIntersecting), { threshold: 0.15 }).observe(hero);
 })();
