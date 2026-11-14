@@ -642,15 +642,27 @@ class SeoPages
             .'<p class="sp-note">The sample answers show one way to answer. Use your own real examples and numbers; interviewers notice memorised lines.</p>';
         $common = '<ol class="sp-qa"><li><h3>Tell me about yourself.</h3><p><b>How to answer:</b> In about a minute: your current role or degree, 1 or 2 results that fit this job, and why you want it.</p></li><li><h3>Why should we hire you?</h3><p><b>How to answer:</b> Match 3 of your strengths to the job post, for example '.self::e(self::and(array_slice($r['k'], 0, 3))).', with proof.</p></li><li><h3>What is your notice period?</h3><p><b>How to answer:</b> Give the exact period and whether early release is possible.</p></li></ol>';
         $siblings = self::siblings($k, 5);
+        // 3.77.0 (owner, 13 Nov 2026): longer pages, about 10 more questions from the CVTara question bank, by interview round and level.
+        [$more, $bankTotal] = InterviewBank::publicSample($k, $t, 10);
+        $moreHtml = '';
+        if ($more) {
+            foreach (array_unique(array_column($more, 'level')) as $lvl) {
+                $moreHtml .= '<h3>'.self::e($lvl).'</h3><ol class="sp-qa">'.implode('', array_map(fn ($q) => '<li><h4>'.self::e($q['text']).'</h4><p class="sp-note">'.self::e($q['category']).'</p><p><b>How to answer:</b> '.self::e($q['guidance']).'</p></li>',
+                    array_filter($more, fn ($q) => $q['level'] === $lvl))).'</ol>';
+            }
+            $moreHtml .= '<p>'.($bankTotal ? 'These come from the CVTara question bank, which has '.number_format($bankTotal).' questions for each experience level of this role, in every interview round. ' : '')
+                .'In your account you can filter them by round and skill, mark each one as practised and see a model answer built from your own resume.</p><p><a class="sp-cta" href="/register?next=/workspace.html?view=interview">Practise these questions</a></p>';
+        }
 
         return ['kind' => 'interview', 'eyebrow' => 'INTERVIEW QUESTIONS', 'title' => self::pick(["$t Interview Questions & Answers", "$t Interview Questions", "$t Interview Q&A"]), 'description' => self::sentences("$t interview questions with sample answers, such as “".rtrim($r['q'][0][0], '.?').'”.', 'Plus common HR questions.', 'Prepare with examples from your own resume.'),
             'h1' => "$t interview questions and answers", 'lead' => 'Questions that come up often for this role, with a tip on how to answer each one and a sample answer. Use examples from your own work, not memorised lines.',
             'crumbs' => self::crumbs(['Interview questions', '/interview-questions/'], [$t, "/interview-questions/$k/"]), 'image' => self::image('interview', "$t interview questions with answer tips"),
-            'sections' => [['role-questions', 'Questions about the role', $qa], ['hr-questions', 'Common HR questions', $common],
+            'sections' => array_values(array_filter([['role-questions', 'Questions about the role', $qa], ['hr-questions', 'Common HR questions', $common],
+                $moreHtml ? ['more-questions', "More $lt interview questions by experience", $moreHtml] : null,
                 // 3.57.0 (V7 §31): the public sample links to practice; the full question bank stays inside the account.
                 ['practise', 'Practise your answers', '<p>Reading questions helps; answering them out loud or in writing helps more. In your CVTara account you can practise interview questions for your role and experience, try a timed mock interview with written feedback on structure, examples and clarity, and research a company from its own website. Feedback is a learning guide, not a prediction of any interview result.</p><p><a class="sp-cta" href="/register?next='.rawurlencode('/workspace.html?view=interview').'">Start practising</a></p>'],
                 ['prepare', 'How to prepare', self::ul(['Read the job post and list the skills it asks for.', 'Prepare 3 short stories from your resume using the STAR method.', 'Know the numbers on your resume and how you got them.', 'Prepare 2 questions to ask the interviewer.'])],
-                ['skills', 'Skills interviewers often test', self::chips($r['k'])]],
+                ['skills', 'Skills interviewers often test', self::chips($r['k'])]])),
             'faq' => [["What is asked in a $lt interview?", 'Role questions about your skills and past work, plus HR questions such as "Tell me about yourself" and notice period. See the list above.'], ['How should a fresher prepare?', $r['f']], ['What should I bring to the interview?', 'Copies of your resume, ID, certificates if asked, and a short list of questions for them.']],
             'cta' => self::cta(['/register', 'Update my resume free'], [self::rolePath($k), 'See the resume example'], 'Interviewers ask about what is on your resume. Make sure every line is one you can explain. Building and previewing is free.'),
             'related' => [['For this role', [[self::rolePath($k), "$t resume example"], ['/cover-letter-examples/'.$r['c'].'/', 'Cover letter example']]],

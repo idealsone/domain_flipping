@@ -1,3 +1,10 @@
+# CVTara v3.77.0 — Longer interview question pages
+
+## 3.77.0
+Owner plan item 9 ("complete one by one", 13-14 Nov 2026). Built on 3.76.0. No migration; ready-made pages must be rebuilt.
+- **Longer /interview-questions/<role>/ pages.** A new section, "More <role> interview questions by experience", adds 9-10 questions from the CVTara question bank (3.73.0): about 4 for freshers and up to 3 years, 3 for 3-8 years, 3 for 8 years or more, each from a different interview round, with the round and how to answer. They are worded with the page's own job title and the skills of the closest bank role (`InterviewBank::PUBLIC_MAP`, 25 pages), only from approved patterns that read naturally on a public page (`PUBLIC_PATTERNS`), and the same on every rebuild. Pages with no close bank role (engineering, medical, legal) get HR-round and career questions; pages about a kind of search (freshers, internship, student, Gulf jobs, government jobs) get none. The section links to practise in the account.
+- `s85_interview_pages` (11 checks).
+
 # CVTara v3.76.0 — Turn visitors into paying customers
 
 ## 3.76.0

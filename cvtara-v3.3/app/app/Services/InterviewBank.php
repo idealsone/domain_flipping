@@ -145,10 +145,13 @@ class InterviewBank
     }
 
     /** One question as a plain object (the shape Interviews::eligible() returns, plus code, category, skill and gen). */
-    private static function make(int $ri, $si, string $tier, array $p): object
+    private static function make(int $ri, $si, string $tier, array $p, ?string $name = null): object
     {
         $c = self::catalogue();
         $role = $c['roles'][$ri];
+        if ($name !== null) {
+            $role['name'] = $name; // 3.77.0 public pages: the page's own job title with the closest bank role's skills
+        }
         $skill = $si === 'x' ? null : $role['skills'][$si];
         $bands = $c['tiers'][$tier];
 
@@ -364,6 +367,81 @@ class InterviewBank
             'problem', 'pressure' => 'situational',
             default => 'skills',
         };
+    }
+
+    // ---------------------------------------------------------------- public interview pages (3.77.0)
+
+    /** Public role pages (/interview-questions/<role>/) whose job title is close to a bank role: the bank role's skills are used. */
+    public const PUBLIC_MAP = ['accountant' => 'accounts-executive', 'chartered-accountant' => 'finance-manager', 'bank-jobs' => 'bank-operations', 'sales-manager' => 'area-sales-manager',
+        'medical-representative' => 'pharmaceutical-sales-representative', 'retail-sales-associate' => 'retail-store', 'marketing-manager' => 'brand-manager', 'administrative-assistant' => 'office-administrator',
+        'bpo-executive' => 'customer-support', 'lecturer' => 'college-lecturer', 'maintenance-technician' => 'maintenance-coordinator', 'ac-technician' => 'facility-technician-hvac',
+        'pharma-production' => 'production-executive-fmcg', 'pharma-qa-qc' => 'quality-control-chemist', 'textile-production' => 'production-supervisor', 'hospitality' => 'hotel-front-office',
+        'chef' => 'kitchen-supervisor', 'logistics-executive' => 'logistics-coordinator', 'driver' => 'driver-company-or-personal', 'lab-technician' => 'lab-technician-assistant',
+        'pharmacist' => 'pharmacy-assistant', 'it-support-engineer' => 'it-helpdesk-executive', 'data-analyst' => 'data-analyst-business', 'project-manager' => 'project-coordinator',
+        'construction-supervisor' => 'site-administrator-construction'];
+
+    /** Patterns that read naturally with any skill, used on public pages (all role-level patterns are used too). */
+    public const PUBLIC_PATTERNS = ['P01', 'P02', 'P04', 'P05', 'P06', 'P08', 'P09', 'P10', 'P12', 'P14', 'P17', 'P19', 'P20', 'P24', 'P27', 'P29', 'P30', 'P35', 'P36', 'P39', 'P43', 'P45', 'P52'];
+
+    /** Public pages about a kind of search rather than a job (freshers, Gulf jobs...): no bank questions there. */
+    public const PUBLIC_SKIP = ['freshers', 'internship', 'student', 'gulf-jobs', 'government-jobs'];
+
+    /** Experience tiers as the public pages name them. */
+    public const TIER_LABELS = ['entry' => 'Freshers and up to 3 years', 'mid' => '3 to 8 years of experience', 'senior' => '8 years or more'];
+
+    /**
+     * About $n questions from the bank for a public role page: a spread of interview rounds at each experience level, the
+     * same on every rebuild. Uses the bank role behind the page (by slug or PUBLIC_MAP), worded with the page's own job
+     * title; a page with no close bank role gets the role-level questions (HR round, motivation, job switch) only.
+     * Returns [questions, how many questions customers can practise for the role] or [[], 0] while the bank is off.
+     */
+    public static function publicSample(string $pageSlug, string $title, int $n = 10): array
+    {
+        $c = self::catalogue();
+        $ok = self::approved();
+        if (! $ok || in_array($pageSlug, self::PUBLIC_SKIP, true)) {
+            return [[], 0];
+        }
+        $ri = $c['bySlug'][$pageSlug] ?? (isset(self::PUBLIC_MAP[$pageSlug]) ? ($c['bySlug'][self::PUBLIC_MAP[$pageSlug]] ?? null) : null);
+        $fake = $ri === null;
+        if ($fake) {
+            $ri = 0; // only role-level patterns below, so the borrowed role's skills are never used
+        }
+        $labels = $c['categories'] ?? [];
+        $per = ['entry' => 4, 'mid' => 3, 'senior' => 3];
+        $out = [];
+        $usedPat = [];
+        foreach ($per as $tier => $want) {
+            $pool = array_values(array_filter($c['patterns'], fn ($p) => isset($ok[$p['code']]) && ! isset($usedPat[$p['code']]) && ($p['kind'] === 'skill' ? ! $fake && in_array($p['code'], self::PUBLIC_PATTERNS, true) : true)
+                && ! in_array($p['competency'], ['introduction', 'closing'], true) && ! in_array($p['code'], ['R04', 'R11'], true))); // the page already asks about notice period and "why hire you"
+            usort($pool, fn ($a, $b) => crc32($pageSlug.$tier.$a['code']) <=> crc32($pageSlug.$tier.$b['code']));
+            $cats = [];
+            foreach ([true, false] as $strict) { // a different interview round for each question first
+                foreach ($pool as $p) {
+                    if ($want <= 0 || isset($usedPat[$p['code']])) {
+                        continue;
+                    }
+                    $cat = $p['category'][$tier];
+                    if ($strict && isset($cats[$cat])) {
+                        continue;
+                    }
+                    $si = $p['kind'] === 'role' ? 'x' : crc32($pageSlug.$p['code']) % 10;
+                    $q = self::make($ri, $si, $tier, $p, $title);
+                    $out[] = ['level' => self::TIER_LABELS[$tier], 'tier' => $tier, 'category' => $labels[$cat] ?? $cat, 'text' => $q->text, 'guidance' => self::fill($p['guidance'], ['name' => $title], $q->skill), 'skill' => $q->skill];
+                    $cats[$cat] = true;
+                    $usedPat[$p['code']] = true;
+                    $want--;
+                }
+            }
+        }
+        $total = 0;
+        if (! $fake) {
+            foreach ($c['patterns'] as $p) {
+                $total += isset($ok[$p['code']]) ? ($p['kind'] === 'role' ? 1 : 10) : 0;
+            }
+        }
+
+        return [array_slice($out, 0, $n), $total];
     }
 
     // ---------------------------------------------------------------- owner console
