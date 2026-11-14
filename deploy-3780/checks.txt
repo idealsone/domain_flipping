@@ -1,0 +1,5 @@
+S cvtara_app/app/Services/WhatsNew.php d50a6ef279aec305832b3d5c17095ce40975de7a7ee575512c515ed3af6191ea
+S public_html/assets/brand/cvtara-icon.webp ABSENT
+W public_html/dash-v4.css 14faff432443383e45f7bc55a44e5941418c1fc847ed49d542fdb801a24db421
+W public_html/tara-chat.css b3583f461bc0b87cd4c3e4bd639844f7c6bb237010ba7d22352d958f85aaa4e9
+W public_html/tara-chat.js 8eea5972e80d433a09bf01aa27f2c6d2333f63861821e4102344d5a17f1c3825
